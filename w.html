@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Full Screen Video Background with Slide Out Cover Blaze JS Menu</title>
+<title>Full Screen Video Background with Slide Out Blaze JS Menu</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/blazejs@3.2.1/dist/blazejs.css">
 <script src="https://cdn.jsdelivr.net/npm/blazejs@3.2.1/dist/blazejs.min.js"></script>
 <style>
@@ -16,38 +16,13 @@ video {
   object-fit: cover;
 }
 
-/* Menu */
+/* Menu Container and Overlay Image */
 
-.blaze-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
+.menu-container {
+  position: relative;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.5s ease-in-out;
-  z-index: 100;
 }
-
-.blaze-modal-content {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 300px;
-  padding: 20px;
-  background-color: white;
-  border-radius: 5px;
-}
-
-.blaze-modal-active {
-  opacity: 1;
-  visibility: visible;
-}
-
-/* Overlay Image */
 
 .overlay-img {
   position: absolute;
@@ -56,6 +31,25 @@ video {
   width: 100%;
   height: 100%;
   z-index: 101; /* Place it above the video */
+}
+
+/* Blaze JS Menu */
+
+.blaze-modal-content {
+  position: absolute;
+  top: 50%;
+  left: -300px; /* Start off-screen to the left */
+  transform: translate(0, -50%);
+  width: 300px;
+  padding: 20px;
+  background-color: white;
+  border-radius: 5px;
+  z-index: 102; /* Place it above the overlay image */
+  transition: left 0.5s ease-in-out;
+}
+
+.blaze-modal-active .blaze-modal-content {
+  left: 0; /* Slide in from the left */
 }
 
 /* Footer */
@@ -99,7 +93,6 @@ footer a:hover {
 
 <div class="menu-container">
   <img class="overlay-img" src="your_overlay_image.jpg" alt="Overlay Image">
-  <button class="blaze-button" onclick="toggleMenu();">Menu</button>
   <div class="blaze-modal" id="myMenu">
     <div class="blaze-modal-content">
       <a href="#">Link 1</a>
@@ -133,6 +126,14 @@ function checkTime(i) {
   if (i < 10) {i = "0" + i;} // add zero in front of numbers < 10
   return i;
 }
+
+document.querySelector('.blaze-modal-content').addEventListener('click', function(event) {
+  event.stopPropagation(); // Prevent clicks on the menu from closing it
+});
+
+document.querySelector('.menu-container').addEventListener('click', function() {
+  toggleMenu();
+});
 
 function toggleMenu() {
   const menu = document.getElementById('myMenu');
