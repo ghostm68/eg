@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>inkrealm</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/blazejs@3.2.1/dist/blazejs.css">
+  <script src="https://cdn.jsdelivr.net/npm/blazejs@3.2.1/dist/blazejs.min.js"></script>
+  <script src="path-to-lax.min.js"></script>
+<!-- or via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/lax.js"></script>
+  
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-mousewheel/3.1.12/jquery.mousewheel.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.6.0/slick.min.js"></script>
+  <style>
+    /* Video background */
+    video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Menu Toggle Button */
+    .menu-toggle-button {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 3; /* Place it above the menu */
+      cursor: pointer;
+    }
+
+    /* Clock */
+    #clock {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 20px;
+      color: white;
+    }
+
+    /* Blaze JS Menu */
+    .blaze-menu {
+      position: fixed;
+      top: 0;
+      left: -300px; /* Start off-screen to the left */
+      width: 300px;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      z-index: 2; /* Place it above the video */
+      transition: left 0.5s ease-in-out, opacity 0.5s ease-in-out;
+    }
+
+    .blaze-menu-content {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: brown;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .blaze-menu-active {
+      left: 0; /* Slide in from the left */
+      opacity: 1;
+    }
+
+    /* Blaze JS Slider Container */
+    .blaze-slider-container {
+      position: relative;
+      margin-top: 20px;
+    }
+
+    .blaze-slide {
+      background-color: #333;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+  </style>
+  <script>
+  
+var $slider = $('.slideshow .slider'),
+  maxItems = $('.item', $slider).length,
+  dragging = false,
+  tracking,
+  rightTracking;
+
+$sliderRight = $('.slideshow').clone().addClass('slideshow-right').appendTo($('.split-slideshow'));
+
+rightItems = $('.item', $sliderRight).toArray();
+reverseItems = rightItems.reverse();
+$('.slider', $sliderRight).html('');
+for (i = 0; i < maxItems; i++) {
+  $(reverseItems[i]).appendTo($('.slider', $sliderRight));
+}
+
+$slider.addClass('slideshow-left');
+$('.slideshow-left').slick({
+  vertical: true,
+  verticalSwiping: true,
+  arrows: false,
+  infinite: true,
+  dots: true,
+  speed: 1000,
+  cssEase: 'cubic-bezier(0.7, 0, 0.3, 1)'
+}).on('beforeChange', function(event, slick, currentSlide, nextSlide) {
+
+  if (currentSlide > nextSlide && nextSlide == 0 && currentSlide == maxItems - 1) {
+    $('.slideshow-right .slider').slick('slickGoTo', -1);
+    $('.slideshow-text').slick('slickGoTo', maxItems);
+  } else if (currentSlide < nextSlide && currentSlide == 0 && nextSlide == maxItems - 1) {
+    $('.slideshow-right .slider').slick('slickGoTo', maxItems);
+    $('.slideshow-text').slick('slickGoTo', -1);
+  } else {
+    $('.slideshow-right .slider').slick('slickGoTo', maxItems - 1 - nextSlide);
+    $('.slideshow-text').slick('slickGoTo', nextSlide);
+  }
+}).on("mousewheel", function(event) {
+  event.preventDefault();
+  if (event.deltaX > 0 || event.deltaY < 0) {
+    $(this).slick('slickNext');
+  } else if (event.deltaX < 0 || event.deltaY > 0) {
+    $(this).slick('slickPrev');
+  };
+}).on('mousedown touchstart', function(){
+  dragging = true;
+  tracking = $('.slick-track', $slider).css('transform');
+  tracking = parseInt(tracking.split(',')[5]);
+  rightTracking = $('.slideshow-right .slick-track').css('transform');
+  rightTracking = parseInt(rightTracking.split(',')[5]);
+}).on('mousemove touchmove', function(){
+  if (dragging) {
+    newTracking = $('.slideshow-left .slick-track').css('transform');
+    newTracking = parseInt(newTracking.split(',')[5]);
+    diffTracking = newTracking - tracking;
+    $('.slideshow-right .slick-track').css({'transform': 'matrix(1, 0, 0, 1, 0, ' + (rightTracking - diffTracking) + ')'});
+  }
+}).on('mouseleave touchend mouseup', function(){
+  dragging = false;
+});
+
+$('.slideshow-right .slider').slick({
+  swipe: false,
+  vertical: true,
+  arrows: false,
+  infinite: true,
+  speed: 950,
+  cssEase: 'cubic-bezier(0.7, 0, 0.3, 1)',
+  initialSlide: maxItems - 1
+});
+$('.slideshow-text').slick({
+  swipe: false,
+  vertical: true,
+  arrows: false,
+  infinite: true,
+  speed: 900,
+  cssEase: 'cubic-bezier(0.7, 0, 0.3, 1)'
+});
+
+  </script>
+	<style>
+        * {margin: 0; padding: 0;}
+        body {background: black;}
+canvas {display: inline;}
+    </style>
+</head>
+<body>
+
+<video autoplay muted loop id="myVideo">
+  <source src="https://github.com/ghostm68/pantheon/raw/main/wordstarnexus_20231010_140713484.mp4" type="video/mp4">
+</video>
+
+<button class="menu-toggle-button" onclick="toggleMenu();">⇦_⮕</button>
+
+<div id="myMenu" class="blaze-menu">
+  <div class="blaze-menu-content">
+    <a href="#">domain</a>
+    <a href="#">Links</a>
+    <a href="#">cloud</a>
+    <style>
+      body {
+    padding: 0;
+    margin: 0;
+    font-family: Helvetica, sans-serif;
+  }
+
+  #input {
+    text-align: center;
+    width: 90%;
+    margin-top: calc(50vh - 50px);
+    margin-left: calc(50vw - 100px);
+    font-size: 25px;
+    border: 0;
+    outline: 0;
+    background-color: #95853B;
+    padding: 15px;
+    box-sizing: border-box;
+    color: #fff;
+    box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px, rgb(51, 51, 51) 0px 0px 0px 3px;
+  }
+
+::placeholder {
+  color: #fff;
+}
+
+
+    </style>
+	    
+	
+	 
+  <style>
+    /* Styles for the scrolling wave text container */
+    .scrolling-wave-container {
+      width: 60%;
+      height: 90vh;
+      background-color: black;
+      color: white; /* Text color is set to white */
+      font-size: 14px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Styles for the text inside the container */
+    .scrolling-wave-text {
+      position: absolute;
+      bottom: -50px; /* Initial position below the container */
+      white-space: nowrap;
+      animation: wave 4s linear infinite;
+    }
+
+    /* Keyframes for the wave animation */
+    @keyframes wave {
+      0% {
+        transform: translateY(0);
+      }
+      20% {
+        transform: translateY(-60px);
+      }
+      60% {
+        transform: translateY(0);
+      }
+      88% {
+        transform: translateY(80px);
+      }
+      99% {
+        transform: translateY(0);
+      }
+    }
+  </style>
+
+  <div class="scrolling-wave-container">
+    <div class="scrolling-wave-text">
+      ___www.WORDSTAR.nexus
+	   
+	
+  </div>
+	    <canvas id="c"></canvas>
+    <script>
+
+var c = document.getElementById("c");
+var ctx = c.getContext("2d");
+
+//making the canvas full screen
+c.height = window.innerHeight;
+
+
+//english characters
+var english = "wordstarnexus";
+//converting the string into an array of single characters
+english = english.split("");
+
+var font_size = 12;
+var columns = c.width/font_size; //number of columns for the rain
+//an array of drops - one per column
+var drops = [];
+//x below is the x coordinate
+//1 = y co-ordinate of the drop(same for every drop initially)
+for(var x = 0; x < columns; x++)
+	drops[x] = 1; 
+
+//drawing the characters
+function draw()
+{
+	//Black BG for the canvas
+	//translucent BG to show trail
+	ctx.fillStyle = "rgba(0, 0, 0, 0.02)";
+	ctx.fillRect(0, 0, c.width, c.height);
+	
+	ctx.fillStyle = "#F6C000"; //yellow text
+	ctx.font = font_size + "px arial";
+	//looping over drops
+	for(var i = 0; i < drops.length; i++)
+	{
+		//a random chinese character to print
+		var text = english[Math.floor(Math.random()*english.length)];
+		//x = i*font_size, y = value of drops[i]*font_size
+		ctx.fillText(text, i*font_size, drops[i]*font_size);
+		
+		//sending the drop back to the top randomly after it has crossed the screen
+		//adding a randomness to the reset to make the drops scattered on the Y axis
+		if(drops[i]*font_size > c.height && Math.random() > 0.988)
+			drops[i] = 0;
+		
+		//incrementing Y coordinate
+		drops[i]++;
+	}
+}
+
+setInterval(draw, 33);
+    </script>
+  </div>
+
+<font color="white>	  
+spec-script in the works;<br>
+"POSSESSION GARDENER"<br>
+-ghost/plot early notes,<br>
+In 1953, greed leads English and American<br>
+intelligence agencies to orchestrate <br>
+a coup to overthrow the democratically <br>
+elected government of Iran...<br>
+Placed across London, New York, <br>
+Tehran, and Paris, the story follows <br>
+the secret machinations of spies and <br>
+businessmen seeking control over Iran's <br>
+oil reserves. Although set against <br>
+a backdrop of global political tensions, <br>
+at its core is a gritty noir tale of intrigue, <br>
+forbidden romances, and the corrupting influence<br>
+of avarice. With an intense style, <br>
+the R-rated story examines how the<br>
+selfish motives of powerful figures <br>
+can determine the fates of nations <br>
+and reshape the course of history.<br>
+	 -- 16 october 2023<br>
+<a href="https://www.wordstar.nexus/">home</a><br>
+</font color="white>
+                
+                
+               
+<input id='input' placeholder="(w｡rdstar)" autofocus />
+<script>
+  window.onload = function () {
+      lax.init()
+      const input = document.getElementById('input')
+      
+      lax.addDriver('inputLength', function () {
+        return input.value.length
+      })
+
+      lax.addElements("#input", {
+        'inputLength': {
+          "rotate": [
+            [0, 180],
+            [0, 360],
+          ],
+          'opacity': [
+            [0, 100],
+            [1, 0]
+          ]
+        }
+      })
+    }
+
+    </script>
+  
+  </div>
+  </div>
+</div>
+
+<div id="clock"></div>
+
+
+</div>
+<!-- Initialize Blaze JS Slider -->
+<script>
+  const slider = new BlazeSlider('#mySlider', {
+    all: {
+      slidesToShow: 1,       // Number of slides to show at once
+      slideGap: 0,          // Gap between slides
+      loop: true,           // Enable looping
+      enableAutoplay: true, // Enable autoplay
+    },
+  });
+</script>
+ 
+<script>
+  function startTime() {
+    const today = new Date();
+    let h = today.getHours();
+    let m = today.getMinutes();
+    let s = today.getSeconds();
+    m = checkTime(m);
+    s = checkTime(s);
+    document.getElementById('clock').innerHTML = h + ":" + m + ":" + s;
+    setTimeout(startTime, 1000);
+  }
+
+  function checkTime(i) {
+    if (i < 10) {
+      i = "0" + i;
+    } // add zero in front of numbers < 10
+    return i;
+  }
+
+  function toggleMenu() {
+    const menu = document.getElementById('myMenu');
+    menu.classList.toggle('blaze-menu-active');
+  }
+
+  startTime();
+</script>
+
+<!-- Initialize Blaze JS Slider -->
+<script>
+  const slider = new BlazeSlider('#mySlider', {
+    all: {
+      slidesToShow: 3,
+      slideGap: '80px',
+      loop: true,
+      enableAutoplay: true,
+    },
+  });
+</script>
+    
+
+
+  
+
+<link rel="stylesheet"https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.6.0/slick.min.css">
+<link rel="stylesheet"https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.6.0/slick-theme.min.css">
+<link rel="stylesheet"https://fonts.googleapis.com/css?family=Roboto+Condensed:100">
+wordstarnexus_20231010_142826564.mp4
+wordstarnexus_20231010_141815567.mp4
+wordstarnexus_20231010_140713484.mp4
+	
+   <style>
+.footer {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  background-color: yellow;
+  color: white;
+  text-align: center;
+}
+</style>
+
+    
+<div class="footer">
+  <p>you have reached wordstar.nexus</p>
+	
+</div>
+</body>
+</html>
+
+	
+
+ 
