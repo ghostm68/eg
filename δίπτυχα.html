@@ -74,264 +74,126 @@ body {
 </style>
 	   <header>✪</header>  
 	<br>
-	<style> 
-/* RESET RULES & HELPER CLASSES
-–––––––––––––––––––––––––––––––––––––––––––––––––– */
-* {
-  padding: 0;
-  margin: 0;
-  box-sizing: border-box;
-}
+ <style>
+	 *
+  margin 0
+  padding 0
+  box-sizing border-box
+  
 
-ul {
-  list-style: none;
-}
+:root
+  font-size calc(.5vw + 1vh + .5vmin)
+body
+  font 100 50%/1.5 'Roboto', sans-serif
+  
+.intro
+  position relative
+  margin 2em
+  padding .2em .6em
+  cursor pointer
+  // &:hover
+  //   background rgba(96, 125, 139, 0.5);
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+  
+  color #FFF
+  font-size 2em
+  max-width 26em
+  h1
+    margin-bottom .5em
+    line-height 1
+    font-weight 100
+  
+//===== #CrossFade =======
 
-button {
-  background: transparent;
-  border: none;
-  outline: none;
-}
-
-body {
-  font: 20px/28px sans-serif;
-}
-
-.container {
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.cover {
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
-  height: 100vh;
-}
-
-
-/* SLIDESHOW
-–––––––––––––––––––––––––––––––––––––––––––––––––– */
-.slideshow {
-  cursor: none;
-}
-
-.slideshow .slides {
-  display: grid;
-}
-
-.slideshow .slide {
-  grid-column: 1;
-  grid-row: 1;
-  opacity: 0;
-  transition: opacity 0.4s;
-}
-
-.slideshow .slide.is-active {
-  opacity: 1;
-}
-
-.slideshow .arrows {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: flex;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-.slideshow .arrows .arrow {
-  position: relative;
-  width: 50%;
-  cursor: inherit;
-  visibility: hidden;
-  overflow: inherit;
-}
-
-.slideshow .arrows .is-visible {
-  visibility: visible;
-}
-
-.slideshow .arrows span {
-  position: absolute;
-  width: 72px;
-  height: 72px;
-  background-size: 72px 72px;
-  mix-blend-mode: difference;
-  filter: invert(1);
-}
-
-.slideshow .arrow-prev span {
-  background-image: url(https://s3-us-west-2.amazonaws.com/s.cdpn.io/162656/slider-prev-arrow.svg);
-}
-
-.slideshow .arrow-next span {
-  background-image: url(https://s3-us-west-2.amazonaws.com/s.cdpn.io/162656/slider-next-arrow.svg);
-}
-
-main {
-  padding: 50px;
-}
-
-main p + p {
-  margin-top: 20px;
-}
-
-
-/* FOOTER
-–––––––––––––––––––––––––––––––––––––––––––––––––– */
-footer {
-  font-size: 1rem;
-  text-align: right;
-  padding: 10px 0;
-  border-top: 1px solid #ccc;
-}
-
-footer span {
-  color: #e31b23;
-}
-
-</style>
-	
-	<script>
-	const slideshow = document.querySelector(".slideshow");
-const list = document.querySelector(".slideshow .slides");
-const btns = document.querySelectorAll(".slideshow .arrows .arrow");
-const prevBtn = document.querySelector(".slideshow .arrow-prev");
-const prevBtnChild = document.querySelector(".slideshow .arrow-prev span");
-const nextBtn = document.querySelector(".slideshow .arrow-next");
-const nextBtnChild = document.querySelector(".slideshow .arrow-next span");
-const main = document.querySelector("main");
-const autoplayInterval = parseInt(slideshow.dataset.autoplayInterval) || 4000;
-const isActive = "is-active";
-const isVisible = "is-visible";
-let intervalID;
-
-window.addEventListener("load", () => {
-  changeSlide();
-  autoPlay();
-  stopAutoPlayOnHover();
-  customizeArrows();
-});
-
-function changeSlide() {
-  for (const btn of btns) {
-    btn.addEventListener("click", e => {
-      const activeSlide = document.querySelector(".slide.is-active");
-      activeSlide.classList.remove(isActive);
-      if (e.currentTarget === nextBtn) {
-        activeSlide.nextElementSibling
-          ? activeSlide.nextElementSibling.classList.add(isActive)
-          : list.firstElementChild.classList.add(isActive);
-      } else {
-        activeSlide.previousElementSibling
-          ? activeSlide.previousElementSibling.classList.add(isActive)
-          : list.lastElementChild.classList.add(isActive);
-      }
-    });
-  }
-}
-
-function autoPlay() {
-  if (slideshow.dataset.autoplay === "true") {
-    intervalID = setInterval(() => {
-      nextBtn.click();
-    }, autoplayInterval);
-  }
-}
-
-function stopAutoPlayOnHover() {
-  if (
-    slideshow.dataset.autoplay === "true" &&
-    slideshow.dataset.stopAutoplayOnHover === "true"
-  ) {
-    slideshow.addEventListener("mouseenter", () => {
-      clearInterval(intervalID);
-    });
-
-    slideshow.addEventListener("touchstart", () => {
-      clearInterval(intervalID);
-    });
-  }
-}
-
-function customizeArrows() {
-  slideshow.addEventListener("mousemove", mousemoveHandler);
-  slideshow.addEventListener("touchmove", mousemoveHandler);
-  slideshow.addEventListener("mouseleave", mouseleaveHandler);
-  main.addEventListener("touchstart", mouseleaveHandler);
-}
-
-function mousemoveHandler(e) {
-  const width = this.offsetWidth;
-  const xPos = e.pageX;
-  const yPos = e.pageY;
-  const xPos2 = e.pageX - nextBtn.offsetLeft - nextBtnChild.offsetWidth;
-
-  if (xPos > width / 2) {
-    prevBtn.classList.remove(isVisible);
-    nextBtn.classList.add(isVisible);
-
-    nextBtnChild.style.left = `${xPos2}px`;
-    nextBtnChild.style.top = `${yPos}px`;
-  } else {
-    nextBtn.classList.remove(isVisible);
-    prevBtn.classList.add(isVisible);
-
-    prevBtnChild.style.left = `${xPos}px`;
-    prevBtnChild.style.top = `${yPos}px`;
-  }
-}
-
-function mouseleaveHandler() {
-  prevBtn.classList.remove(isVisible);
-  nextBtn.classList.remove(isVisible);
-}
-	
-	</script>
-	  <ul class="slides">
-    <li class="slide is-active">
-      <div class="cover"
-        style="background-image: url(https://raw.githubusercontent.com/ghostm68/pantheon/main/δίπτυχα_240616_171503.gif);"></div>
-    </li>
-    <li class="slide">
-      <div class="cover"
-        style="background-image: url(https://raw.githubusercontent.com/ghostm68/pantheon/main/δίπτυχα_240616_171503.gif);"></div>
-    </li>
-    <li class="slide">
-      <div class="cover"
-        style="background-image: url(https://raw.githubusercontent.com/ghostm68/pantheon/main/δίπτυχα_240616_171503.gif);"></div>
-    </li>
-  </ul>
-  <div class="arrows">
-    <button class="arrow arrow-prev">
-      <span></span>
-    </button>
-    <button class="arrow arrow-next">
-      <span></span>
-    </button>
-  </div>
-</div>
-<main>
-  <div class="container">
-    <p>trying out the design...    </p>
-
+#CrossFade
+  background #FFF //no flash
+  
+  display flex
+  align-items flex-end
+  
+  height 100vh
+  overflow hidden
+  position relative
+  
+  img
+    position absolute
+    min-width 100%
+    min-height 100%
+    height auto
+    background #000
     
-  </div>
-</main>
-<footer>
-  <div class="container">
-    <small>eye<span>❤</span> emilee<a href="http://inkrealm.info/" target="_blank">inky</a>
-    </small>
-  </div>
-</footer>
-<marquee><header>✪✪<font color="white">a new art series possibly entitled δίπτυχα will be updated here, preview follows...<img width="88" height="88" src="https://raw.githubusercontent.com/ghostm68/pantheon/main/δίπτυχα_240616_171503.gif"></header> 
+    
+    backface-visibility hidden
+    opacity 0    
+    transform scale(1.4) rotate(12deg)
+
+    animation CrossFade 24s infinite
+    &:nth-child(3)
+      animation-delay 6s
+    &:nth-child(2)
+      animation-delay 12s
+    &:nth-child(1)
+      animation-delay 18s
+    
+@keyframes CrossFade
+  25%
+    opacity 1
+    transform scale(1) rotate(0)
+  40%
+    opacity 0   
+  
+    
+ 
+//===== #CrossFadeMixin =======
+/* 
+
+$duration = 12
+$slides = 4
+$step = $duration/$slides
+setDelayRevers($duration, $slides)
+  
+  for index in (2..$slides)
+    &:nth-child({index -1}) 
+      animation-delay ($step*index)s
+
+#CrossFade
+  height 100vh
+  overflow hidden
+  position relative
+  
+  display flex
+  img
+    align-self center
+    position absolute
+    
+    min-width 100%
+    min-height 100%
+    height auto
+    
+    backface-visibility hidden
+    opacity 0
+  
+    transform scale(1.4) rotate(12deg)
+    animation CrossFade ($duration)s infinite 
+    setDelayRevers($duration, $slides)   
+@keyframes CrossFade
+  25%
+    opacity 1
+    transform scale(1) rotate(0)
+  40%
+    opacity 0
+    
+*/   
+</style>
+#CrossFade
+  each img in [1043,1039,1017,929] 
+    img(src='https://raw.githubusercontent.com/ghostm68/pantheon/main/δίπτυχα_240616_171503.gif'+'https://raw.githubusercontent.com/ghostm68/pantheon/main/wordstar2emilee_240617_193743.gif, alt="https://raw.githubusercontent.com/ghostm68/pantheon/main/δίπτυχα_240616_171503.gif")
+  .intro
+    h1 Lorem ipsum dolor sit amet
+    p Lorem ipsum dolor sit amet, consectetur adipisicing elit. Perferendis impedit 
+
+	  
+<marquee><header>✪✪<font color="white">a new art series possibly entitled δίπτυχα will be updated here, preview follows...<img width="88" height="88" src="wordstar2emilee_240617_193743.gif"></header> 
 	</marquee>
 	<br>
 <div class=""><div class="WallTransition-module__background__WT0yz" style="clip-path: polygon(0% 100%, 0% 100%, 0% 100%, 10% 100%, 20% 100%, 30% 100%, 40% 100%, 50% 100%, 60% 100%, 70% 100%, 80% 100%, 90% 100%, 100% 100%, 100% 100%);"></div></div>                   
