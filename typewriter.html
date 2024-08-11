@@ -1,0 +1,225 @@
+
+<!DOCTYPE html><html><head><base href="https://wordstar-online.com/"><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>WordStar Online - Modern Text Editor</title><style>
+    body, html {
+        height: 100%;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #2d2d2d;
+        color: #f0f0f0;
+    }
+    .container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    #toolbar {
+        background-color: #1e1e1e;
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+    }
+    #editor {
+        flex-grow: 1;
+        padding: 20px;
+        font-size: 16px;
+        line-height: 1.6;
+        background-color: #1e1e1e;
+        color: #f0f0f0;
+        border: none;
+        resize: none;
+    }
+    #statusbar {
+        background-color: #007acc;
+        color: white;
+        padding: 5px 10px;
+        font-size: 14px;
+    }
+    button {
+        background-color: #007acc;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        margin-right: 5px;
+        cursor: pointer;
+    }
+    button:hover {
+        background-color: #005999;
+    }
+    #dictionary-select {
+        margin-right: 10px;
+    }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <div id="toolbar">
+    <div>
+    <button onclick="newDocument()" style="background-color: #cc0000;">New</button>
+    <button onclick="saveDocument()" style="background-color: #cc0000;">Save</button>
+    <button onclick="exportTxt()" style="background-color: #cc0000;">Export TXT</button>
+    <button onclick="exportRtf()" style="background-color: #cc0000;">Export RTF</button>
+    <button onclick="exportPdf()" style="background-color: #cc0000;">Export PDF</button>
+    <button onclick="insertPoeticParagraph()" style="background-color: #cc0000;">Insert Poetic Paragraph</button>
+</div>
+    <div>
+        <select id="dictionary-select" onchange="changeDictionary()">
+    <option value="gpt2">GPT-2</option>
+    <option value="bert">BERT</option>
+    <option value="t5">T5</option>
+    <option value="roberta">RoBERTa</option>
+    <option value="xlnet">XLNet</option>
+</select>
+        <button onclick="openNotepad()" style="background-color: #cc0000;">Popup Notepad</button>
+        <button onclick="insertRandomWord()" style="background-color: #cc0000;">Random Word</button>
+    </div>
+</div>
+    <div id="editor"></div>
+    <div id="statusbar" style="background-color: #808080; display: flex; justify-content: space-between; align-items: center;">
+    <span>WordStar Online - Ready</span>
+    <span style="font-size: 12px;">© MMXXIV www.inkrealm.info</span>
+</div>
+</div>
+
+<script>
+    let editor;
+    let dictionary = {
+        "gpt2": ["artificial", "intelligence", "language", "model", "transformer"],
+        "bert": ["bidirectional", "encoder", "representations", "transformers", "nlp"],
+        "t5": ["text", "to", "text", "transfer", "transformer"],
+        "roberta": ["robustly", "optimized", "bert", "approach", "pretraining"],
+        "xlnet": ["generalized", "autoregressive", "pretraining", "language", "understanding"]
+    };
+    let notepadWindow = null;
+
+    window.onload = function() {
+        editor = ace.edit("editor");
+        editor.setTheme("ace/theme/monokai");
+        editor.session.setMode("ace/mode/text");
+        editor.setOptions({
+            fontSize: "14pt"
+        });
+    }
+
+    function newDocument() {
+        editor.setValue("");
+        updateStatusBar("New document created");
+    }
+
+    function saveDocument() {
+        const content = editor.getValue();
+        const blob = new Blob([content], {type: "text/plain;charset=utf-8"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "document.txt";
+        a.click();
+        URL.revokeObjectURL(url);
+        updateStatusBar("Document saved");
+    }
+
+    function exportTxt() {
+        const content = editor.getValue();
+        const blob = new Blob([content], {type: "text/plain;charset=utf-8"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "document.txt";
+        a.click();
+        URL.revokeObjectURL(url);
+        updateStatusBar("Document exported as TXT");
+    }
+
+    function exportRtf() {
+        const content = editor.getValue();
+        const rtfContent = "{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0 Times New Roman;}}\n\n" + content.replace(/\n/g, "\\par\n") + "}";
+        const blob = new Blob([rtfContent], {type: "application/rtf"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "document.rtf";
+        a.click();
+        URL.revokeObjectURL(url);
+        updateStatusBar("Document exported as RTF");
+    }
+
+    function exportPdf() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const content = editor.getValue();
+        const lines = content.split('\n');
+        let y = 10;
+        lines.forEach(line => {
+            doc.text(10, y, line);
+            y += 7;
+        });
+        doc.save("document.pdf");
+        updateStatusBar("Document exported as PDF");
+    }
+
+    function insertPoeticParagraph() {
+        const poeticLines = [
+            "Whispers of the wind, through autumn leaves,",
+            "Carry tales of time, that memory weaves.",
+            "In golden light, and shadows long,",
+            "Nature composes her twilight song.",
+            "As day surrenders to starry night,",
+            "We ponder life's beauty, fleeting and bright."
+        ];
+        const paragraph = poeticLines.join('\n') + '\n\n';
+        editor.insert(paragraph);
+        updateStatusBar("Poetic paragraph inserted");
+    }
+
+    function changeDictionary() {
+        updateStatusBar(`${document.getElementById("dictionary-select").value} dictionary selected`);
+    }
+
+    function insertRandomWord() {
+        const selectedDictionary = document.getElementById("dictionary-select").value;
+        const words = dictionary[selectedDictionary];
+        if (!words || words.length === 0) {
+            updateStatusBar("Dictionary is empty. Please select a different dictionary.");
+            return;
+        }
+        const randomWord = words[Math.floor(Math.random() * words.length)];
+        editor.insert(randomWord + " ");
+        updateStatusBar(`Inserted random word: ${randomWord}`);
+    }
+
+    function openNotepad() {
+        if (notepadWindow === null || notepadWindow.closed) {
+            notepadWindow = window.open("", "Notepad", "width=400,height=400");
+            notepadWindow.document.write(`
+                <html>
+                <head>
+                    <title>Popup Notepad</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 0; padding: 10px; }
+                        textarea { width: 100%; height: 300px; }
+                    </style>
+                </head>
+                <body>
+                    <h3>Popup Notepad</h3>
+                    <textarea id="notepadContent"></textarea>
+                    <br>
+                    <button onclick="window.opener.insertNotepadContent(document.getElementById('notepadContent').value)">Insert to Main Editor</button>
+                </body>
+                </html>
+            `);
+        } else {
+            notepadWindow.focus();
+        }
+    }
+
+    function insertNotepadContent(content) {
+        editor.insert(content);
+        updateStatusBar("Content inserted from popup notepad");
+    }
+
+    function updateStatusBar(message) {
+        document.getElementById("statusbar").children[0].textContent = message;
+    }
+</script>
+</body></html>
