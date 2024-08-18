@@ -7458,6 +7458,171 @@ _________________<br>
     </script>
   
 			  </i></b></small></center><br>
+		 <title>Nexus Wordstar Tokenizer</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        #container {
+            max-width: 800px;
+            width: 100%;
+            background-color: #1a1a1a;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+        }
+        h1 {
+            color: #dfe62e;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+            border: 1px solid #dfe62e;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 20px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+        }
+        #output {
+            background-color: #2a2a2a;
+            border: 1px solid #dfe62e;
+            border-radius: 5px;
+            padding: 10px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            min-height: 100px;
+        }
+        .token {
+            display: inline-block;
+            margin: 2px;
+            padding: 2px 5px;
+            background-color: #3a3a3a;
+            border-radius: 3px;
+        }
+        .space {
+            background-color: #4a0000;
+        }
+        .leading-space::before,
+        .trailing-space::after {
+            content: '·';
+            color: #ff0000;
+        }
+        #tokenize-btn {
+            background-color: #dfe62e;
+            color: #0a0a0a;
+            border: none;
+            padding: 10px 20px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        #tokenize-btn:hover {
+            background-color: #00cc00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+        .download-link {
+            text-decoration: none;
+            color: #dfe62e;
+            margin-left: 5px;
+            font-size: 0.8em;
+            transition: all 0.3s ease;
+        }
+        .download-link:hover {
+            color: #00cc00;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+        }
+        #footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #888;
+        }
+    </style>
+		 <div id="container">
+        <h1>Nexus Wordstar Tokenizer</h1>
+        <textarea id="input" placeholder="Enter your text here..."></textarea>
+        <button id="tokenize-btn">Tokenize</button>
+        <div id="output"></div>
+        <div id="footer">
+            This tokenizer splits text into sentences, encrypts each token, and provides download links for the original sentences.
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+    <script>
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+    const tokenizeBtn = document.getElementById('tokenize-btn');
+
+    function tokenize(text) {
+        // Split the text into sentences
+        return text.match(/[^.!?]+[.!?]+|\s+/g) || [];
+    }
+
+    function encryptToken(token) {
+        // Simple encryption: take first and last character, and length in between
+        if (token.length <= 2) return token;
+        return `${token[0]}${token.length - 2}${token[token.length - 1]}`;
+    }
+
+    function decryptToken(token) {
+        if (token.length <= 2) return token;
+        const first = token[0];
+        const last = token[token.length - 1];
+        const middle = 'x'.repeat(parseInt(token.slice(1, -1)));
+        return first + middle + last;
+    }
+
+    function visualizeTokens(tokens) {
+        return tokens.map((token, index) => {
+            let classes = ['token'];
+            if (token.trim() === '') {
+                classes.push('space');
+            }
+            if (index === 0 && token.startsWith(' ')) {
+                classes.push('leading-space');
+            }
+            if (index === tokens.length - 1 && token.endsWith(' ')) {
+                classes.push('trailing-space');
+            }
+            const encryptedToken = encryptToken(token);
+            const downloadLink = createDownloadLink(token, index);
+            return `<span class="${classes.join(' ')}"><sup>${index + 1}</sup>${_.escape(encryptedToken)} ${downloadLink}</span>`;
+        }).join('');
+    }
+
+    function createDownloadLink(token, index) {
+        const blob = new Blob([token], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        return `<a href="${url}" download="token_${index + 1}.txt" class="download-link">📥</a>`;
+    }
+
+    tokenizeBtn.addEventListener('click', () => {
+        const text = input.value;
+        const tokens = tokenize(text);
+        output.innerHTML = visualizeTokens(tokens);
+    });
+
+    input.addEventListener('input', _.debounce(() => {
+        output.innerHTML = '';
+    }, 300));
+    </script>
 </span></pre>
                     </p>
                     
