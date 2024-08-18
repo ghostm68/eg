@@ -324,11 +324,14 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/15
 				   </font color="red"> </p><br>
 					<video width="338" height="338" src="https://raw.githubusercontent.com/ghostm68/pantheon/main/Kessler 15_20240808_164427441.mp4" muted loop playsinline autoplay class="video"></video>
 	    <br>
-            	<div id="sanity-blog-post"></div>
+            	
+<div id="sanity-blog-post">
+  <div id="post-content"></div> 
+</div>
+
 <script>
-		const token = 'skqGfNSktd90y4bczi37Dme0UIDQpC5Cacq88pbft1fsuUwTSYHaHRt4GAVSU3ki752A66chgFSNh7kvq1KI9n6D24scWAChoYOrWn4Kmnbrjn8t03mrVzaOGY8hWW1HskpQSVZGmvZBBR9dCosVYESbN2kRCEiWxGBVukXLiVKE9SBza26u';
-//const postId = '4c1cf414-90db-4361-abe1-c3d39de9e00e'; //  Replace with your dynamic retrieval logic
-const postId = new URLSearchParams(window.location.search).get('postId'); // example dynamic retrieval
+const token = 'skqGfNSktd90y4bczi37Dme0UIDQpC5Cacq88pbft1fsuUwTSYHaHRt4GAVSU3ki752A66chgFSNh7kvq1KI9n6D24scWAChoYOrWn4Kmnbrjn8t03mrVzaOGY8hWW1HskpQSVZGmvZBBR9dCosVYESbN2kRCEiWxGBVukXLiVKE9SBza26u';
+const postId = '4c1cf414-90db-4361-abe1-c3d39de9e00e'; // Replace with your actual post ID
 
 fetch('https://v8e65xls.api.sanity.io/v1/data/query', {
   method: 'POST',
@@ -340,9 +343,22 @@ fetch('https://v8e65xls.api.sanity.io/v1/data/query', {
     query: `
       {
         post(id: "${postId}") {
-          headline 
+          headline
           _rev
-          // Other fields 
+          mainImage {
+            asset {
+              url
+            }
+          }
+          content {
+            _key
+            markDefs
+            children {
+              _type
+              style
+              text
+            }
+          }
         }
       }
     `
@@ -352,19 +368,34 @@ fetch('https://v8e65xls.api.sanity.io/v1/data/query', {
 .then(data => {
   const post = data.data.post;
 
+  let mainImageUrl = post.mainImage?.asset?.url;
+
+  if (mainImageUrl) {
+    mainImageUrl = mainImageUrl.replace(
+      /-(?:[0-9]+x[0-9]+)-(?:[a-z]+)$/, // Regex to remove existing size from URL
+      '-333x333-gif' // Replace with your desired size and format
+    );
+  }
+
   const postHTML = `
     <h2>${post.headline}</h2>
     <p>Revision: ${post._rev}</p>
-    <div>${post.body}</div>
+    ${mainImageUrl ? `<img src="${mainImageUrl}" alt="${post.headline}" style="width: 333px; height: 333px;">` : ''}
+    <div>
+      ${post.content.map(block => {
+        return `<p>${block.children.map(child => child.text).join('')}</p>`;
+      }).join('')}
+    </div>
   `;
 
-  document.getElementById('sanity-blog-post').innerHTML = postHTML;
+  document.getElementById('post-content').innerHTML = postHTML; 
 })
 .catch(error => {
   console.error('Error fetching data:', error);
-  document.getElementById('sanity-blog-post').innerHTML = '<p>post will be here.</p>';
-});	   
+  document.getElementById('post-content').innerHTML = '<p>Eblog coming soon.</p>';
+});
 </script>
+
                                                 
                                                                     <div>
                                         <a href="https://wordstar.nexus"
