@@ -1,0 +1,323 @@
+
+<!DOCTYPE html><html><head><base href="https://wordstar.nexus/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Birch: Retro Screenwriter</title>
+<style>
+    body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: 'Courier New', monospace;
+        background-color: #000;
+        color: #aaa;
+        overflow: hidden;
+        background-image: url('https://github.com/ghostm68/pantheon/raw/main/allwor');
+        background-size: cover;
+        background-position: center;
+    }
+    #app {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        max-width: 800px;
+        margin: 0 auto;
+        position: relative;
+    }
+    #toolbar {
+        background-color: rgba(34, 34, 34, 0.8);
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+    #editor {
+        flex-grow: 1;
+        background-color: rgba(17, 17, 17, 0.9);
+        padding: 20px;
+        font-size: 16px;
+        line-height: 1.5;
+        resize: none;
+        border: none;
+        outline: none;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        color: #00ff00; /* Changed text color to bright green */
+    }
+    #status {
+        background-color: rgba(34, 34, 34, 0.8);
+        padding: 10px;
+        font-size: 14px;
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+    }
+    button {
+        background-color: #444;
+        color: #ddd;
+        border: none;
+        padding: 5px 10px;
+        margin-right: 5px;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+    button:hover {
+        background-color: #555;
+    }
+    .xperia-element {
+        position: absolute;
+        pointer-events: none;
+    }
+    #xperia-top-left {
+        top: -30px;
+        left: -30px;
+        width: 100px;
+        height: 100px;
+        border-top-left-radius: 50%;
+        border: 2px solid cyan;
+        border-right: none;
+        border-bottom: none;
+    }
+    #xperia-top-right {
+        top: -30px;
+        right: -30px;
+        width: 100px;
+        height: 100px;
+        border-top-right-radius: 50%;
+        border: 2px solid cyan;
+        border-left: none;
+        border-bottom: none;
+    }
+    #xperia-bottom-left {
+        bottom: -30px;
+        left: -30px;
+        width: 100px;
+        height: 100px;
+        border-bottom-left-radius: 50%;
+        border: 2px solid cyan;
+        border-right: none;
+        border-top: none;
+    }
+    #xperia-bottom-right {
+        bottom: -30px;
+        right: -30px;
+        width: 100px;
+        height: 100px;
+        border-bottom-right-radius: 50%;
+        border: 2px solid cyan;
+        border-left: none;
+        border-top: none;
+    }
+</style>
+</head>
+<body>
+<div id="app">
+    <div class="xperia-element" id="xperia-top-left"></div>
+    <div class="xperia-element" id="xperia-top-right"></div>
+    <div class="xperia-element" id="xperia-bottom-left"></div>
+    <div class="xperia-element" id="xperia-bottom-right"></div>
+    <div>
+    <div>
+        <button onclick="newScript()">New</button>
+        <button onclick="exportPDF()">Export PDF</button>
+    </div>
+    <div style="text-align: center; flex-grow: 1;">
+        BIRCH v1.3
+    </div>
+    <div>
+    <div style="display: flex; justify-content: flex-end;">
+        <select id="scriptElementDropdown" onchange="insertSelectedElement()">
+            <option value="">Cue</option>
+            <option value="INT. ">INT.</option>
+            <option value="EXT. ">EXT.</option>
+            <option value="CUT TO:">CUT TO:</option>
+            <option value="FADE IN:">FADE IN:</option>
+            <option value="FADE OUT.">FADE OUT.</option>
+            <option value="DISSOLVE TO:">DISSOLVE TO:</option>
+            <option value="SMASH CUT TO:">SMASH CUT TO:</option>
+            <option value="MATCH CUT TO:">MATCH CUT TO:</option>
+            <option value="JUMP CUT TO:">JUMP CUT TO:</option>
+            <option value="FADE TO BLACK.">FADE TO BLACK.</option>
+            <option value="(V.O.)">(V.O.)</option>
+            <option value="(O.S.)">(O.S.)</option>
+            <option value="(CONT'D)">(CONT'D)</option>
+            <option value="(beat)">(beat)</option>
+            <option value="MONTAGE - ">MONTAGE</option>
+            <option value="SERIES OF SHOTS - ">SERIES OF SHOTS</option>
+            <option value="CHARACTER">CHARACTER</option>
+        </select>
+        <select id="format" onchange="insertRandomName()">
+            <option value="">Random Name</option>
+            <option value="male">Male Name</option>
+            <option value="female">Female Name</option>
+            <option value="unisex">Unisex Name</option>
+        </select>
+    </div>
+</div>
+</div>
+    <textarea id="editor" spellcheck="false" placeholder="INT. COFFEE SHOP - DAY
+
+The aroma of freshly brewed coffee fills the air. JANE (30s, smartly dressed) sits at a corner table, nervously tapping her fingers on a laptop.
+
+JOHN (40s, rugged) enters, scanning the room. He spots Jane and approaches.
+
+JOHN
+(smiling)
+Hey, you must be Jane?
+
+JANE
+(looking up, startled)
+Oh! Yes, that's me. John, right?
+
+CUT TO:
+
+EXT. CITY STREET - NIGHT
+
+Jane and John walk side by side, laughing..." oninput="updateStatus()" style="color: #00ff00;"></textarea>
+    <div id="status">
+    Page: 1 | Format: Film | Words: 0
+    <button onclick="document.getElementById('fileInput').click()">Upload Script (.txt or .fountain)</button>
+    <input type="file" id="fileInput" style="display: none;" accept=".txt,.fountain" onchange="uploadScript(event)">
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+    const editor = document.getElementById('editor');
+    const status = document.getElementById('status');
+    let currentFormat = 'film';
+
+    function updateStatus() {
+        const words = editor.value.trim().split(/\s+/).length;
+        const pages = Math.ceil(words / 250);
+        status.innerHTML = `Page: ${pages} | Format: ${currentFormat.charAt(0).toUpperCase() + currentFormat.slice(1)} | Words: ${words}
+        <button onclick="document.getElementById('fileInput').click()">Upload Script (.txt or .fountain)</button>
+        <input type="file" id="fileInput" style="display: none;" accept=".txt,.fountain" onchange="uploadScript(event)"/>`;
+    }
+
+    function newScript() {
+        if (confirm('Start a new script? This will erase your current work.')) {
+            editor.value = '';
+            updateStatus();
+        }
+    }
+
+    function changeFormat() {
+        currentFormat = document.getElementById('format').value;
+        updateStatus();
+    }
+
+    function exportPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const lines = editor.value.split('\n');
+        let y = 20;
+
+        doc.setFont('Courier');
+        doc.setFontSize(12);
+
+        lines.forEach(line => {
+            if (y > 280) {
+                doc.addPage();
+                y = 20;
+            }
+            doc.text(line, 20, y);
+            y += 5;
+        });
+
+        doc.save('screenplay.pdf');
+    }
+
+    function insertScriptElement(element) {
+        const start = editor.selectionStart;
+        const end = editor.selectionEnd;
+        const text = editor.value;
+        const before = text.substring(0, start);
+        const after = text.substring(end, text.length);
+        editor.value = before + element + after;
+        editor.selectionStart = editor.selectionEnd = start + element.length;
+        editor.focus();
+        updateStatus();
+    }
+
+    function insertSelectedElement() {
+        const dropdown = document.getElementById('scriptElementDropdown');
+        const selectedElement = dropdown.value;
+        if (selectedElement) {
+            insertScriptElement(selectedElement);
+            dropdown.selectedIndex = 0; // Reset dropdown to default option
+        }
+    }
+    
+    function insertRandomName() {
+        const nameType = document.getElementById('format').value;
+        let name = '';
+        
+        switch(nameType) {
+            case 'male':
+                name = getRandomMaleName();
+                break;
+            case 'female':
+                name = getRandomFemaleName();
+                break;
+            case 'unisex':
+                name = getRandomUnisexName();
+                break;
+            default:
+                return;
+        }
+        
+        insertScriptElement(name.toUpperCase());
+    }
+
+    function getRandomMaleName() {
+        const maleNames = ['James', 'John', 'Robert', 'Michael', 'William', 'David', 'Richard', 'Joseph', 'Thomas', 'Charles'];
+        return maleNames[Math.floor(Math.random() * maleNames.length)];
+    }
+
+    function getRandomFemaleName() {
+        const femaleNames = ['Mary', 'Patricia', 'Jennifer', 'Linda', 'Elizabeth', 'Barbara', 'Margaret', 'Susan', 'Dorothy', 'Lisa'];
+        return femaleNames[Math.floor(Math.random() * femaleNames.length)];
+    }
+
+    function getRandomUnisexName() {
+        const unisexNames = ['Alex', 'Jordan', 'Taylor', 'Casey', 'Riley', 'Jessie', 'Avery', 'Emerson', 'Peyton', 'Quinn'];
+        return unisexNames[Math.floor(Math.random() * unisexNames.length)];
+    }
+    
+    function uploadScript(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                editor.value = e.target.result;
+                updateStatus();
+            };
+            reader.readAsText(file);
+        }
+    }
+    
+    updateStatus();
+
+    // Add event listeners for keydown to handle tab key
+    editor.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const start = this.selectionStart;
+            const end = this.selectionEnd;
+
+            this.value = this.value.substring(0, start) + "    " + this.value.substring(end);
+            this.selectionStart = this.selectionEnd = start + 4;
+        }
+    });
+
+    // Ensure the textarea is not read-only
+    editor.readOnly = false;
+
+    // Remove the force re-render code as it's not necessary and might cause issues
+    // Instead, we'll add a small delay to ensure the textarea is properly initialized
+    setTimeout(() => {
+        editor.focus();
+    }, 100);
+</script>
+
+</body></html>
