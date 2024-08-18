@@ -1,0 +1,105 @@
+<!DOCTYPE html><html><head><base href="https://dictionary.archiveproject.org/"><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Funk &amp; Wagnalls Extra - Archive Dictionary Lookup</title><style>
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f4f4f4;
+    position: relative;
+    z-index: 1;
+}
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><style>text { font: italic 16px Arial; fill: %23e0e0e0; }</style></head><body>
+<h1>Funk &amp; Wagnallism - nexus resource</h1>
+<div id="search-container">
+    <input type="text" id="search-input" placeholder="Enter a word to look up">
+    <button id="search-button">Search Dictionary (w/German)</button>
+</div>
+<div id="result"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+<script>
+const searchInput = document.getElementById('search-input');
+const searchButton = document.getElementById('search-button');
+const result = document.getElementById('result');
+
+const dictionaryUrls = [
+    'https://raw.githubusercontent.com/matthewreagan/WebstersEnglishDictionary/master/dictionary.json',
+    'https://gist.githubusercontent.com/BideoWego/60fbd40d5d1f0f1beca11ba95221dd38/raw/58fb4cce910fbf5fa67a2f0f1f619c09d7b1b373/dictionary.json',
+    'https://raw.githubusercontent.com/adambom/dictionary/master/dictionary.json',
+    'https://raw.githubusercontent.com/hathibelagal/German-English-JSON-Dictionary/master/german_english.json'
+];
+
+async function searchDictionary(word) {
+    result.innerHTML = '<p class="loading">Searching...</p>';
+    
+    try {
+        const responses = await Promise.all(dictionaryUrls.map(url => axios.get(url)));
+        const dictionaries = responses.map(response => response.data);
+        
+        let definitionsFound = false;
+        let resultHTML = `<h2>Definitions and Translations for "${word}":</h2>`;
+
+        dictionaries.forEach((dictionary, index) => {
+            if (index < 3) {
+                if (dictionary[word.toLowerCase()]) {
+                    definitionsFound = true;
+                    const definition = dictionary[word.toLowerCase()];
+                    resultHTML += `
+                        <h3>English Definition (Source ${index + 1}):</h3>
+                        <p>${definition}</p>
+                    `;
+                }
+            } else {
+                // German-English dictionary
+                const germanTranslations = Object.entries(dictionary).filter(([key, value]) => 
+                    value.toLowerCase().includes(word.toLowerCase()) || key.toLowerCase() === word.toLowerCase()
+                );
+                if (germanTranslations.length > 0) {
+                    definitionsFound = true;
+                    resultHTML += `<h3>German Translations:</h3><ul>`;
+                    germanTranslations.forEach(([german, english]) => {
+                        resultHTML += `<li>${german} - ${english}</li>`;
+                    });
+                    resultHTML += `</ul>`;
+                }
+            }
+        });
+
+        if (definitionsFound) {
+            result.innerHTML = resultHTML;
+        } else {
+            result.innerHTML = `<p>No definition or translation found for "${word}" in any of the sources.</p>`;
+        }
+    } catch (error) {
+        console.error('Error fetching dictionary data:', error);
+        result.innerHTML = '<p>An error occurred while searching. Please try again later.</p>';
+    }
+}
+
+searchButton.addEventListener('click', () => {
+    const word = searchInput.value.trim();
+    if (word) {
+        searchDictionary(word);
+    }
+});
+
+searchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        const word = searchInput.value.trim();
+        if (word) {
+            searchDictionary(word);
+        }
+    }
+});
+</script>
+</body></html>
