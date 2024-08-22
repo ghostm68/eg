@@ -317,5 +317,157 @@ window.addEventListener('deviceorientation', (event) => {
 </script>
 	  
 </body></html>
+<html><head><base href="https://inkrealm.info/atari">
+ 
+    <style>
+        body {
+            background-color: red;
+            color: white;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        #screen {
+            width: 800px;
+            height: 600px;
+            background-color: coal;
+            border: 10px solid greay;
+            position: relative;
+            overflow: hidden;
+        }
+        #content {
+            padding: 20px;
+        }
+        #keyboard {
+            width: 800px;
+            height: 300px;
+            background-color: #A0A0A0;
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(16, 1fr);
+            grid-gap: 5px;
+            padding: 10px;
+        }
+        .key {
+            background-color: #404040;
+            color: white;
+            border: 2px solid #808080;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            user-select: none;
+            cursor: pointer;
+        }
+        .key:active {
+            background-color: red;
+        }
+        .wide-key {
+            grid-column: span 2;
+        }
+        #controls {
+            margin-top: 20px;
+        }
+        button {
+            background-color: white;
+            color: red;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #A0A0A0;
+        }
+    </style>
+</head>
+<body>
+    <div id="screen">
+        <div id="content">
+            <h1>onscreen 64 BASIC V3</h1>
+            <p>64K RAM SYSTEM nova EXPRESS wordstar</p>
+            <p>READY.</p>
+            <p>_</p>
+        </div>
+    </div>
+    <div id="keyboard"></div>
+    <div id="controls">
+        <button id="powerBtn">Power On/Off</button>
+        <button id="resetBtn">Reset</button>
+        
+    </div>
 
+    <script>
+        const keyboard = document.getElementById('keyboard');
+        const powerBtn = document.getElementById('powerBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const loadBtn = document.getElementById('loadBtn');
+        const content = document.getElementById('content');
+
+        const keyboardLayout = [
+            ['←', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '+', '-', '£', 'HOME', 'DEL'],
+            ['CTRL', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '@', '*', '↑', 'RESTORE'],
+            ['RUN STOP', 'SHIFT LOCK', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', ';', '=', 'RETURN'],
+            ['C=', 'SHIFT', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', 'SHIFT', 'CLR HOME', 'CRSR ↑↓'],
+            ['SPACE', 'CRSR ←→', 'F1', 'F3', 'F5', 'F7']
+        ];
+
+        function createKeyboard() {
+            keyboardLayout.forEach(row => {
+                row.forEach(key => {
+                    const keyElement = document.createElement('div');
+                    keyElement.classList.add('key');
+                    keyElement.textContent = key;
+                    if (key === 'SPACE') {
+                        keyElement.style.gridColumn = 'span 6';
+                    } else if (['RETURN', 'SHIFT LOCK', 'RUN STOP', 'C='].includes(key)) {
+                        keyElement.classList.add('wide-key');
+                    }
+                    keyElement.addEventListener('click', () => handleKeyPress(key));
+                    keyboard.appendChild(keyElement);
+                });
+            });
+        }
+
+        function handleKeyPress(key) {
+            if (key === 'RETURN') {
+                content.innerHTML += '<p>READY.</p><p>_</p>';
+            } else {
+                const lastLine = content.lastElementChild;
+                if (lastLine.textContent === '_') {
+                    lastLine.textContent = key + '_';
+                } else {
+                    lastLine.textContent = lastLine.textContent.slice(0, -1) + key + '_';
+                }
+            }
+        }
+
+        let isPowerOn = true;
+
+        powerBtn.addEventListener('click', () => {
+            isPowerOn = !isPowerOn;
+            content.style.display = isPowerOn ? 'block' : 'none';
+            powerBtn.textContent = isPowerOn ? 'Power Off' : 'Power On';
+        });
+
+        resetBtn.addEventListener('click', () => {
+            if (isPowerOn) {
+                content.innerHTML = '<h1>COMMODORE 64 BASIC V2</h1><p>64K NOVA EXPRESS wordstar</p><p>Ready.</p><p>_</p>';
+            }
+        });
+
+        loadBtn.addEventListener('click', () => {
+            if (isPowerOn) {
+                content.innerHTML += '<p>LOADING...</p>';
+                setTimeout(() => {
+                    content.innerHTML += '<p>READY.</p><p>_</p>';
+                }, 2000);
+            }
+        });
+
+        createKeyboard();
+    </script>
+</body></html>
 
