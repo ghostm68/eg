@@ -1108,81 +1108,80 @@ fontSelect.addEventListener('change', () => {
 });
 document.addEventListener("DOMContentLoaded", function() {	
   const fluxPasswordInput = document.getElementById("fluxPassword");
-    const fluxCheckPasswordButton = document.getElementById("fluxCheckPassword");
-    const fluxPromptContainer = document.getElementById("fluxPromptContainer");
-    const fluxImageContainer = document.getElementById("fluxImageContainer");
+  const fluxCheckPasswordButton = document.getElementById("fluxCheckPassword");
+  const fluxPromptContainer = document.getElementById("fluxPromptContainer");
+  const fluxImageContainer = document.getElementById("fluxImageContainer");
+  const passwordPrompt = document.getElementById("passwordPrompt");
 
-    const correctPassword = "ParisTexas66KingSWUnitATorontoONM5V1K3"; // Replace with your actual password
+  const correctPassword = "ParisTexas66KingSWUnitATorontoONM5V1K3"; // Replace with your actual password
 
-    // Create prompt input and button OUTSIDE the password check function
-    const promptInput = document.createElement('input');
-    promptInput.setAttribute('type', 'text');
-    promptInput.setAttribute('id', 'fluxPromptInput');
-    promptInput.setAttribute('placeholder', 'Enter your prompt here');
+  // Create prompt input and button OUTSIDE the password check function
+  const promptInput = document.createElement('input');
+  promptInput.setAttribute('type', 'text');
+  promptInput.setAttribute('id', 'fluxPromptInput');
+  promptInput.setAttribute('placeholder', 'Enter your prompt here');
 
-    const generateButton = document.createElement('button');
-    generateButton.setAttribute('id', 'fluxGenerateButton');
-    generateButton.textContent = 'Generate';
+  const generateButton = document.createElement('button');
+  generateButton.setAttribute('id', 'fluxGenerateButton');
+  generateButton.textContent = 'Generate';
 
-    fluxCheckPasswordButton.addEventListener("click", (event) => {
-      event.preventDefault(); 
+  // Append prompt input and button only once
+  fluxPromptContainer.appendChild(promptInput);
+  fluxPromptContainer.appendChild(generateButton);
 
-      const enteredPassword = fluxPasswordInput.value;
-      if (enteredPassword === correctPassword) {
-        // Show the prompt container and hide the password prompt
-        fluxPromptContainer.style.display = "block";
-        document.getElementById("passwordPrompt").style.display = "none";
+  fluxCheckPasswordButton.addEventListener("click", (event) => {
+    event.preventDefault(); 
 
-        // Ensure prompt input and button are only appended once
-        if (!fluxPromptContainer.contains(promptInput)) {
-          fluxPromptContainer.appendChild(promptInput);
-        }
-        if (!fluxPromptContainer.contains(generateButton)) {
-          fluxPromptContainer.appendChild(generateButton);
-        }
-
-        // Add event listener to the generate button AFTER appending
-        generateButton.addEventListener('click', () => {
-          const prompt = promptInput.value;
-          fluxQuery({ inputs: prompt })
-            .then((imageUrl) => {
-              const img = document.createElement("img");
-              img.src = imageUrl;
-              img.alt = prompt;
-              fluxImageContainer.appendChild(img);
-            })
-            .catch(err => console.error("Error generating image:", err));
-        }, { once: true }); // Ensure the listener is only added once
-      } else {
-        alert("Incorrect password.");
-      }
-    });
-
-    async function fluxQuery(data) {
-      try {
-        const response = await fetch(
-          "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
-          {
-            headers: {
-              Authorization: "Bearer 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", // Replace with your actual API token
-              "Content-Type": "application/json",
-            },
-            method: "POST",
-            body: JSON.stringify(data),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const blob = await response.blob();
-        return URL.createObjectURL(blob);
-      } catch (error) {
-        console.error("Fetch error:", error);
-        throw error; // Propagate the error to be handled by the caller
-      }
+    const enteredPassword = fluxPasswordInput.value;
+    if (enteredPassword === correctPassword) {
+      // Show the prompt container and hide the password prompt
+      fluxPromptContainer.style.display = "block";
+      passwordPrompt.style.display = "none";
+    } else {
+      alert("Incorrect password.");
     }
+  });
+
+  // Add event listener to the generate button
+  generateButton.addEventListener('click', () => {
+    const prompt = promptInput.value;
+    fluxQuery({ inputs: prompt })
+      .then((imageUrl) => {
+        const img = document.createElement("img");
+        img.src = imageUrl;
+        img.alt = prompt;
+        fluxImageContainer.appendChild(img);
+      })
+      .catch(err => console.error("Error generating image:", err));
+  });
+
+  async function fluxQuery(data) {
+    try {
+      const response = await fetch(
+        "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
+        {
+          headers: {
+            Authorization: "Bearer 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", // Replace with your actual API token
+            "Content-Type": "application/json",
+          },
+          method: "POST",
+          body: JSON.stringify(data),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      return URL.createObjectURL(blob);
+    } catch (error) {
+      console.error("Fetch error:", error);
+      throw error; // Propagate the error to be handled by the caller
+    }
+  }
+});
+
 });	
 	
 </script>
