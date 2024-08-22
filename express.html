@@ -390,76 +390,99 @@ window.addEventListener('deviceorientation', (event) => {
         <button id="powerBtn">Power On/Off</button>
         <button id="resetBtn">Reset</button>
         <button id="loadBtn">Load Program</button>
+	 <button id="saveButton">Save Notes</button>   
     </div>
 
     <script>
-        const keyboard = document.getElementById('keyboard');
-        const powerBtn = document.getElementById('powerBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const loadBtn = document.getElementById('loadBtn');
-        const content = document.getElementById('content');
+const keyboard = document.getElementById('keyboard');
+const powerBtn = document.getElementById('powerBtn');
+const resetBtn = document.getElementById('resetBtn');
+const loadBtn = document.getElementById('loadBtn');
+const content = document.getElementById('content');
+const saveButton = document.getElementById('saveButton');
+saveButton.addEventListener('click', saveNotes);
+	    
+const keyboardLayout = [
+    ['ᛀ', 'ᛁ', 'ᛂ', 'ᛃ', 'ᛄ', 'ᛅ', 'ᛆ', 'ᛇ', 'ᛈ', 'ᛉ', 'ᛊ', 'ᛋ', 'ᛌ', 'ᛍ', 'ᛎ'],
+    ['ᛏ', 'ᛐ', 'ᛑ', 'ᛒ', 'ᛓ', 'ᛔ', 'ᛕ', 'ᛖ', 'ᛗ', 'ᛘ', 'ᛙ', 'ᛚ', 'ᛛ', 'ᛜ', 'ᛝ'],
+    ['ᛞ', 'ᛟ', 'ᛠ', 'ᛡ', 'ᛢ', 'ᛣ', 'ᛤ', 'ᛥ', 'ᛦ', 'ᛧ', 'ᛨ', 'ᛩ', 'ᛪ', '᛫', '᛬'],
+    ['᛭', 'ᛮ', 'ᛯ', 'ᛰ', 'ᛱ', 'ᛲ', 'ᛳ', 'ᛴ', 'ᛵ', 'ᛶ', 'ᛷ', 'ᛸ', '᛹', '᛺', '᛻'],
+    ['᛼', '᛽', '᛾', '᛿', 'ᚽ', 'ᚾ']
+];
 
-        const keyboardLayout = [
-            ['←', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '+', '-', 'ᛳ', 'HOME', 'DEL'],
-            ['ᛰ', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '@', '*', '↑', 'ᛃ'],
-            ['ᚧ', 'ᚶ', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', ';', '=', 'RETURN'],
-            ['ᛈ', 'SHIFT', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', 'SHIFT', 'ᚻ', 'ᛤ'],
-            ['SPACE', 'ᛪ', 'ᚥ', 'ᛯ', 'ᛞ', '᛭']
-        ];
+function createKeyboard() {
+    keyboardLayout.forEach(row => {
+        row.forEach(key => {
+            const keyElement = document.createElement('div');
+            keyElement.classList.add('key');
+            keyElement.textContent = key;
+            if (key === 'SPACE') {
+                keyElement.style.gridColumn = 'span 6';
+            } else if (['RETURN', 'SHIFT LOCK', 'RUN STOP', 'C='].includes(key)) {
+                keyElement.classList.add('wide-key');
+            }
+            keyElement.addEventListener('click', () => handleKeyPress(key));
+            keyboard.appendChild(keyElement);
+        });
+    });
+}
 
-        function createKeyboard() {
-            keyboardLayout.forEach(row => {
-                row.forEach(key => {
-                    const keyElement = document.createElement('div');
-                    keyElement.classList.add('key');
-                    keyElement.textContent = key;
-                    if (key === 'SPACE') {
-                        keyElement.style.gridColumn = 'span 6';
-                    } else if (['RETURN', 'SHIFT LOCK', 'RUN STOP', 'C='].includes(key)) {
-                        keyElement.classList.add('wide-key');
-                    }
-                    keyElement.addEventListener('click', () => handleKeyPress(key));
-                    keyboard.appendChild(keyElement);
-                });
-            });
+function handleKeyPress(key) {
+    if (key === 'RETURN') {
+        content.innerHTML += '<p>READY.</p><p>_</p>';
+    } else {
+        const lastLine = content.lastElementChild;
+        if (lastLine.textContent === '_') {
+            lastLine.textContent = key + '_';
+        } else {
+            lastLine.textContent = lastLine.textContent.slice(0, -1) + key + '_';
         }
+    }
+}
 
-        function handleKeyPress(key) {
-            if (key === 'RETURN') {
-                content.innerHTML += '<p>READY.</p><p>_</p>';
-            } else {
-                const lastLine = content.lastElementChild;
-                if (lastLine.textContent === '_') {
-                    lastLine.textContent = key + '_';
-                } else {
-                    lastLine.textContent = lastLine.textContent.slice(0, -1) + key + '_';
-                }
-            }
-        }
+let isPowerOn = true;
 
-        let isPowerOn = true;
+powerBtn.addEventListener('click', () => {
+    isPowerOn = !isPowerOn;
+    content.style.display = isPowerOn ? 'block' : 'none';
+    powerBtn.textContent = isPowerOn ? 'Power Off' : 'Power On';
+});
 
-        powerBtn.addEventListener('click', () => {
-            isPowerOn = !isPowerOn;
-            content.style.display = isPowerOn ? 'block' : 'none';
-            powerBtn.textContent = isPowerOn ? 'Power Off' : 'Power On';
-        });
+resetBtn.addEventListener('click', () => {
+    if (isPowerOn) {
+        content.innerHTML = '<h1>64 BASIC V3</h1><p>64K RAM SYSTEM EXPRESS</p><p>READY.</p><p>_</p>';
+    }
+});
 
-        resetBtn.addEventListener('click', () => {
-            if (isPowerOn) {
-                content.innerHTML = '<h1>64 BASIC V3</h1><p>64K RAM SYSTEM EXPRESS</p><p>READY.</p><p>_</p>';
-            }
-        });
+loadBtn.addEventListener('click', () => {
+    if (isPowerOn) {
+        content.innerHTML += '<p>LOADING...</p>';
+        setTimeout(() => {
+            content.innerHTML += '<p>READY.</p><p>_</p>';
+        }, 2000);
+    }
+});
 
-        loadBtn.addEventListener('click', () => {
-            if (isPowerOn) {
-                content.innerHTML += '<p>LOADING...</p>';
-                setTimeout(() => {
-                    content.innerHTML += '<p>READY.</p><p>_</p>';
-                }, 2000);
-            }
-        });
+createKeyboard();
 
-        createKeyboard();
+// External Keyboard Input
+document.addEventListener('keydown', (event) => {
+    const key = event.key;
+    content.innerHTML += key;
+});
+
+// Saving to localStorage
+function saveNotes() {
+    localStorage.setItem('notes', content.innerHTML);
+}
+
+// Loading from localStorage
+function loadNotes() {
+    content.innerHTML = localStorage.getItem('notes') || '<h1>64 BASIC V3</h1><p>64K RAM SYSTEM EXPRESS</p><p>READY.</p><p>_</p>';
+}
+
+loadNotes(); // Load notes on page load
+
+// Add save button or event listener to trigger saveNotes()
     </script>
 </body></html>
