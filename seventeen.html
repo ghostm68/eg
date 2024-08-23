@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WordStar Nexus Seven</title>
-    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime&family=Merriweather&family=Open+Sans&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Courier Prime', monospace;
+            font-family: 'Courier New', monospace;
             margin: 0;
             padding: 0;
             display: flex;
@@ -64,28 +63,6 @@
             margin-top: 5px;
             font-size: 14px;
         }
-        .dropdown {
-            position: relative;
-            display: inline-block;
-        }
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            background-color: #f9f9f9;
-            min-width: 160px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1;
-        }
-        .dropdown-content a {
-            color: black;
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-        }
-        .dropdown-content a:hover {background-color: #f1f1f1}
-        .dropdown:hover .dropdown-content {
-            display: block;
-        }
     </style>
 </head>
 <body>
@@ -111,51 +88,12 @@
     </div>
 
     <div id="footer">
-        <div class="dropdown">
-            <span class="tab">File</span>
-            <div class="dropdown-content">
-                <a href="#" onclick="newDocument()">New</a>
-                <a href="#" onclick="openDocument()">Open</a>
-                <a href="#" onclick="saveDocument()">Save</a>
-                <a href="#" onclick="exitDocument()">Exit</a>
-            </div>
-        </div>
-        <div class="dropdown">
-            <span class="tab">Edit</span>
-            <div class="dropdown-content">
-                <a href="#" onclick="undo()">Undo</a>
-                <a href="#" onclick="redo()">Redo</a>
-            </div>
-        </div>
-        <div class="dropdown">
-            <span class="tab">Format</span>
-            <div class="dropdown-content">
-                <a href="#" onclick="alignLeft()">Align Left</a>
-                <a href="#" onclick="alignCenter()">Align Center</a>
-                <a href="#" onclick="alignRight()">Align Right</a>
-            </div>
-        </div>
-        <div class="dropdown">
-            <span class="tab">View</span>
-            <div class="dropdown-content">
-                <a href="#" onclick="changeFont('Courier Prime')">Courier Prime</a>
-                <a href="#" onclick="changeFont('Merriweather')">Merriweather</a>
-                <a href="#" onclick="changeFont('Open Sans')">Open Sans</a>
-            </div>
-        </div>
-        <div class="dropdown">
-            <span class="tab">Tools</span>
-            <div class="dropdown-content">
-                <a href="#" onclick="wordFrequency()">Word Frequency</a>
-                <a href="#" onclick="dictionaryLookup()">Dictionary Lookup</a>
-            </div>
-        </div>
-        <div class="dropdown">
-            <span class="tab">Help</span>
-            <div class="dropdown-content">
-                <a href="#" onclick="showAbout()">About</a>
-            </div>
-        </div>
+        <div class="tab" onclick="showTab('File')">File</div>
+        <div class="tab" onclick="showTab('Edit')">Edit</div>
+        <div class="tab" onclick="showTab('Format')">Format</div>
+        <div class="tab" onclick="showTab('View')">View</div>
+        <div class="tab" onclick="showTab('Tools')">Tools</div>
+        <div class="tab" onclick="showTab('Help')">Help</div>
 
         <div id="status-bar">
             <span id="cursor-position">Line: 1 Col: 1</span>
@@ -171,93 +109,135 @@
         let spellCheckEnabled = false;
         let readingMode = false;
 
-        // Existing functions (updateCursorPosition, updateWordCount, toggleBold, toggleItalic, toggleUnderline, insertDateTime, wordCount, toggleSpellCheck, toggleRuler, saveDocument, printDocument, findReplace, toggleReadingMode, generateLoremIpsum, calculateStats, initRuler) remain the same
-
-        function newDocument() {
-            if (confirm('Are you sure you want to start a new document? Any unsaved changes will be lost.')) {
-                editor.value = '';
-                document.getElementById('file-name').textContent = 'Untitled';
-                updateWordCount();
-            }
+        function updateCursorPosition() {
+            const text = editor.value;
+            const cursorPos = editor.selectionStart;
+            const textBeforeCursor = text.substring(0, cursorPos);
+            const lines = textBeforeCursor.split('\n');
+            const currentLine = lines.length;
+            const currentCol = lines[lines.length - 1].length + 1;
+            document.getElementById('cursor-position').textContent = `Line: ${currentLine} Col: ${currentCol}`;
         }
 
-        function openDocument() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.onchange = e => {
-                const file = e.target.files[0];
-                const reader = new FileReader();
-                reader.readAsText(file, 'UTF-8');
-                reader.onload = readerEvent => {
-                    editor.value = readerEvent.target.result;
-                    document.getElementById('file-name').textContent = file.name;
+        function updateWordCount() {
+            const words = editor.value.trim().split(/\s+/).length;
+            document.getElementById('word-count').textContent = `Words: ${words}`;
+        }
+
+        function toggleBold() {
+            document.execCommand('bold', false, null);
+        }
+
+        function toggleItalic() {
+            document.execCommand('italic', false, null);
+        }
+
+        function toggleUnderline() {
+            document.execCommand('underline', false, null);
+        }
+
+        function insertDateTime() {
+            const now = new Date();
+            const dateTime = now.toLocaleString();
+            const cursorPos = editor.selectionStart;
+            editor.value = editor.value.slice(0, cursorPos) + dateTime + editor.value.slice(cursorPos);
+            updateWordCount();
+        }
+
+        function wordCount() {
+            const words = editor.value.trim().split(/\s+/).length;
+            alert(`Word count: ${words}`);
+        }
+
+        function toggleSpellCheck() {
+            spellCheckEnabled = !spellCheckEnabled;
+            editor.spellcheck = spellCheckEnabled;
+            alert(`Spell check ${spellCheckEnabled ? 'enabled' : 'disabled'}.`);
+        }
+
+        function toggleRuler() {
+            ruler.style.display = ruler.style.display === 'none' ? 'flex' : 'none';
+        }
+
+        function saveDocument() {
+            const blob = new Blob([editor.value], {type: 'text/plain'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'document.txt';
+            a.click();
+        }
+
+        function printDocument() {
+            window.print();
+        }
+
+        function findReplace() {
+            const searchTerm = prompt("Enter the text to search for:");
+            if (searchTerm) {
+                const replaceTerm = prompt("Enter the replacement text:");
+                if (replaceTerm !== null) {
+                    editor.value = editor.value.replace(new RegExp(searchTerm, 'g'), replaceTerm);
                     updateWordCount();
                 }
             }
-            input.click();
         }
 
-        function exitDocument() {
-            if (confirm('Are you sure you want to exit? Any unsaved changes will be lost.')) {
-                window.close();
+        function toggleReadingMode() {
+            readingMode = !readingMode;
+            if (readingMode) {
+                editor.style.fontSize = '18px';
+                editor.style.lineHeight = '1.8';
+                editor.style.maxWidth = '800px';
+                editor.style.margin = 'auto';
+                editor.style.padding = '20px';
+                editor.style.backgroundColor = '#f9f9f9';
+            } else {
+                editor.style.fontSize = '';
+                editor.style.lineHeight = '';
+                editor.style.maxWidth = '';
+                editor.style.margin = '';
+                editor.style.padding = '';
+                editor.style.backgroundColor = '';
             }
         }
 
-        function undo() {
-            document.execCommand('undo', false, null);
+        function generateLoremIpsum() {
+            const loremIpsum = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+            const cursorPos = editor.selectionStart;
+            editor.value = editor.value.slice(0, cursorPos) + loremIpsum + editor.value.slice(cursorPos);
+            updateWordCount();
         }
 
-        function redo() {
-            document.execCommand('redo', false, null);
+        function calculateStats() {
+            const text = editor.value;
+            const charCount = text.length;
+            const wordCount = text.trim().split(/\s+/).length;
+            const sentenceCount = text.split(/[.!?]+/).length - 1;
+            const paragraphCount = text.split(/\n\s*\n/).length;
+            
+            alert(`Text Statistics:
+                Characters: ${charCount}
+                Words: ${wordCount}
+                Sentences: ${sentenceCount}
+                Paragraphs: ${paragraphCount}
+                Average word length: ${(charCount / wordCount).toFixed(2)} characters
+                Average sentence length: ${(wordCount / sentenceCount).toFixed(2)} words`);
         }
 
-        function alignLeft() {
-            document.execCommand('justifyLeft', false, null);
+        function showTab(tabName) {
+            alert(`${tabName} tab clicked. This feature is not yet fully implemented.`);
         }
 
-        function alignCenter() {
-            document.execCommand('justifyCenter', false, null);
-        }
-
-        function alignRight() {
-            document.execCommand('justifyRight', false, null);
-        }
-
-        function changeFont(fontName) {
-            editor.style.fontFamily = fontName;
-        }
-
-        function wordFrequency() {
-            const words = editor.value.toLowerCase().match(/\b(\w+)\b/g);
-            const frequency = {};
-            for (let word of words) {
-                frequency[word] = (frequency[word] || 0) + 1;
+        function initRuler() {
+            for (let i = 1; i <= 80; i++) {
+                if (i % 10 === 0) {
+                    ruler.innerHTML += `<span style="flex: 0 0 50px; text-align: center;">${i}</span>`;
+                } else if (i % 5 === 0) {
+                    ruler.innerHTML += '<span style="flex: 0 0 50px; text-align: center;">|</span>';
+                } else {
+                    ruler.innerHTML += '<span style="flex: 0 0 50px;"></span>';
+                }
             }
-            const sortedFrequency = Object.entries(frequency).sort((a, b) => b[1] - a[1]);
-            let result = 'Word Frequency (top 10):\n';
-            for (let i = 0; i < 10 && i < sortedFrequency.length; i++) {
-                result += `${sortedFrequency[i][0]}: ${sortedFrequency[i][1]}\n`;
-            }
-            alert(result);
-        }
-
-        function dictionaryLookup() {
-            const word = prompt("Enter a word to look up:");
-            if (word) {
-                // This is a very basic dictionary. In a real application, you'd use an API or a more comprehensive dictionary file.
-                const dictionary = {
-                    "word": "a unit of language, consisting of one or more spoken sounds or their written representation, that functions as a principal carrier of meaning",
-                    "sentence": "a set of words that is complete in itself, typically containing a subject and predicate, conveying a statement, question, exclamation, or command, and consisting of a main clause and sometimes one or more subordinate clauses",
-                    "paragraph": "a distinct section of a piece of writing, usually dealing with a single theme and indicated by a new line, indentation, or numbering",
-                    "essay": "a short piece of writing on a particular subject",
-                    "novel": "a fictitious prose narrative of book length, typically representing character and action with some degree of realism"
-                };
-                alert(dictionary[word.toLowerCase()] || "Word not found in the dictionary.");
-            }
-        }
-
-        function showAbout() {
-            alert("WordStar Nexus Seven\nVersion 1.0\n\nA modern web-based text editor inspired by classic word processors.");
         }
 
         editor.addEventListener('input', () => {
