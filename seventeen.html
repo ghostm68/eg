@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="https://wordstar.nexus/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Immerse yourself in the art of writing with Wordstar Nexus. Experience a sleek, distraction-free environment that ignites your creativity and brings your cinematic visions to life. Whether you're crafting an indie gem or the next blockbuster, Wordstar Nexus is your sanctuary for writing scripts with elegance and focus. Step into a world where every word counts." />
+  <meta name="keywords" content="writing, prose, software, elegant writing tools, distraction-free, creativity, Wordstar Nexus, focused writing environment" />
+  <meta name="author" content="Wordstar Nexus Team" />
+  <meta property="og:title" content="Wordstar Nexus - The Seven Redux" />
+  <meta property="og:description" content="Discover an inspiring writing space with Wordstar Nexus. Perfect for writers seeking elegance, focus, and creativity." />
+  <meta property="og:url" content="https://wordstar.nexus/birch" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Wordstar Nexus - The Seven Redux" />
+  <meta name="twitter:description" content="Unleash your creativity in an elegant, distraction-free environment tailored for writers. Wordstar Nexus is your perfect tool for crafting masterpieces." />
+
+  <title>WordStar Seven</title>
+  <style>
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 20px;
+    }
+    ::-webkit-scrollbar-track {
+      box-shadow: inset 0 0 5px tan;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: red;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #efd0f5;
+    }
+
+    /* General styles */
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: 'Courier New', monospace;
+      background-color: #000000;
+      color: #cccccc;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    #editor {
+      flex-grow: 1;
+      background-color: #0a0a0a;
+      padding: 20px;
+      font-size: 18px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow-y: auto;
+      border: 1px solid #333333;
+    }
+    #menu-bar {
+      background-color: #1a1a1a;
+      padding: 5px;
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid #333333;
+    }
+    .menu-item {
+      margin: 0 10px;
+      cursor: pointer;
+    }
+    .shortcut {
+      color: #ff0000;
+    }
+    #footer {
+      background-color: #1a1a1a;
+      padding: 5px;
+      display: flex;
+      justify-content: space-around;
+      border-top: 1px solid #333333;
+    }
+    .tab {
+      cursor: pointer;
+      padding: 5px 10px;
+      background-color: #0a0a0a;
+      border-top: 1px solid #333333;
+      border-left: 1px solid #333333;
+      border-right: 1px solid #333333;
+    }
+    .tab:hover {
+      background-color: #2a2a2a;
+    }
+    @keyframes blink {
+      0% { opacity: 0; }
+      50% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    #editor::after {
+      content: '|';
+      animation: blink 1s infinite;
+      color: #ff0000;
+    }
+    .status-bar {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      padding: 5px;
+      border-top: 1px solid #333333;
+    }
+  </style>
+</head>
+<body>
+  <div id="menu-bar">
+    <div class="menu-item"><span class="shortcut">^K</span> Block</div>
+    <div class="menu-item"><span class="shortcut">^O</span> Onscreen</div>
+    <div class="menu-item"><span class="shortcut">^Q</span> Quick</div>
+    <div class="menu-item"><span class="shortcut">^P</span> Print</div>
+    <div class="menu-item"><span class="shortcut">^C</span> Cursor</div>
+    <div class="menu-item"><span class="shortcut">^R</span> Reform</div>
+    <div class="menu-item"><span class="shortcut">^I</span> Insert</div>
+    <div class="menu-item"><span class="shortcut">^D</span> Delete</div>
+  </div>
+
+  <div id="editor" contenteditable="true">
+    Welcome to WordStar Nexus Seven!
+
+    A writing space. Enjoy the feel of the classic word processing system preferred by William F. Buckley Jr., now with modern web technologies.
+
+    (Use the menu bar above for quick access to common functions, and explore additional features by pressing the tabs below and scrolling down...)
+  </div>
+
+  <div id="footer">
+    <div class="tab">File</div>
+    <div class="tab">Edit</div>
+    <div class="tab">Format</div>
+    <div class="tab">View</div>
+    <div class="tab">Macro</div>
+    <div class="tab">Spell</div>
+    <div class="tab">Math</div>
+    <div class="tab">Help</div>
+    <div class="tab">Tools</div>
+    <div class="tab">Window</div>
+    <div class="status-bar">
+      <span id="cursor-position">Line: 1 Col: 1</span>
+      <span id="word-count">Words: 0</span>
+      <span id="insert-mode">INSERT</span>
+      <span id="file-name">Untitled</span>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+      const menuItems = document.querySelectorAll('.menu-item');
+      const tabs = document.querySelectorAll('.tab');
+      const editor = document.getElementById('editor');
+      const cursorPosition = document.getElementById('cursor-position');
+      const wordCount = document.getElementById('word-count');
+      const insertMode = document.getElementById('insert-mode');
+      let isInsertMode = true;
+
+      menuItems.forEach(item => {
+        item.addEventListener('click', function() {
+          const command = this.textContent.split(' ')[1].toLowerCase();
+          handleCommand(command);
+        });
+      });
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+          const menuName = this.textContent.toLowerCase();
+          showMenu(menuName);
+        });
+      });
+
+      editor.addEventListener('keydown', function(e) {
+        if (e.ctrlKey) {
+          const key = e.key.toUpperCase();
+          const menuItem = Array.from(menuItems).find(item => item.textContent.includes(`^${key}`));
+          if (menuItem) {
+            e.preventDefault();
+            const command = menuItem.textContent.split(' ')[1].toLowerCase();
+            handleCommand(command);
+          }
+        }
+        updateStatusBar();
+      });
+
+      editor.addEventListener('input', updateWordCount);
+      editor.addEventListener('input', autoSaveContent);
+
+      function handleCommand(command) {
+        switch(command) {
+          case 'block':
+            alert('Block command activated');
+            break;
+          case 'onscreen':
+            alert('Onscreen command activated');
+            break;
+          case 'quick':
+            alert('Quick command activated');
+            break;
+          case 'print':
+            window.print();
+            break;
+          case 'cursor':
+            alert('Cursor command activated');
+            break;
+          case 'reform':
+            alert('Reform command activated');
+            break;
+          case 'insert':
+            toggleInsertMode();
+            break;
+          case 'delete':
+            document.execCommand('delete');
+            break;
+          default:
+            alert(`${command} command activated`);
+        }
+      }
+
+      function showMenu(menuName) {
+        // Implement basic actions for the menu tabs
+        switch(menuName) {
+          case 'file':
+            alert('File menu selected');
+            break;
+          case 'edit':
+            alert('Edit menu selected');
+            break;
+          case 'format':
+            alert('Format menu selected');
+            break;
+          case 'view':
+            alert('View menu selected');
+            break;
+          case 'macro':
+            alert('Macro menu selected');
+            break;
+          case 'spell':
+            runSpellCheck();
+            break;
+          case 'math':
+            alert('Math menu selected');
+            break;
+          case 'help':
+            alert('Help menu selected');
+            break;
+          case 'tools':
+            alert('Tools menu selected');
+            break;
+          case 'window':
+            alert('Window menu selected');
+            break;
+        }
+      }
+
+      function toggleInsertMode() {
+        isInsertMode = !isInsertMode;
+        insertMode.textContent = isInsertMode ? 'INSERT' : 'OVERWRITE';
+      }
+
+      function updateStatusBar() {
+        const selection = window.getSelection();
+        const range = selection.getRangeAt(0);
+        const preCaretRange = range.cloneRange();
+        preCaretRange.selectNodeContents(editor);
+        preCaretRange.setEnd(range.endContainer, range.endOffset);
+        const cursorIndex = preCaretRange.toString().length;
+        const textBeforeCursor = editor.innerText.slice(0, cursorIndex);
+        const linesBeforeCursor = textBeforeCursor.split('\n').length;
+        const columnIndex = textBeforeCursor.length - textBeforeCursor.lastIndexOf('\n') - 1;
+        cursorPosition.textContent = `Line: ${linesBeforeCursor} Col: ${columnIndex}`;
+      }
+
+      function updateWordCount() {
+        const words = editor.innerText.trim().split(/\s+/).filter(word => word.length > 0);
+        wordCount.textContent = `Words: ${words.length}`;
+      }
+
+      function autoSaveContent() {
+        localStorage.setItem('autoSaveContent', editor.innerHTML);
+      }
+
+      function loadAutoSavedContent() {
+        const savedContent = localStorage.getItem('autoSaveContent');
+        if (savedContent) {
+          editor.innerHTML = savedContent;
+          updateWordCount();
+        }
+      }
+
+      function runSpellCheck() {
+        // A simple spell-check that highlights misspelled words
+        const text = editor.innerText;
+        const words = text.split(/\s+/);
+        const misspelledWords = words.filter(word => !isWordCorrect(word));
+        alert(`Found ${misspelledWords.length} potential spelling errors.`);
+      }
+
+      function isWordCorrect(word) {
+        // Replace this with a more robust spell-checker
+        const dictionary = ['Welcome', 'to', 'WordStar', 'Nexus', 'Seven'];
+        return dictionary.includes(word);
+      }
+
+      // Load saved content if available
+      loadAutoSavedContent();
+    });
+  </script>
+</body>
+</html>
