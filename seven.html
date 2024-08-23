@@ -137,8 +137,157 @@
         <span class="menu-item7" onclick="toggleReadingMode()"><span class="shortcut7">^M</span> Reading Mode</span>
         <span class="menu-item7" onclick="generateLoremIpsum()"><span class="shortcut7">^L</span> Lorem Ipsum</span>
         <span class="menu-item7" onclick="calculateStats()"><span class="shortcut7">^T</span> Text Stats</span>
-    </span>
+    </div>
+ </span></div>
+    <script>
+        const editor = document.getElementById('editor');
+        const ruler = document.getElementById('ruler');
+        let spellCheckEnabled = false;
+        let readingMode = false;
 
+        function updateCursorPosition() {
+            const text = editor.value;
+            const cursorPos = editor.selectionStart;
+            const textBeforeCursor = text.substring(0, cursorPos);
+            const lines = textBeforeCursor.split('\n');
+            const currentLine = lines.length;
+            const currentCol = lines[lines.length - 1].length + 1;
+            document.getElementById('cursor-position').textContent = `Line: ${currentLine} Col: ${currentCol}`;
+        }
+
+        function updateWordCount() {
+            const words = editor.value.trim().split(/\s+/).length;
+            document.getElementById('word-count').textContent = `Words: ${words}`;
+        }
+
+        function toggleBold() {
+            document.execCommand('bold', false, null);
+        }
+
+        function toggleItalic() {
+            document.execCommand('italic', false, null);
+        }
+
+        function toggleUnderline() {
+            document.execCommand('underline', false, null);
+        }
+
+        function insertDateTime() {
+            const now = new Date();
+            const dateTime = now.toLocaleString();
+            const cursorPos = editor.selectionStart;
+            editor.value = editor.value.slice(0, cursorPos) + dateTime + editor.value.slice(cursorPos);
+            updateWordCount();
+        }
+
+        function wordCount() {
+            const words = editor.value.trim().split(/\s+/).length;
+            alert(`Word count: ${words}`);
+        }
+
+        function toggleSpellCheck() {
+            spellCheckEnabled = !spellCheckEnabled;
+            editor.spellcheck = spellCheckEnabled;
+            alert(`Spell check ${spellCheckEnabled ? 'enabled' : 'disabled'}.`);
+        }
+
+        function toggleRuler() {
+            ruler.style.display = ruler.style.display === 'none' ? 'flex' : 'none';
+        }
+
+        function saveDocument() {
+            const blob = new Blob([editor.value], {type: 'text/plain'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'document.txt';
+            a.click();
+        }
+
+        function printDocument() {
+            window.print();
+        }
+
+        function findReplace() {
+            const searchTerm = prompt("Enter the text to search for:");
+            if (searchTerm) {
+                const replaceTerm = prompt("Enter the replacement text:");
+                if (replaceTerm !== null) {
+                    editor.value = editor.value.replace(new RegExp(searchTerm, 'g'), replaceTerm);
+                    updateWordCount();
+                }
+            }
+        }
+
+        function toggleReadingMode() {
+            readingMode = !readingMode;
+            if (readingMode) {
+                editor.style.fontSize = '18px';
+                editor.style.lineHeight = '1.8';
+                editor.style.maxWidth = '800px';
+                editor.style.margin = 'auto';
+                editor.style.padding = '20px';
+                editor.style.backgroundColor = '#f9f9f9';
+            } else {
+                editor.style.fontSize = '';
+                editor.style.lineHeight = '';
+                editor.style.maxWidth = '';
+                editor.style.margin = '';
+                editor.style.padding = '';
+                editor.style.backgroundColor = '';
+            }
+        }
+
+         function generateLoremIpsum() {
+            const loremIpsum = "More people die every year as a result of the war against drugs than die from what we call, generically, overdosing. These fatalities include, perhaps most prominently, drug merchants who compete for commercial territory, but include also people who are robbed and killed by those desperate for money to buy the drug to which they have become addicted. This is perhaps the moment to note that the pharmaceutical cost of cocaine and heroin is approximately 2 per cent of the street price of those drugs. Since a cocaine addict can spend as much as $1,000 per week to sustain his habit, he would need to come up with that $1,000. The approximate fencing cost of stolen goods is 80 per cent, so that to come up with $1,000 can require stealing $5,000 worth of jewels, cars, whatever. We can see that at free-market rates, $20 per week would provide the addict with the cocaine which, in this wartime drug situation, requires of him $1,000.";
+            const cursorPos = editor.selectionStart;
+            editor.value = editor.value.slice(0, cursorPos) + loremIpsum + editor.value.slice(cursorPos);
+            updateWordCount();
+        }
+
+        function calculateStats() {
+            const text = editor.value;
+            const charCount = text.length;
+            const wordCount = text.trim().split(/\s+/).length;
+            const sentenceCount = text.split(/[.!?]+/).length - 1;
+            const paragraphCount = text.split(/\n\s*\n/).length;
+            
+            alert(`Text Statistics:
+                Characters: ${charCount}
+                Words: ${wordCount}
+                Sentences: ${sentenceCount}
+                Paragraphs: ${paragraphCount}
+                Average word length: ${(charCount / wordCount).toFixed(2)} characters
+                Average sentence length: ${(wordCount / sentenceCount).toFixed(2)} words`);
+        }
+
+        function showTab(tabName) {
+            alert(`${tabName} tab clicked. This feature is not yet fully implemented.`);
+        }
+
+        function initRuler() {
+            for (let i = 1; i <= 80; i++) {
+                if (i % 10 === 0) {
+                    ruler.innerHTML += `<span style="flex: 0 0 50px; text-align: center;">${i}</span>`;
+                } else if (i % 5 === 0) {
+                    ruler.innerHTML += '<span style="flex: 0 0 50px; text-align: center;">|</span>';
+                } else {
+                    ruler.innerHTML += '<span style="flex: 0 0 50px;"></span>';
+                }
+            }
+        }
+
+        editor.addEventListener('input', () => {
+            updateCursorPosition();
+            updateWordCount();
+        });
+
+        editor.addEventListener('click', updateCursorPosition);
+        editor.addEventListener('keyup', updateCursorPosition);
+
+        initRuler();
+        updateWordCount();
+    </script> 	 
+    </div>
   <div id="menu-bar">
     <div class="menu-item"><span class="shortcut">^K</span> Block</div>
     <div class="menu-item"><span class="shortcut">^O</span> Onscreen</div>
@@ -182,7 +331,7 @@ and explore additional features pressing the tabs below and scrolling down...)
     <span id="file-name">title</span>
   </div>
 </div>
-	<script>
+<script>
 document.addEventListener('DOMContentLoaded', (event) => {
   const menuItems = document.querySelectorAll('.menu-item');
   const tabs = document.querySelectorAll('.tab');
@@ -326,30 +475,27 @@ document.addEventListener('DOMContentLoaded', (event) => {
       existingMenu.remove();
     }
     
-    const tab = Array.from(tabs).find(t => t.textContent.toLowerCase() === menuName);
-    if (tab) {
-      tab.insertAdjacentHTML('afterend', menuHTML);
-      
-      const dropdownMenu = document.querySelector('.dropdown-menu');
-      dropdownMenu.style.left = `${tab.offsetLeft}px`;
-      dropdownMenu.style.top = `${tab.offsetTop + tab.offsetHeight}px`;
-      
-      dropdownMenu.querySelectorAll('.menu-item').forEach((item, index) => {
-        item.addEventListener('click', function() {
-          menuItems[index].action();
-          dropdownMenu.remove();
-        });
+    const tab = document.querySelector(`.tab:nth-child(${Array.from(tabs).findIndex(t => t.textContent.toLowerCase() === menuName) + 1})`);
+    tab.insertAdjacentHTML('afterend', menuHTML);
+    
+    const dropdownMenu = document.querySelector('.dropdown-menu');
+    dropdownMenu.style.left = `${tab.offsetLeft}px`;
+    dropdownMenu.style.top = `${tab.offsetTop + tab.offsetHeight}px`;
+    
+    dropdownMenu.querySelectorAll('.menu-item').forEach((item, index) => {
+      item.addEventListener('click', function() {
+        menuItems[index].action();
+        dropdownMenu.remove();
       });
-      
-      document.addEventListener('click', function closeMenu(e) {
-        if (!e.target.closest('.dropdown-menu') && !e.target.closest('.tab')) {
-          dropdownMenu.remove();
-          document.removeEventListener('click', closeMenu);
-        }
-      });
-    }
+    });
+    
+    document.addEventListener('click', function closeMenu(e) {
+      if (!e.target.closest('.dropdown-menu') && !e.target.closest('.tab')) {
+        dropdownMenu.remove();
+        document.removeEventListener('click', closeMenu);
+      }
+    });
   }
-
   function blockOperations() {
     const selection = window.getSelection();
     if (selection.toString().length > 0) {
@@ -361,6 +507,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
           break;
         case 'move':
           document.execCommand('cut');
+          // Prompt user to place cursor where they want to move the text
           alert('Place your cursor where you want to move the text, then press Ctrl+V to paste.');
           break;
         case 'delete':
@@ -418,6 +565,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         printDocument();
         break;
       case 'print preview':
+        // You could potentially use a library like jsPDF to generate a preview
         alert('Print Preview: This feature is not fully implemented in this web version.');
         break;
       case 'page setup':
@@ -430,8 +578,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
   function cursorMovement() {
     const selection = window.getSelection();
-    if (!selection.rangeCount) return;
-    
     const range = selection.getRangeAt(0);
     const options = ['Left', 'Right', 'Up', 'Down', 'Start of Line', 'End of Line'];
     const choice = prompt(`Cursor movement options:\n${options.join('\n')}\nEnter your choice:`);
@@ -466,41 +612,32 @@ document.addEventListener('DOMContentLoaded', (event) => {
   }
 
   function reformParagraph() {
-    const options = ['Align Left', 'Align Center', 'Align Right', 'Justify'];
-    const choice = prompt(`Paragraph reform options:\n${options.join('\n')}\nEnter your choice:`);
-    switch (choice.toLowerCase()) {
-      case 'align left':
-        document.execCommand('justifyLeft');
-        break;
-      case 'align center':
-        document.execCommand('justifyCenter');
-        break;
-      case 'align right':
-        document.execCommand('justifyRight');
-        break;
-      case 'justify':
-        document.execCommand('justifyFull');
-        break;
-      default:
-        alert('Invalid choice');
-    }
+    // This is complex. You could potentially use CSS to adjust line breaks and spacing.
+    alert('Paragraph reformatting: This feature would typically adjust line breaks and spacing. It\'s not fully implemented in this web version.');
   }
 
+  let insertMode = true;
   function toggleInsertMode() {
-    alert('Insert Mode: This feature is not fully implemented in this web version.');
+    insertMode = !insertMode;
+    alert(`Insert mode ${insertMode ? 'enabled' : 'disabled'}`);
+    editor.style.cursor = insertMode ? 'text' : 'default';
   }
 
   function deleteOptions() {
-    const options = ['Delete Character', 'Delete Word', 'Delete Line'];
+    const options = ['Character', 'Word', 'Line', 'Paragraph'];
     const choice = prompt(`Delete options:\n${options.join('\n')}\nEnter your choice:`);
     switch (choice.toLowerCase()) {
-      case 'delete character':
+      case 'character':
         document.execCommand('delete');
         break;
-      case 'delete word':
+      case 'word':
+        document.execCommand('delete');
         document.execCommand('delete');
         break;
-      case 'delete line':
+      case 'line':
+        document.execCommand('deleteLine');
+        break;
+      case 'paragraph':
         document.execCommand('delete');
         break;
       default:
@@ -508,22 +645,47 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
   }
 
+  // Menu functions
   function newDocument() {
-    if (confirm('Are you sure you want to create a new document? Unsaved changes will be lost.')) {
+    if (confirm('Create a new document? Unsaved changes will be lost.')) {
       editor.innerHTML = '';
     }
   }
 
   function openDocument() {
-    alert('Open Document: This feature is not fully implemented in this web version.');
+    // Use a file input element to allow the user to select a file
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.txt'; // Limit to text files for simplicity
+
+    input.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        editor.innerHTML = e.target.result;
+      };
+      reader.readAsText(file);
+    });
+
+    input.click(); // Trigger the file selection dialog
   }
 
   function saveDocument() {
-    alert('Save Document: This feature is not fully implemented in this web version.');
+    // Use a download link to trigger a file download
+    const blob = new Blob([editor.innerHTML], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'document.txt';
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   function saveAsDocument() {
-    alert('Save As Document: This feature is not fully implemented in this web version.');
+    // Similar to saveDocument, but allow the user to choose a filename
+    // (You'll need to add UI for filename input)
   }
 
   function printDocument() {
@@ -531,7 +693,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
   }
 
   function exitApplication() {
-    if (confirm('Are you sure you want to exit? Unsaved changes will be lost.')) {
+    if (confirm('Exit WordStar? Unsaved changes will be lost.')) {
       window.close();
     }
   }
@@ -549,88 +711,120 @@ document.addEventListener('DOMContentLoaded', (event) => {
   }
 
   function findText() {
-    alert('Find Text: This feature is not fully implemented in this web version.');
+    const searchTerm = prompt('Enter text to find:');
+    if (searchTerm) {
+      window.find(searchTerm);
+    }
   }
 
   function replaceText() {
-    alert('Replace Text: This feature is not fully implemented in this web version.');
+    const searchTerm = prompt('Enter text to find:');
+    const replaceTerm = prompt('Enter text to replace with:');
+    if (searchTerm && replaceTerm) {
+      editor.innerHTML = editor.innerHTML.replace(new RegExp(searchTerm, 'g'), replaceTerm);
+    }
   }
 
   function changeFont() {
-    alert('Change Font: This feature is not fully implemented in this web version.');
+    const font = prompt('Enter font name:');
+    if (font) {
+      document.execCommand('fontName', false, font);
+    }
   }
 
   function formatParagraph() {
-    alert('Format Paragraph: This feature is not fully implemented in this web version.');
+    // Provide basic paragraph formatting options (bold, italics, alignment)
+    // using HTML tags or CSS classes.
   }
 
   function setTabs() {
-    alert('Set Tabs: This feature is not fully implemented in this web version.');
+    // This is complex, but you could potentially use CSS grid or flexbox
+    // to simulate tab stops.
   }
 
   function changePageLayout() {
-    alert('Change Page Layout: This feature is not fully implemented in this web version.');
+    // Very challenging to replicate accurately in a browser.
   }
 
-  function changeView(view) {
-    alert(`Change View: Switching to ${view} view.`);
+  function changeView(viewType) {
+    // Simulate different views by adjusting CSS styles.
   }
 
   function toggleRuler() {
-    alert('Toggle Ruler: This feature is not fully implemented in this web version.');
+    // Create a visual ruler element.
   }
 
   function toggleStatusBar() {
-    alert('Toggle Status Bar: This feature is not fully implemented in this web version.');
+    // Create a status bar element.
   }
 
   function recordMacro() {
-    alert('Record Macro: This feature is not fully implemented in this web version.');
+    // This would require a scripting language and execution environment.
   }
 
   function runMacro() {
-    alert('Run Macro: This feature is not fully implemented in this web version.');
+    // This would require a scripting language and execution environment.
   }
 
   function editMacros() {
-    alert('Edit Macros: This feature is not fully implemented in this web version.');
+    // This would require a scripting language and execution environment.
   }
 
   function checkSpelling() {
-    alert('Check Spelling: This feature is not fully implemented in this web version.');
+    // Use a spell-checking library or API.
   }
 
   function toggleAutoCorrect() {
-    alert('Toggle Auto-Correct: This feature is not fully implemented in this web version.');
+    // You could potentially implement basic auto-correct rules.
   }
 
   function openThesaurus() {
-    alert('Open Thesaurus: This feature is not fully implemented in this web version.');
+    // Use a thesaurus API.
   }
 
   function calculateExpression() {
-    alert('Calculate Expression: This feature is not fully implemented in this web version.');
+    const expression = prompt('Enter a mathematical expression:');
+    if (expression) {
+      try {
+        const result = eval(expression);
+        alert(`Result: ${result}`);
+      } catch (error) {
+        alert('Invalid expression');
+      }
+    }
   }
 
   function insertFormula() {
-    alert('Insert Formula: This feature is not fully implemented in this web version.');
+    // This would require a formula editor and rendering engine.
   }
 
   function createGraph() {
-    alert('Create Graph: This feature is not fully implemented in this web version.');
+    // This would require a charting library.
   }
 
   function showHelpContents() {
-    alert('Help Contents: This feature is not fully implemented in this web version.');
+    // Display static help content within the web page.
   }
 
   function searchHelp() {
-    alert('Search Help: This feature is not fully implemented in this web version.');
+    // Implement a search function for the help content.
   }
 
   function showAbout() {
-    alert('About: This feature is not fully implemented in this web version.');
+    alert('WordStar Seven Revival\nA web-based homage to the classic word processor.\nCreated as a demonstration of modern web technologies.');
   }
+
+  // Add blinking cursor effect
+  let cursorVisible = true;
+  setInterval(() => {
+    if (cursorVisible) {
+      editor.style.borderRight = 'none';
+    } else {
+      editor.style.borderRight = '1px solid #ff0000';
+    }
+    cursorVisible = !cursorVisible;
+  }, 500);
 });
 </script>
+
 </body></html>
