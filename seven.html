@@ -72,6 +72,31 @@
   .shortcut {
     color: #ff0000;
   }
+ #menu-bar7, #footer {
+  display: flex;
+  flex-wrap: wrap;
+  background-color: #333;
+  color: white;
+  padding: 5px;
+}
+
+.menu-item7, .tab {
+  margin-right: 15px;
+  cursor: pointer;
+  padding: 2px 5px;
+  /* Add this line to make items display horizontally */
+  flex: 1; 
+}
+
+.menu-item7:hover, .tab:hover {
+  background-color: #555;
+}
+
+.shortcut7 {
+  font-size: 0.8em;
+  color: #aaa;
+}
+ 
 #footer {
     background-color: #1a1a1a;
     padding: 5px;
@@ -103,6 +128,166 @@
 </style>
 </head>
 <body>
+ <span id="7menu-bar">
+        <span class="menu-item7" onclick="toggleSpellCheck()"><span class="shortcut7">^S</span> Spell Check</span>
+        <span class="menu-item7" onclick="toggleRuler()"><span class="shortcut7">^R</span> Ruler</span>
+        <span class="menu-item7" onclick="saveDocument()"><span class="shortcut7">^O</span> Save</span>
+        <span class="menu-item7" onclick="printDocument()"><span class="shortcut7">^P</span> Print</span>
+        <span class="menu-item7" onclick="findReplace()"><span class="shortcut7">^F</span> Find/Replace</span>
+        <span class="menu-item7" onclick="toggleReadingMode()"><span class="shortcut7">^M</span> Reading Mode</span>
+        <span class="menu-item7" onclick="generateLoremIpsum()"><span class="shortcut7">^L</span> Lorem Ipsum</span>
+        <span class="menu-item7" onclick="calculateStats()"><span class="shortcut7">^T</span> Text Stats</span>
+    </div>
+ </span></div>
+    <script>
+        const editor = document.getElementById('editor');
+        const ruler = document.getElementById('ruler');
+        let spellCheckEnabled = false;
+        let readingMode = false;
+
+        function updateCursorPosition() {
+            const text = editor.value;
+            const cursorPos = editor.selectionStart;
+            const textBeforeCursor = text.substring(0, cursorPos);
+            const lines = textBeforeCursor.split('\n');
+            const currentLine = lines.length;
+            const currentCol = lines[lines.length - 1].length + 1;
+            document.getElementById('cursor-position').textContent = `Line: ${currentLine} Col: ${currentCol}`;
+        }
+
+        function updateWordCount() {
+            const words = editor.value.trim().split(/\s+/).length;
+            document.getElementById('word-count').textContent = `Words: ${words}`;
+        }
+
+        function toggleBold() {
+            document.execCommand('bold', false, null);
+        }
+
+        function toggleItalic() {
+            document.execCommand('italic', false, null);
+        }
+
+        function toggleUnderline() {
+            document.execCommand('underline', false, null);
+        }
+
+        function insertDateTime() {
+            const now = new Date();
+            const dateTime = now.toLocaleString();
+            const cursorPos = editor.selectionStart;
+            editor.value = editor.value.slice(0, cursorPos) + dateTime + editor.value.slice(cursorPos);
+            updateWordCount();
+        }
+
+        function wordCount() {
+            const words = editor.value.trim().split(/\s+/).length;
+            alert(`Word count: ${words}`);
+        }
+
+        function toggleSpellCheck() {
+            spellCheckEnabled = !spellCheckEnabled;
+            editor.spellcheck = spellCheckEnabled;
+            alert(`Spell check ${spellCheckEnabled ? 'enabled' : 'disabled'}.`);
+        }
+
+        function toggleRuler() {
+            ruler.style.display = ruler.style.display === 'none' ? 'flex' : 'none';
+        }
+
+        function saveDocument() {
+            const blob = new Blob([editor.value], {type: 'text/plain'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'document.txt';
+            a.click();
+        }
+
+        function printDocument() {
+            window.print();
+        }
+
+        function findReplace() {
+            const searchTerm = prompt("Enter the text to search for:");
+            if (searchTerm) {
+                const replaceTerm = prompt("Enter the replacement text:");
+                if (replaceTerm !== null) {
+                    editor.value = editor.value.replace(new RegExp(searchTerm, 'g'), replaceTerm);
+                    updateWordCount();
+                }
+            }
+        }
+
+        function toggleReadingMode() {
+            readingMode = !readingMode;
+            if (readingMode) {
+                editor.style.fontSize = '18px';
+                editor.style.lineHeight = '1.8';
+                editor.style.maxWidth = '800px';
+                editor.style.margin = 'auto';
+                editor.style.padding = '20px';
+                editor.style.backgroundColor = '#f9f9f9';
+            } else {
+                editor.style.fontSize = '';
+                editor.style.lineHeight = '';
+                editor.style.maxWidth = '';
+                editor.style.margin = '';
+                editor.style.padding = '';
+                editor.style.backgroundColor = '';
+            }
+        }
+
+         function generateLoremIpsum() {
+            const loremIpsum = "More people die every year as a result of the war against drugs than die from what we call, generically, overdosing. These fatalities include, perhaps most prominently, drug merchants who compete for commercial territory, but include also people who are robbed and killed by those desperate for money to buy the drug to which they have become addicted. This is perhaps the moment to note that the pharmaceutical cost of cocaine and heroin is approximately 2 per cent of the street price of those drugs. Since a cocaine addict can spend as much as $1,000 per week to sustain his habit, he would need to come up with that $1,000. The approximate fencing cost of stolen goods is 80 per cent, so that to come up with $1,000 can require stealing $5,000 worth of jewels, cars, whatever. We can see that at free-market rates, $20 per week would provide the addict with the cocaine which, in this wartime drug situation, requires of him $1,000.";
+            const cursorPos = editor.selectionStart;
+            editor.value = editor.value.slice(0, cursorPos) + loremIpsum + editor.value.slice(cursorPos);
+            updateWordCount();
+        }
+
+        function calculateStats() {
+            const text = editor.value;
+            const charCount = text.length;
+            const wordCount = text.trim().split(/\s+/).length;
+            const sentenceCount = text.split(/[.!?]+/).length - 1;
+            const paragraphCount = text.split(/\n\s*\n/).length;
+            
+            alert(`Text Statistics:
+                Characters: ${charCount}
+                Words: ${wordCount}
+                Sentences: ${sentenceCount}
+                Paragraphs: ${paragraphCount}
+                Average word length: ${(charCount / wordCount).toFixed(2)} characters
+                Average sentence length: ${(wordCount / sentenceCount).toFixed(2)} words`);
+        }
+
+        function showTab(tabName) {
+            alert(`${tabName} tab clicked. This feature is not yet fully implemented.`);
+        }
+
+        function initRuler() {
+            for (let i = 1; i <= 80; i++) {
+                if (i % 10 === 0) {
+                    ruler.innerHTML += `<span style="flex: 0 0 50px; text-align: center;">${i}</span>`;
+                } else if (i % 5 === 0) {
+                    ruler.innerHTML += '<span style="flex: 0 0 50px; text-align: center;">|</span>';
+                } else {
+                    ruler.innerHTML += '<span style="flex: 0 0 50px;"></span>';
+                }
+            }
+        }
+
+        editor.addEventListener('input', () => {
+            updateCursorPosition();
+            updateWordCount();
+        });
+
+        editor.addEventListener('click', updateCursorPosition);
+        editor.addEventListener('keyup', updateCursorPosition);
+
+        initRuler();
+        updateWordCount();
+    </script> 	 
+    </div>
   <div id="menu-bar">
     <div class="menu-item"><span class="shortcut">^K</span> Block</div>
     <div class="menu-item"><span class="shortcut">^O</span> Onscreen</div>
@@ -143,10 +328,9 @@ and explore additional features pressing the tabs below and scrolling down...)
     <span id="cursor-position">Line: 1 Col: 1</span>
     <span id="word-count">Words: 0</span>
     <span id="insert-mode">INSERT</span>
-    <span id="file-name">Untitled</span>
+    <span id="file-name">title</span>
   </div>
 </div>
-
 <script>
 document.addEventListener('DOMContentLoaded', (event) => {
   const menuItems = document.querySelectorAll('.menu-item');
