@@ -39,12 +39,20 @@
   .shortcut {
     color: #ff0000;
   }
-  #footer {
-    background-color: #1a1a1a;
-    padding: 5px;
-    display: flex;
-    justify-content: space-around;
-    border-top: 1px solid #333333;
+ .footer {
+  position: fixed;
+  bottom: 0; /* Changed to top: 100%; */
+  width: 100%;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  padding: 10px 0;
+  transform: translateY(-100%); /* Changed to translateY(-100%); */
+  transition: transform 0.3s ease-in-out; /* Added transition */
+}
+
+.footer:hover {
+  transform: translateY(0);
   }
   .tab {
     cursor: pointer;
@@ -243,43 +251,30 @@ document.addEventListener('DOMContentLoaded', (event) => {
         menuItems = [{name: 'No items available', action: () => {}}];
     }
     
-   function showMenu(menuName) {
-  const menuItems = [
-    // ... your existing menu items ...
-  ];
-
-  const menuHTML = `
-    <div class="dropdown-menu" style="position: absolute; background-color: #1a1a1a; border: 1px solid #333333; z-index: 1000;">
-      ${menuItems.map(item => `<div class="menu-item">${item.name}</div>`).join('')}
-    </div>
-  `;
-
-  const existingMenu = document.querySelector('.dropdown-menu');
-  if (existingMenu) {
-    existingMenu.remove();
-  }
-
-  const tab = document.querySelector(`.tab:nth-child(${Array.from(tabs).findIndex(t => t.textContent.toLowerCase() === menuName) + 1})`);
-  tab.insertAdjacentHTML('afterend', menuHTML);
-
-  const dropdownMenu = document.querySelector('.dropdown-menu');
-  dropdownMenu.style.left = `${tab.offsetLeft}px`;
-  dropdownMenu.style.top = `${tab.offsetTop - dropdownMenu.offsetHeight}px`; // Adjust for upward positioning
-
-  dropdownMenu.querySelectorAll('.menu-item').forEach((item, index) => {
-    item.addEventListener('click', () => {
-      menuItems[index].action();
-      dropdownMenu.remove();
-    });
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.dropdown-menu') && !e.target.closest('.tab')) {
-      dropdownMenu.remove();
-      document.removeEventListener('click', closeMenu);
+    const menuHTML = `
+      <div class="dropdown-menu" style="position: absolute; background-color: #1a1a1a; border: 1px solid #333333; z-index: 1000;">
+        ${menuItems.map(item => `<div class="menu-item" style="padding: 5px 10px; cursor: pointer;">${item.name}</div>`).join('')}
+      </div>
+    `;
+    
+    const existingMenu = document.querySelector('.dropdown-menu');
+    if (existingMenu) {
+      existingMenu.remove();
     }
-  });
-}
+    
+    const tab = document.querySelector(`.tab:nth-child(${Array.from(tabs).findIndex(t => t.textContent.toLowerCase() === menuName) + 1})`);
+    tab.insertAdjacentHTML('afterend', menuHTML);
+    
+    const dropdownMenu = document.querySelector('.dropdown-menu');
+    dropdownMenu.style.left = `${tab.offsetLeft}px`;
+    dropdownMenu.style.top = `${tab.offsetTop + tab.offsetHeight}px`;
+    
+    dropdownMenu.querySelectorAll('.menu-item').forEach((item, index) => {
+      item.addEventListener('click', function() {
+        menuItems[index].action();
+        dropdownMenu.remove();
+      });
+    });
     
     document.addEventListener('click', function closeMenu(e) {
       if (!e.target.closest('.dropdown-menu') && !e.target.closest('.tab')) {
