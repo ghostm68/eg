@@ -126,12 +126,12 @@
     color: #f5f2f2;
   }
   #map {
-    width: 70%;
-    height: 100%;
-    float: left;
+    width: 30%;
+    height: 60%;
+    float: center;
   }
   #info {
-    position: absolute;
+    position: bottom;
     top: 10px;
     left: 10px;
     background: rgba(40, 40, 40, 0.8);
@@ -140,8 +140,8 @@
     z-index: 1000;
   }
   #sidebar {
-    width: 30%;
-    height: 100%;
+    width: 20%;
+    height: 50%;
     float: right;
     background-color: #2a2a2a;
     padding: 20px;
@@ -224,7 +224,169 @@
 <center>
 
 <img src="https://raw.githubusercontent.com/ghostm68/pantheon/main/quirky.gif"></center>
+ <div id="map"></div>
+<div id="info">
+  <h2>Location</h2>
+  <p>Latitude: <span id="lat"></span></p>
+  <p>Longitude: <span id="lon"></span></p>
+  <p>Altitude: <span id="alt"></span> km</p>
+  <p>Velocity: <span id="vel"></span> km/h</p>
+</div>
+<div id="sidebar">
+  <h3>Weather</h3>
+  <p id="day-night"></p>
+  <p id="local-time"></p>
+  <p>Temperature: <span id="temp"></span> °F</p>
+  <p>Conditions: <span id="conditions"></span></p>
+  <p>Wind Speed: <span id="wind"></span> m/s</p>
+  <p>Humidity: <span id="humidity"></span> %</p>
   
+  <div id="live-feed">
+    <h3>Live Feed</h3>
+    <iframe src="https://www.youtube.com/embed/21X5lGlDOfg?autoplay=1&mute=1" allow="autoplay" allowfullscreen></iframe>
+    <p id="disclaimer">live streams may be delayed and not in real-time. The feed might not always match the current ISS position displayed on the map.</p>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data.min.js"></script>
+<script>
+  // Initialize the map
+  const map = L.map('map').setView([0, 0], 3);
+  
+  // Add dark mode tile layer
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap contributors, © CARTO'
+  }).addTo(map);
+  
+  // Custom ISS icon
+  const issIcon = L.icon({
+    iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/International_Space_Station.svg',
+    iconSize: [50, 30],
+    iconAnchor: [25, 15]
+  });
+  
+  // Add ISS marker
+  const issMarker = L.marker([0, 0], {icon: issIcon}).addTo(map);
+  
+  // Add ISS trail
+  const issTrail = L.polyline([], {color: 'red', weight: 2}).addTo(map);
+  
+  // Function to get weather data
+  async function getWeatherData(lat, lon) {
+    try {
+      const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,relativehumidity_2m,windspeed_10m&temperature_unit=fahrenheit`);
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching weather data:', error);
+      return null;
+    }
+  }
+
+  // Function to determine if it's day or night
+  function isDayOrNight(lat, lon) {
+    const date = new Date();
+    const times = SunCalc.getTimes(date, lat, lon);
+    return date > times.sunrise && date < times.sunset ? 'Day' : 'Night';
+  }
+
+  // Function to get local time from latitude and longitude
+  function getLocalTime(lat, lon) {
+    const timezone = moment.tz.guess();
+    const localTime = moment().tz(timezone);
+    const offset = Math.round(lon / 15) * 60; // 15 degrees per hour
+    return localTime.utcOffset(offset).format('YYYY-MM-DD HH:mm:ss');
+  }
+
+  // Function to update ISS position and weather
+  async function updateISSPositionAndWeather() {
+    try {
+      // Fetch ISS data
+      const issResponse = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
+      const issData = await issResponse.json();
+      
+      const lat = issData.latitude.toFixed(4);
+      const lon = issData.longitude.toFixed(4);
+      const alt = issData.altitude.toFixed(2);
+      const vel = issData.velocity.toFixed(2);
+      
+      // Update marker position
+      issMarker.setLatLng([lat, lon]);
+      
+      // Update trail
+      issTrail.addLatLng([lat, lon]);
+      
+      // Center map on ISS
+      map.setView([lat, lon]);
+      
+      // Update ISS info
+      document.getElementById('lat').textContent = lat;
+      document.getElementById('lon').textContent = lon;
+      document.getElementById('alt').textContent = alt;
+      document.getElementById('vel').textContent = vel;
+      
+      // Determine if it's day or night
+      const dayOrNight = isDayOrNight(lat, lon);
+      document.getElementById('day-night').textContent = `Current local condition: ${dayOrNight}`;
+      
+      // Get and display local time
+      const localTime = getLocalTime(lat, lon);
+      document.getElementById('local-time').textContent = `Local time: ${localTime}`;
+      
+      // Fetch weather data
+      const weatherData = await getWeatherData(lat, lon);
+      
+      if (weatherData) {
+        // Update weather info
+        document.getElementById('temp').textContent = weatherData.current_weather.temperature.toFixed(1);
+        document.getElementById('wind').textContent = weatherData.current_weather.windspeed.toFixed(1);
+        
+        // Get the current hour
+        const currentHour = new Date().getHours();
+        
+        // Update humidity (using hourly data)
+        document.getElementById('humidity').textContent = weatherData.hourly.relativehumidity_2m[currentHour].toFixed(0);
+        
+        // Weather condition codes (simplified)
+        const weatherCodes = {
+          0: 'Clear sky',
+          1: 'Mainly clear',
+          2: 'Partly cloudy',
+          3: 'Overcast',
+          45: 'Fog',
+          48: 'Depositing rime fog',
+          51: 'Light drizzle',
+          53: 'Moderate drizzle',
+          55: 'Dense drizzle',
+          61: 'Slight rain',
+          63: 'Moderate rain',
+          65: 'Heavy rain',
+          71: 'Slight snow fall',
+          73: 'Moderate snow fall',
+          75: 'Heavy snow fall',
+          95: 'Thunderstorm',
+          96: 'Thunderstorm with slight hail',
+          99: 'Thunderstorm with heavy hail'
+        };
+        
+        const weatherCode = weatherData.current_weather.weathercode;
+        document.getElementById('conditions').textContent = weatherCodes[weatherCode] || 'Unknown';
+      }
+      
+    } catch (error) {
+      console.error('Error updating ISS position and weather:', error);
+    }
+  }
+  
+  // Update ISS position and weather every 1 second
+  setInterval(updateISSPositionAndWeather, 1000);
+  
+  // Initial update
+  updateISSPositionAndWeather();
+</script>  
     <script>
         const editor = document.getElementById('editor');
         const ruler = document.getElementById('ruler');
@@ -865,168 +1027,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
   }, 500);
 });
 </script>
- <div id="map"></div>
-<div id="info">
-  <h2>Location</h2>
-  <p>Latitude: <span id="lat"></span></p>
-  <p>Longitude: <span id="lon"></span></p>
-  <p>Altitude: <span id="alt"></span> km</p>
-  <p>Velocity: <span id="vel"></span> km/h</p>
-</div>
-<div id="sidebar">
-  <h3>Weather</h3>
-  <p id="day-night"></p>
-  <p id="local-time"></p>
-  <p>Temperature: <span id="temp"></span> °F</p>
-  <p>Conditions: <span id="conditions"></span></p>
-  <p>Wind Speed: <span id="wind"></span> m/s</p>
-  <p>Humidity: <span id="humidity"></span> %</p>
-  
-  <div id="live-feed">
-    <h3>Live Feed</h3>
-    <iframe src="https://www.youtube.com/embed/21X5lGlDOfg?autoplay=1&mute=1" allow="autoplay" allowfullscreen></iframe>
-    <p id="disclaimer">live streams may be delayed and not in real-time. The feed might not always match the current ISS position displayed on the map.</p>
-  </div>
-</div>
 
-<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data.min.js"></script>
-<script>
-  // Initialize the map
-  const map = L.map('map').setView([0, 0], 3);
-  
-  // Add dark mode tile layer
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '© OpenStreetMap contributors, © CARTO'
-  }).addTo(map);
-  
-  // Custom ISS icon
-  const issIcon = L.icon({
-    iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/International_Space_Station.svg',
-    iconSize: [50, 30],
-    iconAnchor: [25, 15]
-  });
-  
-  // Add ISS marker
-  const issMarker = L.marker([0, 0], {icon: issIcon}).addTo(map);
-  
-  // Add ISS trail
-  const issTrail = L.polyline([], {color: 'red', weight: 2}).addTo(map);
-  
-  // Function to get weather data
-  async function getWeatherData(lat, lon) {
-    try {
-      const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,relativehumidity_2m,windspeed_10m&temperature_unit=fahrenheit`);
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error fetching weather data:', error);
-      return null;
-    }
-  }
-
-  // Function to determine if it's day or night
-  function isDayOrNight(lat, lon) {
-    const date = new Date();
-    const times = SunCalc.getTimes(date, lat, lon);
-    return date > times.sunrise && date < times.sunset ? 'Day' : 'Night';
-  }
-
-  // Function to get local time from latitude and longitude
-  function getLocalTime(lat, lon) {
-    const timezone = moment.tz.guess();
-    const localTime = moment().tz(timezone);
-    const offset = Math.round(lon / 15) * 60; // 15 degrees per hour
-    return localTime.utcOffset(offset).format('YYYY-MM-DD HH:mm:ss');
-  }
-
-  // Function to update ISS position and weather
-  async function updateISSPositionAndWeather() {
-    try {
-      // Fetch ISS data
-      const issResponse = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
-      const issData = await issResponse.json();
-      
-      const lat = issData.latitude.toFixed(4);
-      const lon = issData.longitude.toFixed(4);
-      const alt = issData.altitude.toFixed(2);
-      const vel = issData.velocity.toFixed(2);
-      
-      // Update marker position
-      issMarker.setLatLng([lat, lon]);
-      
-      // Update trail
-      issTrail.addLatLng([lat, lon]);
-      
-      // Center map on ISS
-      map.setView([lat, lon]);
-      
-      // Update ISS info
-      document.getElementById('lat').textContent = lat;
-      document.getElementById('lon').textContent = lon;
-      document.getElementById('alt').textContent = alt;
-      document.getElementById('vel').textContent = vel;
-      
-      // Determine if it's day or night
-      const dayOrNight = isDayOrNight(lat, lon);
-      document.getElementById('day-night').textContent = `Current local condition: ${dayOrNight}`;
-      
-      // Get and display local time
-      const localTime = getLocalTime(lat, lon);
-      document.getElementById('local-time').textContent = `Local time: ${localTime}`;
-      
-      // Fetch weather data
-      const weatherData = await getWeatherData(lat, lon);
-      
-      if (weatherData) {
-        // Update weather info
-        document.getElementById('temp').textContent = weatherData.current_weather.temperature.toFixed(1);
-        document.getElementById('wind').textContent = weatherData.current_weather.windspeed.toFixed(1);
-        
-        // Get the current hour
-        const currentHour = new Date().getHours();
-        
-        // Update humidity (using hourly data)
-        document.getElementById('humidity').textContent = weatherData.hourly.relativehumidity_2m[currentHour].toFixed(0);
-        
-        // Weather condition codes (simplified)
-        const weatherCodes = {
-          0: 'Clear sky',
-          1: 'Mainly clear',
-          2: 'Partly cloudy',
-          3: 'Overcast',
-          45: 'Fog',
-          48: 'Depositing rime fog',
-          51: 'Light drizzle',
-          53: 'Moderate drizzle',
-          55: 'Dense drizzle',
-          61: 'Slight rain',
-          63: 'Moderate rain',
-          65: 'Heavy rain',
-          71: 'Slight snow fall',
-          73: 'Moderate snow fall',
-          75: 'Heavy snow fall',
-          95: 'Thunderstorm',
-          96: 'Thunderstorm with slight hail',
-          99: 'Thunderstorm with heavy hail'
-        };
-        
-        const weatherCode = weatherData.current_weather.weathercode;
-        document.getElementById('conditions').textContent = weatherCodes[weatherCode] || 'Unknown';
-      }
-      
-    } catch (error) {
-      console.error('Error updating ISS position and weather:', error);
-    }
-  }
-  
-  // Update ISS position and weather every 1 second
-  setInterval(updateISSPositionAndWeather, 1000);
-  
-  // Initial update
-  updateISSPositionAndWeather();
-</script>
 </body>
 </html>
