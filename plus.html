@@ -127,48 +127,8 @@
   }
   #map {
     width: 100%;
-    height: 60%;
+    height: 80%;
     float: center;
-  }
-#info {
-  position: absolute;
-  bottom: 1px;
-  right: 2px;
-  background: rgba(40, 40, 40, 0.8);
-  padding: 10px;
-  border-radius: 5px;
-  z-index: 500;
-}
-  #sidebar {
-    width: 20%;
-    height: 50%;
-    float: right;
-    background-color: #2a2a2a;
-    padding: 20px;
-    box-sizing: border-box;
-    overflow-y: auto;
-  }
-  h2, h3 {
-    margin-top: 0;
-  }
-  #live-feed {
-    width: 100%;
-    margin-top: 20px;
-  }
-  #live-feed iframe {
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    border: none;
-  }
-  #disclaimer {
-    font-size: 0.8em;
-    font-style: italic;
-    color: #aaa;
-    margin-top: 10px;
-  }
-  #day-night, #local-time {
-    font-weight: bold;
-    margin-bottom: 10px;
   }
     </style>
   
@@ -222,20 +182,7 @@
   </div> 
     </div>
  <div id="map"></div>
-<div id="info">
-  <h2>Location</h2>
-  <p>Latitude: <span id="lat"></span></p>
-  <p>Longitude: <span id="lon"></span></p>
-  <p>Altitude: <span id="alt"></span> km</p>
-  <p>Velocity: <span id="vel"></span> km/h</p>
-</div>
-<div id="sidebar">  
-  <div id="live-feed">
-    <h3>Live Feed</h3>
-    <iframe src="https://www.youtube.com/embed/21X5lGlDOfg?autoplay=1&mute=1" allow="autoplay" allowfullscreen></iframe>
-    <p id="disclaimer">live streams may be delayed and not in real-time. The feed might not always match the current ISS position displayed on the map.</p>
-  </div>
-</div>
+
 
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
@@ -282,13 +229,6 @@
     return date > times.sunrise && date < times.sunset ? 'Day' : 'Night';
   }
 
-  // Function to get local time from latitude and longitude
-  function getLocalTime(lat, lon) {
-    const timezone = moment.tz.guess();
-    const localTime = moment().tz(timezone);
-    const offset = Math.round(lon / 15) * 60; // 15 degrees per hour
-    return localTime.utcOffset(offset).format('YYYY-MM-DD HH:mm:ss');
-  }
 
   // Function to update ISS position and weather
   async function updateISSPositionAndWeather() {
@@ -321,49 +261,6 @@
       const dayOrNight = isDayOrNight(lat, lon);
       document.getElementById('day-night').textContent = `Current local condition: ${dayOrNight}`;
       
-      // Get and display local time
-      const localTime = getLocalTime(lat, lon);
-      document.getElementById('local-time').textContent = `Local time: ${localTime}`;
-      
-      // Fetch weather data
-      const weatherData = await getWeatherData(lat, lon);
-      
-      if (weatherData) {
-        // Update weather info
-        document.getElementById('temp').textContent = weatherData.current_weather.temperature.toFixed(1);
-        document.getElementById('wind').textContent = weatherData.current_weather.windspeed.toFixed(1);
-        
-        // Get the current hour
-        const currentHour = new Date().getHours();
-        
-        // Update humidity (using hourly data)
-        document.getElementById('humidity').textContent = weatherData.hourly.relativehumidity_2m[currentHour].toFixed(0);
-        
-        // Weather condition codes (simplified)
-        const weatherCodes = {
-          0: 'Clear sky',
-          1: 'Mainly clear',
-          2: 'Partly cloudy',
-          3: 'Overcast',
-          45: 'Fog',
-          48: 'Depositing rime fog',
-          51: 'Light drizzle',
-          53: 'Moderate drizzle',
-          55: 'Dense drizzle',
-          61: 'Slight rain',
-          63: 'Moderate rain',
-          65: 'Heavy rain',
-          71: 'Slight snow fall',
-          73: 'Moderate snow fall',
-          75: 'Heavy snow fall',
-          95: 'Thunderstorm',
-          96: 'Thunderstorm with slight hail',
-          99: 'Thunderstorm with heavy hail'
-        };
-        
-        const weatherCode = weatherData.current_weather.weathercode;
-        document.getElementById('conditions').textContent = weatherCodes[weatherCode] || 'Unknown';
-      }
       
     } catch (error) {
       console.error('Error updating ISS position and weather:', error);
