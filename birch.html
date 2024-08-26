@@ -647,6 +647,44 @@ p {
     align-items: center;
     justify-content: center;
   }
+  /* Existing styles */
+
+  /* Cinema Quote Reel styles */
+  .cinema-quote-reel {
+    font-family: 'Courier New', monospace;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-color: #000;
+  }
+  .film-reel {
+    width: 300px;
+    height: 300px;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="white" stroke-width="2"/><circle cx="50" cy="50" r="35" fill="none" stroke="white" stroke-width="2"/><circle cx="50" cy="50" r="25" fill="none" stroke="white" stroke-width="2"/><circle cx="50" cy="50" r="5" fill="white"/></svg>') no-repeat center center;
+    background-size: contain;
+    cursor: pointer;
+    transition: transform 0.5s ease;
+  }
+  .film-reel:hover {
+    transform: rotate(360deg);
+  }
+  .quote-container {
+    width: 100%;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    margin-top: 20px;
+  }
+  .quote {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  .quote-info {
+    font-size: 14px;
+    font-style: italic;
+  }	    
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1276,7 +1314,16 @@ or Hold Option, type 1 6 D 2 then release)</i>
       <li><a href="https://www.writersguild.org/" target="_blank"><em>W G A</em></a></li>
     <li>...</li>
       <li>...</li>
-	  <li>...</li>    
+	  <li>...</li>  
+<!-- New Cinema Quote Reel section -->
+<div class="cinema-quote-reel">
+  <h2>Cinema Quote Reel</h2>
+  <div class="film-reel"></div>
+  <div class="quote-container">
+    <p class="quote"></p>
+    <p class="quote-info"></p>
+  </div>
+	
  <li> <em>Developed with Claude, </li>
 <li>	Gemini 1.5 and Flash, </li>
 <li>brigid storyboard maker</li>
@@ -1440,7 +1487,87 @@ document.addEventListener("DOMContentLoaded", function() {
 
     <!-- Container for generated images -->
     <div id="fluxImageContainer"></div> 
+  <script>
+const quotes = [
+  // ... (previous quotes remain unchanged)
+];
+
+const filmReel = document.querySelector('.film-reel');
+const quoteContainer = document.querySelector('.quote-container');
+const quoteText = document.querySelector('.quote');
+const quoteInfo = document.querySelector('.quote-info');
+
+const apiKey = 'd8094d94d700089fed5d2efef5e682bd';
+const tmdbBaseUrl = 'https://api.themoviedb.org/3';
+
+async function fetchRandomMovie() {
+  const response = await fetch(`${tmdbBaseUrl}/movie/top_rated?api_key=${apiKey}&language=en-US&page=${Math.floor(Math.random() * 10) + 1}`);
+  const data = await response.json();
+  return data.results[Math.floor(Math.random() * data.results.length)];
+}
+
+async function fetchMovieQuotes(movieId) {
+  const response = await fetch(`${tmdbBaseUrl}/movie/${movieId}/quotes?api_key=${apiKey}`);
+  const data = await response.json();
+  return data.quotes || [];
+}
+
+async function getRandomQuoteFromTMDB() {
+  const movie = await fetchRandomMovie();
+  const quotes = await fetchMovieQuotes(movie.id);
   
+  if (quotes.length > 0) {
+    const quote = quotes[Math.floor(Math.random() * quotes.length)];
+    return {
+      text: quote.content,
+      character: quote.author || 'Unknown',
+      movie: movie.title,
+      year: new Date(movie.release_date).getFullYear()
+    };
+  }
+  
+  return null;
+}
+
+async function displayQuote() {
+  let quote;
+  
+  // Try to get a quote from TMDB, fallback to local quotes if unsuccessful
+  try {
+    quote = await getRandomQuoteFromTMDB();
+    if (!quote) {
+      quote = quotes[Math.floor(Math.random() * quotes.length)];
+    }
+  } catch (error) {
+    console.error('Error fetching quote from TMDB:', error);
+    quote = quotes[Math.floor(Math.random() * quotes.length)];
+  }
+
+  quoteText.textContent = `"${quote.text}"`;
+  quoteInfo.textContent = `- ${quote.character}, ${quote.movie} (${quote.year})`;
+  quoteContainer.style.opacity = '1';
+}
+
+function hideQuote() {
+  quoteContainer.style.opacity = '0';
+}
+
+filmReel.addEventListener('mouseenter', displayQuote);
+filmReel.addEventListener('mouseleave', hideQuote);
+filmReel.addEventListener('touchstart', displayQuote);
+filmReel.addEventListener('touchend', hideQuote);
+
+// Add more quotes dynamically
+function addQuote(text, character, movie, year) {
+  quotes.push({ text, character, movie, year });
+}
+
+// Example of adding more quotes
+addQuote("I'll get you, my pretty, and your little dog, too!", "Wicked Witch of the West", "The Wizard of Oz", 1939);
+addQuote("I am big! It's the pictures that got small.", "Norma Desmond", "Sunset Boulevard", 1950);
+addQuote("Listen to them. Children of the night. What music they make", "Count Dracula", "Dracula", 1931);
+addQuote("It's alive! It's alive!", "Henry Frankenstein", "Frankenstein", 1931);
+</script>
 	  
 </footer>  
 </body>
