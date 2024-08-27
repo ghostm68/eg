@@ -5,143 +5,90 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WordStar Style Word Processor</title>
     <link rel="stylesheet" href="style-1.css">
-    <style>
-        /* DOS-style basic reset */
-        body {
-            font-family: 'Courier New', monospace;
-            background-color: black;
-            color: green;
-            margin: 0;
-            padding: 10px;
-        }
-
-        /* Top command bar */
-        .command-bar {
-            display: flex;
-            justify-content: space-between;
-            padding: 2px;
-            background-color: #444;
-            color: white;
-        }
-
-        .command-bar span {
-            margin-right: 15px;
-        }
-
-        /* Menu layout */
-        .menu-container {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-
-        .menu-group {
-            text-align: left;
-            margin-right: 20px;
-        }
-
-        .menu-group span {
-            display: block;
-            margin-bottom: 2px;
-        }
-
-        /* Text area */
-        .text-area {
-            width: 100%;
-            height: 300px;
-            background-color: black;
-            color: green;
-            border: 1px solid #444;
-            padding: 10px;
-            margin-top: 10px;
-            font-family: 'Courier New', monospace;
-            white-space: pre-wrap;
-        }
-
-        /* Bottom function row */
-        .function-row {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 10px;
-        }
-
-        .function-box {
-            background-color: #333;
-            color: white;
-            padding: 5px 10px;
-            border: 1px solid #555;
-            text-align: center;
-            width: 80px;
-            font-size: 12px;
-        }
-
-        .function-box span {
-            display: block;
-        }
-    </style>
 </head>
 <body>
-    <!-- Command Bar -->
-    <div class="command-bar">
-        <span>P01 L07 C12 Insert Align</span>
-        <span>EDIT MENU</span>
-        <span>C:TEST</span>
+    <div class="menu-bar">
+        <div class="menu-item">File</div>
+        <div class="menu-item">Edit</div>
+        <div class="menu-item">View</div>
+        <div class="menu-item">Help</div>
     </div>
 
-    <!-- Menu Container -->
-    <div class="menu-container">
-        <div class="menu-group">
-            <span>^E up</span>
-            <span>^A left</span>
-            <span>^R up screen</span>
-            <span>^C down</span>
-        </div>
-        <div class="menu-group">
-            <span>^G char</span>
-            <span>^H back</span>
-            <span>^J line</span>
-            <span>^K block</span>
-        </div>
-        <div class="menu-group">
-            <span>^F help</span>
-            <span>^L find/replace</span>
-            <span>^Q quick</span>
-            <span>^Z undo</span>
-        </div>
-        <div class="menu-group">
-            <span>Esc exit</span>
-            <span>Del erase</span>
-            <span>Ctrl+S save</span>
-            <span>Ctrl+O open</span>
-        </div>
+    <div class="sub-menu-bar">
+        <div class="sub-menu-item">^O Open</div>
+        <div class="sub-menu-item">^S Save</div>
+        <div class="sub-menu-item">^C Copy</div>
+        <div class="sub-menu-item">^X Cut</div>
+        <div class="sub-menu-item">^V Paste</div>
+        <div class="sub-menu-item">^B Bold</div>
+        <div class="sub-menu-item">^U Underline</div>
+        <div class="sub-menu-item">^W Word Count</div>
     </div>
 
-    <!-- Text Area -->
-    <div class="text-area" contenteditable="true">
-        A centered title
-        The quick brown fox jumped over the lazy dog
+    <div class="text-area" contenteditable="true"></div>
+
+    <div class="function-bar">
+        <div class="function-box">Ctrl + S Save</div>
+        <div class="function-box">Ctrl + O Open</div>
+        <div class="function-box">Ctrl + W Word Count</div>
     </div>
 
-    <!-- Function Row -->
-    <div class="function-row">
-        <div class="function-box">
-            <span>Help</span>
-        </div>
-        <div class="function-box">
-            <span>Undo</span>
-        </div>
-        <div class="function-box">
-            <span>Save</span>
-        </div>
-        <div class="function-box">
-            <span>Open</span>
-        </div>
-        <div class="function-box">
-            <span>Align</span>
-        </div>
-        <div class="function-box">
-            <span>Exit</span>
-        </div>
-    </div>
+    <script>
+        // Save file function
+        function saveFile() {
+            const textAreaContent = document.querySelector(".text-area").innerText;
+            const blob = new Blob([textAreaContent], { type: "text/plain" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "wordstar_document.txt";
+            link.click();
+        }
+
+        // Load file function
+        function loadFile(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.querySelector(".text-area").innerText = e.target.result;
+            };
+            reader.readAsText(file);
+        }
+
+        // Word Count function
+        function wordCount() {
+            const text = document.querySelector(".text-area").innerText;
+            const words = text.split(/\s+/).filter(word => word.length > 0);
+            alert("Word Count: " + words.length);
+        }
+
+        // Attach event listeners for the buttons
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelector(".function-box:nth-child(1)").addEventListener("click", saveFile);
+
+            const fileInput = document.createElement("input");
+            fileInput.type = "file";
+            fileInput.style.display = "none";
+            document.body.appendChild(fileInput);
+
+            fileInput.addEventListener("change", loadFile);
+            document.querySelector(".function-box:nth-child(2)").addEventListener("click", () => fileInput.click());
+
+            document.querySelector(".function-box:nth-child(3)").addEventListener("click", wordCount);
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener("keydown", function(event) {
+            if (event.ctrlKey && event.key === 's') {
+                event.preventDefault();
+                saveFile();
+            } else if (event.ctrlKey && event.key === 'o') {
+                event.preventDefault();
+                document.querySelector(".function-box:nth-child(2)").click();
+            } else if (event.ctrlKey && event.key === 'w') {
+                event.preventDefault();
+                wordCount();
+            }
+        });
+    </script>
 </body>
 </html>
