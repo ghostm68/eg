@@ -304,13 +304,10 @@
   updateISSPositionAndWeather();
 </script>  
     <script>
-   document.addEventListener('DOMContentLoaded', (event) => {
+document.addEventListener('DOMContentLoaded', (event) => {
   const menuItems = document.querySelectorAll('.menu-item');
   const tabs = document.querySelectorAll('.tab');
   const editor = document.getElementById('editor');
-
-  editor.style.whiteSpace = 'pre-wrap';
-  editor.style.wordWrap = 'break-word';
 
   menuItems.forEach(item => {
     item.addEventListener('click', function() {
@@ -407,18 +404,11 @@
           {name: 'Status Bar', action: toggleStatusBar}
         ];
         break;
-      case 'tools':
+    case 'tools':
         menuItems = [
           {name: 'Mail Merge', action: mailMerge},
           {name: 'Display Page Breaks', action: displayPageBreaks},
           {name: 'Textual WYSIWYG', action: textualWYSIWYG}
-        ];
-        break;
-      case 'macro':
-        menuItems = [
-          {name: 'Record Macro', action: recordMacro},
-          {name: 'Run Macro', action: runMacro},
-          {name: 'Edit Macros', action: editMacros}
         ];
         break;
       case 'spell':
@@ -445,32 +435,32 @@
       default:
         menuItems = [{name: 'No items available', action: () => {}}];
     }
-
+    
     const menuHTML = `
       <div class="dropdown-menu" style="position: absolute; background-color: #1a1a1a; border: 1px solid #333333; z-index: 1000;">
         ${menuItems.map(item => `<div class="menu-item" style="padding: 5px 10px; cursor: pointer;">${item.name}</div>`).join('')}
       </div>
     `;
-
+    
     const existingMenu = document.querySelector('.dropdown-menu');
     if (existingMenu) {
       existingMenu.remove();
     }
-
+    
     const tab = document.querySelector(`.tab:nth-child(${Array.from(tabs).findIndex(t => t.textContent.toLowerCase() === menuName) + 1})`);
     tab.insertAdjacentHTML('afterend', menuHTML);
-
+    
     const dropdownMenu = document.querySelector('.dropdown-menu');
     dropdownMenu.style.left = `${tab.offsetLeft}px`;
     dropdownMenu.style.top = `${tab.offsetTop + tab.offsetHeight}px`;
-
+    
     dropdownMenu.querySelectorAll('.menu-item').forEach((item, index) => {
       item.addEventListener('click', function() {
         menuItems[index].action();
         dropdownMenu.remove();
       });
     });
-
+    
     document.addEventListener('click', function closeMenu(e) {
       if (!e.target.closest('.dropdown-menu') && !e.target.closest('.tab')) {
         dropdownMenu.remove();
@@ -478,7 +468,6 @@
       }
     });
   }
-
   function blockOperations() {
     const selection = window.getSelection();
     if (selection.toString().length > 0) {
@@ -490,6 +479,7 @@
           break;
         case 'move':
           document.execCommand('cut');
+          // Prompt user to place cursor where they want to move the text
           alert('Place your cursor where you want to move the text, then press Ctrl+V to paste.');
           break;
         case 'delete':
@@ -547,6 +537,7 @@
         printDocument();
         break;
       case 'print preview':
+        // You could potentially use a library like jsPDF to generate a preview
         alert('Print Preview: This feature is not fully implemented in this web version.');
         break;
       case 'page setup':
@@ -590,96 +581,6 @@
       default:
         alert('Invalid choice');
     }
-  }
-
-  function reformParagraph() {
-    alert('Paragraph reformatting: This feature would typically adjust line breaks and spacing. It\'s not fully implemented in this web version.');
-  }
-
-  let insertMode = true;
-  function toggleInsertMode() {
-    insertMode = !insertMode;
-    alert(`Insert mode ${insertMode ? 'enabled' : 'disabled'}`);
-    editor.style.cursor = insertMode ? 'text' : 'default';
-  }
-
-  function deleteOptions() {
-    const options = ['Character', 'Word', 'Line', 'Paragraph'];
-    const choice = prompt(`Delete options:\n${options.join('\n')}\nEnter your choice:`);
-    switch (choice.toLowerCase()) {
-      case 'character':
-        document.execCommand('delete');
-        break;
-      case 'word':
-        document.execCommand('delete');
-        document.execCommand('delete');
-        break;
-      case 'line':
-        document.execCommand('deleteLine');
-        break;
-      case 'paragraph':
-        document.execCommand('delete');
-        break;
-      default:
-        alert('Invalid choice');
-    }
-  }
-
-  function mailMerge() {
-    const template = editor.value;
-    const fields = prompt("Enter comma-separated field names (e.g., name,email,phone):");
-    if (!fields) return;
-    
-    const fieldArray = fields.split(',');
-    let mergedContent = '';
-
-    while (true) {
-      let values = {};
-      for (let field of fieldArray) {
-        const value = prompt(`Enter value for ${field}:`);
-        if (!value) return; // User cancelled
-        values[field] = value;
-      }
-
-      let mergedItem = template;
-      for (let field of fieldArray) {
-        mergedItem = mergedItem.replace(new RegExp(`\\{${field}\\}`, 'g'), values[field]);
-      }
-      mergedContent += mergedItem + '\n\n';
-
-      if (!confirm("Add another entry?")) break;
-    }
-
-    editor.value = mergedContent;
-  }
-
-  function displayPageBreaks() {
-    const linesPerPage = parseInt(prompt("Enter the number of lines per page:", "66")) || 66;
-    const lineHeight = parseFloat(window.getComputedStyle(editor).lineHeight);
-    const editorHeight = editor.offsetHeight;
-    const pageHeight = linesPerPage * lineHeight;
-
-    // Remove existing page break indicators
-    document.querySelectorAll('.page-break').forEach(el => el.remove());
-
-    // Add new page break indicators
-    for (let i = 1; i * pageHeight < editorHeight; i++) {
-      const pageBreak = document.createElement('div');
-      pageBreak.className = 'page-break';
-      pageBreak.style.position = 'absolute';
-      pageBreak.style.left = '0';
-      pageBreak.style.right = '0';
-      pageBreak.style.top = `${i * pageHeight}px`;
-      pageBreak.style.borderTop = '1px dashed #888';
-      pageBreak.style.height = '20px';
-      pageBreak.style.pointerEvents = 'none';
-      pageBreak.innerHTML = `<span style="background: #fff; padding: 0 5px;">Page ${i + 1}</span>`;
-      editor.parentNode.appendChild(pageBreak);
-    }
-  }
-
-  function textualWYSIWYG() {
-    alert("Textual WYSIWYG: This feature simulates print formatting. In this web version, use 'Display Page Breaks' for a similar effect.");
   }
 
   function reformParagraph() {
@@ -909,6 +810,9 @@
     }
   }
 
+  function textualWYSIWYG() {
+    alert("Textual WYSIWYG: This feature simulates print formatting. In this web version, use 'Display Page Breaks' for a similar effect.");
+  }
   // Add blinking cursor effect
   let cursorVisible = true;
   setInterval(() => {
@@ -919,7 +823,7 @@
     }
     cursorVisible = !cursorVisible;
   }, 500);
-});    
+});
 </script>
 
 </body>
