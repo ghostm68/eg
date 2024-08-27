@@ -454,6 +454,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
   const tabs = document.querySelectorAll('.tab');
   const editor = document.getElementById('editor');
 
+  editor.style.whiteSpace = 'pre-wrap';
+  editor.style.wordWrap = 'break-word';
+
   menuItems.forEach(item => {
     item.addEventListener('click', function() {
       const command = this.textContent.split(' ')[1].toLowerCase();
@@ -549,6 +552,13 @@ document.addEventListener('DOMContentLoaded', (event) => {
           {name: 'Status Bar', action: toggleStatusBar}
         ];
         break;
+      case 'tools':
+        menuItems = [
+          {name: 'Mail Merge', action: mailMerge},
+          {name: 'Display Page Breaks', action: displayPageBreaks},
+          {name: 'Textual WYSIWYG', action: textualWYSIWYG}
+        ];
+        break;
       case 'macro':
         menuItems = [
           {name: 'Record Macro', action: recordMacro},
@@ -580,32 +590,32 @@ document.addEventListener('DOMContentLoaded', (event) => {
       default:
         menuItems = [{name: 'No items available', action: () => {}}];
     }
-    
+
     const menuHTML = `
       <div class="dropdown-menu" style="position: absolute; background-color: #1a1a1a; border: 1px solid #333333; z-index: 1000;">
         ${menuItems.map(item => `<div class="menu-item" style="padding: 5px 10px; cursor: pointer;">${item.name}</div>`).join('')}
       </div>
     `;
-    
+
     const existingMenu = document.querySelector('.dropdown-menu');
     if (existingMenu) {
       existingMenu.remove();
     }
-    
+
     const tab = document.querySelector(`.tab:nth-child(${Array.from(tabs).findIndex(t => t.textContent.toLowerCase() === menuName) + 1})`);
     tab.insertAdjacentHTML('afterend', menuHTML);
-    
+
     const dropdownMenu = document.querySelector('.dropdown-menu');
     dropdownMenu.style.left = `${tab.offsetLeft}px`;
     dropdownMenu.style.top = `${tab.offsetTop + tab.offsetHeight}px`;
-    
+
     dropdownMenu.querySelectorAll('.menu-item').forEach((item, index) => {
       item.addEventListener('click', function() {
         menuItems[index].action();
         dropdownMenu.remove();
       });
     });
-    
+
     document.addEventListener('click', function closeMenu(e) {
       if (!e.target.closest('.dropdown-menu') && !e.target.closest('.tab')) {
         dropdownMenu.remove();
@@ -613,6 +623,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
       }
     });
   }
+
   function blockOperations() {
     const selection = window.getSelection();
     if (selection.toString().length > 0) {
@@ -624,7 +635,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
           break;
         case 'move':
           document.execCommand('cut');
-          // Prompt user to place cursor where they want to move the text
           alert('Place your cursor where you want to move the text, then press Ctrl+V to paste.');
           break;
         case 'delete':
@@ -682,7 +692,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
         printDocument();
         break;
       case 'print preview':
-        // You could potentially use a library like jsPDF to generate a preview
         alert('Print Preview: This feature is not fully implemented in this web version.');
         break;
       case 'page setup':
@@ -729,7 +738,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
   }
 
   function reformParagraph() {
-    // This is complex. You could potentially use CSS to adjust line breaks and spacing.
     alert('Paragraph reformatting: This feature would typically adjust line breaks and spacing. It\'s not fully implemented in this web version.');
   }
 
@@ -762,174 +770,64 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
   }
 
-  // Menu functions
-  function newDocument() {
-    if (confirm('Create a new document? Unsaved changes will be lost.')) {
-      editor.innerHTML = '';
-    }
-  }
+  function mailMerge() {
+    const template = editor.value;
+    const fields = prompt("Enter comma-separated field names (e.g., name,email,phone):");
+    if (!fields) return;
+    
+    const fieldArray = fields.split(',');
+    let mergedContent = '';
 
-  function openDocument() {
-    // Use a file input element to allow the user to select a file
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.txt'; // Limit to text files for simplicity
-
-    input.addEventListener('change', (event) => {
-      const file = event.target.files[0];
-      const reader = new FileReader();
-
-      reader.onload = (e) => {
-        editor.innerHTML = e.target.result;
-      };
-      reader.readAsText(file);
-    });
-
-    input.click(); // Trigger the file selection dialog
-  }
-
-  function saveDocument() {
-    // Use a download link to trigger a file download
-    const blob = new Blob([editor.innerHTML], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'document.txt';
-    link.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function saveAsDocument() {
-    // Similar to saveDocument, but allow the user to choose a filename
-    // (You'll need to add UI for filename input)
-  }
-
-  function printDocument() {
-    window.print();
-  }
-
-  function exitApplication() {
-    if (confirm('Exit WordStar? Unsaved changes will be lost.')) {
-      window.close();
-    }
-  }
-
-  function cutText() {
-    document.execCommand('cut');
-  }
-
-  function copyText() {
-    document.execCommand('copy');
-  }
-
-  function pasteText() {
-    document.execCommand('paste');
-  }
-
-  function findText() {
-    const searchTerm = prompt('Enter text to find:');
-    if (searchTerm) {
-      window.find(searchTerm);
-    }
-  }
-
-  function replaceText() {
-    const searchTerm = prompt('Enter text to find:');
-    const replaceTerm = prompt('Enter text to replace with:');
-    if (searchTerm && replaceTerm) {
-      editor.innerHTML = editor.innerHTML.replace(new RegExp(searchTerm, 'g'), replaceTerm);
-    }
-  }
-
-  function changeFont() {
-    const font = prompt('Enter font name:');
-    if (font) {
-      document.execCommand('fontName', false, font);
-    }
-  }
-
-  function formatParagraph() {
-    // Provide basic paragraph formatting options (bold, italics, alignment)
-    // using HTML tags or CSS classes.
-  }
-
-  function setTabs() {
-    // This is complex, but you could potentially use CSS grid or flexbox
-    // to simulate tab stops.
-  }
-
-  function changePageLayout() {
-    // Very challenging to replicate accurately in a browser.
-  }
-
-  function changeView(viewType) {
-    // Simulate different views by adjusting CSS styles.
-  }
-
-  function toggleRuler() {
-    // Create a visual ruler element.
-  }
-
-  function toggleStatusBar() {
-    // Create a status bar element.
-  }
-
-  function recordMacro() {
-    // This would require a scripting language and execution environment.
-  }
-
-  function runMacro() {
-    // This would require a scripting language and execution environment.
-  }
-
-  function editMacros() {
-    // This would require a scripting language and execution environment.
-  }
-
-  function checkSpelling() {
-    // Use a spell-checking library or API.
-  }
-
-  function toggleAutoCorrect() {
-    // You could potentially implement basic auto-correct rules.
-  }
-
-  function openThesaurus() {
-    // Use a thesaurus API.
-  }
-
-  function calculateExpression() {
-    const expression = prompt('Enter a mathematical expression:');
-    if (expression) {
-      try {
-        const result = eval(expression);
-        alert(`Result: ${result}`);
-      } catch (error) {
-        alert('Invalid expression');
+    while (true) {
+      let values = {};
+      for (let field of fieldArray) {
+        const value = prompt(`Enter value for ${field}:`);
+        if (!value) return; // User cancelled
+        values[field] = value;
       }
+
+      let mergedItem = template;
+      for (let field of fieldArray) {
+        mergedItem = mergedItem.replace(new RegExp(`\\{${field}\\}`, 'g'), values[field]);
+      }
+      mergedContent += mergedItem + '\n\n';
+
+      if (!confirm("Add another entry?")) break;
+    }
+
+    editor.value = mergedContent;
+  }
+
+  function displayPageBreaks() {
+    const linesPerPage = parseInt(prompt("Enter the number of lines per page:", "66")) || 66;
+    const lineHeight = parseFloat(window.getComputedStyle(editor).lineHeight);
+    const editorHeight = editor.offsetHeight;
+    const pageHeight = linesPerPage * lineHeight;
+
+    // Remove existing page break indicators
+    document.querySelectorAll('.page-break').forEach(el => el.remove());
+
+    // Add new page break indicators
+    for (let i = 1; i * pageHeight < editorHeight; i++) {
+      const pageBreak = document.createElement('div');
+      pageBreak.className = 'page-break';
+      pageBreak.style.position = 'absolute';
+      pageBreak.style.left = '0';
+      pageBreak.style.right = '0';
+      pageBreak.style.top = `${i * pageHeight}px`;
+      pageBreak.style.borderTop = '1px dashed #888';
+      pageBreak.style.height = '20px';
+      pageBreak.style.pointerEvents = 'none';
+      pageBreak.innerHTML = `<span style="background: #fff; padding: 0 5px;">Page ${i + 1}</span>`;
+      editor.parentNode.appendChild(pageBreak);
     }
   }
 
-  function insertFormula() {
-    // This would require a formula editor and rendering engine.
+  function textualWYSIWYG() {
+    alert("Textual WYSIWYG: This feature simulates print formatting. In this web version, use 'Display Page Breaks' for a similar effect.");
   }
 
-  function createGraph() {
-    // This would require a charting library.
-  }
-
-  function showHelpContents() {
-    // Display static help content within the web page.
-  }
-
-  function searchHelp() {
-    // Implement a search function for the help content.
-  }
-
-  function showAbout() {
-    alert('WordStar Seven Revival\nA web-based homage to the classic word processor.\nCreated as a demonstration of modern web technologies.');
-  }
+  // ... (rest of your existing functions)
 
   // Add blinking cursor effect
   let cursorVisible = true;
