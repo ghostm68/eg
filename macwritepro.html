@@ -1,0 +1,439 @@
+<html><head><base href="https://wordstar.nexus/macwritepro/"><title>LightningWrite Pro</title>
+<style>
+body, html {
+    height: 100%;
+    margin: 0;
+    font-family: 'Helvetica', sans-serif;
+    background-color: #f0f0f0;
+}
+.app-container {
+    background-color: #fff;
+    margin: 0; /* Remove top and bottom margins */
+    border: 2px solid #000;
+    box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Set height to 100% of viewport height */
+    width: 100vw; /* Set width to 100% of viewport width */
+}
+.menu-bar {
+    background-color: #e0e0e0;
+    border-bottom: 1px solid #999;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+}
+.logo {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+}
+.menu-item {
+    margin-right: 15px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: 14px;
+    padding: 5px 10px;
+    position: relative;
+}
+.menu-item:hover {
+    background-color: #d0d0d0;
+}
+.title-bar {
+    background-color: #d3d3d3;
+    border-bottom: 1px solid #999;
+    padding: 5px 10px;
+    font-weight: bold;
+    text-align: center;
+}
+.ruler-container {
+    padding: 10px 0;
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #999;
+}
+.ruler {
+    height: 30px;
+    background-color: #e0e0e0;
+    border: 1px solid #999;
+    display: flex;
+    align-items: flex-end;
+    padding: 0 10px;
+    position: relative;
+    margin: 0 10px;
+}
+.ruler-mark {
+    position: absolute;
+    bottom: 0;
+    width: 1px;
+    background-color: #999;
+}
+.ruler-mark.inch {
+    height: 24px;
+}
+.ruler-mark.half-inch {
+    height: 18px;
+}
+.ruler-mark.quarter-inch {
+    height: 12px;
+}
+.ruler-label {
+    position: absolute;
+    bottom: 30px;
+    font-size: 10px;
+    transform: translateX(-50%);
+}
+.align-buttons {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+}
+.align-button {
+    width: 30px;
+    height: 20px;
+    margin: 0 5px;
+    background-color: #e0e0e0;
+    border: 1px solid #999;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.text-area {
+    flex-grow: 1;
+    padding: 10px;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: none;
+    border: none;
+    outline: none;
+}
+.font-menu, .file-menu, .edit-menu, .style-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #fff;
+    border: 1px solid #999;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    z-index: 1000;
+}
+.font-menu.show, .file-menu.show, .edit-menu.show, .style-menu.show {
+    display: block;
+}
+.menu-option {
+    padding: 5px 10px;
+    cursor: pointer;
+}
+.menu-option:hover {
+    background-color: #f0f0f0;
+}
+.search-modal {
+    display: none;
+    position: fixed;
+    z-index: 1001;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.4);
+}
+.search-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 300px;
+}
+.search-input {
+    width: 100%;
+    padding: 5px;
+    margin-bottom: 10px;
+}
+.search-buttons {
+    display: flex;
+    justify-content: space-between;
+}
+</style>
+</head>
+<body>
+<div class="app-container">
+    <div class="menu-bar">
+        <svg class="logo" viewBox="0 0 24 24">
+            <path fill="#FFD700" d="M3.5,13.5l9-12l9,12l-18,0z"></path>
+            <path fill="#000" d="M12,3l9,12H3L12,3z M12,7.7L6.7,15h10.6L12,7.7z"></path>
+        </svg>
+        <button class="menu-item" id="fileBtn">File
+            <div class="file-menu" id="fileMenu">
+                <div class="menu-option" data-action="new">New</div>
+                <div class="menu-option" data-action="save">Save</div>
+                <div class="menu-option" data-action="open">Open</div>
+            </div>
+        </button>
+        <button class="menu-item" id="editBtn">Edit
+            <div class="edit-menu" id="editMenu">
+                <div class="menu-option" data-action="cut">Cut</div>
+                <div class="menu-option" data-action="copy">Copy</div>
+                <div class="menu-option" data-action="paste">Paste</div>
+            </div>
+        </button>
+        <button class="menu-item" id="searchBtn">Search</button>
+        <button class="menu-item" id="formatBtn">Format</button>
+        <button class="menu-item" id="fontBtn">Font
+            <div class="font-menu" id="fontMenu">
+                <div class="menu-option" data-font="Helvetica">Helvetica</div>
+                <div class="menu-option" data-font="Arial">Arial</div>
+                <div class="menu-option" data-font="Times New Roman">Times New Roman</div>
+                <div class="menu-option" data-font="Courier New">Courier New</div>
+                <div class="menu-option" data-font="SimSun">SimSun (Chinese)</div>
+                <div class="menu-option" data-font="MS Mincho">MS Mincho (Japanese)</div>
+                <div class="menu-option" data-font="Batang">Batang (Korean)</div>
+            </div>
+        </button>
+        <button class="menu-item" id="styleBtn">Style
+            <div class="style-menu" id="styleMenu">
+                <div class="menu-option" data-style="bold">Bold</div>
+                <div class="menu-option" data-style="italic">Italic</div>
+                <div class="menu-option" data-style="underline">Underline</div>
+            </div>
+        </button>
+    </div>
+    <div class="title-bar">
+        Untitled
+    </div>
+    <div class="ruler-container">
+        <div class="ruler" id="ruler"></div>
+        <div class="align-buttons">
+            <button class="align-button" id="alignLeft">&#8826;&#8826;&#8826;</button>
+            <button class="align-button" id="alignCenter">&#8741;&#8741;&#8741;</button>
+            <button class="align-button" id="alignRight">&#8827;&#8827;&#8827;</button>
+            <button class="align-button" id="alignJustify">&#9776;&#9776;&#9776;</button>
+        </div>
+    </div>
+    <textarea class="text-area" id="textArea" placeholder="Start typing here..."></textarea>
+</div>
+
+<div id="searchModal" class="search-modal">
+    <div class="search-content">
+        <input type="text" id="searchInput" class="search-input" placeholder="Find word...">
+        <div class="search-buttons">
+            <button id="findNextBtn">Find Next</button>
+            <button id="closeSearchBtn">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', (event) => {
+    const textArea = document.getElementById('textArea');
+    const ruler = document.getElementById('ruler');
+    const fileBtn = document.getElementById('fileBtn');
+    const editBtn = document.getElementById('editBtn');
+    const searchBtn = document.getElementById('searchBtn');
+    const formatBtn = document.getElementById('formatBtn');
+    const fontBtn = document.getElementById('fontBtn');
+    const fontMenu = document.getElementById('fontMenu');
+    const styleBtn = document.getElementById('styleBtn');
+    const styleMenu = document.getElementById('styleMenu');
+    const fileMenu = document.getElementById('fileMenu');
+    const editMenu = document.getElementById('editMenu');
+    const alignLeft = document.getElementById('alignLeft');
+    const alignCenter = document.getElementById('alignCenter');
+    const alignRight = document.getElementById('alignRight');
+    const alignJustify = document.getElementById('alignJustify');
+    const searchModal = document.getElementById('searchModal');
+    const searchInput = document.getElementById('searchInput');
+    const findNextBtn = document.getElementById('findNextBtn');
+    const closeSearchBtn = document.getElementById('closeSearchBtn');
+    const titleBar = document.querySelector('.title-bar');
+
+    let lastSearchIndex = -1;
+    let currentFileName = 'Untitled';
+
+    // Create ruler markings
+    const rulerWidth = 780;
+    const pixelsPerInch = 96;
+
+    for (let i = 0; i <= rulerWidth; i += pixelsPerInch / 16) {
+        const mark = document.createElement('div');
+        mark.style.left = `${i}px`;
+        
+        if (i % pixelsPerInch === 0) {
+            mark.className = 'ruler-mark inch';
+            const label = document.createElement('span');
+            label.className = 'ruler-label';
+            label.textContent = i / pixelsPerInch;
+            label.style.left = `${i}px`;
+            ruler.appendChild(label);
+        } else if (i % (pixelsPerInch / 2) === 0) {
+            mark.className = 'ruler-mark half-inch';
+        } else if (i % (pixelsPerInch / 4) === 0) {
+            mark.className = 'ruler-mark quarter-inch';
+        } else {
+            mark.className = 'ruler-mark';
+        }
+        
+        ruler.appendChild(mark);
+    }
+
+    function updateTitle(newTitle) {
+        currentFileName = newTitle;
+        titleBar.textContent = currentFileName;
+        document.title = `${currentFileName} - LightningWrite Pro`;
+    }
+
+    ruler.addEventListener('click', (e) => {
+        const rect = ruler.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        textArea.style.textIndent = `${x}px`;
+    });
+
+    fileBtn.addEventListener('click', () => {
+        fileMenu.classList.toggle('show');
+    });
+
+    editBtn.addEventListener('click', () => {
+        editMenu.classList.toggle('show');
+    });
+
+    searchBtn.addEventListener('click', () => {
+        searchModal.style.display = 'block';
+        searchInput.focus();
+    });
+
+    formatBtn.addEventListener('click', () => {
+        textArea.style.fontWeight = textArea.style.fontWeight === 'bold' ? 'normal' : 'bold';
+    });
+
+    fontBtn.addEventListener('click', () => {
+        fontMenu.classList.toggle('show');
+    });
+
+    styleBtn.addEventListener('click', () => {
+        styleMenu.classList.toggle('show');
+    });
+
+    fontMenu.addEventListener('click', (e) => {
+        if (e.target.classList.contains('menu-option')) {
+            textArea.style.fontFamily = e.target.dataset.font;
+            fontMenu.classList.remove('show');
+        }
+    });
+
+    styleMenu.addEventListener('click', (e) => {
+        if (e.target.classList.contains('menu-option')) {
+            switch (e.target.dataset.style) {
+                case 'bold':
+                    textArea.style.fontWeight = textArea.style.fontWeight === 'bold' ? 'normal' : 'bold';
+                    break;
+                case 'italic':
+                    textArea.style.fontStyle = textArea.style.fontStyle === 'italic' ? 'normal' : 'italic';
+                    break;
+                case 'underline':
+                    textArea.style.textDecoration = textArea.style.textDecoration === 'underline' ? 'none' : 'underline';
+                    break;
+            }
+            styleMenu.classList.remove('show');
+        }
+    });
+
+    fileMenu.addEventListener('click', (e) => {
+        if (e.target.classList.contains('menu-option')) {
+            switch (e.target.dataset.action) {
+                case 'new':
+                    textArea.value = '';
+                    updateTitle('Untitled');
+                    break;
+                case 'save':
+                    const blob = new Blob([textArea.value], {type: 'text/plain'});
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = currentFileName + '.txt';
+                    a.click();
+                    break;
+                case 'open':
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.txt';
+                    input.onchange = e => {
+                        const file = e.target.files[0];
+                        const reader = new FileReader();
+                        reader.onload = readerEvent => {
+                            textArea.value = readerEvent.target.result;
+                            updateTitle(file.name.replace('.txt', ''));
+                        }
+                        reader.readAsText(file);
+                    }
+                    input.click();
+                    break;
+            }
+            fileMenu.classList.remove('show');
+        }
+    });
+
+    editMenu.addEventListener('click', (e) => {
+        if (e.target.classList.contains('menu-option')) {
+            switch (e.target.dataset.action) {
+                case 'cut':
+                    document.execCommand('cut');
+                    break;
+                case 'copy':
+                    document.execCommand('copy');
+                    break;
+                case 'paste':
+                    document.execCommand('paste');
+                    break;
+            }
+            editMenu.classList.remove('show');
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!fileBtn.contains(e.target)) fileMenu.classList.remove('show');
+        if (!editBtn.contains(e.target)) editMenu.classList.remove('show');
+        if (!fontBtn.contains(e.target)) fontMenu.classList.remove('show');
+        if (!styleBtn.contains(e.target)) styleMenu.classList.remove('show');
+    });
+
+    alignLeft.addEventListener('click', () => textArea.style.textAlign = 'left');
+    alignCenter.addEventListener('click', () => textArea.style.textAlign = 'center');
+    alignRight.addEventListener('click', () => textArea.style.textAlign = 'right');
+    alignJustify.addEventListener('click', () => textArea.style.textAlign = 'justify');
+
+    findNextBtn.addEventListener('click', findNext);
+    closeSearchBtn.addEventListener('click', () => {
+        searchModal.style.display = 'none';
+        lastSearchIndex = -1;
+    });
+
+    searchInput.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') {
+            findNext();
+        }
+    });
+
+    function findNext() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const text = textArea.value.toLowerCase();
+        let searchIndex = text.indexOf(searchTerm, lastSearchIndex + 1);
+
+        if (searchIndex === -1) {
+            // If not found from the last position, start from the beginning
+            searchIndex = text.indexOf(searchTerm);
+        }
+
+        if (searchIndex !== -1) {
+            textArea.setSelectionRange(searchIndex, searchIndex + searchTerm.length);
+            textArea.focus();
+            lastSearchIndex = searchIndex;
+        } else {
+            alert('No more matches found');
+            lastSearchIndex = -1;
+        }
+    }
+
+    // Initialize the title
+    updateTitle('Untitled');
+});
+</script>
+</body></html>
