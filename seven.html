@@ -454,37 +454,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
   const tabs = document.querySelectorAll('.tab');
   const editor = document.getElementById('editor');
 
-  // Initialize WYSIWYG toolbar
-  const toolbar = document.createElement('div');
-  toolbar.id = 'wysiwyg-toolbar';
-  toolbar.innerHTML = `
-    <button data-command="bold" title="Bold"><strong>B</strong></button>
-    <button data-command="italic" title="Italic"><em>I</em></button>
-    <button data-command="underline" title="Underline"><u>U</u></button>
-    <select data-command="fontName">
-      <option value="Arial">Arial</option>
-      <option value="Helvetica">Helvetica</option>
-      <option value="Times New Roman">Times New Roman</option>
-      <option value="Courier">Courier</option>
-    </select>
-    <select data-command="fontSize">
-      ${[1, 2, 3, 4, 5, 6, 7].map(size => `<option value="${size}">${size}</option>`).join('')}
-    </select>
-  `;
-  editor.parentNode.insertBefore(toolbar, editor);
-
-  // WYSIWYG toolbar event listeners
-  toolbar.querySelectorAll('button, select').forEach(element => {
-    element.addEventListener('click', function(e) {
-      const command = this.dataset.command;
-      if (command === 'fontName' || command === 'fontSize') {
-        document.execCommand(command, false, this.value);
-      } else {
-        document.execCommand(command, false, null);
-      }
-    });
-  });
-
   menuItems.forEach(item => {
     item.addEventListener('click', function() {
       const command = this.textContent.split(' ')[1].toLowerCase();
@@ -608,13 +577,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
           {name: 'About', action: showAbout}
         ];
         break;
-      case 'tools':
-        menuItems = [
-          {name: 'Lorem Ipsum', action: insertLoremIpsum},
-          {name: 'Word Count', action: showWordCount},
-          {name: 'Toggle ReadOnly', action: toggleReadOnly}
-        ];
-        break;
       default:
         menuItems = [{name: 'No items available', action: () => {}}];
     }
@@ -651,7 +613,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
       }
     });
   }
-
   function blockOperations() {
     const selection = window.getSelection();
     if (selection.toString().length > 0) {
@@ -663,6 +624,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
           break;
         case 'move':
           document.execCommand('cut');
+          // Prompt user to place cursor where they want to move the text
           alert('Place your cursor where you want to move the text, then press Ctrl+V to paste.');
           break;
         case 'delete':
@@ -720,6 +682,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         printDocument();
         break;
       case 'print preview':
+        // You could potentially use a library like jsPDF to generate a preview
         alert('Print Preview: This feature is not fully implemented in this web version.');
         break;
       case 'page setup':
@@ -766,6 +729,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
   }
 
   function reformParagraph() {
+    // This is complex. You could potentially use CSS to adjust line breaks and spacing.
     alert('Paragraph reformatting: This feature would typically adjust line breaks and spacing. It\'s not fully implemented in this web version.');
   }
 
@@ -798,6 +762,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
   }
 
+  // Menu functions
   function newDocument() {
     if (confirm('Create a new document? Unsaved changes will be lost.')) {
       editor.innerHTML = '';
@@ -805,9 +770,10 @@ document.addEventListener('DOMContentLoaded', (event) => {
   }
 
   function openDocument() {
+    // Use a file input element to allow the user to select a file
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.txt';
+    input.accept = '.txt'; // Limit to text files for simplicity
 
     input.addEventListener('change', (event) => {
       const file = event.target.files[0];
@@ -819,10 +785,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
       reader.readAsText(file);
     });
 
-    input.click();
+    input.click(); // Trigger the file selection dialog
   }
 
   function saveDocument() {
+    // Use a download link to trigger a file download
     const blob = new Blob([editor.innerHTML], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
 
@@ -834,17 +801,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
   }
 
   function saveAsDocument() {
-    const filename = prompt('Enter filename:', 'document.txt');
-    if (filename) {
-      const blob = new Blob([editor.innerHTML], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      link.click();
-      URL.revokeObjectURL(url);
-    }
+    // Similar to saveDocument, but allow the user to choose a filename
+    // (You'll need to add UI for filename input)
   }
 
   function printDocument() {
@@ -890,131 +848,55 @@ document.addEventListener('DOMContentLoaded', (event) => {
       document.execCommand('fontName', false, font);
     }
   }
-function formatParagraph() {
-    const options = ['Align Left', 'Align Center', 'Align Right', 'Justify'];
-    const choice = prompt(`Paragraph formatting options:\n${options.join('\n')}\nEnter your choice:`);
-    switch (choice.toLowerCase()) {
-      case 'align left':
-        document.execCommand('justifyLeft');
-        break;
-      case 'align center':
-        document.execCommand('justifyCenter');
-        break;
-      case 'align right':
-        document.execCommand('justifyRight');
-        break;
-      case 'justify':
-        document.execCommand('justifyFull');
-        break;
-      default:
-        alert('Invalid choice');
-    }
+
+  function formatParagraph() {
+    // Provide basic paragraph formatting options (bold, italics, alignment)
+    // using HTML tags or CSS classes.
   }
 
   function setTabs() {
-    alert('Setting tabs is not implemented in this web version. Consider using CSS for spacing.');
+    // This is complex, but you could potentially use CSS grid or flexbox
+    // to simulate tab stops.
   }
 
   function changePageLayout() {
-    alert('Changing page layout is not fully implemented in this web version.');
+    // Very challenging to replicate accurately in a browser.
   }
 
   function changeView(viewType) {
-    switch(viewType) {
-      case 'normal':
-        editor.style.width = '100%';
-        editor.style.height = '600px';
-        editor.style.padding = '10px';
-        break;
-      case 'page':
-        editor.style.width = '8.5in';
-        editor.style.height = '11in';
-        editor.style.padding = '1in';
-        editor.style.border = '1px solid #ccc';
-        editor.style.boxShadow = '0 0 10px rgba(0,0,0,0.1)';
-        break;
-      default:
-        alert('Invalid view type');
-    }
+    // Simulate different views by adjusting CSS styles.
   }
 
-  let rulerVisible = false;
   function toggleRuler() {
-    rulerVisible = !rulerVisible;
-    let ruler = document.getElementById('ruler');
-    if (rulerVisible) {
-      if (!ruler) {
-        ruler = document.createElement('div');
-        ruler.id = 'ruler';
-        ruler.style.height = '20px';
-        ruler.style.background = 'linear-gradient(to right, #ccc 1px, transparent 1px) repeat-x';
-        ruler.style.backgroundSize = '1ch 100%';
-        ruler.style.marginBottom = '5px';
-        editor.parentNode.insertBefore(ruler, editor);
-      }
-      ruler.style.display = 'block';
-    } else if (ruler) {
-      ruler.style.display = 'none';
-    }
+    // Create a visual ruler element.
   }
 
-  let statusBarVisible = false;
   function toggleStatusBar() {
-    statusBarVisible = !statusBarVisible;
-    let statusBar = document.getElementById('status-bar');
-    if (statusBarVisible) {
-      if (!statusBar) {
-        statusBar = document.createElement('div');
-        statusBar.id = 'status-bar';
-        statusBar.style.height = '20px';
-        statusBar.style.backgroundColor = '#f0f0f0';
-        statusBar.style.padding = '5px';
-        statusBar.style.marginTop = '5px';
-        editor.parentNode.appendChild(statusBar);
-      }
-      statusBar.style.display = 'block';
-      updateStatusBar();
-    } else if (statusBar) {
-      statusBar.style.display = 'none';
-    }
-  }
-
-  function updateStatusBar() {
-    const statusBar = document.getElementById('status-bar');
-    if (statusBar) {
-      const wordCount = editor.innerText.split(/\s+/).filter(word => word.length > 0).length;
-      const charCount = editor.innerText.length;
-      statusBar.textContent = `Words: ${wordCount} | Characters: ${charCount}`;
-    }
+    // Create a status bar element.
   }
 
   function recordMacro() {
-    alert('Macro recording is not implemented in this web version.');
+    // This would require a scripting language and execution environment.
   }
 
   function runMacro() {
-    alert('Running macros is not implemented in this web version.');
+    // This would require a scripting language and execution environment.
   }
 
   function editMacros() {
-    alert('Editing macros is not implemented in this web version.');
+    // This would require a scripting language and execution environment.
   }
 
   function checkSpelling() {
-    alert('Spell checking is not implemented in this web version. Consider using browser-based spell checking.');
+    // Use a spell-checking library or API.
   }
 
   function toggleAutoCorrect() {
-    alert('Auto-correct is not implemented in this web version.');
+    // You could potentially implement basic auto-correct rules.
   }
 
   function openThesaurus() {
-    const word = window.getSelection().toString().trim();
-    if (word) {
-      window.open(`https://www.thesaurus.com/browse/${encodeURIComponent(word)}`, '_blank');
-    } else {
-      alert('Please select a word to look up in the thesaurus.');
-    }
+    // Use a thesaurus API.
   }
 
   function calculateExpression() {
@@ -1030,43 +912,23 @@ function formatParagraph() {
   }
 
   function insertFormula() {
-    alert('Formula insertion is not implemented in this web version.');
+    // This would require a formula editor and rendering engine.
   }
 
   function createGraph() {
-    alert('Graph creation is not implemented in this web version.');
+    // This would require a charting library.
   }
 
   function showHelpContents() {
-    alert('WordStar Seven Revival Help\n\nThis is a web-based homage to the classic word processor.\nUse the menus at the top to access various features.\nMost features are simulated and may not function exactly like the original WordStar.');
+    // Display static help content within the web page.
   }
 
   function searchHelp() {
-    const searchTerm = prompt('Enter a term to search in help:');
-    if (searchTerm) {
-      alert(`Search results for "${searchTerm}" in help:\nNo results found. This is a simulated help system.`);
-    }
+    // Implement a search function for the help content.
   }
 
   function showAbout() {
     alert('WordStar Seven Revival\nA web-based homage to the classic word processor.\nCreated as a demonstration of modern web technologies.');
-  }
-
-  function insertLoremIpsum() {
-    const loremIpsum = "More people die every year as a result of the war against drugs than die from what we call, generically, overdosing. These fatalities include, perhaps most prominently, drug merchants who compete for commercial territory, but include also people who are robbed and killed by those desperate for money to buy the drug to which they have become addicted. This is perhaps the moment to note that the pharmaceutical cost of cocaine and heroin is approximately 2 per cent of the street price of those drugs. Since a cocaine addict can spend as much as $1,000 per week to sustain his habit, he would need to come up with that $1,000. The approximate fencing cost of stolen goods is 80 per cent, so that to come up with $1,000 can require stealing $5,000 worth of jewels, cars, whatever. We can see that at free-market rates, $20 per week would provide the addict with the cocaine which, in this wartime drug situation, requires of him $1,000.";
-    document.execCommand('insertText', false, loremIpsum);
-  }
-
-  function showWordCount() {
-    const text = editor.innerText;
-    const wordCount = text.split(/\s+/).filter(word => word.length > 0).length;
-    const charCount = text.length;
-    alert(`Word count: ${wordCount}\nCharacter count: ${charCount}`);
-  }
-
-  function toggleReadOnly() {
-    editor.contentEditable = editor.contentEditable === 'true' ? 'false' : 'true';
-    alert(`Read-only mode ${editor.contentEditable === 'false' ? 'enabled' : 'disabled'}`);
   }
 
   // Add blinking cursor effect
@@ -1079,361 +941,7 @@ function formatParagraph() {
     }
     cursorVisible = !cursorVisible;
   }, 500);
-
-  // Event listener for updating status bar 
-  editor.addEventListener('input', updateStatusBar);  
 });
-
-  // Initialize the editor with some default content
-  editor.innerHTML = '<p>Slide this frame out, to fit as needed. Version-control-3, 2nd environment. (Some features are still under construction) Welcome to WordStar Nexus Seven! A writing space. Enjoy the feel of the classic word processing preferred by William F Buckley jr. now with modern web technologies. (^=ctrl...the map is tracking the international space station in real time...)</p>';
-
-  // Initialize the status bar
-  toggleStatusBar();
-
-  // Add event listener for window resize to adjust the editor layout
-  window.addEventListener('resize', () => {
-    if (editor.style.width === '8.5in') {  // If in page layout view
-      changeView('page');  // Readjust the layout
-    }
-  });
-
-  // Add event listener for beforeunload to warn about unsaved changes
-  window.addEventListener('beforeunload', (event) => {
-    if (editor.innerHTML !== '<h1>Welcome to WordStar Seven Revival</h1><p>Start typing your document here...</p>') {
-      event.preventDefault();  // Cancel the event
-      event.returnValue = '';  // Chrome requires returnValue to be set
-    }
-  });
-
-  // Function to handle keyboard shortcuts
-  function handleKeyboardShortcut(e) {
-    if (e.ctrlKey) {
-      switch(e.key.toLowerCase()) {
-        case 's':
-          e.preventDefault();
-          saveDocument();
-          break;
-        case 'o':
-          e.preventDefault();
-          openDocument();
-          break;
-        case 'p':
-          e.preventDefault();
-          printDocument();
-          break;
-        case 'f':
-          e.preventDefault();
-          findText();
-          break;
-        case 'h':
-          e.preventDefault();
-          replaceText();
-          break;
-        // Add more shortcuts as needed
-      }
-    }
-  }
-
-  // Add event listener for keyboard shortcuts
-  document.addEventListener('keydown', handleKeyboardShortcut);
-
-  // Function to handle drag and drop file opening
-  function handleDrop(e) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        editor.innerHTML = event.target.result;
-        updateStatusBar();
-      };
-      reader.readAsText(files[0]);
-    }
-  }
-
-  // Add event listeners for drag and drop
-  editor.addEventListener('dragover', (e) => e.preventDefault());
-  editor.addEventListener('drop', handleDrop);
-
-  // Function to auto-save content to local storage
-  function autoSave() {
-    localStorage.setItem('wordstarContent', editor.innerHTML);
-  }
-
-  // Set up auto-save interval
-  setInterval(autoSave, 30000);  // Auto-save every 30 seconds
-
-  // Load content from local storage on startup
-  const savedContent = localStorage.getItem('wordstarContent');
-  if (savedContent) {
-    editor.innerHTML = savedContent;
-    updateStatusBar();
-  }
-
-console.log('WordStar Seven Revival initialized successfully!');
-});
-
-// Performance optimization: Debounce function for handlers that might fire rapidly
-function debounce(func, wait) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
-
-// Debounced version of updateStatusBar
-const debouncedUpdateStatusBar = debounce(updateStatusBar, 250);
-
-// Replace the original event listener with the debounced version
-editor.removeEventListener('input', updateStatusBar);
-editor.addEventListener('input', debouncedUpdateStatusBar);
-
-// Add undo/redo functionality
-let undoStack = [];
-let redoStack = [];
-
-function saveState() {
-  undoStack.push(editor.innerHTML);
-  redoStack = [];
-  if (undoStack.length > 50) undoStack.shift(); // Limit stack size
-}
-
-function undo() {
-  if (undoStack.length > 1) {
-    redoStack.push(undoStack.pop());
-    editor.innerHTML = undoStack[undoStack.length - 1];
-    debouncedUpdateStatusBar();
-  }
-}
-
-function redo() {
-  if (redoStack.length > 0) {
-    undoStack.push(redoStack.pop());
-    editor.innerHTML = undoStack[undoStack.length - 1];
-    debouncedUpdateStatusBar();
-  }
-}
-
-editor.addEventListener('input', saveState);
-
-// Add keyboard shortcuts for undo/redo
-document.addEventListener('keydown', (e) => {
-  if (e.ctrlKey && e.key === 'z') {
-    e.preventDefault();
-    undo();
-  } else if (e.ctrlKey && e.key === 'y') {
-    e.preventDefault();
-    redo();
-  }
-});
-
-// Error handling
-window.addEventListener('error', (event) => {
-  console.error('An error occurred:', event.error);
-  alert('An error occurred. Please check the console for more details.');
-});
-
-// Add a simple plugin system
-const plugins = [];
-
-function registerPlugin(name, init) {
-  plugins.push({ name, init });
-}
-
-function initializePlugins() {
-  plugins.forEach(plugin => {
-    try {
-      plugin.init(editor);
-      console.log(`Plugin ${plugin.name} initialized successfully.`);
-    } catch (error) {
-      console.error(`Failed to initialize plugin ${plugin.name}:`, error);
-    }
-  });
-}
-
-// Example plugin: Word counter
-registerPlugin('wordCounter', (editor) => {
-  const counter = document.createElement('div');
-  counter.id = 'word-counter';
-  counter.style.position = 'fixed';
-  counter.style.bottom = '10px';
-  counter.style.right = '10px';
-  counter.style.background = '#f0f0f0';
-  counter.style.padding = '5px';
-  counter.style.borderRadius = '5px';
-  document.body.appendChild(counter);
-
-  function updateCounter() {
-    const wordCount = editor.innerText.split(/\s+/).filter(word => word.length > 0).length;
-    counter.textContent = `Words: ${wordCount}`;
-  }
-
-  editor.addEventListener('input', debounce(updateCounter, 250));
-  updateCounter(); // Initial count
-});
-
-// Initialize plugins
-initializePlugins();
-
-console.log('WordStar Seven Revival extended features loaded.');
-
-// Cleanup function to be called when the application is closed
-function cleanup() {
-  // Save the current document state
-  localStorage.setItem('wordstarContent', editor.innerHTML);
-  
-  // Clear any running intervals
-  clearInterval(autoSaveInterval);
-  
-  // Remove event listeners
-  window.removeEventListener('beforeunload', beforeUnloadHandler);
-  editor.removeEventListener('input', debouncedUpdateStatusBar);
-  document.removeEventListener('keydown', handleKeyboardShortcut);
-  
-  console.log('WordStar Seven Revival cleanup completed.');
-}
-
-// Handler for beforeunload event
-function beforeUnloadHandler(event) {
-  cleanup();
-  // The following line is for browsers that don't support the standard beforeunload behavior
-  event.returnValue = '';
-}
-
-// Add the beforeunload event listener
-window.addEventListener('beforeunload', beforeUnloadHandler);
-
-// Easter egg: Konami code
-let konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
-let konamiIndex = 0;
-
-document.addEventListener('keydown', (e) => {
-  if (e.key === konamiCode[konamiIndex]) {
-    konamiIndex++;
-    if (konamiIndex === konamiCode.length) {
-      activateEasterEgg();
-      konamiIndex = 0;
-    }
-  } else {
-    konamiIndex = 0;
-  }
-});
-
-function activateEasterEgg() {
-  alert('Congratulations! You've unlocked the secret WordStar mode!');
-  document.body.style.fontFamily = 'Courier, monospace';
-  editor.style.backgroundColor = '#000';
-  editor.style.color = '#0f0';
-  // Add more retro styling as desired
-}
-
-// Advanced feature: Collaborative editing setup (simplified version)
-function setupCollaborativeEditing() {
-  const collaborationServer = 'wss://your-collaboration-server.com';
-  let ws;
-
-  try {
-    ws = new WebSocket(collaborationServer);
-
-    ws.onopen = () => {
-      console.log('Connected to collaboration server');
-    };
-
-    ws.onmessage = (event) => {
-      const change = JSON.parse(event.data);
-      applyRemoteChange(change);
-    };
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
-    ws.onclose = () => {
-      console.log('Disconnected from collaboration server');
-    };
-
-    editor.addEventListener('input', () => {
-      const change = captureLocalChange();
-      ws.send(JSON.stringify(change));
-    });
-
-  } catch (error) {
-    console.error('Failed to setup collaborative editing:', error);
-  }
-}
-
-function captureLocalChange() {
-  // Implement logic to capture local changes
-  // This is a placeholder and would need a proper implementation
-  return { type: 'change', content: editor.innerHTML };
-}
-
-function applyRemoteChange(change) {
-  // Implement logic to apply remote changes
-  // This is a placeholder and would need a proper implementation
-  if (change.type === 'change') {
-    editor.innerHTML = change.content;
-  }
-}
-
-// Uncomment the following line to enable collaborative editing
-// setupCollaborativeEditing();
-
-// Final initialization
-document.fonts.ready.then(() => {
-  // Ensure all fonts are loaded before final rendering
-  editor.style.visibility = 'visible';
-  console.log('WordStar Seven Revival fonts loaded and editor visible.');
-});
-
-// Add a custom right-click context menu
-editor.addEventListener('contextmenu', (e) => {
-  e.preventDefault();
-  const contextMenu = document.createElement('div');
-  contextMenu.id = 'custom-context-menu';
-  contextMenu.style.position = 'fixed';
-  contextMenu.style.top = `${e.clientY}px`;
-  contextMenu.style.left = `${e.clientX}px`;
-  contextMenu.style.backgroundColor = '#f0f0f0';
-  contextMenu.style.border = '1px solid #999';
-  contextMenu.style.padding = '5px';
-  contextMenu.style.zIndex = '1000';
-
-  const menuItems = [
-    { text: 'Cut', action: () => document.execCommand('cut') },
-    { text: 'Copy', action: () => document.execCommand('copy') },
-    { text: 'Paste', action: () => document.execCommand('paste') },
-    { text: 'Select All', action: () => document.execCommand('selectAll') },
-  ];
-
-  menuItems.forEach(item => {
-    const menuItem = document.createElement('div');
-    menuItem.textContent = item.text;
-    menuItem.style.cursor = 'pointer';
-    menuItem.style.padding = '5px';
-    menuItem.addEventListener('click', () => {
-      item.action();
-      contextMenu.remove();
-    });
-    contextMenu.appendChild(menuItem);
-  });
-
-  document.body.appendChild(contextMenu);
-
-  document.addEventListener('click', function removeMenu() {
-    contextMenu.remove();
-    document.removeEventListener('click', removeMenu);
-  });
-});
-
-console.log('WordStar Seven Revival initialization complete. Ready for use!');
 </script>
 
 </body>
