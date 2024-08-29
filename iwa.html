@@ -93,7 +93,9 @@
             <button onclick="formatText('italic')">Italic</button>
             <button onclick="formatText('underline')">Underline</button>
             <button onclick="saveDocument()">Save</button>
-            <button onclick="openDocument()">Open</button>
+            <button id="uploadButton">Upload File</button>
+<input type="file" id="fileInput" accept=".txt, .rtf, .html" style="display: none;">
+
         </div>
         <div contenteditable="true" id="text-editor" class="text-editor">
             Start typing here...
@@ -117,29 +119,66 @@ function formatText(command) {
     document.execCommand(command, false, null);
 }
 
-function saveDocument() {
-    const text = document.getElementById('text-editor').innerHTML;
-    const blob = new Blob([text], { type: 'text/html' });
+function saveFile(content, format) {
+    let filename = "untitled";
+    let mimeType = "text/plain";
+    let fileExtension = ".txt";
+
+    // Adjust MIME type and file extension based on the selected format
+    if (format === 'rtf') {
+        mimeType = "application/rtf";
+        fileExtension = ".rtf";
+    } else if (format === 'html') {
+        mimeType = "text/html";
+        fileExtension = ".html";
+    }
+
+    // Create a blob with the correct MIME type
+    const blob = new Blob([content], { type: mimeType });
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'document.html';
+    
+    link.href = window.URL.createObjectURL(blob);
+    link.download = filename + fileExtension;
     link.click();
 }
 
-function openDocument() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'text/html';
-    input.onchange = function(event) {
-        const file = event.target.files[0];
+document.getElementById('saveButton').addEventListener('click', function() {
+    const content = document.getElementById('textEditor').value;
+
+    // Prompt user to select the format
+    let format = prompt("Enter the format to save as (txt, rtf, html):", "txt");
+
+    // Validate the format
+    if (format !== 'txt' && format !== 'rtf' && format !== 'html') {
+        alert("Invalid format. Saving as .txt by default.");
+        format = 'txt';
+    }
+
+    saveFile(content, format);
+});
+
+
+document.getElementById('uploadButton').addEventListener('click', function() {
+    document.getElementById('fileInput').click();
+});
+
+document.getElementById('fileInput').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+
+    if (file) {
         const reader = new FileReader();
+        
         reader.onload = function(e) {
-            document.getElementById('text-editor').innerHTML = e.target.result;
+            document.getElementById('textEditor').value = e.target.result;
         };
+        
         reader.readAsText(file);
-    };
-    input.click();
-}
+    } else {
+        alert("No file selected.");
+    }
+});
+
+
  
     </script>
 </body>
