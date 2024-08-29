@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IBM Writing Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+  <style>
+    body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f8ff;
+    color: #000;
+    margin: 0;
+    padding: 0;
+}
+
+.splash-screen {
+    text-align: center;
+    padding-top: 20%;
+}
+
+.menu-options p {
+    margin: 10px 0;
+}
+
+.footer {
+    margin-top: 20px;
+    font-style: italic;
+}
+
+.editor-container {
+    padding: 20px;
+}
+
+.hidden {
+    display: none;
+}
+
+.toolbar {
+    background-color: #0047ab;
+    color: white;
+    padding: 10px;
+}
+
+.toolbar button {
+    background-color: white;
+    border: 1px solid #0047ab;
+    color: #0047ab;
+    padding: 5px 10px;
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+.toolbar button:hover {
+    background-color: #0047ab;
+    color: white;
+}
+
+.text-editor {
+    border: 1px solid #0047ab;
+    padding: 10px;
+    min-height: 400px;
+    margin-top: 10px;
+    background-color: white;
+}
+
+  </style>
+<body>
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="splash-screen">
+        <h1>IBM Writing Assistant</h1>
+        <div class="menu-options">
+            <p>1. New Document</p>
+            <p>2. Open Document</p>
+            <p>3. Save Document</p>
+            <p>4. Print Document</p>
+            <p>5. Spell Check</p>
+            <p>6. Thesaurus</p>
+            <p>7. Format Options</p>
+            <p>8. Help</p>
+            <p>9. Exit</p>
+        </div>
+        <div class="footer">
+            <p>Select a number to continue...</p>
+        </div>
+    </div>
+
+    <!-- Main Editor -->
+    <div id="editor-container" class="editor-container hidden">
+        <div class="toolbar">
+            <button onclick="formatText('bold')">Bold</button>
+            <button onclick="formatText('italic')">Italic</button>
+            <button onclick="formatText('underline')">Underline</button>
+            <button onclick="saveDocument()">Save</button>
+            <button onclick="openDocument()">Open</button>
+        </div>
+        <div contenteditable="true" id="text-editor" class="text-editor">
+            Start typing here...
+        </div>
+    </div>
+
+    <script>
+     document.addEventListener('DOMContentLoaded', function() {
+    const splashScreen = document.getElementById('splash-screen');
+    const editorContainer = document.getElementById('editor-container');
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key >= '1' && e.key <= '9') {
+            splashScreen.classList.add('hidden');
+            editorContainer.classList.remove('hidden');
+        }
+    });
+});
+
+function formatText(command) {
+    document.execCommand(command, false, null);
+}
+
+function saveDocument() {
+    const text = document.getElementById('text-editor').innerHTML;
+    const blob = new Blob([text], { type: 'text/html' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'document.html';
+    link.click();
+}
+
+function openDocument() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'text/html';
+    input.onchange = function(event) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('text-editor').innerHTML = e.target.result;
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+}
+ 
+    </script>
+</body>
+</html>
