@@ -1,37 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Space</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            color: #333;
-        }
-        h1 {
-            color: #2c3e50;
-        }
-        gradio-app {
-            width: 100%;
-            max-width: 800px;
-            height: 600px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-    </style>
-    <script type="module" src="https://gradio.s3-us-west-2.amazonaws.com/4.36.1/gradio.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rotating Word Processor with Background</title>
+  <style>
+    /* Basic page styles */
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      height: 100%;
+      overflow: auto;
+    }
+
+    /* Background image or video */
+    .background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      object-fit: cover;
+    }
+
+    /* Styles for the rotating text area */
+    .rotating-container {
+      width: 60%;
+      height: 200px;
+      margin: 20px auto;
+      position: relative;
+    }
+
+    #rotating-input {
+      width: 100%;
+      height: 100%;
+      padding: 10px;
+      font-size: 18px;
+      background-color: black;
+      color: white;
+      border: none;
+      outline: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    /* Styles for the stable text area */
+    .stable-container {
+      width: 60%;
+      margin: 20px auto;
+      position: relative;
+    }
+
+    #stable-input {
+      width: 100%;
+      height: 200px;
+      padding: 10px;
+      font-size: 18px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
+
+    /* Styles for the toolbar */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding: 10px;
+      background-color: #eee;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .toolbar button {
+      background-color: #ddd;
+      border: 1px solid #ccc;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+
+    .toolbar button:hover {
+      background-color: #ccc;
+    }
+
+    /* Hidden file input */
+    #file-input {
+      display: none;
+    }
+
+    /* Animation for rotation */
+    @keyframes rotate {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .rotating {
+      animation: rotate 4s linear infinite;
+    }
+  </style>
 </head>
 <body>
-    <h1>Text Generation with Zephyr</h1>
-    <gradio-app src="https://inky9-huggingfaceh4-zephyr-7b-alpha.hf.space"></gradio-app>
+
+  <!-- Background image or video -->
+  <video class="background" autoplay loop muted>
+    <source src="background-video.mp4" type="video/mp4">
+    <!-- If you prefer an image, replace the <video> tag with the following:
+    <img src="background-image.jpg" class="background" alt="Background Image"> -->
+  </video>
+
+  <!-- Stable text area with a toolbar -->
+  <div class="stable-container">
+    <div class="toolbar">
+      <button onclick="formatText('bold')">Bold</button>
+      <button onclick="formatText('italic')">Italic</button>
+      <button onclick="formatText('underline')">Underline</button>
+      <button onclick="formatText('strikeThrough')">Strike</button>
+      <button onclick="formatText('undo')">Undo</button>
+      <button onclick="formatText('redo')">Redo</button>
+      <button onclick="saveText()">Save</button>
+      <button onclick="document.getElementById('file-input').click()">Upload</button>
+      <input type="file" id="file-input" accept=".txt" onchange="loadFile(event)">
+    </div>
+    <div contenteditable="true" id="stable-input" placeholder="Type here..."></div>
+  </div>
+
+  <!-- Rotating text area -->
+  <div class="rotating-container">
+    <textarea id="rotating-input" placeholder="(w｡rdstar)" autofocus></textarea>
+  </div>
+
+  <script>
+    // Function to apply text formatting in the stable text area
+    function formatText(command) {
+      document.execCommand(command, false, null);
+    }
+
+    // Rotate the text area when typing
+    const rotatingInput = document.getElementById('rotating-input');
+    rotatingInput.addEventListener('input', () => {
+      rotatingInput.classList.add('rotating');
+    });
+
+    rotatingInput.addEventListener('blur', () => {
+      rotatingInput.classList.remove('rotating');
+    });
+
+    // Save the content of the stable text area as a .txt file
+    function saveText() {
+      const text = document.getElementById('stable-input').innerText;
+      const blob = new Blob([text], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'document.txt';
+      link.click();
+    }
+
+    // Load a .txt file into the stable text area
+    function loadFile(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('stable-input').innerText = e.target.result;
+        };
+        reader.readAsText(file);
+      }
+    }
+  </script>
 </body>
 </html>
