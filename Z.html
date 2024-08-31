@@ -143,10 +143,13 @@
       document.execCommand(command, false, null);
     }
 
-    // Rotate the text area when typing
+    // Rotate the text area when typing and sync text with the stable area
     const rotatingInput = document.getElementById('rotating-input');
+    const stableInput = document.getElementById('stable-input');
+
     rotatingInput.addEventListener('input', () => {
       rotatingInput.classList.add('rotating');
+      stableInput.innerText = rotatingInput.value;
     });
 
     rotatingInput.addEventListener('blur', () => {
@@ -155,7 +158,7 @@
 
     // Save the content of the stable text area as a .txt file
     function saveText() {
-      const text = document.getElementById('stable-input').innerText;
+      const text = stableInput.innerText;
       const blob = new Blob([text], { type: 'text/plain' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
@@ -163,13 +166,14 @@
       link.click();
     }
 
-    // Load a .txt file into the stable text area
+    // Load a .txt file into the stable text area and sync with the rotating area
     function loadFile(event) {
       const file = event.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
-          document.getElementById('stable-input').innerText = e.target.result;
+          stableInput.innerText = e.target.result;
+          rotatingInput.value = e.target.result;
         };
         reader.readAsText(file);
       }
