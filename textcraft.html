@@ -5,7 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AmigaWord Clone - Web Edition</title>
     <style>
-        /* ... (previous styles remain the same) ... */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Courier New', monospace;
+            background-color: #808080;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #c0c0c0;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+        .menu-bar {
+            display: flex;
+            background-color: #ffffff;
+            padding: 2px;
+        }
+        .menu-item {
+            padding: 2px 10px;
+            margin-right: 2px;
+            background-color: #ffffff;
+            border: 1px solid #000;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .menu-item:first-child {
+            background-color: #00a000;
+            color: #fff;
+        }
+        .toolbar {
+            display: flex;
+            background-color: #c0c0c0;
+            padding: 2px;
+        }
         .tool-button {
             width: 32px;
             height: 32px;
@@ -87,9 +124,110 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // ... (previous JavaScript code remains the same) ...
+    const ruler = document.getElementById('ruler');
+    const editor = document.getElementById('editor');
+    const cursorPosition = document.getElementById('cursor-position');
+    const wordCount = document.getElementById('word-count');
+    const fileName = document.getElementById('file-name');
+    const canvas = document.getElementById('drawing-canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Create ruler markings
+    for (let i = 0; i <= 60; i++) {
+        const mark = document.createElement('div');
+        mark.className = 'ruler-mark';
+        mark.style.left = (i * (100/60)) + '%';
+        
+        if (i % 10 === 0) {
+            mark.style.height = '20px';
+            const number = document.createElement('span');
+            number.className = 'ruler-number';
+            number.textContent = i;
+            number.style.left = (i * (100/60)) + '%';
+            ruler.appendChild(number);
+        }
+        
+        ruler.appendChild(mark);
+    }
+
+    // Update cursor position and word count
+    editor.addEventListener('input', updateStatusBar);
+    editor.addEventListener('click', updateStatusBar);
+    editor.addEventListener('keyup', updateStatusBar);
+
+    function updateStatusBar() {
+        const selection = window.getSelection();
+        const range = selection.getRangeAt(0);
+        const lines = editor.innerText.split('\n');
+        let lineNumber = 1;
+        let columnNumber = 1;
+
+        for (let i = 0; i < lines.length; i++) {
+            if (range.startOffset <= lines[i].length) {
+                lineNumber = i + 1;
+                columnNumber = range.startOffset + 1;
+                break;
+            }
+            range.startOffset -= lines[i].length + 1; // +1 for the newline character
+        }
+
+        cursorPosition.textContent = `Line: ${lineNumber}, Column: ${columnNumber}`;
+        wordCount.textContent = `Words: ${editor.innerText.trim().split(/\s+/).length}`;
+    }
+
+    // Drawing functionality
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    function resizeCanvas() {
+        canvas.width = editor.offsetWidth;
+        canvas.height = editor.offsetHeight;
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function startDrawing(e) {
+        isDrawing = true;
+        [lastX, lastY] = [e.offsetX, e.offsetY];
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(e.offsetX, e.offsetY);
+        ctx.stroke();
+        [lastX, lastY] = [e.offsetX, e.offsetY];
+    }
+
+    function stopDrawing() {
+        isDrawing = false;
+    }
+
+    let isDrawingMode = false;
 
     // Implement functionality for all buttons
+    document.getElementById('magic-wand-btn').addEventListener('click', () => {
+        isDrawingMode = !isDrawingMode;
+        if (isDrawingMode) {
+            canvas.style.pointerEvents = 'auto';
+            editor.contentEditable = 'false';
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+        } else {
+            canvas.style.pointerEvents = 'none';
+            editor.contentEditable = 'true';
+            canvas.removeEventListener('mousedown', startDrawing);
+            canvas.removeEventListener('mousemove', draw);
+            canvas.removeEventListener('mouseup', stopDrawing);
+            canvas.removeEventListener('mouseout', stopDrawing);
+        }
+    });
+
     document.getElementById('scissors-btn').addEventListener('click', () => {
         document.execCommand('cut', false, null);
     });
@@ -148,7 +286,41 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('undo-btn').addEventListener('click', () => document.execCommand('undo', false, null));
 
-    // ... (rest of the JavaScript code remains the same) ...
+    // Implement save and load functionality
+    document.getElementById('save-doc').addEventListener('click', () => {
+        const content = editor.innerHTML;
+        const drawingData = canvas.toDataURL();
+        const saveData = JSON.stringify({ content, drawingData });
+        const blob = new Blob([saveData], {type: 'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${fileName.textContent}.json`;
+        a.click();
+    });
+
+    document.getElementById('load-doc').addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = e => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.readAsText(file, 'UTF-8');
+            reader.onload = readerEvent => {
+                const saveData = JSON.parse(readerEvent.target.result);
+                editor.innerHTML = saveData.content;
+                const img = new Image();
+                img.onload = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0);
+                };
+                img.src = saveData.drawingData;
+                fileName.textContent = file.name.replace('.json', '');
+                updateStatusBar();
+            }
+        }
+        input.click();
+    });
 });
 </script>
 </body>
