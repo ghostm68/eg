@@ -102,4 +102,285 @@ searchInput.addEventListener('keypress', (e) => {
     }
 });
 </script>
+        <div id="beatnikSoulContainer"></div>
+
+<script>
+  const songs = [
+    { id: '2Qs1J612nZs', color: 'blue', thumbnail: 'https://granarybooks.cdn.bibliopolis.com/pictures/3025.jpeg?auto=webp&v=1643822358', effect: 'particle' },
+    { id: 'STMEyMMnIE8', color: 'purple', thumbnail: 'https://pictures.abebooks.com/isbn/9780394179520-es.jpg', effect: 'particle' },
+    { id: 'e2MGdgiQgSI', color: 'white', thumbnail: 'https://i.booksee.org/covers/671000/d2f8946aca4b659de65', effect: 'snow' }
+  ];
+
+  let currentSongIndex = 0;
+
+  const thoughts = [
+    "The road calls with a siren song.",
+    "Gasping for air in the square confines of this life.",
+    "Chasing after ghosts in a stolen Cadillac.",
+    "Lost in the neon wilderness.", 
+    "Concrete whispers empty promises.", 
+    "Faces blur in a kaleidoscope of shadows.", 
+    "The saxophonist wept a melody that pierced the night.",
+    "Snowflakes falling, each one a prayer for redemption.",
+    "Found beauty in a cracked cup of coffee at 4 am."
+  ];
+
+  function createThought() {
+    const thought = document.createElement('div');
+    thought.classList.add('thought');
+    thought.textContent = thoughts[Math.floor(Math.random() * thoughts.length)];
+    thought.style.left = Math.random() * window.innerWidth + 'px';
+    thought.style.top = Math.random() * window.innerHeight + 'px';
+    thought.style.transform = `rotate(${Math.random() * 360}deg) scale(0)`;
+    document.getElementById('beatnikSoulContainer').appendChild(thought);
+
+    setTimeout(() => {
+      thought.style.opacity = 1;
+      thought.style.transform = `rotate(0deg) scale(1)`;
+      thought.classList.add(`${songs[currentSongIndex].color}-glow`);
+    }, 100);
+
+    setTimeout(() => {
+      thought.style.opacity = 0;
+      thought.style.transform = `rotate(${Math.random() * 360}deg) scale(0)`;
+      setTimeout(() => thought.remove(), 2000); 
+    }, 5000);
+  }
+
+  setInterval(createThought, 2000); 
+
+  // YouTube Player 
+  let player;
+  function onYouTubeIframeAPIReady() {
+    player = new YT.Player('youtubePlayer', {
+      height: '0',
+      width: '0',
+      videoId: songs[currentSongIndex].id,
+      playerVars: {
+        'autoplay': 1,
+        'controls': 0,
+        'showinfo': 0,
+        'modestbranding': 1,
+        'loop': 1,
+        'playlist': songs[currentSongIndex].id,
+        'fs': 0,
+        'cc_load_policy': 0,
+        'iv_load_policy': 3,
+        'autohide': 0 
+      },
+      events: {
+        'onReady': onPlayerReady,
+        'onStateChange': onPlayerStateChange
+      }
+    });
+  }
+
+  function onPlayerReady(event) {
+    event.target.setVolume(50); 
+    event.target.playVideo();
+    updateBackgroundImage(); 
+    startEffect();
+  }
+
+  function onPlayerStateChange(event) {
+    if (event.data == YT.PlayerState.ENDED) {
+      nextSong(); 
+    }
+  }
+
+  function updateBackgroundImage() {
+    document.querySelector('#beatnikSoulContainer').style.backgroundImage = `url('${songs[currentSongIndex].thumbnail}')`;
+  }
+
+  // Handle autoplay restrictions (may need adjustments based on your app)
+  document.addEventListener('click', () => { 
+    if (player && player.playVideo) {
+      player.playVideo();
+    }
+  });
+
+
+ // Particle effect
+ function createParticle() {
+    const particle = document.createElement('div');
+    particle.classList.add('particle');
+    particle.style.width = `${Math.random() * 15 + 5}px`; 
+    particle.style.height = particle.style.width;
+    particle.style.left = `${Math.random() * window.innerWidth}px`;
+    particle.style.top = `${Math.random() * window.innerHeight}px`;
+    particle.style.backgroundColor = songs[currentSongIndex].color;
+    particle.textContent = "..."; 
+    document.body.appendChild(particle);
+
+    const animation = particle.animate([
+      { transform: 'translate(0, 0)', opacity: 1 },
+      { transform: `translate(${Math.random() * 200 - 100}px, ${Math.random() * 200 - 100}px)`, opacity: 0 }
+    ], {
+      duration: Math.random() * 3000 + 2000,
+      easing: 'ease-out'
+    });
+
+    animation.onfinish = () => particle.remove();
+  }
+
+// YouTube Player
+  let player;
+  function onYouTubeIframeAPIReady() {
+    player = new YT.Player('youtubePlayer', {
+      height: '0',
+      width: '0',
+      videoId: songs[currentSongIndex].id,
+      playerVars: {
+        'autoplay': 1,
+        'controls': 0,
+        'showinfo': 0,
+        'modestbranding': 1,
+        'loop': 1,
+        'playlist': songs[currentSongIndex].id,
+        'fs': 0,
+        'cc_load_policy': 0,
+        'iv_load_policy': 3,
+        'autohide': 0
+      },
+      events: {
+        'onReady': onPlayerReady,
+        'onStateChange': onPlayerStateChange
+      }
+    });
+  }
+
+  function onPlayerReady(event) {
+    event.target.setVolume(50);
+    event.target.playVideo();
+    updateBackgroundImage();
+    startEffect();
+  }
+
+  function onPlayerStateChange(event) {
+    if (event.data == YT.PlayerState.ENDED) {
+      nextSong();
+    }
+  }
+
+  function updateBackgroundImage() {
+    document.querySelector('.background-image').style.backgroundImage = `url('${songs[currentSongIndex].thumbnail}')`;
+  }
+
+  // Handle autoplay restrictions
+  document.body.addEventListener('click', function() {
+    if (player && player.playVideo) {
+      player.playVideo();
+    }
+  });
+
+  // Snow effect
+  const snowCanvas = document.getElementById('snowCanvas');
+  const snowCtx = snowCanvas.getContext('2d');
+  let snowflakes = [];
+
+  function resizeSnowCanvas() {
+    snowCanvas.width = window.innerWidth;
+    snowCanvas.height = window.innerHeight;
+  }
+
+  window.addEventListener('resize', resizeSnowCanvas);
+  resizeSnowCanvas();
+
+  function createSnowflake() {
+    return {
+      x: Math.random() * snowCanvas.width,
+      y: 0,
+      radius: Math.random() * 3 + 1,
+      speed: Math.random() * 3 + 1
+    };
+  }
+
+  function drawSnow() {
+    snowCtx.clearRect(0, 0, snowCanvas.width, snowCanvas.height);
+    snowCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+
+    snowflakes.forEach((flake, index) => {
+      snowCtx.beginPath();
+      snowCtx.arc(flake.x, flake.y, flake.radius, 0, 2 * Math.PI);
+      snowCtx.fill();
+
+      flake.y += flake.speed;
+      flake.x += Math.sin(flake.y * 0.05) * 0.5;
+
+      if (flake.y > snowCanvas.height) {
+        snowflakes[index] = createSnowflake();
+      }
+    });
+
+    if (songs[currentSongIndex].effect === 'snow') {
+      requestAnimationFrame(drawSnow);
+    }
+  }
+
+  function initSnow() {
+    snowflakes = [];
+    for (let i = 0; i < 100; i++) {
+      snowflakes.push(createSnowflake());
+    }
+  }
+
+  let particleInterval;
+
+  function startEffect() {
+    // Clear previous effects
+    clearInterval(particleInterval);
+    snowflakes = [];
+    snowCtx.clearRect(0, 0, snowCanvas.width, snowCanvas.height);
+
+    // Remove all existing particles
+    document.querySelectorAll('.particle').forEach(p => p.remove());
+
+    // Start new effect
+    if (songs[currentSongIndex].effect === 'particle') {
+      particleInterval = setInterval(createParticle, 100);
+    } else if (songs[currentSongIndex].effect === 'snow') {
+      initSnow();
+      drawSnow();
+    }
+  }
+
+  // Song control functions
+  function nextSong() {
+    currentSongIndex = (currentSongIndex + 1) % songs.length;
+    loadCurrentSong();
+  }
+
+  function previousSong() {
+    currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
+    loadCurrentSong();
+  }
+
+  function loadCurrentSong() {
+    player.loadVideoById(songs[currentSongIndex].id);
+    updateBackgroundImage();
+    startEffect();
+  }
+
+  // Keyboard controls
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      nextSong();
+    } else if (e.key === 'ArrowLeft') {
+      previousSong();
+    }
+  });
+
+  // Button controls
+  document.getElementById('nextBtn').addEventListener('click', nextSong);
+  document.getElementById('prevBtn').addEventListener('click', previousSong);
+
+  // Ensure music starts on load 
+  window.addEventListener('load', () => {
+    if (player && player.playVideo) {
+      player.playVideo();
+    }
+    startEffect();
+  });
+
+</script>
 </body></html>
