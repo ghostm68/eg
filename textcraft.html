@@ -1,5 +1,4 @@
-
-   <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -66,6 +65,7 @@
         position: relative;
         border-top: 1px solid #000;
         border-bottom: 1px solid #000;
+        overflow: hidden;
     }
     .ruler-mark {
         position: absolute;
@@ -131,6 +131,21 @@
     .dropdown:hover .dropdown-content {
         display: block;
     }
+    .color-picker {
+        display: none;
+        position: absolute;
+        background-color: #fff;
+        border: 1px solid #000;
+        padding: 5px;
+        z-index: 2;
+    }
+    .color-option {
+        width: 20px;
+        height: 20px;
+        margin: 2px;
+        cursor: pointer;
+        display: inline-block;
+    }
 </style>
 </head>
 <body>
@@ -139,8 +154,8 @@
         <div class="menu-item dropdown">
             Help
             <div class="dropdown-content">
-                <a href="#">About</a>
-                <a href="#">User Guide</a>
+                <a href="#" id="about">About</a>
+                <a href="#" id="user-guide">User Guide</a>
             </div>
         </div>
         <div class="menu-item dropdown">
@@ -159,8 +174,21 @@
                 <a href="#" id="align-right">Align Right</a>
             </div>
         </div>
-        <div class="menu-item">Styles</div>
-        <div class="menu-item">Extras</div>
+        <div class="menu-item dropdown">
+            Styles
+            <div class="dropdown-content">
+                <a href="#" id="style-normal">Normal</a>
+                <a href="#" id="style-heading">Heading</a>
+                <a href="#" id="style-subheading">Subheading</a>
+            </div>
+        </div>
+        <div class="menu-item dropdown">
+            Extras
+            <div class="dropdown-content">
+                <a href="#" id="insert-date">Insert Date</a>
+                <a href="#" id="insert-time">Insert Time</a>
+            </div>
+        </div>
         <div class="tool-button" id="magic-wand-btn" title="Toggle Drawing Mode">🪄</div>
         <div class="tool-button" id="scissors-btn" title="Cut">✂️</div>
         <div class="tool-button" id="camera-btn" title="Insert Image">📷</div>  
@@ -184,7 +212,16 @@
     </div>
 </div>
 
-    <script>
+<div id="color-picker" class="color-picker">
+    <div class="color-option" style="background-color: red;" data-color="red"></div>
+    <div class="color-option" style="background-color: blue;" data-color="blue"></div>
+    <div class="color-option" style="background-color: green;" data-color="green"></div>
+    <div class="color-option" style="background-color: yellow;" data-color="yellow"></div>
+    <div class="color-option" style="background-color: purple;" data-color="purple"></div>
+    <div class="color-option" style="background-color: orange;" data-color="orange"></div>
+</div>
+
+<script>
 document.addEventListener('DOMContentLoaded', function() {
     const ruler = document.getElementById('ruler');
     const editor = document.getElementById('editor');
@@ -193,6 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const fileName = document.getElementById('file-name');
     const canvas = document.getElementById('drawing-canvas');
     const ctx = canvas.getContext('2d');
+    const colorPicker = document.getElementById('color-picker');
 
     // Create ruler markings
     for (let i = 0; i <= 60; i++) {
@@ -322,7 +360,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.getElementById('bold-btn').addEventListener('click', () => document.execCommand('bold', false, null));
-    document.getElementById('italic-btn').addEventListener('click', () => document.execCommand('italic', false, null));
+ document.getElementById('italic-btn').addEventListener('click', () => document.execCommand('italic', false, null));
     document.getElementById('underline-btn').addEventListener('click', () => document.execCommand('underline', false, null));
 
     document.getElementById('font-btn').addEventListener('click', () => {
@@ -330,14 +368,54 @@ document.addEventListener('DOMContentLoaded', function() {
         if (font) document.execCommand('fontName', false, font);
     });
 
-    document.getElementById('text-color-btn').addEventListener('click', () => {
-        const color = prompt('Enter text color (name or hex):', 'red');
-        if (color) document.execCommand('foreColor', false, color);
+    document.getElementById('text-color-btn').addEventListener('click', (e) => {
+        const rect = e.target.getBoundingClientRect();
+        colorPicker.style.display = 'block';
+        colorPicker.style.top = `${rect.bottom}px`;
+        colorPicker.style.left = `${rect.left}px`;
+    });
+
+    colorPicker.addEventListener('click', (e) => {
+        if (e.target.classList.contains('color-option')) {
+            const color = e.target.dataset.color;
+            document.execCommand('foreColor', false, color);
+            colorPicker.style.display = 'none';
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#text-color-btn') && !e.target.closest('#color-picker')) {
+            colorPicker.style.display = 'none';
+        }
     });
 
     document.getElementById('undo-btn').addEventListener('click', () => document.execCommand('undo', false, null));
 
-    // Implement save and load functionality
+    // Implement Styles functionality
+    document.getElementById('style-normal').addEventListener('click', () => {
+        document.execCommand('removeFormat', false, null);
+    });
+
+    document.getElementById('style-heading').addEventListener('click', () => {
+        document.execCommand('formatBlock', false, '<h1>');
+    });
+
+    document.getElementById('style-subheading').addEventListener('click', () => {
+        document.execCommand('formatBlock', false, '<h2>');
+    });
+
+    // Implement Extras functionality
+    document.getElementById('insert-date').addEventListener('click', () => {
+        const currentDate = new Date().toLocaleDateString();
+        document.execCommand('insertText', false, currentDate);
+    });
+
+    document.getElementById('insert-time').addEventListener('click', () => {
+        const currentTime = new Date().toLocaleTimeString();
+        document.execCommand('insertText', false, currentTime);
+    });
+
+    // Implement Project functionality
     document.getElementById('new-doc').addEventListener('click', () => {
         if (confirm('Create a new document? Unsaved changes will be lost.')) {
             editor.innerHTML = '';
@@ -382,35 +460,22 @@ document.addEventListener('DOMContentLoaded', function() {
         input.click();
     });
 
-    // Implement layout functionality
+    // Implement Layout functionality
     document.getElementById('align-left').addEventListener('click', () => document.execCommand('justifyLeft', false, null));
     document.getElementById('align-center').addEventListener('click', () => document.execCommand('justifyCenter', false, null));
     document.getElementById('align-right').addEventListener('click', () => document.execCommand('justifyRight', false, null));
 
-    // Additional functionality for remaining menu items
-    document.querySelector('.menu-item:nth-child(4)').addEventListener('click', () => {
-        alert('Styles functionality not implemented in this demo.');
-    });
-
-    document.querySelector('.menu-item:nth-child(5)').addEventListener('click', () => {
-        alert('Extras functionality not implemented in this demo.');
-    });
-
-      document.getElementById('scissors-btn').addEventListener('click', () => {
-        document.execCommand('cut', false, null);
-    });
-
     // Help menu functionality
-    document.querySelector('.dropdown-content a:nth-child(1)').addEventListener('click', (e) => {
+    document.getElementById('about').addEventListener('click', (e) => {
         e.preventDefault();
         alert('Amiga Textcraft - Web Edition\nVersion 1.0\nCreated as a demo text editor with basic functionality.');
     });
 
-    document.querySelector('.dropdown-content a:nth-child(2)').addEventListener('click', (e) => {
+    document.getElementById('user-guide').addEventListener('click', (e) => {
         e.preventDefault();
-        alert('User Guide:\n1. Use the toolbar buttons to format text and add content.\n2. The magic wand toggles drawing mode.\n3. Save and load your work using the Project menu.\n4. Adjust text alignment using the Layout menu.');
+        alert('User Guide:\n1. Use the toolbar buttons to format text and add content.\n2. The magic wand toggles drawing mode.\n3. Save and load your work using the Project menu.\n4. Adjust text alignment using the Layout menu.\n5. Apply different styles using the Styles menu.\n6. Insert date and time using the Extras menu.');
     });
 });
 </script>
 </body>
-</html>     
+</html>
