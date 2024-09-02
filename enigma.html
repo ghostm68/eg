@@ -142,7 +142,8 @@ body {
       <textarea id="output" readonly></textarea>
     </div>
     </div>
-  </div>
+
+    </div>
 <script>
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     const symbols = '!@#$%^&*()_+=-`~[]\{}|;\':",./<>?';
@@ -230,6 +231,151 @@ const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
       document.getElementById('output').value = result;
     }
   </script>
+  <div id="enigma-section"> 
+  <h2>Streamlined Enigma</h2>
+
+  <div>
+    <label for="enigma-rotor1">Rotor 1:</label>
+    <select id="enigma-rotor1">
+      <option value="rotor1">Rotor I</option>
+      <option value="rotor2">Rotor II</option> 
+    </select>
+  </div>
+
+  <div>
+    <label for="enigma-position1">Position 1:</label>
+    <select id="enigma-position1">
+      <option value="A">A</option>
+      <option value="B">B</option>
+      </select>
+  </div>
+
+  <div>
+    <label for="enigma-rotor2">Rotor 2:</label>
+    <select id="enigma-rotor2">
+      <option value="rotor1">Rotor I</option>
+      <option value="rotor2">Rotor II</option> 
+    </select>
+  </div>
+
+  <div>
+    <label for="enigma-position2">Position 2:</label>
+    <select id="enigma-position2">
+      <option value="A">A</option>
+      <option value="B">B</option>
+      </select>
+  </div>
+
+  <button onclick="enigmaCipher()">Enigma Cipher</button>
+  <button onclick="enigmaDecipher()">Enigma Decipher</button>
+
+  <div class="enigma-disclaimer">
+  <p><strong>Note:</strong> This is a simplified simulation of the Enigma machine, 
+     originally invented by Arthur Scherbius. The actual Enigma machine used multiple rotors, a plugboard, 
+     and other complex features. This simulation is intended for educational purposes to illustrate basic 
+     encryption concepts. 
+  </p>
+  </div> 
+</div>
+  <script>
+    // Rotor Wirings (using simple substitutions for demonstration)
+const rotor1Wiring = {
+  'A': 'D', 'B': 'K', 'C': 'V', 'D': 'Q', 'E': 'L', 'F': 'G', 
+  'G': 'Z', 'H': 'B', 'I': 'P', 'J': 'S', 'K': 'O', 'L': 'M', 
+  'M': 'R', 'N': 'W', 'O': 'C', 'P': 'I', 'Q': 'U', 'R': 'Y', 
+  'S': 'A', 'T': 'N', 'U': 'F', 'V': 'X', 'W': 'J', 'X': 'H',
+  'Y': 'T', 'Z': 'E'
+};
+
+const rotor2Wiring = {
+  'A': 'H', 'B': 'Q', 'C': 'Z', 'D': 'G', 'E': 'P', 'F': 'J', 
+  'G': 'T', 'H': 'M', 'I': 'O', 'J': 'B', 'K': 'L', 'L': 'N', 
+  'M': 'C', 'N': 'V', 'O': 'F', 'P': 'D', 'Q': 'U', 'R': 'S', 
+  'S': 'R', 'T': 'A', 'U': 'X', 'V': 'Y', 'W': 'I', 'X': 'K',
+  'Y': 'E', 'Z': 'W' 
+};
+
+// Function to encrypt a single letter using a rotor
+function encryptLetter(letter, rotorWiring, position) {
+  // Adjust letter index based on rotor position 
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let letterIndex = alphabet.indexOf(letter);
+  letterIndex = (letterIndex + alphabet.indexOf(position)) % 26;
+
+  // Get substituted letter from the rotor wiring 
+  const substitutedLetter = rotorWiring[alphabet[letterIndex]];
+
+  // Adjust substituted letter index back to original alphabet position
+  let substitutedIndex = alphabet.indexOf(substitutedLetter);
+  substitutedIndex = (substitutedIndex - alphabet.indexOf(position) + 26) % 26;
+
+  return alphabet[substitutedIndex];
+}
+
+// Function to decrypt a single letter using a rotor
+function decryptLetter(letter, rotorWiring, position) {
+  // Adjust letter index based on rotor position
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let letterIndex = alphabet.indexOf(letter);
+  letterIndex = (letterIndex + alphabet.indexOf(position)) % 26;
+
+  // Find the letter in the rotor wiring that maps to the input letter
+  let originalLetter = '';
+  for (const [key, value] of Object.entries(rotorWiring)) {
+    if (value === alphabet[letterIndex]) {
+      originalLetter = key;
+      break;
+    }
+  }
+
+  // Adjust original letter index back to original alphabet position
+  let originalIndex = alphabet.indexOf(originalLetter);
+  originalIndex = (originalIndex - alphabet.indexOf(position) + 26) % 26;
+
+  return alphabet[originalIndex];
+}
+
+function enigmaCipher() {
+  const inputText = document.getElementById('input').value.toUpperCase();
+  const rotor1 = document.getElementById('enigma-rotor1').value;
+  const position1 = document.getElementById('enigma-position1').value;
+  const rotor2 = document.getElementById('enigma-rotor2').value;
+  const position2 = document.getElementById('enigma-position2').value;
+  let outputText = '';
+
+  for (let i = 0; i < inputText.length; i++) {
+    let letter = inputText[i];
+    if (letter.match(/[A-Z]/)) {
+      letter = encryptLetter(letter, eval(rotor1 + 'Wiring'), position1);
+      letter = encryptLetter(letter, eval(rotor2 + 'Wiring'), position2);
+    }
+    outputText += letter;
+  }
+
+  document.getElementById('output').value = outputText;
+}
+
+function enigmaDecipher() {
+  const inputText = document.getElementById('input').value.toUpperCase();
+  const rotor1 = document.getElementById('enigma-rotor1').value;
+  const position1 = document.getElementById('enigma-position1').value;
+  const rotor2 = document.getElementById('enigma-rotor2').value;
+  const position2 = document.getElementById('enigma-position2').value;
+  let outputText = '';
+
+  for (let i = 0; i < inputText.length; i++) {
+    let letter = inputText[i];
+    if (letter.match(/[A-Z]/)) {
+      letter = decryptLetter(letter, eval(rotor2 + 'Wiring'), position2);
+      letter = decryptLetter(letter, eval(rotor1 + 'Wiring'), position1);
+    }
+    outputText += letter;
+  }
+
+  document.getElementById('output').value = outputText;
+}
+  </script>
+
 </body>
 </html>
-</html>
+
