@@ -339,14 +339,88 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    document.getElementById('stamp-btn').addEventListener('click', () => {
-        const stamp = prompt('Enter text to stamp:', 'APPROVED');
-        if (stamp) {
-            const stampSpan = `<span style="color: red; font-weight: bold; border: 2px solid red; padding: 2px;">${stamp}</span>`;
-            document.execCommand('insertHTML', false, stampSpan);
-        }
-    });
+ document.getElementById('stamp-btn').addEventListener('click', () => {
+        const stampOptions = [
+            { text: 'APPROVED', color: 'green' },
+            { text: 'REJECTED', color: 'red' },
+            { text: 'PENDING', color: 'orange' },
+            { text: 'CONFIDENTIAL', color: 'blue' },
+            { text: 'URGENT', color: 'purple' }
+        ];
 
+        const stampSelect = document.createElement('select');
+        stampOptions.forEach((option, index) => {
+            const optionElement = document.createElement('option');
+            optionElement.value = index;
+            optionElement.textContent = option.text;
+            stampSelect.appendChild(optionElement);
+        });
+
+        const customOption = document.createElement('option');
+        customOption.value = 'custom';
+        customOption.textContent = 'Custom...';
+        stampSelect.appendChild(customOption);
+
+        const stampDialog = document.createElement('div');
+        stampDialog.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        `;
+
+        stampDialog.innerHTML = `
+            <h3>Choose a stamp:</h3>
+            ${stampSelect.outerHTML}
+            <br><br>
+            <button id="apply-stamp">Apply Stamp</button>
+            <button id="cancel-stamp">Cancel</button>
+        `;
+
+        document.body.appendChild(stampDialog);
+
+        const applyStamp = () => {
+            let selectedOption = stampOptions[stampSelect.value];
+            if (stampSelect.value === 'custom') {
+                const customText = prompt('Enter custom stamp text:');
+                if (!customText) return;
+                const customColor = prompt('Enter stamp color (e.g., red, #FF0000):', 'black');
+                selectedOption = { text: customText, color: customColor };
+            }
+
+            const stampSpan = `<span style="
+                color: ${selectedOption.color};
+                font-weight: bold;
+                border: 2px solid ${selectedOption.color};
+                padding: 2px 5px;
+                border-radius: 3px;
+                transform: rotate(-15deg);
+                display: inline-block;
+                font-size: 1.2em;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            ">${selectedOption.text}</span>`;
+
+            document.execCommand('insertHTML', false, stampSpan);
+            document.body.removeChild(stampDialog);
+        };
+
+        document.getElementById('apply-stamp').addEventListener('click', applyStamp);
+        document.getElementById('cancel-stamp').addEventListener('click', () => {
+            document.body.removeChild(stampDialog);
+        });
+
+        stampSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'custom') {
+                applyStamp();
+            }
+        });
+  
     document.getElementById('paint-roller-btn').addEventListener('click', () => {
         const color = prompt('Enter background color (name or hex):', 'yellow');
         if (color) document.execCommand('backColor', false, color);
@@ -360,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.getElementById('bold-btn').addEventListener('click', () => document.execCommand('bold', false, null));
- document.getElementById('italic-btn').addEventListener('click', () => document.execCommand('italic', false, null));
+    document.getElementById('italic-btn').addEventListener('click', () => document.execCommand('italic', false, null));
     document.getElementById('underline-btn').addEventListener('click', () => document.execCommand('underline', false, null));
 
     document.getElementById('font-btn').addEventListener('click', () => {
@@ -475,7 +549,14 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         alert('User Guide:\n1. Use the toolbar buttons to format text and add content.\n2. The magic wand toggles drawing mode.\n3. Save and load your work using the Project menu.\n4. Adjust text alignment using the Layout menu.\n5. Apply different styles using the Styles menu.\n6. Insert date and time using the Extras menu.');
     });
+
+    // Initialize the editor
+    editor.contentEditable = 'true';
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    updateStatusBar();
 });
+      });
 </script>
 </body>
 </html>
