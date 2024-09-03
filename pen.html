@@ -8,15 +8,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/ace.js"></script>
     <style>
         :root {
-            --primary-color: #61dafb;
-            --secondary-color: #f0db4f;
-            --background-color: #1e1e1e;
-            --panel-background: #252526;
-            --header-background: #2d2d2d;
-            --text-color: #f0f0f0;
-            --border-color: #3c3c3c;
-            --button-hover: #4fa3d1;
-            --shadow-color: rgba(0, 0, 0, 0.2);
+            --primary-color: #b5b5b5;
+            --secondary-color: #959595;
+            --background-color: #1a1a1a;
+            --panel-background: #2a2a2a;
+            --header-background: #303030;
+            --text-color: #e0e0e0;
+            --border-color: #454545;
+            --button-hover: #505050;
+            --shadow-color: rgba(0, 0, 0, 0.3);
         }
 
         @font-face {
@@ -32,6 +32,25 @@
             color: var(--text-color);
             height: 100%;
             overflow: hidden;
+        }
+
+        /* Sleek scrollbar styles */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--panel-background);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
         }
 
         .app-container {
@@ -53,7 +72,6 @@
             font-size: 28px;
             font-weight: bold;
             color: var(--primary-color);
-            text-shadow: 2px 2px 4px var(--shadow-color);
         }
 
         .user-menu {
@@ -91,6 +109,8 @@
             display: flex;
             flex-direction: column;
             border-right: 1px solid var(--border-color);
+            min-width: 100px;
+            max-width: calc(100% - 200px);
         }
 
         .panel-header {
@@ -116,7 +136,7 @@
 
         .preview-container {
             flex: 1;
-            background-color: #ffffff;
+            background-color: var(--panel-background);
             display: flex;
             flex-direction: column;
         }
@@ -132,6 +152,7 @@
         .preview-frame {
             flex: 1;
             border: none;
+            background-color: white;
         }
 
         .button {
@@ -148,8 +169,13 @@
 
         .button:hover {
             background-color: var(--button-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px var(--shadow-color);
+            color: var(--text-color);
+        }
+
+        .resize-handle {
+            width: 5px;
+            background-color: var(--border-color);
+            cursor: col-resize;
         }
 
         @media (max-width: 768px) {
@@ -161,12 +187,12 @@
                 height: 33.33%;
                 border-right: none;
                 border-bottom: 1px solid var(--border-color);
+                max-width: 100%;
             }
 
             .preview-container {
                 height: 50%;
             }
-
 
             .user-menu {
                 flex-direction: column;
@@ -177,25 +203,11 @@
                 font-size: 14px;
                 padding: 8px 16px;
             }
-        }
 
-        /* Animations */
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+            .resize-handle {
+                display: none;
+            }
         }
-
-        .logo {
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(100%); }
-            to { transform: translateX(0); }
-        }
-
-    
     </style>
 </head>
 <body>
@@ -209,7 +221,7 @@
         </header>
         <main class="main-content">
             <div class="editor-container">
-                <div class="panel">
+                <div class="panel" id="html-panel">
                     <div class="panel-header">
                         <span>HTML</span>
                         <button class="button" onclick="formatCode('html')">Format</button>
@@ -218,7 +230,8 @@
                         <div id="html-editor" class="editor"></div>
                     </div>
                 </div>
-                <div class="panel">
+                <div class="resize-handle" id="html-resize"></div>
+                <div class="panel" id="css-panel">
                     <div class="panel-header">
                         <span>CSS</span>
                         <button class="button" onclick="formatCode('css')">Format</button>
@@ -227,7 +240,8 @@
                         <div id="css-editor" class="editor"></div>
                     </div>
                 </div>
-                <div class="panel">
+                <div class="resize-handle" id="css-resize"></div>
+                <div class="panel" id="js-panel">
                     <div class="panel-header">
                         <span>JavaScript</span>
                         <button class="button" onclick="formatCode('javascript')">Format</button>
@@ -243,8 +257,6 @@
             </div>
         </main>
     </div>
-
-    
 
     <script>
         let htmlEditor, cssEditor, jsEditor;
@@ -274,51 +286,42 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #000;
+  background-color: #1a1a1a;
+  color: #e0e0e0;
   overflow: hidden;
 }
 
 .nexus-container {
-  perspective: 1000px;
+  text-align: center;
 }
 
 .nexus-title {
   font-family: 'Arial', sans-serif;
   font-size: 15vw;
-  color: #fff;
-  text-shadow: 0 0 10px #00f, 0 0 20px #00f, 0 0 30px #00f, 0 0 40px #00f;
-  animation: glow 2s ease-in-out infinite alternate, rotate3d 5s linear infinite;
+  color: #e0e0e0;
+  text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease;
 }
 
-@keyframes glow {
-  from {
-    text-shadow: 0 0 10px #00f, 0 0 20px #00f, 0 0 30px #00f, 0 0 40px #00f;
-  }
-  to {
-    text-shadow: 0 0 20px #0ff, 0 0 30px #0ff, 0 0 40px #0ff, 0 0 50px #0ff, 0 0 60px #0ff;
-  }
-}
-
-@keyframes rotate3d {
-  0% {
-    transform: rotate3d(0, 1, 0, 0deg);
-  }
-  100% {
-    transform: rotate3d(0, 1, 0, 360deg);
-  }
+.nexus-title:hover {
+  transform: scale(1.05);
 }`);
 
             jsEditor.setValue(`document.addEventListener('DOMContentLoaded', (event) => {
-  const nexusTitle = document.querySelector('.zen-title');
+  const nexusTitle = document.querySelector('.nexus-title');
   
-  document.addEventListener('mousemove', (e) => {
-    const x = e.clientX / window.innerWidth - 0.5;
-    const y = e.clientY / window.innerHeight - 0.5;
+  nexusTitle.addEventListener('mousemove', (e) => {
+    const rect = nexusTitle.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
     
-    nexusTitle.style.transform = \`
-      rotate3d(\${y}, \${-x}, 0, 30deg)
-      scale3d(1.1, 1.1, 1.1)
+    nexusTitle.style.textShadow = \`
+      \${x / 30}px \${y / 30}px 4px rgba(255, 255, 255, 0.1)
     \`;
+  });
+  
+  nexusTitle.addEventListener('mouseleave', () => {
+    nexusTitle.style.textShadow = '2px 2px 4px rgba(255, 255, 255, 0.1)';
   });
 });`);
 
@@ -328,6 +331,7 @@
             });
 
             updatePreview();
+            initializeResizeHandles();
         }
 
         function updatePreview() {
@@ -386,7 +390,54 @@
             }
         }
 
-       
+        function initializeResizeHandles() {
+            const htmlPanel = document.getElementById('html-panel');
+            const cssPanel = document.getElementById('css-panel');
+            const jsPanel = document.getElementById('js-panel');
+            const htmlResize = document.getElementById('html-resize');
+            const cssResize = document.getElementById('css-resize');
+
+            let isResizing = false;
+            let currentResizer;
+
+            htmlResize.addEventListener('mousedown', initResize);
+            cssResize.addEventListener('mousedown', initResize);
+
+            function initResize(e) {
+                isResizing = true;
+                currentResizer = e.target;
+                document.addEventListener('mousemove', resize);
+                document.addEventListener('mouseup', stopResize);
+            }
+
+            function resize(e) {
+                if (!isResizing) return;
+                
+                const container = document.querySelector('.editor-container');
+                const containerWidth = container.getBoundingClientRect().width;
+
+                if (currentResizer === htmlResize) {
+                    const newWidth = e.clientX / containerWidth * 100;
+                    htmlPanel.style.flex = `0 0 ${newWidth}%`;
+                    cssPanel.style.flex = `0 0 ${(100 - newWidth) / 2}%`;
+                    jsPanel.style.flex = `0 0 ${(100 - newWidth) / 2}%`;
+                } else if (currentResizer === cssResize) {
+                    const htmlWidth = htmlPanel.getBoundingClientRect().width / containerWidth * 100;
+                    const newWidth = (e.clientX - htmlPanel.getBoundingClientRect().width) / containerWidth * 100;
+                    cssPanel.style.flex = `0 0 ${newWidth}%`;
+                    jsPanel.style.flex = `0 0 ${100 - htmlWidth - newWidth}%`;
+                }
+
+                [htmlEditor, cssEditor, jsEditor].forEach(editor => editor.resize());
+            }
+
+            function stopResize() {
+                isResizing = false;
+                document.removeEventListener('mousemove', resize);
+                document.removeEventListener('mouseup', stopResize);
+            }
+        }
+
         // Initialize editors when the page loads
         window.addEventListener('load', initializeEditors);
     </script>
@@ -395,5 +446,3 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify-html.min.js"></script>
 </body>
 </html>
-
-</body></html>
