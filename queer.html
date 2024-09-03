@@ -67,6 +67,17 @@
         <input type="file" id="txt-upload" accept=".txt" onchange="uploadTxt()" class="mt-4 w-full">
         <button onclick="downloadTxt()" class="mt-4 px-4 py-2 bg-blue-500 text-white font-medium rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 w-full">Download TXT</button>
       </div>
+      <!-- Word Count and Chapter Outline -->
+      <div class="mt-8">
+        <div class="mb-4">
+          <label for="word-count" class="block text-sm font-medium text-gray-700 mb-1">Word Count:</label>
+          <span id="word-count" class="block w-full mt-1 text-gray-700">0</span>
+        </div>
+        <div class="mb-4">
+          <label for="chapter-outline" class="block text-sm font-medium text-gray-700 mb-1">Chapter Outline:</label>
+          <textarea id="chapter-outline" class="block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" placeholder="Write an outline for the current chapter..."></textarea>
+        </div>
+      </div>
       <!-- Chapter and Character Lists -->
       <div class="mt-8">
         <h2 class="text-lg font-semibold mb-4 leading-reduced text-left">Chapters</h2>
@@ -87,19 +98,11 @@
         <textarea id="markdown-editor" class="w-full h-[70vh] p-4 bg-primary-bg shadow-lg rounded-lg mb-6 hidden"></textarea>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div>
-            <label for="add-tags" class="block text-sm font-medium text-gray-700 mb-1">Add Tags:</label>
-            <input type="text" id="add-tags" placeholder="Add tags (comma-separated)" class="block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-          </div>
-          <div>
             <label for="word-count" class="block text-sm font-medium text-gray-700 mb-1">Word Count:</label>
             <span id="word-count" class="block w-full mt-1 text-gray-700">0</span>
           </div>
         </div>
         <div id="document-tags" class="flex flex-wrap gap-2 mb-6"></div>
-        <div class="mb-6">
-          <label for="chapter-outline" class="block text-sm font-medium text-gray-700 mb-1">Chapter Outline:</label>
-          <textarea id="chapter-outline" class="block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" placeholder="Write an outline for the current chapter..."></textarea>
-        </div>
       </div>
     </div>
   </div>
@@ -118,298 +121,179 @@
       </div>
     </div>
   </div>
-
   <script>
-    var quill = new Quill('#editor', {
-      theme: 'snow',
-      modules: {
-        toolbar: [
-          [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-          ['bold', 'italic', 'underline', 'strike'],
-          ['blockquote', 'code-block'],
-          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-          [{ 'script': 'sub'}, { 'script': 'super' }],
-          [{ 'indent': '-1'}, { 'indent': '+1' }],
-          [{ 'direction': 'rtl' }],
-          [{ 'color': [] }, { 'background': [] }],
-          [{ 'font': [] }],
-          [{ 'align': [] }],
-          ['clean'],
-          ['link', 'image', 'video']
-        ]
-      }
+   var quill = new Quill('#editor', {
+  theme: 'snow',
+  modules: {
+    toolbar: [
+      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      ['blockquote', 'code-block'],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      [{ 'script': 'sub'}, { 'script': 'super' }],
+      [{ 'indent': '-1'}, { 'indent': '+1' }],
+      [{ 'direction': 'rtl' }],
+      [{ 'color': [] }, { 'background': [] }],
+      [{ 'font': [] }],
+      [{ 'align': [] }],
+      ['clean'],
+      ['link', 'image', 'video']
+    ]
+  }
+});
+
+function updateNovelTitle() {
+  const title = document.getElementById('novel-title').value;
+  console.log('Novel title updated:', title);
+  // (You might want to update your storage with this new title)
+}
+
+function createNewNovel() {
+  console.log('Creating new novel');
+  // (You might want to add a new novel to your storage, perhaps a new tab or window)
+}
+
+function renameItem() {
+  console.log('Renaming item');
+  // (You need to implement the logic for renaming the novel)
+}
+
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const toggleBtn = document.getElementById('toggle-sidebar');
+  sidebar.classList.toggle('-translate-x-full');
+  toggleBtn.classList.toggle('hidden');
+}
+
+function truncateTitle(title, maxLength = 30) {
+  if (title.length <= maxLength) return title;
+  return title.substr(0, maxLength - 3) + '...';
+}
+
+function addChapter(chapterName) {
+  const chapterList = document.getElementById('chapter-list');
+  const newItem = document.createElement('li');
+  newItem.className = 'hover:bg-sidebar-hover p-2 rounded transition duration-200 leading-reduced text-left';
+  const span = document.createElement('span');
+  span.className = 'truncate-title';
+  span.title = chapterName;
+  span.textContent = truncateTitle(chapterName);
+  newItem.appendChild(span);
+  chapterList.appendChild(newItem);
+}
+
+function addCharacter(characterName) {
+  const characterList = document.getElementById('character-list');
+  const newItem = document.createElement('li');
+  newItem.className = 'hover:bg-sidebar-hover p-2 rounded transition duration-200 leading-reduced text-left';
+  const span = document.createElement('span');
+  span.className = 'truncate-title';
+  span.title = characterName;
+  span.textContent = truncateTitle(characterName);
+  newItem.appendChild(span);
+  characterList.appendChild(newItem);
+}
+
+function addTag(tag) {
+  const tagList = document.getElementById('tag-list');
+  const newTag = document.createElement('span');
+  newTag.className = 'bg-gray-700 text-xs px-2 py-1 rounded-full leading-reduced';
+  newTag.textContent = tag;
+  tagList.appendChild(newTag);
+}
+
+function addDocumentTag(tag) {
+  const documentTags = document.getElementById('document-tags');
+  const newTag = document.createElement('span');
+  newTag.className = 'bg-blue-500 text-white text-xs px-2 py-1 rounded-full leading-reduced flex items-center';
+  newTag.innerHTML = `${tag} <button class="ml-1 focus:outline-none" onclick="removeDocumentTag(this)">×</button>`;
+  documentTags.appendChild(newTag);
+}
+
+function removeDocumentTag(button) {
+  button.parentElement.remove();
+}
+
+document.getElementById('add-tags').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    const newTags = this.value.split(',').map(tag => tag.trim()).filter(tag => tag);
+    newTags.forEach(tag => {
+      addTag(tag);
+      addDocumentTag(tag);
     });
+    this.value = '';
+  }
+});
 
-    let isMarkdownMode = false;
+// Word Count Functionality
+function updateWordCount() {
+  const content = quill.root.textContent;
+  const wordCount = content.trim().split(/\s+/).length;
+  document.getElementById('word-count').textContent = wordCount;
+}
 
-    function toggleEditorMode() {
-      const quillEditor = document.getElementById('editor');
-      const markdownEditor = document.getElementById('markdown-editor');
-      
-      if (isMarkdownMode) {
-        quillEditor.style.display = 'block';
-        markdownEditor.style.display = 'none';
-        quill.root.innerHTML = marked(markdownEditor.value);
-      } else {
-        quillEditor.style.display = 'none';
-        markdownEditor.style.display = 'block';
-        markdownEditor.value = quill.root.innerHTML;
-      }
-      
-      isMarkdownMode = !isMarkdownMode;
-    }
+quill.on('text-change', updateWordCount);
 
-    function updateNovelTitle() {
-      const title = document.getElementById('novel-title').value;
-      console.log('Novel title updated:', title);
-      // Here you would typically update the title in your data structure or send it to a server
-    }
+// Save to Local Storage
+function saveToLocal() {
+  const data = {
+    title: document.getElementById('novel-title').value,
+    content: quill.root.textContent, // Store plain text
+    chapterOutline: document.getElementById('chapter-outline').value,
+  };
+  localStorage.setItem('novelData', JSON.stringify(data));
+  console.log('Data saved to local storage.');
+}
 
-    function createNewNovel() {
-      console.log('Creating new novel');
-      // Implement the logic to create a new novel
-    }
+// Load from Local Storage
+function loadFromLocal() {
+  const savedData = localStorage.getItem('novelData');
+  if (savedData) {
+    const data = JSON.parse(savedData);
+    document.getElementById('novel-title').value = data.title;
+    quill.root.textContent = data.content; // Load plain text
+    document.getElementById('chapter-outline').value = data.chapterOutline;
+    console.log('Data loaded from local storage.');
+  } else {
+    console.log('No data found in local storage.');
+  }
+}
 
-    function createNewFolder() {
-      console.log('Creating new folder');
-      // Implement the logic to create a new folder
-    }
+// Download TXT
+function downloadTxt() {
+  const title = document.getElementById('novel-title').value;
+  const content = quill.root.textContent;
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = window.URL.createObjectURL(blob);
 
-    function deleteItem() {
-      document.getElementById('deleteModal').classList.remove('hidden');
-    }
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${title}.txt`;
+  link.click();
 
-    function confirmDelete() {
-      console.log('Item deleted');
-      document.getElementById('deleteModal').classList.add('hidden');
-      // Implement the actual delete logic here
-    }
+  window.URL.revokeObjectURL(url);
+}
 
-    function cancelDelete() {
-      document.getElementById('deleteModal').classList.add('hidden');
-    }
+function uploadTxt() {
+  const fileInput = document.getElementById('txt-upload');
+  const file = fileInput.files[0];
+  const reader = new FileReader();
 
-    function renameItem() {
-      console.log('Renaming item');
-      // Implement the logic to rename an item
-    }
+  reader.onload = function(e) {
+    quill.root.textContent = e.target.result; // Set editor content
+    updateWordCount(); // Update word count after loading
+  };
 
-    function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      const toggleBtn = document.getElementById('toggle-sidebar');
-      sidebar.classList.toggle('-translate-x-full');
-      toggleBtn.classList.toggle('hidden');
-    }
+  reader.readAsText(file);
+}
 
-    function truncateTitle(title, maxLength = 30) {
-      if (title.length <= maxLength) return title;
-      return title.substr(0, maxLength - 3) + '...';
-    }
-
-    function addTag(tag) {
-      const tagList = document.getElementById('tag-list');
-      const newTag = document.createElement('span');
-      newTag.className = 'bg-gray-700 text-xs px-2 py-1 rounded-full leading-reduced';
-      newTag.textContent = tag;
-      tagList.appendChild(newTag);
-    }
-
-    function addDocumentTag(tag) {
-      const documentTags = document.getElementById('document-tags');
-      const newTag = document.createElement('span');
-      newTag.className = 'bg-blue-500 text-white text-xs px-2 py-1 rounded-full leading-reduced flex items-center';
-      newTag.innerHTML = `${tag} <button class="ml-1 focus:outline-none" onclick="removeDocumentTag(this)">×</button>`;
-      documentTags.appendChild(newTag);
-    }
-
-    function removeDocumentTag(button) {
-      button.parentElement.remove();
-    }
-
-    // Add a new chapter to the sidebar
-    function addChapter(chapterName) {
-      const novelList = document.getElementById('novel-list');
-      const newItem = document.createElement('li');
-      newItem.className = 'hover:bg-sidebar-hover p-2 rounded transition duration-200 leading-reduced text-left';
-      const span = document.createElement('span');
-      span.className = 'truncate-title';
-      span.title = chapterName;
-      span.textContent = truncateTitle(chapterName);
-      newItem.appendChild(span);
-      novelList.appendChild(newItem);
-    }
-
-    // Add a new character to the sidebar
-    function addCharacter(characterName) {
-      const categoryList = document.getElementById('category-list');
-      const newItem = document.createElement('li');
-      newItem.className = 'hover:bg-sidebar-hover p-2 rounded transition duration-200 leading-reduced text-left';
-      const span = document.createElement('span');
-      span.className = 'truncate-title';
-      span.title = characterName;
-      span.textContent = truncateTitle(characterName);
-      newItem.appendChild(span);
-      categoryList.appendChild(newItem);
-    }
-
-    // Populate the sidebar with example data from The Great Gatsby
-    const gatsbyChapters = [
-      "Chapter 1:  The Great Gatsby",
-      "Chapter 2:  The Valley of Ashes",
-      "Chapter 3:  The Party",
-      "Chapter 4:  The Yellow Cocktail Dress",
-      "Chapter 5:  The Green Light",
-      "Chapter 6:  The Past",
-      "Chapter 7:  The Daisy Chain",
-      "Chapter 8:  The Aftermath",
-      "Chapter 9:  The End"
-    ];
-    const gatsbyCharacters = [
-      "Jay Gatsby",
-      "Nick Carraway",
-      "Daisy Buchanan",
-      "Tom Buchanan",
-      "Jordan Baker",
-      "Myrtle Wilson",
-      "George Wilson"
-    ];
-    gatsbyChapters.forEach(chapter => {
-      addChapter(chapter);
-    });
-    gatsbyCharacters.forEach(character => {
-      addCharacter(character);
-    });
-
-    document.getElementById('add-category').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        const newCategory = this.value.trim();
-        if (newCategory) {
-          const categoryList = document.getElementById('category-list');
-          const newItem = document.createElement('li');
-          newItem.className = 'hover:bg-sidebar-hover p-2 rounded transition duration-200 leading-reduced text-left';
-          const span = document.createElement('span');
-          span.className = 'truncate-title';
-          span.title = newCategory;
-          span.textContent = truncateTitle(newCategory);
-          newItem.appendChild(span);
-          categoryList.appendChild(newItem);
-          this.value = '';
-          console.log('New category added:', newCategory);
-        }
-      }
-    });
-
-    document.getElementById('add-tags').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        const newTags = this.value.split(',').map(tag => tag.trim()).filter(tag => tag);
-        newTags.forEach(tag => {
-          addTag(tag);
-          addDocumentTag(tag);
-        });
-        this.value = '';
-      }
-    });
-
-    // Populate category select
-    const categorySelect = document.getElementById('category-select');
-    const categories = ['Personal', 'Design', 'Work', 'Projects', 'Finance'];
-    categories.forEach(category => {
-      const option = document.createElement('option');
-      option.value = category.toLowerCase();
-      option.textContent = category;
-      categorySelect.appendChild(option);
-    });
-
-    // Add event listeners for import and export
-    document.getElementById('export-select').addEventListener('change', function() {
-      console.log('Export format selected:', this.value);
-      // Implement export logic
-    });
-
-    // Initialize editor with some content
-    quill.root.innerHTML = '<h1>Novel Document</h1><p>Start...</p>';
-
-    // Modal event listeners
-    document.getElementById('confirmDelete').addEventListener('click', confirmDelete);
-    document.getElementById('cancelDelete').addEventListener('click', cancelDelete);
-
-    // Apply truncation to existing titles
-    document.querySelectorAll('.truncate-title').forEach(el => {
-      el.textContent = truncateTitle(el.textContent);
-    });
-
-    // Word Count Functionality
-    function updateWordCount() {
-      const content = quill.root.textContent;
-      const wordCount = content.trim().split(/\s+/).length;
-      document.getElementById('word-count').textContent = wordCount;
-    }
-
-    quill.on('text-change', updateWordCount);
-
-    // Save to Local Storage
-    function saveToLocal() {
-      const data = {
-        title: document.getElementById('novel-title').value,
-        content: quill.root.textContent, // Store plain text
-        chapterSummary: document.getElementById('chapter-summary').value,
-        chapterOutline: document.getElementById('chapter-outline').value,
-        tags: Array.from(document.getElementById('document-tags').querySelectorAll('span')).map(tag => tag.textContent.split(' ')[0]),
-      };
-      localStorage.setItem('novelData', JSON.stringify(data));
-      console.log('Data saved to local storage.');
-    }
-
-    // Load from Local Storage
-    function loadFromLocal() {
-      const savedData = localStorage.getItem('novelData');
-      if (savedData) {
-        const data = JSON.parse(savedData);
-        document.getElementById('novel-title').value = data.title;
-        quill.root.textContent = data.content; // Load plain text
-        document.getElementById('chapter-summary').value = data.chapterSummary;
-        document.getElementById('chapter-outline').value = data.chapterOutline;
-        data.tags.forEach(tag => addDocumentTag(tag));
-        console.log('Data loaded from local storage.');
-      } else {
-        console.log('No data found in local storage.');
-      }
-    }
-
-    // Download TXT
-    function downloadTxt() {
-      const title = document.getElementById('novel-title').value;
-      const content = quill.root.textContent;
-      const blob = new Blob([content], { type: 'text/plain' });
-      const url = window.URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${title}.txt`;
-      link.click();
-
-      window.URL.revokeObjectURL(url);
-    }
-    function uploadTxt() {
-      const fileInput = document.getElementById('txt-upload');
-      const file = fileInput.files[0];
-      const reader = new FileReader();
-
-      reader.onload = function(e) {
-        quill.root.textContent = e.target.result; // Set editor content
-        updateWordCount(); // Update word count after loading
-      };
-
-      reader.readAsText(file);
-    }
-
-    // Toggle Sidebar
-    function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      const toggleBtn = document.getElementById('toggle-sidebar');
-      sidebar.classList.toggle('-translate-x-full');
-      toggleBtn.classList.toggle('hidden');
-    }
+// Toggle Sidebar
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const toggleBtn = document.getElementById('toggle-sidebar');
+  sidebar.classList.toggle('-translate-x-full');
+  toggleBtn.classList.toggle('hidden');
+}
   </script>
 
 </body></html>
