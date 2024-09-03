@@ -276,252 +276,54 @@
 
             // Set initial content
             htmlEditor.setValue(`<div class="nexus-container">
- <h1>Anagram Helper</h1>
-<div id="root">
-</div>
+  <h1 class="nexus-title">nexus</h1>
+</div>`);
 
             cssEditor.setValue(`body, html {
-* {
   margin: 0;
   padding: 0;
-  position: relative;
-  box-sizing: border-box;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+  overflow: hidden;
 }
 
-html {
-  font: 112.5%/1.5 -apple-system, BlinkMacSystemFont, "Helvetica", sans-serif;
-  padding: 2rem;
-  color: #eee;
-  background: #000;
+.nexus-container {
+  text-align: center;
 }
 
-.mega {
-  font-size: 10vw;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: -0.025em;
-  line-height: 1.1;
+.nexus-title {
+  font-family: 'Arial', sans-serif;
+  font-size: 15vw;
+  color: #e0e0e0;
+  text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease;
 }
 
-.lt--used {
-  text-decoration: strike;
-  opacity: 0.3;
-}
-
-input {
-  background: transparent;
-  color: #E05362;
-  outline: none;
-  border: none;
-  border-bottom: 2px solid;
-  -webkit-appearance: none;
-  max-width: 100%;
-  margin-bottom: -2px;
-}
-
-.wordInput input {
-  color: #5B93FC;
-}
+.nexus-title:hover {
+  transform: scale(1.05);
+}`);
 
             jsEditor.setValue(`document.addEventListener('DOMContentLoaded', (event) => {
-class Anagram extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      word: props.word,
-      letters: {},
-      usedLetters: {} };
-
-
-    this._beginEditing = this._beginEditing.bind(this);
-    this._updateFromInput = this._updateFromInput.bind(this);
-    this._endEditing = this._endEditing.bind(this);
-  }
-
-  _mapLetters(string) {
-    let obj = {};
-    string.split('').map(letter => {
-      let i = letter.toUpperCase();
-      if (obj[i] >= 1) {
-        obj[i]++;
-      } else {
-        obj[i] = 1;
-      }
-    });
-
-    return obj;
-  }
-
-  componentWillMount() {
-    const letters = this._mapLetters(this.props.word);
-    const usedLetters = this._mapLetters(this.props.compareTo);
-
-    this.setState({
-      letters: letters,
-      usedLetters: usedLetters });
-
-  }
-
-  componentWillUpdate() {
-    const usedLetters = this._mapLetters(this.props.compareTo);
-
-    this.setState({
-      usedLetters: usedLetters });
-
-  }
-
-  _beginEditing() {
-    this.setState({
-      isEditing: true });
-
-  }
-
-  _updateFromInput(e) {
-    this.setState({
-      word: e.target.value });
-
-
-    console.log(this.state);
-  }
-
-  _endEditing(e) {
-    this.setState({
-      word: e.target.value,
-      isEditing: false });
-
-
-    this.props.onWordChanged(e.target.value);
-  }
-
-  render() {
-    const check = this.state.usedLetters,
-    word = this.props.word.split(''),
-    outputLetters = [];
-
-    word.map((l, i) => {
-      let letter = l.toUpperCase();
-      outputLetters[i] = {
-        letter: letter,
-        used: false };
-
-
-      if (check[letter] > 0) {
-        check[letter]--;
-        outputLetters[i].used = true;
-      }
-    });
-
-    const output = /*#__PURE__*/
-    React.createElement("div", {
-      onClick: this._beginEditing,
-      className: "mega" },
-    outputLetters.map((item) => /*#__PURE__*/
-    React.createElement("span", { className: item.used ? 'lt--used' : 'lt' },
-    item.letter)));
-
-
-
-
-
-    const input = /*#__PURE__*/
-    React.createElement("div", { className: "wordInput" }, /*#__PURE__*/
-    React.createElement(Input, {
-      onChange: this._updateFromInput,
-      onBlur: this._endEditing,
-      autoFocus: this.state.isEditing,
-      value: this.props.word }));
-
-
-
-    return /*#__PURE__*/(
-      React.createElement("div", null,
-      this.state.isEditing ? input : output));
-
-
-  }}
-
-
-Anagram.defaultProps = {
-  compareTo: '' };
-
-
-class Input extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      value: props.value };
-
-
-    this._handleChange = this._handleChange.bind(this);
-  }
-
-  _handleChange(e) {
-    this.setState({
-      value: e.target.value });
-
-
-    this.props.onChange(e);
-  }
-
-  render() {
-    return /*#__PURE__*/(
-      React.createElement("div", null, /*#__PURE__*/
-      React.createElement("input", {
-        autoFocus: this.props.autoFocus,
-        className: "mega",
-        onChange: this._handleChange,
-        onBlur: this.props.onBlur,
-        value: this.state.value })));
-
-
-  }}
-
-
-class AnagramContainer extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      val: props.anagram || '',
-      word: props.word };
-
-
-    this._onInputChange = this._onInputChange.bind(this);
-    this._onWordChange = this._onWordChange.bind(this);
-  }
-
-  _onInputChange(e) {
-    this.setState({
-      val: e.target.value.toUpperCase() });
-
-  }
-
-  _onWordChange(newWord) {
-    this.setState({
-      word: newWord });
-
-  }
-
-  render() {
-    return /*#__PURE__*/(
-      React.createElement("div", null, /*#__PURE__*/
-      React.createElement(Anagram, {
-        word: this.state.word,
-        allowExtraneousLetters: false,
-        onExtraneousLetters: null,
-        compareTo: this.state.val,
-        onWordChanged: this._onWordChange }), /*#__PURE__*/
-      React.createElement(Input, {
-        onChange: this._onInputChange,
-        autoFocus: true,
-        value: this.props.anagram })));
-
-
-  }}
-
-
-ReactDOM.render( /*#__PURE__*/
-React.createElement(AnagramContainer, { word: "Type an anagram", anagram: "A pregnant ma" }),
-document.getElementById('root'));
+  const nexusTitle = document.querySelector('.nexus-title');
+  
+  nexusTitle.addEventListener('mousemove', (e) => {
+    const rect = nexusTitle.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    nexusTitle.style.textShadow = \`
+      \${x / 30}px \${y / 30}px 4px rgba(255, 255, 255, 0.1)
+    \`;
+  });
+  
+  nexusTitle.addEventListener('mouseleave', () => {
+    nexusTitle.style.textShadow = '2px 2px 4px rgba(255, 255, 255, 0.1)';
+  });
+});`);
 
             // Add change listeners
             [htmlEditor, cssEditor, jsEditor].forEach(editor => {
