@@ -52,64 +52,40 @@
     }
   </style>
 </head>
-<body class="font-inter bg-primary-bg"> 
+<body class="font-inter bg-primary-bg">
   <div class="flex h-screen">
     <div id="sidebar" class="w-64 bg-sidebar-bg text-white p-6 overflow-y-auto transition-all duration-300 ease-in-out">
       <div class="flex justify-between mb-6 bg-sidebar-bg p-2 rounded">
         <button onclick="createNewNovel()" class="text-gray-300 hover:text-white"><i class="fas fa-plus-square"></i></button>
-        <button onclick="createNewFolder()" class="text-gray-300 hover:text-white"><i class="fas fa-folder-plus"></i></button>
-        <button onclick="deleteItem()" class="text-gray-300 hover:text-white"><i class="fas fa-trash"></i></button>
         <button onclick="renameItem()" class="text-gray-300 hover:text-white"><i class="fas fa-pencil-alt"></i></button>
         <button onclick="toggleSidebar()" class="text-gray-300 hover:text-white"><i class="fas fa-times"></i></button>
       </div>
-      <h2 class="text-lg font-semibold mb-4 leading-reduced text-left">Chapters</h2>
-      <ul id="novel-list" class="space-y-1">
-        <!-- Chapters will be dynamically added here -->
-      </ul>
+      <!-- Save/Load/Download/Upload Buttons -->
       <div class="mt-8">
-        <h2 class="text-lg font-semibold mb-4 leading-reduced text-left">Characters</h2>
-        <ul id="category-list" class="space-y-1">
-          <!-- Characters will be dynamically added here -->
-        </ul>
+        <button onclick="saveToLocal()" class="px-4 py-2 bg-green-500 text-white font-medium rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-300 w-full">Save to Local Storage</button>
+        <button onclick="loadFromLocal()" class="mt-4 px-4 py-2 bg-blue-500 text-white font-medium rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 w-full">Load from Local Storage</button>
+        <input type="file" id="txt-upload" accept=".txt" onchange="uploadTxt()" class="mt-4 w-full">
+        <button onclick="downloadTxt()" class="mt-4 px-4 py-2 bg-blue-500 text-white font-medium rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 w-full">Download TXT</button>
+      </div>
+      <!-- Chapter and Character Lists -->
+      <div class="mt-8">
+        <h2 class="text-lg font-semibold mb-4 leading-reduced text-left">Chapters</h2>
+        <ul id="chapter-list" class="space-y-1"></ul>
       </div>
       <div class="mt-8">
-        <h2 class="text-lg font-semibold mb-4 leading-reduced text-left">Location/Tags</h2>
-        <div id="tag-list" class="flex flex-wrap gap-2">
-          <!-- Tags will be dynamically added here -->
-        </div>
+        <h2 class="text-lg font-semibold mb-4 leading-reduced text-left">Characters</h2>
+        <ul id="character-list" class="space-y-1"></ul>
       </div>
     </div>
     <button id="toggle-sidebar" class="fixed left-2 top-2 bg-sidebar-bg text-white p-2 rounded-full shadow-lg hidden"><i class="fas fa-chevron-right"></i></button>
     <div class="flex-1 flex flex-col overflow-hidden">
-      <div class="bg-primary-bg shadow-md p-4 mb-4">
+        <div class="bg-primary-bg shadow-md p-4 mb-4">
         <input type="text" id="novel-title" value="Novel Title" class="text-2xl font-bold w-full bg-transparent border-none focus:outline-none" onchange="updateNovelTitle()">
       </div>
       <div class="flex-1 overflow-auto px-4">
         <div id="editor" class="bg-primary-bg shadow-lg rounded-lg mb-6 h-[70vh]"></div>
         <textarea id="markdown-editor" class="w-full h-[70vh] p-4 bg-primary-bg shadow-lg rounded-lg mb-6 hidden"></textarea>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div>
-            <label for="category-select" class="block text-sm font-medium text-gray-700 mb-1">Category:</label>
-            <select id="category-select" class="block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-              <option value="">Select a category</option>
-            </select>
-          </div>
-          <div>
-            <label for="export-select" class="block text-sm font-medium text-gray-700 mb-1">Export:</label>
-            <select id="export-select" class="block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-              <option value="">Select format</option>
-              <option value="txt">TXT</option>
-            </select>
-          </div>
-          <div>
-            <label for="add-category" class="block text-sm font-medium text-gray-700 mb-1">Add Category:</label>
-            <input type="text" id="add-category" placeholder="New category" class="block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-          </div>
-          <div>
-            <button onclick="downloadTxt()" class="px-4 py-2 bg-blue-500 text-white font-medium rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300">Download TXT</button>
-          </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div>
             <label for="add-tags" class="block text-sm font-medium text-gray-700 mb-1">Add Tags:</label>
             <input type="text" id="add-tags" placeholder="Add tags (comma-separated)" class="block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
@@ -121,16 +97,8 @@
         </div>
         <div id="document-tags" class="flex flex-wrap gap-2 mb-6"></div>
         <div class="mb-6">
-          <label for="chapter-summary" class="block text-sm font-medium text-gray-700 mb-1">Chapter Summary:</label>
-          <textarea id="chapter-summary" class="block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" placeholder="Write a brief summary of the current chapter..."></textarea>
-        </div>
-        <div class="mb-6">
           <label for="chapter-outline" class="block text-sm font-medium text-gray-700 mb-1">Chapter Outline:</label>
           <textarea id="chapter-outline" class="block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" placeholder="Write an outline for the current chapter..."></textarea>
-        </div>
-        <div class="flex justify-end mt-4">
-          <button onclick="saveToLocal()" class="px-4 py-2 bg-green-500 text-white font-medium rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-300">Save to Local Storage</button>
-          <button onclick="loadFromLocal()" class="ml-4 px-4 py-2 bg-blue-500 text-white font-medium rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300">Load from Local Storage</button>
         </div>
       </div>
     </div>
@@ -421,6 +389,26 @@
       link.click();
 
       window.URL.revokeObjectURL(url);
+    }
+    function uploadTxt() {
+      const fileInput = document.getElementById('txt-upload');
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        quill.root.textContent = e.target.result; // Set editor content
+        updateWordCount(); // Update word count after loading
+      };
+
+      reader.readAsText(file);
+    }
+
+    // Toggle Sidebar
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const toggleBtn = document.getElementById('toggle-sidebar');
+      sidebar.classList.toggle('-translate-x-full');
+      toggleBtn.classList.toggle('hidden');
     }
   </script>
 
