@@ -276,53 +276,273 @@
 
             // Set initial content
             htmlEditor.setValue(`<div class="nexus-container">
-  <h1 class="nexus-title">nexus</h1>
-</div>`);
+  <html>
+    <head>
+        <title>Word Guessing Game</title>
+        <meta charset="UTF-8">
+        <link href="https://fonts.googleapis.com/css?family=Comfortaa" rel="stylesheet">
+        <link rel="stylesheet" type="text/css" href="style.css">
+    </head>
+    <body>
+      
+        <div id="wrapper">
+            <p class="hint"></p>
+            <div id="word-lines"></div>
+            <input id="input-field" type="text" maxlength="1" autofocus autocomplete="off">
+            <button id="button-guess">Guess</button>
+            <button id="button-hint">Hint</button>
+            <p id="lives"></p>
+            <div id="wrong-letters">
+                <p>Wrong letters</p>
+                <h6 class="wrong"></h6>
+            </div>
+            <button id="button-new">New Game</button>
+            <script type="text/javascript" src="script.js"></script>
+        </div>
+    </body>
+</html>
 
             cssEditor.setValue(`body, html {
-  margin: 0;
-  padding: 0;
-  height: 100%;
+ @import url('https://fonts.googleapis.com/css?family=Montserrat:300,400,700');
+
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #444;
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+}
+
+#wrapper {
+    display: block;
+    margin: 0 auto;
+    width: 70%;
+    text-align: center;
+}
+
+#ig {
+  height: 50px;
+  width: 50px;
+  background-color: #00a8ff;
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #1a1a1a;
-  color: #e0e0e0;
-  overflow: hidden;
+  border-bottom-right-radius: 6px;
+  position: absolute;
+  top: 0;
 }
 
-.nexus-container {
-  text-align: center;
+#ig:hover {
+  background-color: #009dee;
+  transition: .5s;
 }
 
-.nexus-title {
-  font-family: 'Arial', sans-serif;
-  font-size: 15vw;
-  color: #e0e0e0;
-  text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.1);
-  transition: transform 0.3s ease;
+.hint,
+.wrong {
+    height: 60px;
+    margin: 28x auto 18px;
+    background: transparent;
+    width: 100%;
 }
 
-.nexus-title:hover {
-  transform: scale(1.05);
+.wrong {
+    letter-spacing: 8px;
+}
+
+#wrong-letters {
+    display: flex;
+    flex-direction: column;
+    width: 60%;
+    height: 80px;
+    padding: 10px;
+    margin: auto;
+    background-color: #555;
+    border-radius: 6px;
+    margin-bottom: 40px;
+}
+
+#wrong-letters p,
+.wrong {
+    margin: 8px;
+}
+
+.hint { margin-top: 80px; }
+
+#input-field {
+    width: 30px;
+    height: 36px;
+    border: none;
+    border-radius: 6px;
+    padding: 0 20px;
+    outline: none;
+    text-align: center;
+    font-size: 16px;
+}
+
+button {
+    border: none;
+    border-radius: 6px;
+    height: 36px;
+    padding: 0 30px;
+    font-size: 14px;
+    cursor: pointer;
+    color: #fff;
+    background-color: #00a8ff;
+    outline: none;
+}
+
+button:hover {
+    background-color: #009dee;
+    transition: .4s;
+}
+
+#button-hint {
+    opacity: 0.5;
+}
+
+#button-hint:hover {
+    opacity: 1;
+    transition: .4s;
+}
+
+#lives {
+    font-size: 16px;
+    margin: 26px;
+}
+
+.line {
+    width: 40px;
+    height: 30px;
+    border-bottom: solid 3px #fff;
+    display: inline-block;
+    margin: 0 4px;
+    line-height: 0%;
+    position: relative;
+    font-weight: 600;
+}
+
+.container {
+    position: absolute;
+    bottom: 50%;
+    left: 50%;
+    margin-left: -25%;
+    margin-top: -25%;
+}
+
+#word-lines {
+    display: flex;
+    justify-content: center;
+    margin: 60px 0;
 }`);
 
             jsEditor.setValue(`document.addEventListener('DOMContentLoaded', (event) => {
   const nexusTitle = document.querySelector('.nexus-title');
   
-  nexusTitle.addEventListener('mousemove', (e) => {
-    const rect = nexusTitle.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+let lives, maxLives, letterFound, history, allLetters, ourLetters, word, rnd;
+
+let words = [['Rome', 'Capital of Italy'], ['Banana', 'Yellow fruit'], ['Javascript', 'Programming language'], ['Budapest', 'Capital of Hungary'], ['Carbonara', 'Italian food'], ['Guitar', 'String instrument'], ['Telephone', 'Electrical communication device'], ['Raspberry', 'Sweet, red fruit'], ['Backpack', 'A bag you wear on your back']];
+let letterLines = document.querySelector('#word-lines');
+
+//Choose random word-hint pair, create lines for the letters
+let randomNumber = () => {
+    rnd = Math.floor(Math.random() * Math.floor(words.length));
+    return rnd;
+}
+
+let random = (words) => {
+    randomNumber();
+    let currentWord = words[rnd][0];
+    for (let i = 0; i<currentWord.length; i++) {
+        var div = document.createElement('div');
+        letterLines.appendChild(div);
+        div.classList.add('line');
+    }
+    return currentWord;
+};
+
+word = random(words);
+
+//Validate input field (only one letter), get input (Guess - event listener), compare with currentWord's letters
+const input = document.querySelector('#input-field');
+const guess = document.querySelector('#button-guess');
+
+lives = document.querySelector('#lives');
+maxLives = 10;
+lives.textContent = `You have ${maxLives} lives.`;
+history = '';
+allLetters = word.length;
+ourLetters = 0;
+let showLetter = document.querySelectorAll('.line');
+
+guess.addEventListener('click', game);
+input.addEventListener('keyup', ent);
+
+function ent(e) {
+    if (e.keyCode === 13) {
+        game();
+    }
+};
+
+function game() {
+    let letters = /^[A-Za-z]+$/;
+    history.split('');
+    let correct = [];
+
+    if (history.indexOf(input.value.toUpperCase())==-1) {
+        if (input.value.match(letters)) {
+            for (let i = 0; i < word.length; i++) {
+                if (input.value.toUpperCase() == word[i].toUpperCase()) {
+                    // Print letter to the screen
+                    let letterContainer = document.createElement('div');
+                    let myLetter = document.createTextNode(input.value.toUpperCase());
+                    
+                    if (showLetter[i].firstChild == undefined) {
+                       showLetter[i].appendChild(letterContainer);
+                        letterContainer.appendChild(myLetter);
+                        letterContainer.classList.add('container');
+                    }
+                    letterFound = true;
+                    correct.push(input.value.toUpperCase());
+                } else if (correct.length <= 0){
+                    letterFound = false;
+                }
+            };
+        } else {
+            alert('Enter a valid letter!');
+        }
     
-    nexusTitle.style.textShadow = \`
-      \${x / 30}px \${y / 30}px 4px rgba(255, 255, 255, 0.1)
-    \`;
-  });
-  
-  nexusTitle.addEventListener('mouseleave', () => {
-    nexusTitle.style.textShadow = '2px 2px 4px rgba(255, 255, 255, 0.1)';
-  });
+       if (letterFound == false) {
+            document.querySelector('.wrong').textContent += input.value.toUpperCase();
+            maxLives--;
+            if (maxLives == 0) {
+                alert('You ran out of lives!');
+                guess.removeEventListener('click', game);
+                input.removeEventListener('keyup', ent);
+            }
+            lives.textContent = `You have ${maxLives} lives.`;
+        } else {
+            ourLetters++;
+            if (ourLetters == allLetters) {
+                alert(`Congrats! You found the word: ${word.toUpperCase()}!`);
+                guess.removeEventListener('click', game);
+            }
+        }
+    }
+    history += input.value.toUpperCase();
+    input.value = '';
+};
+
+//Show hint
+const hint = document.querySelector('#button-hint');
+hint.addEventListener('click', function(){
+    document.querySelector('.hint').textContent = words[rnd][1];
+});
+
+//New game
+const newGame = document.querySelector('#button-new');
+newGame.addEventListener('click', function(){
+    document.location.reload(true);
 });`);
 
             // Add change listeners
