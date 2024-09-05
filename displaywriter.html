@@ -186,14 +186,17 @@ z-index: 1000;
 
 </style>
 <style>
-   /* We'll target a more specific div now */
-   #root > div { 
+.decoder-container {  /* CSS class for the component */
       font-family: sans-serif;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
     }
-    #root > div h2 {
+    .decoder-container h2 {
       color: #333;
+      margin-bottom: 10px;
     }
-    #root > div textarea {
+    .decoder-container textarea {
       background-color: #f4f4f4; 
       width: 300px; 
       height: 100px;
@@ -201,18 +204,14 @@ z-index: 1000;
       border: 1px solid #ccc;
       margin-bottom: 10px;
     }
-    #root > div button {
-      background-color: #008CBA; /* Blue */
-      border: none; 
+    .decoder-container button {
+      background-color: #008CBA; 
       color: white; 
       padding: 10px 20px; 
-      text-align: center; 
-      text-decoration: none; 
-      display: inline-block; 
-      font-size: 16px; 
-      margin: 4px 2px; 
+      border: none;
       cursor: pointer;
       border-radius: 4px;
+      margin-right: 5px;
     }
   </style>	
 </head><body>
@@ -9056,35 +9055,6 @@ Friend, his lack of wisdom makes the path of life wane.
 <script>
 (() => {
   "use strict";
-  var e = {
-    730: (e, n, t) => {
-      // ... (React code remains the same)
-    },
-    391: (e, n, t) => {
-      // ... (React code remains the same)
-    },
-    950: (e, n, t) => {
-      // ... (React code remains the same)
-    },
-    153: (e, n, t) => {
-      // ... (React code remains the same)
-    },
-    202: (e, n) => {
-      // ... (React code remains the same)
-    },
-    43: (e, n, t) => {
-      // ... (React code remains the same)
-    },
-    579: (e, n, t) => {
-      // ... (React code remains the same)
-    },
-    234: (e, n) => {
-      // ... (React code remains the same)
-    },
-    853: (e, n, t) => {
-      // ... (React code remains the same)
-    },
-  };
 
   // Your code key
   const codeKey = {
@@ -9116,8 +9086,8 @@ Friend, his lack of wisdom makes the path of life wane.
     Z: "ix",
   };
 
+  // Encoding/Decoding Logic
   const n = (e) => {
-    // Create a reverse mapping for decoding
     const reverseKey = Object.fromEntries(
       Object.entries(codeKey).map(([key, value]) => [value, key])
     );
@@ -9152,61 +9122,7 @@ Friend, his lack of wisdom makes the path of life wane.
     };
   };
 
-  const u = () => {
-    const [text, setText] = React.useState("");
-    const [isCipher, setIsCipher] = React.useState(true);
-    const [isVigenere, setIsVigenere] = React.useState(true);
-    const { encode, decode } = n(codeKey);
-
-    return (
-      // Wrap everything in a single div
-      <div> 
-        <div className="app-container">
-          <h2>DECODER</h2>
-          <div className="textarea-container">
-            {isCipher ? (
-              <textarea value={text} readOnly={true} />
-            ) : (
-              <textarea value={text} onChange={(e) => setText(e.target.value)} />
-            )}
-          </div>
-          <div className="buttons-container">
-            <button
-              onClick={() => {
-                setText(
-                  isCipher
-                    ? decode(text)
-                    : encode(text.split("").map((e) => codeKey[e.toUpperCase()] || e).join(""))
-                );
-                setIsCipher(!isCipher);
-              }}
-            >
-              Toggle Keyboard Type (
-              {isCipher ? "Cipher" : "Regular"}
-              )
-            </button>
-            <button
-              onClick={() => {
-                setText(
-                  isVigenere
-                    ? vigenereDecode(text, "word")
-                    : vigenereEncode(text, "word")
-                );
-                setIsVigenere(!isVigenere);
-              }}
-            >
-              Toggle Text Type (
-              {isVigenere ? "Standard" : "Vigenere"}
-              )
-            </button>
-          </div>
-        </div>
-      </div> // Closing the added div
-    );
-  };
-
-
-  // Vigenere functions
+  // Vigenere Cipher Functions
   function vigenereEncode(text, key) {
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     let result = "";
@@ -9247,12 +9163,63 @@ Friend, his lack of wisdom makes the path of life wane.
     return result;
   }
 
+  // React Component
+  const u = () => {
+    const [text, setText] = React.useState("");
+    const [isCipher, setIsCipher] = React.useState(true);
+    const [isVigenere, setIsVigenere] = React.useState(true);
+    const { encode, decode } = n(codeKey);
+
+    return (
+      <div className="decoder-container"> 
+        <h2>DECODER</h2>
+        <div>
+          {isCipher ? (
+            <textarea value={text} readOnly={true} />
+          ) : (
+            <textarea value={text} onChange={(e) => setText(e.target.value)} />
+          )}
+        </div>
+        <div>
+          <button
+            onClick={() => {
+              setText(
+                isCipher
+                  ? decode(text)
+                  : encode(
+                      text.split("").map((e) => codeKey[e.toUpperCase()] || e).join("")
+                    )
+              );
+              setIsCipher(!isCipher);
+            }}
+          >
+            Toggle Keyboard Type ({isCipher ? "Cipher" : "Regular"})
+          </button>
+          <button
+            onClick={() => {
+              setText(
+                isVigenere
+                  ? vigenereDecode(text, "word")
+                  : vigenereEncode(text, "word")
+              );
+              setIsVigenere(!isVigenere);
+            }}
+          >
+            Toggle Text Type ({isVigenere ? "Standard" : "Vigenere"})
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Render the App
   React.createRoot(document.getElementById("root")).render(
     <React.StrictMode>
       <u />
     </React.StrictMode>
   );
-})();</script>
+})();
+</script>
 ___________________________________________________________________________
 onion@
 <marquee>http://yd3r4tdjgg7you3tuq7uyy5hl7tbwzowmd4pcgf6gpgk24hyawcvsjqd.onion </marquee>	
