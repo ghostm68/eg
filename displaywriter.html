@@ -9010,11 +9010,13 @@ Friend, his lack of wisdom makes the path of life wane.
 
 	</center> 
 </pre>
- <label for="encodedWord">Enter a word to decode:</label>
-  <input type="text" id="encodedWord">
-  <button onclick="decodeAndDisplay()">Decode</button>
+<label for="wordInput">Enter a word:</label>
+  <input type="text" id="wordInput">
 
-  <p id="decodedWord"></p>
+  <button onclick="encodeWord()">Encode</button>
+  <button onclick="decodeWord()">Decode</button>
+
+  <p id="result"></p>
 
   <script>
     const cipher = {
@@ -9041,21 +9043,50 @@ Friend, his lack of wisdom makes the path of life wane.
       'z': 'ix'
     };
 
+    function encodeWord(word) {
+      let encodedWord = '';
+      for (let i = 0; i < word.length; i++) {
+        const letter = word[i];
+        encodedWord += cipher[letter] || letter;
+      }
+      return encodedWord;
+    }
+
     function decodeWord(word) {
       let decodedWord = '';
       for (let i = 0; i < word.length; i++) {
         const letter = word[i];
-        decodedWord += cipher[letter] || letter;
+        for (const originalLetter in cipher) {
+          if (cipher[originalLetter] === letter) {
+            decodedWord += originalLetter;
+            break;
+          }
+        }
+        if (cipher[letter] === undefined) {
+          decodedWord += letter;
+        }
       }
       return decodedWord;
     }
 
-    function decodeAndDisplay() {
-      const encodedWordInput = document.getElementById("encodedWord");
-      const encodedWord = encodedWordInput.value;
-      const decodedWord = decodeWord(encodedWord);
-      document.getElementById("decodedWord").textContent = decodedWord;
+    function processWord() {
+      const wordInput = document.getElementById("wordInput");
+      const word = wordInput.value;
+      const result = document.getElementById("result");
+
+      if (event.target.textContent === "Encode") {
+        result.textContent = encodeWord(word);
+      } else {
+        result.textContent = decodeWord(word);
+      }
     }
+
+    // Attach the processWord function to both buttons
+    const encodeButton = document.querySelector('button:first-of-type');
+    encodeButton.addEventListener('click', processWord);
+
+    const decodeButton = document.querySelector('button:nth-of-type(2)');
+    decodeButton.addEventListener('click', processWord);
   </script>		    
 ___________________
 onion@
