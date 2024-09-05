@@ -184,37 +184,7 @@ z-index: 1000;
     }
 }
 
-</style>
-<style>
-.decoder-container {  /* CSS class for the component */
-      font-family: sans-serif;
-      padding: 20px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    .decoder-container h2 {
-      color: #333;
-      margin-bottom: 10px;
-    }
-    .decoder-container textarea {
-      background-color: #f4f4f4; 
-      width: 300px; 
-      height: 100px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      margin-bottom: 10px;
-    }
-    .decoder-container button {
-      background-color: #008CBA; 
-      color: white; 
-      padding: 10px 20px; 
-      border: none;
-      cursor: pointer;
-      border-radius: 4px;
-      margin-right: 5px;
-    }
-  </style>	
-</head><body>
+</style></head><body>
 <div class="parallax">
     <div class="parallax__layer parallax__layer--back">
         <div id="smoke-container"></div>
@@ -9046,181 +9016,92 @@ Friend, his lack of wisdom makes the path of life wane.
 </pre>
 
 
-	    
+  <label for="wordInput">words:</label>
+  <input type="text" id="wordInput">
 
- <div id="root"></div>
+  <button id="encodeButton">Encode</button>
+  <button id="decodeButton">Decode</button>
 
-<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-<script>
-(() => {
-  "use strict";
+  <p id="result"></p>
 
-  // Your code key
-  const codeKey = {
-    A: "ik",
-    B: "oz",
-    C: "ux",
-    D: "em",
-    E: "aj",
-    F: "yn",
-    G: "rp",
-    H: "qs",
-    I: "lw",
-    J: "gh",
-    K: "tv",
-    L: "bd",
-    M: "fz",
-    N: "xc",
-    O: "et",
-    P: "vf",
-    Q: "gz",
-    R: "hb",
-    S: "dc",
-    T: "mn",
-    U: "xy",
-    V: "wk",
-    W: "ol",
-    X: "ze",
-    Y: "ar",
-    Z: "ix",
-  };
-
-  // Encoding/Decoding Logic
-  const n = (e) => {
-    const reverseKey = Object.fromEntries(
-      Object.entries(codeKey).map(([key, value]) => [value, key])
-    );
-    return {
-      encode: (e) => {
-        return e
-          .toUpperCase()
-          .split("")
-          .map((e) => codeKey[e] || e)
-          .join("");
-      },
-      decode: (e) => {
-        let result = "";
-        let i = 0;
-        while (i < e.length) {
-          let found = false;
-          for (const [key, value] of Object.entries(reverseKey)) {
-            if (e.slice(i, i + key.length) === key) {
-              result += value;
-              i += key.length;
-              found = true;
-              break;
-            }
-          }
-          if (!found) {
-            result += e[i];
-            i++;
-          }
-        }
-        return result;
-      },
+  <script>
+    const cipher = {
+       'a': 'ik',
+  'b': 'oz',
+  'c': 'ux',
+  'd': 'em',
+  'e': 'aj',
+  'f': 'yn',
+  'g': 'rp',
+  'h': 'qs',
+  'i': 'lw',
+  'j': 'gh', 
+  'k': 'tv', 
+  'l': 'bd', 
+  'm': 'fz', 
+  'n': 'xc', 
+  'o': 'et',
+  'p': 'vf',
+  'q': 'gz',
+  'r': 'hb',
+  's': 'dc',
+  't': 'mn',
+  'u': 'xy',
+  'v': 'wk',
+  'w': 'ol',
+  'x': 'ze',
+  'y': 'ar',
+  'z': 'ix'
     };
-  };
 
-  // Vigenere Cipher Functions
-  function vigenereEncode(text, key) {
-    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    let result = "";
-    let keyIndex = 0;
+  function encodeWord(word) {
+  let encodedWord = '';
+  for (let i = 0; i < word.length; i++) {
+    const letter = word[i];
+    encodedWord += cipher[letter] || letter;
+  }
+  return encodedWord;
+}
 
-    for (let i = 0; i < text.length; i++) {
-      const char = text[i].toUpperCase();
-      if (alphabet.includes(char)) {
-        const textIndex = alphabet.indexOf(char);
-        const keyChar = key[keyIndex % key.length].toUpperCase();
-        const keyIndex = alphabet.indexOf(keyChar);
-        result += alphabet[(textIndex + keyIndex) % 26];
-        keyIndex++;
-      } else {
-        result += char;
+function decodeWord(word) {
+  let decodedWord = '';
+  for (let i = 0; i < word.length; i++) {
+    const letter = word[i];
+    let decodedLetter = letter; // Assume the letter is unchanged
+
+    // Check if the letter is an encoded value in the cipher object
+    for (const originalLetter in cipher) {
+      if (cipher[originalLetter] === letter) {
+        decodedLetter = originalLetter; // Decode the letter
+        break; // Exit the inner loop once a match is found
       }
     }
-    return result;
+
+    decodedWord += decodedLetter; 
   }
+  return decodedWord;
+}
 
-  function vigenereDecode(text, key) {
-    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    let result = "";
-    let keyIndex = 0;
+function processWord(isEncode) {
+  const wordInput = document.getElementById("wordInput");
+  const word = wordInput.value;
+  const result = document.getElementById("result");
 
-    for (let i = 0; i < text.length; i++) {
-      const char = text[i].toUpperCase();
-      if (alphabet.includes(char)) {
-        const textIndex = alphabet.indexOf(char);
-        const keyChar = key[keyIndex % key.length].toUpperCase();
-        const keyIndex = alphabet.indexOf(keyChar);
-        result += alphabet[(textIndex - keyIndex + 26) % 26];
-        keyIndex++;
-      } else {
-        result += char;
-      }
-    }
-    return result;
+  if (isEncode) {
+    result.textContent = encodeWord(word);
+  } else {
+    result.textContent = decodeWord(word);
   }
+}
 
-  // React Component
-  const u = () => {
-    const [text, setText] = React.useState("");
-    const [isCipher, setIsCipher] = React.useState(true);
-    const [isVigenere, setIsVigenere] = React.useState(true);
-    const { encode, decode } = n(codeKey);
+// Attach the processWord function to both buttons with the correct isEncode value
+const encodeButton = document.getElementById("encodeButton");
+encodeButton.addEventListener('click', () => processWord(true));
 
-    return (
-      <div className="decoder-container"> 
-        <h2>DECODER</h2>
-        <div>
-          {isCipher ? (
-            <textarea value={text} readOnly={true} />
-          ) : (
-            <textarea value={text} onChange={(e) => setText(e.target.value)} />
-          )}
-        </div>
-        <div>
-          <button
-            onClick={() => {
-              setText(
-                isCipher
-                  ? decode(text)
-                  : encode(
-                      text.split("").map((e) => codeKey[e.toUpperCase()] || e).join("")
-                    )
-              );
-              setIsCipher(!isCipher);
-            }}
-          >
-            Toggle Keyboard Type ({isCipher ? "Cipher" : "Regular"})
-          </button>
-          <button
-            onClick={() => {
-              setText(
-                isVigenere
-                  ? vigenereDecode(text, "word")
-                  : vigenereEncode(text, "word")
-              );
-              setIsVigenere(!isVigenere);
-            }}
-          >
-            Toggle Text Type ({isVigenere ? "Standard" : "Vigenere"})
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  // Render the App
-  React.createRoot(document.getElementById("root")).render(
-    <React.StrictMode>
-      <u />
-    </React.StrictMode>
-  );
-})();
-</script>
-___________________________________________________________________________
+const decodeButton = document.getElementById("decodeButton");
+decodeButton.addEventListener('click', () => processWord(false));
+  </script>	    
+___________________
 onion@
 <marquee>http://yd3r4tdjgg7you3tuq7uyy5hl7tbwzowmd4pcgf6gpgk24hyawcvsjqd.onion </marquee>	
 _________________<br>
@@ -9384,5 +9265,4 @@ toggleButton.addEventListener('click', () => {
     
 
 		          
-
 
