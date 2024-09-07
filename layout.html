@@ -1,0 +1,605 @@
+<html>
+<head>
+<base href="https://synthwave-highland.ai/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SynthWord:Screenplay Pong</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+  :root {
+    --neon-pink: #ff00ff;
+    --neon-blue: #00ffff;
+    --neon-purple: #9900ff;
+    --dark-bg: #120024;
+  }
+
+  body {
+    font-family: 'VT323', monospace;
+    background-color: var(--dark-bg);
+    color: #fff;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  header {
+    text-align: center;
+    padding: 40px 0;
+    position: relative;
+  }
+
+  h1 {
+    font-size: 4em;
+    margin: 0;
+    text-shadow: 0 0 10px var(--neon-pink), 0 0 20px var(--neon-blue);
+  }
+
+  nav {
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 10px 0;
+  }
+
+  nav ul {
+    list-style-type: none;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  nav ul li {
+    margin: 5px 15px;
+  }
+
+  nav ul li a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.2em;
+    transition: color 0.3s ease;
+  }
+
+  nav ul li a:hover {
+    color: var(--neon-blue);
+  }
+
+  .editor {
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 2px solid var(--neon-purple);
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 40px;
+  }
+
+  #screenplay {
+    width: 100%;
+    height: 500px;
+    background-color: #000;
+    color: #0f0;
+    font-family: 'Courier New', monospace;
+    font-size: 1.2em;
+    border: none;
+    padding: 10px;
+    resize: vertical;
+  }
+
+  .ai-extras, .quantum-connections {
+    margin-top: 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 2px solid var(--neon-pink);
+    border-radius: 10px;
+    padding: 10px;
+  }
+
+  h2 {
+    color: var(--neon-blue);
+    text-shadow: 0 0 5px var(--neon-blue);
+  }
+
+  button {
+    background-color: var(--neon-purple);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    font-family: 'VT323', monospace;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 5px;
+  }
+
+  .ai-extras button, .quantum-connections button {
+    font-size: 1em;
+    padding: 8px 16px;
+  }
+
+  button:hover {
+    background-color: var(--neon-pink);
+    box-shadow: 0 0 10px var(--neon-pink);
+  }
+
+  @keyframes neon-glow {
+    0% {
+      box-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue), 0 0 15px var(--neon-blue), 0 0 20px var(--neon-blue);
+    }
+    100% {
+      box-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue), 0 0 30px var(--neon-blue), 0 0 40px var(--neon-blue);
+    }
+  }
+
+  .neon-border {
+    animation: neon-glow 1.5s ease-in-out infinite alternate;
+  }
+
+  .grid {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(var(--neon-purple) 1px, transparent 1px),
+                      linear-gradient(90deg, var(--neon-purple) 1px, transparent 1px);
+    background-size: 50px 50px;
+    opacity: 0.1;
+    z-index: -1;
+  }
+
+  .sun {
+    position: fixed;
+    bottom: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 200px;
+    background: linear-gradient(to top, var(--neon-pink), var(--neon-purple));
+    border-radius: 50%;
+    box-shadow: 0 0 50px var(--neon-pink), 0 0 100px var(--neon-purple);
+    z-index: -2;
+  }
+
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .toolbar button {
+    font-size: 1em;
+    padding: 5px 10px;
+  }
+</style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="sun"></div>
+
+  <header>
+    <h1>SynthWord</h1>
+  </header>
+
+  <nav>
+    <ul>
+      <li><a href="#editor">Editor</a></li>
+      <li><a href="#ai-extras">AI Extras</a></li>
+      <li><a href="#quantum-connections">Quantum Connections</a></li>
+      <li><a href="#formatting">Formatting</a></li>
+      <li><a href="#export-pdf">Export PDF</a></li>
+    </ul>
+  </nav>
+
+  <div class="container">
+    <div id="editor" class="editor neon-border">
+      <div class="toolbar">
+        <button id="scene-heading">Scene Heading</button>
+        <button id="action">Action</button>
+        <button id="character">Character</button>
+        <button id="dialogue">Dialogue</button>
+        <button id="parenthetical">Parenthetical</button>
+        <button id="transition">Transition</button>
+      </div>
+      <div id="screenplay">
+  <div style="display: flex; justify-content: space-between;">
+    <div style="flex: 1;">
+      <div class="ruler">
+        <div class="ruler-marks"></div>
+      </div>
+      <div id="ace-editor"></div>
+      <div class="screenplay-controls">
+        <button id="import-pdf">Import PDF</button>
+        <button id="export-pdf">Export to PDF</button>
+      </div>
+    </div>
+    <div style="width: 250px; margin-left: 20px; background-color: rgba(0, 0, 0, 0.5); border: 1px solid var(--neon-blue); border-radius: 5px; padding: 10px;">
+      <h3 style="color: var(--neon-pink); margin-top: 0;">Notepad</h3>
+      <div class="character-location-list">
+        <h4 style="color: var(--neon-blue);">Characters:</h4>
+        <ul id="character-list" style="list-style-type: none; padding-left: 10px;">
+          <li>PROTAGONIST</li>
+          <li>ANTAGONIST</li>
+          <li>SUPPORTING CHARACTER 1</li>
+          <li>SUPPORTING CHARACTER 2</li>
+        </ul>
+        <h4 style="color: var(--neon-blue);">Locations:</h4>
+        <ul id="location-list" style="list-style-type: none; padding-left: 10px;">
+          <li>FUTURISTIC CITY</li>
+          <li>ABANDONED WAREHOUSE</li>
+          <li>VIRTUAL REALITY REALM</li>
+          <li>SPACE STATION</li>
+        </ul>
+      </div>
+      <textarea id="notes" style="width: 100%; height: 150px; background-color: rgba(0, 0, 0, 0.7); color: var(--neon-blue); border: 1px solid var(--neon-purple); border-radius: 5px; padding: 5px; margin-top: 10px;" placeholder="Add your notes here..."></textarea>
+    </div>
+  </div>
+</div>
+    </div>
+
+  <div id="ai-extras" class="ai-extras">
+    <h2>AI Extras</h2>
+    <button id="generate-ideas"> Plot </button>
+    <button id="analyze-script">Re-Script</button>
+    <button id="character-development">Character Development</button>
+    <button id="download-ai-to-body">Download to Physical Ai</button>
+  </div>
+ 
+<div id="score">Player: 0 | AI: 0</div>
+<canvas id="gameCanvas" width="800" height="400"></canvas>
+<div id="menu">
+    <h1>PONG</h1>
+    <button id="startButton">Start Game</button>
+</div>
+
+        <div id="aiStrategy">AI Strategy: Initializing...</div>
+      </div>
+  <div id="quantum-connections" class="quantum-connections">
+    <h2>Quantum Connections</h2>
+    <button id="quantum-collaboration">Quantum Collaboration</button>
+    <button id="multiverse-plotting">Multiverse Plotting</button>
+    <button id="entangled-storytelling">Entangled Storytelling</button>
+    <button id="download-quantum-to-body">Download Physical Quantum</button>
+  </div>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+  <script>
+// Initialize Ace editor
+const editor = ace.edit("screenplay");
+editor.setTheme("ace/theme/terminal");
+editor.session.setMode("ace/mode/text");
+editor.setOptions({
+  fontFamily: "'Courier New', monospace",
+  fontSize: "14px",
+  wrap: true
+});
+
+  // Screenplay formatting functions
+    function formatLine(type) {
+      const cursor = editor.selection.getCursor();
+      const currentLine = editor.session.getLine(cursor.row);
+      let formattedLine = currentLine.trim();
+
+      switch(type) {
+        case 'scene-heading':
+          formattedLine = formattedLine.toUpperCase();
+          break;
+        case 'character':
+          formattedLine = formattedLine.toUpperCase();
+          break;
+        case 'transition':
+          formattedLine = formattedLine.toUpperCase();
+          editor.session.insert({row: cursor.row, column: 0}, "\n");
+          editor.session.insert({row: cursor.row + 1, column: 0}, formattedLine.padStart((80 - formattedLine.length) / 2 + formattedLine.length));
+          editor.session.insert({row: cursor.row + 2, column: 0}, "\n");
+          return;
+        case 'parenthetical':
+          formattedLine = `(${formattedLine})`;
+          break;
+      }
+
+      editor.session.replace({
+        start: {row: cursor.row, column: 0},
+        end: {row: cursor.row, column: currentLine.length}
+      }, formattedLine);
+    }
+
+    document.getElementById('scene-heading').addEventListener('click', () => formatLine('scene-heading'));
+    document.getElementById('action').addEventListener('click', () => formatLine('action'));
+    document.getElementById('character').addEventListener('click', () => formatLine('character'));
+    document.getElementById('dialogue').addEventListener('click', () => formatLine('dialogue'));
+    document.getElementById('parenthetical').addEventListener('click', () => formatLine('parenthetical'));
+    document.getElementById('transition').addEventListener('click', () => formatLine('transition'));
+
+// AI Extras functionality
+document.getElementById('generate-ideas').addEventListener('click', () => {
+  alert('Generating futuristic plot ideas using advanced AI algorithms...');
+  // Implement AI-driven plot idea generation here
+});
+
+document.getElementById('analyze-script').addEventListener('click', () => {
+  alert('Analyzing script for structure, pacing, and character arcs using AI...');
+  // Implement AI script analysis here
+});
+
+document.getElementById('character-development').addEventListener('click', () => {
+  alert('Initiating AI-powered character development session...');
+  // Implement AI character development here
+});
+
+document.getElementById('download-ai-to-body').addEventListener('click', () => {
+  alert('Initiating transfer of AI consciousness to a designated physical body...');
+  // Implement AI consciousness transfer to physical body here
+});
+
+// Quantum Connections functionality
+document.getElementById('quantum-collaboration').addEventListener('click', () => {
+  alert('Establishing quantum entanglement for real-time collaboration across spacetime...');
+  // Implement quantum collaboration feature here
+});
+
+document.getElementById('multiverse-plotting').addEventListener('click', () => {
+  alert('Accessing parallel universe plot variations using quantum computing...');
+  // Implement multiverse plotting feature here
+});
+
+document.getElementById('entangled-storytelling').addEventListener('click', () => {
+  alert('Initializing entangled storytelling mode for non-linear narrative creation...');
+  // Implement entangled storytelling feature here
+});
+
+document.getElementById('download-quantum-to-body').addEventListener('click', () => {
+  alert('Initiating transfer of quantum-enhanced consciousness to a designated physical body...');
+  // Implement quantum consciousness transfer to physical body here
+});
+
+// Add synthwave visual effects
+const colors = ['#ff00ff', '#00ffff', '#9900ff'];
+let colorIndex = 0;
+
+setInterval(() => {
+  document.body.style.boxShadow = `0 0 10px ${colors[colorIndex]}, 0 0 20px ${colors[colorIndex]}`;
+  colorIndex = (colorIndex + 1) % colors.length;
+}, 1000);
+
+// Export PDF functionality
+document.getElementById('export-pdf').addEventListener('click', () => {
+  // Get the script content from the Ace Editor
+  const scriptContent = editor.getValue();
+
+  // Create a new jsPDF instance
+  const doc = new jsPDF();
+
+  // Add the script content to the PDF document
+  doc.text(scriptContent, 10, 10); // Adjust position as needed
+
+  // Save the PDF file
+  doc.save('my-screenplay.pdf'); // Choose a filename
+});
+
+// PONG Game Logic (add your PONG JavaScript code here)
+// ... (your PONG game code)
+
+  </script>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const scoreElement = document.getElementById('score');
+const menuElement = document.getElementById('menu');
+const startButton = document.getElementById('startButton');
+const aiStrategyElement = document.getElementById('aiStrategy');
+
+const paddleHeight = 100;
+const paddleWidth = 10;
+const ballSize = 10;
+
+let playerY = (canvas.height - paddleHeight) / 2;
+let aiY = (canvas.height - paddleHeight) / 2;
+let ballX = canvas.width / 2;
+let ballY = canvas.height / 2;
+let ballSpeedX = 5;
+let ballSpeedY = 5;
+
+let playerScore = 0;
+let aiScore = 0;
+
+let gameRunning = false;
+let particles = [];
+
+// AI strategies
+const aiStrategies = [
+    {
+        name: "Predictive",
+        execute: (aiY, ballY, ballX) => {
+            const prediction = ballY + (ballX - (canvas.width - paddleWidth)) * (ballSpeedY / ballSpeedX);
+            const targetY = Math.min(Math.max(prediction - paddleHeight / 2, 0), canvas.height - paddleHeight);
+            return aiY < targetY ? aiY + 4 : aiY - 4;
+        }
+    },
+    {
+        name: "Reactive",
+        execute: (aiY, ballY) => {
+            const aiCenter = aiY + paddleHeight / 2;
+            return aiCenter < ballY - 35 ? aiY + 6 : aiCenter > ballY + 35 ? aiY - 6 : aiY;
+        }
+    },
+    {
+        name: "Zone Defense",
+        execute: (aiY) => {
+            const zones = [0, canvas.height / 3, 2 * canvas.height / 3, canvas.height - paddleHeight];
+            const targetZone = zones[Math.floor(Math.random() * zones.length)];
+            return aiY < targetZone ? aiY + 3 : aiY > targetZone ? aiY - 3 : aiY;
+        }
+    },
+    {
+        name: "Aggressive",
+        execute: (aiY, ballY, ballX) => {
+            if (ballX > canvas.width / 2) {
+                return aiY < ballY - paddleHeight / 4 ? aiY + 7 : aiY > ballY + paddleHeight / 4 ? aiY - 7 : aiY;
+            } else {
+                return aiY < canvas.height / 2 - paddleHeight / 2 ? aiY + 3 : aiY > canvas.height / 2 + paddleHeight / 2 ? aiY - 3 : aiY;
+            }
+        }
+    }
+];
+
+let currentStrategy = aiStrategies[0];
+let strategyChangeCounter = 0;
+
+function drawRect(x, y, width, height, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, width, height);
+}
+
+function drawCircle(x, y, radius, color) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2, false);
+    ctx.fill();
+}
+
+function drawGame() {
+    // Clear canvas
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw paddles
+    drawRect(0, playerY, paddleWidth, paddleHeight, '#0ff');
+    drawRect(canvas.width - paddleWidth, aiY, paddleWidth, paddleHeight, '#0ff');
+    
+    // Draw ball
+    drawCircle(ballX, ballY, ballSize, '#0ff');
+    
+    // Draw center line
+    for (let i = 0; i < canvas.height; i += 40) {
+        drawRect(canvas.width / 2 - 1, i, 2, 20, '#0ff');
+    }
+
+    // Draw particles
+    particles.forEach((p, index) => {
+        p.life--;
+        if (p.life <= 0) {
+            particles.splice(index, 1);
+        } else {
+            p.x += p.speedX;
+            p.y += p.speedY;
+            p.size *= 0.95;
+            drawCircle(p.x, p.y, p.size, `rgba(0, 255, 255, ${p.life / 20})`);
+        }
+    });
+}
+
+function createParticles(x, y, count) {
+    for (let i = 0; i < count; i++) {
+        particles.push({
+            x: x,
+            y: y,
+            size: Math.random() * 3 + 1,
+            speedX: (Math.random() - 0.5) * 8,
+            speedY: (Math.random() - 0.5) * 8,
+            life: Math.random() * 20 + 10
+        });
+    }
+}
+
+function updateGame() {
+    ballX += ballSpeedX;
+    ballY += ballSpeedY;
+    
+    // Ball collision with top and bottom
+    if (ballY < 0 || ballY > canvas.height) {
+        ballSpeedY = -ballSpeedY;
+        createParticles(ballX, ballY, 20);
+    }
+    
+    // Ball collision with paddles
+    if (ballX < paddleWidth) {
+        if (ballY > playerY && ballY < playerY + paddleHeight) {
+            ballSpeedX = -ballSpeedX;
+            let deltaY = ballY - (playerY + paddleHeight / 2);
+            ballSpeedY = deltaY * 0.35;
+            createParticles(ballX, ballY, 30);
+        } else if (ballX < 0) {
+            aiScore++;
+            resetBall();
+        }
+    }
+    if (ballX > canvas.width - paddleWidth) {
+        if (ballY > aiY && ballY < aiY + paddleHeight) {
+            ballSpeedX = -ballSpeedX;
+            let deltaY = ballY - (aiY + paddleHeight / 2);
+            ballSpeedY = deltaY * 0.35;
+            createParticles(ballX, ballY, 30);
+        } else if (ballX > canvas.width) {
+            playerScore++;
+            resetBall();
+        }
+    }
+    
+    // AI movement
+    aiY = currentStrategy.execute(aiY, ballY, ballX);
+    aiY = Math.max(0, Math.min(canvas.height - paddleHeight, aiY));
+    
+    // Change AI strategy
+    strategyChangeCounter++;
+    if (strategyChangeCounter >= 500) {
+        changeAIStrategy();
+        strategyChangeCounter = 0;
+    }
+    
+    scoreElement.textContent = `Player: ${playerScore} | AI: ${aiScore}`;
+}
+
+function resetBall() {
+    ballX = canvas.width / 2;
+    ballY = canvas.height / 2;
+    ballSpeedX = -ballSpeedX;
+    ballSpeedY = 3;
+    createParticles(ballX, ballY, 50);
+}
+
+function changeAIStrategy() {
+    const newStrategy = aiStrategies[Math.floor(Math.random() * aiStrategies.length)];
+    if (newStrategy !== currentStrategy) {
+        currentStrategy = newStrategy;
+        aiStrategyElement.textContent = `AI Strategy: ${currentStrategy.name}`;
+        createParticles(canvas.width - paddleWidth, aiY + paddleHeight / 2, 100);
+    }
+}
+
+function gameLoop() {
+    if (gameRunning) {
+        updateGame();
+        drawGame();
+        requestAnimationFrame(gameLoop);
+    }
+}
+
+canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    playerY = e.clientY - rect.top - paddleHeight / 2;
+    
+    // Keep paddle within canvas
+    playerY = Math.max(0, Math.min(canvas.height - paddleHeight, playerY));
+});
+
+startButton.addEventListener('click', () => {
+    gameRunning = true;
+    menuElement.style.display = 'none';
+    scoreElement.style.display = 'block';
+    aiStrategyElement.style.display = 'block';
+    changeAIStrategy();
+    gameLoop();
+});
+
+// Initial setup
+scoreElement.style.display = 'none';
+aiStrategyElement.style.display = 'none';
+drawGame();
+</script>
+</body>
+</html>
