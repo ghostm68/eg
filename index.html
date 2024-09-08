@@ -378,19 +378,30 @@ footer {
             <div>
 		    
     
-    <form id="signupForm">
+    
+    <form id="signupForm" onsubmit="return false;">
         <label for="email">Email:</label>
         <input type="email" id="email" name="email" placeholder="Enter your email" required>
-        <button type="submit">Sign Up</button>
+        <button type="button" id="submitButton">Sign Up</button>
     </form>
     <div id="message"></div>
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('signupForm');
+        const submitButton = document.getElementById('submitButton');
         const messageDiv = document.getElementById('message');
 
-        form.addEventListener('submit', function(event) {
+        // Prevent form submission on enter key
+        form.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // Handle button click
+        submitButton.addEventListener('click', function(event) {
             event.preventDefault();
             
             const email = document.getElementById('email').value;
@@ -400,7 +411,7 @@ footer {
                 return;
             }
 
-            fetch('/nexus.php', {
+            fetch('./nexus.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -427,9 +438,15 @@ footer {
             return re.test(email);
         }
     });
+
+    // Remove email from URL if present
+    if (window.history.replaceState) {
+        const cleanURL = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({}, document.title, cleanURL);
+    }
     </script>
-</body>
-</html>
+
+    
 
         </div>
       </div>
