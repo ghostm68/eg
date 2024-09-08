@@ -26,11 +26,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $headers .= "MIME-Version: 1.0\r\n";
             $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
 
-            if (mail($to, $subject, $message, $headers)) {
+            $mailResult = mail($to, $subject, $message, $headers);
+            if ($mailResult) {
                 echo json_encode(["status" => "success", "message" => "Email sent successfully!"]);
             } else {
                 $error = error_get_last();
-                echo json_encode(["status" => "error", "message" => "Error sending email: " . $error['message']]);
+                echo json_encode([
+                    "status" => "error", 
+                    "message" => "Error sending email. Please check server logs.",
+                    "debug_info" => [
+                        "mail_error" => $error,
+                        "to" => $to,
+                        "subject" => $subject,
+                        "headers" => $headers
+                    ]
+                ]);
             }
         } else {
             echo json_encode(["status" => "error", "message" => "Invalid email address."]);
