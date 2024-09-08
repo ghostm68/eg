@@ -4,6 +4,43 @@
     <title>WordStar Nexus</title>
     <script type="module" src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+   
+	<script>$(document).ready(function() {
+    $('#signupForm').submit(function(event) {
+        event.preventDefault(); // Prevent default form submission
+
+        var email = $('#email').val();
+
+        // Validate email (you can add more validation here)
+        if (!validateEmail(email)) {
+            $('#message').html('<p style="color: red;">Please enter a valid email address.</p>');
+            return;
+        }
+
+        // Send data to server using jQuery AJAX
+        $.ajax({
+            type: 'POST',
+            url: 'nexus.php', // Your PHP script
+            data: { email: email }, 
+            success: function(response) {
+                $('#message').html('<p style="color: green;">Thank you! You will receive an email confirmation.</p>');
+                $('#signupForm')[0].reset(); // Clear the form
+            },
+            error: function(error) {
+                $('#message').html('<p style="color: red;">Oops! An error occurred. Please try again later.</p>');
+            }
+        });
+    });
+
+    // Basic email validation function
+    function validateEmail(email) {
+        // Use a regular expression to match a common email format
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; 
+        return re.test(email);
+    }
+});
+	</script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
         body {
@@ -168,23 +205,13 @@
                         <h2 class="text-3xl font-bold mb-6 text-center">Join the WordStar Nexus </h2>
                         <form class="space-y-4">
                             <div>
-                                <label for="email" class="block mb-2">Email Address</label>
-                                <input type="email" id="email" name="email" required
-                                       class="w-full px-4 py-2 rounded bg-zinc-800 text-white border border-zinc-700 focus:outline-none focus:border-blue-500">
-                            </div>
-                            <div>
-                                <label for="name" class="block mb-2">Full Name</label>
-                                <input type="text" id="name" name="name" required
-                                       class="w-full px-4 py-2 rounded bg-zinc-800 text-white border border-zinc-700 focus:outline-none focus:border-blue-500">
-                            </div>
-                            <div class="flex items-center">
-                                <input type="checkbox" id="terms" name="terms" required class="mr-2">
-                                <label for="terms">I agree to the <a href="/terms" class="text-blue-400 hover:underline">Terms of Service</a></label>
-                            </div>
-                            <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-300">
-                                Sign Up
-                            </button>
-                        </form>
+                                 <form id="signupForm">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+        <button type="submit">Sign Up</button>
+    </form>
+
+    <div id="message"></div>
                     </div>
                 </div>
             </section>
