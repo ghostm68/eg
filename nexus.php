@@ -1,17 +1,29 @@
 <?php
+
 // Replace with your actual email settings
 $to = "inkrealm@wordstar.nexus";
 $subject = "New Signup on Your Web";
 
-$email = $_POST['email'];
+// Sanitize email address
+$email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
 
-$message = "A new user has signed up with the email address: " . $email;
+if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $message = "A new user has signed up with the email address: " . $email;
 
-// You can use a library like PHPMailer for more advanced email sending
-// For basic sending, use mail()
-if (mail($to, $subject, $message)) {
-    echo "Email sent successfully!";
+    // Set email headers
+    $headers = "From: Your Website <noreply@yourwebsite.com>\r\n";
+    $headers .= "Reply-To: noreply@yourwebsite.com\r\n";
+    $headers .= "MIME-Version: 1.0\r\n";
+    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+
+    if (mail($to, $subject, $message, $headers)) {
+        echo "Email sent successfully!";
+    } else {
+        $error = error_get_last();
+        echo "Error sending email: " . $error['message'];
+    }
 } else {
-    echo "Error sending email.";
+    echo "Invalid email address.";
 }
+
 ?>
