@@ -376,45 +376,57 @@ footer {
           <h2 class="text-3xl font-bold mb-6 text-center">Join </h2>
           <form class="space-y-4">
             <div>
-		    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-   
-	<script>
-    $(document).ready(function() {
-        $('#signupForm').submit(function(event) {
-            event.preventDefault(); // Prevent default form submission
-            var email = $('#email').val();
-            // Validate email (you can add more validation here)
-            if (!validateEmail(email)) {
-                $('#message').html('<p style="color: red;">Please enter a valid email address.</p>');
-                return;
-            }
-            // Send data to server using jQuery AJAX
-            $.ajax({
-                type: 'POST',
-                url: 'nexus.php', // Your PHP script
-                data: { email: email }, 
-                success: function(response) {
-                    $('#message').html('<p style="color: green;">Thank you! You will receive an email confirmation.</p>');
-                    $('#signupForm')[0].reset(); // Clear the form
-                },
-                error: function(error) {
-                    $('#message').html('<p style="color: red;">Oops! An error occurred. Please try again later.</p>');
-                }
-            });
-        });
-        // Basic email validation function
-        function validateEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; 
-            return re.test(email);
-        }
-    });
-	</script>
-              <form id="signupForm">
+		    
+    <form id="signupForm">
         <label for="email">Email:</label>
         <input type="email" id="email" name="email" placeholder="Enter your email" required>
         <button type="submit">Sign Up</button>
     </form>
     <div id="message"></div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('signupForm');
+        const messageDiv = document.getElementById('message');
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+            
+            const email = document.getElementById('email').value;
+            
+            // Validate email
+            if (!validateEmail(email)) {
+                messageDiv.innerHTML = '<p style="color: red;">Please enter a valid email address.</p>';
+                return;
+            }
+
+            // Send data to server using Fetch API
+            fetch('nexus.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'email=' + encodeURIComponent(email)
+            })
+            .then(response => response.text())
+            .then(data => {
+                messageDiv.innerHTML = '<p style="color: green;">Thank you! You will receive an email confirmation.</p>';
+                form.reset(); // Clear the form
+            })
+            .catch(error => {
+                messageDiv.innerHTML = '<p style="color: red;">Oops! An error occurred. Please try again later.</p>';
+                console.error('Error:', error);
+            });
+        });
+
+        // Basic email validation function
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+    });
+    </script>
+
         </div>
       </div>
     </section> 
