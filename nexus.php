@@ -11,8 +11,8 @@ if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
     $message = "A new user has signed up with the email address: " . $email;
 
     // Set email headers
-    $headers = "From: Your Website <noreply@yourwebsite.com>\r\n";
-    $headers .= "Reply-To: noreply@yourwebsite.com\r\n";
+    $headers = "From: Your Website <noreply@wordstar.nexus>\r\n";
+    $headers .= "Reply-To: noreply@wordstar.nexus\r\n";
     $headers .= "MIME-Version: 1.0\r\n";
     $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
 
