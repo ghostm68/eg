@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Novel Viewer (Debug)</title>
+  <title>Novel Viewer (Fixed)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css?family=Roboto:100" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -13,7 +13,9 @@
     #content-wrapper { position: relative; height: 100%; overflow-y: scroll; background-color: rgba(248, 248, 248, 0.7); }
     #content { font-size: 18px; line-height: 1.6; padding: 20px; transform: translateZ(0); color: #333; }
     #background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; z-index: -1; transition: background-image 1s ease; }
-    #debug { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 10px; z-index: 1000; }
+    #debug { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 10px; z-index: 1000; max-height: 200px; overflow-y: auto; }
+    .chapter { margin-bottom: 30px; }
+    h2 { font-size: 24px; margin-bottom: 15px; }
   </style>
 </head>
 <body>
@@ -39,8 +41,8 @@
         url: "https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/your-images.json",
         dataType: "json",
         success: function(data) {
-          imageData = data;
-          log('Image data loaded: ' + imageData.length + ' images');
+          imageData = data.filter(img => img && img.url); // Filter out any undefined or invalid entries
+          log('Image data loaded: ' + imageData.length + ' valid images');
           setBackgroundImage(0);
           loadContent();
         },
@@ -66,22 +68,23 @@
     }
 
     function processContent(text) {
-      let chapters = text.split("## ");
+      let chapters = text.split("## ").filter(chapter => chapter.trim() !== "");
       const finalChapters = [];
 
       for (let i = 0; i < chapters.length; i++) {
         const chapter = chapters[i];
-        const heading = chapter.split("\n")[0];
+        const lines = chapter.split("\n");
+        const heading = lines[0];
 
         if (heading.startsWith("Chapter") || heading.startsWith("Section")) {
           currentImageIndex = (currentImageIndex + 1) % imageData.length;
           setBackgroundImage(currentImageIndex);
-          finalChapters.push('<div class="chapter"><h2>' + heading + '</h2>' + chapter.substring(heading.length) + '</div>');
+          finalChapters.push('<div class="chapter"><h2>' + heading + '</h2>' + lines.slice(1).join("\n") + '</div>');
         } else if (heading.includes("_START")) {
           const id = heading.toLowerCase().replace("_start", "").replace(/_/g, "-");
-          finalChapters.push(`<div id="${id}">${chapter}</div>`);
+          finalChapters.push(`<div id="${id}" class="chapter"><h2>${heading.replace("_START", "")}</h2>${lines.slice(1).join("\n")}</div>`);
         } else {
-          finalChapters.push('<div>' + chapter + '</div>');
+          finalChapters.push('<div class="chapter">' + chapter + '</div>');
         }
       }
 
@@ -95,16 +98,16 @@
         log('Setting background image: ' + imageUrl);
         $('#background').css('background-image', `url(${imageUrl})`);
       } else {
-        log('No image data available');
+        log('No valid image data available');
       }
     }
 
-    $(window).scroll(function() {
-      const scrollTop = $(window).scrollTop();
+    $('#content-wrapper').on('scroll', function() {
+      const scrollTop = $(this).scrollTop();
       const windowHeight = $(window).height();
       const documentHeight = $(document).height();
       const scrollPercentage = scrollTop / (documentHeight - windowHeight);
-      const parallaxShift = scrollPercentage * 100;
+      const parallaxShift = scrollPercentage * 200; // Increased for more noticeable effect
       $('#background').css('transform', `translateY(${parallaxShift}px) scale(1.1)`);
     });
   </script>
