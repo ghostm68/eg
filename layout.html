@@ -2,95 +2,100 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Novel Viewer</title>
+  <title>Novel Viewer (Debug)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css?family=Roboto:100" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    html, body {
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-    }
-    body {
-      font-family: "Roboto", sans-serif;
-      perspective: 1px;
-    }
-    #content-wrapper {
-      position: relative;
-      height: 100%;
-      overflow-y: scroll;
-      background-color: rgba(248, 248, 248, 0.7);
-    }
-    #content {
-      font-size: 24px;
-      line-height: 1.6;
-      padding: 50px 100px;
-      transform: translateZ(0);
-      color: #333;
-    }
-    #background {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-size: cover;
-      background-position: center;
-      z-index: -1;
-      transition: background-image 1s ease;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; overflow: hidden; }
+    body { font-family: "Roboto", sans-serif; perspective: 1px; }
+    #content-wrapper { position: relative; height: 100%; overflow-y: scroll; background-color: rgba(248, 248, 248, 0.7); }
+    #content { font-size: 18px; line-height: 1.6; padding: 20px; transform: translateZ(0); color: #333; }
+    #background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; z-index: -1; transition: background-image 1s ease; }
+    #debug { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 10px; z-index: 1000; }
   </style>
 </head>
 <body>
+  <div id="debug"></div>
   <div id="content-wrapper">
     <div id="background"></div>
-    <div id="content"></div>
+    <div id="content">Loading content...</div>
   </div>
 
   <script>
     let currentImageIndex = 0;
     let imageData = [];
 
+    function log(message) {
+      console.log(message);
+      $('#debug').append('<p>' + message + '</p>');
+    }
+
     $(document).ready(function() {
-      $.getJSON("https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/your-images.json", function(data) {
-        imageData = data;
-        setBackgroundImage(0); // Set initial background to the main image
+      log('Document ready');
 
-        $.get('https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/horse.txt', function(text) {
-          let chapters = text.split("## ");
-          const finalChapters = [];
-
-          for (let i = 0; i < chapters.length; i++) {
-            const chapter = chapters[i];
-            const heading = chapter.split("\n")[0];
-
-            if (heading.startsWith("Chapter") || heading.startsWith("Section")) {
-              currentImageIndex = (currentImageIndex + 1) % imageData.length;
-              setBackgroundImage(currentImageIndex);
-              finalChapters.push('<div class="chapter">' + chapter + '</div>');
-            } else if (heading.includes("_START")) {
-              const id = heading.toLowerCase().replace("_start", "").replace(/_/g, "-");
-              finalChapters.push(`<div id="${id}">${chapter}</div>`);
-            } else {
-              finalChapters.push('<div>' + chapter + '</div>');
-            }
-          }
-
-          $('#content').html(finalChapters.join(''));
-        });
+      $.ajax({
+        url: "https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/your-images.json",
+        dataType: "json",
+        success: function(data) {
+          imageData = data;
+          log('Image data loaded: ' + imageData.length + ' images');
+          setBackgroundImage(0);
+          loadContent();
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+          log('Error loading image data: ' + textStatus + ', ' + errorThrown);
+        }
       });
     });
+
+    function loadContent() {
+      log('Loading content');
+      $.ajax({
+        url: 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/horse.txt',
+        dataType: 'text',
+        success: function(text) {
+          log('Content loaded, length: ' + text.length);
+          processContent(text);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+          log('Error loading content: ' + textStatus + ', ' + errorThrown);
+        }
+      });
+    }
+
+    function processContent(text) {
+      let chapters = text.split("## ");
+      const finalChapters = [];
+
+      for (let i = 0; i < chapters.length; i++) {
+        const chapter = chapters[i];
+        const heading = chapter.split("\n")[0];
+
+        if (heading.startsWith("Chapter") || heading.startsWith("Section")) {
+          currentImageIndex = (currentImageIndex + 1) % imageData.length;
+          setBackgroundImage(currentImageIndex);
+          finalChapters.push('<div class="chapter"><h2>' + heading + '</h2>' + chapter.substring(heading.length) + '</div>');
+        } else if (heading.includes("_START")) {
+          const id = heading.toLowerCase().replace("_start", "").replace(/_/g, "-");
+          finalChapters.push(`<div id="${id}">${chapter}</div>`);
+        } else {
+          finalChapters.push('<div>' + chapter + '</div>');
+        }
+      }
+
+      $('#content').html(finalChapters.join(''));
+      log('Content processed and displayed');
+    }
 
     function setBackgroundImage(index) {
       if (imageData.length > 0) {
         const imageUrl = imageData[index].url;
+        log('Setting background image: ' + imageUrl);
         $('#background').css('background-image', `url(${imageUrl})`);
+      } else {
+        log('No image data available');
       }
     }
 
@@ -99,7 +104,7 @@
       const windowHeight = $(window).height();
       const documentHeight = $(document).height();
       const scrollPercentage = scrollTop / (documentHeight - windowHeight);
-      const parallaxShift = scrollPercentage * 100; // Adjust this value to control the parallax effect intensity
+      const parallaxShift = scrollPercentage * 100;
       $('#background').css('transform', `translateY(${parallaxShift}px) scale(1.1)`);
     });
   </script>
