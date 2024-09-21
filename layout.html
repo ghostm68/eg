@@ -5,57 +5,52 @@
   <title>Novel Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css?family=Roboto:100" rel="stylesheet">
-  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <style>
-  * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-html, body {
-  height: 100%;
-  width: 100%;
-  overflow: hidden; 
-}
-body {
-  font-family: "Roboto", sans-serif;
-  perspective: 1px;
-}
-#content-wrapper {
-  position: relative;
-  height: 100%;
-  overflow-y: scroll; /* Allow scrolling for content */
-  background-color: #f8f8f8; 
-}
-#content {
-  font-size: 24px;
-  line-height: 1.6;
-  padding: 50px 100px; 
-  transform: translateZ(0); 
-  color: #666; /* Ash color */
-}
-#background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-  z-index: -1;
-  transform: translateZ(-1px) scale(2); 
-  transition: background-image 1s ease; 
-  background-attachment: fixed; /*  Keep the background fixed */
-  transform: translateZ(-10px) scale(1.5); /* Adjust scale for parallax */
-  background-image: url("https://raw.githubusercontent.com/ghostm68/pantheon/main/Conversione_di_san_Paolo_September_2015-1a.jpg"); /* Add background image URL here */
-}
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+    body {
+      font-family: "Roboto", sans-serif;
+      perspective: 1px;
+    }
+    #content-wrapper {
+      position: relative;
+      height: 100%;
+      overflow-y: scroll;
+      background-color: #f8f8f8;
+    }
+    #content {
+      font-size: 24px;
+      line-height: 1.6;
+      padding: 50px 100px;
+      transform: translateZ(0);
+      color: #666;
+    }
+    #background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      z-index: -1;
+      transition: background-image 1s ease;
+    }
   </style>
 </head>
 <body>
   <div id="content-wrapper">
     <div id="background"></div>
-    <div id="content"> 
-      </div>
+    <div id="content"></div>
   </div>
 
   <script>
@@ -63,63 +58,50 @@ body {
     let imageData = [];
 
     $(document).ready(function() {
-      $.getJSON("your-images.json", function(data) {
+      $.getJSON("https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/your-images.json", function(data) {
         imageData = data;
-        setBackgroundImage(0); // Set initial background
+        setBackgroundImage(0);
 
-        $.get('horse.txt', function(text) {
-          $('#content').html(text); // Display the chapters
-
+        $.get('https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/horse.txt', function(text) {
           let chapters = text.split("## ");
           const finalChapters = [];
-          let currentChapter = null;
 
           for (let i = 0; i < chapters.length; i++) {
             const chapter = chapters[i];
             const heading = chapter.split("\n")[0];
 
             if (heading.startsWith("Chapter") || heading.startsWith("Section")) {
-              // Get a random image index
-              currentImageIndex = Math.floor(Math.random() * imageData.length); 
-              setBackgroundImage(currentImageIndex); // Update background 
-
-              currentChapter = chapter;
-            } else if (currentChapter) {
-              currentChapter += "## " + chapter; 
-            } else if (heading === "PDF_NOTES_START") { 
-              // finalChapters.push('<a href="your-notes.pdf" target="_blank">Chapter 2 Notes (PDF)</a>');
-            } else if (heading === "PRELUDE_CHAPTER_THREE_START") {
-              finalChapters.push('<div id="prelude-chapter-three">' + chapter + '</div>'); 
-            } else if (heading === "INTRODUCTION_CHAPTER_THREE_START") {
-              finalChapters.push('<div id="introduction-chapter-three">' + chapter + '</div>'); 
-            } else if (heading === "GENESIS_AND_REVELATION_CHAPTER_THREE_START") {
-              finalChapters.push('<div id="genesis-and-revelation-chapter-three">' + chapter + '</div>'); 
-            } else if (heading === "TWO_DAYS_EARLIER_CHAPTER_THREE_START") {
-              finalChapters.push('<div id="two-days-earlier-chapter-three">' + chapter + '</div>'); 
-            } else if (heading === "CONTEXT_CHAPTER_THREE_START") {
-              finalChapters.push('<div id="context-chapter-three">' + chapter + '</div>'); 
-            } else if (heading === "POV_CHAPTER_THREE_START") {
-              finalChapters.push('<div id="pov-chapter-three">' + chapter + '</div>'); 
-            } else if (heading === "NOTES_CHAPTER_THREE_START") {
-              finalChapters.push('<div id="notes-chapter-three">' + chapter + '</div>'); 
-            } else if (heading.startsWith("Chapter Four - i") || heading.startsWith("Chapter Four - ii") || heading.startsWith("Chapter Four - post-script")) { 
-              finalChapters.push('<div id="chapter-four-section-' + i + '">' + chapter + '</div>'); 
-            } else if (currentChapter) { 
-              finalChapters.push(currentChapter); 
-              currentChapter = null;
-            } 
+              currentImageIndex = (currentImageIndex + 1) % imageData.length;
+              setBackgroundImage(currentImageIndex);
+              finalChapters.push('<div class="chapter">' + chapter + '</div>');
+            } else if (heading.includes("_START")) {
+              const id = heading.toLowerCase().replace("_start", "").replace(/_/g, "-");
+              finalChapters.push(`<div id="${id}">${chapter}</div>`);
+            } else {
+              finalChapters.push('<div>' + chapter + '</div>');
+            }
           }
 
-          $('#content').html(finalChapters.join('')); // Display the chapters
+          $('#content').html(finalChapters.join(''));
         });
       });
+    });
 
-      function setBackgroundImage(index) {
-        if (imageData.length > 0) {
-          // Nothing should be here!
-        }
+    function setBackgroundImage(index) {
+      if (imageData.length > 0) {
+        const imageUrl = imageData[index].url;
+        $('#background').css('background-image', `url(${imageUrl})`);
       }
-});
+    }
+
+    $(window).scroll(function() {
+      const scrollTop = $(window).scrollTop();
+      const windowHeight = $(window).height();
+      const documentHeight = $(document).height();
+      const scrollPercentage = scrollTop / (documentHeight - windowHeight);
+      const parallaxShift = scrollPercentage * 100; // Adjust this value to control the parallax effect intensity
+      $('#background').css('transform', `translateY(${parallaxShift}px) scale(1.1)`);
+    });
   </script>
 </body>
 </html>
