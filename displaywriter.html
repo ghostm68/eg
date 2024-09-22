@@ -1,26 +1,285 @@
+<html><head>
+  <meta charset="utf-8"><title>novel 4/10</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lato:wght@300;400;700&family=Merriweather:wght@300;400;700&family=Roboto+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/ScrollTrigger.min.js"></script>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>Novel 4/10</title>
-  <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; width: 100%; overflow: hidden; }
-    body { font-family: "Roboto", sans-serif; }
-    #content-wrapper { position: relative; height: 100%; overflow-y: scroll; background-color: rgba(248, 248, 248, 0.7); }
-    #content { font-size: 18px; line-height: 1.6; padding: 20px; color: #333; }
-    #background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; z-index: -1; transition: background-image 1s ease, transform 0.3s ease-out; }
-    #debug { position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 10px; z-index: 1000; max-height: 20px; overflow-y: auto; width: 20px; }
-    .chapter { margin-bottom: 30px; }
-    h2 { font-size: 24px; margin-bottom: 15px; }
-  </style>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; width: 100%; }
+  body { font-family: 'Lato', sans-serif; background-color: #f0f0f0; }
+
+  #content {
+    color: #000000;
+    background-color: rgba(255, 255, 255, 0.9);
+  }
+
+  body.dark-theme #content {
+    color: #e0e0e0;
+    background-color: rgba(0, 0, 0, 0.9);
+  }
+
+  body.dark-theme #index {
+    background: rgba(40, 40, 40, 0.9);
+  }
+
+  body.dark-theme #reader-mode-toggle,
+  body.dark-theme #theme-toggle {
+    background-color: #444;
+    color: #fff;
+  }
+
+  body.dark-theme #reader-mode-toggle:hover,
+  body.dark-theme #theme-toggle:hover {
+    background-color: #666;
+  }
+
+  #theme-toggle {
+    position: fixed;
+    top: 10px;
+    left: 140px;
+    background-color: #808080;
+    color: #ffffff;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 14px;
+    z-index: 1000;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+  }
+
+  #theme-toggle:hover {
+    background-color: #a0a0a0;
+  }
+
+  #content-wrapper {
+    position: relative;
+    height: 100%;
+    overflow-y: scroll;
+    perspective: 2px;
+    transform-style: preserve-3d;
+  }
+
+  #background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    z-index: -1;
+    transform: translateZ(-2px) scale(2);
+  }
+
+  #index {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #ffff00;
+    padding: 20px;
+    z-index: 1000;
+    max-height: 80%;
+    overflow-y: auto;
+    width: 300px;
+    font-size: 14px;
+    font-family: 'Roboto Mono', monospace;
+    box-shadow: 0 0 10px rgba(255, 255, 0, 0.3);
+    border-radius: 5px;
+  }
+
+  #index h3 {
+    margin-bottom: 10px;
+    color: #ffff00;
+    font-weight: 700;
+  }
+
+  #index ul {
+    list-style-type: none;
+  }
+
+  #index li {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+  }
+
+  .index-thumbnail {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    margin-right: 10px;
+    border-radius: 5px;
+  }
+
+  #index a {
+    color: #ffff00;
+    text-decoration: none;
+    transition: color 0.3s;
+    flex-grow: 1;
+  }
+
+  #index a:hover {
+    color: #ff69b4;
+  }
+
+  .chapter {
+    margin-bottom: 60px;
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity 0.5s, transform 0.5s;
+  }
+
+  .chapter.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    margin-bottom: 30px;
+    color: #2c3e50;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+  }
+
+  p {
+    margin-bottom: 20px;
+    text-align: left;
+  }
+
+  .chapter-transition {
+    height: 100px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(255,255,255,0));
+    margin-bottom: 60px;
+  }
+
+  #progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 4px;
+    background-color: #ffff00;
+    z-index: 1001;
+    width: 0;
+    transition: width 0.3s;
+  }
+
+  .font-style-1 {
+    font-family: 'Lato', sans-serif;
+    font-weight: 400;
+  }
+
+  .font-style-2 {
+    font-family: 'Merriweather', serif;
+    font-weight: 700;
+  }
+
+  .font-style-3 {
+    font-family: 'Roboto Slab', serif;
+    font-weight: 300;
+  }
+
+  #reader-mode-toggle {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background-color: #808080;
+    color: #ffffff;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 14px;
+    z-index: 1000;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+  }
+
+  #reader-mode-toggle:hover {
+    background-color: #a0a0a0;
+  }
+
+  .reader-mode {
+    background-color: #f9f9f9;
+    color: #333;
+    font-family: 'Merriweather', serif;
+    line-height: 1.8;
+    padding: 20px 15% !important;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .reader-mode #background,
+  .reader-mode #index,
+  .reader-mode #progress-bar {
+    display: none;
+  }
+
+  .reader-mode .chapter {
+    opacity: 1;
+    transform: none;
+  }
+
+  .reader-mode h2 {
+    font-size: 28px;
+    margin-top: 40px;
+  }
+
+  .reader-mode p {
+    font-size: 18px;
+    margin-bottom: 20px;
+  }
+
+  #loading-indicator {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    color: #ffff00;
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 20px;
+    border-radius: 10px;
+    z-index: 2000;
+  }
+
+  @media (max-width: 768px) {
+    #content {
+      padding: 50px 5%;
+    }
+
+    #index {
+      width: 188px;
+      font-size: 10px;
+    }
+
+    h2 {
+      font-size: 28px;
+    }
+
+    .reader-mode {
+      padding: 20px 5% !important;
+    }
+  }
+</style>
 </head>
 <body>
-  <div id="debug"></div>
+  <div id="loading-indicator">Loading content...</div>
+  <div id="index">
+    <i> Table of Contents</i>
+    <p style="color: #ff9900; margin-bottom: 10px;">Use the links below to navigate.</p>
+    <ul id="index-list"></ul>
+  </div>
+  <button id="reader-mode-toggle">Toggle Reader Mode</button>
+  <button id="theme-toggle"><i class="fas fa-lightbulb"></i></button>
+  <div id="progress-bar"></div>
   <div id="content-wrapper">
     <div id="background"></div>
     <div id="content">Loading content...</div>
@@ -30,45 +289,42 @@
     let currentImageIndex = 0;
     let imageData = [];
     let chapterTops = [];
-
-    function log(message) {
-      console.log(message);
-      $('#debug').append('<p>' + message + '</p>');
-      $('#debug').scrollTop($('#debug')[0].scrollHeight);
-    }
+    let isReaderMode = false;
+    let isDarkTheme = false;
 
     $(document).ready(function() {
-      log('Document ready');
-
       $.ajax({
         url: "https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/your-images.json",
         dataType: "json",
         success: function(data) {
           imageData = data.filter(img => img && img.url);
-          log('Image data loaded: ' + imageData.length + ' valid images');
-          imageData.forEach((img, index) => {
-            log(`Image ${index}: ${img.url}`);
-          });
           setBackgroundImage(0);
           loadContent();
         },
         error: function(jqXHR, textStatus, errorThrown) {
-          log('Error loading image data: ' + textStatus + ', ' + errorThrown);
+          console.error('Error loading image data:', textStatus, errorThrown);
+          $('#loading-indicator').text('Error loading image data. Please try again.');
         }
       });
+
+      if (localStorage.getItem('isDarkTheme') === 'true') {
+        toggleTheme();
+      }
+
+      $('#theme-toggle').on('click', toggleTheme);
     });
 
     function loadContent() {
-      log('Loading content');
       $.ajax({
         url: 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/horse.txt',
         dataType: 'text',
         success: function(text) {
-          log('Content loaded, length: ' + text.length);
           processContent(text);
+          $('#loading-indicator').hide();
         },
         error: function(jqXHR, textStatus, errorThrown) {
-          log('Error loading content: ' + textStatus + ', ' + errorThrown);
+          console.error('Error loading content:', textStatus, errorThrown);
+          $('#loading-indicator').text('Error loading content. Please try again.');
         }
       });
     }
@@ -76,46 +332,64 @@
     function processContent(text) {
       let chapters = text.split("## ").filter(chapter => chapter.trim() !== "");
       const finalChapters = [];
+      const indexList = [];
 
       for (let i = 0; i < chapters.length; i++) {
         const chapter = chapters[i];
         const lines = chapter.split("\n");
         const heading = lines[0];
+        const fontStyle = `font-style-${(i % 3) + 1}`;
 
-        if (heading.startsWith("Chapter") || heading.startsWith("Section")) {
-          finalChapters.push(`<div class="chapter" data-image="${currentImageIndex}"><h2>${heading}</h2>${lines.slice(1).join("\n")}</div>`);
-          currentImageIndex = (currentImageIndex + 1) % imageData.length;
-        } else if (heading.includes("_START")) {
-          const id = heading.toLowerCase().replace("_start", "").replace(/_/g, "-");
-          finalChapters.push(`<div id="${id}" class="chapter" data-image="${currentImageIndex}"><h2>${heading.replace("_START", "")}</h2>${lines.slice(1).join("\n")}</div>`);
+        if (heading.startsWith("Chapter") || heading.startsWith("Section") || heading.includes("_START")) {
+          const id = `chapter-${i}`;
+          const imageUrl = imageData[currentImageIndex].url;
+          const thumbnailUrl = imageData[currentImageIndex].thumbnailUrl || imageUrl;
+
+          finalChapters.push(`
+            <div class="chapter-transition"></div>
+            <div id="${id}" class="chapter ${fontStyle}" data-image="${currentImageIndex}">
+              <h2>${heading.replace("_START", "")}</h2>
+              ${lines.slice(1).join("\n").split('\n\n').map(p => `<p>${p}</p>`).join('')}
+            </div>
+          `);
+
+          indexList.push(`
+            <li>
+              <img src="${thumbnailUrl}" alt="Chapter thumbnail" class="index-thumbnail">
+              <a href="#${id}">${heading.replace("_START", "")}</a>
+            </li>
+          `);
+
           currentImageIndex = (currentImageIndex + 1) % imageData.length;
         } else {
-          finalChapters.push(`<div class="chapter" data-image="${currentImageIndex}">${chapter}</div>`);
+          finalChapters.push(`
+            <div class="chapter ${fontStyle}" data-image="${currentImageIndex}">
+              ${chapter.split('\n\n').map(p => `<p>${p}</p>`).join('')}
+            </div>
+          `);
         }
       }
 
       $('#content').html(finalChapters.join(''));
-      log('Content processed and displayed');
+      $('#index-list').html(indexList.join(''));
       
-      // Calculate chapter positions
       setTimeout(() => {
         $('.chapter').each(function(index) {
           chapterTops.push($(this).offset().top);
         });
-        log(`Chapter tops calculated: ${chapterTops.length} chapters`);
-        
-        // Initial background set
         handleScroll();
+        initializeScrollTrigger();
       }, 100);
     }
 
     function setBackgroundImage(index) {
       if (imageData.length > 0) {
         const imageUrl = imageData[index].url;
-        log('Setting background image: ' + imageUrl);
-        $('#background').css('background-image', `url(${imageUrl})`);
-      } else {
-        log('No valid image data available');
+        gsap.to('#background', {
+          backgroundImage: `url(${imageUrl})`,
+          duration: 1,
+          ease: 'power2.inOut'
+        });
       }
     }
 
@@ -124,48 +398,101 @@
       const windowHeight = $(window).height();
       const documentHeight = $('#content').height();
       
-      // Parallax effect
-      const scrollPercentage = scrollTop / (documentHeight - windowHeight);
-      const parallaxShift = scrollPercentage * 200; // Increased for more noticeable effect
-      $('#background').css('transform', `translateY(-${parallaxShift}px)`);
+      const scrollPercentage = (scrollTop / (documentHeight - windowHeight)) * 100;
+      $('#progress-bar').css('width', `${scrollPercentage}%`);
       
-      // Image alternation
       let currentChapter = chapterTops.findIndex(top => top > scrollTop + 100) - 1;
       if (currentChapter < 0) currentChapter = chapterTops.length - 1;
       const imageIndex = $('.chapter').eq(currentChapter).data('image');
       setBackgroundImage(imageIndex);
-      
-      log(`Scroll position: ${scrollTop}, Current chapter: ${currentChapter}, Image index: ${imageIndex}`);
+
+      $('.chapter').each(function() {
+        const chapterTop = $(this).offset().top;
+        const chapterBottom = chapterTop + $(this).height();
+        const viewportTop = scrollTop;
+        const viewportBottom = scrollTop + windowHeight;
+
+        if (chapterBottom > viewportTop && chapterTop < viewportBottom) {
+          $(this).css('opacity', 1).css('transform', 'translateY(0)');
+        }
+      });
     }
 
-    $('#content-wrapper').on('scroll', _.debounce(handleScroll, 100));
+    function initializeScrollTrigger() {
+      gsap.registerPlugin(ScrollTrigger);
+      
+      gsap.utils.toArray('.chapter').forEach((chapter, i) => {
+        ScrollTrigger.create({
+          trigger: chapter,
+          start: 'top 80%',
+          end: 'bottom 20%',
+          onEnter: () => {
+            gsap.to(chapter, {opacity: 1, y: 0, duration: 0.5, ease: 'power2.out'});
+          },
+          onEnterBack: () => {
+            gsap.to(chapter, {opacity: 1, y: 0, duration: 0.5, ease: 'power2.out'});
+          },
+          onLeave: () => {
+            gsap.to(chapter, {opacity: 0, y: 50, duration: 0.5, ease: 'power2.in'});
+          },
+          onLeaveBack: () => {
+            gsap.to(chapter, {opacity: 0, y: 50, duration: 0.5, ease: 'power2.in'});
+          }
+        });
+      });
+
+      gsap.to('#background', {
+        y: (i, target) => -ScrollTrigger.maxScroll(window) * 0.1,
+        ease: 'none',
+        scrollTrigger: {
+          start: 0,
+          end: 'max',
+          invalidateOnRefresh: true,
+          scrub: true
+        }
+      });
+    }
+
+    $('#content-wrapper').on('scroll', _.throttle(handleScroll, 100));
+
+    $(document).on('click', '#index a', function(e) {
+      e.preventDefault();
+      const targetId = $(this).attr('href');
+      const targetElement = $(targetId);
+      if (targetElement.length) {
+        $('#content-wrapper').animate({
+          scrollTop: targetElement.offset().top - $('#content-wrapper').offset().top + $('#content-wrapper').scrollTop()
+        }, 1000, function() {
+          targetElement.css('opacity', 1).css('transform', 'translateY(0)');
+        });
+      }
+    });
+
+    $('#reader-mode-toggle').on('click', function() {
+      isReaderMode = !isReaderMode;
+      $('body').toggleClass('reader-mode');
+      if (isReaderMode) {
+        $(this).text('Exit Reader Mode');
+        $('#content-wrapper').css('overflow-y', 'auto');
+      } else {
+        $(this).text('Toggle Reader Mode');
+        $('#content-wrapper').css('overflow-y', 'scroll');
+        handleScroll();
+      }
+    });
+
+    function toggleTheme() {
+      isDarkTheme = !isDarkTheme;
+      $('body').toggleClass('dark-theme');
+      localStorage.setItem('isDarkTheme', isDarkTheme);
+    }
+
+    $(document).keydown(function(e) {
+      if (e.ctrlKey && e.keyCode == 82) { 
+        e.preventDefault();
+        $('#reader-mode-toggle').click();
+      }
+    });
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
