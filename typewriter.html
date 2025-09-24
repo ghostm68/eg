@@ -82,7 +82,7 @@
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.6.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2"></script>
 </head>
 <body>
 <div class="container">
@@ -117,10 +117,10 @@
                     <option value="randomsentence">Random Sentence (Local)</option>
                     <option value="distilgpt2">DistilGPT-2 (Client-side)</option>
                     <option value="gpt2">GPT-2 Small (Client-side)</option>
-                    <option value="hf-bloom">BLOOM-560M (API)</option>
-                    <option value="hf-flan-t5">Flan-T5-Base (API)</option>
-                    <option value="hf-gpt-neo">GPT-Neo-125M (API)</option>
-                    <option value="hf-distilbert">DistilBERT (API)</option>
+                    <option value="hf-gpt2">GPT-2 (API)</option>
+                    <option value="hf-distilgpt2">DistilGPT-2 (API)</option>
+                    <option value="hf-gpt-neo">GPT-Neo-1.3B (API)</option>
+                    <option value="hf-opt">OPT-350M (API)</option>
                 </select>
                 <span id="model-status" class="model-status">Ready</span>
                 
@@ -398,19 +398,18 @@ Generated text will appear here and can be inserted into your document.</div>
     async function generateWithHuggingFaceAPI(model, prompt) {
         const token = document.getElementById('hf-token').value;
         const modelMap = {
-            'hf-bloom': 'bigscience/bloom-560m',
-            'hf-flan-t5': 'google/flan-t5-small',
-            'hf-gpt-neo': 'EleutherAI/gpt-neo-125M',
-            'hf-distilbert': 'distilgpt2' // Changed to a working text generation model
+            'hf-gpt2': 'gpt2',
+            'hf-distilgpt2': 'distilgpt2', 
+            'hf-gpt-neo': 'EleutherAI/gpt-neo-1.3B',
+            'hf-opt': 'facebook/opt-350m'
         };
         
         const headers = {
-            'Content-Type': 'application/json',
-            'User-Agent': 'WordStar-App/1.0'
+            'Content-Type': 'application/json'
         };
         
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
+        if (token && token.trim()) {
+            headers['Authorization'] = `Bearer ${token.trim()}`;
         }
         
         try {
@@ -420,50 +419,64 @@ Generated text will appear here and can be inserted into your document.</div>
                 body: JSON.stringify({
                     inputs: prompt,
                     parameters: {
-                        max_new_tokens: 40,
-                        temperature: 0.7,
+                        max_new_tokens: 50,
+                        temperature: 0.8,
                         do_sample: true,
-                        return_full_text: false,
-                        repetition_penalty: 1.1
+                        return_full_text: false
                     },
                     options: {
-                        wait_for_model: true
+                        wait_for_model: true,
+                        use_cache: false
                     }
                 })
             });
             
+            const responseText = await response.text();
+            console.log('API Response:', responseText);
+            
             if (!response.ok) {
                 if (response.status === 503) {
-                    throw new Error('Model is loading, please try again in a moment');
+                    return 'Model is currently loading. Please try again in 30 seconds.';
                 } else if (response.status === 429) {
-                    throw new Error('Rate limit exceeded. Please wait a moment or add an API token');
+                    return 'Rate limit exceeded. Please add a Hugging Face API token or wait a moment.';
+                } else if (response.status === 401) {
+                    return 'Invalid API token. Please check your Hugging Face token.';
                 } else {
-                    throw new Error(`API request failed: ${response.status}`);
+                    return `API Error (${response.status}). Try a different model or add an API token.`;
                 }
             }
             
-            const result = await response.json();
+            let result;
+            try {
+                result = JSON.parse(responseText);
+            } catch (e) {
+                return 'Invalid response from API. Please try again.';
+            }
             
             if (result.error) {
-                throw new Error(result.error);
+                return `Model error: ${result.error}`;
             }
             
             // Handle different response formats
             let generatedText = '';
-            if (Array.isArray(result)) {
-                generatedText = result[0]?.generated_text || result[0]?.translation_text || '';
+            if (Array.isArray(result) && result.length > 0) {
+                generatedText = result[0].generated_text || '';
             } else if (result.generated_text) {
                 generatedText = result.generated_text;
             } else {
-                generatedText = String(result);
+                return 'No text generated. The model may be overloaded.';
             }
             
-            return generatedText || 'No text generated. Try a different prompt.';
+            // Clean up the response
+            if (generatedText.includes(prompt)) {
+                generatedText = generatedText.replace(prompt, '').trim();
+            }
+            
+            return generatedText || 'Unable to generate meaningful text with this prompt.';
             
         } catch (error) {
-            // Fallback generation if API fails
-            console.error('API Error:', error);
-            return `${prompt} continues with creative possibilities. The narrative develops further, exploring new themes and ideas in unexpected ways.`;
+            console.error('Network Error:', error);
+            return `Network error: ${error.message}. Check your internet connection.`;
         }
     }
 
