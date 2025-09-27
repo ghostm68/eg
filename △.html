@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>△</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #3d3d3d;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --text-tertiary: #888888;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #60a5fa;
+            --border-color: #404040;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .editor-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .toolbar {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+        }
+
+        .toolbar-button {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .toolbar-button:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .toolbar-button.active {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
+        .formatting-toolbar {
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            display: none;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .formatting-toolbar.visible {
+            display: flex;
+        }
+
+        .editor-content {
+            padding: 20px;
+            min-height: 500px;
+            outline: none;
+        }
+
+        .block {
+            margin: 16px 0;
+            padding: 12px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            position: relative;
+            border: 1px solid transparent;
+        }
+
+        .block:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .block.focused {
+            border-color: var(--accent-primary);
+            background: var(--bg-tertiary);
+        }
+
+        .block.dragging {
+            opacity: 0.6;
+            transform: rotate(2deg);
+        }
+
+        .block.drop-target {
+            border: 2px dashed var(--accent-primary);
+            background: var(--bg-tertiary);
+        }
+
+        .block-content {
+            min-height: 24px;
+            outline: none;
+            padding: 2px 0;
+            line-height: 1.6;
+        }
+
+        .block-content[contenteditable="true"] {
+            cursor: text;
+        }
+
+        .paragraph {
+            font-size: 16px;
+        }
+
+        .heading-1 {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .heading-2 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .heading-3 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .bullet-list {
+            padding-left: 32px;
+            position: relative;
+        }
+
+        .bullet-list::before {
+            content: "•";
+            position: absolute;
+            left: 16px;
+            color: var(--accent-secondary);
+            font-size: 18px;
+        }
+
+        .number-list {
+            padding-left: 32px;
+            position: relative;
+        }
+
+        .number-list::before {
+            content: counter(list-item) ".";
+            position: absolute;
+            left: 16px;
+            color: var(--accent-secondary);
+            font-weight: 600;
+        }
+
+        .block-actions {
+            position: absolute;
+            left: -45px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: opacity 0.2s;
+            display: flex;
+            gap: 4px;
+        }
+
+        .block:hover .block-actions {
+            opacity: 1;
+        }
+
+        .block-action-button {
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .block-action-button:hover {
+            background: var(--accent-primary);
+            transform: scale(1.1);
+        }
+
+        .drag-handle {
+            cursor: grab;
+            color: var(--text-tertiary);
+            padding: 4px;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .media-block {
+            margin: 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .media-content {
+            width: 100%;
+            border-radius: 6px;
+            background: var(--bg-primary);
+        }
+
+        .media-block img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .media-block video {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .media-caption {
+            width: 100%;
+            padding: 8px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            outline: none;
+            text-align: center;
+        }
+
+        .media-upload {
+            border: 2px dashed var(--border-color);
+            padding: 40px 20px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .media-upload:hover {
+            border-color: var(--accent-primary);
+            background: var(--bg-tertiary);
+        }
+
+        .media-upload-input {
+            display: none;
+        }
+
+        .placeholder::before {
+            content: attr(data-placeholder);
+            color: var(--text-tertiary);
+            pointer-events: none;
+        }
+
+        .collaboration-status {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            font-size: 14px;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .user-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        /* Rich Text Formatting */
+        .bold {
+            font-weight: bold;
+        }
+
+        .italic {
+            font-style: italic;
+        }
+
+        .underline {
+            text-decoration: underline;
+        }
+
+        .code {
+            font-family: 'Courier New', monospace;
+            background: var(--bg-primary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .link {
+            color: var(--accent-secondary);
+            text-decoration: underline;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <button class="toolbar-button" data-type="paragraph">Paragraph</button>
+                <button class="toolbar-button" data-type="heading-1">H1</button>
+                <button class="toolbar-button" data-type="heading-2">H2</button>
+                <button class="toolbar-button" data-type="heading-3">H3</button>
+            </div>
+            <div class="toolbar-group">
+                <button class="toolbar-button" data-type="bullet-list">• List</button>
+                <button class="toolbar-button" data-type="number-list">1. List</button>
+            </div>
+            <div class="toolbar-group">
+                <button class="toolbar-button" data-type="image">🖼️ Image</button>
+                <button class="toolbar-button" data-type="video">🎥 Video</button>
+            </div>
+        </div>
+        
+        <div class="formatting-toolbar" id="formattingToolbar">
+            <button class="toolbar-button" data-command="bold" title="Bold">B</button>
+            <button class="toolbar-button" data-command="italic" title="Italic">I</button>
+            <button class="toolbar-button" data-command="underline" title="Underline">U</button>
+            <button class="toolbar-button" data-command="insertUnorderedList" title="Bullet List">•</button>
+            <button class="toolbar-button" data-command="insertOrderedList" title="Numbered List">1.</button>
+            <button class="toolbar-button" data-command="createLink" title="Create Link">🔗</button>
+            <button class="toolbar-button" data-command="code" title="Code">{ }</button>
+        </div>
+        
+        <div class="editor-content" id="editor"></div>
+        
+        <div class="collaboration-status">
+            <span>Connected users: <span id="user-count">1</span></span>
+            <div class="user-indicator">
+                <div class="user-color" style="background: #3b82f6;"></div>
+                <span>You</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class BlockEditor {
+            constructor(containerId) {
+                this.container = document.getElementById(containerId);
+                this.formattingToolbar = document.getElementById('formattingToolbar');
+                this.blocks = [];
+                this.currentBlock = null;
+                this.draggedBlock = null;
+                this.userId = this.generateUserId();
+                this.userColor = this.generateUserColor();
+                
+                this.init();
+                this.setupEventListeners();
+                this.addInitialBlock();
+            }
+
+            generateUserId() {
+                return 'user-' + Math.random().toString(36).substr(2, 9);
+            }
+
+            generateUserColor() {
+                const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            init() {
+                this.container.addEventListener('click', (e) => {
+                    if (e.target === this.container) {
+                        this.focusLastBlock();
+                    }
+                });
+            }
+
+            setupEventListeners() {
+                // Toolbar events
+                document.querySelectorAll('.toolbar-button[data-type]').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        if (this.currentBlock) {
+                            this.changeBlockType(this.currentBlock, e.target.dataset.type);
+                        } else if (e.target.dataset.type === 'image' || e.target.dataset.type === 'video') {
+                            this.addMediaBlock(e.target.dataset.type);
+                        }
+                    });
+                });
+
+                // Formatting toolbar events
+                document.querySelectorAll('.toolbar-button[data-command]').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.executeCommand(e.target.dataset.command);
+                    });
+                });
+
+                // Keyboard events
+                this.container.addEventListener('keydown', (e) => {
+                    this.handleKeydown(e);
+                });
+
+                // Selection change for formatting toolbar
+                document.addEventListener('selectionchange', () => {
+                    this.updateFormattingToolbar();
+                });
+
+                // Drag and drop events
+                this.container.addEventListener('dragstart', (e) => this.handleDragStart(e));
+                this.container.addEventListener('dragover', (e) => this.handleDragOver(e));
+                this.container.addEventListener('dragenter', (e) => this.handleDragEnter(e));
+                this.container.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+                this.container.addEventListener('drop', (e) => this.handleDrop(e));
+                this.container.addEventListener('dragend', (e) => this.handleDragEnd(e));
+            }
+
+            createBlock(type = 'paragraph', content = '') {
+                const block = document.createElement('div');
+                block.className = `block ${type}`;
+                block.dataset.type = type;
+                block.draggable = true;
+
+                const actions = document.createElement('div');
+                actions.className = 'block-actions';
+                
+                const dragHandle = document.createElement('div');
+                dragHandle.className = 'block-action-button drag-handle';
+                dragHandle.innerHTML = '⣿';
+                dragHandle.setAttribute('draggable', 'false');
+
+                const addButton = document.createElement('button');
+                addButton.className = 'block-action-button';
+                addButton.innerHTML = '+';
+                addButton.addEventListener('click', () => {
+                    this.addBlockAfter(block);
+                });
+
+                actions.appendChild(dragHandle);
+                actions.appendChild(addButton);
+                block.appendChild(actions);
+
+                let contentDiv;
+                if (type === 'image' || type === 'video') {
+                    contentDiv = this.createMediaBlock(type, content);
+                } else {
+                    contentDiv = this.createTextBlock(type, content);
+                }
+
+                block.appendChild(contentDiv);
+                return block;
+            }
+
+            createTextBlock(type, content) {
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'block-content';
+                contentDiv.contentEditable = true;
+                contentDiv.innerHTML = content;
+                
+                const placeholders = {
+                    'paragraph': 'Start writing...',
+                    'heading-1': 'Heading 1',
+                    'heading-2': 'Heading 2',
+                    'heading-3': 'Heading 3',
+                    'bullet-list': 'List item',
+                    'number-list': 'List item'
+                };
+                
+                contentDiv.dataset.placeholder = placeholders[type];
+                if (!content) {
+                    contentDiv.classList.add('placeholder');
+                }
+
+                contentDiv.addEventListener('input', (e) => {
+                    contentDiv.classList.remove('placeholder');
+                    this.onContentChange(block, e);
+                });
+
+                contentDiv.addEventListener('focus', () => {
+                    this.setCurrentBlock(block);
+                });
+
+                contentDiv.addEventListener('blur', () => {
+                    if (!contentDiv.innerHTML.trim()) {
+                        contentDiv.classList.add('placeholder');
+                    }
+                });
+
+                contentDiv.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+
+                return contentDiv;
+            }
+
+            createMediaBlock(type, content) {
+                const mediaContainer = document.createElement('div');
+                mediaContainer.className = 'media-block';
+
+                if (content) {
+                    // Existing media
+                    const mediaElement = type === 'image' ? 
+                        document.createElement('img') : 
+                        document.createElement('video');
+                    
+                    mediaElement.src = content;
+                    mediaElement.controls = type === 'video';
+                    mediaElement.className = 'media-content';
+                    mediaContainer.appendChild(mediaElement);
+                } else {
+                    // Upload area
+                    const uploadArea = document.createElement('div');
+                    uploadArea.className = 'media-upload';
+                    uploadArea.innerHTML = `
+                        <div>Click to upload ${type}</div>
+                        <input type="file" class="media-upload-input" accept="${type}/*">
+                    `;
+                    
+                    const fileInput = uploadArea.querySelector('input');
+                    fileInput.addEventListener('change', (e) => {
+                        this.handleMediaUpload(e, mediaContainer, type);
+                    });
+
+                    uploadArea.addEventListener('click', () => fileInput.click());
+                    mediaContainer.appendChild(uploadArea);
+                }
+
+                const caption = document.createElement('input');
+                caption.type = 'text';
+                caption.placeholder = 'Add a caption...';
+                caption.className = 'media-caption';
+                caption.addEventListener('focus', () => {
+                    this.setCurrentBlock(block);
+                });
+                mediaContainer.appendChild(caption);
+
+                return mediaContainer;
+            }
+
+            handleMediaUpload(event, mediaContainer, type) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    mediaContainer.innerHTML = '';
+                    
+                    const mediaElement = type === 'image' ? 
+                        document.createElement('img') : 
+                        document.createElement('video');
+                    
+                    mediaElement.src = e.target.result;
+                    mediaElement.controls = type === 'video';
+                    mediaElement.className = 'media-content';
+                    mediaContainer.appendChild(mediaElement);
+
+                    const caption = document.createElement('input');
+                    caption.type = 'text';
+                    caption.placeholder = 'Add a caption...';
+                    caption.className = 'media-caption';
+                    mediaContainer.appendChild(caption);
+                };
+                reader.readAsDataURL(file);
+            }
+
+            addBlock(type = 'paragraph', content = '', beforeBlock = null) {
+                const block = this.createBlock(type, content);
+                
+                if (beforeBlock) {
+                    this.container.insertBefore(block, beforeBlock);
+                    const index = this.blocks.indexOf(beforeBlock);
+                    this.blocks.splice(index, 0, block);
+                } else {
+                    this.container.appendChild(block);
+                    this.blocks.push(block);
+                }
+
+                if (type !== 'image' && type !== 'video') {
+                    this.focusBlock(block);
+                }
+                return block;
+            }
+
+            addMediaBlock(type) {
+                this.addBlock(type, '');
+            }
+
+            addBlockAfter(block) {
+                const index = this.blocks.indexOf(block);
+                return this.addBlock('paragraph', '', this.blocks[index + 1]);
+            }
+
+            addInitialBlock() {
+                this.addBlock('paragraph', 'Welcome to the dark mode block editor!');
+            }
+
+            setCurrentBlock(block) {
+                if (this.currentBlock) {
+                    this.currentBlock.classList.remove('focused');
+                }
+                this.currentBlock = block;
+                block.classList.add('focused');
+            }
+
+            focusBlock(block) {
+                this.setCurrentBlock(block);
+                const contentDiv = block.querySelector('.block-content');
+                if (contentDiv) {
+                    contentDiv.focus();
+                    
+                    const range = document.createRange();
+                    range.selectNodeContents(contentDiv);
+                    range.collapse(false);
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+            }
+
+            focusLastBlock() {
+                if (this.blocks.length > 0) {
+                    this.focusBlock(this.blocks[this.blocks.length - 1]);
+                }
+            }
+
+            changeBlockType(block, newType) {
+                const oldContent = block.querySelector('.block-content')?.innerHTML || '';
+                const newBlock = this.createBlock(newType, oldContent);
+                
+                block.parentNode.replaceChild(newBlock, block);
+                
+                const index = this.blocks.indexOf(block);
+                this.blocks[index] = newBlock;
+                this.setCurrentBlock(newBlock);
+                
+                document.querySelectorAll('.toolbar-button[data-type]').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.type === newType);
+                });
+            }
+
+            executeCommand(command) {
+                if (command === 'code') {
+                    document.execCommand('formatBlock', false, '<pre>');
+                } else if (command === 'createLink') {
+                    const url = prompt('Enter URL:');
+                    if (url) {
+                        document.execCommand('createLink', false, url);
+                    }
+                } else {
+                    document.execCommand(command, false, null);
+                }
+                this.focusCurrentBlock();
+            }
+
+            updateFormattingToolbar() {
+                const selection = window.getSelection();
+                if (selection.rangeCount === 0 || !this.currentBlock) {
+                    this.formattingToolbar.classList.remove('visible');
+                    return;
+                }
+
+                const contentDiv = this.currentBlock.querySelector('.block-content');
+                if (contentDiv && contentDiv.contains(selection.anchorNode)) {
+                    this.formattingToolbar.classList.add('visible');
+                    
+                    // Update active states
+                    this.formattingToolbar.querySelectorAll('.toolbar-button').forEach(btn => {
+                        const command = btn.dataset.command;
+                        if (command === 'createLink') {
+                            btn.classList.toggle('active', document.queryCommandState('unlink'));
+                        } else {
+                            btn.classList.toggle('active', document.queryCommandState(command));
+                        }
+                    });
+                } else {
+                    this.formattingToolbar.classList.remove('visible');
+                }
+            }
+
+            focusCurrentBlock() {
+                if (this.currentBlock) {
+                    const contentDiv = this.currentBlock.querySelector('.block-content');
+                    if (contentDiv) {
+                        contentDiv.focus();
+                    }
+                }
+            }
+
+            handleKeydown(e) {
+                if (!this.currentBlock) return;
+
+                const contentDiv = this.currentBlock.querySelector('.block-content');
+                if (!contentDiv) return;
+
+                switch (e.key) {
+                    case 'Enter':
+                        if (e.shiftKey) return;
+                        e.preventDefault();
+                        this.addBlockAfter(this.currentBlock);
+                        break;
+
+                    case 'Backspace':
+                        if (contentDiv.innerHTML === '' && this.blocks.length > 1) {
+                            e.preventDefault();
+                            this.deleteBlock(this.currentBlock);
+                        }
+                        break;
+
+                    case 'Tab':
+                        e.preventDefault();
+                        if (e.shiftKey) {
+                            // Outdent list
+                            document.execCommand('outdent');
+                        } else {
+                            // Indent list
+                            document.execCommand('indent');
+                        }
+                        break;
+                }
+            }
+
+            deleteBlock(block) {
+                const index = this.blocks.indexOf(block);
+                if (index > 0) {
+                    const previousBlock = this.blocks[index - 1];
+                    this.blocks.splice(index, 1);
+                    this.container.removeChild(block);
+                    this.focusBlock(previousBlock);
+                }
+            }
+
+            // Drag and Drop Methods
+            handleDragStart(e) {
+                if (!e.target.closest('.block') || e.target.classList.contains('drag-handle')) return;
+                
+                this.draggedBlock = e.target.closest('.block');
+                this.draggedBlock.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', this.draggedBlock);
+            }
+
+            handleDragOver(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            }
+
+            handleDragEnter(e) {
+                const block = e.target.closest('.block');
+                if (block && block !== this.draggedBlock) {
+                    block.classList.add('drop-target');
+                }
+            }
+
+            handleDragLeave(e) {
+                const block = e.target.closest('.block');
+                if (block) {
+                    block.classList.remove('drop-target');
+                }
+            }
+
+            handleDrop(e) {
+                e.preventDefault();
+                const targetBlock = e.target.closest('.block');
+                
+                if (targetBlock && this.draggedBlock && targetBlock !== this.draggedBlock) {
+                    const rect = targetBlock.getBoundingClientRect();
+                    const dropPosition = e.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+                    
+                    if (dropPosition === 'before') {
+                        this.container.insertBefore(this.draggedBlock, targetBlock);
+                    } else {
+                        this.container.insertBefore(this.draggedBlock, targetBlock.nextSibling);
+                    }
+                    
+                    // Update blocks array
+                    const oldIndex = this.blocks.indexOf(this.draggedBlock);
+                    this.blocks.splice(oldIndex, 1);
+                    
+                    const newIndex = this.blocks.indexOf(targetBlock);
+                    if (dropPosition === 'before') {
+                        this.blocks.splice(newIndex, 0, this.draggedBlock);
+                    } else {
+                        this.blocks.splice(newIndex + 1, 0, this.draggedBlock);
+                    }
+                }
+                
+                this.clearDropTargets();
+            }
+
+            handleDragEnd(e) {
+                this.clearDropTargets();
+                if (this.draggedBlock) {
+                    this.draggedBlock.classList.remove('dragging');
+                    this.draggedBlock = null;
+                }
+            }
+
+            clearDropTargets() {
+                document.querySelectorAll('.block.drop-target').forEach(block => {
+                    block.classList.remove('drop-target');
+                });
+            }
+
+            onContentChange(block, e) {
+                // Handle content changes
+                console.log('Content changed:', block.dataset.type, e.target.innerHTML);
+            }
+
+            simulateCollaboration() {
+                setInterval(() => {
+                    const userCount = 1 + Math.floor(Math.random() * 3);
+                    document.getElementById('user-count').textContent = userCount;
+                }, 5000);
+            }
+        }
+
+        // Initialize the editor
+        document.addEventListener('DOMContentLoaded', () => {
+            const editor = new BlockEditor('editor');
+            editor.simulateCollaboration();
+            
+            // Set first toolbar button as active
+            document.querySelector('.toolbar-button').classList.add('active');
+        });
+    </script>
+</body>
+</html>
