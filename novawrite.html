@@ -279,21 +279,50 @@
         }
 
         /* Dictionary Search in Toolbar */
-        .toolbar-group .dictionary-results {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            width: 300px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 10px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-            font-size: 14px;
-        }
+       .dictionary-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 15px;
+    max-height: 400px; /* Increased from 200px */
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+    font-size: 14px;
+    margin-top: 5px;
+    width: 100%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dictionary-results h2 {
+    font-size: 16px;
+    color: var(--accent-primary);
+    margin-bottom: 10px;
+}
+
+.dictionary-results h3 {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 12px 0 6px 0;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.dictionary-results p, .dictionary-results li {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.dictionary-results ul {
+    padding-left: 20px;
+    margin: 10px 0;
+}
 
         #search-input {
             padding: 6px 10px;
@@ -321,6 +350,7 @@
         #search-button:hover {
             background: var(--accent-secondary);
         }
+        
 
         /* Editor Area */
         .editor-area {
@@ -749,55 +779,71 @@
                     'https://raw.githubusercontent.com/hathibelagal/German-English-JSON-Dictionary/master/german_english.json'
                 ];
 
-                this.searchDictionary = async (word) => {
-                    this.result.innerHTML = '<p class="loading">Searching...</p>';
-                    this.result.style.display = 'block';
-                    
-                    try {
-                        const responses = await Promise.all(dictionaryUrls.map(url => axios.get(url)));
-                        const dictionaries = responses.map(response => response.data);
-                        
-                        let definitionsFound = false;
-                        let resultHTML = `<h2>Definitions for "${word}":</h2>`;
+              // Dictionary search - FIXED VERSION
+this.searchButton.addEventListener('click', () => {
+    const word = this.searchInput.value.trim();
+    if (word) {
+        this.searchDictionary(word);
+    }
+});
 
-                        dictionaries.forEach((dictionary, index) => {
-                            if (index < 3) {
-                                if (dictionary[word.toLowerCase()]) {
-                                    definitionsFound = true;
-                                    const definition = dictionary[word.toLowerCase()];
-                                    resultHTML += `
-                                        <h3>English Definition (Source ${index + 1}):</h3>
-                                        <p>${definition}</p>
-                                    `;
-                                }
-                            } else {
-                                // German-English dictionary
-                                const germanTranslations = Object.entries(dictionary).filter(([key, value]) => 
-                                    value.toLowerCase().includes(word.toLowerCase()) || key.toLowerCase() === word.toLowerCase()
-                                );
-                                if (germanTranslations.length > 0) {
-                                    definitionsFound = true;
-                                    resultHTML += `<h3>German Translations:</h3><ul>`;
-                                    germanTranslations.slice(0, 5).forEach(([german, english]) => {
-                                        resultHTML += `<li>${german} - ${english}</li>`;
-                                    });
-                                    resultHTML += `</ul>`;
-                                }
-                            }
-                        });
+this.searchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        const word = this.searchInput.value.trim();
+        if (word) {
+            this.searchDictionary(word);
+        }
+    }
+});
 
-                        if (definitionsFound) {
-                            this.result.innerHTML = resultHTML;
-                        } else {
-                            this.result.innerHTML = `<p>No definition found for "${word}".</p>`;
-                        }
-                    } catch (error) {
-                        console.error('Error fetching dictionary data:', error);
-                        this.result.innerHTML = '<p>Error searching. Please try again.</p>';
-                    }
-                };
+// Remove the toggleDictionaryResults function and replace with:
+this.searchDictionary = async (word) => {
+    this.result.innerHTML = '<p class="loading">Searching...</p>';
+    this.result.style.display = 'block';
+    
+    try {
+        const responses = await Promise.all(dictionaryUrls.map(url => axios.get(url)));
+        const dictionaries = responses.map(response => response.data);
+        
+        let definitionsFound = false;
+        let resultHTML = `<h2>Definitions for "${word}":</h2>`;
+
+        dictionaries.forEach((dictionary, index) => {
+            if (index < 3) {
+                if (dictionary[word.toLowerCase()]) {
+                    definitionsFound = true;
+                    const definition = dictionary[word.toLowerCase()];
+                    resultHTML += `
+                        <h3>English Definition (Source ${index + 1}):</h3>
+                        <p>${definition}</p>
+                    `;
+                }
+            } else {
+                // German-English dictionary
+                const germanTranslations = Object.entries(dictionary).filter(([key, value]) => 
+                    value.toLowerCase().includes(word.toLowerCase()) || key.toLowerCase() === word.toLowerCase()
+                );
+                if (germanTranslations.length > 0) {
+                    definitionsFound = true;
+                    resultHTML += `<h3>German Translations:</h3><ul>`;
+                    germanTranslations.slice(0, 5).forEach(([german, english]) => {
+                        resultHTML += `<li><strong>${german}</strong> - ${english}</li>`;
+                    });
+                    resultHTML += `</ul>`;
+                }
             }
+        });
 
+        if (definitionsFound) {
+            this.result.innerHTML = resultHTML;
+        } else {
+            this.result.innerHTML = `<p>No definition found for "${word}".</p>`;
+        }
+    } catch (error) {
+        console.error('Error fetching dictionary data:', error);
+        this.result.innerHTML = '<p>Error searching. Please try again.</p>';
+    }
+};
             toggleDictionaryResults() {
                 const word = this.searchInput.value.trim();
                 if (word) {
