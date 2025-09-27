@@ -448,179 +448,181 @@
         <span>Code crafted by DeepSeek • <span id="currentDate"></span></span>
     </footer>
 
-    <script>
-        class NovaWrite {
-            constructor() {
-                this.editor = document.getElementById('editor');
-                this.wordCountElement = document.getElementById('wordCount');
-                this.charCountElement = document.getElementById('charCount');
-                this.currentDateElement = document.getElementById('currentDate');
-                
-                this.init();
-            }
+<script>
+    class NovaWrite {
+        constructor() {
+            this.editor = document.getElementById('editor');
+            this.wordCountElement = document.getElementById('wordCount');
+            this.charCountElement = document.getElementById('charCount');
+            this.currentDateElement = document.getElementById('currentDate');
+            
+            this.init();
+        }
 
-            init() {
-                this.setupEventListeners();
+        init() {
+            this.setupEventListeners();
+            this.updateWordCount();
+            this.setCurrentDate();
+            this.setupAutoSave();
+        }
+
+        setupEventListeners() {
+            // Toolbar buttons
+            document.querySelectorAll('.toolbar-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const command = e.target.dataset.command;
+                    const value = e.target.dataset.value;
+                    
+                    if (command === 'formatBlock') {
+                        document.execCommand('formatBlock', false, value);
+                    } else if (command === 'createLink') {
+                        this.createLink();
+                    } else if (command === 'insertImage') {
+                        this.insertImage();
+                    } else {
+                        document.execCommand(command, false, null);
+                    }
+                    
+                    this.editor.focus();
+                });
+            });
+
+            // Editor events
+            this.editor.addEventListener('input', () => {
                 this.updateWordCount();
-                this.setCurrentDate();
-                this.setupAutoSave();
-            }
+                this.autoSave();
+            });
 
-            setupEventListeners() {
-                // Toolbar buttons
-                document.querySelectorAll('.toolbar-button').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const command = e.target.dataset.command;
-                        const value = e.target.dataset.value;
-                        
-                        if (command === 'formatBlock') {
-                            document.execCommand('formatBlock', false, value);
-                        } else if (command === 'createLink') {
-                            this.createLink();
-                        } else if (command === 'insertImage') {
-                            this.insertImage();
-                        } else {
-                            document.execCommand(command, false, null);
-                        }
-                        
-                        this.editor.focus();
-                    });
-                });
-
-                // Editor events
-                this.editor.addEventListener('input', () => {
-                    this.updateWordCount();
-                    this.autoSave();
-                });
-
-                this.editor.addEventListener('keydown', (e) => {
-                    // Tab key for indentation
-                    if (e.key === 'Tab') {
-                        e.preventDefault();
-                        document.execCommand('indent');
-                    }
-                    
-                    // Shift+Tab for outdentation
-                    if (e.key === 'Tab' && e.shiftKey) {
-                        e.preventDefault();
-                        document.execCommand('outdent');
-                    }
-                });
-
-                // Document title
-                document.querySelector('.document-title').addEventListener('input', () => {
-                    this.autoSave();
-                });
-
-                // New document button
-                document.querySelector('.new-document-btn').addEventListener('click', () => {
-                    this.createNewDocument();
-                });
-
-                // Document list items
-                document.querySelectorAll('.document-item').forEach(item => {
-                    item.addEventListener('click', () => {
-                        document.querySelectorAll('.document-item').forEach(i => i.classList.remove('active'));
-                        item.classList.add('active');
-                    });
-                });
-            }
-
-            updateWordCount() {
-                const text = this.editor.innerText || '';
-                const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-                const characters = text.length;
-                
-                this.wordCountElement.textContent = words;
-                this.charCountElement.textContent = characters;
-                
-                // Add animation
-                this.wordCountElement.classList.add('word-count-updating');
-                this.charCountElement.classList.add('word-count-updating');
-                
-                setTimeout(() => {
-                    this.wordCountElement.classList.remove('word-count-updating');
-                    this.charCountElement.classList.remove('word-count-updating');
-                }, 300);
-            }
-
-            createLink() {
-                const url = prompt('Enter URL:');
-                if (url) {
-                    document.execCommand('createLink', false, url);
+            this.editor.addEventListener('keydown', (e) => {
+                // Tab key for indentation
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    document.execCommand('indent');
                 }
-            }
-
-            insertImage() {
-                const url = prompt('Enter image URL:');
-                if (url) {
-                    document.execCommand('insertImage', false, url);
-                }
-            }
-
-            autoSave() {
-                // Simulate auto-save
-                const saveIndicator = document.querySelector('.document-info');
-                saveIndicator.innerHTML = '<span>Last saved: Just now</span><span>•</span><span>Auto-save enabled</span>';
                 
-                // Simulate brief saving state
-                setTimeout(() => {
-                    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    saveIndicator.innerHTML = `<span>Last saved: ${now}</span><span>•</span><span>Auto-save enabled</span>`;
-                }, 500);
-            }
+                // Shift+Tab for outdentation
+                if (e.key === 'Tab' && e.shiftKey) {
+                    e.preventDefault();
+                    document.execCommand('outdent');
+                }
+            });
 
-            setupAutoSave() {
-                // Auto-save every 30 seconds
-                setInterval(() => {
-                    this.autoSave();
-                }, 30000);
-            }
+            // Document title
+            document.querySelector('.document-title').addEventListener('input', () => {
+                this.autoSave();
+            });
 
-            createNewDocument() {
-                const title = prompt('Enter document title:', 'Untitled Document');
-                if (title) {
-                    document.querySelector('.document-title').value = title;
-                    this.editor.innerHTML = '<p>Start writing your new document here...</p>';
-                    this.updateWordCount();
-                    
-                    // Add to documents list
-                    const documentsList = document.querySelector('.documents-list');
-                    const newDoc = document.createElement('div');
-                    newDoc.className = 'document-item';
-                    newDoc.innerHTML = `
-                        <div class="document-name">${title}</div>
-                        <div class="document-date">Just now</div>
-                    `;
-                    
-                    documentsList.appendChild(newDoc);
-                    
-                    // Set as active
-                    document.querySelectorAll('.document-item').forEach(item => item.classList.remove('active'));
+            // New document button
+            document.querySelector('.new-document-btn').addEventListener('click', () => {
+                this.createNewDocument();
+            });
+
+            // Document list items
+            document.querySelectorAll('.document-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.document-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                });
+            });
+        }
+
+        updateWordCount() {
+            const text = this.editor.innerText || '';
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            const characters = text.length;
+            
+            this.wordCountElement.textContent = words;
+            this.charCountElement.textContent = characters;
+            
+            // Add animation
+            this.wordCountElement.classList.add('word-count-updating');
+            this.charCountElement.classList.add('word-count-updating');
+            
+            setTimeout(() => {
+                this.wordCountElement.classList.remove('word-count-updating');
+                this.charCountElement.classList.remove('word-count-updating');
+            }, 300);
+        }
+
+        createLink() {
+            const url = prompt('Enter URL:');
+            if (url) {
+                document.execCommand('createLink', false, url);
+            }
+        }
+
+        // CORRECTED insertImage method - single method with proper closing
+        insertImage() {
+            const url = prompt('Enter image URL:');
+            if (url) {
+                // Use insertHTML instead of insertImage for better compatibility
+                document.execCommand('insertHTML', false, `<img src="${url}" style="max-width: 100%; height: auto; border-radius: 4px; margin: 10px 0;">`);
+            }
+        }
+
+        autoSave() {
+            // Simulate auto-save
+            const saveIndicator = document.querySelector('.document-info');
+            saveIndicator.innerHTML = '<span>Last saved: Just now</span><span>•</span><span>Auto-save enabled</span>';
+            
+            // Simulate brief saving state
+            setTimeout(() => {
+                const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                saveIndicator.innerHTML = `<span>Last saved: ${now}</span><span>•</span><span>Auto-save enabled</span>`;
+            }, 500);
+        }
+
+        setupAutoSave() {
+            // Auto-save every 30 seconds
+            setInterval(() => {
+                this.autoSave();
+            }, 30000);
+        }
+
+        createNewDocument() {
+            const title = prompt('Enter document title:', 'Untitled Document');
+            if (title) {
+                document.querySelector('.document-title').value = title;
+                this.editor.innerHTML = '<p>Start writing your new document here...</p>';
+                this.updateWordCount();
+                
+                // Add to documents list
+                const documentsList = document.querySelector('.documents-list');
+                const newDoc = document.createElement('div');
+                newDoc.className = 'document-item';
+                newDoc.innerHTML = `
+                    <div class="document-name">${title}</div>
+                    <div class="document-date">Just now</div>
+                `;
+                
+                documentsList.appendChild(newDoc);
+                
+                // Set as active
+                document.querySelectorAll('.document-item').forEach(item => item.classList.remove('active'));
+                newDoc.classList.add('active');
+                
+                newDoc.addEventListener('click', () => {
+                    document.querySelectorAll('.document-item').forEach(i => i.classList.remove('active'));
                     newDoc.classList.add('active');
-                    
-                    newDoc.addEventListener('click', () => {
-                        document.querySelectorAll('.document-item').forEach(i => i.classList.remove('active'));
-                        newDoc.classList.add('active');
-                    });
-                }
-            }
-
-            setCurrentDate() {
-                this.currentDateElement.textContent = new Date().toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
                 });
             }
         }
 
-        // Initialize the editor when the page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            const editor = new NovaWrite();
-        });
-    </script>
+        setCurrentDate() {
+            this.currentDateElement.textContent = new Date().toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+    }
+
+    // Initialize the editor when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        const editor = new NovaWrite();
+    });
+</script>
 </head>
 </body>
 </html>
