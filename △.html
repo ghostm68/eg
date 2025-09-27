@@ -1,71 +1,626 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-  <link rel="shortcut icon" href="https://inkrealm.info/Images//favicon.ico" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Kalam&display=swap"
-      rel="stylesheet"
-    />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>^ffine app simulation</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NovaWrite - Dark Text Editor</title>
     <style>
-      html,
-      body {
-        height: 100%;
-        overflow: hidden;
-        margin: 0;
-        padding: 0;
-        background-color: var(--affine-white-90);
-        transition: background-color 0.3s;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      doc-title {
-        margin-top: 78px;
-      }
-
-      :root .tp-dfwv {
-        position: fixed;
-        overflow: scroll;
-
-        top: 0;
-        bottom: 0;
-        right: 0;
-      }
-
-      @media print {
-        doc-title {
-          margin-top: 0px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-      }
 
-      affine-editor-container {
-        display: block;
-        height: 100%;
-      }
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --text-tertiary: #666666;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #60a5fa;
+            --border-color: #333333;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+        }
 
-      .affine-page-viewport {
-        height: 100%;
-      }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-      .playground-page-editor-container {
-        height: 100%;
-      }
+        .app-container {
+            display: flex;
+            flex: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .documents-list {
+            flex: 1;
+        }
+
+        .documents-list h3 {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .document-item {
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 5px;
+        }
+
+        .document-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .document-item.active {
+            background: var(--accent-primary);
+        }
+
+        .document-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .document-date {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        .new-document-btn {
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+        }
+
+        .new-document-btn:hover {
+            background: var(--accent-secondary);
+        }
+
+        /* Main Editor */
+        .main-editor {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+        }
+
+        .editor-header {
+            padding: 20px 40px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+        }
+
+        .document-title {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 28px;
+            font-weight: 700;
+            width: 100%;
+            outline: none;
+            margin-bottom: 10px;
+        }
+
+        .document-title::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .document-info {
+            display: flex;
+            gap: 20px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            padding: 15px 40px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-group {
+            display: flex;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            padding: 4px;
+            gap: 2px;
+        }
+
+        .toolbar-button {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .toolbar-button:hover {
+            background: var(--bg-primary);
+        }
+
+        .toolbar-button.active {
+            background: var(--accent-primary);
+        }
+
+        /* Editor Area */
+        .editor-area {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            background: var(--bg-primary);
+        }
+
+        .editor-content {
+            max-width: 800px;
+            margin: 0 auto;
+            min-height: 100%;
+            outline: none;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        .editor-content:focus {
+            outline: none;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            padding: 12px 40px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 15px 40px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        /* Typography Styles */
+        .editor-content h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 30px 0 20px 0;
+            color: var(--text-primary);
+        }
+
+        .editor-content h2 {
+            font-size: 26px;
+            font-weight: 600;
+            margin: 25px 0 15px 0;
+            color: var(--text-primary);
+        }
+
+        .editor-content h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 20px 0 12px 0;
+            color: var(--text-primary);
+        }
+
+        .editor-content p {
+            margin-bottom: 16px;
+        }
+
+        .editor-content ul, .editor-content ol {
+            margin: 16px 0;
+            padding-left: 30px;
+        }
+
+        .editor-content li {
+            margin-bottom: 8px;
+        }
+
+        .editor-content blockquote {
+            border-left: 4px solid var(--accent-primary);
+            padding-left: 20px;
+            margin: 20px 0;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .editor-content code {
+            background: var(--bg-tertiary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .editor-content pre {
+            background: var(--bg-tertiary);
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        .editor-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-tertiary);
+        }
+
+        /* Word Count Animation */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .word-count-updating {
+            animation: pulse 0.3s ease-in-out;
+        }
     </style>
-    <script type="module" crossorigin src="https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/%5E1.js"></script>
-    <link rel="modulepreload" crossorigin href="https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/%5E2.js">
-    <link rel="stylesheet" crossorigin href="https://raw.githubusercontent.com/ghostm68/eg/a150521270bc69d828d0d51e782aa380e3dca46c/%5E.css">
-  </head>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <span>📝</span>
+                NovaWrite
+            </div>
+            
+            <div class="documents-list">
+                <h3>Recent Documents</h3>
+                <div class="document-item active">
+                    <div class="document-name">Welcome Document</div>
+                    <div class="document-date">Just now</div>
+                </div>
+                <div class="document-item">
+                    <div class="document-name">Project Notes</div>
+                    <div class="document-date">2 hours ago</div>
+                </div>
+                <div class="document-item">
+                    <div class="document-name">Meeting Minutes</div>
+                    <div class="document-date">Yesterday</div>
+                </div>
+            </div>
 
-  <body>
-    <div id="app">
-      <div id="inspector"></div>
+            <button class="new-document-btn">+ New Document</button>
+        </div>
+
+        <!-- Main Editor -->
+        <div class="main-editor">
+            <div class="editor-header">
+                <input type="text" class="document-title" placeholder="Untitled Document" value="Welcome to NovaWrite">
+                <div class="document-info">
+                    <span>Last saved: Just now</span>
+                    <span>•</span>
+                    <span>Auto-save enabled</span>
+                </div>
+            </div>
+
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <button class="toolbar-button" data-command="formatBlock" data-value="p">Paragraph</button>
+                    <button class="toolbar-button" data-command="formatBlock" data-value="h1">H1</button>
+                    <button class="toolbar-button" data-command="formatBlock" data-value="h2">H2</button>
+                    <button class="toolbar-button" data-command="formatBlock" data-value="h3">H3</button>
+                </div>
+                <div class="toolbar-group">
+                    <button class="toolbar-button" data-command="bold" title="Bold">B</button>
+                    <button class="toolbar-button" data-command="italic" title="Italic">I</button>
+                    <button class="toolbar-button" data-command="underline" title="Underline">U</button>
+                </div>
+                <div class="toolbar-group">
+                    <button class="toolbar-button" data-command="insertUnorderedList" title="Bullet List">• List</button>
+                    <button class="toolbar-button" data-command="insertOrderedList" title="Numbered List">1. List</button>
+                </div>
+                <div class="toolbar-group">
+                    <button class="toolbar-button" data-command="createLink" title="Create Link">🔗 Link</button>
+                    <button class="toolbar-button" id="insertImage" title="Insert Image">🖼️ Image</button>
+                </div>
+            </div>
+
+            <div class="editor-area">
+                <div class="editor-content" id="editor" contenteditable="true">
+                    <h1>Welcome to NovaWrite</h1>
+                    
+                    <p>This is a clean, focused writing environment designed for getting your thoughts down without distractions. The dark theme is easy on the eyes during long writing sessions.</p>
+                    
+                    <h2>Features</h2>
+                    
+                    <ul>
+                        <li><strong>Clean interface</strong> - No unnecessary clutter</li>
+                        <li><strong>Real-time formatting</strong> - See your changes instantly</li>
+                        <li><strong>Auto-save</strong> - Never lose your work</li>
+                        <li><strong>Multiple document support</strong> - Switch between projects easily</li>
+                    </ul>
+                    
+                    <h3>Quick Tips</h3>
+                    
+                    <p>Use the toolbar above to format your text. You can create:</p>
+                    
+                    <ol>
+                        <li>Headings of different levels</li>
+                        <li>Bold and italic text</li>
+                        <li>Lists (both bulleted and numbered)</li>
+                        <li>Links and images</li>
+                    </ol>
+                    
+                    <blockquote>
+                        Good writing is clear thinking made visible. This editor helps you focus on what matters most – your words.
+                    </blockquote>
+                    
+                    <p>Start writing your own content here. Select any text to apply formatting, or place your cursor to start typing anew.</p>
+                </div>
+            </div>
+
+            <div class="status-bar">
+                <div class="status-item">
+                    <span>Words: <span id="wordCount">0</span></span>
+                    <span>•</span>
+                    <span>Characters: <span id="charCount">0</span></span>
+                </div>
+                <div class="status-item">
+                    <span>Ready</span>
+                </div>
+            </div>
+        </div>
     </div>
-  </body>
+
+    <footer class="footer">
+        <span>Code crafted by DeepSeek • <span id="currentDate"></span></span>
+    </footer>
+
+    <script>
+        class NovaWrite {
+            constructor() {
+                this.editor = document.getElementById('editor');
+                this.wordCountElement = document.getElementById('wordCount');
+                this.charCountElement = document.getElementById('charCount');
+                this.currentDateElement = document.getElementById('currentDate');
+                
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.updateWordCount();
+                this.setCurrentDate();
+                this.setupAutoSave();
+            }
+
+            setupEventListeners() {
+                // Toolbar buttons
+                document.querySelectorAll('.toolbar-button').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const command = e.target.dataset.command;
+                        const value = e.target.dataset.value;
+                        
+                        if (command === 'formatBlock') {
+                            document.execCommand('formatBlock', false, value);
+                        } else if (command === 'createLink') {
+                            this.createLink();
+                        } else if (command === 'insertImage') {
+                            this.insertImage();
+                        } else {
+                            document.execCommand(command, false, null);
+                        }
+                        
+                        this.editor.focus();
+                    });
+                });
+
+                // Editor events
+                this.editor.addEventListener('input', () => {
+                    this.updateWordCount();
+                    this.autoSave();
+                });
+
+                this.editor.addEventListener('keydown', (e) => {
+                    // Tab key for indentation
+                    if (e.key === 'Tab') {
+                        e.preventDefault();
+                        document.execCommand('indent');
+                    }
+                    
+                    // Shift+Tab for outdentation
+                    if (e.key === 'Tab' && e.shiftKey) {
+                        e.preventDefault();
+                        document.execCommand('outdent');
+                    }
+                });
+
+                // Document title
+                document.querySelector('.document-title').addEventListener('input', () => {
+                    this.autoSave();
+                });
+
+                // New document button
+                document.querySelector('.new-document-btn').addEventListener('click', () => {
+                    this.createNewDocument();
+                });
+
+                // Document list items
+                document.querySelectorAll('.document-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        document.querySelectorAll('.document-item').forEach(i => i.classList.remove('active'));
+                        item.classList.add('active');
+                    });
+                });
+            }
+
+            updateWordCount() {
+                const text = this.editor.innerText || '';
+                const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+                const characters = text.length;
+                
+                this.wordCountElement.textContent = words;
+                this.charCountElement.textContent = characters;
+                
+                // Add animation
+                this.wordCountElement.classList.add('word-count-updating');
+                this.charCountElement.classList.add('word-count-updating');
+                
+                setTimeout(() => {
+                    this.wordCountElement.classList.remove('word-count-updating');
+                    this.charCountElement.classList.remove('word-count-updating');
+                }, 300);
+            }
+
+            createLink() {
+                const url = prompt('Enter URL:');
+                if (url) {
+                    document.execCommand('createLink', false, url);
+                }
+            }
+
+            insertImage() {
+                const url = prompt('Enter image URL:');
+                if (url) {
+                    document.execCommand('insertImage', false, url);
+                }
+            }
+
+            autoSave() {
+                // Simulate auto-save
+                const saveIndicator = document.querySelector('.document-info');
+                saveIndicator.innerHTML = '<span>Last saved: Just now</span><span>•</span><span>Auto-save enabled</span>';
+                
+                // Simulate brief saving state
+                setTimeout(() => {
+                    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    saveIndicator.innerHTML = `<span>Last saved: ${now}</span><span>•</span><span>Auto-save enabled</span>`;
+                }, 500);
+            }
+
+            setupAutoSave() {
+                // Auto-save every 30 seconds
+                setInterval(() => {
+                    this.autoSave();
+                }, 30000);
+            }
+
+            createNewDocument() {
+                const title = prompt('Enter document title:', 'Untitled Document');
+                if (title) {
+                    document.querySelector('.document-title').value = title;
+                    this.editor.innerHTML = '<p>Start writing your new document here...</p>';
+                    this.updateWordCount();
+                    
+                    // Add to documents list
+                    const documentsList = document.querySelector('.documents-list');
+                    const newDoc = document.createElement('div');
+                    newDoc.className = 'document-item';
+                    newDoc.innerHTML = `
+                        <div class="document-name">${title}</div>
+                        <div class="document-date">Just now</div>
+                    `;
+                    
+                    documentsList.appendChild(newDoc);
+                    
+                    // Set as active
+                    document.querySelectorAll('.document-item').forEach(item => item.classList.remove('active'));
+                    newDoc.classList.add('active');
+                    
+                    newDoc.addEventListener('click', () => {
+                        document.querySelectorAll('.document-item').forEach(i => i.classList.remove('active'));
+                        newDoc.classList.add('active');
+                    });
+                }
+            }
+
+            setCurrentDate() {
+                this.currentDateElement.textContent = new Date().toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+        }
+
+        // Initialize the editor when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            const editor = new NovaWrite();
+        });
+    </script>
+</head>
+</body>
 </html>
