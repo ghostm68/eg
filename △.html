@@ -579,44 +579,44 @@
                 return mediaContainer;
             }
 
-            handleMediaUpload(event, mediaContainer, block) {
-                const file = event.target.files[0];
-                if (!file) return;
+           handleMediaUpload(event, mediaContainer, type) {
+    const file = event.target.files[0];
+    if (!file) return;
 
-                // Check file size (10MB limit)
-                if (file.size > 10 * 1024 * 1024) {
-                    alert('File size must be less than 10MB');
-                    return;
-                }
+    // Check file size (10MB limit) - Example from the code
+    if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB');
+        return;
+    }
 
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    mediaContainer.innerHTML = '';
-                    
-                    const mediaElement = document.createElement('img');
-                    mediaElement.src = e.target.result;
-                    mediaElement.className = 'media-content';
-                    mediaContainer.appendChild(mediaElement);
+    // Get a reference to the block element correctly
+    const block = mediaContainer.parentElement; // This line is crucial
 
-                    const caption = document.createElement('input');
-                    caption.type = 'text';
-                    caption.placeholder = 'Add a caption...';
-                    caption.className = 'media-caption';
-                    caption.addEventListener('focus', () => {
-                        this.setCurrentBlock(block);
-                    });
-                    
-                    caption.addEventListener('input', () => {
-                        this.onContentChange(block, { target: caption });
-                    });
-                    
-                    mediaContainer.appendChild(caption);
-                    
-                    // Update the block content for persistence
-                    this.onContentChange(block, { target: { value: e.target.result } });
-                };
-                reader.readAsDataURL(file);
-            }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        mediaContainer.innerHTML = '';
+
+        const mediaElement = document.createElement('img');
+        mediaElement.src = e.target.result;
+        mediaElement.className = 'media-content';
+        mediaContainer.appendChild(mediaElement);
+
+        const caption = document.createElement('input');
+        caption.type = 'text';
+        caption.placeholder = 'Add a caption...';
+        caption.className = 'media-caption';
+        caption.addEventListener('focus', () => {
+            this.setCurrentBlock(block); // Now 'block' is defined
+        });
+        caption.addEventListener('input', () => {
+            this.onContentChange(block, { target: caption }); // Now 'block' is defined
+        });
+        mediaContainer.appendChild(caption);
+
+        this.onContentChange(block, { target: { value: e.target.result } });
+    };
+    reader.readAsDataURL(file);
+}
 
             addBlock(type = 'paragraph', content = '', beforeBlock = null) {
                 const block = this.createBlock(type, content);
@@ -805,6 +805,33 @@
         document.addEventListener('DOMContentLoaded', () => {
             const editor = new BlockEditor('editor');
             editor.simulateCollaboration();
+        });
+    </script>
+        <!-- Add this right before the closing </body> tag -->
+    <footer style="
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 30px;
+        background: #2d2d2d;
+        border-top: 1px solid #404040;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: #b0b0b0;
+        z-index: 1000;
+    ">
+        <span>Code compiled by DeepSeek • <span id="current-date"></span></span>
+    </footer>
+
+    <script>
+        // Add this script to display the current date
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
         });
     </script>
 </body>
