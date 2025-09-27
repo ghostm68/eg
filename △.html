@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NovaWrite - Dark Text Editor</title>
+    <title>NovaWrite - Dark Text Editor with Dictionary</title>
     <style>
         * {
             margin: 0;
@@ -45,13 +45,14 @@
 
         /* Sidebar */
         .sidebar {
-            width: 280px;
+            width: 300px;
             background: var(--bg-secondary);
             border-right: 1px solid var(--border-color);
             padding: 20px;
             display: flex;
             flex-direction: column;
             gap: 30px;
+            overflow-y: auto;
         }
 
         .logo {
@@ -112,10 +113,93 @@
             cursor: pointer;
             transition: background 0.2s;
             width: 100%;
+            margin-bottom: 20px;
         }
 
         .new-document-btn:hover {
             background: var(--accent-secondary);
+        }
+
+        /* Dictionary Section */
+        .dictionary-section {
+            padding: 15px 0;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .dictionary-section h3 {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        #search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        #search-button {
+            width: 100%;
+            padding: 10px;
+            background: var(--accent-primary);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        #search-button:hover {
+            background: var(--accent-secondary);
+        }
+
+        .dictionary-results {
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .dictionary-results h2 {
+            font-size: 16px;
+            color: var(--accent-primary);
+            margin-bottom: 10px;
+        }
+
+        .dictionary-results h3 {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 10px 0 5px 0;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        .dictionary-results p, .dictionary-results li {
+            font-size: 14px;
+            line-height: 1.4;
+            color: var(--text-primary);
+        }
+
+        .dictionary-results ul {
+            padding-left: 20px;
+            margin: 10px 0;
+        }
+
+        .loading {
+            color: var(--text-tertiary);
+            font-style: italic;
         }
 
         /* Main Editor */
@@ -345,6 +429,8 @@
                 NovaWrite
             </div>
             
+            <button class="new-document-btn">+ New Document</button>
+            
             <div class="documents-list">
                 <h3>Recent Documents</h3>
                 <div class="document-item active">
@@ -361,7 +447,15 @@
                 </div>
             </div>
 
-            <button class="new-document-btn">+ New Document</button>
+            <!-- Dictionary Section -->
+            <div class="dictionary-section">
+                <h3>Dictionary Lookup</h3>
+                <div id="search-container">
+                    <input type="text" id="search-input" placeholder="Enter a word to look up">
+                    <button id="search-button">Search Dictionary (w/German)</button>
+                </div>
+                <div id="result" class="dictionary-results"></div>
+            </div>
         </div>
 
         <!-- Main Editor -->
@@ -393,7 +487,6 @@
                 </div>
                 <div class="toolbar-group">
                     <button class="toolbar-button" data-command="createLink" title="Create Link">🔗 Link</button>
-                    <button class="toolbar-button" id="insertImage" title="Insert Image">🖼️ Image</button>
                 </div>
             </div>
 
@@ -409,6 +502,7 @@
                         <li><strong>Clean interface</strong> - No unnecessary clutter</li>
                         <li><strong>Real-time formatting</strong> - See your changes instantly</li>
                         <li><strong>Auto-save</strong> - Never lose your work</li>
+                        <li><strong>Dictionary integration</strong> - Look up words while you write</li>
                         <li><strong>Multiple document support</strong> - Switch between projects easily</li>
                     </ul>
                     
@@ -420,8 +514,10 @@
                         <li>Headings of different levels</li>
                         <li>Bold and italic text</li>
                         <li>Lists (both bulleted and numbered)</li>
-                        <li>Links and images</li>
+                        <li>Links</li>
                     </ol>
+                    
+                    <p>Use the dictionary in the sidebar to look up definitions and translations while you write.</p>
                     
                     <blockquote>
                         Good writing is clear thinking made visible. This editor helps you focus on what matters most – your words.
@@ -448,182 +544,247 @@
         <span>Code crafted by DeepSeek • <span id="currentDate"></span></span>
     </footer>
 
-<script>
-    class NovaWrite {
-        constructor() {
-            this.editor = document.getElementById('editor');
-            this.wordCountElement = document.getElementById('wordCount');
-            this.charCountElement = document.getElementById('charCount');
-            this.currentDateElement = document.getElementById('currentDate');
-            
-            this.init();
-        }
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.0/axios.min.js"></script>
+    <script>
+        class NovaWrite {
+            constructor() {
+                this.editor = document.getElementById('editor');
+                this.wordCountElement = document.getElementById('wordCount');
+                this.charCountElement = document.getElementById('charCount');
+                this.currentDateElement = document.getElementById('currentDate');
+                
+                this.init();
+            }
 
-        init() {
-            this.setupEventListeners();
-            this.updateWordCount();
-            this.setCurrentDate();
-            this.setupAutoSave();
-        }
+            init() {
+                this.setupEventListeners();
+                this.updateWordCount();
+                this.setCurrentDate();
+                this.setupAutoSave();
+                this.setupDictionary();
+            }
 
-        setupEventListeners() {
-            // Toolbar buttons
-            document.querySelectorAll('.toolbar-button').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const command = e.target.dataset.command;
-                    const value = e.target.dataset.value;
-                    
-                    if (command === 'formatBlock') {
-                        document.execCommand('formatBlock', false, value);
-                    } else if (command === 'createLink') {
-                        this.createLink();
-                    } else if (command === 'insertImage') {
-                        this.insertImage();
-                    } else {
-                        document.execCommand(command, false, null);
+            setupEventListeners() {
+                // Toolbar buttons
+                document.querySelectorAll('.toolbar-button').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const command = e.target.dataset.command;
+                        const value = e.target.dataset.value;
+                        
+                        if (command === 'formatBlock') {
+                            document.execCommand('formatBlock', false, value);
+                        } else if (command === 'createLink') {
+                            this.createLink();
+                        } else {
+                            document.execCommand(command, false, null);
+                        }
+                        
+                        this.editor.focus();
+                    });
+                });
+
+                // Editor events
+                this.editor.addEventListener('input', () => {
+                    this.updateWordCount();
+                    this.autoSave();
+                });
+
+                this.editor.addEventListener('keydown', (e) => {
+                    // Tab key for indentation
+                    if (e.key === 'Tab') {
+                        e.preventDefault();
+                        document.execCommand('indent');
                     }
                     
-                    this.editor.focus();
+                    // Shift+Tab for outdentation
+                    if (e.key === 'Tab' && e.shiftKey) {
+                        e.preventDefault();
+                        document.execCommand('outdent');
+                    }
                 });
-            });
 
-            // Editor events
-            this.editor.addEventListener('input', () => {
-                this.updateWordCount();
-                this.autoSave();
-            });
-
-            this.editor.addEventListener('keydown', (e) => {
-                // Tab key for indentation
-                if (e.key === 'Tab') {
-                    e.preventDefault();
-                    document.execCommand('indent');
-                }
-                
-                // Shift+Tab for outdentation
-                if (e.key === 'Tab' && e.shiftKey) {
-                    e.preventDefault();
-                    document.execCommand('outdent');
-                }
-            });
-
-            // Document title
-            document.querySelector('.document-title').addEventListener('input', () => {
-                this.autoSave();
-            });
-
-            // New document button
-            document.querySelector('.new-document-btn').addEventListener('click', () => {
-                this.createNewDocument();
-            });
-
-            // Document list items
-            document.querySelectorAll('.document-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    document.querySelectorAll('.document-item').forEach(i => i.classList.remove('active'));
-                    item.classList.add('active');
+                // Document title
+                document.querySelector('.document-title').addEventListener('input', () => {
+                    this.autoSave();
                 });
-            });
-        }
 
-        updateWordCount() {
-            const text = this.editor.innerText || '';
-            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-            const characters = text.length;
-            
-            this.wordCountElement.textContent = words;
-            this.charCountElement.textContent = characters;
-            
-            // Add animation
-            this.wordCountElement.classList.add('word-count-updating');
-            this.charCountElement.classList.add('word-count-updating');
-            
-            setTimeout(() => {
-                this.wordCountElement.classList.remove('word-count-updating');
-                this.charCountElement.classList.remove('word-count-updating');
-            }, 300);
-        }
+                // New document button
+                document.querySelector('.new-document-btn').addEventListener('click', () => {
+                    this.createNewDocument();
+                });
 
-        createLink() {
-            const url = prompt('Enter URL:');
-            if (url) {
-                document.execCommand('createLink', false, url);
+                // Document list items
+                document.querySelectorAll('.document-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        document.querySelectorAll('.document-item').forEach(i => i.classList.remove('active'));
+                        item.classList.add('active');
+                    });
+                });
             }
-        }
 
-        insertImage() {
-            const url = prompt('Enter image URL:');
-            if (url) {
-                // Use insertHTML for better compatibility and styling
-                document.execCommand('insertHTML', false, 
-                    `<img src="${url}" style="max-width: 100%; height: auto; border-radius: 6px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.3);" alt="Inserted image">`
-                );
+            setupDictionary() {
+                const searchInput = document.getElementById('search-input');
+                const searchButton = document.getElementById('search-button');
+                const result = document.getElementById('result');
+
+                const dictionaryUrls = [
+                    'https://raw.githubusercontent.com/matthewreagan/WebstersEnglishDictionary/master/dictionary.json',
+                    'https://gist.githubusercontent.com/BideoWego/60fbd40d5d1f0f1beca11ba95221dd38/raw/58fb4cce910fbf5fa67a2f0f1f619c09d7b1b373/dictionary.json',
+                    'https://raw.githubusercontent.com/adambom/dictionary/master/dictionary.json',
+                    'https://raw.githubusercontent.com/hathibelagal/German-English-JSON-Dictionary/master/german_english.json'
+                ];
+
+                this.searchDictionary = async (word) => {
+                    result.innerHTML = '<p class="loading">Searching...</p>';
+                    
+                    try {
+                        const responses = await Promise.all(dictionaryUrls.map(url => axios.get(url)));
+                        const dictionaries = responses.map(response => response.data);
+                        
+                        let definitionsFound = false;
+                        let resultHTML = `<h2>Definitions and Translations for "${word}":</h2>`;
+
+                        dictionaries.forEach((dictionary, index) => {
+                            if (index < 3) {
+                                if (dictionary[word.toLowerCase()]) {
+                                    definitionsFound = true;
+                                    const definition = dictionary[word.toLowerCase()];
+                                    resultHTML += `
+                                        <h3>English Definition (Source ${index + 1}):</h3>
+                                        <p>${definition}</p>
+                                    `;
+                                }
+                            } else {
+                                // German-English dictionary
+                                const germanTranslations = Object.entries(dictionary).filter(([key, value]) => 
+                                    value.toLowerCase().includes(word.toLowerCase()) || key.toLowerCase() === word.toLowerCase()
+                                );
+                                if (germanTranslations.length > 0) {
+                                    definitionsFound = true;
+                                    resultHTML += `<h3>German Translations:</h3><ul>`;
+                                    germanTranslations.forEach(([german, english]) => {
+                                        resultHTML += `<li>${german} - ${english}</li>`;
+                                    });
+                                    resultHTML += `</ul>`;
+                                }
+                            }
+                        });
+
+                        if (definitionsFound) {
+                            result.innerHTML = resultHTML;
+                        } else {
+                            result.innerHTML = `<p>No definition or translation found for "${word}" in any of the sources.</p>`;
+                        }
+                    } catch (error) {
+                        console.error('Error fetching dictionary data:', error);
+                        result.innerHTML = '<p>An error occurred while searching. Please try again later.</p>';
+                    }
+                };
+
+                searchButton.addEventListener('click', () => {
+                    const word = searchInput.value.trim();
+                    if (word) {
+                        this.searchDictionary(word);
+                    }
+                });
+
+                searchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        const word = searchInput.value.trim();
+                        if (word) {
+                            this.searchDictionary(word);
+                        }
+                    }
+                });
             }
-        }
 
-        autoSave() {
-            // Simulate auto-save
-            const saveIndicator = document.querySelector('.document-info');
-            saveIndicator.innerHTML = '<span>Last saved: Just now</span><span>•</span><span>Auto-save enabled</span>';
-            
-            // Simulate brief saving state
-            setTimeout(() => {
-                const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                saveIndicator.innerHTML = `<span>Last saved: ${now}</span><span>•</span><span>Auto-save enabled</span>`;
-            }, 500);
-        }
+            updateWordCount() {
+                const text = this.editor.innerText || '';
+                const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+                const characters = text.length;
+                
+                this.wordCountElement.textContent = words;
+                this.charCountElement.textContent = characters;
+                
+                // Add animation
+                this.wordCountElement.classList.add('word-count-updating');
+                this.charCountElement.classList.add('word-count-updating');
+                
+                setTimeout(() => {
+                    this.wordCountElement.classList.remove('word-count-updating');
+                    this.charCountElement.classList.remove('word-count-updating');
+                }, 300);
+            }
 
-        setupAutoSave() {
-            // Auto-save every 30 seconds
-            setInterval(() => {
-                this.autoSave();
-            }, 30000);
-        }
+            createLink() {
+                const url = prompt('Enter URL:');
+                if (url) {
+                    document.execCommand('createLink', false, url);
+                }
+            }
 
-        createNewDocument() {
-            const title = prompt('Enter document title:', 'Untitled Document');
-            if (title) {
-                document.querySelector('.document-title').value = title;
-                this.editor.innerHTML = '<p>Start writing your new document here...</p>';
-                this.updateWordCount();
+            autoSave() {
+                // Simulate auto-save
+                const saveIndicator = document.querySelector('.document-info');
+                saveIndicator.innerHTML = '<span>Last saved: Just now</span><span>•</span><span>Auto-save enabled</span>';
                 
-                // Add to documents list
-                const documentsList = document.querySelector('.documents-list');
-                const newDoc = document.createElement('div');
-                newDoc.className = 'document-item';
-                newDoc.innerHTML = `
-                    <div class="document-name">${title}</div>
-                    <div class="document-date">Just now</div>
-                `;
-                
-                documentsList.appendChild(newDoc);
-                
-                // Set as active
-                document.querySelectorAll('.document-item').forEach(item => item.classList.remove('active'));
-                newDoc.classList.add('active');
-                
-                newDoc.addEventListener('click', () => {
-                    document.querySelectorAll('.document-item').forEach(i => i.classList.remove('active'));
+                // Simulate brief saving state
+                setTimeout(() => {
+                    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    saveIndicator.innerHTML = `<span>Last saved: ${now}</span><span>•</span><span>Auto-save enabled</span>`;
+                }, 500);
+            }
+
+            setupAutoSave() {
+                // Auto-save every 30 seconds
+                setInterval(() => {
+                    this.autoSave();
+                }, 30000);
+            }
+
+            createNewDocument() {
+                const title = prompt('Enter document title:', 'Untitled Document');
+                if (title) {
+                    document.querySelector('.document-title').value = title;
+                    this.editor.innerHTML = '<p>Start writing your new document here...</p>';
+                    this.updateWordCount();
+                    
+                    // Add to documents list
+                    const documentsList = document.querySelector('.documents-list');
+                    const newDoc = document.createElement('div');
+                    newDoc.className = 'document-item';
+                    newDoc.innerHTML = `
+                        <div class="document-name">${title}</div>
+                        <div class="document-date">Just now</div>
+                    `;
+                    
+                    documentsList.appendChild(newDoc);
+                    
+                    // Set as active
+                    document.querySelectorAll('.document-item').forEach(item => item.classList.remove('active'));
                     newDoc.classList.add('active');
+                    
+                    newDoc.addEventListener('click', () => {
+                        document.querySelectorAll('.document-item').forEach(i => i.classList.remove('active'));
+                        newDoc.classList.add('active');
+                    });
+                }
+            }
+
+            setCurrentDate() {
+                this.currentDateElement.textContent = new Date().toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
                 });
             }
         }
 
-        setCurrentDate() {
-            this.currentDateElement.textContent = new Date().toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-        }
-    }
-
-    // Initialize the editor when the page loads
-    document.addEventListener('DOMContentLoaded', () => {
-        const editor = new NovaWrite();
-    });
-</script>
-</head>
+        // Initialize the editor when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            const editor = new NovaWrite();
+        });
+    </script>
 </body>
 </html>
