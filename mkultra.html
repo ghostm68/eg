@@ -64,7 +64,7 @@
             50% { opacity: 0.03; transform: scale(1.1); }
         }
 
-        .main-content {
+        .main-content-splash {
             text-align: center;
             position: relative;
             z-index: 2;
@@ -169,27 +169,32 @@
             border-color: rgba(255, 255, 255, 0.3);
         }
 
-        /* Slide-out Menu */
+        /* Slide-out Menu - Fixed closing issue */
         .menu-overlay {
             position: fixed;
             top: 0;
-            right: -100%;
+            left: 0;
             width: 100%;
             height: 100%;
-            background: #000000;
+            background: rgba(0, 0, 0, 0.95);
             z-index: 999;
-            transition: right 0.5s ease-in-out;
             display: flex;
             align-items: center;
             justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease-in-out;
         }
 
         .menu-overlay.active {
-            right: 0;
+            opacity: 1;
+            visibility: visible;
         }
 
         .menu-content {
             text-align: center;
+            position: relative;
+            z-index: 1000;
         }
 
         .menu-links {
@@ -211,6 +216,7 @@
             transition: all 0.4s ease;
             display: inline-block;
             letter-spacing: 0.05em;
+            cursor: pointer;
         }
 
         .menu-links a:hover {
@@ -235,33 +241,130 @@
             justify-content: center;
             font-family: Arial, sans-serif;
             transition: opacity 0.3s ease;
+            z-index: 1001;
         }
 
         .close-menu:hover {
             opacity: 0.7;
         }
 
-        /* Geometric shapes */
-        .shape {
+        /* Main content area */
+        .main-content {
+            display: none;
+            min-height: 100vh;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            opacity: 0;
+            animation: fadeIn 1s ease 0.5s forwards;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .content-section {
+            margin-bottom: 4rem;
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            font-weight: normal;
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            font-weight: normal;
+        }
+
+        /* Portfolio grid styles */
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .portfolio-item {
+            background: var(--secondary);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .portfolio-item:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Video section */
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            margin: 2rem 0;
+        }
+
+        .video-container iframe {
             position: absolute;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            pointer-events: none;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
         }
 
-        .shape-square {
-            width: 120px;
-            height: 120px;
-            top: 20%;
-            right: 10%;
-            transform: rotate(45deg);
+        /* Footer */
+        footer {
+            background: #000;
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-top: 4rem;
+            border-top: 1px solid var(--border);
         }
 
-        .shape-circle {
-            width: 80px;
-            height: 80px;
-            bottom: 30%;
-            left: 10%;
-            border-radius: 50%;
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .social-links a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .social-links a:hover {
+            opacity: 0.7;
+        }
+
+        /* IMDb section */
+        .imdb-section {
+            background: #f5c518;
+            color: #000;
+            padding: 2rem;
+            border-radius: var(--radius);
+            margin: 2rem 0;
+        }
+
+        .imdb-section h3 {
+            color: #000;
+            margin-bottom: 1rem;
         }
 
         @media (max-width: 768px) {
@@ -269,7 +372,7 @@
             .cyrillic-subtitle { font-size: 0.9rem; letter-spacing: 0.2em; }
             .menu-links a { font-size: 2rem; }
             .word-indicator span { font-size: 1.8rem; }
-            .shape { display: none; }
+            h1 { font-size: 2rem; }
         }
     </style>
 </head>
@@ -278,11 +381,7 @@
     <div class="loading-screen" id="loadingScreen">
         <div class="floating-letters" id="floatingLetters"></div>
         
-        <!-- Geometric shapes -->
-        <div class="shape shape-square"></div>
-        <div class="shape shape-circle"></div>
-        
-        <div class="main-content">
+        <div class="main-content-splash">
             <div class="main-letter">М</div>
             <div class="cyrillic-subtitle">кечероп</div>
             
@@ -309,13 +408,92 @@
         <div class="menu-content">
             <nav>
                 <ul class="menu-links">
-                    <li><a href="#home">Главная</a></li>
-                    <li><a href="#portfolio">Портфолио</a></li>
-                    <li><a href="#about">Обо мне</a></li>
-                    <li><a href="#contact">Контакты</a></li>
+                    <li><a onclick="showSection('home')">Главная</a></li>
+                    <li><a onclick="showSection('portfolio')">Портфолио</a></li>
+                    <li><a onclick="showSection('videos')">Видео</a></li>
+                    <li><a onclick="showSection('imdb')">IMDb</a></li>
+                    <li><a onclick="showSection('about')">Обо мне</a></li>
+                    <li><a onclick="showSection('contact')">Контакты</a></li>
                 </ul>
             </nav>
         </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Home Section -->
+        <section id="home" class="content-section active">
+            <h1>Марта - Художник и Фотограф</h1>
+            <p>Добро пожаловать в мое творческое пространство. Я специализируюсь на художественной фотографии и визуальных искусствах.</p>
+            
+            <div class="portfolio-grid">
+                <div class="portfolio-item">
+                    <img src="https://picsum.photos/400/300?random=1" alt="Работа 1" style="width:100%; height:200px; object-fit:cover;">
+                    <div style="padding:1rem;">
+                        <h3>Художественная серия</h3>
+                        <p>Описание проекта</p>
+                    </div>
+                </div>
+                <div class="portfolio-item">
+                    <img src="https://picsum.photos/400/300?random=2" alt="Работа 2" style="width:100%; height:200px; object-fit:cover;">
+                    <div style="padding:1rem;">
+                        <h3>Портреты</h3>
+                        <p>Описание проекта</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Portfolio Section -->
+        <section id="portfolio" class="content-section">
+            <h2>Портфолио</h2>
+            <p>Мои последние работы в области фотографии и визуального искусства.</p>
+            <!-- Add your portfolio items here -->
+        </section>
+
+        <!-- Videos Section -->
+        <section id="videos" class="content-section">
+            <h2>Видео работы</h2>
+            <div class="video-container">
+                <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen></iframe>
+            </div>
+            <!-- Add more video containers as needed -->
+        </section>
+
+        <!-- IMDb Section -->
+        <section id="imdb" class="content-section">
+            <h2>IMDb</h2>
+            <div class="imdb-section">
+                <h3>Фильмография и участие в проектах</h3>
+                <p>Информация о ваших кинематографических работах будет отображена здесь.</p>
+                <!-- Add your IMDb credits here -->
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="content-section">
+            <h2>Обо мне</h2>
+            <p>Информация о вашем профессиональном опыте и художественном подходе.</p>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="content-section">
+            <h2>Контакты</h2>
+            <p>Свяжитесь со мной для сотрудничества и проектов.</p>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <div class="footer-content">
+                <p>&copy; 2024 Марта. Все права защищены.</p>
+                <div class="social-links">
+                    <a href="#">Instagram</a>
+                    <a href="#">VK</a>
+                    <a href="#">IMDb</a>
+                    <a href="#">Email</a>
+                </div>
+            </div>
+        </footer>
     </div>
 
     <script>
@@ -329,7 +507,7 @@
             const letters = ['М', 'А', 'Р', 'Т', 'А'];
             const floatingLetters = document.getElementById('floatingLetters');
             
-            // Create floating letters with random positions
+            // Create floating letters
             for (let i = 0; i < 25; i++) {
                 const letter = document.createElement('div');
                 letter.className = 'floating-letter';
@@ -346,6 +524,7 @@
             const progressFill = document.getElementById('progressFill');
             const loadingScreen = document.getElementById('loadingScreen');
             const menuButton = document.getElementById('menuButton');
+            const mainContent = document.getElementById('mainContent');
             
             let progress = 0;
             const interval = setInterval(() => {
@@ -364,8 +543,9 @@
                         loadingScreen.style.opacity = '0';
                         setTimeout(() => {
                             loadingScreen.style.display = 'none';
-                            // Show menu button after splash screen
+                            // Show menu button and main content
                             menuButton.classList.add('visible');
+                            mainContent.style.display = 'block';
                         }, 800);
                     }, 600);
                 }
@@ -377,32 +557,49 @@
             const menuOverlay = document.getElementById('menuOverlay');
             const closeMenu = document.getElementById('closeMenu');
 
+            // Fixed menu closing - works anywhere on overlay
             menuButton.addEventListener('click', () => {
                 menuOverlay.classList.add('active');
-                // Prevent body scroll when menu is open:cite[2]
                 document.body.style.overflow = 'hidden';
             });
 
-            closeMenu.addEventListener('click', () => {
-                menuOverlay.classList.remove('active');
-                document.body.style.overflow = 'unset';
-            });
+            closeMenu.addEventListener('click', closeMenuFunc);
 
-            // Close menu when clicking outside content
             menuOverlay.addEventListener('click', (e) => {
                 if (e.target === menuOverlay) {
-                    menuOverlay.classList.remove('active');
-                    document.body.style.overflow = 'unset';
+                    closeMenuFunc();
                 }
             });
+
+            function closeMenuFunc() {
+                menuOverlay.classList.remove('active');
+                document.body.style.overflow = 'unset';
+            }
 
             // Close menu with Escape key
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && menuOverlay.classList.contains('active')) {
-                    menuOverlay.classList.remove('active');
-                    document.body.style.overflow = 'unset';
+                    closeMenuFunc();
                 }
             });
+        }
+
+        // Section navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Close menu
+            document.getElementById('menuOverlay').classList.remove('active');
+            document.body.style.overflow = 'unset';
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
         }
     </script>
 </body>
