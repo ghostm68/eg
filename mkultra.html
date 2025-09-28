@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Марта - Портфолио</title>
+    <title>Марта Кечероп - Портфолио</title>
     <style>
         * {
             margin: 0;
@@ -11,38 +11,28 @@
             box-sizing: border-box;
         }
 
-        :root {
-            --background: #0a0a0a;
-            --foreground: #ededed;
-            --primary: #ededed;
-            --secondary: #171717;
-            --border: #262626;
-            --radius: 0.5rem;
-        }
-
         body {
-            background-color: var(--background);
-            color: var(--foreground);
-            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #fafafa;
+            color: #0a0a0a;
+            font-family: 'Times New Roman', Times, serif;
             overflow-x: hidden;
         }
 
-        /* Loading Screen */
-        .loading-screen {
+        /* Splash Screen - Full screen dark background */
+        .splash-screen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: var(--background);
+            background: #000;
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 1000;
-            transition: opacity 0.8s ease;
         }
 
-        .floating-letters {
+        .floating-background {
             position: absolute;
             width: 100%;
             height: 100%;
@@ -52,56 +42,69 @@
         .floating-letter {
             position: absolute;
             color: rgba(255, 255, 255, 0.05);
-            font-size: 6rem;
+            font-size: 4rem;
             font-weight: bold;
-            animation: pulse 3s infinite;
+            animation: float 6s infinite ease-in-out;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.1; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.1; }
+            50% { transform: translateY(-20px) rotate(5deg); opacity: 0.03; }
+        }
+
+        .splash-content {
+            text-align: center;
+            z-index: 2;
         }
 
         .main-letter {
             font-size: 12rem;
             font-weight: bold;
             color: white;
+            margin-bottom: 1rem;
             text-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
-        }
-
-        .word-indicator {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-
-        .word-indicator span {
-            font-size: 2rem;
-            font-weight: bold;
             transition: all 0.5s ease;
         }
 
-        .word-indicator .active {
-            color: white;
-            opacity: 1;
-            transform: translateY(0);
+        .name-reveal {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
         }
 
-        .word-indicator .inactive {
+        .name-letter {
+            font-size: 2.5rem;
+            font-weight: bold;
             color: rgba(255, 255, 255, 0.3);
+            transition: all 0.5s ease;
+        }
+
+        .name-letter.active {
+            color: white;
+        }
+
+        .last-name {
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 300;
+            letter-spacing: 0.3em;
+            margin-top: 1rem;
             opacity: 0;
-            transform: translateY(1rem);
+            transition: opacity 1s ease;
+        }
+
+        .last-name.visible {
+            opacity: 1;
         }
 
         .progress-bar {
-            width: 8rem;
+            width: 200px;
             height: 2px;
             background: rgba(255, 255, 255, 0.2);
             border-radius: 1px;
             overflow: hidden;
-            position: absolute;
-            bottom: 3rem;
+            margin: 2rem auto;
         }
 
         .progress-fill {
@@ -111,530 +114,339 @@
             transition: width 0.3s ease;
         }
 
-        /* Menu Button */
-        .menu-button {
-            position: fixed;
-            top: 2rem;
-            right: 2rem;
-            z-index: 1001;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: var(--radius);
-            cursor: pointer;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            font-size: 1rem;
-        }
-
-        .menu-button:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Slide-out Menu */
-        .menu-overlay {
-            position: fixed;
-            top: 0;
-            right: -100%;
-            width: 100%;
-            height: 100%;
-            background: #000000;
-            z-index: 999;
-            transition: right 0.4s ease-in-out;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .menu-overlay.active {
-            right: 0;
-        }
-
-        .menu-content {
-            text-align: center;
-        }
-
-        .menu-links {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .menu-links li {
-            margin: 2rem 0;
-        }
-
-        .menu-links a {
-            color: white;
-            text-decoration: none;
-            font-size: 2.5rem;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            display: inline-block;
-        }
-
-        .menu-links a:hover {
-            transform: translateX(10px);
-            color: #ccc;
-        }
-
-        .close-menu {
-            position: absolute;
-            top: 2rem;
-            right: 2rem;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 3rem;
-            cursor: pointer;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Main Content */
+        /* Main content - hidden initially */
         .main-content {
             display: none;
             min-height: 100vh;
-            padding: 2rem;
+            background: #fafafa;
+        }
+
+        /* Simple header - appears after splash */
+        .simple-header {
+            background: rgba(250, 250, 250, 0.95);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e5e5e5;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: #404040;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #000;
+        }
+
+        /* Content sections */
+        .content-section {
+            padding: 6rem 2rem 2rem;
             max-width: 1200px;
             margin: 0 auto;
         }
 
-        .content-section {
-            margin-bottom: 4rem;
-        }
-
-        h1 {
-            font-size: 3rem;
-            margin-bottom: 2rem;
+        .hero-section {
             text-align: center;
+            padding: 8rem 2rem 4rem;
         }
 
-        h2 {
-            font-size: 2rem;
-            margin-bottom: 1.5rem;
-            color: var(--primary);
+        .hero-title {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            font-weight: normal;
         }
 
-        /* Photo Grid */
-        .photo-grid {
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Projects grid */
+        .projects-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-top: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
         }
 
-        .photo-item {
-            position: relative;
-            aspect-ratio: 1;
-            background: var(--secondary);
-            border-radius: var(--radius);
+        .project-card {
+            background: white;
+            border-radius: 8px;
             overflow: hidden;
-            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease;
         }
 
-        .photo-item:hover {
-            transform: scale(1.05);
+        .project-card:hover {
+            transform: translateY(-5px);
         }
 
-        .photo-item img {
+        .project-image {
             width: 100%;
-            height: 100%;
+            height: 300px;
             object-fit: cover;
-            transition: transform 0.5s ease;
         }
 
-        .photo-item:hover img {
-            transform: scale(1.1);
+        .project-info {
+            padding: 1.5rem;
         }
 
-        .photo-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.4);
-            opacity: 0;
+        .project-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .project-meta {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .project-rating {
             display: flex;
             align-items: center;
-            justify-content: center;
-            transition: opacity 0.3s ease;
+            gap: 0.5rem;
+            color: #d97706;
+            font-weight: bold;
         }
 
-        .photo-item:hover .photo-overlay {
-            opacity: 1;
-        }
-
-        .zoom-indicator {
-            color: white;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 0.5rem 1rem;
-            border-radius: 2rem;
-            backdrop-filter: blur(10px);
-        }
-
-        /* Lightbox */
-        .lightbox {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 1002;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .lightbox.active {
-            display: flex;
-        }
-
-        .lightbox-content {
-            max-width: 90%;
-            max-height: 90%;
-            position: relative;
-        }
-
-        .lightbox img {
-            max-width: 100%;
-            max-height: 90vh;
-            object-fit: contain;
-            border-radius: var(--radius);
-        }
-
-        .lightbox-caption {
-            color: white;
+        footer {
             text-align: center;
-            margin-top: 1rem;
-            opacity: 0.8;
-        }
-
-        .lightbox-close {
-            position: absolute;
-            top: -50px;
-            right: 0;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 2rem;
-            cursor: pointer;
-            padding: 0.5rem;
-        }
-
-        .lightbox-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: white;
-            font-size: 2rem;
-            cursor: pointer;
-            padding: 1rem;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 50%;
-        }
-
-        .lightbox-prev {
-            left: 2rem;
-        }
-
-        .lightbox-next {
-            right: 2rem;
-        }
-
-        .lightbox-counter {
-            position: absolute;
-            bottom: -40px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            opacity: 0.6;
+            padding: 3rem 2rem;
+            border-top: 1px solid #e5e5e5;
+            margin-top: 4rem;
+            color: #666;
         }
 
         @media (max-width: 768px) {
             .main-letter { font-size: 8rem; }
-            .menu-links a { font-size: 2rem; }
-            h1 { font-size: 2rem; }
-            .lightbox-nav { font-size: 1.5rem; padding: 0.5rem; }
-            .lightbox-prev { left: 1rem; }
-            .lightbox-next { right: 1rem; }
+            .name-letter { font-size: 2rem; }
+            .hero-title { font-size: 2.5rem; }
+            .nav-links { display: none; }
         }
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div class="loading-screen" id="loadingScreen">
-        <div class="floating-letters" id="floatingLetters"></div>
-        <div class="text-center">
-            <div class="main-letter">М</div>
-            <div class="word-indicator">
-                <span class="active">М</span>
-                <span class="inactive">А</span>
-                <span class="inactive">Р</span>
-                <span class="inactive">Т</span>
-                <span class="inactive">А</span>
-            </div>
-        </div>
-        <div class="progress-bar">
-            <div class="progress-fill" id="progressFill"></div>
-        </div>
-    </div>
-
-    <!-- Menu Button -->
-    <button class="menu-button" id="menuButton">☰ Меню</button>
-
-    <!-- Slide-out Menu -->
-    <div class="menu-overlay" id="menuOverlay">
-        <button class="close-menu" id="closeMenu">×</button>
-        <div class="menu-content">
-            <nav>
-                <ul class="menu-links">
-                    <li><a href="#home" onclick="showSection('home')">Главная</a></li>
-                    <li><a href="#portfolio" onclick="showSection('portfolio')">Портфолио</a></li>
-                    <li><a href="#about" onclick="showSection('about')">Обо мне</a></li>
-                    <li><a href="#contact" onclick="showSection('contact')">Контакты</a></li>
-                </ul>
-            </nav>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content" id="mainContent">
-        <!-- Home Section -->
-        <section id="home" class="content-section">
-            <h1>Марта - Фотограф</h1>
-            <p>Добро пожаловать в мое портфолио. Я специализируюсь на художественной и портретной фотографии.</p>
+    <!-- Splash Screen -->
+    <div class="splash-screen" id="splashScreen">
+        <div class="floating-background" id="floatingBackground"></div>
+        
+        <div class="splash-content">
+            <div class="main-letter" id="mainLetter">М</div>
             
-            <div class="photo-grid" id="homeGallery">
-                <!-- Photos will be added by JavaScript -->
+            <div class="name-reveal" id="nameReveal">
+                <div class="name-letter">М</div>
+                <div class="name-letter">А</div>
+                <div class="name-letter">Р</div>
+                <div class="name-letter">Т</div>
+                <div class="name-letter">А</div>
             </div>
-        </section>
-
-        <!-- Portfolio Section (hidden by default) -->
-        <section id="portfolio" class="content-section" style="display: none;">
-            <h2>Портфолио</h2>
-            <div class="photo-grid" id="portfolioGallery">
-                <!-- Photos will be added by JavaScript -->
+            
+            <div class="last-name" id="lastName">КЕССЛЕР</div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
             </div>
-        </section>
-
-        <!-- About Section (hidden by default) -->
-        <section id="about" class="content-section" style="display: none;">
-            <h2>Обо мне</h2>
-            <p>Я профессиональный фотограф с более чем 5-летним опытом работы в индустрии.</p>
-        </section>
-
-        <!-- Contact Section (hidden by default) -->
-        <section id="contact" class="content-section" style="display: none;">
-            <h2>Контакты</h2>
-            <p>Свяжитесь со мной для сотрудничества.</p>
-        </section>
+        </div>
     </div>
 
-    <!-- Lightbox -->
-    <div class="lightbox" id="lightbox">
-        <button class="lightbox-close" id="lightboxClose">×</button>
-        <button class="lightbox-nav lightbox-prev" id="lightboxPrev">‹</button>
-        <button class="lightbox-nav lightbox-next" id="lightboxNext">›</button>
-        <div class="lightbox-content">
-            <img id="lightboxImage" src="" alt="">
-            <div class="lightbox-caption" id="lightboxCaption"></div>
-            <div class="lightbox-counter" id="lightboxCounter"></div>
-        </div>
+    <!-- Main Content (hidden until splash completes) -->
+    <div class="main-content" id="mainContent">
+        <!-- Simple Header -->
+        <header class="simple-header">
+            <div class="header-content">
+                <div class="logo">МК</div>
+                <nav class="nav-links">
+                    <a href="#projects">Проекты</a>
+                    <a href="#about">Обо мне</a>
+                    <a href="#contact">Контакты</a>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <h1 class="hero-title">Марта Кечероп</h1>
+            <p class="hero-subtitle">Актриса и творческая личность, специализирующаяся на кино и телевизионных проектах</p>
+        </section>
+
+        <!-- Projects Section -->
+        <section id="projects" class="content-section">
+            <h2>Проекты</h2>
+            <div class="projects-grid" id="projectsGrid">
+                <!-- Projects will be loaded by JavaScript -->
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="content-section">
+            <h2>Обо мне</h2>
+            <p>Информация о профессиональном опыте и творческом пути.</p>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="content-section">
+            <h2>Контакты</h2>
+            <p>Для сотрудничества и предложений.</p>
+        </section>
+
+        <footer>
+            <p>&copy; 2024 Марта Кечероп. Все права защищены.</p>
+        </footer>
     </div>
 
     <script>
-        // Sample photo data - replace with your actual photos
-        const photos = [
-            { src: "https://picsum.photos/600/400?random=1", alt: "Фото 1", caption: "Описание фото 1" },
-            { src: "https://picsum.photos/600/400?random=2", alt: "Фото 2", caption: "Описание фото 2" },
-            { src: "https://picsum.photos/600/400?random=3", alt: "Фото 3", caption: "Описание фото 3" },
-            { src: "https://picsum.photos/600/400?random=4", alt: "Фото 4", caption: "Описание фото 4" },
-            { src: "https://picsum.photos/600/400?random=5", alt: "Фото 5", caption: "Описание фото 5" },
-            { src: "https://picsum.photos/600/400?random=6", alt: "Фото 6", caption: "Описание фото 6" }
+        // Project data from your React component
+        const projects = [
+            {
+                title: "The Mysterious Benedict Society",
+                year: "2021-2022",
+                role: "Constance Contraire",
+                type: "TV Series",
+                rating: "7.6",
+                image: "https://ext.same-assets.com/2784977362/3234773272.jpeg",
+                description: "Талантливые сироты объединяются для выполнения секретной миссии от эксцентричного благотворителя."
+            },
+            {
+                title: "The Santa Clauses",
+                year: "2023",
+                role: "Olga",
+                type: "TV Series",
+                rating: "6.4",
+                image: "https://ext.same-assets.com/2784977362/378978037.jpeg",
+                description: "Продолжение истории о Санта-Клаусе и его семье в современном мире."
+            },
+            {
+                title: "Cosmoball",
+                year: "2020",
+                role: "Девочка с респиратором",
+                type: "Film",
+                rating: "4.7",
+                image: "https://ext.same-assets.com/2784977362/1959617723.jpeg",
+                description: "Фантастический спортивный фильм о будущем человечества."
+            },
+            {
+                title: "Survive",
+                year: "2022",
+                role: "Young Jane",
+                type: "Film",
+                rating: "4.7",
+                image: "https://ext.same-assets.com/2784977362/2221195134.jpeg",
+                description: "Драма о выживании и человеческой стойкости."
+            }
         ];
 
-        // Initialize the page
+        // Initialize splash screen
         document.addEventListener('DOMContentLoaded', function() {
-            initLoadingScreen();
-            initMenu();
-            initGallery();
-            initLightbox();
+            initSplashScreen();
+            loadProjects();
         });
 
-        function initLoadingScreen() {
+        function initSplashScreen() {
             const letters = ['М', 'А', 'Р', 'Т', 'А'];
-            const floatingLetters = document.getElementById('floatingLetters');
-            
-            // Create floating letters
-            for (let i = 0; i < 20; i++) {
+            const floatingBackground = document.getElementById('floatingBackground');
+            const mainLetter = document.getElementById('mainLetter');
+            const nameLetters = document.querySelectorAll('.name-letter');
+            const lastName = document.getElementById('lastName');
+            const progressFill = document.getElementById('progressFill');
+            const splashScreen = document.getElementById('splashScreen');
+            const mainContent = document.getElementById('mainContent');
+
+            // Create floating letters background
+            for (let i = 0; i < 15; i++) {
                 const letter = document.createElement('div');
                 letter.className = 'floating-letter';
                 letter.textContent = letters[Math.floor(Math.random() * letters.length)];
                 letter.style.left = Math.random() * 100 + '%';
                 letter.style.top = Math.random() * 100 + '%';
-                letter.style.animationDelay = (Math.random() * 5) + 's';
-                letter.style.animationDuration = (3 + Math.random() * 2) + 's';
-                floatingLetters.appendChild(letter);
+                letter.style.animationDelay = (Math.random() * 4) + 's';
+                letter.style.animationDuration = (4 + Math.random() * 4) + 's';
+                floatingBackground.appendChild(letter);
             }
 
-            // Loading animation
-            const wordIndicator = document.querySelectorAll('.word-indicator span');
-            const progressFill = document.getElementById('progressFill');
-            const loadingScreen = document.getElementById('loadingScreen');
-            const mainContent = document.getElementById('mainContent');
-            
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += 2;
-                progressFill.style.width = progress + '%';
-                
-                if (progress >= 20) wordIndicator[1].classList.replace('inactive', 'active');
-                if (progress >= 40) wordIndicator[2].classList.replace('inactive', 'active');
-                if (progress >= 60) wordIndicator[3].classList.replace('inactive', 'active');
-                if (progress >= 80) wordIndicator[4].classList.replace('inactive', 'active');
-                
-                if (progress >= 100) {
-                    clearInterval(interval);
+            let currentStep = 0;
+            const totalSteps = 5;
+            const stepDuration = 800;
+
+            function nextStep() {
+                if (currentStep < totalSteps) {
+                    // Update main letter
+                    mainLetter.textContent = letters[currentStep];
+                    
+                    // Activate corresponding name letter
+                    nameLetters[currentStep].classList.add('active');
+                    
+                    // Update progress
+                    progressFill.style.width = ((currentStep + 1) / totalSteps) * 100 + '%';
+                    
+                    currentStep++;
+                    setTimeout(nextStep, stepDuration);
+                } else {
+                    // Show last name
+                    lastName.classList.add('visible');
+                    
+                    // Complete progress
+                    progressFill.style.width = '100%';
+                    
+                    // Transition to main content after delay
                     setTimeout(() => {
-                        loadingScreen.style.opacity = '0';
+                        splashScreen.style.opacity = '0';
                         setTimeout(() => {
-                            loadingScreen.style.display = 'none';
+                            splashScreen.style.display = 'none';
                             mainContent.style.display = 'block';
-                        }, 800);
-                    }, 500);
+                        }, 1000);
+                    }, 1000);
                 }
-            }, 50);
-        }
-
-        function initMenu() {
-            const menuButton = document.getElementById('menuButton');
-            const menuOverlay = document.getElementById('menuOverlay');
-            const closeMenu = document.getElementById('closeMenu');
-
-            menuButton.addEventListener('click', () => {
-                menuOverlay.classList.add('active');
-            });
-
-            closeMenu.addEventListener('click', () => {
-                menuOverlay.classList.remove('active');
-            });
-
-            // Close menu when clicking outside content
-            menuOverlay.addEventListener('click', (e) => {
-                if (e.target === menuOverlay) {
-                    menuOverlay.classList.remove('active');
-                }
-            });
-        }
-
-        function initGallery() {
-            const homeGallery = document.getElementById('homeGallery');
-            const portfolioGallery = document.getElementById('portfolioGallery');
-
-            photos.forEach((photo, index) => {
-                const photoItem = createPhotoItem(photo, index);
-                homeGallery.appendChild(photoItem.cloneNode(true));
-                portfolioGallery.appendChild(photoItem);
-            });
-        }
-
-        function createPhotoItem(photo, index) {
-            const div = document.createElement('div');
-            div.className = 'photo-item';
-            div.innerHTML = `
-                <img src="${photo.src}" alt="${photo.alt}" loading="lazy">
-                <div class="photo-overlay">
-                    <div class="zoom-indicator">
-                        <span>Увеличить</span>
-                    </div>
-                </div>
-            `;
-            div.addEventListener('click', () => openLightbox(index));
-            return div;
-        }
-
-        function initLightbox() {
-            window.currentPhotoIndex = 0;
-            const lightbox = document.getElementById('lightbox');
-            const lightboxImage = document.getElementById('lightboxImage');
-            const lightboxCaption = document.getElementById('lightboxCaption');
-            const lightboxCounter = document.getElementById('lightboxCounter');
-            const lightboxClose = document.getElementById('lightboxClose');
-            const lightboxPrev = document.getElementById('lightboxPrev');
-            const lightboxNext = document.getElementById('lightboxNext');
-
-            lightboxClose.addEventListener('click', closeLightbox);
-            lightboxPrev.addEventListener('click', showPrevPhoto);
-            lightboxNext.addEventListener('click', showNextPhoto);
-
-            // Keyboard navigation
-            document.addEventListener('keydown', (e) => {
-                if (!lightbox.classList.contains('active')) return;
-                
-                switch(e.key) {
-                    case 'Escape': closeLightbox(); break;
-                    case 'ArrowLeft': showPrevPhoto(); break;
-                    case 'ArrowRight': showNextPhoto(); break;
-                }
-            });
-
-            // Close lightbox when clicking outside image
-            lightbox.addEventListener('click', (e) => {
-                if (e.target === lightbox) closeLightbox();
-            });
-
-            window.openLightbox = function(index) {
-                window.currentPhotoIndex = index;
-                updateLightbox();
-                lightbox.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            };
-
-            window.closeLightbox = function() {
-                lightbox.classList.remove('active');
-                document.body.style.overflow = 'unset';
-            };
-
-            window.showPrevPhoto = function() {
-                window.currentPhotoIndex = window.currentPhotoIndex > 0 ? window.currentPhotoIndex - 1 : photos.length - 1;
-                updateLightbox();
-            };
-
-            window.showNextPhoto = function() {
-                window.currentPhotoIndex = window.currentPhotoIndex < photos.length - 1 ? window.currentPhotoIndex + 1 : 0;
-                updateLightbox();
-            };
-
-            function updateLightbox() {
-                const photo = photos[window.currentPhotoIndex];
-                lightboxImage.src = photo.src;
-                lightboxImage.alt = photo.alt;
-                lightboxCaption.textContent = photo.caption || '';
-                lightboxCounter.textContent = `${window.currentPhotoIndex + 1} / ${photos.length}`;
             }
+
+            // Start the animation sequence
+            setTimeout(nextStep, 500);
         }
 
-        function showSection(sectionId) {
-            // Hide all sections
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.style.display = 'none';
+        function loadProjects() {
+            const projectsGrid = document.getElementById('projectsGrid');
+            
+            projects.forEach(project => {
+                const projectCard = document.createElement('div');
+                projectCard.className = 'project-card';
+                projectCard.innerHTML = `
+                    <img src="${project.image}" alt="${project.title}" class="project-image">
+                    <div class="project-info">
+                        <div class="project-title">${project.title}</div>
+                        <div class="project-meta">${project.role} • ${project.type} • ${project.year}</div>
+                        <div class="project-rating">
+                            ⭐ ${project.rating}/10
+                        </div>
+                        <p>${project.description}</p>
+                    </div>
+                `;
+                projectsGrid.appendChild(projectCard);
             });
-            
-            // Show selected section
-            document.getElementById(sectionId).style.display = 'block';
-            
-            // Close menu
-            document.getElementById('menuOverlay').classList.remove('active');
-            
-            // Scroll to top
-            window.scrollTo(0, 0);
         }
     </script>
 </body>
