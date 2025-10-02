@@ -5,54 +5,352 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ataraxia - World Building</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
     <style>
-        /* Import and apply Olivetti font */
+        /* Modern CSS Reset */
+        *, *::before, *::after { box-sizing: border-box; }
+        * { margin: 0; }
+        body { line-height: 1.5; -webkit-font-smoothing: antialiased; }
+        img, picture, video, canvas, svg { display: block; max-width: 100%; }
+        input, button, textarea, select { font: inherit; }
+        p, h1, h2, h3, h4, h5, h6 { overflow-wrap: break-word; }
+        
+        /* Import Olivetti font */
         @font-face {
             font-family: 'Olivetti';
             src: url('https://cdn.jsdelivr.net/gh/ghostm68/inktwo/fonts/olivetti/olivetti-typewriter-regular.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
         }
-        * { font-family: 'Olivetti', 'Courier New', monospace; }
+        
+        @font-face {
+            font-family: 'Olivetti';
+            src: url('https://cdn.jsdelivr.net/gh/ghostm68/inktwo/fonts/olivetti/olivetti-typewriter-bold.otf') format('opentype');
+            font-weight: bold;
+            font-style: normal;
+        }
 
-        /* Monochrome and Blue Color Scheme */
-        body { background: #1a1a1a; color: #e0e0e0; }
-        .writing-section { background: #2a2a2a; border: 1px solid #333; }
-        #writing-area { background: #1a1a1a; color: #e0e0e0; border: none; }
-        .writing-tools button { background: #2a2a2a; border: 1px solid #0066cc; color: #e0e0e0; }
-        .settings-group input[type="range"] { accent-color: #0066cc; }
+        /* Main styling */
+        body {
+            font-family: 'Olivetti', 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-        /* Responsive Layout: Map on right for desktop, below on mobile */
-        .app-container { display: flex; height: 100vh; }
-        .writing-section, .map-section { flex: 1; }
+        .app-container {
+            display: flex;
+            height: 100vh;
+            flex-direction: row;
+        }
+
+        /* Writing section - LEFT on desktop */
+        .writing-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #2a2a2a;
+            border-right: 1px solid #333;
+            min-width: 0; /* Prevents flex overflow */
+        }
+
+        .writing-header {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+            flex-shrink: 0;
+        }
+
+        #writing-area {
+            flex: 1;
+            width: 100%;
+            border: none;
+            padding: 20px;
+            background: #1a1a1a;
+            resize: none;
+            outline: none;
+            font-family: 'Olivetti', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #e0e0e0;
+            min-height: 200px;
+        }
+
+        .writing-tools {
+            background: #1a1a1a;
+            padding: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            border-top: 1px solid #333;
+            flex-shrink: 0;
+        }
+
+        .writing-tools button {
+            padding: 10px 15px;
+            background: #2a2a2a;
+            border: 1px solid #0066cc;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Olivetti', 'Courier New', monospace;
+            font-size: 12px;
+            color: #e0e0e0;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        /* Map section - RIGHT on desktop */
+        .map-section {
+            flex: 1;
+            position: relative;
+            background: #1a1a1a;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: flex;
+            gap: 5px;
+        }
+
+        .map-btn {
+            background: rgba(42, 42, 42, 0.9);
+            border: 1px solid #0066cc;
+            border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-family: 'Olivetti', 'Courier New', monospace;
+            font-size: 12px;
+            color: #e0e0e0;
+        }
+
+        /* Remove Leaflet attribution */
+        .leaflet-control-attribution {
+            display: none !important;
+        }
+
+        /* Mobile responsive */
         @media (max-width: 768px) {
-            .app-container { flex-direction: column; }
-            .writing-section { order: 1; }
-            .map-section { order: 2; }
+            .app-container {
+                flex-direction: column;
+            }
+            
+            .writing-section {
+                order: 1;
+                flex: 1;
+                border-right: none;
+                border-bottom: 1px solid #333;
+            }
+            
+            .map-section {
+                order: 2;
+                flex: 1;
+            }
+            
+            .writing-tools {
+                flex-direction: column;
+            }
+            
+            .writing-tools button {
+                min-width: auto;
+            }
+        }
+
+        /* Settings panel */
+        #settings-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 400px;
+            background: #2a2a2a;
+            border: 2px solid #0066cc;
+            border-radius: 8px;
+            padding: 20px;
+            z-index: 1001;
+            display: none;
+        }
+
+        .settings-group {
+            margin-bottom: 15px;
+        }
+
+        .settings-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #e0e0e0;
+        }
+
+        .settings-group select {
+            width: 100%;
+            padding: 8px;
+            background: #1a1a1a;
+            border: 1px solid #0066cc;
+            border-radius: 4px;
+            color: #e0e0e0;
+            font-family: 'Olivetti', 'Courier New', monospace;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: #0066cc;
+        }
+
+        .close-btn {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Olivetti', 'Courier New', monospace;
+            width: 100%;
         }
     </style>
 </head>
 <body>
     <div class="app-container">
+        <!-- Writing Section - Left on Desktop -->
         <div class="writing-section">
-            <textarea id="writing-area"></textarea>
-            <div class="writing-tools">...</div>
+            <div class="writing-header">
+                Ataraxia - World Building Sanctuary
+            </div>
+            <textarea id="writing-area" placeholder="Begin your world-building journey here..."></textarea>
+            <div class="writing-tools">
+                <button id="generate-poem">Generate Poem</button>
+                <button id="save-location">Pin to Map</button>
+                <button id="clear-text">Clear</button>
+                <button id="export-text">Export Text</button>
+                <button id="settings-btn">Settings</button>
+            </div>
         </div>
+
+        <!-- Map Section - Right on Desktop -->
         <div class="map-section">
             <div id="map"></div>
+            <div class="map-controls">
+                <button class="map-btn" id="inspiration-btn">Get Inspired</button>
+            </div>
         </div>
     </div>
 
-    <script>
-        // Initialize Map with no Leaflet logo
-        const map = L.map('map', { attributionControl: false }).setView([37.8, -96], 4);
+    <!-- Settings Panel -->
+    <div id="settings-panel">
+        <h3 style="color: #e0e0e0; margin-bottom: 15px; text-align: center;">Settings</h3>
+        
+        <div class="settings-group">
+            <label for="map-theme">Map Theme:</label>
+            <select id="map-theme">
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+                <option value="satellite">Satellite</option>
+            </select>
+        </div>
 
-        // Limited tile layers: dark (default), light, satellite
-        const tileLayers = {
-            dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '' }),
-            light: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '' }),
-            satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '' })
-        };
-        tileLayers.dark.addTo(map); // Set dark as default
+        <div class="settings-group">
+            <label for="font-size">Font Size: <span id="font-size-value">14px</span></label>
+            <input type="range" id="font-size" min="12" max="24" value="14">
+        </div>
+
+        <button class="close-btn" id="close-settings">Apply & Close</button>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize map with dark theme
+            const map = L.map('map', {
+                attributionControl: false
+            }).setView([37.8, -96], 4);
+
+            // Limited tile layers - only 3 working themes
+            const tileLayers = {
+                dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'),
+                light: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
+                satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}')
+            };
+
+            // Set dark as default
+            tileLayers.dark.addTo(map);
+
+            // Basic functionality
+            const settingsBtn = document.getElementById('settings-btn');
+            const settingsPanel = document.getElementById('settings-panel');
+            const closeSettings = document.getElementById('close-settings');
+            const fontSizeSlider = document.getElementById('font-size');
+            const fontSizeValue = document.getElementById('font-size-value');
+            const mapThemeSelect = document.getElementById('map-theme');
+
+            settingsBtn.addEventListener('click', () => {
+                settingsPanel.style.display = 'block';
+            });
+
+            closeSettings.addEventListener('click', () => {
+                settingsPanel.style.display = 'none';
+                applySettings();
+            });
+
+            fontSizeSlider.addEventListener('input', () => {
+                fontSizeValue.textContent = fontSizeSlider.value + 'px';
+            });
+
+            function applySettings() {
+                const theme = mapThemeSelect.value;
+                const fontSize = fontSizeSlider.value;
+                
+                // Apply map theme
+                map.removeLayer(Object.values(tileLayers).find(layer => map.hasLayer(layer)));
+                tileLayers[theme].addTo(map);
+                
+                // Apply font size
+                document.getElementById('writing-area').style.fontSize = fontSize + 'px';
+            }
+
+            // Close settings when clicking outside
+            window.addEventListener('click', (e) => {
+                if (e.target === settingsPanel) {
+                    settingsPanel.style.display = 'none';
+                }
+            });
+
+            // Basic writing tools functionality
+            document.getElementById('generate-poem').addEventListener('click', () => {
+                const poems = [
+                    "The mountains stand in silent grace...",
+                    "Where ocean meets the waiting shore...",
+                    "Through forest deep where shadows dance..."
+                ];
+                const writingArea = document.getElementById('writing-area');
+                writingArea.value += '\n\n' + poems[Math.floor(Math.random() * poems.length)];
+            });
+
+            document.getElementById('clear-text').addEventListener('click', () => {
+                if (confirm('Clear all text?')) {
+                    document.getElementById('writing-area').value = '';
+                }
+            });
+
+            document.getElementById('export-text').addEventListener('click', () => {
+                const text = document.getElementById('writing-area').value;
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'ataraxia-notes.txt';
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        });
     </script>
 </body>
 </html>
