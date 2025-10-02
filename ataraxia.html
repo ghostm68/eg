@@ -1,535 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ataraxia - World Building</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ataraxia - World Building</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+    <style>
+        /* Import and apply Olivetti font */
+        @font-face {
+            font-family: 'Olivetti';
+            src: url('https://cdn.jsdelivr.net/gh/ghostm68/inktwo/fonts/olivetti/olivetti-typewriter-regular.otf') format('opentype');
+        }
+        * { font-family: 'Olivetti', 'Courier New', monospace; }
 
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      height: 100vh;
-      overflow: hidden;
-      background: #2c1810;
-    }
+        /* Monochrome and Blue Color Scheme */
+        body { background: #1a1a1a; color: #e0e0e0; }
+        .writing-section { background: #2a2a2a; border: 1px solid #333; }
+        #writing-area { background: #1a1a1a; color: #e0e0e0; border: none; }
+        .writing-tools button { background: #2a2a2a; border: 1px solid #0066cc; color: #e0e0e0; }
+        .settings-group input[type="range"] { accent-color: #0066cc; }
 
-    /* Import Olivetti fonts */
-    @font-face {
-      font-family: 'Olivetti';
-      src: url('https://cdn.jsdelivr.net/gh/ghostm68/inktwo/fonts/olivetti/olivetti-typewriter-regular.otf') format('opentype');
-      font-weight: normal;
-      font-style: normal;
-    }
-
-    .app-container {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-
-    /* Header */
-    .app-header {
-      background: linear-gradient(to bottom, #8B4513, #654321);
-      color: #F9F5EB;
-      padding: 10px 15px;
-      text-align: center;
-      border-bottom: 2px solid #5D4037;
-      z-index: 1000;
-      flex-shrink: 0;
-    }
-
-    .main-title {
-      font-family: 'Olivetti', 'Courier New', monospace;
-      font-size: 1.8em;
-      margin: 0;
-    }
-
-    .subtitle {
-      font-family: 'Olivetti', 'Courier New', monospace;
-      font-size: 0.9em;
-      opacity: 0.9;
-    }
-
-    /* Main Content - Split Screen */
-    .main-content {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
-
-    /* Map Section */
-    .map-section {
-      flex: 1;
-      position: relative;
-      border-right: 2px solid #8B4513;
-    }
-
-    #map {
-      width: 100%;
-      height: 100%;
-    }
-
-    .map-controls {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 1000;
-      display: flex;
-      gap: 5px;
-    }
-
-    .map-btn {
-      background: rgba(255, 255, 255, 0.9);
-      border: 1px solid #8B4513;
-      border-radius: 5px;
-      padding: 8px 12px;
-      cursor: pointer;
-      font-family: 'Olivetti', 'Courier New', monospace;
-      font-size: 0.8em;
-    }
-
-    /* Writing Section */
-    .writing-section {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background: #FDFDF8;
-    }
-
-    .writing-header {
-      background: #8B4513;
-      color: white;
-      padding: 10px 15px;
-      font-family: 'Olivetti', 'Courier New', monospace;
-      font-weight: bold;
-      flex-shrink: 0;
-    }
-
-    #writing-area {
-      flex: 1;
-      width: 100%;
-      border: none;
-      padding: 15px;
-      background: #FDFDF8;
-      resize: none;
-      outline: none;
-      font-family: 'Olivetti', 'Courier New', monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      color: #2C1810;
-    }
-
-    .writing-tools {
-      background: rgba(139, 69, 19, 0.9);
-      padding: 10px;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      flex-shrink: 0;
-    }
-
-    .writing-tools button {
-      padding: 8px 12px;
-      background: #F9F5EB;
-      border: 1px solid #8B4513;
-      border-radius: 4px;
-      cursor: pointer;
-      font-family: 'Olivetti', 'Courier New', monospace;
-      font-size: 0.8em;
-      color: #2C1810;
-      flex: 1;
-      min-width: 120px;
-    }
-
-    /* Location Inspiration */
-    #location-inspiration {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 90%;
-      max-width: 400px;
-      background: rgba(255, 255, 255, 0.95);
-      border: 2px solid #8B4513;
-      border-radius: 8px;
-      padding: 20px;
-      z-index: 1001;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      display: none;
-    }
-
-    #location-info {
-      margin: 15px 0;
-      line-height: 1.5;
-    }
-
-    #use-inspiration {
-      width: 100%;
-      padding: 10px;
-      background: #8B4513;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-family: 'Olivetti', 'Courier New', monospace;
-    }
-
-    /* Settings Panel */
-    #settings-panel {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 90%;
-      max-width: 400px;
-      max-height: 80vh;
-      background: rgba(255, 255, 255, 0.95);
-      border: 2px solid #8B4513;
-      border-radius: 8px;
-      padding: 20px;
-      z-index: 1001;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      overflow-y: auto;
-      display: none;
-    }
-
-    .settings-group {
-      margin-bottom: 15px;
-    }
-
-    .settings-group label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: 500;
-    }
-
-    .settings-group select, .settings-group input {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #8B4513;
-      border-radius: 4px;
-      background: #FDFDF8;
-    }
-
-    .close-btn {
-      background: #8B4513;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-
-    /* Mobile Responsive */
-    @media (max-width: 768px) {
-      .main-content {
-        flex-direction: column;
-      }
-      
-      .map-section {
-        flex: 1;
-        border-right: none;
-        border-bottom: 2px solid #8B4513;
-      }
-      
-      .writing-section {
-        flex: 1;
-      }
-      
-      .writing-tools {
-        flex-direction: column;
-      }
-      
-      .writing-tools button {
-        min-width: auto;
-      }
-      
-      .main-title {
-        font-size: 1.5em;
-      }
-      
-      .subtitle {
-        font-size: 0.8em;
-      }
-    }
-
-    /* Location Pins */
-    .location-pin {
-      background: rgba(139, 69, 19, 0.9);
-      color: white;
-      padding: 5px 10px;
-      border-radius: 15px;
-      font-family: 'Olivetti', 'Courier New', monospace;
-      font-size: 12px;
-      border: 2px solid white;
-    }
-  </style>
+        /* Responsive Layout: Map on right for desktop, below on mobile */
+        .app-container { display: flex; height: 100vh; }
+        .writing-section, .map-section { flex: 1; }
+        @media (max-width: 768px) {
+            .app-container { flex-direction: column; }
+            .writing-section { order: 1; }
+            .map-section { order: 2; }
+        }
+    </style>
 </head>
 <body>
-  <div class="app-container">
-    <!-- Header -->
-    <div class="app-header">
-      <div class="main-title">Ataraxia</div>
-      <div class="subtitle">World Building Sanctuary</div>
-    </div>
-
-    <!-- Main Split Screen Content -->
-    <div class="main-content">
-      <!-- Map Section -->
-      <div class="map-section">
-        <div id="map"></div>
-        <div class="map-controls">
-          <button class="map-btn" id="settings-btn">Settings</button>
-          <button class="map-btn" id="inspiration-btn">Get Inspired</button>
+    <div class="app-container">
+        <div class="writing-section">
+            <textarea id="writing-area"></textarea>
+            <div class="writing-tools">...</div>
         </div>
-      </div>
-
-      <!-- Writing Section -->
-      <div class="writing-section">
-        <div class="writing-header">
-          📝 Your World Awaits...
+        <div class="map-section">
+            <div id="map"></div>
         </div>
-        <textarea id="writing-area" placeholder="Begin your world-building journey here...&#10;&#10;Click 'Get Inspired' for location prompts, or create your own stories."></textarea>
-        <div class="writing-tools">
-          <button id="generate-poem">Generate Poem</button>
-          <button id="save-location">Pin to Map</button>
-          <button id="clear-text">Clear</button>
-          <button id="export-text">Export Text</button>
-        </div>
-      </div>
     </div>
 
-    <!-- Location Inspiration Modal -->
-    <div id="location-inspiration">
-      <h3>📍 Location Inspiration</h3>
-      <p id="location-info"></p>
-      <button id="use-inspiration">Use in Writing</button>
-      <button class="close-btn" id="close-inspiration">Close</button>
-    </div>
+    <script>
+        // Initialize Map with no Leaflet logo
+        const map = L.map('map', { attributionControl: false }).setView([37.8, -96], 4);
 
-    <!-- Settings Modal -->
-    <div id="settings-panel">
-      <h3>Ataraxia Settings</h3>
-      
-      <div class="settings-group">
-        <label for="map-theme">Map Theme:</label>
-        <select id="map-theme">
-          <option value="dark">Dark</option>
-          <option value="light">Light</option>
-          <option value="satellite">Satellite</option>
-          <option value="terrain">Terrain</option>
-          <option value="watercolor" selected>Watercolor</option>
-        </select>
-      </div>
-
-      <div class="settings-group">
-        <label for="font-size">Font Size:</label>
-        <input type="range" id="font-size" min="12" max="24" value="14">
-        <span id="font-size-value">14px</span>
-      </div>
-
-      <div class="settings-group">
-        <label for="writing-mode">Writing Mode:</label>
-        <select id="writing-mode">
-          <option value="world-building">World Building</option>
-          <option value="poetry">Poetry Generation</option>
-          <option value="free-write">Free Writing</option>
-        </select>
-      </div>
-
-      <button class="close-btn" id="close-settings">Apply & Close</button>
-    </div>
-  </div>
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      // Initialize Map
-      const map = L.map('map').setView([37.8, -96], 4);
-
-      const tileLayers = {
-        dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-          attribution: 'OpenStreetMap contributors, CartoDB'
-        }),
-        light: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap contributors'
-        }),
-        satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-          attribution: 'Tiles &copy; Esri'
-        }),
-        terrain: L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}.png', {
-          attribution: 'Map tiles by Stamen Design'
-        }),
-        watercolor: L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.png', {
-          attribution: 'Map tiles by Stamen Design'
-        })
-      };
-
-      let currentTileLayer = tileLayers.watercolor;
-      currentTileLayer.addTo(map);
-
-      // UI Elements
-      const writingArea = document.getElementById('writing-area');
-      const settingsBtn = document.getElementById('settings-btn');
-      const inspirationBtn = document.getElementById('inspiration-btn');
-      const settingsPanel = document.getElementById('settings-panel');
-      const locationInspiration = document.getElementById('location-inspiration');
-      const locationInfo = document.getElementById('location-info');
-      const closeSettings = document.getElementById('close-settings');
-      const closeInspiration = document.getElementById('close-inspiration');
-      const useInspiration = document.getElementById('use-inspiration');
-
-      // Simple modal controls
-      settingsBtn.addEventListener('click', () => {
-        settingsPanel.style.display = 'block';
-      });
-
-      inspirationBtn.addEventListener('click', () => {
-        getRandomLocationInspiration();
-      });
-
-      closeSettings.addEventListener('click', () => {
-        settingsPanel.style.display = 'none';
-        applySettings();
-      });
-
-      closeInspiration.addEventListener('click', () => {
-        locationInspiration.style.display = 'none';
-      });
-
-      useInspiration.addEventListener('click', () => {
-        writingArea.value += '\n\n' + locationInfo.textContent;
-        locationInspiration.style.display = 'none';
-      });
-
-      // Writing Tools
-      document.getElementById('generate-poem').addEventListener('click', () => {
-        const poems = [
-          "The mountains stand in silent grace,\nTheir shadows fall on time and space.\nRivers weave through ancient stone,\nIn whispered tales of lands unknown.",
-          
-          "Where ocean meets the waiting shore,\nAnd waves crash with their endless roar.\nThe salt-kissed air, the seabird's cry,\nBeneath the vast and cloud-strewn sky.",
-          
-          "Through forest deep where shadows dance,\nThe sunlight steals a fleeting glance.\nAmong the trees, a world apart,\nWhere nature weaves her living art."
-        ];
-        
-        writingArea.value += '\n\n' + poems[Math.floor(Math.random() * poems.length)];
-      });
-
-      document.getElementById('save-location').addEventListener('click', () => {
-        const center = map.getCenter();
-        if (writingArea.value.trim()) {
-          const pin = L.marker(center, {
-            icon: L.divIcon({
-              className: 'location-pin',
-              html: '📌',
-              iconSize: [30, 30],
-              iconAnchor: [15, 30]
-            })
-          }).addTo(map);
-          
-          pin.bindPopup(`<strong>Saved Note:</strong><br>${writingArea.value.substring(0, 100)}...`);
-          alert('Note pinned to map!');
-        } else {
-          alert('Please write something first!');
-        }
-      });
-
-      document.getElementById('clear-text').addEventListener('click', () => {
-        if (confirm('Clear all text?')) {
-          writingArea.value = '';
-        }
-      });
-
-      document.getElementById('export-text').addEventListener('click', () => {
-        const text = writingArea.value;
-        const blob = new Blob([text], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'ataraxia-notes.txt';
-        a.click();
-        URL.revokeObjectURL(url);
-      });
-
-      // Settings
-      const fontSizeSlider = document.getElementById('font-size');
-      const fontSizeValue = document.getElementById('font-size-value');
-
-      function applySettings() {
-        const theme = document.getElementById('map-theme').value;
-        const fontSize = fontSizeSlider.value;
-        
-        // Apply map theme
-        map.removeLayer(currentTileLayer);
-        currentTileLayer = tileLayers[theme];
-        currentTileLayer.addTo(map);
-        
-        // Apply font size
-        writingArea.style.fontSize = fontSize + 'px';
-        fontSizeValue.textContent = fontSize + 'px';
-      }
-
-      fontSizeSlider.addEventListener('input', () => {
-        fontSizeValue.textContent = fontSizeSlider.value + 'px';
-      });
-
-      // Location Inspiration
-      function getRandomLocationInspiration() {
-        const prompts = [
-          "Describe a hidden civilization in these mountains",
-          "What magical creatures live in these forests?",
-          "Create a legend about this river's origin",
-          "What secrets does this coastline hold?",
-          "Design a city that could thrive in this landscape",
-          "What ancient ruins might be buried here?",
-          "Describe the sounds and smells of this place at dawn",
-          "What adventures await explorers in this terrain?",
-          "Create a myth about how these lands were formed",
-          "What would daily life be like for people living here?"
-        ];
-        
-        const terrains = [
-          "majestic mountain ranges",
-          "rolling hills and valleys", 
-          "dense ancient forests",
-          "vast open plains",
-          "coastal landscapes",
-          "desert expanses",
-          "river deltas",
-          "frozen wilderness",
-          "tropical islands",
-          "urban landscapes"
-        ];
-        
-        const terrain = terrains[Math.floor(Math.random() * terrains.length)];
-        const prompt = prompts[Math.floor(Math.random() * prompts.length)];
-        
-        locationInfo.innerHTML = `
-          <strong>A landscape of ${terrain}</strong><br><br>
-          <em>Writing Prompt:</em><br>
-          ${prompt}
-        `;
-        
-        locationInspiration.style.display = 'block';
-      }
-
-      // Close modals when clicking outside
-      window.addEventListener('click', (e) => {
-        if (e.target === settingsPanel) {
-          settingsPanel.style.display = 'none';
-        }
-        if (e.target === locationInspiration) {
-          locationInspiration.style.display = 'none';
-        }
-      });
-    });
-  </script>
+        // Limited tile layers: dark (default), light, satellite
+        const tileLayers = {
+            dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '' }),
+            light: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '' }),
+            satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '' })
+        };
+        tileLayers.dark.addTo(map); // Set dark as default
+    </script>
 </body>
 </html>
