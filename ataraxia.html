@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ataraxia - World Building Sanctuary</title>
+  <title>Ataraxia - World Building</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/three@0.159.0/build/three.module.js"></script>
   <style>
     * {
       margin: 0;
@@ -15,8 +14,9 @@
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      height: 100vh;
       overflow: hidden;
-      background: #000;
+      background: #2c1810;
     }
 
     /* Import Olivetti fonts */
@@ -27,79 +27,95 @@
       font-style: normal;
     }
 
-    #map {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
     }
 
-    /* Three.js Canvas */
-    #three-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 2;
-    }
-
-    /* Draggable Writing Desk */
-    #writing-desk {
-      position: absolute;
-      top: 50px;
-      left: 50px;
-      width: 400px;
-      height: 500px;
-      background: rgba(249, 245, 235, 0.95);
-      border: 1px solid #8B4513;
-      border-radius: 8px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      z-index: 1000;
-      resize: both;
-      overflow: hidden;
-      font-family: 'Olivetti', 'Courier New', monospace;
-    }
-
-    .desk-header {
+    /* Header */
+    .app-header {
       background: linear-gradient(to bottom, #8B4513, #654321);
       color: #F9F5EB;
-      padding: 12px 15px;
-      cursor: move;
+      padding: 10px 15px;
+      text-align: center;
       border-bottom: 2px solid #5D4037;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: bold;
+      z-index: 1000;
+      flex-shrink: 0;
     }
 
-    #close-desk {
-      background: none;
-      border: none;
-      color: #F9F5EB;
-      font-size: 20px;
+    .main-title {
+      font-family: 'Olivetti', 'Courier New', monospace;
+      font-size: 1.8em;
+      margin: 0;
+    }
+
+    .subtitle {
+      font-family: 'Olivetti', 'Courier New', monospace;
+      font-size: 0.9em;
+      opacity: 0.9;
+    }
+
+    /* Main Content - Split Screen */
+    .main-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Map Section */
+    .map-section {
+      flex: 1;
+      position: relative;
+      border-right: 2px solid #8B4513;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .map-controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      display: flex;
+      gap: 5px;
+    }
+
+    .map-btn {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #8B4513;
+      border-radius: 5px;
+      padding: 8px 12px;
       cursor: pointer;
-      padding: 0;
-      width: 24px;
-      height: 24px;
-      border-radius: 3px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      font-family: 'Olivetti', 'Courier New', monospace;
+      font-size: 0.8em;
     }
 
-    #close-desk:hover {
-      background: rgba(255, 255, 255, 0.2);
+    /* Writing Section */
+    .writing-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #FDFDF8;
+    }
+
+    .writing-header {
+      background: #8B4513;
+      color: white;
+      padding: 10px 15px;
+      font-family: 'Olivetti', 'Courier New', monospace;
+      font-weight: bold;
+      flex-shrink: 0;
     }
 
     #writing-area {
+      flex: 1;
       width: 100%;
-      height: calc(100% - 100px);
       border: none;
-      padding: 20px;
+      padding: 15px;
       background: #FDFDF8;
       resize: none;
       outline: none;
@@ -109,21 +125,13 @@
       color: #2C1810;
     }
 
-    #writing-area::placeholder {
-      color: #8B7355;
-      font-style: italic;
-    }
-
     .writing-tools {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
       background: rgba(139, 69, 19, 0.9);
       padding: 10px;
       display: flex;
       gap: 8px;
-      border-top: 1px solid #8B4513;
+      flex-wrap: wrap;
+      flex-shrink: 0;
     }
 
     .writing-tools button {
@@ -133,47 +141,37 @@
       border-radius: 4px;
       cursor: pointer;
       font-family: 'Olivetti', 'Courier New', monospace;
-      font-size: 12px;
+      font-size: 0.8em;
       color: #2C1810;
-      transition: all 0.2s;
+      flex: 1;
+      min-width: 120px;
     }
 
-    .writing-tools button:hover {
-      background: #E8DFCA;
-      transform: translateY(-1px);
-    }
-
-    /* Location Inspiration Panel */
+    /* Location Inspiration */
     #location-inspiration {
       position: absolute;
-      top: 50px;
-      right: 50px;
-      width: 300px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 400px;
       background: rgba(255, 255, 255, 0.95);
-      border: 1px solid #8B4513;
+      border: 2px solid #8B4513;
       border-radius: 8px;
-      padding: 15px;
-      z-index: 999;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-      font-family: 'Olivetti', 'Courier New', monospace;
-    }
-
-    #location-inspiration h3 {
-      color: #8B4513;
-      margin-bottom: 10px;
-      border-bottom: 1px solid #E8DFCA;
-      padding-bottom: 5px;
+      padding: 20px;
+      z-index: 1001;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      display: none;
     }
 
     #location-info {
-      margin-bottom: 15px;
+      margin: 15px 0;
       line-height: 1.5;
-      color: #2C1810;
     }
 
     #use-inspiration {
       width: 100%;
-      padding: 8px;
+      padding: 10px;
       background: #8B4513;
       color: white;
       border: none;
@@ -182,42 +180,23 @@
       font-family: 'Olivetti', 'Courier New', monospace;
     }
 
-    #use-inspiration:hover {
-      background: #654321;
-    }
-
     /* Settings Panel */
-    #settings-button {
-      position: absolute;
-      bottom: 20px;
-      right: 20px;
-      background: rgba(255, 255, 255, 0.9);
-      border: 1px solid #8B4513;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      z-index: 999;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    }
-
     #settings-panel {
       position: absolute;
-      bottom: 80px;
-      right: 20px;
-      width: 300px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 400px;
+      max-height: 80vh;
       background: rgba(255, 255, 255, 0.95);
-      border: 1px solid #8B4513;
+      border: 2px solid #8B4513;
       border-radius: 8px;
       padding: 20px;
-      z-index: 999;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      max-height: 80vh;
+      z-index: 1001;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
       overflow-y: auto;
+      display: none;
     }
 
     .settings-group {
@@ -227,7 +206,6 @@
     .settings-group label {
       display: block;
       margin-bottom: 5px;
-      color: #2C1810;
       font-weight: 500;
     }
 
@@ -239,193 +217,135 @@
       background: #FDFDF8;
     }
 
-    .effect-option {
-      margin: 10px 0;
-      padding: 10px;
-      border: 1px solid #8B4513;
-      border-radius: 5px;
+    .close-btn {
+      background: #8B4513;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
       cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .effect-option:hover {
-      background: rgba(139, 69, 19, 0.1);
-    }
-
-    .effect-option.active {
-      background: rgba(139, 69, 19, 0.2);
-      border-color: #5D4037;
-    }
-
-    .credits-section {
-      margin-top: 20px;
-      padding: 15px;
-      background: rgba(139, 69, 19, 0.1);
-      border-radius: 5px;
-      font-size: 0.8em;
-    }
-
-    .export-note {
-      color: #8B4513;
-      font-style: italic;
       margin-top: 10px;
-      padding: 10px;
-      background: rgba(255, 255, 0, 0.1);
-      border-left: 3px solid #8B4513;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .main-content {
+        flex-direction: column;
+      }
+      
+      .map-section {
+        flex: 1;
+        border-right: none;
+        border-bottom: 2px solid #8B4513;
+      }
+      
+      .writing-section {
+        flex: 1;
+      }
+      
+      .writing-tools {
+        flex-direction: column;
+      }
+      
+      .writing-tools button {
+        min-width: auto;
+      }
+      
+      .main-title {
+        font-size: 1.5em;
+      }
+      
+      .subtitle {
+        font-size: 0.8em;
+      }
     }
 
     /* Location Pins */
     .location-pin {
-      background: rgba(139, 69, 19, 0.8);
+      background: rgba(139, 69, 19, 0.9);
       color: white;
       padding: 5px 10px;
       border-radius: 15px;
       font-family: 'Olivetti', 'Courier New', monospace;
       font-size: 12px;
-      cursor: pointer;
       border: 2px solid white;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    }
-
-    .location-pin:hover {
-      background: rgba(139, 69, 19, 1);
-      transform: scale(1.05);
-    }
-
-    /* Title styling for Three.js effects */
-    .title-overlay {
-      position: absolute;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 3;
-      text-align: center;
-      pointer-events: none;
-    }
-
-    .main-title {
-      font-family: 'Olivetti', 'Courier New', monospace;
-      font-size: 2.5em;
-      color: #8B4513;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-      margin-bottom: 5px;
-    }
-
-    .subtitle {
-      font-family: 'Olivetti', 'Courier New', monospace;
-      font-size: 1em;
-      color: #654321;
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
     }
   </style>
 </head>
 <body>
-  <div id="map"></div>
-  <div id="three-container"></div>
-
-  <!-- Title Overlay -->
-  <div class="title-overlay">
-    <div class="main-title">Ataraxia</div>
-    <div class="subtitle">World Building Sanctuary</div>
-  </div>
-
-  <!-- Draggable Writing Desk -->
-  <div id="writing-desk">
-    <div class="desk-header">
-      <span>📝 Ataraxia Notebook</span>
-      <button id="close-desk">×</button>
-    </div>
-    <textarea id="writing-area" placeholder="Find your creative calm...&#10;&#10;Click anywhere on the map for inspiration, or let the poetry generator guide your journey."></textarea>
-    <div class="writing-tools">
-      <button id="generate-poem">Generate Poem</button>
-      <button id="save-location">Pin to Map</button>
-      <button id="clear-text">Clear</button>
-      <button id="export-text">Export</button>
-    </div>
-  </div>
-
-  <!-- Location Inspiration Panel -->
-  <div id="location-inspiration" style="display: none;">
-    <h3>📍 Location Inspiration</h3>
-    <p id="location-info"></p>
-    <button id="use-inspiration">Use in Writing</button>
-  </div>
-
-  <!-- Settings Button -->
-  <div id="settings-button">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B4513" stroke-width="1.5">
-      <circle cx="12" cy="12" r="3"></circle>
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-    </svg>
-  </div>
-
-  <!-- Settings Panel -->
-  <div id="settings-panel" style="display: none;">
-    <h3>Ataraxia Settings</h3>
-    
-    <div class="settings-group">
-      <label for="map-theme">Map Theme:</label>
-      <select id="map-theme">
-        <option value="dark">Dark</option>
-        <option value="light">Light</option>
-        <option value="satellite">Satellite</option>
-        <option value="terrain">Terrain</option>
-        <option value="watercolor" selected>Watercolor</option>
-        <option value="toner">Toner</option>
-      </select>
+  <div class="app-container">
+    <!-- Header -->
+    <div class="app-header">
+      <div class="main-title">Ataraxia</div>
+      <div class="subtitle">World Building Sanctuary</div>
     </div>
 
-    <div class="settings-group">
-      <label for="font-size">Font Size:</label>
-      <input type="range" id="font-size" min="12" max="24" value="14">
-      <span id="font-size-value">14px</span>
-    </div>
-
-    <div class="settings-group">
-      <label for="writing-mode">Writing Mode:</label>
-      <select id="writing-mode">
-        <option value="world-building">World Building</option>
-        <option value="poetry">Poetry Generation</option>
-        <option value="free-write">Free Writing</option>
-      </select>
-    </div>
-
-    <div class="settings-group">
-      <label>3D Visual Effects (In-App Only):</label>
-      <div class="effect-option" data-effect="holographic">
-        <strong>Holographic Titles</strong>
-        <br><small>Semi-transparent, glitching text effects</small>
+    <!-- Main Split Screen Content -->
+    <div class="main-content">
+      <!-- Map Section -->
+      <div class="map-section">
+        <div id="map"></div>
+        <div class="map-controls">
+          <button class="map-btn" id="settings-btn">Settings</button>
+          <button class="map-btn" id="inspiration-btn">Get Inspired</button>
+        </div>
       </div>
-      <div class="effect-option" data-effect="particles">
-        <strong>Floating Particles</strong>
-        <br><small>Text made of shimmering particle clouds</small>
-      </div>
-      <div class="effect-option" data-effect="nature">
-        <strong>Nature Elements</strong>
-        <br><small>Leaves and natural elements forming text</small>
-      </div>
-      <div class="effect-option" data-effect="none">
-        <strong>No Effects</strong>
-        <br><small>Standard text display</small>
+
+      <!-- Writing Section -->
+      <div class="writing-section">
+        <div class="writing-header">
+          📝 Your World Awaits...
+        </div>
+        <textarea id="writing-area" placeholder="Begin your world-building journey here...&#10;&#10;Click 'Get Inspired' for location prompts, or create your own stories."></textarea>
+        <div class="writing-tools">
+          <button id="generate-poem">Generate Poem</button>
+          <button id="save-location">Pin to Map</button>
+          <button id="clear-text">Clear</button>
+          <button id="export-text">Export Text</button>
+        </div>
       </div>
     </div>
 
-    <div class="export-note">
-      <strong>Visual Effects Notice:</strong> The 3D effects on this page are rendered in real-time using WebGL and are part of the interactive experience. They exist only within this browser session and will not be included in text exports. For permanent preservation of these visual elements, consider using screen recording software.
+    <!-- Location Inspiration Modal -->
+    <div id="location-inspiration">
+      <h3>📍 Location Inspiration</h3>
+      <p id="location-info"></p>
+      <button id="use-inspiration">Use in Writing</button>
+      <button class="close-btn" id="close-inspiration">Close</button>
     </div>
 
-    <div class="credits-section">
-      <h4>Credits & Technology</h4>
-      <p><strong>Ataraxia World Building Tool</strong> powered by DeepSeek AI</p>
-      <p><strong>3D Visual Effects</strong> implemented using Three.js</p>
-      <p><strong>Holographic Effects:</strong> Custom shader materials creating semi-transparent, glitching text with energy-field aesthetics</p>
-      <p><strong>Particle Systems:</strong> Dynamic particle clouds that form textual shapes through mathematical positioning algorithms</p>
-      <p><strong>Nature Elements:</strong> Instanced 3D models arranged to create organic, environment-themed text compositions</p>
-      <p><strong>Font:</strong> Olivetti typewriter from Inktwo collection</p>
+    <!-- Settings Modal -->
+    <div id="settings-panel">
+      <h3>Ataraxia Settings</h3>
+      
+      <div class="settings-group">
+        <label for="map-theme">Map Theme:</label>
+        <select id="map-theme">
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+          <option value="satellite">Satellite</option>
+          <option value="terrain">Terrain</option>
+          <option value="watercolor" selected>Watercolor</option>
+        </select>
+      </div>
+
+      <div class="settings-group">
+        <label for="font-size">Font Size:</label>
+        <input type="range" id="font-size" min="12" max="24" value="14">
+        <span id="font-size-value">14px</span>
+      </div>
+
+      <div class="settings-group">
+        <label for="writing-mode">Writing Mode:</label>
+        <select id="writing-mode">
+          <option value="world-building">World Building</option>
+          <option value="poetry">Poetry Generation</option>
+          <option value="free-write">Free Writing</option>
+        </select>
+      </div>
+
+      <button class="close-btn" id="close-settings">Apply & Close</button>
     </div>
-    
-    <button id="apply-settings">Apply Settings</button>
-    <button id="close-settings">Close</button>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -449,384 +369,39 @@
         }),
         watercolor: L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.png', {
           attribution: 'Map tiles by Stamen Design'
-        }),
-        toner: L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}.png', {
-          attribution: 'Map tiles by Stamen Design'
         })
       };
 
       let currentTileLayer = tileLayers.watercolor;
       currentTileLayer.addTo(map);
 
-      // Three.js Initialization
-      let scene, camera, renderer, currentEffect = 'holographic';
-      let effectObjects = [];
-
-      function initThreeJS() {
-        scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setClearColor(0x000000, 0);
-        document.getElementById('three-container').appendChild(renderer.domElement);
-
-        camera.position.z = 5;
-      }
-
-      function createHolographicText() {
-        clearEffects();
-        
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.width = 512;
-        canvas.height = 128;
-        
-        context.font = 'bold 60px Arial';
-        context.fillStyle = '#ffffff';
-        context.fillText('Ataraxia', 50, 80);
-
-        const texture = new THREE.CanvasTexture(canvas);
-        const geometry = new THREE.PlaneGeometry(6, 1.5);
-        const material = new THREE.ShaderMaterial({
-          uniforms: {
-            time: { value: 0 },
-            texture: { value: texture },
-            glowColor: { value: new THREE.Color(0.2, 0.8, 1.0) }
-          },
-          vertexShader: `
-            varying vec2 vUv;
-            void main() {
-              vUv = uv;
-              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-          `,
-          fragmentShader: `
-            uniform float time;
-            uniform sampler2D texture;
-            uniform vec3 glowColor;
-            varying vec2 vUv;
-            
-            void main() {
-              vec4 texColor = texture2D(texture, vUv);
-              float alpha = texColor.a;
-              
-              // Holographic glitch effect
-              float glow = sin(time * 3.0 + vUv.x * 10.0) * 0.3 + 0.7;
-              float scanLines = sin(vUv.y * 200.0 + time * 5.0) * 0.1;
-              
-              vec3 finalColor = glowColor * glow + scanLines;
-              gl_FragColor = vec4(finalColor, alpha * 0.8);
-            }
-          `,
-          transparent: true
-        });
-
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.set(0, 1.5, 0);
-        scene.add(mesh);
-        effectObjects.push(mesh);
-
-        // Add floating particles around text
-        const particleCount = 150;
-        const particles = new THREE.BufferGeometry();
-        const positions = new Float32Array(particleCount * 3);
-
-        for (let i = 0; i < particleCount * 3; i += 3) {
-          positions[i] = (Math.random() - 0.5) * 8;
-          positions[i + 1] = (Math.random() - 0.5) * 3 + 1;
-          positions[i + 2] = (Math.random() - 0.5) * 2;
-        }
-
-        particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        const particleMaterial = new THREE.PointsMaterial({
-          color: 0x4a90e2,
-          size: 0.05,
-          transparent: true
-        });
-
-        const particleSystem = new THREE.Points(particles, particleMaterial);
-        scene.add(particleSystem);
-        effectObjects.push(particleSystem);
-      }
-
-      function createParticleText() {
-        clearEffects();
-
-        const particleCount = 1500;
-        const geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(particleCount * 3);
-        const colors = new Float32Array(particleCount * 3);
-
-        // Create "Ataraxia" in particles
-        const text = "Ataraxia";
-        const particlesPerLetter = Math.floor(particleCount / text.length);
-        
-        let particleIndex = 0;
-        for (let letterIndex = 0; letterIndex < text.length; letterIndex++) {
-          for (let i = 0; i < particlesPerLetter; i++) {
-            if (particleIndex >= particleCount) break;
-            
-            const baseX = (letterIndex - text.length/2) * 0.8;
-            const x = baseX + (Math.random() - 0.5) * 0.6;
-            const y = (Math.random() - 0.5) * 1.5 + 1;
-            const z = (Math.random() - 0.5) * 2;
-            
-            positions[particleIndex * 3] = x;
-            positions[particleIndex * 3 + 1] = y;
-            positions[particleIndex * 3 + 2] = z;
-
-            // Calming blue/green color scheme
-            colors[particleIndex * 3] = Math.random() * 0.3 + 0.3;     // R
-            colors[particleIndex * 3 + 1] = Math.random() * 0.4 + 0.5; // G
-            colors[particleIndex * 3 + 2] = Math.random() * 0.5 + 0.5; // B
-            
-            particleIndex++;
-          }
-        }
-
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-        const material = new THREE.PointsMaterial({
-          size: 0.03,
-          vertexColors: true,
-          transparent: true,
-          opacity: 0.8
-        });
-
-        const particles = new THREE.Points(geometry, material);
-        scene.add(particles);
-        effectObjects.push(particles);
-      }
-
-      function createNatureText() {
-        clearEffects();
-
-        // Create leaf-like particles forming "Ataraxia"
-        const leafCount = 800;
-        const geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(leafCount * 3);
-        const sizes = new Float32Array(leafCount);
-
-        const text = "Ataraxia";
-        const leavesPerLetter = Math.floor(leafCount / text.length);
-        
-        let leafIndex = 0;
-        for (let letterIndex = 0; letterIndex < text.length; letterIndex++) {
-          for (let i = 0; i < leavesPerLetter; i++) {
-            if (leafIndex >= leafCount) break;
-            
-            const radius = 0.3;
-            const angle = Math.random() * Math.PI * 2;
-            const distance = Math.random() * radius;
-            const baseX = (letterIndex - text.length/2) * 0.7;
-            
-            positions[leafIndex * 3] = baseX + Math.cos(angle) * distance;
-            positions[leafIndex * 3 + 1] = Math.sin(angle) * distance * 0.5 + 1;
-            positions[leafIndex * 3 + 2] = (Math.random() - 0.5) * 1.5;
-
-            sizes[leafIndex] = Math.random() * 0.08 + 0.03;
-            leafIndex++;
-          }
-        }
-
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-
-        const material = new THREE.PointsMaterial({
-          color: 0x4a8c2d,
-          size: 0.1,
-          transparent: true,
-          opacity: 0.7
-        });
-
-        const leaves = new THREE.Points(geometry, material);
-        scene.add(leaves);
-        effectObjects.push(leaves);
-      }
-
-      function clearEffects() {
-        effectObjects.forEach(obj => scene.remove(obj));
-        effectObjects = [];
-      }
-
-      function animate() {
-        requestAnimationFrame(animate);
-
-        if (currentEffect === 'holographic') {
-          effectObjects.forEach((obj, index) => {
-            if (obj.material && obj.material.uniforms && obj.material.uniforms.time) {
-              obj.material.uniforms.time.value = performance.now() * 0.001;
-            }
-            // Gentle floating animation
-            obj.position.y += Math.sin(performance.now() * 0.001 + index) * 0.001;
-          });
-        } else if (currentEffect === 'particles') {
-          effectObjects.forEach(particles => {
-            particles.rotation.y += 0.001;
-            const positions = particles.geometry.attributes.position.array;
-            for (let i = 0; i < positions.length; i += 3) {
-              positions[i + 1] += Math.sin(performance.now() * 0.001 + i * 0.1) * 0.0005;
-            }
-            particles.geometry.attributes.position.needsUpdate = true;
-          });
-        } else if (currentEffect === 'nature') {
-          effectObjects.forEach(leaves => {
-            const positions = leaves.geometry.attributes.position.array;
-            for (let i = 0; i < positions.length; i += 3) {
-              // Gentle leaf floating motion
-              positions[i] += Math.sin(performance.now() * 0.001 + i) * 0.0003;
-              positions[i + 1] += Math.cos(performance.now() * 0.001 + i * 0.5) * 0.0002;
-            }
-            leaves.geometry.attributes.position.needsUpdate = true;
-          });
-        }
-
-        renderer.render(scene, camera);
-      }
-
-      // Initialize Three.js
-      initThreeJS();
-      animate();
-
-      // Effect Selection
-      const effectOptions = document.querySelectorAll('.effect-option');
-      effectOptions.forEach(option => {
-        option.addEventListener('click', () => {
-          effectOptions.forEach(opt => opt.classList.remove('active'));
-          option.classList.add('active');
-          currentEffect = option.dataset.effect;
-
-          switch(currentEffect) {
-            case 'holographic':
-              createHolographicText();
-              break;
-            case 'particles':
-              createParticleText();
-              break;
-            case 'nature':
-              createNatureText();
-              break;
-            case 'none':
-              clearEffects();
-              break;
-          }
-        });
-      });
-
-      // Set default effect
-      document.querySelector('[data-effect="holographic"]').classList.add('active');
-      createHolographicText();
-
-      // Handle window resize
-      window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      });
-
-      // Draggable Writing Desk Functionality
-      const writingDesk = document.getElementById('writing-desk');
-      const closeDesk = document.getElementById('close-desk');
+      // UI Elements
       const writingArea = document.getElementById('writing-area');
-      let isDragging = false;
-      let currentX, currentY, initialX, initialY;
-
-      writingDesk.addEventListener('mousedown', dragStart);
-      document.addEventListener('mousemove', drag);
-      document.addEventListener('mouseup', dragEnd);
-
-      function dragStart(e) {
-        if (e.target === writingArea || e.target.tagName === 'BUTTON') return;
-        initialX = e.clientX - writingDesk.offsetLeft;
-        initialY = e.clientY - writingDesk.offsetTop;
-        isDragging = true;
-        writingDesk.style.cursor = 'grabbing';
-      }
-
-      function drag(e) {
-        if (!isDragging) return;
-        e.preventDefault();
-        currentX = e.clientX - initialX;
-        currentY = e.clientY - initialY;
-        
-        // Keep within viewport bounds
-        currentX = Math.max(10, Math.min(window.innerWidth - writingDesk.offsetWidth - 10, currentX));
-        currentY = Math.max(10, Math.min(window.innerHeight - writingDesk.offsetHeight - 10, currentY));
-        
-        writingDesk.style.left = currentX + 'px';
-        writingDesk.style.top = currentY + 'px';
-      }
-
-      function dragEnd() {
-        isDragging = false;
-        writingDesk.style.cursor = 'default';
-      }
-
-      closeDesk.addEventListener('click', () => {
-        writingDesk.style.display = 'none';
-      });
-
-      // Location Inspiration
+      const settingsBtn = document.getElementById('settings-btn');
+      const inspirationBtn = document.getElementById('inspiration-btn');
+      const settingsPanel = document.getElementById('settings-panel');
       const locationInspiration = document.getElementById('location-inspiration');
       const locationInfo = document.getElementById('location-info');
+      const closeSettings = document.getElementById('close-settings');
+      const closeInspiration = document.getElementById('close-inspiration');
       const useInspiration = document.getElementById('use-inspiration');
 
-      // Poetry Prompts Database
-      const poetryPrompts = [
-        "Write a haiku about the stillness of this place",
-        "Describe the colors you imagine at dawn here",
-        "What stories do the winds carry through this landscape?",
-        "Create a myth about how this land was formed",
-        "Write about a traveler's first impression of this vista",
-        "What secrets might be buried beneath these grounds?",
-        "Describe the soundscape of this location at midnight",
-        "Imagine a civilization that once thrived here",
-        "What magical creatures might inhabit this terrain?",
-        "Write a sonnet about the changing seasons here"
-      ];
+      // Simple modal controls
+      settingsBtn.addEventListener('click', () => {
+        settingsPanel.style.display = 'block';
+      });
 
-      const worldBuildingPrompts = [
-        "What resources would a settlement here depend on?",
-        "How would the geography shape local culture and myths?",
-        "What strategic advantages does this location offer?",
-        "Describe the architecture that would suit this environment",
-        "What trade routes might pass through here?",
-        "How would seasons affect life in this place?",
-        "What hidden dangers might lurk in this terrain?",
-        "What would the local cuisine be based on available resources?",
-        "How would transportation work in this geography?",
-        "What festivals or traditions might develop here?"
-      ];
+      inspirationBtn.addEventListener('click', () => {
+        getRandomLocationInspiration();
+      });
 
-      map.on('click', async (e) => {
-        const { lat, lng } = e.latlng;
-        
-        try {
-          // Get location name
-          const locationName = await getLocationName(lat, lng);
-          
-          // Get geographic context
-          const context = getGeographicContext(lat, lng);
-          
-          // Show inspiration panel
-          locationInfo.innerHTML = `
-            <strong>${locationName}</strong><br><br>
-            <em>${context.terrain}</em><br><br>
-            <strong>Writing Prompt:</strong><br>
-            ${getRandomPrompt()}
-          `;
-          
-          locationInspiration.style.display = 'block';
-          currentLocation = e.latlng;
-        } catch (error) {
-          console.error('Error getting location info:', error);
-          locationInfo.innerHTML = `A mysterious, uncharted place...<br><br>
-          <strong>Writing Prompt:</strong><br>
-          ${getRandomPrompt()}`;
-          locationInspiration.style.display = 'block';
-          currentLocation = e.latlng;
-        }
+      closeSettings.addEventListener('click', () => {
+        settingsPanel.style.display = 'none';
+        applySettings();
+      });
+
+      closeInspiration.addEventListener('click', () => {
+        locationInspiration.style.display = 'none';
       });
 
       useInspiration.addEventListener('click', () => {
@@ -837,19 +412,20 @@
       // Writing Tools
       document.getElementById('generate-poem').addEventListener('click', () => {
         const poems = [
-          "The mountains stand in silent grace,\nTheir shadows fall on time and space.\nRivers weave through ancient stone,\nIn whispered tales of lands unknown.\n\nBeneath the sun's enduring gaze,\nThe wilderness in splendor plays.\nEach leaf that falls, each bird that flies,\nBeneath the vast and endless skies.",
+          "The mountains stand in silent grace,\nTheir shadows fall on time and space.\nRivers weave through ancient stone,\nIn whispered tales of lands unknown.",
           
-          "Where ocean meets the waiting shore,\nAnd waves crash with their endless roar.\nThe salt-kissed air, the seabird's cry,\nBeneath the vast and cloud-strewn sky.\n\nHorizons stretch to distant lands,\nHeld gently in Time's weathered hands.\nThe world spins on, both wild and free,\nA timeless, deep, and breathing sea.",
+          "Where ocean meets the waiting shore,\nAnd waves crash with their endless roar.\nThe salt-kissed air, the seabird's cry,\nBeneath the vast and cloud-strewn sky.",
           
-          "Through forest deep where shadows dance,\nThe sunlight steals a fleeting glance.\nAmong the trees, a world apart,\nWhere nature weaves her living art.\n\nThe breeze that stirs the sleeping leaves,\nThe spider who her web conceives,\nAll share this earth, this air, this light,\nFrom darkest eve to morning bright."
+          "Through forest deep where shadows dance,\nThe sunlight steals a fleeting glance.\nAmong the trees, a world apart,\nWhere nature weaves her living art."
         ];
         
         writingArea.value += '\n\n' + poems[Math.floor(Math.random() * poems.length)];
       });
 
       document.getElementById('save-location').addEventListener('click', () => {
-        if (currentLocation && writingArea.value.trim()) {
-          const pin = L.marker(currentLocation, {
+        const center = map.getCenter();
+        if (writingArea.value.trim()) {
+          const pin = L.marker(center, {
             icon: L.divIcon({
               className: 'location-pin',
               html: '📌',
@@ -859,8 +435,9 @@
           }).addTo(map);
           
           pin.bindPopup(`<strong>Saved Note:</strong><br>${writingArea.value.substring(0, 100)}...`);
+          alert('Note pinned to map!');
         } else {
-          alert('Please select a location on the map and write something first!');
+          alert('Please write something first!');
         }
       });
 
@@ -881,26 +458,13 @@
         URL.revokeObjectURL(url);
       });
 
-      // Settings Panel
-      const settingsButton = document.getElementById('settings-button');
-      const settingsPanel = document.getElementById('settings-panel');
-      const closeSettings = document.getElementById('close-settings');
-      const applySettings = document.getElementById('apply-settings');
+      // Settings
       const fontSizeSlider = document.getElementById('font-size');
       const fontSizeValue = document.getElementById('font-size-value');
 
-      settingsButton.addEventListener('click', () => {
-        settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'block' : 'none';
-      });
-
-      closeSettings.addEventListener('click', () => {
-        settingsPanel.style.display = 'none';
-      });
-
-      applySettings.addEventListener('click', () => {
+      function applySettings() {
         const theme = document.getElementById('map-theme').value;
         const fontSize = fontSizeSlider.value;
-        const writingMode = document.getElementById('writing-mode').value;
         
         // Apply map theme
         map.removeLayer(currentTileLayer);
@@ -910,54 +474,61 @@
         // Apply font size
         writingArea.style.fontSize = fontSize + 'px';
         fontSizeValue.textContent = fontSize + 'px';
-        
-        settingsPanel.style.display = 'none';
-      });
+      }
 
       fontSizeSlider.addEventListener('input', () => {
         fontSizeValue.textContent = fontSizeSlider.value + 'px';
       });
 
-      // Helper Functions
-      async function getLocationName(lat, lng) {
-        try {
-          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`);
-          const data = await response.json();
-          return data.display_name || "Unknown Location";
-        } catch (error) {
-          return "A Mysterious Location";
-        }
-      }
-
-      function getGeographicContext(lat, lng) {
-        // Simplified geographic context based on coordinates
-        const terrainTypes = [
-          "Rolling hills and fertile valleys",
-          "Majestic mountain ranges",
-          "Vast plains stretching to the horizon", 
-          "Dense, ancient forests",
-          "Coastal landscapes meeting the sea",
-          "Arid desert expanse",
-          "Lush river delta",
-          "Frozen northern wilderness",
-          "Tropical island paradise",
-          "Urban metropolis landscape"
+      // Location Inspiration
+      function getRandomLocationInspiration() {
+        const prompts = [
+          "Describe a hidden civilization in these mountains",
+          "What magical creatures live in these forests?",
+          "Create a legend about this river's origin",
+          "What secrets does this coastline hold?",
+          "Design a city that could thrive in this landscape",
+          "What ancient ruins might be buried here?",
+          "Describe the sounds and smells of this place at dawn",
+          "What adventures await explorers in this terrain?",
+          "Create a myth about how these lands were formed",
+          "What would daily life be like for people living here?"
         ];
         
-        return {
-          terrain: terrainTypes[Math.floor(Math.random() * terrainTypes.length)],
-          climate: "Temperate",
-          features: ["Rivers", "Forests", "Wildlife"]
-        };
+        const terrains = [
+          "majestic mountain ranges",
+          "rolling hills and valleys", 
+          "dense ancient forests",
+          "vast open plains",
+          "coastal landscapes",
+          "desert expanses",
+          "river deltas",
+          "frozen wilderness",
+          "tropical islands",
+          "urban landscapes"
+        ];
+        
+        const terrain = terrains[Math.floor(Math.random() * terrains.length)];
+        const prompt = prompts[Math.floor(Math.random() * prompts.length)];
+        
+        locationInfo.innerHTML = `
+          <strong>A landscape of ${terrain}</strong><br><br>
+          <em>Writing Prompt:</em><br>
+          ${prompt}
+        `;
+        
+        locationInspiration.style.display = 'block';
       }
 
-      function getRandomPrompt() {
-        const mode = document.getElementById('writing-mode').value;
-        const prompts = mode === 'poetry' ? poetryPrompts : worldBuildingPrompts;
-        return prompts[Math.floor(Math.random() * prompts.length)];
-      }
-
-      let currentLocation = null;
+      // Close modals when clicking outside
+      window.addEventListener('click', (e) => {
+        if (e.target === settingsPanel) {
+          settingsPanel.style.display = 'none';
+        }
+        if (e.target === locationInspiration) {
+          locationInspiration.style.display = 'none';
+        }
+      });
     });
   </script>
 </body>
