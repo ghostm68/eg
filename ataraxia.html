@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=1024, initial-scale=1.0">
   <title>Ataraxia - World Building</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/three@0.159.0/build/three.module.js"></script>
@@ -465,10 +465,22 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // Three.js variables
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // Global or widely accessible variables
     let scene, camera, renderer, currentEffect = 'none';
     let effectObjects = [];
     let particleSystem = null;
+
+    let map; // Declare map globally
+    let currentTileLayer; // Declare currentTileLayer globally
+    const tileLayers = { // Make tileLayers globally accessible too
+      dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'),
+      light: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19
+      }),
+      satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}')
+    };
 
     // Font list from your GitHub repository
     const fontList = [
@@ -486,20 +498,11 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
       // Initialize Map with no attribution
-      const map = L.map('map', {
+      map = L.map('map', { // Assign to global map
         attributionControl: false
       }).setView([37.8, -96], 4);
 
-      // Only 3 working themes - Dark as default
-      const tileLayers = {
-        dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'),
-        light: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19
-        }),
-        satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}')
-      };
-
-      let currentTileLayer = tileLayers.dark;
+      currentTileLayer = tileLayers.dark; // Assign to global currentTileLayer
       currentTileLayer.addTo(map);
 
       // Initialize Three.js
@@ -519,15 +522,20 @@
       const settingsPanel = document.getElementById('settings-panel');
       const closeSettings = document.getElementById('close-settings');
       const visualEffectSelect = document.getElementById('visual-effect');
-      const insertCoordinatesBtn = document.getElementById('insert-coordinates');
-      const insertAddressBtn = document.getElementById('insert-address');
-      const clearStreetPinsBtn = document.getElementById('clear-street-pins');
+      // Removed insertCoordinatesBtn, insertAddressBtn, clearStreetPinsBtn from here
+      // as they are handled by global functions or dynamic popup events.
 
       // Street Map
       showStreetMapBtn.addEventListener('click', () => {
         streetMapPanel.classList.add('active');
         if (!streetMap) {
           initStreetMap();
+        }
+        // Invalidate size to ensure map renders correctly after panel becomes active
+        if (streetMap) {
+            setTimeout(() => { // Give CSS transition time
+                streetMap.invalidateSize();
+            }, 300);
         }
       });
 
@@ -566,25 +574,50 @@
           })
         }).addTo(streetMap);
 
-        // Store the pin
+        // Store the pin - if you only want ONE current pin, don't push to streetPins
+        // If you want multiple pins, keep this, but then 'currentStreetPin' logic needs adjustment
+        // For now, assuming you only want one interactive pin at a time for insertion
+        // If you want multiple, you'd iterate through streetPins for clearStreetPins
+        // and currentStreetPin would just be the *last added*.
         streetPins.push(currentStreetPin);
         
         // Show popup with options
-        currentStreetPin.bindPopup(`
+        const popupContent = `
           <div style="color: #1a1a1a;">
             <strong>Location Selected</strong><br>
             Lat: ${latlng.lat.toFixed(6)}<br>
             Lng: ${latlng.lng.toFixed(6)}<br>
-            <button onclick="insertCoordinates()" style="margin: 5px; padding: 5px; background: #00aaff; color: white; border: none; border-radius: 3px; cursor: pointer;">Insert Coordinates</button>
-            <button onclick="insertAddress()" style="margin: 5px; padding: 5px; background: #00aaff; color: white; border: none; border-radius: 3px; cursor: pointer;">Insert Address</button>
+            <button class="popup-insert-coords" style="margin: 5px; padding: 5px; background: #00aaff; color: white; border: none; border-radius: 3px; cursor: pointer;">Insert Coordinates</button>
+            <button class="popup-insert-address" style="margin: 5px; padding: 5px; background: #00aaff; color: white; border: none; border-radius: 3px; cursor: pointer;">Insert Address</button>
           </div>
-        `).openPopup();
+        `;
+
+        currentStreetPin.bindPopup(popupContent).openPopup();
+
+        // Add event listeners to buttons *after* the popup is opened and rendered
+        currentStreetPin.getPopup().on('contentupdate', function() {
+            const popupDiv = this.getElement();
+            if (popupDiv) {
+                const insertCoordsButton = popupDiv.querySelector('.popup-insert-coords');
+                const insertAddressButton = popupDiv.querySelector('.popup-insert-address');
+
+                if (insertCoordsButton) {
+                    insertCoordsButton.onclick = window.insertCoordinates; // Reference the global function
+                }
+                if (insertAddressButton) {
+                    insertAddressButton.onclick = window.insertAddress; // Reference the global function
+                }
+            }
+        });
       }
 
-      // Street map button handlers
-      insertCoordinatesBtn.addEventListener('click', insertCoordinates);
-      insertAddressBtn.addEventListener('click', insertAddress);
-      clearStreetPinsBtn.addEventListener('click', clearStreetPins);
+      // Street map button handlers (these buttons should now work)
+      // If you have these buttons in your HTML for the streetMapPanel, ensure their IDs match
+      // For instance: <button id="insert-coordinates">Insert Coordinates</button>
+      document.getElementById('insert-coordinates').addEventListener('click', window.insertCoordinates);
+      document.getElementById('insert-address').addEventListener('click', window.insertAddress);
+      document.getElementById('clear-street-pins').addEventListener('click', window.clearStreetPins);
+
 
       // Settings
       settingsBtn.addEventListener('click', () => {
@@ -593,7 +626,7 @@
 
       closeSettings.addEventListener('click', () => {
         settingsPanel.style.display = 'none';
-        applySettings();
+        window.applySettings(); // Call the global applySettings
       });
 
       // Visual Effects
@@ -607,7 +640,7 @@
         const poems = [
           "The mountains stand in silent grace,\nTheir shadows fall on time and space.\nRivers weave through ancient stone,\nIn whispered tales of lands unknown.",
           "Where ocean meets the waiting shore,\nAnd waves crash with their endless roar.\nThe salt-kissed air, the seabird's cry,\nBeneath the vast and cloud-strewn sky.",
-          "Through forest deep where shadows dance,\nThe sunlight steals a fleeting glance.\nAmong the trees, a world apart,\nWhere nature weaves her living art."
+          "Through forest deep where shadows dance,\nThe sunlight steals a fleeting glance,\nAmong the trees, a world apart,\nWhere nature weaves her living art."
         ];
         writingArea.value += '\n\n' + poems[Math.floor(Math.random() * poems.length)];
       });
@@ -710,15 +743,16 @@
       window.addEventListener('click', (e) => {
         if (e.target === settingsPanel) {
           settingsPanel.style.display = 'none';
+          window.applySettings(); // Apply settings if clicked outside
         }
         if (e.target === locationInspiration) {
           locationInspiration.style.display = 'none';
         }
       });
-    });
+    }); // End DOMContentLoaded
 
-    // Street Map Functions
-    function insertCoordinates() {
+    // Street Map Functions (moved outside DOMContentLoaded to be global)
+    window.insertCoordinates = function() { // Make global
       if (!currentStreetPin) return;
       
       const latlng = currentStreetPin.getLatLng();
@@ -729,7 +763,7 @@
       // document.getElementById('street-map-panel').classList.remove('active');
     }
 
-    function insertAddress() {
+    window.insertAddress = function() { // Make global
       if (!currentStreetPin) return;
       
       const latlng = currentStreetPin.getLatLng();
@@ -738,7 +772,7 @@
       insertTextAtCursor(address);
     }
 
-    function clearStreetPins() {
+    window.clearStreetPins = function() { // Make global
       streetPins.forEach(pin => {
         if (streetMap) streetMap.removeLayer(pin);
       });
@@ -922,15 +956,17 @@
       document.getElementById('writing-area').style.fontFamily = 'SelectedFont, "Courier New", monospace';
     }
 
-    // Settings function
-    function applySettings() {
+    // Settings function (moved outside DOMContentLoaded to be global)
+    window.applySettings = function() {
       const theme = document.getElementById('map-theme').value;
       const fontSize = document.getElementById('font-size').value;
       
-      // This would need access to the main map variable
-      // map.removeLayer(currentTileLayer);
-      // currentTileLayer = tileLayers[theme];
-      // currentTileLayer.addTo(map);
+      // Update map theme
+      if (map && currentTileLayer && tileLayers[theme]) { // Check if map and layers exist
+        map.removeLayer(currentTileLayer);
+        currentTileLayer = tileLayers[theme];
+        currentTileLayer.addTo(map);
+      }
       
       document.getElementById('writing-area').style.fontSize = fontSize + 'px';
       document.getElementById('font-size-value').textContent = fontSize + 'px';
@@ -943,5 +979,6 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
   </script>
+
 </body>
 </html>
