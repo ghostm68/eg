@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WordStar Nexus - Sitemap</title>
   <link rel="shortcut icon" href="https://raw.githubusercontent.com/ghostm68/inktwo/main/Images/favicon.ico" />
+  <!-- Add GSAP Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -740,29 +742,154 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
   
   <script>
-    // Floating Typewriter Keys Animation
+    // Initialize GSAP animations when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      // Set initial state for all card links
+      gsap.set('.card-link', {
+        opacity: 0,
+        y: 30,
+        scale: 0.9
+      });
+
+      // Set initial state for section headers
+      gsap.set('.sitemap-section h2', {
+        opacity: 0,
+        x: -50
+      });
+
+      // Set initial state for header
+      gsap.set('.sitemap-header', {
+        opacity: 0,
+        y: -30
+      });
+
+      // Set initial state for footer elements
+      gsap.set('.sitemap-footer', {
+        opacity: 0,
+        y: 30
+      });
+
+      // Create main animation timeline
+      const masterTL = gsap.timeline();
+
+      // Animate header first
+      masterTL.to('.sitemap-header', {
+        duration: 1,
+        opacity: 1,
+        y: 0,
+        ease: "power2.out"
+      });
+
+      // Animate section headers with stagger
+      masterTL.to('.sitemap-section h2', {
+        duration: 0.8,
+        opacity: 1,
+        x: 0,
+        stagger: 0.2,
+        ease: "power2.out"
+      }, "-=0.5");
+
+      // Animate card links with staggered delay per section
+      const sections = document.querySelectorAll('.sitemap-section');
+      
+      sections.forEach((section, sectionIndex) => {
+        const cards = section.querySelectorAll('.card-link');
+        
+        masterTL.to(cards, {
+          duration: 0.6,
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          stagger: 0.08, // Stagger between cards in same section
+          ease: "back.out(1.4)"
+        }, `+=${sectionIndex * 0.1}`); // Delay between sections
+      });
+
+      // Animate footer last
+      masterTL.to('.sitemap-footer', {
+        duration: 0.8,
+        opacity: 1,
+        y: 0,
+        ease: "power2.out"
+      }, "-=0.3");
+
+      // Add click animations to card links
+      const cardLinks = document.querySelectorAll('.card-link');
+      
+      cardLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const targetUrl = this.href;
+          
+          // Create click animation timeline
+          const clickTL = gsap.timeline();
+          
+          // Animate the clicked link
+          clickTL.to(this, {
+            duration: 0.3,
+            scale: 1.1,
+            backgroundColor: 'rgba(220, 20, 60, 0.3)',
+            ease: "power2.out"
+          });
+          
+          // Animate other links fading out
+          clickTL.to('.card-link:not(:hover)', {
+            duration: 0.4,
+            opacity: 0.3,
+            scale: 0.95,
+            ease: "power2.out"
+          }, "-=0.2");
+          
+          // Navigate after animation
+          clickTL.eventCallback('onComplete', () => {
+            window.location.href = targetUrl;
+          });
+        });
+      });
+
+      // Enhanced hover effects with GSAP
+      cardLinks.forEach(link => {
+        link.addEventListener('mouseenter', function() {
+          gsap.to(this, {
+            duration: 0.3,
+            scale: 1.02,
+            y: -2,
+            boxShadow: '0 5px 15px rgba(220, 20, 60, 0.3)',
+            ease: "power2.out"
+          });
+        });
+        
+        link.addEventListener('mouseleave', function() {
+          gsap.to(this, {
+            duration: 0.3,
+            scale: 1,
+            y: 0,
+            boxShadow: 'none',
+            ease: "power2.out"
+          });
+        });
+      });
+    });
+
+    // Your existing Anime.js background animation (kept intact)
     var container = document.getElementById('keyAnimation');
     var width = window.innerWidth;
     var height = window.innerHeight;
 
-    // Letters to create (spelling WORDSTAR and extras)
     var letters = ['W', 'O', 'R', 'D', 'S', 'T', 'A', 'R', 
                    'N', 'E', 'X', 'U', 'S', 'I', 'K', 'L', 
                    '.', ':', ';', '*', '@', '#'];
     
     var redKeys = ['W', 'O', 'R', 'D', 'S', 'T', 'A', 'R'];
 
-    // Create typewriter keys
     letters.forEach(function(letter) {
       var key = document.createElement('div');
       key.className = 'typewriter-key';
       
-      // Make some keys red (WORDSTAR letters)
       if (redKeys.indexOf(letter) !== -1 && Math.random() > 0.5) {
         key.classList.add('red');
       }
       
-      // Make some keys smaller
       if (Math.random() > 0.6) {
         key.classList.add('small');
       }
@@ -773,7 +900,6 @@
       container.appendChild(key);
     });
 
-    // Animate all keys
     var keys = document.querySelectorAll('.typewriter-key');
 
     function animateKey(el) {
@@ -805,7 +931,6 @@
     }
 
     keys.forEach(function(key) {
-      // Stagger the start of each animation
       setTimeout(function() {
         animateKey(key);
       }, Math.random() * 2000);
