@@ -3230,34 +3230,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Create floating images
   function createFloatingImages() {
-    const numImages = Math.min(18, imageUrls.length); // More images for more motion
+    const numImages = Math.min(18, imageUrls.length);
     
     for (let i = 0; i < numImages; i++) {
       const img = document.createElement('img');
       img.src = imageUrls[i];
       img.className = 'floating-img';
       
-      // Random initial position
       const leftPos = Math.random() * 90;
       const topPos = Math.random() * 90;
       
       img.style.left = `${leftPos}%`;
       img.style.top = `${topPos}%`;
-      
-      // Random animation delay
       img.style.animationDelay = `${Math.random() * 5}s`;
       
       floatingContainer.appendChild(img);
-      
-      // Animate the image with more complex motion
       animateImage(img);
     }
   }
   
-  // Animate individual image with more dynamic motion
+  // Animate individual image
   function animateImage(img) {
     const moveImage = () => {
-      // More dramatic movement
       const newLeft = Math.random() * 80;
       const newTop = Math.random() * 80;
       const rotation = Math.random() * 360;
@@ -3265,21 +3259,16 @@ document.addEventListener('DOMContentLoaded', function() {
       
       img.style.transform = `translate(${newLeft}vw, ${newTop}vh) rotate(${rotation}deg) scale(${scale})`;
       
-      // Random duration for more dynamic feel
       const duration = 8 + Math.random() * 12;
-      
       img.style.transition = `transform ${duration}s ease-in-out, opacity ${duration/2}s ease`;
       
-      // Fade in and out effect
       setTimeout(() => {
         img.style.opacity = 0.01 + Math.random() * 0.2;
       }, duration * 500);
       
-      // Schedule next movement
       setTimeout(moveImage, duration * 1000);
     };
     
-    // Start the animation
     moveImage();
   }
   
@@ -3288,10 +3277,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Create menu gallery
   function createMenuGallery() {
-    // Use a subset of images for the gallery
     const galleryImages = imageUrls.slice(0, 10);
     
-    // Create image elements for the gallery
     galleryImages.forEach((url, index) => {
       const img = document.createElement('img');
       img.src = url;
@@ -3300,7 +3287,6 @@ document.addEventListener('DOMContentLoaded', function() {
       menuGallery.appendChild(img);
     });
     
-    // Start gallery animation
     let currentIndex = 0;
     const galleryImgs = menuGallery.querySelectorAll('.menu-gallery-image');
     
@@ -3311,7 +3297,7 @@ document.addEventListener('DOMContentLoaded', function() {
         galleryImgs[currentIndex].classList.remove('active');
         currentIndex = (currentIndex + 1) % galleryImgs.length;
         galleryImgs[currentIndex].classList.add('active');
-      }, 3000); // Change image every 3 seconds
+      }, 3000);
     }
   }
   
@@ -3319,12 +3305,13 @@ document.addEventListener('DOMContentLoaded', function() {
   createMenuGallery();
 
   // Slide-out menu functionality
-  menuToggle.addEventListener('click', () => {
+  menuToggle.addEventListener('click', function(event) {
+    event.stopPropagation();
     slideMenu.classList.toggle('open');
   });
 
   // Close menu when clicking outside
-  document.addEventListener('click', (event) => {
+  document.addEventListener('click', function(event) {
     if (!slideMenu.contains(event.target) && !menuToggle.contains(event.target)) {
       slideMenu.classList.remove('open');
     }
@@ -3335,72 +3322,77 @@ document.addEventListener('DOMContentLoaded', function() {
   const resourceList = document.querySelector('.resource-list');
   const resourceToggleIcon = document.querySelector('.resource-menu .toggle-icon');
 
-  resourceMenu.addEventListener('click', () => {
-    resourceList.style.display = resourceList.style.display === 'none' ? 'block' : 'none';
-    resourceToggleIcon.textContent = resourceToggleIcon.textContent === '+' ? '-' : '+';
-  });
+  if (resourceMenu && resourceList) {
+    resourceMenu.addEventListener('click', function() {
+      const isHidden = resourceList.style.display === 'none';
+      resourceList.style.display = isHidden ? 'block' : 'none';
+      resourceToggleIcon.textContent = isHidden ? '-' : '+';
+    });
+  }
 
-  // Notes menu functionality
-// Notes menu functionality
-document.querySelector('.notes-menu h3').addEventListener('click', function() {
-  const box = document.getElementById('notesBox');
-  const icon = document.querySelector('.notes-menu .toggle-icon');
-  
-  if (box.style.display === 'none') {
-    // Load reader.html content properly
-    fetch('https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/reader.html')
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.text();
-      })
-      .then(html => {
-        // Use innerHTML to render the HTML content properly
-        box.innerHTML = html;
-        box.style.display = 'block';
-        icon.textContent = '-';
-      })
-      .catch(error => {
-        console.error('Error loading reader.html:', error);
-        box.innerHTML = '<p>Could not load reader.html</p>';
-        box.style.display = 'block';
-        icon.textContent = '-';
-      });
-  } else {
-    box.style.display = 'none';
-    box.innerHTML = ''; // Clear content when closing
-    icon.textContent = '+';
+  // Notes menu functionality - FIXED VERSION
+  const notesMenu = document.querySelector('.notes-menu h3');
+  if (notesMenu) {
+    notesMenu.addEventListener('click', function() {
+      const box = document.getElementById('notesBox');
+      const icon = document.querySelector('.notes-menu .toggle-icon');
+      
+      if (box.style.display === 'none' || !box.style.display) {
+        // Load reader.html content properly
+        fetch('https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/reader.html')
+          .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.text();
+          })
+          .then(html => {
+            box.innerHTML = html;
+            box.style.display = 'block';
+            icon.textContent = '-';
+          })
+          .catch(error => {
+            console.error('Error loading reader.html:', error);
+            box.innerHTML = '<p>Could not load reader.html</p>';
+            box.style.display = 'block';
+            icon.textContent = '-';
+          });
+      } else {
+        box.style.display = 'none';
+        icon.textContent = '+';
+      }
+    });
+  }
+});
+
+// Theme toggle functionality - Dark theme default
+document.addEventListener('DOMContentLoaded', function() {
+  const themeToggle = document.getElementById('themeToggle');
+  const body = document.body;
+
+  if (themeToggle) {
+    // Set dark theme as default
+    body.removeAttribute('data-theme');
+    themeToggle.textContent = '🌙';
+
+    // Only apply light theme if explicitly saved
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+      body.setAttribute('data-theme', 'light');
+      themeToggle.textContent = '☀️';
+    }
+
+    themeToggle.addEventListener('click', function() {
+      if (body.getAttribute('data-theme') === 'light') {
+        body.removeAttribute('data-theme');
+        themeToggle.textContent = '🌙';
+        localStorage.setItem('theme', 'dark');
+      } else {
+        body.setAttribute('data-theme', 'light');
+        themeToggle.textContent = '☀️';
+        localStorage.setItem('theme', 'light');
+      }
+    });
   }
 });
 </script>
-				  <script>
-// Theme toggle functionality - Dark theme default
-const themeToggle = document.getElementById('themeToggle');
-const body = document.body;
-
-// Set dark theme as default (no attribute = dark theme)
-body.removeAttribute('data-theme');
-themeToggle.textContent = '🌙';
-
-// Only apply light theme if explicitly saved
-const savedTheme = localStorage.getItem('theme');
-if (savedTheme === 'light') {
-  body.setAttribute('data-theme', 'light');
-  themeToggle.textContent = '☀️';
-}
-
-themeToggle.addEventListener('click', () => {
-  if (body.getAttribute('data-theme') === 'light') {
-    body.removeAttribute('data-theme');
-    themeToggle.textContent = '🌙';
-    localStorage.setItem('theme', 'dark');
-  } else {
-    body.setAttribute('data-theme', 'light');
-    themeToggle.textContent = '☀️';
-    localStorage.setItem('theme', 'light');
-  }
-});
-				  </script>
 </body>
 </html>
