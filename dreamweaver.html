@@ -534,6 +534,30 @@ body {
   background: rgba(220, 220, 220, 0.8);
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
+		.menu-toggle, 
+.theme-toggle, 
+.resource-menu h3, 
+.notes-menu h3 {
+  cursor: pointer;
+  z-index: 1000;
+  position: relative; /* Ensure they're above other elements */
+}
+
+/* Ensure no other elements are blocking clicks */
+.slide-menu, 
+.resource-menu, 
+.notes-menu {
+  pointer-events: auto;
+}
+
+/* Make sure floating images don't block interactions */
+.floating-images {
+  pointer-events: none;
+}
+
+.floating-img {
+  pointer-events: none;
+}
 	</style>
 </head>
 <body>
@@ -3186,11 +3210,16 @@ Ah, young sir, the Wordstars—and the Inkrealm as their heart’s blood, their 
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM loaded - initializing scripts');
+  
+  // Get elements with null checks
   const menuToggle = document.querySelector('.menu-toggle');
   const slideMenu = document.querySelector('.slide-menu');
   const floatingContainer = document.getElementById('floatingContainer');
   const menuGallery = document.getElementById('menuGallery');
   
+  console.log('Elements found:', { menuToggle, slideMenu, floatingContainer, menuGallery });
+
   // Array of image URLs
   const imageUrls = [
     'https://github.com/ghostm68/pantheon/raw/main/Kristina.wordstar.gif',
@@ -3226,118 +3255,135 @@ document.addEventListener('DOMContentLoaded', function() {
     'https://github.com/ghostm68/pantheon/raw/main/angelina.jpeg',
     'https://github.com/ghostm68/pantheon/raw/main/jennifer.jpg',
     'https://github.com/ghostm68/pantheon/raw/main/White-Goddess.jpg'
-  ];
+ ];
 
   // Create floating images
-  function createFloatingImages() {
-    const numImages = Math.min(18, imageUrls.length);
-    
-    for (let i = 0; i < numImages; i++) {
-      const img = document.createElement('img');
-      img.src = imageUrls[i];
-      img.className = 'floating-img';
+  if (floatingContainer) {
+    function createFloatingImages() {
+      const numImages = Math.min(18, imageUrls.length);
       
-      const leftPos = Math.random() * 90;
-      const topPos = Math.random() * 90;
-      
-      img.style.left = `${leftPos}%`;
-      img.style.top = `${topPos}%`;
-      img.style.animationDelay = `${Math.random() * 5}s`;
-      
-      floatingContainer.appendChild(img);
-      animateImage(img);
+      for (let i = 0; i < numImages; i++) {
+        const img = document.createElement('img');
+        img.src = imageUrls[i];
+        img.className = 'floating-img';
+        
+        const leftPos = Math.random() * 90;
+        const topPos = Math.random() * 90;
+        
+        img.style.left = `${leftPos}%`;
+        img.style.top = `${topPos}%`;
+        img.style.animationDelay = `${Math.random() * 5}s`;
+        
+        floatingContainer.appendChild(img);
+        animateImage(img);
+      }
     }
-  }
-  
-  // Animate individual image
-  function animateImage(img) {
-    const moveImage = () => {
-      const newLeft = Math.random() * 80;
-      const newTop = Math.random() * 80;
-      const rotation = Math.random() * 360;
-      const scale = 0.8 + Math.random() * 0.4;
-      
-      img.style.transform = `translate(${newLeft}vw, ${newTop}vh) rotate(${rotation}deg) scale(${scale})`;
-      
-      const duration = 8 + Math.random() * 12;
-      img.style.transition = `transform ${duration}s ease-in-out, opacity ${duration/2}s ease`;
-      
-      setTimeout(() => {
-        img.style.opacity = 0.01 + Math.random() * 0.2;
-      }, duration * 500);
-      
-      setTimeout(moveImage, duration * 1000);
-    };
     
-    moveImage();
+    function animateImage(img) {
+      const moveImage = () => {
+        const newLeft = Math.random() * 80;
+        const newTop = Math.random() * 80;
+        const rotation = Math.random() * 360;
+        const scale = 0.8 + Math.random() * 0.4;
+        
+        img.style.transform = `translate(${newLeft}vw, ${newTop}vh) rotate(${rotation}deg) scale(${scale})`;
+        
+        const duration = 8 + Math.random() * 12;
+        img.style.transition = `transform ${duration}s ease-in-out, opacity ${duration/2}s ease`;
+        
+        setTimeout(() => {
+          img.style.opacity = 0.01 + Math.random() * 0.2;
+        }, duration * 500);
+        
+        setTimeout(moveImage, duration * 1000);
+      };
+      
+      moveImage();
+    }
+    
+    createFloatingImages();
   }
-  
-  // Initialize floating images
-  createFloatingImages();
 
   // Create menu gallery
-  function createMenuGallery() {
-    const galleryImages = imageUrls.slice(0, 10);
-    
-    galleryImages.forEach((url, index) => {
-      const img = document.createElement('img');
-      img.src = url;
-      img.className = 'menu-gallery-image';
-      img.alt = `Gallery image ${index + 1}`;
-      menuGallery.appendChild(img);
-    });
-    
-    let currentIndex = 0;
-    const galleryImgs = menuGallery.querySelectorAll('.menu-gallery-image');
-    
-    if (galleryImgs.length > 0) {
-      galleryImgs[0].classList.add('active');
+  if (menuGallery) {
+    function createMenuGallery() {
+      const galleryImages = imageUrls.slice(0, 10);
       
-      setInterval(() => {
-        galleryImgs[currentIndex].classList.remove('active');
-        currentIndex = (currentIndex + 1) % galleryImgs.length;
-        galleryImgs[currentIndex].classList.add('active');
-      }, 3000);
+      galleryImages.forEach((url, index) => {
+        const img = document.createElement('img');
+        img.src = url;
+        img.className = 'menu-gallery-image';
+        img.alt = `Gallery image ${index + 1}`;
+        menuGallery.appendChild(img);
+      });
+      
+      let currentIndex = 0;
+      const galleryImgs = menuGallery.querySelectorAll('.menu-gallery-image');
+      
+      if (galleryImgs.length > 0) {
+        galleryImgs[0].classList.add('active');
+        
+        setInterval(() => {
+          galleryImgs[currentIndex].classList.remove('active');
+          currentIndex = (currentIndex + 1) % galleryImgs.length;
+          galleryImgs[currentIndex].classList.add('active');
+        }, 3000);
+      }
     }
+    
+    createMenuGallery();
   }
-  
-  // Initialize menu gallery
-  createMenuGallery();
 
   // Slide-out menu functionality
-  menuToggle.addEventListener('click', function(event) {
-    event.stopPropagation();
-    slideMenu.classList.toggle('open');
-  });
+  if (menuToggle && slideMenu) {
+    menuToggle.addEventListener('click', function(event) {
+      event.stopPropagation();
+      console.log('Menu toggle clicked');
+      slideMenu.classList.toggle('open');
+    });
 
-  // Close menu when clicking outside
-  document.addEventListener('click', function(event) {
-    if (!slideMenu.contains(event.target) && !menuToggle.contains(event.target)) {
-      slideMenu.classList.remove('open');
-    }
-  });
+    // Close menu when clicking outside
+    document.addEventListener('click', function(event) {
+      if (slideMenu.classList.contains('open') && 
+          !slideMenu.contains(event.target) && 
+          !menuToggle.contains(event.target)) {
+        slideMenu.classList.remove('open');
+      }
+    });
+  } else {
+    console.log('Menu elements not found');
+  }
 
   // Resource menu toggle
   const resourceMenu = document.querySelector('.resource-menu h3');
   const resourceList = document.querySelector('.resource-list');
   const resourceToggleIcon = document.querySelector('.resource-menu .toggle-icon');
 
-  if (resourceMenu && resourceList) {
+  if (resourceMenu && resourceList && resourceToggleIcon) {
+    console.log('Resource menu elements found');
     resourceMenu.addEventListener('click', function() {
+      console.log('Resource menu clicked');
       const isHidden = resourceList.style.display === 'none';
       resourceList.style.display = isHidden ? 'block' : 'none';
       resourceToggleIcon.textContent = isHidden ? '-' : '+';
     });
+    
+    // Initialize resource list as hidden
+    resourceList.style.display = 'none';
   }
 
   // Notes menu functionality - FIXED VERSION
   const notesMenu = document.querySelector('.notes-menu h3');
-  if (notesMenu) {
+  const notesBox = document.getElementById('notesBox');
+  const notesToggleIcon = document.querySelector('.notes-menu .toggle-icon');
+
+  if (notesMenu && notesBox && notesToggleIcon) {
+    console.log('Notes menu elements found');
     notesMenu.addEventListener('click', function() {
-      const box = document.getElementById('notesBox');
-      const icon = document.querySelector('.notes-menu .toggle-icon');
+      console.log('Notes menu clicked');
       
-      if (box.style.display === 'none' || !box.style.display) {
+      if (notesBox.style.display === 'none' || notesBox.style.display === '') {
+        console.log('Opening notes box');
         // Load reader.html content properly
         fetch('https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/reader.html')
           .then(response => {
@@ -3345,30 +3391,34 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.text();
           })
           .then(html => {
-            box.innerHTML = html;
-            box.style.display = 'block';
-            icon.textContent = '-';
+            notesBox.innerHTML = html;
+            notesBox.style.display = 'block';
+            notesToggleIcon.textContent = '-';
+            console.log('Notes loaded successfully');
           })
           .catch(error => {
             console.error('Error loading reader.html:', error);
-            box.innerHTML = '<p>Could not load reader.html</p>';
-            box.style.display = 'block';
-            icon.textContent = '-';
+            notesBox.innerHTML = '<p>Could not load reader.html</p>';
+            notesBox.style.display = 'block';
+            notesToggleIcon.textContent = '-';
           });
       } else {
-        box.style.display = 'none';
-        icon.textContent = '+';
+        console.log('Closing notes box');
+        notesBox.style.display = 'none';
+        notesToggleIcon.textContent = '+';
       }
     });
+    
+    // Initialize notes box as hidden
+    notesBox.style.display = 'none';
   }
-});
 
-// Theme toggle functionality - Dark theme default
-document.addEventListener('DOMContentLoaded', function() {
+  // Theme toggle functionality
   const themeToggle = document.getElementById('themeToggle');
   const body = document.body;
 
   if (themeToggle) {
+    console.log('Theme toggle found');
     // Set dark theme as default
     body.removeAttribute('data-theme');
     themeToggle.textContent = '🌙';
@@ -3381,6 +3431,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     themeToggle.addEventListener('click', function() {
+      console.log('Theme toggle clicked');
       if (body.getAttribute('data-theme') === 'light') {
         body.removeAttribute('data-theme');
         themeToggle.textContent = '🌙';
@@ -3392,6 +3443,8 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+
+  console.log('All event listeners attached');
 });
 </script>
 </body>
