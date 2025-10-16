@@ -93,6 +93,8 @@
   .tag.film { border-color: #89ddff; color: #89ddff; }
   .tag.book { border-color: #c3e88d; color: #c3e88d; }
   .tag.dream { border-color: #ffcb6b; color: #ffcb6b; }
+  .tag.names { border-color: #ff9966; color: #ff9966; }
+  .tag.chinese { border-color: #66ffcc; color: #66ffcc; }
   
   #filterBtns {
     margin-top: 10px;
@@ -131,6 +133,7 @@
 <div id="controls">
   <button id="prevBtn">← Previous</button>
   <button id="nextBtn">Next →</button>
+  <button id="randomBtn">🎲 Random</button>
   <button id="indexBtn">Date Index</button>
   <button id="jumpStart">Jump to Start</button>
   <button id="jumpEnd">Jump to End</button>
@@ -142,6 +145,8 @@
     <button class="filter" data-filter="film">Films</button>
     <button class="filter" data-filter="book">Books</button>
     <button class="filter" data-filter="dream">Dreams</button>
+    <button class="filter" data-filter="names">Names</button>
+    <button class="filter" data-filter="chinese">中文</button>
   </div>
   
   <div id="dateNav"></div>
@@ -152,24 +157,28 @@
 <div id="content" style="display:none;"></div>
 
 <script>
-// Configuration
-const TXT_FILE_URL = 'dreamweaver.txt'; // Put your .txt file in same folder as this HTML
+const TXT_FILE_URL = 'dreamweaver.txt';
 
 let entries = [];
 let currentIndex = 0;
 let currentFilter = 'all';
 
-// Date pattern matcher - adjust this regex to match YOUR date formats
-// This looks for patterns like "16 july 2025" or "17july2025" or "3 aug"
-const datePattern = /^(\d{1,2}\s*(?:january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s*\d{0,4})/im;
+// Enhanced date pattern - catches:
+// English: "16 july 2025", "17july2025", "3 aug"
+// Spanish: "16 julio 2025", "3 agosto"
+// French: "16 juillet 2025", "3 août"
+// Gaelic: "25th An t-Ògmhios 2024"
+// Dashed titles: "-strawberry-", "layered strawberries and cream parfait -six-"
+const datePattern = /^(\d{1,2}(?:st|nd|rd|th)?\s*(?:january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre|an t-\w+)[a-z\-]*\s*\d{0,4})|^.+?-\w+-|^-[a-z]+(-[a-z]+)*-/im;
 
-// Tag patterns - looks for [lyric], [poem], etc. anywhere in the entry
 const tagPatterns = {
   lyric: /\[lyric\]|\blyrics?\b/i,
   poem: /\[poem\]|\bpoems?\b/i,
   film: /\[film\]|\bfilms?\b|\bmovies?\b/i,
   book: /\[book\]|\bbooks?\b|\breading\b/i,
-  dream: /\[dream\]|\bdreams?\b|\bdreamt\b/i
+  dream: /\[dream\]|\bdreams?\b|\bdreamt\b/i,
+  names: /\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/,
+  chinese: /[\u4e00-\u9fff]/
 };
 
 async function loadText() {
@@ -189,7 +198,6 @@ async function loadText() {
 }
 
 function parseEntries(text) {
-  // Split by lines
   const lines = text.split('\n');
   let currentEntry = { date: 'Start', content: '', tags: [] };
   
@@ -197,24 +205,20 @@ function parseEntries(text) {
     const match = line.match(datePattern);
     
     if (match) {
-      // Found a new date - save previous entry
       if (currentEntry.content.trim()) {
         detectTags(currentEntry);
         entries.push(currentEntry);
       }
-      // Start new entry
       currentEntry = {
         date: match[0].trim(),
         content: line + '\n',
         tags: []
       };
     } else {
-      // Continue building current entry
       currentEntry.content += line + '\n';
     }
   });
   
-  // Add final entry
   if (currentEntry.content.trim()) {
     detectTags(currentEntry);
     entries.push(currentEntry);
@@ -224,12 +228,15 @@ function parseEntries(text) {
 }
 
 function detectTags(entry) {
-  // Check content against each tag pattern
   for (let [tag, pattern] of Object.entries(tagPatterns)) {
     if (pattern.test(entry.content)) {
       entry.tags.push(tag);
     }
   }
+}
+
+function stripHtmlTags(text) {
+  return text.replace(/<[^>]*>/g, '');
 }
 
 function showEntry(index) {
@@ -238,15 +245,14 @@ function showEntry(index) {
   currentIndex = Math.max(0, Math.min(index, entries.length - 1));
   const entry = entries[currentIndex];
   
-  document.getElementById('content').textContent = entry.content;
+  const cleanContent = stripHtmlTags(entry.content);
+  document.getElementById('content').textContent = cleanContent;
   document.getElementById('entryInfo').textContent = 
     `Entry ${currentIndex + 1} of ${entries.length} — ${entry.date}`;
   
-  // Update button states
   document.getElementById('prevBtn').disabled = currentIndex === 0;
   document.getElementById('nextBtn').disabled = currentIndex === entries.length - 1;
   
-  // Scroll to top
   window.scrollTo(0, 0);
 }
 
@@ -263,7 +269,6 @@ function buildDateIndex() {
     </div>`;
   }).join('');
   
-  // Add click handlers
   nav.querySelectorAll('.dateLink').forEach(link => {
     link.addEventListener('click', (e) => {
       const index = parseInt(e.target.closest('.dateLink').getAttribute('data-index'));
@@ -278,13 +283,17 @@ function getFilteredEntries() {
   return entries.filter(entry => entry.tags.includes(currentFilter));
 }
 
-// Event listeners
 document.getElementById('prevBtn').addEventListener('click', () => {
   showEntry(currentIndex - 1);
 });
 
 document.getElementById('nextBtn').addEventListener('click', () => {
   showEntry(currentIndex + 1);
+});
+
+document.getElementById('randomBtn').addEventListener('click', () => {
+  const randomIndex = Math.floor(Math.random() * entries.length);
+  showEntry(randomIndex);
 });
 
 document.getElementById('indexBtn').addEventListener('click', () => {
@@ -299,7 +308,6 @@ document.getElementById('jumpEnd').addEventListener('click', () => {
   showEntry(entries.length - 1);
 });
 
-// Filter buttons
 document.querySelectorAll('.filter').forEach(btn => {
   btn.addEventListener('click', (e) => {
     document.querySelectorAll('.filter').forEach(b => b.classList.remove('active'));
@@ -310,10 +318,8 @@ document.querySelectorAll('.filter').forEach(btn => {
   });
 });
 
-// Set default filter button
 document.querySelector('.filter[data-filter="all"]').classList.add('active');
 
-// Keyboard navigation
 document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft') showEntry(currentIndex - 1);
   if (e.key === 'ArrowRight') showEntry(currentIndex + 1);
@@ -321,7 +327,6 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'End') showEntry(entries.length - 1);
 });
 
-// Load on page load
 loadText();
 </script>
 
