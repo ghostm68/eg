@@ -53,6 +53,65 @@
     cursor: not-allowed;
   }
   
+  #searchBox {
+    width: 100%;
+    max-width: 500px;
+    padding: 10px;
+    margin-top: 15px;
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+  }
+  
+  #searchBox:focus {
+    outline: none;
+    border-color: var(--text);
+  }
+  
+  #searchResults {
+    margin-top: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+    border: 1px solid var(--dim);
+    padding: 10px;
+  }
+  
+  #searchResults.show {
+    display: block;
+  }
+  
+  .searchResult {
+    padding: 8px;
+    margin: 5px 0;
+    cursor: pointer;
+    border-bottom: 1px solid #222;
+    color: var(--text);
+  }
+  
+  .searchResult:hover {
+    background: #1a1a1a;
+  }
+  
+  .searchResult .date {
+    color: var(--accent);
+    font-weight: bold;
+  }
+  
+  .searchResult .preview {
+    color: var(--dim);
+    font-size: 12px;
+    margin-top: 5px;
+  }
+  
+  .highlight {
+    background: var(--accent);
+    color: var(--bg);
+    padding: 0 2px;
+  }
+  
   #dateNav {
     margin-top: 15px;
     max-height: 300px;
@@ -76,38 +135,6 @@
   
   .dateLink:hover {
     background: #1a1a1a;
-  }
-  
-  .tag {
-    display: inline-block;
-    padding: 2px 8px;
-    margin-left: 8px;
-    font-size: 11px;
-    border: 1px solid var(--dim);
-    border-radius: 3px;
-    color: var(--dim);
-  }
-  
-  .tag.lyric { border-color: #ff6b9d; color: #ff6b9d; }
-  .tag.poem { border-color: #c792ea; color: #c792ea; }
-  .tag.film { border-color: #89ddff; color: #89ddff; }
-  .tag.book { border-color: #c3e88d; color: #c3e88d; }
-  .tag.dream { border-color: #ffcb6b; color: #ffcb6b; }
-  .tag.names { border-color: #ff9966; color: #ff9966; }
-  .tag.chinese { border-color: #66ffcc; color: #66ffcc; }
-  
-  #filterBtns {
-    margin-top: 10px;
-  }
-  
-  #filterBtns button {
-    padding: 5px 12px;
-    font-size: 12px;
-  }
-  
-  #filterBtns button.active {
-    background: var(--accent);
-    color: var(--bg);
   }
   
   #content {
@@ -138,16 +165,8 @@
   <button id="jumpStart">Jump to Start</button>
   <button id="jumpEnd">Jump to End</button>
   
-  <div id="filterBtns">
-    <button class="filter" data-filter="all">All</button>
-    <button class="filter" data-filter="lyric">Lyrics</button>
-    <button class="filter" data-filter="poem">Poems</button>
-    <button class="filter" data-filter="film">Films</button>
-    <button class="filter" data-filter="book">Books</button>
-    <button class="filter" data-filter="dream">Dreams</button>
-    <button class="filter" data-filter="names">Names</button>
-    <button class="filter" data-filter="chinese">中文</button>
-  </div>
+  <input type="text" id="searchBox" placeholder="Search for anything... (names, phrases, words)">
+  <div id="searchResults"></div>
   
   <div id="dateNav"></div>
   <div id="entryInfo"></div>
@@ -161,25 +180,9 @@ const TXT_FILE_URL = 'dreamweaver.txt';
 
 let entries = [];
 let currentIndex = 0;
-let currentFilter = 'all';
 
-// Enhanced date pattern - catches:
-// English: "16 july 2025", "17july2025", "3 aug"
-// Spanish: "16 julio 2025", "3 agosto"
-// French: "16 juillet 2025", "3 août"
-// Gaelic: "25th An t-Ògmhios 2024"
-// Dashed titles: "-strawberry-", "layered strawberries and cream parfait -six-"
+// Enhanced date pattern
 const datePattern = /^(\d{1,2}(?:st|nd|rd|th)?\s*(?:january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre|an t-\w+)[a-z\-]*\s*\d{0,4})|^.+?-\w+-|^-[a-z]+(-[a-z]+)*-/im;
-
-const tagPatterns = {
-  lyric: /\[lyric\]|\blyrics?\b/i,
-  poem: /\[poem\]|\bpoems?\b/i,
-  film: /\[film\]|\bfilms?\b|\bmovies?\b/i,
-  book: /\[book\]|\bbooks?\b|\breading\b/i,
-  dream: /\[dream\]|\bdreams?\b|\bdreamt\b/i,
-  names: /\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/,
-  chinese: /[\u4e00-\u9fff]/
-};
 
 async function loadText() {
   try {
@@ -199,20 +202,18 @@ async function loadText() {
 
 function parseEntries(text) {
   const lines = text.split('\n');
-  let currentEntry = { date: 'Start', content: '', tags: [] };
+  let currentEntry = { date: 'Start', content: '' };
   
   lines.forEach(line => {
     const match = line.match(datePattern);
     
     if (match) {
       if (currentEntry.content.trim()) {
-        detectTags(currentEntry);
         entries.push(currentEntry);
       }
       currentEntry = {
         date: match[0].trim(),
-        content: line + '\n',
-        tags: []
+        content: line + '\n'
       };
     } else {
       currentEntry.content += line + '\n';
@@ -220,19 +221,10 @@ function parseEntries(text) {
   });
   
   if (currentEntry.content.trim()) {
-    detectTags(currentEntry);
     entries.push(currentEntry);
   }
   
   console.log(`Parsed ${entries.length} entries`);
-}
-
-function detectTags(entry) {
-  for (let [tag, pattern] of Object.entries(tagPatterns)) {
-    if (pattern.test(entry.content)) {
-      entry.tags.push(tag);
-    }
-  }
 }
 
 function stripHtmlTags(text) {
@@ -258,14 +250,10 @@ function showEntry(index) {
 
 function buildDateIndex() {
   const nav = document.getElementById('dateNav');
-  const filteredEntries = getFilteredEntries();
   
-  nav.innerHTML = filteredEntries.map(entry => {
-    const tags = entry.tags.map(tag => 
-      `<span class="tag ${tag}">${tag}</span>`
-    ).join('');
-    return `<div class="dateLink" data-index="${entries.indexOf(entry)}">
-      ${entry.date} ${tags}
+  nav.innerHTML = entries.map((entry, idx) => {
+    return `<div class="dateLink" data-index="${idx}">
+      ${entry.date}
     </div>`;
   }).join('');
   
@@ -278,11 +266,80 @@ function buildDateIndex() {
   });
 }
 
-function getFilteredEntries() {
-  if (currentFilter === 'all') return entries;
-  return entries.filter(entry => entry.tags.includes(currentFilter));
+// Search functionality
+let searchTimeout;
+document.getElementById('searchBox').addEventListener('input', (e) => {
+  clearTimeout(searchTimeout);
+  const query = e.target.value.trim();
+  
+  if (query.length < 2) {
+    document.getElementById('searchResults').classList.remove('show');
+    return;
+  }
+  
+  searchTimeout = setTimeout(() => {
+    performSearch(query);
+  }, 300);
+});
+
+function performSearch(query) {
+  const results = [];
+  const lowerQuery = query.toLowerCase();
+  
+  entries.forEach((entry, idx) => {
+    const cleanContent = stripHtmlTags(entry.content);
+    const lowerContent = cleanContent.toLowerCase();
+    
+    if (lowerContent.includes(lowerQuery)) {
+      // Find context around the match
+      const matchIndex = lowerContent.indexOf(lowerQuery);
+      const start = Math.max(0, matchIndex - 50);
+      const end = Math.min(cleanContent.length, matchIndex + query.length + 50);
+      let preview = cleanContent.substring(start, end);
+      
+      if (start > 0) preview = '...' + preview;
+      if (end < cleanContent.length) preview = preview + '...';
+      
+      // Highlight the match
+      const regex = new RegExp(`(${query})`, 'gi');
+      preview = preview.replace(regex, '<span class="highlight">$1</span>');
+      
+      results.push({ entry, idx, preview });
+    }
+  });
+  
+  displaySearchResults(results);
 }
 
+function displaySearchResults(results) {
+  const container = document.getElementById('searchResults');
+  
+  if (results.length === 0) {
+    container.innerHTML = '<div style="padding: 10px; color: var(--dim);">No results found</div>';
+    container.classList.add('show');
+    return;
+  }
+  
+  container.innerHTML = results.map(({ entry, idx, preview }) => {
+    return `<div class="searchResult" data-index="${idx}">
+      <div class="date">${entry.date}</div>
+      <div class="preview">${preview}</div>
+    </div>`;
+  }).join('');
+  
+  container.querySelectorAll('.searchResult').forEach(result => {
+    result.addEventListener('click', () => {
+      const idx = parseInt(result.getAttribute('data-index'));
+      showEntry(idx);
+      container.classList.remove('show');
+      document.getElementById('searchBox').value = '';
+    });
+  });
+  
+  container.classList.add('show');
+}
+
+// Navigation buttons
 document.getElementById('prevBtn').addEventListener('click', () => {
   showEntry(currentIndex - 1);
 });
@@ -298,6 +355,7 @@ document.getElementById('randomBtn').addEventListener('click', () => {
 
 document.getElementById('indexBtn').addEventListener('click', () => {
   document.getElementById('dateNav').classList.toggle('show');
+  document.getElementById('searchResults').classList.remove('show');
 });
 
 document.getElementById('jumpStart').addEventListener('click', () => {
@@ -308,19 +366,11 @@ document.getElementById('jumpEnd').addEventListener('click', () => {
   showEntry(entries.length - 1);
 });
 
-document.querySelectorAll('.filter').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    document.querySelectorAll('.filter').forEach(b => b.classList.remove('active'));
-    e.target.classList.add('active');
-    currentFilter = e.target.getAttribute('data-filter');
-    buildDateIndex();
-    document.getElementById('dateNav').classList.add('show');
-  });
-});
-
-document.querySelector('.filter[data-filter="all"]').classList.add('active');
-
+// Keyboard navigation
 document.addEventListener('keydown', (e) => {
+  // Don't interfere if typing in search box
+  if (e.target.id === 'searchBox') return;
+  
   if (e.key === 'ArrowLeft') showEntry(currentIndex - 1);
   if (e.key === 'ArrowRight') showEntry(currentIndex + 1);
   if (e.key === 'Home') showEntry(0);
