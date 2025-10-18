@@ -137,6 +137,58 @@
     background: #1a1a1a;
   }
   
+  #bookmarksList {
+    margin-top: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+    border: 1px solid var(--dim);
+    padding: 10px;
+  }
+  
+  #bookmarksList.show {
+    display: block;
+  }
+  
+  .bookmarkItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    margin: 5px 0;
+    border-bottom: 1px solid #222;
+  }
+  
+  .bookmarkItem:hover {
+    background: #1a1a1a;
+  }
+  
+  .bookmarkDate {
+    color: var(--accent);
+    cursor: pointer;
+    flex-grow: 1;
+  }
+  
+  .removeBookmark {
+    background: transparent;
+    border: 1px solid #ff4444;
+    color: #ff4444;
+    padding: 3px 8px;
+    margin: 0;
+    cursor: pointer;
+    font-size: 11px;
+  }
+  
+  .removeBookmark:hover {
+    background: #ff4444;
+    color: var(--bg);
+  }
+  
+  .bookmarked {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  
   #content {
     white-space: pre-wrap;
     font-size: 14px;
@@ -161,6 +213,8 @@
   <button id="prevBtn">← Previous</button>
   <button id="nextBtn">Next →</button>
   <button id="randomBtn">🎲 Random</button>
+  <button id="bookmarkBtn">📌 Bookmark</button>
+  <button id="viewBookmarksBtn">View Bookmarks</button>
   <button id="indexBtn">Date Index</button>
   <button id="jumpStart">Jump to Start</button>
   <button id="jumpEnd">Jump to End</button>
@@ -169,6 +223,7 @@
   <div id="searchResults"></div>
   
   <div id="dateNav"></div>
+  <div id="bookmarksList"></div>
   <div id="entryInfo"></div>
 </div>
 
@@ -180,6 +235,7 @@ const TXT_FILE_URL = 'dreamweaver.txt';
 
 let entries = [];
 let currentIndex = 0;
+let bookmarks = [];
 
 // Enhanced date pattern
 const datePattern = /^(\d{1,2}(?:st|nd|rd|th)?\s*(?:january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre|an t-\w+)[a-z\-]*\s*\d{0,4})|^.+?-\w+-|^-[a-z]+(-[a-z]+)*-/im;
@@ -244,6 +300,8 @@ function showEntry(index) {
   
   document.getElementById('prevBtn').disabled = currentIndex === 0;
   document.getElementById('nextBtn').disabled = currentIndex === entries.length - 1;
+  
+  updateBookmarkButton();
   
   window.scrollTo(0, 0);
 }
@@ -356,6 +414,7 @@ document.getElementById('randomBtn').addEventListener('click', () => {
 document.getElementById('indexBtn').addEventListener('click', () => {
   document.getElementById('dateNav').classList.toggle('show');
   document.getElementById('searchResults').classList.remove('show');
+  document.getElementById('bookmarksList').classList.remove('show');
 });
 
 document.getElementById('jumpStart').addEventListener('click', () => {
@@ -365,6 +424,78 @@ document.getElementById('jumpStart').addEventListener('click', () => {
 document.getElementById('jumpEnd').addEventListener('click', () => {
   showEntry(entries.length - 1);
 });
+
+// Bookmark functionality
+document.getElementById('bookmarkBtn').addEventListener('click', () => {
+  toggleBookmark(currentIndex);
+});
+
+document.getElementById('viewBookmarksBtn').addEventListener('click', () => {
+  document.getElementById('bookmarksList').classList.toggle('show');
+  document.getElementById('dateNav').classList.remove('show');
+  document.getElementById('searchResults').classList.remove('show');
+  displayBookmarks();
+});
+
+function toggleBookmark(index) {
+  const bookmarkIndex = bookmarks.indexOf(index);
+  
+  if (bookmarkIndex > -1) {
+    bookmarks.splice(bookmarkIndex, 1);
+  } else {
+    bookmarks.push(index);
+  }
+  
+  updateBookmarkButton();
+  if (document.getElementById('bookmarksList').classList.contains('show')) {
+    displayBookmarks();
+  }
+}
+
+function updateBookmarkButton() {
+  const btn = document.getElementById('bookmarkBtn');
+  if (bookmarks.includes(currentIndex)) {
+    btn.classList.add('bookmarked');
+    btn.textContent = '📌 Bookmarked';
+  } else {
+    btn.classList.remove('bookmarked');
+    btn.textContent = '📌 Bookmark';
+  }
+}
+
+function displayBookmarks() {
+  const container = document.getElementById('bookmarksList');
+  
+  if (bookmarks.length === 0) {
+    container.innerHTML = '<div style="padding: 10px; color: var(--dim);">No bookmarks yet. Click "📌 Bookmark" to save entries.</div>';
+    return;
+  }
+  
+  bookmarks.sort((a, b) => a - b);
+  
+  container.innerHTML = bookmarks.map(idx => {
+    const entry = entries[idx];
+    return `<div class="bookmarkItem">
+      <div class="bookmarkDate" data-index="${idx}">${entry.date}</div>
+      <button class="removeBookmark" data-index="${idx}">Remove</button>
+    </div>`;
+  }).join('');
+  
+  container.querySelectorAll('.bookmarkDate').forEach(item => {
+    item.addEventListener('click', () => {
+      const idx = parseInt(item.getAttribute('data-index'));
+      showEntry(idx);
+      container.classList.remove('show');
+    });
+  });
+  
+  container.querySelectorAll('.removeBookmark').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.getAttribute('data-index'));
+      toggleBookmark(idx);
+    });
+  });
+}
 
 // Keyboard navigation
 document.addEventListener('keydown', (e) => {
@@ -379,21 +510,6 @@ document.addEventListener('keydown', (e) => {
 
 loadText();
 </script>
-  <script>
-    function detectTags(entry) {
-  for (let [tag, pattern] of Object.entries(tagPatterns)) {
-    if (pattern.test(entry.content)) {
-      entry.tags.push(tag);
-    }
-  }
-}
-
-function stripHtmlTags(text) {
-  return text.replace(/<[^>]*>/g, '');
-}
-    }
-
-  </script>
 
 </body>
 </html>
