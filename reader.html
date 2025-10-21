@@ -10,6 +10,7 @@
     --text: #e0e0e0;
     --accent: #8a2be2;
     --dim: #666;
+    --highlight: #ffcb6b;
   }
   
   body {
@@ -32,6 +33,35 @@
     z-index: 100;
   }
   
+  #searchBox {
+    width: 100%;
+    background: #1a1a1a;
+    border: 1px solid var(--dim);
+    color: var(--text);
+    padding: 10px;
+    font-family: inherit;
+    font-size: 13px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+  }
+  
+  #searchBox:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  
+  #searchBox::placeholder {
+    color: var(--dim);
+    font-size: 12px;
+  }
+  
+  #searchStats {
+    font-size: 11px;
+    color: var(--dim);
+    margin-bottom: 10px;
+    min-height: 14px;
+  }
+  
   button {
     background: transparent;
     border: 1px solid var(--accent);
@@ -51,65 +81,6 @@
   button:disabled {
     opacity: 0.3;
     cursor: not-allowed;
-  }
-  
-  #searchBox {
-    width: 100%;
-    max-width: 500px;
-    padding: 10px;
-    margin-top: 15px;
-    background: var(--bg);
-    border: 1px solid var(--accent);
-    color: var(--text);
-    font-family: inherit;
-    font-size: 14px;
-  }
-  
-  #searchBox:focus {
-    outline: none;
-    border-color: var(--text);
-  }
-  
-  #searchResults {
-    margin-top: 10px;
-    max-height: 300px;
-    overflow-y: auto;
-    display: none;
-    border: 1px solid var(--dim);
-    padding: 10px;
-  }
-  
-  #searchResults.show {
-    display: block;
-  }
-  
-  .searchResult {
-    padding: 8px;
-    margin: 5px 0;
-    cursor: pointer;
-    border-bottom: 1px solid #222;
-    color: var(--text);
-  }
-  
-  .searchResult:hover {
-    background: #1a1a1a;
-  }
-  
-  .searchResult .date {
-    color: var(--accent);
-    font-weight: bold;
-  }
-  
-  .searchResult .preview {
-    color: var(--dim);
-    font-size: 12px;
-    margin-top: 5px;
-  }
-  
-  .highlight {
-    background: var(--accent);
-    color: var(--bg);
-    padding: 0 2px;
   }
   
   #dateNav {
@@ -137,54 +108,39 @@
     background: #1a1a1a;
   }
   
-  #bookmarksList {
-    margin-top: 15px;
-    max-height: 300px;
-    overflow-y: auto;
-    display: none;
-    border: 1px solid var(--dim);
-    padding: 10px;
+  .dateLink .preview {
+    font-size: 10px;
+    color: var(--dim);
+    margin-top: 3px;
+    font-style: italic;
   }
   
-  #bookmarksList.show {
-    display: block;
-  }
-  
-  .bookmarkItem {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px;
-    margin: 5px 0;
-    border-bottom: 1px solid #222;
-  }
-  
-  .bookmarkItem:hover {
-    background: #1a1a1a;
-  }
-  
-  .bookmarkDate {
-    color: var(--accent);
-    cursor: pointer;
-    flex-grow: 1;
-  }
-  
-  .removeBookmark {
-    background: transparent;
-    border: 1px solid #ff4444;
-    color: #ff4444;
-    padding: 3px 8px;
-    margin: 0;
-    cursor: pointer;
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    margin-left: 8px;
     font-size: 11px;
+    border: 1px solid var(--dim);
+    border-radius: 3px;
+    color: var(--dim);
   }
   
-  .removeBookmark:hover {
-    background: #ff4444;
-    color: var(--bg);
+  .tag.lyric { border-color: #ff6b9d; color: #ff6b9d; }
+  .tag.poem { border-color: #c792ea; color: #c792ea; }
+  .tag.film { border-color: #89ddff; color: #89ddff; }
+  .tag.book { border-color: #c3e88d; color: #c3e88d; }
+  .tag.dream { border-color: #ffcb6b; color: #ffcb6b; }
+  
+  #filterBtns {
+    margin-top: 10px;
   }
   
-  .bookmarked {
+  #filterBtns button {
+    padding: 5px 12px;
+    font-size: 12px;
+  }
+  
+  #filterBtns button.active {
     background: var(--accent);
     color: var(--bg);
   }
@@ -192,6 +148,13 @@
   #content {
     white-space: pre-wrap;
     font-size: 14px;
+  }
+  
+  .highlight {
+    background: var(--highlight);
+    color: var(--bg);
+    padding: 1px 3px;
+    border-radius: 2px;
   }
   
   #entryInfo {
@@ -210,20 +173,30 @@
 <body>
 
 <div id="controls">
+  <input 
+    type="text" 
+    id="searchBox" 
+    placeholder="search: water AND flying, ocean OR sea, dream -anxiety, &quot;exact phrase&quot;"
+  />
+  <div id="searchStats"></div>
+  
   <button id="prevBtn">← Previous</button>
   <button id="nextBtn">Next →</button>
-  <button id="randomBtn">🎲 Random</button>
-  <button id="bookmarkBtn">📌 Bookmark</button>
-  <button id="viewBookmarksBtn">View Bookmarks</button>
+  <button id="randomBtn">✧ Random ✧</button>
   <button id="indexBtn">Date Index</button>
   <button id="jumpStart">Jump to Start</button>
   <button id="jumpEnd">Jump to End</button>
   
-  <input type="text" id="searchBox" placeholder="Search for anything... (names, phrases, words)">
-  <div id="searchResults"></div>
+  <div id="filterBtns">
+    <button class="filter" data-filter="all">All</button>
+    <button class="filter" data-filter="lyric">Lyrics</button>
+    <button class="filter" data-filter="poem">Poems</button>
+    <button class="filter" data-filter="film">Films</button>
+    <button class="filter" data-filter="book">Books</button>
+    <button class="filter" data-filter="dream">Dreams</button>
+  </div>
   
   <div id="dateNav"></div>
-  <div id="bookmarksList"></div>
   <div id="entryInfo"></div>
 </div>
 
@@ -231,14 +204,24 @@
 <div id="content" style="display:none;"></div>
 
 <script>
+// Configuration
 const TXT_FILE_URL = 'dreamweaver.txt';
 
 let entries = [];
 let currentIndex = 0;
-let bookmarks = [];
+let currentFilter = 'all';
+let searchResults = [];
+let isSearching = false;
 
-// Enhanced date pattern
-const datePattern = /^(\d{1,2}(?:st|nd|rd|th)?\s*(?:january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre|an t-\w+)[a-z\-]*\s*\d{0,4})|^.+?-\w+-|^-[a-z]+(-[a-z]+)*-/im;
+const datePattern = /^(\d{1,2}\s*(?:january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s*\d{0,4})/im;
+
+const tagPatterns = {
+  lyric: /\[lyric\]|\blyrics?\b/i,
+  poem: /\[poem\]|\bpoems?\b/i,
+  film: /\[film\]|\bfilms?\b|\bmovies?\b/i,
+  book: /\[book\]|\bbooks?\b|\breading\b/i,
+  dream: /\[dream\]|\bdreams?\b|\bdreamt\b/i
+};
 
 async function loadText() {
   try {
@@ -258,18 +241,20 @@ async function loadText() {
 
 function parseEntries(text) {
   const lines = text.split('\n');
-  let currentEntry = { date: 'Start', content: '' };
+  let currentEntry = { date: 'Start', content: '', tags: [] };
   
   lines.forEach(line => {
     const match = line.match(datePattern);
     
     if (match) {
       if (currentEntry.content.trim()) {
+        detectTags(currentEntry);
         entries.push(currentEntry);
       }
       currentEntry = {
         date: match[0].trim(),
-        content: line + '\n'
+        content: line + '\n',
+        tags: []
       };
     } else {
       currentEntry.content += line + '\n';
@@ -277,14 +262,129 @@ function parseEntries(text) {
   });
   
   if (currentEntry.content.trim()) {
+    detectTags(currentEntry);
     entries.push(currentEntry);
   }
   
   console.log(`Parsed ${entries.length} entries`);
 }
 
-function stripHtmlTags(text) {
-  return text.replace(/<[^>]*>/g, '');
+function detectTags(entry) {
+  for (let [tag, pattern] of Object.entries(tagPatterns)) {
+    if (pattern.test(entry.content)) {
+      entry.tags.push(tag);
+    }
+  }
+}
+
+function performSearch(query) {
+  if (!query.trim()) {
+    isSearching = false;
+    searchResults = [];
+    updateSearchStats();
+    buildDateIndex();
+    return;
+  }
+  
+  isSearching = true;
+  searchResults = [];
+  
+  const terms = parseSearchQuery(query);
+  
+  entries.forEach((entry, index) => {
+    if (matchesSearch(entry, terms)) {
+      searchResults.push({ entry, index });
+    }
+  });
+  
+  updateSearchStats();
+  buildDateIndex();
+  
+  if (searchResults.length > 0) {
+    showEntry(searchResults[0].index);
+  }
+}
+
+function parseSearchQuery(query) {
+  const terms = {
+    and: [],
+    or: [],
+    not: [],
+    exact: []
+  };
+  
+  // Extract exact phrases
+  const exactMatches = query.match(/"([^"]+)"/g);
+  if (exactMatches) {
+    exactMatches.forEach(match => {
+      const phrase = match.replace(/"/g, '');
+      terms.exact.push(phrase);
+      query = query.replace(match, '');
+    });
+  }
+  
+  const words = query.toLowerCase().split(/\s+/).filter(w => w);
+  let currentOp = 'and';
+  
+  words.forEach(word => {
+    if (word === 'and') {
+      currentOp = 'and';
+    } else if (word === 'or') {
+      currentOp = 'or';
+    } else if (word.startsWith('-')) {
+      terms.not.push(word.substring(1));
+    } else if (word) {
+      terms[currentOp].push(word);
+    }
+  });
+  
+  return terms;
+}
+
+function matchesSearch(entry, terms) {
+  const content = entry.content.toLowerCase();
+  const date = entry.date.toLowerCase();
+  const searchText = content + ' ' + date;
+  
+  for (let term of terms.not) {
+    if (searchText.includes(term)) {
+      return false;
+    }
+  }
+  
+  for (let phrase of terms.exact) {
+    if (!searchText.includes(phrase.toLowerCase())) {
+      return false;
+    }
+  }
+  
+  for (let term of terms.and) {
+    if (!searchText.includes(term)) {
+      return false;
+    }
+  }
+  
+  if (terms.or.length > 0) {
+    let orMatch = false;
+    for (let term of terms.or) {
+      if (searchText.includes(term)) {
+        orMatch = true;
+        break;
+      }
+    }
+    if (!orMatch) return false;
+  }
+  
+  return true;
+}
+
+function updateSearchStats() {
+  const stats = document.getElementById('searchStats');
+  if (isSearching) {
+    stats.textContent = `${searchResults.length} matches`;
+  } else {
+    stats.textContent = '';
+  }
 }
 
 function showEntry(index) {
@@ -293,25 +393,79 @@ function showEntry(index) {
   currentIndex = Math.max(0, Math.min(index, entries.length - 1));
   const entry = entries[currentIndex];
   
-  const cleanContent = stripHtmlTags(entry.content);
-  document.getElementById('content').textContent = cleanContent;
+  let displayContent = entry.content;
+  const searchQuery = document.getElementById('searchBox').value;
+  
+  if (isSearching && searchQuery) {
+    displayContent = highlightSearchTerms(displayContent, searchQuery);
+  }
+  
+  document.getElementById('content').innerHTML = displayContent;
+  
+  const resultInfo = isSearching && searchResults.length > 0 
+    ? ` • result ${searchResults.findIndex(r => r.index === currentIndex) + 1}/${searchResults.length}`
+    : '';
+  
   document.getElementById('entryInfo').textContent = 
-    `Entry ${currentIndex + 1} of ${entries.length} — ${entry.date}`;
+    `Entry ${currentIndex + 1} of ${entries.length} — ${entry.date}${resultInfo}`;
   
   document.getElementById('prevBtn').disabled = currentIndex === 0;
   document.getElementById('nextBtn').disabled = currentIndex === entries.length - 1;
   
-  updateBookmarkButton();
-  
   window.scrollTo(0, 0);
+}
+
+function highlightSearchTerms(content, query) {
+  const terms = parseSearchQuery(query);
+  let highlighted = content;
+  
+  highlighted = highlighted.replace(/&/g, '&amp;')
+                         .replace(/</g, '&lt;')
+                         .replace(/>/g, '&gt;');
+  
+  terms.exact.forEach(phrase => {
+    const regex = new RegExp(`(${escapeRegex(phrase)})`, 'gi');
+    highlighted = highlighted.replace(regex, '<span class="highlight">$1</span>');
+  });
+  
+  terms.and.forEach(term => {
+    const regex = new RegExp(`(${escapeRegex(term)})`, 'gi');
+    highlighted = highlighted.replace(regex, '<span class="highlight">$1</span>');
+  });
+  
+  terms.or.forEach(term => {
+    const regex = new RegExp(`(${escapeRegex(term)})`, 'gi');
+    highlighted = highlighted.replace(regex, '<span class="highlight">$1</span>');
+  });
+  
+  return highlighted;
+}
+
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function buildDateIndex() {
   const nav = document.getElementById('dateNav');
+  const displayEntries = isSearching ? searchResults : getFilteredEntries().map((entry, idx) => ({
+    entry,
+    index: entries.indexOf(entry)
+  }));
   
-  nav.innerHTML = entries.map((entry, idx) => {
-    return `<div class="dateLink" data-index="${idx}">
-      ${entry.date}
+  nav.innerHTML = displayEntries.map(({ entry, index }) => {
+    const tags = entry.tags.map(tag => 
+      `<span class="tag ${tag}">${tag}</span>`
+    ).join('');
+    
+    let preview = '';
+    if (isSearching) {
+      const snippet = entry.content.substring(0, 80).replace(/\n/g, ' ').trim();
+      preview = `<div class="preview">${snippet}...</div>`;
+    }
+    
+    return `<div class="dateLink" data-index="${index}">
+      ${entry.date} ${tags}
+      ${preview}
     </div>`;
   }).join('');
   
@@ -324,80 +478,29 @@ function buildDateIndex() {
   });
 }
 
-// Search functionality
-let searchTimeout;
-document.getElementById('searchBox').addEventListener('input', (e) => {
-  clearTimeout(searchTimeout);
-  const query = e.target.value.trim();
+function getFilteredEntries() {
+  if (currentFilter === 'all') return entries;
+  return entries.filter(entry => entry.tags.includes(currentFilter));
+}
+
+function showRandomEntry() {
+  const pool = isSearching ? searchResults.map(r => r.index) : 
+               (currentFilter === 'all' ? entries.map((_, i) => i) :
+                entries.map((e, i) => ({ e, i }))
+                       .filter(({ e }) => e.tags.includes(currentFilter))
+                       .map(({ i }) => i));
   
-  if (query.length < 2) {
-    document.getElementById('searchResults').classList.remove('show');
-    return;
+  if (pool.length > 0) {
+    const randomIndex = pool[Math.floor(Math.random() * pool.length)];
+    showEntry(randomIndex);
   }
-  
-  searchTimeout = setTimeout(() => {
-    performSearch(query);
-  }, 300);
+}
+
+// Event listeners
+document.getElementById('searchBox').addEventListener('input', (e) => {
+  performSearch(e.target.value);
 });
 
-function performSearch(query) {
-  const results = [];
-  const lowerQuery = query.toLowerCase();
-  
-  entries.forEach((entry, idx) => {
-    const cleanContent = stripHtmlTags(entry.content);
-    const lowerContent = cleanContent.toLowerCase();
-    
-    if (lowerContent.includes(lowerQuery)) {
-      // Find context around the match
-      const matchIndex = lowerContent.indexOf(lowerQuery);
-      const start = Math.max(0, matchIndex - 50);
-      const end = Math.min(cleanContent.length, matchIndex + query.length + 50);
-      let preview = cleanContent.substring(start, end);
-      
-      if (start > 0) preview = '...' + preview;
-      if (end < cleanContent.length) preview = preview + '...';
-      
-      // Highlight the match
-      const regex = new RegExp(`(${query})`, 'gi');
-      preview = preview.replace(regex, '<span class="highlight">$1</span>');
-      
-      results.push({ entry, idx, preview });
-    }
-  });
-  
-  displaySearchResults(results);
-}
-
-function displaySearchResults(results) {
-  const container = document.getElementById('searchResults');
-  
-  if (results.length === 0) {
-    container.innerHTML = '<div style="padding: 10px; color: var(--dim);">No results found</div>';
-    container.classList.add('show');
-    return;
-  }
-  
-  container.innerHTML = results.map(({ entry, idx, preview }) => {
-    return `<div class="searchResult" data-index="${idx}">
-      <div class="date">${entry.date}</div>
-      <div class="preview">${preview}</div>
-    </div>`;
-  }).join('');
-  
-  container.querySelectorAll('.searchResult').forEach(result => {
-    result.addEventListener('click', () => {
-      const idx = parseInt(result.getAttribute('data-index'));
-      showEntry(idx);
-      container.classList.remove('show');
-      document.getElementById('searchBox').value = '';
-    });
-  });
-  
-  container.classList.add('show');
-}
-
-// Navigation buttons
 document.getElementById('prevBtn').addEventListener('click', () => {
   showEntry(currentIndex - 1);
 });
@@ -406,15 +509,10 @@ document.getElementById('nextBtn').addEventListener('click', () => {
   showEntry(currentIndex + 1);
 });
 
-document.getElementById('randomBtn').addEventListener('click', () => {
-  const randomIndex = Math.floor(Math.random() * entries.length);
-  showEntry(randomIndex);
-});
+document.getElementById('randomBtn').addEventListener('click', showRandomEntry);
 
 document.getElementById('indexBtn').addEventListener('click', () => {
   document.getElementById('dateNav').classList.toggle('show');
-  document.getElementById('searchResults').classList.remove('show');
-  document.getElementById('bookmarksList').classList.remove('show');
 });
 
 document.getElementById('jumpStart').addEventListener('click', () => {
@@ -425,87 +523,35 @@ document.getElementById('jumpEnd').addEventListener('click', () => {
   showEntry(entries.length - 1);
 });
 
-// Bookmark functionality
-document.getElementById('bookmarkBtn').addEventListener('click', () => {
-  toggleBookmark(currentIndex);
+document.querySelectorAll('.filter').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    document.querySelectorAll('.filter').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    currentFilter = e.target.getAttribute('data-filter');
+    
+    if (isSearching) {
+      performSearch(document.getElementById('searchBox').value);
+    } else {
+      buildDateIndex();
+      document.getElementById('dateNav').classList.add('show');
+    }
+  });
 });
 
-document.getElementById('viewBookmarksBtn').addEventListener('click', () => {
-  document.getElementById('bookmarksList').classList.toggle('show');
-  document.getElementById('dateNav').classList.remove('show');
-  document.getElementById('searchResults').classList.remove('show');
-  displayBookmarks();
-});
+document.querySelector('.filter[data-filter="all"]').classList.add('active');
 
-function toggleBookmark(index) {
-  const bookmarkIndex = bookmarks.indexOf(index);
-  
-  if (bookmarkIndex > -1) {
-    bookmarks.splice(bookmarkIndex, 1);
-  } else {
-    bookmarks.push(index);
-  }
-  
-  updateBookmarkButton();
-  if (document.getElementById('bookmarksList').classList.contains('show')) {
-    displayBookmarks();
-  }
-}
-
-function updateBookmarkButton() {
-  const btn = document.getElementById('bookmarkBtn');
-  if (bookmarks.includes(currentIndex)) {
-    btn.classList.add('bookmarked');
-    btn.textContent = '📌 Bookmarked';
-  } else {
-    btn.classList.remove('bookmarked');
-    btn.textContent = '📌 Bookmark';
-  }
-}
-
-function displayBookmarks() {
-  const container = document.getElementById('bookmarksList');
-  
-  if (bookmarks.length === 0) {
-    container.innerHTML = '<div style="padding: 10px; color: var(--dim);">No bookmarks yet. Click "📌 Bookmark" to save entries.</div>';
-    return;
-  }
-  
-  bookmarks.sort((a, b) => a - b);
-  
-  container.innerHTML = bookmarks.map(idx => {
-    const entry = entries[idx];
-    return `<div class="bookmarkItem">
-      <div class="bookmarkDate" data-index="${idx}">${entry.date}</div>
-      <button class="removeBookmark" data-index="${idx}">Remove</button>
-    </div>`;
-  }).join('');
-  
-  container.querySelectorAll('.bookmarkDate').forEach(item => {
-    item.addEventListener('click', () => {
-      const idx = parseInt(item.getAttribute('data-index'));
-      showEntry(idx);
-      container.classList.remove('show');
-    });
-  });
-  
-  container.querySelectorAll('.removeBookmark').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const idx = parseInt(btn.getAttribute('data-index'));
-      toggleBookmark(idx);
-    });
-  });
-}
-
-// Keyboard navigation
 document.addEventListener('keydown', (e) => {
-  // Don't interfere if typing in search box
-  if (e.target.id === 'searchBox') return;
+  if (document.activeElement === document.getElementById('searchBox')) return;
   
   if (e.key === 'ArrowLeft') showEntry(currentIndex - 1);
   if (e.key === 'ArrowRight') showEntry(currentIndex + 1);
   if (e.key === 'Home') showEntry(0);
   if (e.key === 'End') showEntry(entries.length - 1);
+  if (e.key === 'r' || e.key === 'R') showRandomEntry();
+  if (e.key === '/') {
+    e.preventDefault();
+    document.getElementById('searchBox').focus();
+  }
 });
 
 loadText();
