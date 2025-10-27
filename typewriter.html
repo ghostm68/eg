@@ -589,33 +589,55 @@ The other AI models listed are currently offline simulations except for;
         }
     }
 
-    async function generateWithPuterAI(prompt, model, responseElement) {
-        responseElement.textContent = `Connecting to ${model}... Please wait.`;
-        responseElement.className = 'loading';
-        
-        try {
-            // Use Puter.js AI chat API
+   async function generateWithPuterAI(prompt, model, responseElement) {
+    responseElement.textContent = `Connecting to ${model}... Please wait.`;
+    responseElement.className = 'loading';
+    
+    try {
+        // For DeepSeek models, use the specific API format
+        if (model.includes('deepseek')) {
+            const response = await puter.ai.chat(prompt, { 
+                model: model,
+                temperature: 0.7,
+                max_tokens: 1000
+            });
+            responseElement.textContent = `✅ ${model} Response:\n\n${response}`;
+        } 
+        // For Liquid AI models
+        else if (model.includes('liquid')) {
+            const response = await puter.ai.chat(prompt, { 
+                model: model,
+                stream: false,
+                temperature: 0.8
+            });
+            responseElement.textContent = `✅ ${model} Response:\n\n${response}`;
+        }
+        // For Gemma models (your current working implementation)
+        else {
             const response = await puter.ai.chat(prompt, { 
                 model: model
             });
-            
             responseElement.textContent = `✅ ${model} Response:\n\n${response}`;
-            responseElement.className = 'success';
-            updateStatusBar(`Text generated with ${model}`);
-            
-        } catch (error) {
-            console.error("Puter.js API error:", error);
-            
-            // Provide helpful error message
-            if (error.message && (error.message.includes('auth') || error.message.includes('login'))) {
-                responseElement.textContent = `Puter.js Authentication Required:\n\nTo use ${model}, you may need to:\n1. Have a Puter.js account\n2. Confirm your email address\n3. Be logged in to the Puter.js service\n\nTry the free Gemma models which should work without authentication!`;
-            } else {
-                responseElement.textContent = `Error with ${model}: ${error.message || 'Unknown error'}\n\nTry using one of the confirmed working models.`;
-            }
-            responseElement.className = 'error';
-            updateStatusBar("Authentication required for Puter.js");
         }
+        
+        responseElement.className = 'success';
+        updateStatusBar(`Text generated with ${model}`);
+        
+    } catch (error) {
+        console.error("API error:", error);
+        
+        // More specific error handling
+        if (error.message.includes('rate limit') || error.message.includes('quota')) {
+            responseElement.textContent = `Rate limit exceeded for ${model}. Try again in a few moments or use a different model.`;
+        } else if (error.message.includes('auth') || error.message.includes('login')) {
+            responseElement.textContent = `Authentication required for ${model}.\n\nPuter.js requires email confirmation for full API access. Some models may have additional requirements.`;
+        } else {
+            responseElement.textContent = `Error with ${model}: ${error.message}\n\nThis model might require specific configuration or may be temporarily unavailable.`;
+        }
+        responseElement.className = 'error';
+        updateStatusBar("API error - try Gemma models");
     }
+}
 
     // Utility functions for the AI response
     function insertAIResponse() {
