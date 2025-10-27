@@ -9,6 +9,8 @@
     <title>WordStar Nexus - Modern Text Editor</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
+    <!-- Add Puter.js for AI capabilities -->
+    <script src="https://js.puter.com/v2/"></script>
     <style>
         body, html {
             height: 100%;
@@ -59,9 +61,6 @@
             background-color: #666;
             cursor: not-allowed;
         }
-        #dictionary-select {
-            margin-right: 10px;
-        }
         #notebook {
             background-color: #cc0000;
             padding: 10px;
@@ -104,9 +103,6 @@
             min-height: 200px;
             line-height: 1.4;
         }
-        #word-info {
-            display: none;
-        }
         select, textarea {
             background-color: #2d2d2d;
             color: white;
@@ -139,6 +135,12 @@
             padding: 3px 6px;
             margin-right: 3px;
         }
+        .model-category {
+            color: #cc0000;
+            font-weight: bold;
+            margin-top: 5px;
+            font-size: 11px;
+        }
     </style>
 </head>
 <body>
@@ -168,33 +170,45 @@
         <div style="width: 18%; display: flex; flex-direction: column;">
             <div class="ai-section">
                 <select id="ai-model-select" style="width: 100%; padding: 5px; margin-bottom: 5px;">
-                    <option value="liquid-ai">🚀 Liquid AI (Live)</option>
-                    <option value="local-simulation">💻 Local AI Simulation</option>
-                    <option value="gpt2">🤖 GPT-2</option>
-                    <option value="markov">🔗 Markov Chain</option>
-                    <option value="wordassociation">🧠 Word Association</option>
+                    <optgroup label="🚀 Liquid AI Models">
+                        <option value="liquid/lfm-7b">Liquid LFM-7B</option>
+                        <option value="liquid/lfm-3b">Liquid LFM-3B</option>
+                    </optgroup>
+                    <optgroup label="🤖 Google Gemma 3">
+                        <option value="google/gemma-3-27b-it">Gemma 3 27B</option>
+                        <option value="google/gemma-3-12b-it">Gemma 3 12B</option>
+                        <option value="google/gemma-3-4b-it">Gemma 3 4B</option>
+                    </optgroup>
+                    <optgroup label="⭐ Google Gemma 3n">
+                        <option value="google/gemma-3n-e2b-it:free">Gemma 3n E2B (Free)</option>
+                        <option value="google/gemma-3n-e4b-it">Gemma 3n E4B</option>
+                    </optgroup>
+                    <optgroup label="⚡ Google Gemini Flash">
+                        <option value="google/gemini-2.0-flash-001">Gemini 2.0 Flash</option>
+                        <option value="google/gemini-2.0-flash-lite-001">Gemini 2.0 Flash Lite</option>
+                        <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
+                    </optgroup>
+                    <optgroup label="🎯 Google Gemini Pro">
+                        <option value="google/gemini-2.5-pro">Gemini 2.5 Pro</option>
+                        <option value="google/gemini-pro-1.5">Gemini Pro 1.5</option>
+                    </optgroup>
+                    <optgroup label="🔗 Other Models">
+                        <option value="markov">Markov Chain</option>
+                        <option value="wordassociation">Word Association</option>
+                    </optgroup>
                 </select>
                 <textarea id="ai-prompt" placeholder="Enter your creative prompt here..." style="width: 100%; padding: 5px; margin-bottom: 5px; height: 60px;"></textarea>
                 <button onclick="generateText()" id="generate-btn" style="width: 100%; background-color: #cc0000; color: white; border: none; padding: 5px 10px; cursor: pointer; font-size: 12px;">✨ Create Text</button>
             </div>
             <div id="dictionary-results">
-                <div id="word-info" style="display: none;">
-                    <h3 id="word-title" style="color: #cc0000; margin-bottom: 10px;"></h3>
-                    <div id="word-definition" style="margin-bottom: 10px;"></div>
-                    <div id="word-etymology" style="margin-bottom: 10px; font-style: italic;"></div>
-                    <div id="word-thesaurus">
-                        <h4 style="color: #cc0000; margin-bottom: 5px;">Synonyms:</h4>
-                        <ul id="word-synonyms" style="list-style-type: none; padding-left: 0;"></ul>
-                    </div>
-                </div>
                 <div id="ai-response">
-🚀 <strong>Liquid AI Text Generator</strong>
+🚀 <strong>AI Text Generator Powered by Puter.js</strong>
 
-• Choose "Liquid AI" for real AI responses
-• Enter your creative prompt above
+• Choose from various AI models including Liquid AI and Google Gemma
+• Enter your creative prompt above  
 • Click "Create Text" to generate
 
-<em>Note: Liquid AI connects to a live API. If unavailable, use "Local AI Simulation" for instant results.</em>
+<em>Note: Uses Puter.js "User Pays" model - free for developers, users cover their own usage costs.</em>
                 </div>
                 <div class="insert-buttons">
                     <button onclick="insertAIResponse()" style="background-color: #00cc00;">Insert into Document</button>
@@ -208,9 +222,6 @@
         <span>WordStar Online - Ready</span>
         <span id="word-count" style="font-size: 12px;">Words: 0</span>
         <span style="font-size: 12px;">© MMXXIV www.inkrealm.info</span>
-        <br>
-        <br>
-        <iframe width="600" height="600" src="https://inkrealm.info/x2" title="My Site"></iframe>
     </div>
 </div>
 
@@ -226,7 +237,8 @@
         updateWordCount();
     };
 
-    // All your existing functions remain here...
+    // ... (keep all your existing WordStar functions: newDocument, saveDocument, exportTxt, exportRtf, exportPdf, insertPoeticParagraph, insertRandomScientificWord, insertNoteToEditor, updateStatusBar, updateWordCount)
+
     function newDocument() {
         if (editor) {
             editor.setValue("");
@@ -339,7 +351,7 @@
         }
     }
 
-    // Enhanced AI generation with better user experience
+    // Enhanced AI generation with Puter.js
     async function generateText() {
         const aiPrompt = document.getElementById('ai-prompt').value;
         const aiModel = document.getElementById('ai-model-select').value;
@@ -361,17 +373,14 @@
         generateBtn.style.backgroundColor = '#666';
         
         try {
-            if (aiModel === 'liquid-ai') {
-                await generateWithLiquidAI(aiPrompt, aiResponse);
-            } else if (aiModel === 'local-simulation') {
-                await generateWithLocalSimulation(aiPrompt, aiResponse);
+            if (aiModel === 'markov' || aiModel === 'wordassociation') {
+                await generateWithSimulation(aiPrompt, aiModel, aiResponse);
             } else {
-                // Other models use enhanced simulation
-                await generateWithEnhancedSimulation(aiPrompt, aiModel, aiResponse);
+                await generateWithPuterAI(aiPrompt, aiModel, aiResponse);
             }
         } catch (error) {
             console.error("Generation error:", error);
-            aiResponse.textContent = `❌ Error: ${error.message}\n\n💡 Try using "Local AI Simulation" for instant results.`;
+            aiResponse.textContent = `❌ Error: ${error.message}\n\n💡 Try using a different model or check your connection.`;
             aiResponse.className = 'error';
             updateStatusBar("Error generating text");
         } finally {
@@ -382,119 +391,54 @@
         }
     }
 
-    async function generateWithLiquidAI(prompt, responseElement) {
-        responseElement.textContent = '🔄 Connecting to Liquid AI... Please wait.';
+    async function generateWithPuterAI(prompt, model, responseElement) {
+        responseElement.textContent = `🔄 Connecting to ${model}... Please wait.`;
         responseElement.className = 'loading';
         
-        // Try multiple API endpoints with better error handling
-        const apiEndpoints = [
-            'https://liquid.puter.com/v1/chat/completions',
-            'https://api.puter.com/v1/chat/completions'
-        ];
-        
-        let lastError = null;
-        
-        for (const endpoint of apiEndpoints) {
-            try {
-                console.log(`Trying Liquid AI endpoint: ${endpoint}`);
-                
-                const requestBody = {
-                    messages: [{
-                        role: 'user',
-                        content: prompt
-                    }],
-                    stream: false,
-                    max_tokens: 500
-                };
-                
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-                
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(requestBody),
-                    signal: controller.signal
-                });
-
-                clearTimeout(timeoutId);
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                const data = await response.json();
-                
-                if (data.choices && data.choices[0] && data.choices[0].message) {
-                    const generatedText = data.choices[0].message.content;
-                    responseElement.textContent = `✅ Liquid AI Response:\n\n${generatedText}`;
-                    responseElement.className = 'success';
-                    updateStatusBar("Text generated with Liquid AI");
-                    return;
-                } else {
-                    throw new Error("Invalid response format from API");
-                }
-                
-            } catch (error) {
-                console.warn(`Endpoint ${endpoint} failed:`, error);
-                lastError = error;
-                continue; // Try next endpoint
-            }
+        try {
+            // Use Puter.js AI chat API [citation:1]
+            const response = await puter.ai.chat(prompt, { 
+                model: model,
+                stream: false
+            });
+            
+            responseElement.textContent = `✅ ${model} Response:\n\n${response}`;
+            responseElement.className = 'success';
+            updateStatusBar(`Text generated with ${model}`);
+            
+        } catch (error) {
+            console.error("Puter.js API error:", error);
+            
+            // Fallback to simulation if Puter.js fails
+            responseElement.textContent = `❌ API Error with ${model}: ${error.message}\n\n🔄 Falling back to local simulation...`;
+            await generateWithSimulation(prompt, model, responseElement);
+            updateStatusBar("Text generated (fallback simulation)");
         }
-        
-        // If all endpoints failed, fall back to simulation
-        console.log("All Liquid AI endpoints failed, falling back to simulation");
-        await generateWithLocalSimulation(prompt, responseElement);
-        updateStatusBar("Text generated (fallback simulation)");
     }
 
-    async function generateWithLocalSimulation(prompt, responseElement) {
+    async function generateWithSimulation(prompt, model, responseElement) {
         responseElement.textContent = '🔄 Running local simulation...';
         responseElement.className = 'loading';
         
-        // Simulate API delay (shorter for local simulation)
-        await new Promise(resolve => setTimeout(resolve, 800));
+        // Simulate processing delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Enhanced local simulation with more varied responses
-        const promptWords = prompt.toLowerCase().split(/\s+/).slice(0, 5);
-        const responses = [
-            `🧠 **Local AI Simulation**\n\nBased on your prompt "${prompt}", here's a creative response:\n\nThe digital ink flows like a river of thought, carrying your ideas through the landscape of imagination. Each word builds upon the last, creating a tapestry of meaning that reflects the essence of your query.`,
-            
-            `💻 **Simulated AI Response**\n\nYour prompt "${prompt}" has sparked a chain of synthetic creativity:\n\nIn the realm of algorithmic composition, your words serve as the foundation for this generated text. The simulation explores linguistic patterns and creative associations to produce meaningful content.`,
-            
-            `🤖 **AI Simulation Result**\n\nProcessing: "${prompt}"\n\nThis response demonstrates the potential of machine-assisted writing. The words you provided have been expanded into a coherent passage that maintains the spirit of your original idea while introducing new perspectives.`
-        ];
-        
-        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-        responseElement.textContent = randomResponse;
-        responseElement.className = 'success';
-        updateStatusBar("Text generated (local simulation)");
-    }
-
-    async function generateWithEnhancedSimulation(prompt, model, responseElement) {
-        responseElement.textContent = `🔄 Simulating ${model}...`;
-        responseElement.className = 'loading';
-        
-        await new Promise(resolve => setTimeout(resolve, 600));
-        
-        const responses = {
-            'gpt2': `🤖 **GPT-2 Simulation**\n\nPrompt: "${prompt}"\n\nThis is a simulated GPT-2 response. The model would generate text by predicting the most likely next words based on patterns learned from vast amounts of text data.`,
-            'markov': `🔗 **Markov Chain Simulation**\n\nProcessing: "${prompt}"\n\nA Markov chain model would analyze word transitions and probabilities to generate text that follows similar patterns to its training data.`,
-            'wordassociation': `🧠 **Word Association Simulation**\n\nPrompt: "${prompt}"\n\nThis simulation creates text by following semantic connections between words, building associations that expand on your original idea.`
+        const simulations = {
+            'markov': `🔗 **Markov Chain Simulation**\n\nPrompt: "${prompt}"\n\nThis simulated response demonstrates how a Markov chain would generate text based on probabilistic word transitions and patterns learned from training data.`,
+            'wordassociation': `🧠 **Word Association Simulation**\n\nProcessing: "${prompt}"\n\nThis simulation creates text by following semantic connections between words, building associations that creatively expand on your original idea through linguistic patterns.`,
+            'default': `🤖 **AI Simulation**\n\nBased on your prompt "${prompt}", this simulated response demonstrates the kind of text that would be generated by the selected AI model. In a live environment, this would connect to the actual model API.`
         };
         
-        responseElement.textContent = responses[model] || `Simulated ${model} response for: "${prompt}"`;
+        const response = simulations[model] || simulations['default'];
+        responseElement.textContent = response;
         responseElement.className = 'success';
-        updateStatusBar(`Text generated (${model} simulation)`);
     }
 
-    // New utility functions for the AI response
+    // Utility functions for the AI response
     function insertAIResponse() {
         if (editor) {
             const aiResponse = document.getElementById('ai-response').textContent;
-            if (aiResponse && !aiResponse.includes('Liquid AI Text Generator')) {
+            if (aiResponse && !aiResponse.includes('AI Text Generator Powered by Puter.js')) {
                 editor.insert('\n\n' + aiResponse + '\n\n');
                 updateStatusBar("AI response inserted into document");
                 updateWordCount();
@@ -506,7 +450,7 @@
 
     function copyAIResponse() {
         const aiResponse = document.getElementById('ai-response').textContent;
-        if (aiResponse && !aiResponse.includes('Liquid AI Text Generator')) {
+        if (aiResponse && !aiResponse.includes('AI Text Generator Powered by Puter.js')) {
             navigator.clipboard.writeText(aiResponse).then(() => {
                 updateStatusBar("AI response copied to clipboard");
             }).catch(err => {
