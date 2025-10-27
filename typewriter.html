@@ -132,11 +132,14 @@
         }
         .insert-buttons {
             margin-top: 10px;
+            display: flex;
+            gap: 5px;
         }
         .insert-buttons button {
             font-size: 11px;
             padding: 3px 6px;
             margin-right: 3px;
+            flex: 1;
         }
         .model-category {
             color: #cc0000;
@@ -156,6 +159,10 @@
         }
         .footer-right iframe {
             border: none;
+        }
+        .working-model {
+            color: #00ff00 !important;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -186,10 +193,14 @@
         <div style="width: 18%; display: flex; flex-direction: column;">
             <div class="ai-section">
                 <select id="ai-model-select" style="width: 100%; padding: 5px; margin-bottom: 5px;">
-                    <optgroup label="🚀 Liquid AI Models">
-                        <option value="liquid-ai">Liquid AI (Puter API)</option>
-                        <option value="liquid/lfm-7b">Liquid LFM-7B</option>
-                        <option value="liquid/lfm-3b">Liquid LFM-3B</option>
+                    <optgroup label="🚀 DeepSeek Models (Recommended)">
+                        <option value="deepseek-chat">DeepSeek Chat (V3)</option>
+                        <option value="deepseek-reasoner">DeepSeek Reasoner (R1)</option>
+                    </optgroup>
+                    <optgroup label="✅ WORKING MODELS">
+                        <option value="google/gemma-2-9b-it:free" class="working-model">Gemma 2 9B (Free) ✅</option>
+                        <option value="google/gemma-3-4b-it:free" class="working-model">Gemma 3 4B (Free) ✅</option>
+                        <option value="google/gemma-3-12b-it:free" class="working-model">Gemma 3 12B (Free) ✅</option>
                     </optgroup>
                     <optgroup label="🤖 Google Gemini Flash">
                         <option value="google/gemini-2.0-flash-001">Gemini 2.0 Flash</option>
@@ -213,13 +224,10 @@
                     <optgroup label="💎 Google Gemma">
                         <option value="google/gemma-2-27b-it">Gemma 2 27B</option>
                         <option value="google/gemma-2-9b-it">Gemma 2 9B</option>
-                        <option value="google/gemma-2-9b-it:free">Gemma 2 9B Free</option>
                         <option value="google/gemma-3-12b-it">Gemma 3 12B</option>
-                        <option value="google/gemma-3-12b-it:free">Gemma 3 12B Free</option>
                         <option value="google/gemma-3-27b-it">Gemma 3 27B</option>
                         <option value="google/gemma-3-27b-it:free">Gemma 3 27B Free</option>
                         <option value="google/gemma-3-4b-it">Gemma 3 4B</option>
-                        <option value="google/gemma-3-4b-it:free">Gemma 3 4B Free</option>
                         <option value="google/gemma-3n-e2b-it:free">Gemma 3n E2B Free</option>
                         <option value="google/gemma-3n-e4b-it">Gemma 3n E4B</option>
                     </optgroup>
@@ -261,15 +269,24 @@
                         <ul id="word-synonyms" style="list-style-type: none; padding-left: 0;"></ul>
                     </div>
                 </div>
-                <div id="ai-response" style="white-space: pre-wrap;">To use the text generation feature:
+                <div id="ai-response" style="white-space: pre-wrap;">🚀 **AI Text Generator Powered by Puter.js**
 
-1. Choose a language model from the dropdown menu.
-2. Enter a prompt in the text area.
-3. Click the "Create Text" button.
+✅ **Working Models:**
+• DeepSeek Chat & Reasoner (Recommended!)
+• Google Gemma 2 & 3 Free models
 
-The "Liquid AI" and Google models require a Puter.js account with email confirmation. The other models are offline simulations.
+💡 **How to use:**
+1. Choose a model (DeepSeek models are fastest)
+2. Enter your prompt
+3. Click "Create Text"
 
-Try different prompts and models to see varied results. The generated text will appear here after you click "Create Text".</div>
+📝 **Note:** Puter.js models require email confirmation for full access. The free Gemma models should work without issues!
+
+Try different prompts and see what these AI models can create for you.</div>
+                <div class="insert-buttons">
+                    <button onclick="insertAIResponse()" style="background-color: #00cc00;">Insert into Document</button>
+                    <button onclick="copyAIResponse()" style="background-color: #0066cc;">Copy to Clipboard</button>
+                </div>
             </div>
         </div>
     </div>
@@ -304,6 +321,15 @@ Try different prompts and models to see varied results. The generated text will 
                 updateWordCount();
             });
         }
+        
+        // Apply working model styling
+        setTimeout(() => {
+            const workingOptions = document.querySelectorAll('.working-model');
+            workingOptions.forEach(option => {
+                option.style.color = '#00ff00';
+                option.style.fontWeight = 'bold';
+            });
+        }, 100);
     };
 
     function newDocument() {
@@ -329,7 +355,7 @@ Try different prompts and models to see varied results. The generated text will 
     }
 
     function exportTxt() {
-        saveDocument(); // This function already handles TXT export
+        saveDocument();
     }
 
     function exportRtf() {
@@ -401,7 +427,7 @@ Try different prompts and models to see varied results. The generated text will 
     }
 
     function updateStatusBar(message) {
-        const statusBarElement = document.querySelector('#statusbar span');
+        const statusBarElement = document.querySelector('#statusbar .footer-left span');
         if (statusBarElement) {
             statusBarElement.textContent = "WordStar Online - " + message;
         }
@@ -440,19 +466,19 @@ Try different prompts and models to see varied results. The generated text will 
         
         try {
             // Check if this is a Puter.js model
-            const isPuterModel = aiModel.includes('liquid') || aiModel.includes('google/');
+            const isPuterModel = aiModel.includes('google/') || aiModel === 'deepseek-chat' || aiModel === 'deepseek-reasoner';
             
             if (isPuterModel) {
                 await generateWithPuterAI(aiPrompt, aiModel, aiResponse);
             } else {
                 // For all other models, use the original placeholder response
-                aiResponse.textContent = `Generated text using ${aiModel} model based on prompt: "${aiPrompt}"\n\nThis is a placeholder response. In a full implementation, this would connect to an AI model to generate text. Only the Puter.js models are currently active.\n\nNote: Puter.js models require email confirmation to use.`;
+                aiResponse.textContent = `Generated text using ${aiModel} model based on prompt: "${aiPrompt}"\n\nThis is a placeholder response. In a full implementation, this would connect to an AI model to generate text.\n\nTry the working models for real AI responses!`;
                 aiResponse.className = 'success';
                 updateStatusBar("Text generated (placeholder)");
             }
         } catch (error) {
             console.error("Generation error:", error);
-            aiResponse.textContent = `An error occurred: ${error.message}\n\nNote: Puter.js models require email confirmation.`;
+            aiResponse.textContent = `An error occurred: ${error.message}\n\nTry using one of the confirmed working models.`;
             aiResponse.className = 'error';
             updateStatusBar("Error generating text");
         } finally {
@@ -463,17 +489,16 @@ Try different prompts and models to see varied results. The generated text will 
     }
 
     async function generateWithPuterAI(prompt, model, responseElement) {
-        responseElement.textContent = 'Connecting to Puter AI... Please wait.';
+        responseElement.textContent = `Connecting to ${model}... Please wait.`;
         responseElement.className = 'loading';
         
         try {
             // Use Puter.js AI chat API
-            // Note: This requires the user to have a Puter account with email confirmation
             const response = await puter.ai.chat(prompt, { 
                 model: model
             });
             
-            responseElement.textContent = `Response from ${model}:\n\n${response}`;
+            responseElement.textContent = `✅ ${model} Response:\n\n${response}`;
             responseElement.className = 'success';
             updateStatusBar(`Text generated with ${model}`);
             
@@ -481,13 +506,45 @@ Try different prompts and models to see varied results. The generated text will 
             console.error("Puter.js API error:", error);
             
             // Provide helpful error message
-            if (error.message.includes('auth') || error.message.includes('login')) {
-                responseElement.textContent = `Puter.js Authentication Required:\n\nTo use ${model}, you need to:\n1. Have a Puter.js account\n2. Confirm your email address\n3. Be logged in to the Puter.js service\n\nWithout authentication, only placeholder responses are available.`;
+            if (error.message && (error.message.includes('auth') || error.message.includes('login'))) {
+                responseElement.textContent = `Puter.js Authentication Required:\n\nTo use ${model}, you may need to:\n1. Have a Puter.js account\n2. Confirm your email address\n3. Be logged in to the Puter.js service\n\nTry the free Gemma models which should work without authentication!`;
             } else {
-                responseElement.textContent = `Error with ${model}: ${error.message}\n\nThis model may require Puter.js authentication with email confirmation.`;
+                responseElement.textContent = `Error with ${model}: ${error.message || 'Unknown error'}\n\nTry using one of the confirmed working models.`;
             }
             responseElement.className = 'error';
             updateStatusBar("Authentication required for Puter.js");
+        }
+    }
+
+    // Utility functions for the AI response
+    function insertAIResponse() {
+        if (editor) {
+            const aiResponse = document.getElementById('ai-response').textContent;
+            const defaultText = "🚀 **AI Text Generator Powered by Puter.js**";
+            
+            if (aiResponse && !aiResponse.includes(defaultText)) {
+                editor.insert('\n\n' + aiResponse + '\n\n');
+                updateStatusBar("AI response inserted into document");
+                updateWordCount();
+            } else {
+                alert('No AI response available to insert. Generate some text first.');
+            }
+        }
+    }
+
+    function copyAIResponse() {
+        const aiResponse = document.getElementById('ai-response').textContent;
+        const defaultText = "🚀 **AI Text Generator Powered by Puter.js**";
+        
+        if (aiResponse && !aiResponse.includes(defaultText)) {
+            navigator.clipboard.writeText(aiResponse).then(() => {
+                updateStatusBar("AI response copied to clipboard");
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy to clipboard');
+            });
+        } else {
+            alert('No AI response available to copy. Generate some text first.');
         }
     }
 </script>
