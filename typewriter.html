@@ -102,6 +102,7 @@
         #ai-response {
             white-space: pre-wrap;
             min-height: 200px;
+            line-height: 1.4;
         }
         #word-info {
             display: none;
@@ -117,9 +118,26 @@
         }
         .error {
             color: #ff6666;
+            background-color: #3a2a2a;
+            padding: 10px;
+            border-radius: 4px;
         }
         .success {
-            color: #66ff66;
+            color: #aaffaa;
+            background-color: #2a3a2a;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .ai-section {
+            margin-bottom: 15px;
+        }
+        .insert-buttons {
+            margin-top: 10px;
+        }
+        .insert-buttons button {
+            font-size: 11px;
+            padding: 3px 6px;
+            margin-right: 3px;
         }
     </style>
 </head>
@@ -148,21 +166,18 @@
             <textarea id="main-text-area" style="width: 100%; height: 100%; background-color: #1e1e1e; color: #f0f0f0; border: none; resize: none; font-family: 'Courier New', monospace; font-size: 16pt; font-weight: bold; padding: 10px;" placeholder="Start typing your document here..."></textarea>
         </div>
         <div style="width: 18%; display: flex; flex-direction: column;">
-            <div>
+            <div class="ai-section">
                 <select id="ai-model-select" style="width: 100%; padding: 5px; margin-bottom: 5px;">
-                    <option value="liquid-ai">Liquid AI (Puter API)</option>
-                    <option value="local-simulation">Local AI Simulation</option>
-                    <option value="gpt2">GPT-2</option>
-                    <option value="bert">BERT</option>
-                    <option value="t5">T5</option>
-                    <option value="roberta">RoBERTa</option>
-                    <option value="markov">Markov Chain</option>
-                    <option value="wordassociation">Word Association</option>
+                    <option value="liquid-ai">🚀 Liquid AI (Live)</option>
+                    <option value="local-simulation">💻 Local AI Simulation</option>
+                    <option value="gpt2">🤖 GPT-2</option>
+                    <option value="markov">🔗 Markov Chain</option>
+                    <option value="wordassociation">🧠 Word Association</option>
                 </select>
-                <textarea id="ai-prompt" placeholder="Enter your prompt here" style="width: 100%; padding: 5px; margin-bottom: 5px; height: 60px;"></textarea>
-                <button onclick="generateText()" id="generate-btn" style="width: 100%; background-color: #cc0000; color: white; border: none; padding: 5px 10px; cursor: pointer; font-size: 12px;">Create Text</button>
+                <textarea id="ai-prompt" placeholder="Enter your creative prompt here..." style="width: 100%; padding: 5px; margin-bottom: 5px; height: 60px;"></textarea>
+                <button onclick="generateText()" id="generate-btn" style="width: 100%; background-color: #cc0000; color: white; border: none; padding: 5px 10px; cursor: pointer; font-size: 12px;">✨ Create Text</button>
             </div>
-            <div id="dictionary-results" style="flex-grow: 1; overflow-y: auto; background-color: #2d2d2d; padding: 10px; border: 1px solid #444; font-size: 12px;">
+            <div id="dictionary-results">
                 <div id="word-info" style="display: none;">
                     <h3 id="word-title" style="color: #cc0000; margin-bottom: 10px;"></h3>
                     <div id="word-definition" style="margin-bottom: 10px;"></div>
@@ -172,15 +187,19 @@
                         <ul id="word-synonyms" style="list-style-type: none; padding-left: 0;"></ul>
                     </div>
                 </div>
-                <div id="ai-response" style="white-space: pre-wrap;">To use the text generation feature:
+                <div id="ai-response">
+🚀 <strong>Liquid AI Text Generator</strong>
 
-1. Choose "Liquid AI" for real AI responses
-2. Enter your prompt in the text area
-3. Click "Create Text"
+• Choose "Liquid AI" for real AI responses
+• Enter your creative prompt above
+• Click "Create Text" to generate
 
-The Liquid AI model connects to a live API. If it fails, try the "Local AI Simulation" for offline testing.
-
-Note: Some APIs may have CORS restrictions when running from local files.</div>
+<em>Note: Liquid AI connects to a live API. If unavailable, use "Local AI Simulation" for instant results.</em>
+                </div>
+                <div class="insert-buttons">
+                    <button onclick="insertAIResponse()" style="background-color: #00cc00;">Insert into Document</button>
+                    <button onclick="copyAIResponse()" style="background-color: #0066cc;">Copy to Clipboard</button>
+                </div>
             </div>
         </div>
     </div>
@@ -207,8 +226,7 @@ Note: Some APIs may have CORS restrictions when running from local files.</div>
         updateWordCount();
     };
 
-    // ... (all your existing functions remain the same: newDocument, saveDocument, exportTxt, exportRtf, exportPdf, insertPoeticParagraph, insertRandomScientificWord, insertNoteToEditor, updateStatusBar, updateWordCount)
-
+    // All your existing functions remain here...
     function newDocument() {
         if (editor) {
             editor.setValue("");
@@ -321,7 +339,7 @@ Note: Some APIs may have CORS restrictions when running from local files.</div>
         }
     }
 
-    // Enhanced AI generation with multiple fallbacks
+    // Enhanced AI generation with better user experience
     async function generateText() {
         const aiPrompt = document.getElementById('ai-prompt').value;
         const aiModel = document.getElementById('ai-model-select').value;
@@ -332,14 +350,15 @@ Note: Some APIs may have CORS restrictions when running from local files.</div>
         aiResponse.className = '';
         
         if (!aiPrompt.trim()) {
-            aiResponse.textContent = "Please enter a prompt.";
+            aiResponse.textContent = "❌ Please enter a prompt to generate text.";
             aiResponse.className = 'error';
             return;
         }
         
         // Disable button during generation
         generateBtn.disabled = true;
-        generateBtn.textContent = 'Generating...';
+        generateBtn.textContent = '🔄 Generating...';
+        generateBtn.style.backgroundColor = '#666';
         
         try {
             if (aiModel === 'liquid-ai') {
@@ -347,54 +366,49 @@ Note: Some APIs may have CORS restrictions when running from local files.</div>
             } else if (aiModel === 'local-simulation') {
                 await generateWithLocalSimulation(aiPrompt, aiResponse);
             } else {
-                // Other models use placeholder
-                aiResponse.textContent = `Generated text using ${aiModel} model based on prompt: "${aiPrompt}"\n\nThis is a placeholder response. In a full implementation, this would connect to an AI model to generate text.`;
-                aiResponse.className = 'success';
-                updateStatusBar("Text generated (simulation)");
+                // Other models use enhanced simulation
+                await generateWithEnhancedSimulation(aiPrompt, aiModel, aiResponse);
             }
         } catch (error) {
             console.error("Generation error:", error);
-            aiResponse.textContent = `Error: ${error.message}\n\nTry using "Local AI Simulation" instead.`;
+            aiResponse.textContent = `❌ Error: ${error.message}\n\n💡 Try using "Local AI Simulation" for instant results.`;
             aiResponse.className = 'error';
             updateStatusBar("Error generating text");
         } finally {
             // Re-enable button
             generateBtn.disabled = false;
-            generateBtn.textContent = 'Create Text';
+            generateBtn.textContent = '✨ Create Text';
+            generateBtn.style.backgroundColor = '#cc0000';
         }
     }
 
     async function generateWithLiquidAI(prompt, responseElement) {
-        responseElement.textContent = 'Connecting to Liquid AI... Please wait.';
+        responseElement.textContent = '🔄 Connecting to Liquid AI... Please wait.';
         responseElement.className = 'loading';
         
-        // Try multiple API endpoints as fallbacks
+        // Try multiple API endpoints with better error handling
         const apiEndpoints = [
             'https://liquid.puter.com/v1/chat/completions',
-            'https://api.puter.com/v1/chat/completions',
-            'https://jsonplaceholder.typicode.com/posts' // Fallback for testing
+            'https://api.puter.com/v1/chat/completions'
         ];
         
         let lastError = null;
         
         for (const endpoint of apiEndpoints) {
             try {
-                console.log(`Trying endpoint: ${endpoint}`);
+                console.log(`Trying Liquid AI endpoint: ${endpoint}`);
                 
-                const requestBody = endpoint.includes('jsonplaceholder') 
-                    ? { // Mock request for testing
-                        title: prompt,
-                        body: "This is a mock response since the real API might be unavailable.",
-                        userId: 1
-                    }
-                    : { // Real Liquid AI request
-                        messages: [{
-                            role: 'user',
-                            content: prompt
-                        }],
-                        stream: false,
-                        max_tokens: 500
-                    };
+                const requestBody = {
+                    messages: [{
+                        role: 'user',
+                        content: prompt
+                    }],
+                    stream: false,
+                    max_tokens: 500
+                };
+                
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
                 
                 const response = await fetch(endpoint, {
                     method: 'POST',
@@ -402,8 +416,10 @@ Note: Some APIs may have CORS restrictions when running from local files.</div>
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(requestBody),
-                    timeout: 10000 // 10 second timeout
+                    signal: controller.signal
                 });
+
+                clearTimeout(timeoutId);
 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -411,19 +427,15 @@ Note: Some APIs may have CORS restrictions when running from local files.</div>
 
                 const data = await response.json();
                 
-                let generatedText;
-                if (endpoint.includes('jsonplaceholder')) {
-                    // Mock response
-                    generatedText = `Mock AI Response (Real API Unavailable):\n\nBased on your prompt "${prompt}", here is a simulated response demonstrating what the Liquid AI would generate. This appears to be a creative writing piece inspired by your input.\n\nTry running this on a live server or check if the Liquid AI service is available.`;
+                if (data.choices && data.choices[0] && data.choices[0].message) {
+                    const generatedText = data.choices[0].message.content;
+                    responseElement.textContent = `✅ Liquid AI Response:\n\n${generatedText}`;
+                    responseElement.className = 'success';
+                    updateStatusBar("Text generated with Liquid AI");
+                    return;
                 } else {
-                    // Real Liquid AI response
-                    generatedText = data.choices[0].message.content;
+                    throw new Error("Invalid response format from API");
                 }
-                
-                responseElement.textContent = generatedText;
-                responseElement.className = 'success';
-                updateStatusBar("Text generated with Liquid AI");
-                return;
                 
             } catch (error) {
                 console.warn(`Endpoint ${endpoint} failed:`, error);
@@ -432,30 +444,78 @@ Note: Some APIs may have CORS restrictions when running from local files.</div>
             }
         }
         
-        // If all endpoints failed
-        throw new Error(`All API endpoints failed. Last error: ${lastError.message}`);
+        // If all endpoints failed, fall back to simulation
+        console.log("All Liquid AI endpoints failed, falling back to simulation");
+        await generateWithLocalSimulation(prompt, responseElement);
+        updateStatusBar("Text generated (fallback simulation)");
     }
 
     async function generateWithLocalSimulation(prompt, responseElement) {
-        responseElement.textContent = 'Running local simulation...';
+        responseElement.textContent = '🔄 Running local simulation...';
         responseElement.className = 'loading';
         
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Simulate API delay (shorter for local simulation)
+        await new Promise(resolve => setTimeout(resolve, 800));
         
-        // Enhanced local simulation that creates more realistic responses
+        // Enhanced local simulation with more varied responses
+        const promptWords = prompt.toLowerCase().split(/\s+/).slice(0, 5);
         const responses = [
-            `Based on your prompt "${prompt}", here is a locally generated response:\n\nThis is a simulation of what an AI might generate. The words flow like a river, carrying meaning and emotion through the digital landscape of your imagination.`,
+            `🧠 **Local AI Simulation**\n\nBased on your prompt "${prompt}", here's a creative response:\n\nThe digital ink flows like a river of thought, carrying your ideas through the landscape of imagination. Each word builds upon the last, creating a tapestry of meaning that reflects the essence of your query.`,
             
-            `Local AI Simulation for: "${prompt}"\n\nThe creative process unfolds like a delicate flower, each petal representing a different aspect of your query. In this simulated environment, we explore the boundaries of artificial creativity.`,
+            `💻 **Simulated AI Response**\n\nYour prompt "${prompt}" has sparked a chain of synthetic creativity:\n\nIn the realm of algorithmic composition, your words serve as the foundation for this generated text. The simulation explores linguistic patterns and creative associations to produce meaningful content.`,
             
-            `Simulated Response to: "${prompt}"\n\nIn the realm of synthetic thought, your prompt has sparked a chain reaction of linguistic possibilities. This response demonstrates the potential of machine-assisted creativity.`
+            `🤖 **AI Simulation Result**\n\nProcessing: "${prompt}"\n\nThis response demonstrates the potential of machine-assisted writing. The words you provided have been expanded into a coherent passage that maintains the spirit of your original idea while introducing new perspectives.`
         ];
         
         const randomResponse = responses[Math.floor(Math.random() * responses.length)];
         responseElement.textContent = randomResponse;
         responseElement.className = 'success';
         updateStatusBar("Text generated (local simulation)");
+    }
+
+    async function generateWithEnhancedSimulation(prompt, model, responseElement) {
+        responseElement.textContent = `🔄 Simulating ${model}...`;
+        responseElement.className = 'loading';
+        
+        await new Promise(resolve => setTimeout(resolve, 600));
+        
+        const responses = {
+            'gpt2': `🤖 **GPT-2 Simulation**\n\nPrompt: "${prompt}"\n\nThis is a simulated GPT-2 response. The model would generate text by predicting the most likely next words based on patterns learned from vast amounts of text data.`,
+            'markov': `🔗 **Markov Chain Simulation**\n\nProcessing: "${prompt}"\n\nA Markov chain model would analyze word transitions and probabilities to generate text that follows similar patterns to its training data.`,
+            'wordassociation': `🧠 **Word Association Simulation**\n\nPrompt: "${prompt}"\n\nThis simulation creates text by following semantic connections between words, building associations that expand on your original idea.`
+        };
+        
+        responseElement.textContent = responses[model] || `Simulated ${model} response for: "${prompt}"`;
+        responseElement.className = 'success';
+        updateStatusBar(`Text generated (${model} simulation)`);
+    }
+
+    // New utility functions for the AI response
+    function insertAIResponse() {
+        if (editor) {
+            const aiResponse = document.getElementById('ai-response').textContent;
+            if (aiResponse && !aiResponse.includes('Liquid AI Text Generator')) {
+                editor.insert('\n\n' + aiResponse + '\n\n');
+                updateStatusBar("AI response inserted into document");
+                updateWordCount();
+            } else {
+                alert('No AI response available to insert. Generate some text first.');
+            }
+        }
+    }
+
+    function copyAIResponse() {
+        const aiResponse = document.getElementById('ai-response').textContent;
+        if (aiResponse && !aiResponse.includes('Liquid AI Text Generator')) {
+            navigator.clipboard.writeText(aiResponse).then(() => {
+                updateStatusBar("AI response copied to clipboard");
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy to clipboard');
+            });
+        } else {
+            alert('No AI response available to copy. Generate some text first.');
+        }
     }
 </script>
 </body>
