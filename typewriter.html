@@ -1,176 +1,108 @@
 <!DOCTYPE html>
-<html>
-    
-    <head><base href="https://wordstar-online.com/">
-        <meta charset="UTF-8">
-        
-    <meta name="viewport" content="width=1024">
+<html lang="en">
+    <head>
+    <meta charset="UTF-8">
+     <meta name="viewport" content="width=1024">
         <meta name="keywords" content="typewriter, writing, retro, vintage, text editor, AI, generative, creative writing">
         <meta name="description" content="Experience the nostalgia of a classic typewriter with Wordstar, a web-based app that combines vintage aesthetics with modern AI-powered writing tools. Generate creative text, experiment with different writing styles, and rediscover the joy of putting words on paper (virtually!).">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>WordStar Nexus - Modern Text Editor</title><style>
- body, html {
-        height: 100%;
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background-color: #2d2d2d;
-        color: #f0f0f0;
-    }
-    .container {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-    }
-    #toolbar {
-        background-color: #1e1e1e;
-        padding: 10px;
-        display: flex;
-        justify-content: space-between;
-    }
-    #editor {
-        flex-grow: 1;
-        padding: 20px;
-        font-size: 16px;
-        line-height: 1.6;
-        background-color: #1e1e1e;
-        color: #f0f0f0;
-        border: none;
-        resize: none;
-    }
-    #statusbar {
-        background-color: #cc0000;
-        color: white;
-        padding: 5px 10px;
-        font-size: 14px;
-    }
-    button {
-        background-color: #cc0000;
-        color: white;
-        border: none;
-        padding: 5px 10px;
-        margin-right: 5px;
-        cursor: pointer;
-    }
-    button:hover {
-        background-color: #990000;
-    }
-    #dictionary-select {
-        margin-right: 10px;
-    }
-</style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
+   <title>WordStar Nexus - Modern Text Editor</title><style>
+    <title>WordStar Online</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
+    <style>
+        body { font-family: sans-serif; background-color: #121212; color: #f0f0f0; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        .container { padding: 10px; }
+        #toolbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        #toolbar button { background-color: #cc0000; color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 4px; margin-right: 5px; }
+        #notebook { background-color: #cc0000; padding: 10px; border-radius: 5px; margin-left: 10px; }
+        #notebookText { width: 200px; background-color: #1e1e1e; color: #f0f0f0; border: 1px solid black; padding: 5px; }
+        #editor { display: flex; justify-content: space-between; flex-grow: 1; }
+        #ace-editor { width: 80%; height: 100%; }
+        #main-text-area { width: 100%; height: 100%; background-color: #1e1e1e; color: #f0f0f0; border: none; resize: none; font-family: 'Courier New', monospace; font-size: 16pt; font-weight: bold; padding: 10px; }
+        #statusbar { background-color: #cc0000; display: flex; justify-content: space-between; align-items: center; padding: 5px 10px; }
+        #statusbar span { font-size: 12px; }
+    </style>
 </head>
 <body>
 <div class="container">
     <div id="toolbar">
-    <div>
-        <button onclick="newDocument()" style="background-color: #cc0000;">New</button>
-        <button onclick="saveDocument()" style="background-color: #cc0000;">Save</button>
-        <button onclick="exportTxt()" style="background-color: #cc0000;">Export TXT</button>
-        <button onclick="exportRtf()" style="background-color: #cc0000;">Export RTF</button>
-        <button onclick="exportPdf()" style="background-color: #cc0000;">Export PDF</button>
-        <button onclick="insertPoeticParagraph()" style="background-color: #cc0000;">Insert Random Poetic Paragraph</button>
-        <button onclick="insertRandomScientificWord()" style="background-color: #cc0000;">Random Word</button>
-    </div>
-        
-    <div>
-    </div>
-    <div id="notebook" style="background-color: #cc0000; padding: 10px; border-radius: 5px; margin-left: 10px;">
-        <textarea id="notebookText" rows="3" style="width: 200px; background-color: #cc0000; color: black; border: 1px solid black; padding: 5px;" placeholder="Write your note here..."></textarea>
         <div>
-    <button onclick="insertNoteToEditor()" style="background-color: black; color: #cc0000; border: none; padding: 5px 10px; margin-top: 5px; cursor: pointer;">Insert Note</button>
-</div>
-    </div>
-</div>
-    <div id="editor" style="display: flex; justify-content: space-between;">
-    <div id="ace-editor" style="width: 80%; height: 100%;">
-    <textarea id="main-text-area" style="width: 100%; height: 100%; background-color: #1e1e1e; color: #f0f0f0; border: none; resize: none; font-family: 'Courier New', monospace; font-size: 16pt; font-weight: bold; padding: 10px;" placeholder="Start typing your document here..."></textarea>
-</div>
-    <div style="width: 18%; display: flex; flex-direction: column;">
-        <div>
-    <select id="ai-model-select" style="width: 100%; padding: 5px; margin-bottom: 5px;">
-    <option value="gpt2">GPT-2</option>
-    <option value="bert">BERT</option>
-    <option value="t5">T5</option>
-    <option value="roberta">RoBERTa</option>
-    <option value="xlnet">XLNet</option>
-    <option value="elmo">ELMo</option>
-    <option value="distilbert">DistilBERT</option>
-    <option value="albert">ALBERT</option>
-    <option value="electra">ELECTRA</option>
-    <option value="markov">Markov Chain</option>
-    <option value="wordassociation">Word Association</option>
-    <option value="randomsentence">Random Sentence Generator</option>
-    <option value="gpt-neo">GPT-Neo</option>
-    <option value="gpt-j">GPT-J</option>
-    <option value="bloom">BLOOM</option>
-    <option value="opt">OPT</option>
-    <option value="llama">LLaMA</option>
-    <option value="tensorflow">TensorFlow</option>
-    <option value="pytorch">PyTorch</option>
-    <option value="huggingface">Hugging Face Transformers</option>
-    <option value="gemma-2b">Gemma 2B</option>
-    <option value="gemma-7b">Gemma 7B</option>
-    <option value="palm">PaLM</option>
-    <option value="bard">Bard</option>
-</select>
-    <textarea id="ai-prompt" placeholder="Enter your prompt here" style="width: 100%; padding: 5px; margin-bottom: 5px; height: 60px;"></textarea>
-    <button onclick="generateText()" style="width: 100%; background-color: #cc0000; color: white; border: none; padding: 5px 10px; cursor: pointer; font-size: 12px;">Create Text</button>
-</div>
-        <div id="dictionary-results" style="flex-grow: 1; overflow-y: auto; background-color: #2d2d2d; padding: 10px; border: 1px solid #444; font-size: 12px;">
-    <div id="word-info" style="display: none;">
-        <h3 id="word-title" style="color: #cc0000; margin-bottom: 10px;"></h3>
-        <div id="word-definition" style="margin-bottom: 10px;"></div>
-        <div id="word-etymology" style="margin-bottom: 10px; font-style: italic;"></div>
-        <div id="word-thesaurus">
-            <h4 style="color: #cc0000; margin-bottom: 5px;">Synonyms:</h4>
-            <ul id="word-synonyms" style="list-style-type: none; padding-left: 0;"></ul>
+            <button onclick="newDocument()">New</button>
+            <button onclick="saveDocument()">Save</button>
+            <button onclick="exportTxt()">Export TXT</button>
+            <button onclick="exportRtf()">Export RTF</button>
+            <button onclick="exportPdf()">Export PDF</button>
+            <button onclick="insertPoeticParagraph()">Insert Random Poetic Paragraph</button>
+            <button onclick="insertRandomScientificWord()">Random Word</button>
+        </div>
+        <div id="notebook">
+            <textarea id="notebookText" rows="3" placeholder="Write your note here..."></textarea>
+            <div>
+                <button onclick="insertNoteToEditor()" style="background-color: black; color: #cc0000; border: none; padding: 5px 10px; margin-top: 5px; cursor: pointer;">Insert Note</button>
+            </div>
         </div>
     </div>
-    <div id="ai-response" style="white-space: pre-wrap;">To use the text generation feature:
+    <div id="editor">
+        <div id="ace-editor" style="width: 80%; height: 500px;"></div>
+        <div style="width: 18%; display: flex; flex-direction: column;">
+            <div>
+                <select id="ai-model-select" style="width: 100%; padding: 5px; margin-bottom: 5px; background-color: #2d2d2d; color: white;">
+                    <!-- MODIFICATION 1: Changed GPT-2 to Liquid AI -->
+                    <option value="liquid-ai">Liquid AI (Puter API)</option> 
+                    <option value="bert">BERT</option>
+                    <option value="t5">T5</option>
+                    <option value="roberta">RoBERTa</option>
+                    <option value="xlnet">XLNet</option>
+                    <option value="elmo">ELMo</option>
+                    <option value="distilbert">DistilBERT</option>
+                    <option value="albert">ALBERT</option>
+                    <option value="electra">ELECTRA</option>
+                    <option value="markov">Markov Chain</option>
+                    <option value="wordassociation">Word Association</option>
+                    <option value="randomsentence">Random Sentence Generator</option>
+                    <option value="gpt-neo">GPT-Neo</option>
+                    <option value="gpt-j">GPT-J</option>
+                    <option value="bloom">BLOOM</option>
+                    <option value="opt">OPT</option>
+                    <option value="llama">LLaMA</option>
+                    <option value="tensorflow">TensorFlow</option>
+                    <option value="pytorch">PyTorch</option>
+                    <option value="huggingface">Hugging Face Transformers</option>
+                    <option value="gemma-2b">Gemma 2B</option>
+                    <option value="gemma-7b">Gemma 7B</option>
+                    <option value="palm">PaLM</option>
+                    <option value="bard">Bard</option>
+                </select>
+                <textarea id="ai-prompt" placeholder="Enter your prompt here" style="width: 100%; padding: 5px; margin-bottom: 5px; height: 60px; background-color: #2d2d2d; color: white;"></textarea>
+                <button onclick="generateText()" style="width: 100%; background-color: #cc0000; color: white; border: none; padding: 5px 10px; cursor: pointer; font-size: 12px;">Create Text</button>
+            </div>
+            <div id="dictionary-results" style="flex-grow: 1; overflow-y: auto; background-color: #2d2d2d; padding: 10px; border: 1px solid #444; font-size: 12px; margin-top: 10px;">
+                <div id="ai-response" style="white-space: pre-wrap;">To use the text generation feature:
 
 1. Choose a language model from the dropdown menu.
 2. Enter a prompt in the text area.
 3. Click the "Create Text" button.
 
-The text will be generated based on your input and the selected model. Here's a brief overview of the working models:
-
-1. Markov Chain: Generates text based on statistical patterns from a predefined dataset.
-2. Word Association: Creates text by following word associations from a custom dictionary.
-3. Random Sentence Generator: Constructs simple sentences using predefined components.
-
-These models will generate more than just repeating the prompt. Here's what to expect:
-
-- Markov Chain: Produces a sequence of words based on probabilistic transitions.
-- Word Association: Expands on the prompt by following associated words.
-- Random Sentence Generator: Creates a completely new sentence each time.
-
-The other AI models listed are currently offline simulations. In a full implementation, they would connect to more sophisticated language models.
-
-Try different prompts and models to see varied results. The generated text will appear here after you click "Create Text".</div>
-</div>
+The "Liquid AI" model is connected to a live API and will provide a real response. The other models are offline simulations.
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-    <div id="statusbar" style="background-color: #cc0000; display: flex; justify-content: space-between; align-items: center;">
+<div id="statusbar">
     <span>WordStar Online - Ready</span>
-    <span id="word-count" style="font-size: 12px;">Words: 0</span>
-    <span style="font-size: 12px;">© MMXXIV www.inkrealm.info</span>
-        <br>
-        <br>
-        
-    <iframe width="600" height="600" src="https://inkrealm.info/x2" title="My Site"></iframe>
-</div>
+    <span id="word-count">Words: 0</span>
+    <span>© MMXXIV www.inkrealm.info</span>
 </div>
 
-    
 <script>
     let editor;
 
-    // Initialize editor when the page loads
     window.onload = function() {
         editor = ace.edit("ace-editor");
         editor.setTheme("ace/theme/monokai");
         editor.session.setMode("ace/mode/text");
+        editor.session.on('change', updateWordCount);
         updateWordCount();
     };
 
@@ -178,7 +110,6 @@ Try different prompts and models to see varied results. The generated text will 
         if (editor) {
             editor.setValue("");
             updateStatusBar("New document created");
-            updateWordCount();
         }
     }
 
@@ -195,10 +126,8 @@ Try different prompts and models to see varied results. The generated text will 
             updateStatusBar("Document saved");
         }
     }
-
-    function exportTxt() {
-        saveDocument(); // This function already handles TXT export
-    }
+    
+    function exportTxt() { saveDocument(); }
 
     function exportRtf() {
         if (editor) {
@@ -219,12 +148,9 @@ Try different prompts and models to see varied results. The generated text will 
         if (editor && window.jspdf) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            const content = editor.getValue();
-            doc.text(content, 10, 10);
+            doc.text(editor.getValue(), 10, 10);
             doc.save("document.pdf");
             updateStatusBar("Document exported as PDF");
-        } else {
-            console.error("jsPDF is not available or editor is not initialized");
         }
     }
 
@@ -233,25 +159,15 @@ Try different prompts and models to see varied results. The generated text will 
             const poeticParagraphs = [
                 "Whispers of twilight dance on autumn leaves,\nAs golden hues paint the sky's canvas,\nNature's symphony echoes through the trees,\nA moment of beauty, forever to last.",
                 "Moonlit waves caress the shore,\nStars above, a cosmic dance,\nIn this quiet, forevermore,\nWe find life's gentle romance.",
-                "Sunflowers reach for azure skies,\nTheir petals, a sea of gold,\nIn fields where summer never dies,\nAnd stories of light unfold."
             ];
-            const randomParagraph = poeticParagraphs[Math.floor(Math.random() * poeticParagraphs.length)];
-            editor.insert(randomParagraph + "\n\n");
-            updateStatusBar("Poetic paragraph inserted");
-            updateWordCount();
+            editor.insert(poeticParagraphs[Math.floor(Math.random() * poeticParagraphs.length)] + "\n\n");
         }
     }
 
     function insertRandomScientificWord() {
         if (editor) {
-            const scientificWords = [
-                "Quantum", "Photosynthesis", "Entropy", "Mitochondria", "Neuroplasticity",
-                "Genome", "Algorithm", "Nanotechnology", "Thermodynamics", "Synapse"
-            ];
-            const randomWord = scientificWords[Math.floor(Math.random() * scientificWords.length)];
-            editor.insert(randomWord + " ");
-            updateStatusBar("Random scientific word inserted");
-            updateWordCount();
+            const scientificWords = ["Quantum", "Photosynthesis", "Entropy", "Mitochondria", "Neuroplasticity"];
+            editor.insert(scientificWords[Math.floor(Math.random() * scientificWords.length)] + " ");
         }
     }
 
@@ -259,54 +175,75 @@ Try different prompts and models to see varied results. The generated text will 
         if (editor) {
             const noteContent = document.getElementById('notebookText').value;
             if (noteContent.trim() === '') {
-                alert('Note is empty. Please write something before inserting.');
+                alert('Note is empty.');
                 return;
             }
             editor.insert(noteContent + '\n');
-            updateStatusBar("Note inserted into main text area");
-            updateWordCount();
         }
     }
 
     function updateStatusBar(message) {
-        const statusBarElement = document.querySelector('#statusbar span');
-        if (statusBarElement) {
-            statusBarElement.textContent = "WordStar Online - " + message;
-        }
+        document.querySelector('#statusbar span').textContent = "WordStar Online - " + message;
     }
 
     function updateWordCount() {
         if (editor) {
             const content = editor.getValue();
-            const wordCount = content.trim().split(/\s+/).length;
-            const wordCountElement = document.getElementById('word-count');
-            if (wordCountElement) {
-                wordCountElement.textContent = `Words: ${wordCount}`;
-            }
+            const wordCount = content.trim() === '' ? 0 : content.trim().split(/\s+/).length;
+            document.getElementById('word-count').textContent = `Words: ${wordCount}`;
         }
     }
 
-    // Add event listener for content changes
-    if (editor) {
-        editor.session.on('change', function() {
-            updateWordCount();
-        });
-    }
-
-    // Initialize word count on page load
-    updateWordCount();
-
-    // Function to generate text (placeholder implementation)
-    function generateText() {
+    // MODIFICATION 2: Replaced placeholder function with a real API call
+    async function generateText() {
         const aiPrompt = document.getElementById('ai-prompt').value;
         const aiModel = document.getElementById('ai-model-select').value;
         const aiResponse = document.getElementById('ai-response');
-        
-        // Simple placeholder response
-        aiResponse.textContent = `Generated text using ${aiModel} model based on prompt: "${aiPrompt}"\n\nThis is a placeholder response. In a full implementation, this would connect to an AI model to generate text. Scroll down for a slow notepad or to get a working model, visit inkrealm.info/app.`;
+
+        if (aiModel === 'liquid-ai') {
+            // This is the working model, so we make a real API call
+            if (!aiPrompt.trim()) {
+                aiResponse.textContent = "Please enter a prompt.";
+                return;
+            }
+            
+            aiResponse.textContent = 'Generating with Liquid AI... Please wait.';
+            
+            try {
+                const response = await fetch('https://liquid.puter.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        messages: [{
+                            role: 'user',
+                            content: aiPrompt
+                        }],
+                        stream: false // We want the full response at once
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error.message || `HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const generatedText = data.choices[0].message.content;
+                
+                aiResponse.textContent = generatedText;
+                
+            } catch (error) {
+                console.error("API Error:", error);
+                aiResponse.textContent = "An error occurred while fetching the response: " + error.message;
+            }
+
+        } else {
+            // For all other models, use the original placeholder response
+            aiResponse.textContent = `Generated text using ${aiModel} model based on prompt: "${aiPrompt}"\n\nThis is a placeholder response. In a full implementation, this would connect to an AI model to generate text. Only the "Liquid AI" option is currently active.`;
+        }
     }
 </script>
-</body></html>
-    
-
-
+</body>
+</html>
