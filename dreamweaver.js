@@ -1,37 +1,35 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 
 // --- START: Icon Components ---
 // All icons are consolidated here for simplicity.
 
-type IconProps = React.HTMLAttributes<SVGElement>;
-
-const SparklesIcon: React.FC<IconProps> = (props) => (
+const SparklesIcon = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props} >
     <path fillRule="evenodd" d="M9.315 7.584C12.195 3.883 16.695 1.5 21.75 1.5a.75.75 0 01.75.75c0 5.056-2.383 9.555-6.084 12.436A6.75 6.75 0 019.75 22.5a.75.75 0 01-.75-.75v-7.182o-.001-.001a6.72 6.72 0 01-2.22 3.182.75.75 0 01-1.07-.478A5.25 5.25 0 016 13.5v-3.75a.75.75 0 01.75-.75h3.355a2.25 2.25 0 01.188 0l.001.001h.001L9.315 7.584zM12 15.375a3.75 3.75 0 013.75-3.75H18a3.75 3.75 0 013.75 3.75v3.75a3.75 3.75 0 01-3.75 3.75H15.75a3.75 3.75 0 01-3.75-3.75v-3.75z" clipRule="evenodd" />
   </svg>
 );
 
-const DocumentTextIcon: React.FC<IconProps> = (props) => (
+const DocumentTextIcon = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
     <path fillRule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a.375.375 0 01-.375-.375V6.75A3.75 3.75 0 0010.5 3h-4.875C5.663 3 5.641 3 5.625 3zM12 9V4.875c0-.621.504-1.125 1.125-1.125H13.5v3.75c0 .621.504 1.125 1.125 1.125h3.75v9.375a.375.375 0 01-.375.375H5.625a.375.375 0 01-.375-.375V3.375c0-.207.168-.375.375-.375h4.875c.621 0 1.125.504 1.125 1.125V9z" clipRule="evenodd" />
     <path d="M10.5 13.5a.75.75 0 01.75-.75h4.5a.75.75 0 010 1.5h-4.5a.75.75 0 01-.75-.75zm0 3a.75.75 0 01.75-.75h4.5a.75.75 0 010 1.5h-4.5a.75.75 0 01-.75-.75z" />
   </svg>
 );
 
-const PaperAirplaneIcon: React.FC<IconProps> = (props) => (
+const PaperAirplaneIcon = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
     <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
   </svg>
 );
 
-const ExclamationTriangleIcon: React.FC<IconProps> = (props) => (
+const ExclamationTriangleIcon = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
     <path fillRule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.598 4.5H4.644c-2.308 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
   </svg>
 );
 
-const InformationCircleIcon: React.FC<IconProps> = (props) => (
+const InformationCircleIcon = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
         <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836.042-.02a.75.75 0 01.67 1.34l-.042.022c-1.147.573-2.438-.463-2.127-1.706l.71-2.836-.042.02a.75.75 0 11-.671-1.34l.041-.022zM12 9a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
     </svg>
@@ -39,14 +37,14 @@ const InformationCircleIcon: React.FC<IconProps> = (props) => (
 // --- END: Icon Components ---
 
 // --- START: Helper Components ---
-const LoadingIndicator: React.FC<{ text: string }> = ({ text }) => (
+const LoadingIndicator = ({ text }) => (
   <div className="flex flex-col items-center justify-center space-y-2 p-4 bg-gray-800/50 rounded-lg">
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-light"></div>
     <p className="text-gray-400 text-sm">{text}</p>
   </div>
 );
 
-const ErrorDisplay: React.FC<{ message: string }> = ({ message }) => (
+const ErrorDisplay = ({ message }) => (
   <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg relative flex items-start space-x-2" role="alert">
     <ExclamationTriangleIcon className="h-5 w-5 mt-0.5 flex-shrink-0" />
     <div>
@@ -56,12 +54,12 @@ const ErrorDisplay: React.FC<{ message: string }> = ({ message }) => (
   </div>
 );
 
-const FormattedAnswer: React.FC<{ text: string }> = ({ text }) => {
+const FormattedAnswer = ({ text }) => {
     const lines = text.split('\n');
-    const renderedElements: React.ReactNode[] = [];
-    let listItems: { key: number; content: string }[] = [];
+    const renderedElements = [];
+    let listItems = [];
 
-    const closeList = (key: string) => {
+    const closeList = (key) => {
         if (listItems.length > 0) {
             renderedElements.push(
                 <ul key={key} className="list-disc pl-5 space-y-2 my-2">
@@ -95,10 +93,10 @@ const FormattedAnswer: React.FC<{ text: string }> = ({ text }) => {
 
     closeList('ul-end');
 
-    return <>{renderedElements}</>;
+    return renderedElements;
 };
 
-const AnswerDisplay: React.FC<{ answer: string; isLoading: boolean }> = ({ answer, isLoading }) => {
+const AnswerDisplay = ({ answer, isLoading }) => {
   if (isLoading && !answer) {
     return <LoadingIndicator text="AI is preparing the answer..." />;
   }
@@ -122,21 +120,34 @@ const AnswerDisplay: React.FC<{ answer: string; isLoading: boolean }> = ({ answe
 // --- END: Helper Components ---
 
 // --- START: Main App Component ---
-// --- START: Main App Component ---
 function App() {
-  const [documentContent, setDocumentContent] = useState<string>('');
-  const [tempDocumentContent, setTempDocumentContent] = useState<string>('');
-  const [question, setQuestion] = useState<string>('');
-  const [answer, setAnswer] = useState<string>('');
-  const [isAsking, setIsAsking] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState<string>('deepseek-chat');
-  const [dreamweaverDocs, setDreamweaverDocs] = useState<string>(''); // NEW
+  const [documentContent, setDocumentContent] = useState('');
+  const [tempDocumentContent, setTempDocumentContent] = useState('');
+  const [question, setQuestion] = useState('');
+  const [answer, setAnswer] = useState('');
+  const [isAsking, setIsAsking] = useState(false);
+  const [error, setError] = useState(null);
+  const [selectedModel, setSelectedModel] = useState('deepseek-chat');
+  const [dreamweaverDocs, setDreamweaverDocs] = useState('');
   
-  const questionTextareaRef = useRef<HTMLTextAreaElement>(null); // ADD THIS LINE
+  const questionTextareaRef = useRef(null);
+
+  // Define available DeepSeek models 
+  const availableModels = [
+    {
+      id: 'deepseek-chat',
+      name: 'DeepSeek Chat (V3.1)',
+      description: 'Best for general conversations, writing, and coding'
+    },
+    {
+      id: 'deepseek-reasoner', 
+      name: 'DeepSeek Reasoner (R1)',
+      description: 'Best for complex reasoning, math, and step-by-step analysis'
+    }
+  ];
 
   // NEW: Load your dreamweaver.txt automatically
-  useEffect(() => { // ADD useEffect IMPORT AT TOP: import { useState, useCallback, useRef, useEffect } from 'react';
+  useEffect(() => {
     const loadDreamweaverDocs = async () => {
       try {
         const response = await fetch('https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/dreamweaver.txt');
@@ -177,7 +188,7 @@ Please answer based on BOTH the Dreamweaver documentation and the user's documen
     
     try {
       // Use Puter's DeepSeek API
-      const response = await (window as any).puter.ai.chat(prompt, {
+      const response = await window.puter.ai.chat(prompt, {
         model: selectedModel,
         stream: true
       });
@@ -189,14 +200,14 @@ Please answer based on BOTH the Dreamweaver documentation and the user's documen
         }
       }
 
-    } catch (err: unknown) {
+    } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred while asking the question.';
       setError(errorMessage);
       console.error("Error calling DeepSeek API:", err);
     } finally {
       setIsAsking(false);
     }
-  }, [question, documentContent, isAsking, selectedModel, dreamweaverDocs]); // ADD dreamweaverDocs to dependencies
+  }, [question, documentContent, isAsking, selectedModel, dreamweaverDocs]);
   
   const handleLoadDocument = () => {
     if (!tempDocumentContent.trim()) {
@@ -215,7 +226,7 @@ Please answer based on BOTH the Dreamweaver documentation and the user's documen
     setError(null);
   }
 
-  const handleQuestionKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleQuestionKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleAskQuestion();
@@ -385,7 +396,7 @@ if (container) {
     tailwindScript.src = 'https://cdn.tailwindcss.com';
     tailwindScript.onload = () => {
       // Configure Tailwind
-      (window as any).tailwind.config = {
+      window.tailwind.config = {
         theme: {
           extend: {
             colors: {
@@ -400,9 +411,9 @@ if (container) {
       setTimeout(() => {
           const root = ReactDOM.createRoot(appRoot);
           root.render(
-              <React.StrictMode>
-                  <App />
-              </React.StrictMode>
+              React.createElement(React.StrictMode, null,
+                React.createElement(App)
+              )
           );
       }, 0);
     };
