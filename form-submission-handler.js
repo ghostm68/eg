@@ -1,7 +1,11 @@
 /*
  * A clean, modern, and dependency-free form submission handler.
+ * This version waits for the HTML to be fully loaded before running.
  */
-(function() {
+
+// We wrap the entire script in this event listener.
+document.addEventListener('DOMContentLoaded', function() {
+
     // Get the form element from the HTML. Make sure the 'id' matches!
     const form = document.getElementById('contact-form');
     // Get the element where we will display status messages
@@ -9,7 +13,7 @@
 
     if (!form) {
         console.error("Error: Could not find the form with id 'contact-form'.");
-        return;
+        return; // Stop if the form doesn't exist
     }
     
     if (!statusMessage) {
@@ -23,11 +27,11 @@
 
         // Get all the data from the form
         const data = new FormData(event.target);
-        const scriptURL = event.target.action; // Get the URL from the form's 'action' attribute
+        const scriptURL = event.target.action;
 
         // Display a "sending" message
         if (statusMessage) {
-            statusMessage.style.display = 'block';
+            statusMessage.style.display = 'block'; // Make it visible
             statusMessage.textContent = 'Sending...';
         }
         
@@ -59,4 +63,5 @@
 
     // Attach the handleSubmit function to the form's 'submit' event.
     form.addEventListener('submit', handleSubmit);
-})();
+    
+}); // This closes the DOMContentLoaded listener
