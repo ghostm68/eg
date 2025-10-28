@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
-import { GoogleGenAI } from '@google/genai';
 
 // --- START: Icon Components ---
 // All icons are consolidated here for simplicity.
@@ -37,30 +36,9 @@ const InformationCircleIcon: React.FC<IconProps> = (props) => (
         <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836.042-.02a.75.75 0 01.67 1.34l-.042.022c-1.147.573-2.438-.463-2.127-1.706l.71-2.836-.042.02a.75.75 0 11-.671-1.34l.041-.022zM12 9a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
     </svg>
 );
-
 // --- END: Icon Components ---
 
-
-// --- START: React Components ---
-
-// This component is rendered if the API key is missing.
-const ApiKeyError: React.FC = () => (
-    <div className="min-h-screen bg-gray-900 text-gray-200 flex flex-col items-center justify-center font-sans p-4">
-      <div className="w-full max-w-2xl bg-red-900/50 border border-red-700 text-red-300 px-6 py-5 rounded-lg flex items-start space-x-4" role="alert">
-        <ExclamationTriangleIcon className="h-8 w-8 mt-1 flex-shrink-0" />
-        <div>
-          <h2 className="font-bold text-lg mb-1">Configuration Error</h2>
-          <p>The Gemini API key is missing. This application cannot function without it.</p>
-          <p className="text-sm text-red-400 mt-2">
-            Please ensure the <code>API_KEY</code> environment variable is correctly set up in your deployment environment.
-          </p>
-        </div>
-      </div>
-    </div>
-);
-
-
-// Helper component for loading states
+// --- START: Helper Components ---
 const LoadingIndicator: React.FC<{ text: string }> = ({ text }) => (
   <div className="flex flex-col items-center justify-center space-y-2 p-4 bg-gray-800/50 rounded-lg">
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-light"></div>
@@ -68,7 +46,6 @@ const LoadingIndicator: React.FC<{ text: string }> = ({ text }) => (
   </div>
 );
 
-// Helper component for displaying errors
 const ErrorDisplay: React.FC<{ message: string }> = ({ message }) => (
   <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg relative flex items-start space-x-2" role="alert">
     <ExclamationTriangleIcon className="h-5 w-5 mt-0.5 flex-shrink-0" />
@@ -79,7 +56,6 @@ const ErrorDisplay: React.FC<{ message: string }> = ({ message }) => (
   </div>
 );
 
-// New component for rendering Markdown-like text
 const FormattedAnswer: React.FC<{ text: string }> = ({ text }) => {
     const lines = text.split('\n');
     const renderedElements: React.ReactNode[] = [];
@@ -122,17 +98,16 @@ const FormattedAnswer: React.FC<{ text: string }> = ({ text }) => {
     return <>{renderedElements}</>;
 };
 
-// Helper component for the answer display, now with streaming indicator
 const AnswerDisplay: React.FC<{ answer: string; isLoading: boolean }> = ({ answer, isLoading }) => {
   if (isLoading && !answer) {
-    return <LoadingIndicator text="Gemini is preparing the answer..." />;
+    return <LoadingIndicator text="AI is preparing the answer..." />;
   }
 
   if (!answer && !isLoading) {
     return (
       <div className="flex items-start space-x-3 p-4 bg-gray-800/50 rounded-lg h-full">
         <InformationCircleIcon className="h-6 w-6 text-brand-light flex-shrink-0" />
-        <p className="text-gray-400">The answer from Gemini will appear here once you ask a question.</p>
+        <p className="text-gray-400">The answer from AI will appear here once you ask a question.</p>
       </div>
     );
   }
@@ -144,21 +119,33 @@ const AnswerDisplay: React.FC<{ answer: string; isLoading: boolean }> = ({ answe
     </div>
   );
 };
+// --- END: Helper Components ---
 
-
-interface AppProps {
-  ai: GoogleGenAI;
-}
-
-function App({ ai }: AppProps) {
+// --- START: Main App Component ---
+function App() {
   const [documentContent, setDocumentContent] = useState<string>('');
   const [tempDocumentContent, setTempDocumentContent] = useState<string>('');
   const [question, setQuestion] = useState<string>('');
   const [answer, setAnswer] = useState<string>('');
   const [isAsking, setIsAsking] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState<string>('deepseek-chat');
   
   const questionTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Define available DeepSeek models 
+  const availableModels = [
+    {
+      id: 'deepseek-chat',
+      name: 'DeepSeek Chat (V3.1)',
+      description: 'Best for general conversations, writing, and coding'
+    },
+    {
+      id: 'deepseek-reasoner', 
+      name: 'DeepSeek Reasoner (R1)',
+      description: 'Best for complex reasoning, math, and step-by-step analysis'
+    }
+  ];
 
   const handleAskQuestion = useCallback(async () => {
     if (!question.trim() || !documentContent || isAsking) return;
@@ -178,23 +165,27 @@ function App({ ai }: AppProps) {
     ${question}`;
     
     try {
-        const stream = await ai.models.generateContentStream({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-        });
+      // Use Puter's DeepSeek API
+      const response = await (window as any).puter.ai.chat(prompt, {
+        model: selectedModel,
+        stream: true
+      });
 
-        for await (const chunk of stream) {
-            setAnswer((prev) => prev + chunk.text);
+      // Handle streaming response
+      for await (const chunk of response) {
+        if (chunk?.text) {
+          setAnswer((prev) => prev + chunk.text);
         }
+      }
 
     } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred while asking the question.';
-        setError(errorMessage);
-        console.error("Error calling Gemini API:", err);
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred while asking the question.';
+      setError(errorMessage);
+      console.error("Error calling DeepSeek API:", err);
     } finally {
-        setIsAsking(false);
+      setIsAsking(false);
     }
-  }, [ai, question, documentContent, isAsking]);
+  }, [question, documentContent, isAsking, selectedModel]);
   
   const handleLoadDocument = () => {
     if (!tempDocumentContent.trim()) {
@@ -231,7 +222,7 @@ function App({ ai }: AppProps) {
     <header className="bg-gray-900/80 backdrop-blur-sm border-b border-gray-700 sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-center">
         <SparklesIcon className="h-8 w-8 text-brand-primary" />
-        <h1 className="ml-3 text-2xl font-bold tracking-tight text-white">Document Q&A with Gemini</h1>
+        <h1 className="ml-3 text-2xl font-bold tracking-tight text-white">Dreamweaver AI</h1>
         </div>
     </header>
   );
@@ -249,7 +240,7 @@ function App({ ai }: AppProps) {
             </div>
 
             <p className="text-gray-400">
-                Instead of fetching a file, please paste the content of the document you want to analyze below.
+                Paste the content of the document you want to analyze below.
             </p>
 
             {error && <ErrorDisplay message={error} />}
@@ -283,6 +274,29 @@ function App({ ai }: AppProps) {
             <div className="flex items-center space-x-2">
                 <SparklesIcon className="h-6 w-6 text-brand-primary" />
                 <h2 className="text-xl font-semibold text-white">Ask about the document</h2>
+            </div>
+
+            {/* Model Selection Dropdown */}
+            <div className="bg-gray-800/50 p-4 rounded-lg">
+              <label htmlFor="model-select" className="block text-sm font-medium text-gray-300 mb-2">
+                Select AI Model
+              </label>
+              <select
+                id="model-select"
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                disabled={isAsking}
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg text-gray-200 p-2 focus:ring-2 focus:ring-brand-primary focus:border-brand-primary"
+              >
+                {availableModels.map((model) => (
+                  <option key={model.id} value={model.id}>
+                    {model.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-sm text-gray-400 mt-2">
+                {availableModels.find(m => m.id === selectedModel)?.description}
+              </p>
             </div>
 
             <div className="flex items-center justify-between p-3 bg-gray-800/50 border border-gray-700 rounded-lg">
@@ -338,64 +352,53 @@ function App({ ai }: AppProps) {
     </div>
   );
 }
-
-// --- END: React Components ---
-
+// --- END: Main App Component ---
 
 // --- START: Embedding Logic ---
-// This is the code that will find the container on your page and inject the app.
-
 const CONTAINER_ID = 'gemini-qa-app'; 
 
 const container = document.getElementById(CONTAINER_ID);
 
 if (container) {
-  // Create a Shadow DOM to encapsulate styles and structure.
   const shadowRoot = container.attachShadow({ mode: 'open' });
-
-  // Create the root element for the React app inside the Shadow DOM.
   const appRoot = document.createElement('div');
   appRoot.id = 'root';
   shadowRoot.appendChild(appRoot);
 
-  // Inject Tailwind CSS for styling.
-  const tailwindScript = document.createElement('script');
-  tailwindScript.src = 'https://cdn.tailwindcss.com';
-  tailwindScript.onload = () => {
-    // Configure Tailwind for our app.
-    (window as any).tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            'brand-primary': '#4f46e5',
-            'brand-secondary': '#7c3aed',
-            'brand-light': '#a5b4fc',
+  // Load Puter.js SDK
+  const puterScript = document.createElement('script');
+  puterScript.src = 'https://js.puter.com/v2/';
+  puterScript.onload = () => {
+    // Load Tailwind CSS
+    const tailwindScript = document.createElement('script');
+    tailwindScript.src = 'https://cdn.tailwindcss.com';
+    tailwindScript.onload = () => {
+      // Configure Tailwind
+      (window as any).tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'brand-primary': '#4f46e5',
+              'brand-secondary': '#7c3aed',
+              'brand-light': '#a5b4fc',
+            }
           }
         }
-      }
-    };
+      };
 
-    // A slight delay ensures Tailwind is ready before rendering.
-    setTimeout(() => {
-        const root = ReactDOM.createRoot(appRoot);
-        
-        // Check for the API key before rendering the main app.
-        if (!process.env.API_KEY) {
-            root.render(<ApiKeyError />);
-        } else { 
-            // Initialize the Gemini client and pass it to the app.
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-            root.render(
-                <React.StrictMode>
-                    <App ai={ai} />
-                </React.StrictMode>
-            );
-        }
-    }, 0);
+      setTimeout(() => {
+          const root = ReactDOM.createRoot(appRoot);
+          root.render(
+              <React.StrictMode>
+                  <App />
+              </React.StrictMode>
+          );
+      }, 0);
+    };
+    shadowRoot.appendChild(tailwindScript);
   };
-  shadowRoot.appendChild(tailwindScript);
+  shadowRoot.appendChild(puterScript);
   
-  // Add base styles to ensure the app container fills the host element.
   const styleElement = document.createElement('style');
   styleElement.textContent = `
     #root { 
@@ -404,9 +407,7 @@ if (container) {
     }
   `;
   shadowRoot.appendChild(styleElement);
-
 } else {
-  console.warn(`[Gemini Q&A App] Could not find container element with id #${CONTAINER_ID} to mount to.`);
+  console.warn(`[Dreamweaver AI] Could not find container element with id #${CONTAINER_ID} to mount to.`);
 }
-
 // --- END: Embedding Logic ---
