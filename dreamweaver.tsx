@@ -366,7 +366,7 @@ Please answer based on BOTH the Dreamweaver documentation and the user's documen
 // --- END: Main App Component ---
 
 // --- START: Embedding Logic ---
-const CONTAINER_ID = 'gemini-qa-app'; 
+const CONTAINER_ID = 'dreamweaver-ai-app';
 
 const container = document.getElementById(CONTAINER_ID);
 
