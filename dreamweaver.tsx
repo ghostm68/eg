@@ -3,10 +3,43 @@ import ReactDOM from 'react-dom/client';
 import { GoogleGenAI } from "@google/genai";
 
 // --- START: Gemini Service ---
-if (!process.env.API_KEY) {
-    throw new Error("API_KEY environment variable not set");
+// ---  START: Gemini Service ---
+// Note: This service is now initialized only after checking for the API key.
+// ---  END: Gemini Service ---
+
+// ...
+
+interface AppProps {
+  ai: GoogleGenAI;
 }
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+function  App({ ai }: AppProps) {
+    // ...
+    const askQuestionAboutDocument = useCallback(async (doc : string, q: string): Promise<string> => {
+        // ... uses the 'ai' prop
+     }, [ai]);
+    // ...
+}
+
+// ...
+
+// --- START: Embedding Logic ---
+//  ...
+if (container) {
+    // ...
+    // Check for the API key before rendering the main app
+    if  (!process.env.API_KEY) {
+        root.render(<ApiKeyError />);
+    } else { 
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        root. render(
+            <React.StrictMode>
+                <App ai={ai} />
+            </React.StrictMode >
+        );
+    }
+    // ...
+}
 
 async function askQuestionAboutDocument(documentContent: string, question: string): Promise<string> {
     try {
