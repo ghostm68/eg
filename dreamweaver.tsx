@@ -122,6 +122,7 @@ const AnswerDisplay: React.FC<{ answer: string; isLoading: boolean }> = ({ answe
 // --- END: Helper Components ---
 
 // --- START: Main App Component ---
+// --- START: Main App Component ---
 function App() {
   const [documentContent, setDocumentContent] = useState<string>('');
   const [tempDocumentContent, setTempDocumentContent] = useState<string>('');
@@ -130,22 +131,24 @@ function App() {
   const [isAsking, setIsAsking] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState<string>('deepseek-chat');
+  const [dreamweaverDocs, setDreamweaverDocs] = useState<string>(''); // NEW
   
-  const questionTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const questionTextareaRef = useRef<HTMLTextAreaElement>(null); // ADD THIS LINE
 
-  // Define available DeepSeek models 
-  const availableModels = [
-    {
-      id: 'deepseek-chat',
-      name: 'DeepSeek Chat (V3.1)',
-      description: 'Best for general conversations, writing, and coding'
-    },
-    {
-      id: 'deepseek-reasoner', 
-      name: 'DeepSeek Reasoner (R1)',
-      description: 'Best for complex reasoning, math, and step-by-step analysis'
-    }
-  ];
+  // NEW: Load your dreamweaver.txt automatically
+  useEffect(() => { // ADD useEffect IMPORT AT TOP: import { useState, useCallback, useRef, useEffect } from 'react';
+    const loadDreamweaverDocs = async () => {
+      try {
+        const response = await fetch('https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/dreamweaver.txt');
+        const docs = await response.text();
+        setDreamweaverDocs(docs);
+      } catch (err) {
+        console.error('Failed to load Dreamweaver docs:', err);
+      }
+    };
+    
+    loadDreamweaverDocs();
+  }, []);
 
   const handleAskQuestion = useCallback(async () => {
     if (!question.trim() || !documentContent || isAsking) return;
@@ -154,15 +157,23 @@ function App() {
     setIsAsking(true);
     setAnswer('');
 
-    const prompt = `Based on the following document, please provide a concise and accurate answer to the user's question. Format your response using basic markdown where appropriate (e.g., lists, bolding).
+    // MODIFIED: Include both user's document AND your dreamweaver docs
+    const prompt = `You are an expert assistant for the Dreamweaver AI tool. 
 
-    DOCUMENT:
-    ---
-    ${documentContent}
-    ---
-    
-    QUESTION:
-    ${question}`;
+DREAMWEAVER DOCUMENTATION:
+---
+${dreamweaverDocs}
+---
+
+USER'S DOCUMENT:
+---
+${documentContent}
+---
+
+QUESTION:
+${question}
+
+Please answer based on BOTH the Dreamweaver documentation and the user's document.`;
     
     try {
       // Use Puter's DeepSeek API
@@ -185,7 +196,7 @@ function App() {
     } finally {
       setIsAsking(false);
     }
-  }, [question, documentContent, isAsking, selectedModel]);
+  }, [question, documentContent, isAsking, selectedModel, dreamweaverDocs]); // ADD dreamweaverDocs to dependencies
   
   const handleLoadDocument = () => {
     if (!tempDocumentContent.trim()) {
