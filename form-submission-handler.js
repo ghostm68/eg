@@ -1,41 +1,62 @@
-// Replace your existing doPost function with this one
-function doPost(e) {
-  // Log the raw data received by the script. This is the most important step.
-  console.log("Received data from form:");
-  console.log(JSON.stringify(e, null, 2)); 
+/*
+ * A clean, modern, and dependency-free form submission handler.
+ */
+(function() {
+    // Get the form element from the HTML. Make sure the 'id' matches!
+    const form = document.getElementById('contact-form');
+    // Get the element where we will display status messages
+    const statusMessage = document.getElementById('form-status-message');
 
-  try {
-    // --- The rest of your original code would go here ---
-    // For example:
-    MailApp.sendEmail({
-      to: "YOUR_EMAIL@EXAMPLE.COM", // Make sure to put your actual email here
-      subject: "New Contact Form Submission",
-      htmlBody: formatMailBody(e.parameter) // We assume the error is here
-    });
-
-    // Return a success response
-    return ContentService
-      .createTextOutput(JSON.stringify({ "result": "success" }))
-      .setMimeType(ContentService.MimeType.JSON);
-
-  } catch (error) {
-    // Log any errors that occur
-    console.error("Error executing script:", error);
+    if (!form) {
+        console.error("Error: Could not find the form with id 'contact-form'.");
+        return;
+    }
     
-    // Return an error response
-    return ContentService
-      .createTextOutput(JSON.stringify({ "result": "error", "error": error.message }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
+    if (!statusMessage) {
+        console.warn("Warning: Could not find the status message element with id 'form-status-message'.");
+    }
 
-// Make sure your formatMailBody function is also in the script
-// Example of what it might look like:
-function formatMailBody(data) {
-  // The error is likely happening on the next line if 'data' is undefined
-  var html = "New form submission:<br><br>";
-  Object.keys(data).forEach(function(key) {
-    html += "<b>" + key + ":</b> " + data[key] + "<br>";
-  });
-  return html;
-}
+    // This function will be called when the form is submitted.
+    async function handleSubmit(event) {
+        // This is the most important line: it stops the browser from redirecting.
+        event.preventDefault();
+
+        // Get all the data from the form
+        const data = new FormData(event.target);
+        const scriptURL = event.target.action; // Get the URL from the form's 'action' attribute
+
+        // Display a "sending" message
+        if (statusMessage) {
+            statusMessage.style.display = 'block';
+            statusMessage.textContent = 'Sending...';
+        }
+        
+        try {
+            // Use the modern 'fetch' API to send the data.
+            const response = await fetch(scriptURL, {
+                method: 'POST',
+                body: data
+            });
+
+            if (response.ok) {
+                // If the submission was successful...
+                if (statusMessage) {
+                    statusMessage.textContent = 'Your message was sent, thank you!';
+                }
+                form.reset(); // Clear the form fields
+            } else {
+                // If there was a network error...
+                throw new Error('Network response was not ok.');
+            }
+        } catch (error) {
+            // If something went wrong during the submission...
+            console.error('Error submitting form:', error);
+            if (statusMessage) {
+                statusMessage.textContent = 'Oops! There was a problem submitting your form. Please try again.';
+            }
+        }
+    }
+
+    // Attach the handleSubmit function to the form's 'submit' event.
+    form.addEventListener('submit', handleSubmit);
+})();
