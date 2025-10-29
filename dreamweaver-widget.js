@@ -1,4 +1,4 @@
-// dreamweaver-widget.js — Dreamweaver AI Q&A (Gemma 2 & 3 only)
+// dreamweaver-widget.js — Dreamweaver AI Q&A (Gemma 2 & 3, non-streaming)
 
 (async () => {
   if (document.readyState === "loading")
@@ -73,14 +73,11 @@
     const prompt = `You are Dreamweaver AI. Use this document as context:\n\n${context}\n\nQuestion: ${q}`;
 
     try {
-      const stream = await window.puter.ai.chat(prompt, { model: modelSel.value, stream: true });
-      outBox.textContent = "";
-      for await (const chunk of stream) {
-        if (chunk?.text) {
-          outBox.textContent += chunk.text;
-          outBox.scrollTop = outBox.scrollHeight;
-        }
-      }
+      // Non-streaming call for Gemma models
+      const response = await window.puter.ai.chat(prompt, { model: modelSel.value });
+      outBox.textContent = response;
+      outBox.scrollTop = outBox.scrollHeight;
+
     } catch (err) {
       console.error(err);
       outBox.textContent = "⚠️ Error retrieving response.";
