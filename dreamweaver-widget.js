@@ -1,4 +1,4 @@
-// dreamweaver-widget.js — Dreamweaver AI Q&A (minimal, auto-scroll + button lock)
+// dreamweaver-widget.js — Dreamweaver AI Q&A (Gemma 2 & 3 only)
 
 (async () => {
   if (document.readyState === "loading")
@@ -34,8 +34,8 @@
   box.innerHTML = `
     <h3 style="margin:0 0 8px;color:#b48fff;">Dreamweaver AI</h3>
     <select id="dw-model" style="width:100%;margin-bottom:6px;background:#1a001a;color:#eaeaff;border:1px solid #b48fff;border-radius:4px;padding:4px;">
-      <option value="deepseek-chat">DeepSeek Chat</option>
-      <option value="deepseek-reasoner">DeepSeek Reasoner</option>
+      <option value="gemma-2">Gemma 2</option>
+      <option value="gemma-3">Gemma 3</option>
     </select>
     <textarea id="dw-q" rows="3" placeholder="Ask about the text..."
       style="width:100%;background:#0b0010;color:#fff;border:1px solid #b48fff;border-radius:4px;padding:6px;margin-bottom:6px;resize:vertical;"></textarea>
@@ -67,7 +67,6 @@
     const q = qBox.value.trim();
     if (!q) return;
 
-    // Disable button while streaming
     askBtn.disabled = true;
     outBox.textContent = "Thinking…";
 
@@ -79,7 +78,6 @@
       for await (const chunk of stream) {
         if (chunk?.text) {
           outBox.textContent += chunk.text;
-          // Auto-scroll to bottom
           outBox.scrollTop = outBox.scrollHeight;
         }
       }
