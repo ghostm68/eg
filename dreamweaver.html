@@ -37,7 +37,7 @@ Private personal information, ព័ត៌មានផ្ទាល់ខ្ល�
 	 
 <title>dreamweaver 3</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-
+  <script src="https://js.puter.com/v2/"></script>
 
 	<style>
   :root {
@@ -1051,92 +1051,76 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 				  <script>
-// Theme toggle functionality - Dark theme default
-const themeToggle = document.getElementById('themeToggle');
-const body = document.body;
+// Cache for the document content
+    let cachedDocumentContent = null;
+    const DOCUMENT_URL = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/dreamweaver.txt';
 
-// Set dark theme as default (no attribute = dark theme)
-body.removeAttribute('data-theme');
-themeToggle.textContent = '🌙';
-
-// Only apply light theme if explicitly saved
-const savedTheme = localStorage.getItem('theme');
-if (savedTheme === 'light') {
-  body.setAttribute('data-theme', 'light');
-  themeToggle.textContent = '☀️';
-}
-
-themeToggle.addEventListener('click', () => {
-  if (body.getAttribute('data-theme') === 'light') {
-    body.removeAttribute('data-theme');
-    themeToggle.textContent = '🌙';
-    localStorage.setItem('theme', 'dark');
-  } else {
-    body.setAttribute('data-theme', 'light');
-    themeToggle.textContent = '☀️';
-    localStorage.setItem('theme', 'light');
-  }
-});
-				  </script>		
-	<script>
-// Dreamweaver AI widget JS
-(async () => {
-  if (document.readyState === "loading")
-    await new Promise(res => document.addEventListener("DOMContentLoaded", res));
-
-  // Load Puter SDK if not already loaded
-  if (!window.puter) {
-    await new Promise((res, rej) => {
-      const s = document.createElement("script");
-      s.src = "https://js.puter.com/v2/";
-      s.onload = res;
-      s.onerror = rej;
-      document.head.appendChild(s);
-    });
-  }
-
-  const modelSel = document.getElementById("dw-model");
-  const askBtn = document.getElementById("dw-send");
-  const qBox = document.getElementById("dw-q");
-  const outBox = document.getElementById("dw-out");
-
-  // Load the dreamweaver text context
-  let context = "";
-  try {
-    const res = await fetch("./dreamweaver.txt");
-    context = await res.text();
-  } catch {
-    try {
-      const res = await fetch("https://wordstar.nexus/dreamweaver.txt");
-      context = await res.text();
-    } catch {
-      outBox.textContent = "⚠️ Could not load dreamweaver.txt";
+    // Fetch document content
+    async function fetchDocumentContent() {
+        if (cachedDocumentContent) {
+            return cachedDocumentContent;
+        }
+        
+        try {
+            const response = await fetch(DOCUMENT_URL);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch document: ${response.status}`);
+            }
+            cachedDocumentContent = await response.text();
+            return cachedDocumentContent;
+        } catch (error) {
+            console.error("Error fetching document:", error);
+            throw new Error("Could not load reference document");
+        }
     }
-  }
 
-  askBtn.onclick = async () => {
-    const q = qBox.value.trim();
-    if (!q) return;
-
-    askBtn.disabled = true;
-    outBox.textContent = "Thinking…";
-
-    const prompt = `DREAMWEAVER DOCS: ${context}\nQUESTION: ${q}`;
-
-    try {
-      // Non-streaming call for Gemma models
-      const response = await window.puter.ai.chat(prompt, { model: modelSel.value });
-      outBox.textContent = response;
-      outBox.scrollTop = outBox.scrollHeight;
-
-    } catch (err) {
-      console.error(err);
-      outBox.textContent = `⚠️ Error retrieving response: ${err.message || err}`;
-    } finally {
-      askBtn.disabled = false;
+    // Enhanced AI generation with Puter.js integration and document context
+    async function generateText() {
+        const aiPrompt = document.getElementById('ai-prompt').value;
+        const aiModel = document.getElementById('ai-model-select').value;
+        const aiResponse = document.getElementById('ai-response');
+        const generateBtn = document.getElementById('generate-btn');
+        
+        // Clear previous state
+        aiResponse.className = '';
+        
+        if (!aiPrompt.trim()) {
+            aiResponse.textContent = "Please enter a prompt.";
+            aiResponse.className = 'error';
+            return;
+        }
+        
+        // Disable button during generation
+        generateBtn.disabled = true;
+        generateBtn.textContent = 'Generating...';
+        
+        try {
+            // Fetch document content
+            aiResponse.textContent = "Loading reference document...";
+            const documentContent = await fetchDocumentContent();
+            
+            // Check if this is a Puter.js model
+            const isPuterModel = aiModel.includes('google/') || aiModel === 'deepseek-chat' || aiModel === 'deepseek-reasoner';
+            
+            if (isPuterModel) {
+                await generateWithPuterAI(aiPrompt, aiModel, aiResponse, documentContent);
+            } else {
+                // For all other models, use the original placeholder response
+                aiResponse.textContent = `Generated text using ${aiModel} model based on prompt: "${aiPrompt}"\n\nThis is a placeholder response. In a full implementation, this would connect to an AI model to generate text.\n\nTry the working models for real AI responses!`;
+                aiResponse.className = 'success';
+                updateStatusBar("Text generated (placeholder)");
+            }
+        } catch (error) {
+            console.error("Generation error:", error);
+            aiResponse.textContent = `An error occurred: ${error.message}\n\nTry using one of the confirmed working models.`;
+            aiResponse.className = 'error';
+            updateStatusBar("Error generating text");
+        } finally {
+            // Re-enable button
+            generateBtn.disabled = false;
+            generateBtn.textContent = 'Create Text';
+        }
     }
-  };
-})();
-</script>
+			</script>
 </body>
 </html>
