@@ -4,34 +4,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Infinite Atlas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DejaVu+Sans+Mono&family=DejaVu+Sans:wght@400;700&family=DejaVu+Serif:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
             background: #0a0a0a;
             color: #f0f0f0;
             font-family: 'Georgia', serif;
-            text-align: center;
-            padding: 2rem;
             margin: 0;
+            padding: 0;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
         }
         h1 {
             font-size: 2.5rem;
             margin-bottom: 0.5rem;
             letter-spacing: 1px;
+            text-align: center;
         }
         .subtitle {
             font-style: italic;
             color: #aaa;
             margin-bottom: 2rem;
+            text-align: center;
+        }
+        #art-section {
+            text-align: center;
         }
         #art-container {
             margin: 2rem auto;
             min-height: 400px;
         }
         #artwork {
-            max-width: 90vw;
+            max-width: 90%;
             max-height: 60vh;
             box-shadow: 0 5px 25px rgba(0,0,0,0.5);
             border: 1px solid #333;
+            cursor: pointer;
         }
         #info {
             margin-top: 1.5rem;
@@ -60,10 +81,113 @@
             background: #222;
             border-color: #777;
         }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
         .api-status {
             margin-top: 2rem;
             font-size: 0.9rem;
             color: #666;
+            text-align: center;
+        }
+        
+        /* Notepad Section */
+        #notepad-section {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1.5rem;
+            height: fit-content;
+            position: sticky;
+            top: 2rem;
+        }
+        #notepad-section h2 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            color: #eee;
+            border-bottom: 1px solid #333;
+            padding-bottom: 0.5rem;
+        }
+        .font-selector {
+            margin-bottom: 1rem;
+        }
+        .font-selector label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        .font-selector select {
+            width: 100%;
+            padding: 0.5rem;
+            background: #0a0a0a;
+            color: #eee;
+            border: 1px solid #444;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        #notepad {
+            width: 100%;
+            min-height: 300px;
+            background: #0a0a0a;
+            color: #f0f0f0;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 1rem;
+            font-size: 1rem;
+            line-height: 1.6;
+            resize: vertical;
+            font-family: 'DejaVu Sans Mono', monospace;
+        }
+        #notepad:focus {
+            outline: none;
+            border-color: #666;
+        }
+        .dejavu-sans-mono {
+            font-family: 'DejaVu Sans Mono', monospace;
+        }
+        .dejavu-sans {
+            font-family: 'DejaVu Sans', sans-serif;
+        }
+        .dejavu-serif {
+            font-family: 'DejaVu Serif', serif;
+        }
+        .notepad-controls {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .notepad-controls button {
+            flex: 1;
+            min-width: 120px;
+            padding: 0.6rem 1rem;
+            font-size: 0.9rem;
+        }
+        #attachedImage {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #0a0a0a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            text-align: center;
+        }
+        #attachedImage img {
+            max-width: 100%;
+            max-height: 150px;
+            margin-top: 0.5rem;
+            border: 1px solid #333;
+        }
+        #attachedImage p {
+            margin: 0.5rem 0;
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+        .remove-img {
+            margin-top: 0.5rem;
+            padding: 0.3rem 0.8rem;
+            font-size: 0.8rem;
         }
         .loading {
             opacity: 0.7;
@@ -74,51 +198,98 @@
     <h1>INFINITE ATLAS</h1>
     <p class="subtitle">A cartography of the world's art, one chance encounter at a time.</p>
 
-    <div id="art-container">
-        <img id="artwork" src="" alt="A discovery from the Infinite Atlas">
-        <div id="info">
-            <div id="title"></div>
-            <div id="artist"></div>
+    <div class="container">
+        <div id="art-section">
+            <div id="art-container">
+                <img id="artwork" src="" alt="A discovery from the Infinite Atlas">
+                <div id="info">
+                    <div id="title"></div>
+                    <div id="artist"></div>
+                </div>
+            </div>
+
+            <div>
+                <button id="newArtButton">Chart a New Course</button>
+                <button id="attachImageButton" disabled>Attach to Notepad</button>
+            </div>
+
+            <div class="api-status">
+                Powered by Cleveland Museum, The Met, Art Institute of Chicago, V&A, and Rijksmuseum
+            </div>
         </div>
-    </div>
 
-    <div>
-        <button id="newArtButton">Chart a New Course</button>
-    </div>
+        <div id="notepad-section">
+            <h2>Notepad</h2>
+            
+            <div class="font-selector">
+                <label for="fontSelect">Font:</label>
+                <select id="fontSelect">
+                    <option value="dejavu-sans-mono" selected>DejaVu Sans Mono</option>
+                    <option value="dejavu-sans">DejaVu Sans</option>
+                    <option value="dejavu-serif">DejaVu Serif</option>
+                </select>
+            </div>
 
-    <div class="api-status">
-        Powered by the Cleveland Museum of Art and The Metropolitan Museum of Art
+            <textarea id="notepad" placeholder="Write your thoughts about the art..."></textarea>
+
+            <div id="attachedImage" style="display: none;">
+                <p><strong>Attached Image:</strong></p>
+                <p id="attachedTitle"></p>
+                <img id="attachedArtwork" src="" alt="">
+                <br>
+                <button class="remove-img" id="removeImageButton">Remove Image</button>
+            </div>
+
+            <div class="notepad-controls">
+                <button id="exportButton">Export as TXT</button>
+                <button id="clearButton">Clear All</button>
+            </div>
+        </div>
     </div>
 
     <script>
         const newArtButton = document.getElementById('newArtButton');
-        newArtButton.addEventListener('click', fetchRandomArt);
+        const attachImageButton = document.getElementById('attachImageButton');
+        const exportButton = document.getElementById('exportButton');
+        const clearButton = document.getElementById('clearButton');
+        const removeImageButton = document.getElementById('removeImageButton');
+        const notepad = document.getElementById('notepad');
+        const fontSelect = document.getElementById('fontSelect');
+        const attachedImageDiv = document.getElementById('attachedImage');
+        
+        let currentArtwork = null;
 
-        // Only use the most reliable APIs
+        // Font selector
+        fontSelect.addEventListener('change', (e) => {
+            notepad.className = e.target.value;
+        });
+
+        // Art APIs
         const apiFunctions = [
             fetchClevelandArt,
-            fetchMetropolitanArt
+            fetchMetropolitanArt,
+            fetchArtInstituteChicago,
+            fetchVictoriaAlbert,
+            fetchRijksmuseum
         ];
 
-        // Track current API attempts
         let currentAttempts = 0;
         const maxAttempts = 5;
+        const preferredArtworkId = 80313;
 
-        // SPECIFIC ARTWORK YOU WANTED - Gaspar de Crayer
-        const preferredArtworkId = 80313; // This is the Cleveland Museum ID for "The Meeting of Alexander the Great and Diogenes"
+        newArtButton.addEventListener('click', fetchRandomArt);
 
         async function fetchRandomArt() {
-            console.log("Button clicked! Fetching new art...");
             currentAttempts = 0;
-            
-            // Disable button during loading
             newArtButton.disabled = true;
+            attachImageButton.disabled = true;
             newArtButton.textContent = 'Navigating...';
             document.body.classList.add('loading');
             
             document.getElementById('artwork').src = '';
             document.getElementById('title').innerText = 'Consulting the atlas...';
             document.getElementById('artist').innerText = '';
+            currentArtwork = null;
 
             await tryAllApis();
         }
@@ -130,31 +301,26 @@
             }
 
             currentAttempts++;
-            
-            // Shuffle APIs for better distribution
             const shuffledApis = [...apiFunctions].sort(() => Math.random() - 0.5);
             
             for (const apiFunction of shuffledApis) {
                 try {
                     await apiFunction();
-                    // Success - re-enable button
                     newArtButton.disabled = false;
+                    attachImageButton.disabled = false;
                     newArtButton.textContent = 'Chart a New Course';
                     document.body.classList.remove('loading');
                     return;
                 } catch (error) {
                     console.log(`API ${apiFunction.name} failed:`, error.message);
-                    // Continue to next API
                 }
             }
 
-            // If all APIs failed, try again with delay
             setTimeout(tryAllApis, 500);
         }
 
-        // 1. Cleveland Museum of Art API - IMPROVED RANDOMNESS
+        // 1. Cleveland Museum
         async function fetchClevelandArt() {
-            // 20% chance to show the specific artwork you wanted
             if (Math.random() < 0.2) {
                 await fetchSpecificClevelandArtwork(preferredArtworkId);
             } else {
@@ -164,96 +330,133 @@
 
         async function fetchSpecificClevelandArtwork(artworkId) {
             const response = await fetch(`https://openaccess-api.clevelandart.org/api/artworks/${artworkId}/`);
-            
             if (!response.ok) throw new Error('Network response was not ok');
-            
             const data = await response.json();
             
             if (data.data && data.data.images?.web?.url) {
                 const art = data.data;
-                
-                // Test if image loads
                 await testImageLoad(art.images.web.url);
-                
-                document.getElementById('artwork').src = art.images.web.url;
-                document.getElementById('title').innerText = art.title || 'Untitled';
-                document.getElementById('artist').innerText = art.creators?.[0]?.description || 'Artist Unknown';
-                console.log("Success - Showing specific artwork:", art.title);
+                displayArtwork(art.images.web.url, art.title, art.creators?.[0]?.description);
             } else {
                 throw new Error("Specific artwork not available");
             }
         }
 
         async function fetchRandomClevelandArtwork() {
-            // Better randomness: get multiple artworks and pick one randomly
             const response = await fetch(`https://openaccess-api.clevelandart.org/api/artworks/?has_image=1&limit=50`);
-            
             if (!response.ok) throw new Error('Network response was not ok');
-            
             const data = await response.json();
             
             if (data.data && data.data.length > 0) {
-                // Pick a truly random artwork from the 50 results
-                const randomIndex = Math.floor(Math.random() * data.data.length);
-                const art = data.data[randomIndex];
-                
+                const art = data.data[Math.floor(Math.random() * data.data.length)];
                 if (art.images?.web?.url) {
-                    // Test if image loads
                     await testImageLoad(art.images.web.url);
-                    
-                    document.getElementById('artwork').src = art.images.web.url;
-                    document.getElementById('title').innerText = art.title || 'Untitled';
-                    document.getElementById('artist').innerText = art.creators?.[0]?.description || 'Artist Unknown';
-                    console.log("Success from Cleveland Museum - Random selection");
+                    displayArtwork(art.images.web.url, art.title, art.creators?.[0]?.description);
                 } else {
-                    throw new Error("No valid image from Cleveland API");
+                    throw new Error("No valid image");
                 }
             } else {
-                throw new Error("No data from Cleveland API");
+                throw new Error("No data");
             }
         }
 
-        // 2. The Metropolitan Museum of Art API
+        // 2. Metropolitan Museum
         async function fetchMetropolitanArt() {
-            // Use a curated list of known good object IDs from The Met
             const goodObjectIds = [
                 436535, 437329, 437327, 436528, 436101, 437994, 436121, 
-                436048, 437430, 436931, 437879, 436944, 436532, 437329,
-                459106, 459107, 459108, 436535, 437327, 436528
+                436048, 437430, 436931, 437879, 436944, 436532, 459106, 459107
             ];
-            
             const randomObjectId = goodObjectIds[Math.floor(Math.random() * goodObjectIds.length)];
-            
             const response = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${randomObjectId}`);
-            
             if (!response.ok) throw new Error('Network response was not ok');
-            
             const art = await response.json();
             
             if (art.primaryImage && art.primaryImage.length > 0) {
-                // Test if image loads
                 await testImageLoad(art.primaryImage);
-                
-                document.getElementById('artwork').src = art.primaryImage;
-                document.getElementById('title').innerText = art.title || 'Untitled';
-                document.getElementById('artist').innerText = art.artistDisplayName || 'Artist Unknown';
-                console.log("Success from The Met");
+                displayArtwork(art.primaryImage, art.title, art.artistDisplayName);
             } else {
-                throw new Error("No image available from The Met");
+                throw new Error("No image available");
             }
         }
 
-        // Helper function to test if an image loads successfully
+        // 3. Art Institute of Chicago
+        async function fetchArtInstituteChicago() {
+            const response = await fetch(`https://api.artic.edu/api/v1/artworks/search?q=painting&limit=100&fields=id,title,artist_display,image_id`);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const data = await response.json();
+            
+            if (data.data && data.data.length > 0) {
+                const artworks = data.data.filter(art => art.image_id);
+                if (artworks.length === 0) throw new Error("No images available");
+                
+                const art = artworks[Math.floor(Math.random() * artworks.length)];
+                const imageUrl = `https://www.artic.edu/iiif/2/${art.image_id}/full/843,/0/default.jpg`;
+                await testImageLoad(imageUrl);
+                displayArtwork(imageUrl, art.title, art.artist_display);
+            } else {
+                throw new Error("No data from Art Institute");
+            }
+        }
+
+        // 4. Victoria & Albert Museum
+        async function fetchVictoriaAlbert() {
+            const response = await fetch(`https://api.vam.ac.uk/v2/objects/search?q=painting&images_exist=1&page_size=50`);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const data = await response.json();
+            
+            if (data.records && data.records.length > 0) {
+                const art = data.records[Math.floor(Math.random() * data.records.length)];
+                if (art._images && art._images._primary_thumbnail) {
+                    const imageUrl = `https://framemark.vam.ac.uk/collections/${art._images._primary_thumbnail}/full/full/0/default.jpg`;
+                    await testImageLoad(imageUrl);
+                    displayArtwork(imageUrl, art._primaryTitle, art._primaryMaker?.name);
+                } else {
+                    throw new Error("No image available");
+                }
+            } else {
+                throw new Error("No data from V&A");
+            }
+        }
+
+        // 5. Rijksmuseum
+        async function fetchRijksmuseum() {
+            const response = await fetch(`https://www.rijksmuseum.nl/api/en/collection?key=0fiuZFh4&format=json&imgonly=true&ps=50`);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const data = await response.json();
+            
+            if (data.artObjects && data.artObjects.length > 0) {
+                const art = data.artObjects[Math.floor(Math.random() * data.artObjects.length)];
+                if (art.webImage?.url) {
+                    await testImageLoad(art.webImage.url);
+                    displayArtwork(art.webImage.url, art.title, art.principalOrFirstMaker);
+                } else {
+                    throw new Error("No image available");
+                }
+            } else {
+                throw new Error("No data from Rijksmuseum");
+            }
+        }
+
         function testImageLoad(url) {
             return new Promise((resolve, reject) => {
                 const img = new Image();
                 img.onload = () => resolve();
                 img.onerror = () => reject(new Error('Image failed to load'));
                 img.src = url;
-                
-                // Timeout after 5 seconds
                 setTimeout(() => reject(new Error('Image load timeout')), 5000);
             });
+        }
+
+        function displayArtwork(imageUrl, title, artist) {
+            currentArtwork = {
+                imageUrl: imageUrl,
+                title: title || 'Untitled',
+                artist: artist || 'Artist Unknown'
+            };
+            
+            document.getElementById('artwork').src = imageUrl;
+            document.getElementById('title').innerText = currentArtwork.title;
+            document.getElementById('artist').innerText = currentArtwork.artist;
         }
 
         function showError(message) {
@@ -264,13 +467,50 @@
             document.body.classList.remove('loading');
         }
 
-        // Begin the journey when the page loads - start with your preferred artwork!
+        // Notepad functionality
+        attachImageButton.addEventListener('click', () => {
+            if (currentArtwork) {
+                document.getElementById('attachedArtwork').src = currentArtwork.imageUrl;
+                document.getElementById('attachedTitle').innerText = `${currentArtwork.title} by ${currentArtwork.artist}`;
+                attachedImageDiv.style.display = 'block';
+            }
+        });
+
+        removeImageButton.addEventListener('click', () => {
+            attachedImageDiv.style.display = 'none';
+            document.getElementById('attachedArtwork').src = '';
+        });
+
+        exportButton.addEventListener('click', () => {
+            let content = notepad.value;
+            
+            // Add artwork info if attached
+            if (attachedImageDiv.style.display === 'block' && currentArtwork) {
+                content += `\n\n---\nAttached Artwork:\n${currentArtwork.title}\nArtist: ${currentArtwork.artist}\nImage: ${currentArtwork.imageUrl}`;
+            }
+            
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `atlas-notes-${Date.now()}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        clearButton.addEventListener('click', () => {
+            if (confirm('Clear all notes and attached image?')) {
+                notepad.value = '';
+                attachedImageDiv.style.display = 'none';
+                document.getElementById('attachedArtwork').src = '';
+            }
+        });
+
+        // Initialize
         async function initialize() {
             try {
                 await fetchSpecificClevelandArtwork(preferredArtworkId);
             } catch (error) {
-                // If specific artwork fails, fall back to random
-                console.log("Preferred artwork failed, falling back to random:", error.message);
                 fetchRandomArt();
             }
         }
