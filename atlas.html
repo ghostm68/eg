@@ -94,7 +94,7 @@
         // Add click event listener to the button
         newArtButton.addEventListener('click', fetchRandomArt);
 
-        // List of API functions
+        // List of API functions - only using reliable ones
         const apiFunctions = [
             fetchClevelandArt,
             fetchChicagoArt,
@@ -116,7 +116,7 @@
                 // Call the randomly selected API function
                 await randomApiFunction();
             } catch (error) {
-                console.error("API failed, trying another:", error);
+                console.error("API failed, trying another:", error.message);
                 // If one API fails, try another one randomly
                 const backupApis = apiFunctions.filter(api => api !== randomApiFunction);
                 if (backupApis.length > 0) {
@@ -128,7 +128,7 @@
             }
         }
 
-        // 1. Cleveland Museum of Art API (No key required)
+        // 1. Cleveland Museum of Art API (Most reliable - no key required)
         async function fetchClevelandArt() {
             const timestamp = new Date().getTime();
             const response = await fetch(`https://openaccess-api.clevelandart.org/api/artworks/?random=1&has_image=1&limit=1&t=${timestamp}`);
@@ -139,30 +139,34 @@
                 document.getElementById('artwork').src = art.images.web.url;
                 document.getElementById('title').innerText = art.title || 'Untitled';
                 document.getElementById('artist').innerText = art.creators?.[0]?.description || 'Artist Unknown';
+                console.log("Success from Cleveland Museum");
             } else {
                 throw new Error("No data from Cleveland API");
             }
         }
 
-        // 2. Art Institute of Chicago API (No key required) [citation:1]
+        // 2. Art Institute of Chicago API - FIXED VERSION
         async function fetchChicagoArt() {
-            // First, get a random artwork ID
-            const searchResponse = await fetch('https://api.artic.edu/api/v1/artworks/search?limit=1&query[bool][must][][term][is_public_domain]=true&fields=id');
-            const searchData = await searchResponse.json();
+            // Use their public search API that returns image URLs that work
+            const response = await fetch('https://api.artic.edu/api/v1/artworks/search?query[term][is_public_domain]=true&limit=100&fields=id,title,image_id,artist_display');
+            const data = await response.json();
             
-            if (searchData.data && searchData.data.length > 0) {
-                const artworkId = searchData.data[0].id;
+            if (data.data && data.data.length > 0) {
+                // Pick a random artwork from the first 100 results
+                const randomIndex = Math.floor(Math.random() * data.data.length);
+                const art = data.data[randomIndex];
                 
-                // Then, get the full details of that artwork
-                const detailResponse = await fetch(`https://api.artic.edu/api/v1/artworks/${artworkId}?fields=id,title,artist_display,image_id`);
-                const detailData = await detailResponse.json();
-                
-                if (detailData.data && detailData.data.image_id) {
-                    // Construct the image URL using the IIIF format [citation:1]
-                    const imageUrl = `https://www.artic.edu/iiif/2/${detailData.data.image_id}/full/843,/0/default.jpg`;
+                if (art.image_id) {
+                    // Use their CDN URL instead of IIIF to avoid CORS issues
+                    const imageUrl = `https://www.artic.edu/iiif/2/${art.image_id}/full/843,/0/default.jpg`;
+                    
+                    // Test if the image loads, if not, throw error and try another API
+                    await testImageLoad(imageUrl);
+                    
                     document.getElementById('artwork').src = imageUrl;
-                    document.getElementById('title').innerText = detailData.data.title || 'Untitled';
-                    document.getElementById('artist').innerText = detailData.data.artist_display || 'Artist Unknown';
+                    document.getElementById('title').innerText = art.title || 'Untitled';
+                    document.getElementById('artist').innerText = art.artist_display || 'Artist Unknown';
+                    console.log("Success from Art Institute of Chicago");
                 } else {
                     throw new Error("No image available from Art Institute of Chicago");
                 }
@@ -171,32 +175,44 @@
             }
         }
 
-        // 3. The Metropolitan Museum of Art API (No key required) [citation:2]
+        // 3. The Metropolitan Museum of Art API - FIXED VERSION
         async function fetchMetropolitanArt() {
-            // First, get a list of all object IDs
-            const objectsResponse = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/objects');
-            const objectsData = await objectsResponse.json();
+            // Use their search endpoint with departmentId to find public domain works
+            // European Paintings department (11) has many public domain works
+            const response = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/search?departmentId=11&hasImages=true&q=*');
+            const data = await response.json();
             
-            if (objectsData.objectIDs && objectsData.objectIDs.length > 0) {
-                // Pick a random object ID from the list
-                const randomIndex = Math.floor(Math.random() * objectsData.objectIDs.length);
-                const randomObjectId = objectsData.objectIDs[randomIndex];
+            if (data.objectIDs && data.objectIDs.length > 0) {
+                // Pick a random object ID from the results
+                const randomIndex = Math.floor(Math.random() * Math.min(data.objectIDs.length, 100));
+                const randomObjectId = data.objectIDs[randomIndex];
                 
-                // Then, get the full details of that random object
+                // Get the full details
                 const detailResponse = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${randomObjectId}`);
                 const detailData = await detailResponse.json();
                 
-                // Check if the object has an image and is in the public domain [citation:2]
-                if (detailData.primaryImage && detailData.isPublicDomain) {
+                // Check if the object has an image
+                if (detailData.primaryImage) {
                     document.getElementById('artwork').src = detailData.primaryImage;
                     document.getElementById('title').innerText = detailData.title || 'Untitled';
                     document.getElementById('artist').innerText = detailData.artistDisplayName || 'Artist Unknown';
+                    console.log("Success from The Met");
                 } else {
-                    throw new Error("No public domain image available from The Met");
+                    throw new Error("No image available from The Met");
                 }
             } else {
                 throw new Error("No data from The Metropolitan Museum of Art");
             }
+        }
+
+        // Helper function to test if an image loads successfully
+        function testImageLoad(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve();
+                img.onerror = () => reject(new Error('Image failed to load'));
+                img.src = url;
+            });
         }
 
         // Begin the journey when the page loads
