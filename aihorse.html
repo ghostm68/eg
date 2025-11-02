@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Assistant</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://js.puter.com/v2/"></script>
+  <style>
+    body { font-family: 'Courier New', monospace; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #1f2937; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #8b5cf6; border-radius: 3px; }
+  </style>
+</head>
+<body class="bg-gray-900 text-gray-300 p-4">
+  <div class="max-w-3xl mx-auto">
+    <!-- AI Assistant Card -->
+    <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 shadow-lg">
+      <h3 class="text-lg font-bold text-purple-400 mb-3">✨ AI Writing Assistant</h3>
+      
+      <!-- Model Selection -->
+      <div class="mb-3">
+        <label class="block text-xs text-gray-400 mb-1">Model:</label>
+        <select id="model" class="w-full p-2 bg-gray-700 border border-gray-600 rounded text-sm text-gray-200 focus:border-purple-500 focus:outline-none">
+          <optgroup label="🚀 Recommended">
+            <option value="deepseek-chat" selected>DeepSeek Chat (V3)</option>
+            <option value="deepseek-reasoner">DeepSeek Reasoner (R1)</option>
+          </optgroup>
+          <optgroup label="Google Models">
+            <option value="google/gemma-3-12b-it:free">Gemma 3 12B</option>
+            <option value="google/gemma-2-9b-it:free">Gemma 2 9B</option>
+            <option value="google/gemma-3-4b-it:free">Gemma 3 4B</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <!-- Context Toggle -->
+      <div class="mb-3">
+        <label class="block text-xs text-gray-400 mb-1">Context:</label>
+        <div class="flex gap-2 flex-wrap">
+          <button class="context-btn bg-purple-600 text-white px-3 py-1 text-xs rounded hover:bg-purple-700 transition" data-context="novel">Full Novel</button>
+          <button class="context-btn bg-gray-700 text-gray-300 px-3 py-1 text-xs rounded hover:bg-gray-600 transition" data-context="none">No Context</button>
+        </div>
+        <p id="contextInfo" class="text-xs text-gray-500 mt-1">AI has access to the full novel text</p>
+      </div>
+
+      <!-- Input -->
+      <div class="mb-3">
+        <label class="block text-xs text-gray-400 mb-1">Ask about your novel:</label>
+        <textarea id="input" class="w-full p-2 bg-gray-700 border border-gray-600 rounded text-sm text-gray-200 focus:border-purple-500 focus:outline-none min-h-[60px]" placeholder="Ask for feedback, themes, continuity checks, character analysis..."></textarea>
+      </div>
+
+      <!-- Ask Button -->
+      <button id="ask" class="w-full bg-purple-600 text-white py-2 rounded font-bold hover:bg-purple-700 transition disabled:opacity-50">
+        Ask AI
+      </button>
+
+      <!-- Response -->
+      <div class="mt-3">
+        <label class="block text-xs text-gray-400 mb-1">Response:</label>
+        <div id="response" class="bg-gray-900 border border-gray-700 rounded p-3 text-sm min-h-[100px] max-h-[400px] overflow-y-auto custom-scrollbar whitespace-pre-wrap">
+          <p class="text-gray-500 italic">AI responses will appear here...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const NOVEL_URL = 'https://wordstar.nexus/horse.txt';
+    
+    let novelText = '';
+    let aiContext = 'novel';
+    let isLoading = false;
+
+    const modelSelect = document.getElementById('model');
+    const input = document.getElementById('input');
+    const askBtn = document.getElementById('ask');
+    const response = document.getElementById('response');
+    const contextInfo = document.getElementById('contextInfo');
+
+    // Load novel text
+    async function loadNovel() {
+      try {
+        const res = await fetch(NOVEL_URL);
+        novelText = await res.text();
+        console.log(`Novel loaded: ${novelText.length} characters`);
+      } catch (error) {
+        console.error('Could not load novel:', error);
+      }
+    }
+
+    // Build prompt with context
+    function buildPrompt(userMessage) {
+      if (aiContext === 'novel' && novelText) {
+        const preview = novelText.substring(0, 8000);
+        const truncated = novelText.length > 8000 ? '\n\n[Novel continues beyond this excerpt...]' : '';
+        return `You are analyzing a novel-in-progress called "A Horse Struck Down By Lightning". Here is the text:\n\n${preview}${truncated}\n\n---\n\nReader's question: ${userMessage}`;
+      }
+      return userMessage;
+    }
+
+    // Call Puter AI
+    async function callAI(prompt) {
+      response.innerHTML = '<p class="text-purple-400 animate-pulse">Thinking...</p>';
+      try {
+        const result = await puter.ai.chat(prompt, {
+          model: modelSelect.value,
+          temperature: 0.7,
+          max_tokens: 2000
+        });
+        response.textContent = `✨ ${result}`;
+      } catch (error) {
+        console.error('AI Error:', error);
+        let msg = error.message;
+        if (msg.includes('rate limit')) msg = '⏱️ Rate limit - try again in a moment';
+        else if (msg.includes('auth')) msg = '🔐 Auth required - Puter needs email confirmation';
+        else if (msg.includes('Network')) msg = '🌐 Network error - check connection';
+        response.innerHTML = `<p class="text-red-400">❌ ${msg}</p>`;
+      }
+    }
+
+    // Event listeners
+    askBtn.addEventListener('click', async () => {
+      const msg = input.value.trim();
+      if (!msg) {
+        response.innerHTML = '<p class="text-red-400">Please enter a message</p>';
+        return;
+      }
+      if (isLoading) return;
+      
+      isLoading = true;
+      askBtn.disabled = true;
+      
+      const prompt = buildPrompt(msg);
+      await callAI(prompt);
+      
+      isLoading = false;
+      askBtn.disabled = false;
+    });
+
+    // Context switching
+    document.addEventListener('click', e => {
+      if (e.target.classList.contains('context-btn')) {
+        document.querySelectorAll('.context-btn').forEach(btn => {
+          btn.classList.remove('bg-purple-600', 'text-white');
+          btn.classList.add('bg-gray-700', 'text-gray-300');
+        });
+        e.target.classList.remove('bg-gray-700', 'text-gray-300');
+        e.target.classList.add('bg-purple-600', 'text-white');
+        
+        aiContext = e.target.dataset.context;
+        contextInfo.textContent = aiContext === 'novel' 
+          ? 'AI has access to the full novel text'
+          : 'AI responds without specific context';
+      }
+    });
+
+    // Enter to submit
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        askBtn.click();
+      }
+    });
+
+    // Load novel on page load
+    loadNovel();
+  </script>
+</body>
+</html>
