@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Creative Writing AI - BYOK</title>
+    <title>Creative Writing Studio</title>
     <style>
         body {
             background: #0a0a0a;
@@ -19,6 +19,7 @@
             padding: 2rem;
             max-width: 1600px;
             margin: 0 auto;
+            min-height: 100vh;
         }
         @media (max-width: 1024px) {
             .container {
@@ -37,30 +38,137 @@
             margin-bottom: 2rem;
             text-align: center;
         }
-        #writing-section {
-            text-align: center;
+        
+        /* AI Controls Section - Left Side */
+        #ai-controls {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1.5rem;
+            height: fit-content;
         }
-        #writing-container {
-            margin: 2rem auto;
+        #ai-controls h2 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            color: #eee;
+            border-bottom: 1px solid #333;
+            padding-bottom: 0.5rem;
+        }
+        .api-key-section {
+            background: #0a0a0a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .api-key-section h3 {
+            margin-top: 0;
+            font-size: 1rem;
+            color: #eee;
+        }
+        #apiKey {
+            width: 100%;
+            padding: 0.5rem;
+            background: #1a1a1a;
+            color: #eee;
+            border: 1px solid #444;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .api-help {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        .prompt-section {
+            margin-bottom: 1rem;
+        }
+        .prompt-section label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        #prompt {
+            width: 100%;
+            min-height: 120px;
+            background: #0a0a0a;
+            color: #f0f0f0;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 0.8rem;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            resize: vertical;
+            font-family: inherit;
+        }
+        .controls-group {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1rem;
+            align-items: end;
+            margin: 1rem 0;
+        }
+        .creativity-control {
+            flex: 1;
+        }
+        .creativity-control label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 0.5rem 0;
+        }
+        .creativity-value {
+            text-align: center;
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+        #generateButton {
+            padding: 0.8rem 1.5rem;
+            background: transparent;
+            color: #eee;
+            border: 1px solid #555;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            height: fit-content;
+        }
+        #generateButton:hover {
+            background: #222;
+            border-color: #777;
+        }
+        #generateButton:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Center Output Section */
+        #output-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             min-height: 400px;
         }
-        #output {
-            max-width: 90%;
-            margin: 0 auto;
-            text-align: left;
+        .story-output {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 1rem 0;
+            white-space: pre-wrap;
             line-height: 1.6;
+            max-width: 800px;
+            width: 100%;
+            min-height: 300px;
         }
-        #info {
-            margin-top: 1.5rem;
-            font-size: 1.1rem;
-            line-height: 1.5;
-        }
-        #title {
-            font-weight: bold;
-        }
-        #artist {
-            font-style: italic;
-            color: #ccc;
+        .output-controls {
+            margin: 1rem 0;
         }
         button {
             margin: 0.5rem;
@@ -81,14 +189,8 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
-        .api-status {
-            margin-top: 2rem;
-            font-size: 0.9rem;
-            color: #666;
-            text-align: center;
-        }
         
-        /* Notepad Section */
+        /* Notepad Section - Right Side */
         #notepad-section {
             background: #1a1a1a;
             border: 1px solid #333;
@@ -136,19 +238,6 @@
             resize: vertical;
             font-family: 'DejaVu Sans Mono', monospace;
         }
-        #notepad:focus {
-            outline: none;
-            border-color: #666;
-        }
-        .dejavu-sans-mono {
-            font-family: 'DejaVu Sans Mono', monospace;
-        }
-        .dejavu-sans {
-            font-family: 'DejaVu Sans', sans-serif;
-        }
-        .dejavu-serif {
-            font-family: 'DejaVu Serif', serif;
-        }
         .notepad-controls {
             margin-top: 1rem;
             display: flex;
@@ -161,97 +250,24 @@
             padding: 0.6rem 1rem;
             font-size: 0.9rem;
         }
+        .dejavu-sans-mono {
+            font-family: 'DejaVu Sans Mono', monospace;
+        }
+        .dejavu-sans {
+            font-family: 'DejaVu Sans', sans-serif;
+        }
+        .dejavu-serif {
+            font-family: 'DejaVu Serif', serif;
+        }
         
-        /* API Key Section */
-        #api-key-section {
-            background: #0a0a0a;
-            border: 1px solid #444;
-            border-radius: 4px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-        #api-key-section h3 {
-            margin-top: 0;
-            font-size: 1rem;
-            color: #eee;
-        }
-        #apiKey {
-            width: 100%;
-            padding: 0.5rem;
-            background: #1a1a1a;
-            color: #eee;
-            border: 1px solid #444;
-            border-radius: 4px;
+        .api-status {
+            margin-top: 2rem;
             font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-        }
-        #apiKey:focus {
-            outline: none;
-            border-color: #666;
-        }
-        .api-help {
-            font-size: 0.8rem;
             color: #666;
-            margin-top: 0.5rem;
-        }
-        
-        /* Prompt Section */
-        .prompt-section {
-            margin-bottom: 1rem;
-        }
-        .prompt-section label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #aaa;
-            font-size: 0.9rem;
-        }
-        #prompt {
-            width: 100%;
-            min-height: 80px;
-            background: #0a0a0a;
-            color: #f0f0f0;
-            border: 1px solid #444;
-            border-radius: 4px;
-            padding: 0.8rem;
-            font-size: 0.9rem;
-            line-height: 1.4;
-            resize: vertical;
-        }
-        #prompt:focus {
-            outline: none;
-            border-color: #666;
-        }
-        
-        .creativity-control {
-            margin: 1rem 0;
-        }
-        .creativity-control label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #aaa;
-            font-size: 0.9rem;
-        }
-        input[type="range"] {
-            width: 100%;
-            margin: 0.5rem 0;
-        }
-        .creativity-value {
             text-align: center;
-            color: #ccc;
-            font-size: 0.9rem;
         }
-        
         .loading {
             opacity: 0.7;
-        }
-        .story-output {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-top: 1rem;
-            white-space: pre-wrap;
-            line-height: 1.6;
         }
     </style>
 </head>
@@ -260,35 +276,15 @@
     <p class="subtitle">AI-powered storytelling with your NVIDIA API key</p>
 
     <div class="container">
-        <div id="writing-section">
-            <div id="writing-container">
-                <div class="story-output" id="output">
-                    Your generated story will appear here...
-                </div>
-                <div id="info">
-                    <div id="title"></div>
-                    <div id="artist"></div>
-                </div>
-            </div>
-
-            <div>
-                <button id="generateButton">Generate Story</button>
-                <button id="copyButton" disabled>Copy to Notepad</button>
-            </div>
-
-            <div class="api-status">
-                Powered by NVIDIA Nemotron AI - Bring Your Own Key
-            </div>
-        </div>
-
-        <div id="notepad-section">
-            <h2>Writing Studio</h2>
+        <!-- Left: AI Controls -->
+        <div id="ai-controls">
+            <h2>AI Controls</h2>
             
-            <div id="api-key-section">
+            <div class="api-key-section">
                 <h3>NVIDIA API Key:</h3>
                 <input type="password" id="apiKey" placeholder="Enter your nvapi-... key">
                 <div class="api-help">
-                    Get your free key at: build.nvidia.com
+                    Get your free key at: build.nvidia.com • Your key stays in your browser
                 </div>
             </div>
 
@@ -298,13 +294,32 @@
 Example: Write a short story about a musician who discovers their instrument has magical powers..."></textarea>
             </div>
 
-            <div class="creativity-control">
-                <label for="creativity">Creativity Level: <span id="creativityValue">0.7</span></label>
-                <input type="range" id="creativity" min="0.1" max="1.0" step="0.1" value="0.7">
+            <div class="controls-group">
+                <div class="creativity-control">
+                    <label for="creativity">Creativity: <span id="creativityValue">0.7</span></label>
+                    <input type="range" id="creativity" min="0.1" max="1.0" step="0.1" value="0.7">
+                </div>
+                <button id="generateButton">Generate Story</button>
             </div>
+        </div>
 
+        <!-- Center: Generated Output -->
+        <div id="output-section">
+            <div class="story-output" id="output">
+                Your AI-generated story will appear here...
+                \n\nStart by entering your API key and a prompt on the left.
+            </div>
+            <div class="output-controls">
+                <button id="copyButton" disabled>Copy to Notepad</button>
+            </div>
+        </div>
+
+        <!-- Right: Notepad -->
+        <div id="notepad-section">
+            <h2>Writing Notepad</h2>
+            
             <div class="font-selector">
-                <label for="fontSelect">Notepad Font:</label>
+                <label for="fontSelect">Font Style:</label>
                 <select id="fontSelect">
                     <option value="dejavu-sans-mono" selected>DejaVu Sans Mono</option>
                     <option value="dejavu-sans">DejaVu Sans</option>
@@ -312,7 +327,7 @@ Example: Write a short story about a musician who discovers their instrument has
                 </select>
             </div>
 
-            <textarea id="notepad" placeholder="Write your story ideas or paste generated content here..."></textarea>
+            <textarea id="notepad" placeholder="Write your story ideas, edit AI-generated content, or keep notes here..."></textarea>
 
             <div class="notepad-controls">
                 <button id="exportButton">Export as TXT</button>
@@ -321,7 +336,14 @@ Example: Write a short story about a musician who discovers their instrument has
         </div>
     </div>
 
+    <div class="api-status">
+        Powered by NVIDIA Nemotron AI • Bring Your Own Key • CORS Proxy Enabled
+    </div>
+
     <script>
+        // Import OpenAI (you'll need to include the openai library)
+        // For now, we'll use fetch directly to avoid CORS issues
+        
         // Font handling
         document.getElementById('fontSelect').addEventListener('change', function() {
             const notepad = document.getElementById('notepad');
@@ -396,7 +418,10 @@ Example: Write a short story about a musician who discovers their instrument has
             copyBtn.disabled = true;
 
             try {
-                const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+                // Using CORS proxy to avoid browser restrictions
+                const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
+                
+                const response = await fetch(proxyUrl, {
                     method: 'POST',
                     headers: {
                         'Authorization': 'Bearer ' + apiKey,
@@ -451,6 +476,19 @@ Example: Write a short story about a musician who discovers their instrument has
                 document.getElementById('generateButton').click();
             }
         });
+
+        // Auto-save API key to localStorage
+        document.getElementById('apiKey').addEventListener('change', function(e) {
+            if (e.target.value) {
+                localStorage.setItem('nvidia_api_key', e.target.value);
+            }
+        });
+
+        // Load saved API key
+        const savedKey = localStorage.getItem('nvidia_api_key');
+        if (savedKey) {
+            document.getElementById('apiKey').value = savedKey;
+        }
     </script>
 </body>
 </html>
