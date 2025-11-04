@@ -32,6 +32,12 @@
       background-color: #805ad5;
     }
 
+    /* Optimize rendering for large content */
+    #content {
+      will-change: contents;
+      contain: layout style paint;
+    }
+
     .prose {
       color: #e2e8f0;
     }
@@ -405,7 +411,7 @@
             loadingDiv.innerHTML = '<p class="text-red-500">No content files could be loaded or parsed. Check console for details.</p>';
             loadingDiv.style.display = 'block';
         }
-        buildDateIndex();
+        requestAnimationFrame(() => buildDateIndex());
       } catch (error) {
         loadingDiv.innerHTML =
           `<p class="text-red-500">Error loading content. Please check the console for details.</p><br>
@@ -536,7 +542,8 @@
     }
 
     function buildDateIndex() {
-      dateNav.innerHTML = '';
+      // Use DocumentFragment for better performance
+      const fragment = document.createDocumentFragment();
 
       const itemsToDisplay = isSearching ? searchResults : getFilteredEntries().map((entry) => ({
         entry,
@@ -547,6 +554,7 @@
         const noEntriesMessage = document.createElement('p');
         noEntriesMessage.className = 'text-gray-500 text-sm p-2';
         noEntriesMessage.textContent = 'No entries found for this filter/search.';
+        dateNav.innerHTML = '';
         dateNav.appendChild(noEntriesMessage);
         return;
       }
@@ -589,8 +597,11 @@
             isDateIndexVisible = false;
           }
         });
-        dateNav.appendChild(dateLink);
+        fragment.appendChild(dateLink);
       });
+
+      dateNav.innerHTML = '';
+      dateNav.appendChild(fragment);
     }
 
     function showRandomEntry() {
