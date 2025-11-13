@@ -496,8 +496,8 @@ Private personal information, ព័ត៌មានផ្ទាល់ខ្ល�
         
         .postnav-image {
             position: relative;
-            width: 150px;
-            height: 150px;
+            width: 36px;
+            height: 36px;
             overflow: hidden;
             flex-shrink: 0;
         }
@@ -614,6 +614,58 @@ Private personal information, ព័ត៌មានផ្ទាល់ខ្ល�
             font-size: 14px;
             margin: 5px 0;
         }
+	.searchform-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 1000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.searchform-overlay.active {
+    display: flex;
+}
+
+.searchform {
+    background: #fff;
+    padding: 40px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+}
+
+.search-form {
+    display: flex;
+    margin-top: 20px;
+}
+
+.search-field {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #e1e1e1;
+    font-size: 16px;
+}
+
+.search-button {
+    padding: 12px 20px;
+    background: #0a0000;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-close-search {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+    color: #fff;
+    font-size: 24px;
+}
     </style>
 </head>
 <body>
@@ -1314,67 +1366,71 @@ START...
 	<button class="search-button" type="submit"><i class="fa fa-search"></i></button>
 </form>    </div>
 </div>
-  <script>
-        // Menu Toggle
-        const menuToggle = document.getElementById('menu-toggle');
-        const navPanel = document.getElementById('nav-panel');
-        
-        menuToggle.addEventListener('click', function(e) {
-            e.preventDefault();
-            navPanel.classList.toggle('active');
-        });
-        
-        // Close menu when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!navPanel.contains(e.target) && !menuToggle.contains(e.target)) {
-                navPanel.classList.remove('active');
-            }
-        });
-        
-        // Sidebar Toggle
-        const sidebarToggle = document.getElementById('sidebar-toggle');
-        const sidebar = document.getElementById('hidden-sidebar');
-        const closeButton = sidebar.querySelector('.close-button');
-        
-        sidebarToggle.addEventListener('click', function(e) {
-            e.preventDefault();
-            sidebar.classList.toggle('active');
-        });
-        
-        closeButton.addEventListener('click', function(e) {
-            e.preventDefault();
+ <script>
+    // Menu Toggle
+    const menuToggle = document.getElementById('menu-toggle');
+    const navPanel = document.getElementById('nav-panel');
+    
+    menuToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        navPanel.classList.toggle('active');
+    });
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!navPanel.contains(e.target) && !menuToggle.contains(e.target)) {
+            navPanel.classList.remove('active');
+        }
+    });
+    
+    // Sidebar Toggle
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const sidebar = document.getElementById('hidden-sidebar');
+    const closeButton = sidebar.querySelector('.close-button');
+    
+    sidebarToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        sidebar.classList.toggle('active');
+    });
+    
+    closeButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        sidebar.classList.remove('active');
+    });
+    
+    // Close sidebar when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
             sidebar.classList.remove('active');
-        });
-        
-        // Close sidebar when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
-                sidebar.classList.remove('active');
-            }
-        });
-        
-        // Search Overlay Toggle
-        const searchButtons = document.querySelectorAll('.right-search, .header-icon .fa-search');
-        const searchOverlay = document.querySelector('.searchform-overlay');
-        const closeSearch = document.querySelector('.btn-close-search');
+        }
+    });
+    
+    // Search Overlay Toggle - CORRECTED
+    const searchButtons = document.querySelectorAll('.right-search a, .fa-search');
+    const searchOverlay = document.querySelector('.searchform-overlay');
+    const closeSearch = document.querySelector('.btn-close-search');
+
+    // Initialize search overlay if it exists
+    if (searchOverlay) {
+        searchOverlay.style.display = 'none';
         
         searchButtons.forEach(button => {
             button.addEventListener('click', function(e) {
                 e.preventDefault();
-                if (searchOverlay) {
-                    searchOverlay.classList.add('active');
-                    // Focus on search input
-                    setTimeout(() => {
-                        const searchInput = searchOverlay.querySelector('.search-field');
-                        if (searchInput) searchInput.focus();
-                    }, 100);
-                }
+                searchOverlay.style.display = 'flex';
+                searchOverlay.classList.add('active');
+                // Focus on search input
+                setTimeout(() => {
+                    const searchInput = searchOverlay.querySelector('.search-field');
+                    if (searchInput) searchInput.focus();
+                }, 100);
             });
         });
         
         if (closeSearch) {
             closeSearch.addEventListener('click', function(e) {
                 e.preventDefault();
+                searchOverlay.style.display = 'none';
                 searchOverlay.classList.remove('active');
             });
         }
@@ -1382,9 +1438,19 @@ START...
         // Close search overlay with Escape key
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && searchOverlay && searchOverlay.classList.contains('active')) {
+                searchOverlay.style.display = 'none';
                 searchOverlay.classList.remove('active');
             }
         });
-    </script>
+        
+        // Close search overlay when clicking on background
+        searchOverlay.addEventListener('click', function(e) {
+            if (e.target === searchOverlay) {
+                searchOverlay.style.display = 'none';
+                searchOverlay.classList.remove('active');
+            }
+        });
+    }
+</script>
 </body>
 </html>
