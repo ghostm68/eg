@@ -1323,101 +1323,71 @@ en: "Do Not Sell My Info (KKKalifornia)"
             }
         });
     </script>
-	<script>
-		        class TextScramble {
-            constructor(el) {
-                this.el = el;
-                this.chars = '!<>-_\\/[]{}—=+*^?#@%&';
-                this.update = this.update.bind(this);
-                this.isAnimating = false;
-            }
-            
-            setText(newText, callback) {
-                cancelAnimationFrame(this.frameRequest);
-                const oldText = this.el.innerText;
-                const length = Math.max(oldText.length, newText.length);
-                this.queue = [];
-                
-                for (let i = 0; i < length; i++) {
-                    const from = oldText[i] || "";
-                    const to = newText[i] || "";
-                    const start = Math.floor(Math.random() * 5);
-                    const end = start + Math.floor(Math.random() * 10) + 5;
-                    this.queue.push({ from, to, start, end });
-                }
-                
-                this.frame = 0;
-                this.update(callback);
-            }
-            
-            update(callback) {
-                let output = "";
-                let complete = 0;
-                
-                for (let i = 0, n = this.queue.length; i < n; i++) {
-                    let { from, to, start, end, char } = this.queue[i];
-                    
-                    if (this.frame >= end) {
-                        complete++;
-                        output += to;
-                    } else if (this.frame >= start) {
-                        if (!char || Math.random() < 0.35)
-                            char = this.chars[Math.floor(Math.random() * this.chars.length)];
-                        output += char;
-                        this.queue[i].char = char;
-                    } else {
-                        output += from;
-                    }
-                }
-                
-                this.el.innerText = output;
-                
-                if (complete === this.queue.length) {
-                    if (callback) callback();
-                    return;
-                }
-                
-                this.frame++;
-                this.frameRequest = requestAnimationFrame(() => this.update(callback));
-            }
-        }
-
-        const siteName = "NEXUS";
-        
-        document.querySelectorAll(".scramble-link").forEach(link => {
-            const scrambler = new TextScramble(link);
-            const original = link.textContent;
-            
-            link.addEventListener("mouseenter", () => {
-                if (scrambler.isAnimating) return;
-                scrambler.isAnimating = true;
-                
-                scrambler.setText(siteName, () => {
-                    setTimeout(() => {
-                        scrambler.setText(original, () => {
-                            scrambler.isAnimating = false;
-                        });
-                    }, 250);
-                });
-            });
-        });
-        
-    </script>
 <script>
-document.addEventListener("DOMContentLoaded", function(){
-  document.querySelectorAll('figure.wp-block-gallery figure.wp-block-image img[data-lazy-src]').forEach(img => {
-    img.src = img.getAttribute('data-lazy-src');
-    const srcset = img.getAttribute('data-lazy-srcset');
-    if (srcset) img.srcset = srcset;
-    const sizes = img.getAttribute('data-lazy-sizes');
-    if (sizes) img.sizes = sizes;
-    // Remove the lazy attributes optionally
-    img.removeAttribute('data-lazy-src');
-    img.removeAttribute('data-lazy-srcset');
-    img.removeAttribute('data-lazy-sizes');
+document.addEventListener("DOMContentLoaded", function () {
+  const imgs = document.querySelectorAll("img");
+
+  imgs.forEach(img => {
+    const lazySrc =
+      img.getAttribute("data-lazy-src") ||
+      img.getAttribute("data-src");
+
+    const lazySrcset =
+      img.getAttribute("data-lazy-srcset") ||
+      img.getAttribute("data-srcset");
+
+    const lazySizes =
+      img.getAttribute("data-lazy-sizes") ||
+      img.getAttribute("data-sizes");
+
+    // 1. Use data-lazy-src
+    if (lazySrc) {
+      img.src = lazySrc;
+    }
+
+    // 2. Use data-lazy-srcset
+    if (lazySrcset) {
+      img.srcset = lazySrcset;
+    }
+
+    // 3. Use data-lazy-sizes
+    if (lazySizes) {
+      img.sizes = lazySizes;
+    }
+
+    // 4. Some WP exports require reassigning src to force load
+    if (lazySrc && img.complete && img.naturalWidth === 0) {
+      img.src = lazySrc;
+    }
+
+    // 5. Fallback to <noscript> version if still broken
+    if (img.complete && img.naturalWidth === 0) {
+      const noscript = img.parentNode.querySelector("noscript");
+      if (noscript) {
+        const temp = document.createElement("div");
+        temp.innerHTML = noscript.innerHTML.trim();
+        const realImg = temp.querySelector("img");
+        if (realImg) {
+          img.src = realImg.src;
+          if (realImg.srcset) img.srcset = realImg.srcset;
+          if (realImg.sizes) img.sizes = realImg.sizes;
+        }
+      }
+    }
+
+    // 6. Remove all leftover WP lazy attributes
+    [
+      "data-lazy-src",
+      "data-src",
+      "data-lazy-srcset",
+      "data-srcset",
+      "data-lazy-sizes",
+      "data-sizes"
+    ].forEach(attr => img.removeAttribute(attr));
   });
 });
 </script>
+
 
 </body>
 </html>
