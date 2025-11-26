@@ -2936,13 +2936,10 @@ The Synthesis: In the final scene at the Chalet, when the baby kicks, the sound 
                 
 
   <div>
-  		  <form action="https://www.paypal.com/donate" method="post" target="_top">
-  <input type="hidden" name="hosted_button_id" value="25TNRCZBZ6N36" />
-  <button type="submit">
-    <i class="fa fa-cc-paypal" aria-hidden="true"></i> Donate with PayPal
-  </button>
+  	  <a href="https://wordstar.nexus/contact" class="scramble-link">contact</a>
+                <a href="https://www.paypal.com/donate/?cmd=_s-xclick&hosted_button_id=TUJLYM4PN9D7U" class="scramble-link">donate</a>
+                <a href="https://wordstar.nexus/sitemap" class="scramble-link">sitemap</a>
   <img alt="" border="0" src="https://i.makeagif.com/media/9-30-2017/6QPCA2.gif" width="66" height="60" />
-</form>
 </div>
 <br>	      
  
@@ -3188,6 +3185,86 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 
+<script>
+	     class TextScramble {
+            constructor(el) {
+                this.el = el;
+                this.chars = '!<>-_\\/[]{}—=+*^?#@%&';
+                this.update = this.update.bind(this);
+                this.isAnimating = false;
+            }
+            
+            setText(newText, callback) {
+                cancelAnimationFrame(this.frameRequest);
+                const oldText = this.el.innerText;
+                const length = Math.max(oldText.length, newText.length);
+                this.queue = [];
+                
+                for (let i = 0; i < length; i++) {
+                    const from = oldText[i] || "";
+                    const to = newText[i] || "";
+                    const start = Math.floor(Math.random() * 5);
+                    const end = start + Math.floor(Math.random() * 10) + 5;
+                    this.queue.push({ from, to, start, end });
+                }
+                
+                this.frame = 0;
+                this.update(callback);
+            }
+            
+            update(callback) {
+                let output = "";
+                let complete = 0;
+                
+                for (let i = 0, n = this.queue.length; i < n; i++) {
+                    let { from, to, start, end, char } = this.queue[i];
+                    
+                    if (this.frame >= end) {
+                        complete++;
+                        output += to;
+                    } else if (this.frame >= start) {
+                        if (!char || Math.random() < 0.35)
+                            char = this.chars[Math.floor(Math.random() * this.chars.length)];
+                        output += char;
+                        this.queue[i].char = char;
+                    } else {
+                        output += from;
+                    }
+                }
+                
+                this.el.innerText = output;
+                
+                if (complete === this.queue.length) {
+                    if (callback) callback();
+                    return;
+                }
+                
+                this.frame++;
+                this.frameRequest = requestAnimationFrame(() => this.update(callback));
+            }
+        }
 
+        const siteName = "NEXUS";
+        
+        document.querySelectorAll(".scramble-link").forEach(link => {
+            const scrambler = new TextScramble(link);
+            const original = link.textContent;
+            
+            link.addEventListener("mouseenter", () => {
+                if (scrambler.isAnimating) return;
+                scrambler.isAnimating = true;
+                
+                scrambler.setText(siteName, () => {
+                    setTimeout(() => {
+                        scrambler.setText(original, () => {
+                            scrambler.isAnimating = false;
+                        });
+                    }, 250);
+                });
+            });
+        });
+        
+    </script>
+</script>
 </body>
 </html>
