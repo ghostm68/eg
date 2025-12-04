@@ -160,22 +160,26 @@ async function loadContent(){
   }
 }
 
-/* ----------  identical render  ---------- */
+/* ----------  render page  ---------- */
 function renderPage(){
-  const hc=document.getElementById('heroCarousel');
+  /* -----  hero carousel  ----- */
+  const hc = document.getElementById('heroCarousel');
   contentData.heroCarousel.forEach(it=>{
     const f=document.createElement('div');f.className='hero-carousel-face';
     f.innerHTML=`<img src="${it.src}" alt="${it.alt}"><div class="hero-carousel-caption">${it.caption}</div>`;
     hc.appendChild(f);
   });
+  /* -----  hero text  ----- */
   ['heroTitle','heroSubtitle','heroAuthor'].forEach(id=>{
     document.getElementById(id).textContent=contentData[id.replace('hero','').toLowerCase()];
   });
+  /* -----  nav  ----- */
   const nav=document.getElementById('navMenu');
   contentData.chapters.forEach(ch=>{
     const a=document.createElement('a');a.href=`#${ch.id}`;a.className='nav-link';a.textContent=ch.number;
     a.onclick=()=>nav.classList.remove('open');nav.appendChild(a);
   });
+  /* -----  chapters  ----- */
   const cont=document.getElementById('chapters-container');
   contentData.chapters.forEach(ch=>{
     const s=document.createElement('section');s.className='chapter';s.id=ch.id;
@@ -188,54 +192,38 @@ function renderPage(){
         </div>
         <div class="chapter-content">
           <div class="prose">`;
-/* ----------  NEW image section  ---------- */
-const features = [], normals = [];
-(ch.images || []).forEach(img =>
-  img.feature ? features.push(img) : normals.push(img)
-);
-
-/* 1.  rail : features + first 3 normals , NO captions */
-let railHTML = '';
-[...features, ...normals.slice(0, 3)].forEach(img => {
-  railHTML += `
-    <div class="rail-image ${img.feature ? 'feature' : ''}" onclick="openLightbox(this)">
-      <img src="${img.src}" alt="${img.alt}">
-    </div>`;
-});
-
-/* 2.  mini-grid : remainder (if any) */
-let gridHTML = '';
-if (normals.length > 3) {
-  gridHTML = '<div class="mini-grid">';
-  normals.slice(3).forEach(img => {
-    gridHTML += `
-      <div class="mini-grid-item" onclick="openLightbox(this)">
-        <img src="${img.src}" alt="${img.alt}">
-        <div class="mini-grid-title">${img.caption || img.alt}</div>
-      </div>`;
+    /*  prose paragraphs  */
+    ch.content.forEach(p=>{
+      p=p.replace(/{{([^|]+)\|([^}]+)}}/g,'<span class="annotation-trigger" data-ann="$1" data-chap="'+ch.id+'">$2</span>');
+      h+=`<p>${p}</p>`;
+    });
+    /*  images : split & inject  */
+    const features=[],normals=[];
+    (ch.images||[]).forEach(img=>img.feature?features.push(img):normals.push(img));
+    let railHTML='',gridHTML='';
+    [...features,...normals.slice(0,3)].forEach(img=>{
+      railHTML+=`<div class="rail-image ${img.feature?'feature':''}" onclick="openLightbox(this)"><img src="${img.src}" alt="${img.alt}"></div>`;
+    });
+    if(normals.length>3){
+      gridHTML='<div class="mini-grid">';
+      normals.slice(3).forEach(img=>{
+        gridHTML+=`<div class="mini-grid-item" onclick="openLightbox(this)"><img src="${img.src}" alt="${img.alt}"><div class="mini-grid-title">${img.caption||img.alt}</div></div>`;
+      });
+      gridHTML+='</div>';
+    }
+    h+=`</div>${gridHTML}<div class="image-rail">${railHTML}</div></div></div>`;
+    s.innerHTML=h;
+    cont.appendChild(s);
+    /*  annotations & scroll  */
+    s.querySelectorAll('.annotation-trigger').forEach(tr=>{
+      tr.addEventListener('click',()=>showAnn(tr.dataset.chap,tr.dataset.ann));
+    });
   });
-  gridHTML += '</div>';
+  const io=new IntersectionObserver(es=>es.forEach(e=>e.isIntersecting&&e.target.classList.add('visible')),{threshold:.1});
+  document.querySelectorAll('.chapter').forEach(c=>io.observe(c));
 }
 
-/* 3.  inject into the chapter string  */
-h += `</div>`;               // close prose
-h += gridHTML;               // mini-grid inside prose flow
-h += `<div class="image-rail">${railHTML}</div></div></div>`;
-
-/* 4.  finish chapter HTML  */
-s.innerHTML = h;
-cont.appendChild(s);
-
-/* 5.  observers & triggers  */
-s.querySelectorAll('.annotation-trigger').forEach(tr => {
-  tr.addEventListener('click', () => showAnn(tr.dataset.chap, tr.dataset.ann));
-});
-  });
-
-/* 6.  scroll reveal  */
-const io = new IntersectionObserver(es => es.forEach(e => e.isIntersecting && e.target.classList.add('visible')), { threshold: .1 });
-document.querySelectorAll('.chapter').forEach(c => io.observe(c));
-}
+/*  annotation modal  */
 function showAnn(chapId,key){
   const chap=contentData.chapters.find(c=>c.id===chapId);
   if(!chap||!chap.annotations||!chap.annotations[key])return;
@@ -245,13 +233,19 @@ function showAnn(chapId,key){
   document.getElementById('ann-overlay').classList.add('active');
   document.getElementById('ann-modal').classList.add('active');
 }
+/*  lightbox  */
 function openLightbox(el){
   const img=el.querySelector('img');
   document.getElementById('lightbox-img').src=img.src;
   document.getElementById('lightbox').classList.add('active');
 }
+/*  ESC closes overlays  */
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){document.getElementById('lightbox').classList.remove('active');document.getElementById('ann-modal').classList.remove('active');document.getElementById('ann-overlay').classList.remove('active');}
+  if(e.key==='Escape'){
+    document.getElementById('lightbox').classList.remove('active');
+    document.getElementById('ann-modal').classList.remove('active');
+    document.getElementById('ann-overlay').classList.remove('active');
+  }
 });
 loadContent();
 </script>
