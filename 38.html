@@ -29,13 +29,85 @@
         .h1{top:20%}.h2{top:50%}.h3{top:80%}
 
         /* Nav */
-        .nav{position:fixed;top:2rem;right:2rem;z-index:1000;font-family:'IBM Plex Mono',monospace;font-size:.85rem}
-        .nav-toggle{background:rgba(0,0,0,0.8);color:var(--ash);border:1px solid var(--crimson);padding:.75rem 1.5rem;cursor:pointer;text-transform:uppercase;letter-spacing:.1em;transition:all .3s ease; backdrop-filter: blur(5px);}
-        .nav-toggle:hover{background:var(--crimson);box-shadow:0 0 20px rgba(220,20,60,.5)}
-        .nav-menu{position:absolute;top:100%;right:0;background:var(--iron);border:1px solid var(--blood-deep);margin-top:.5rem;max-height:0;overflow:y-auto;transition:max-height .3s ease; width: 200px;}
-        .nav-menu.open{max-height:400px}
-        .nav-link{display:block;padding:.75rem 1.5rem;color:var(--ash);text-decoration:none;border-bottom:1px solid var(--steel);transition:all .2s ease; font-size: 0.8rem;}
-        .nav-link:hover{background:var(--blood-deep);padding-left:1.8rem}
+       /* NAV - DROPDOWN STYLE */
+.nav {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    z-index: 1000;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* Aligns menu to the right edge */
+}
+
+.nav-toggle {
+    background: rgba(0, 0, 0, 0.9);
+    color: var(--ash);
+    border: 1px solid var(--crimson);
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    z-index: 1001; /* Keeps button above the list */
+}
+
+.nav-toggle:hover {
+    background: var(--blood-deep);
+    box-shadow: 0 0 15px rgba(220, 20, 60, 0.4);
+    text-shadow: 0 0 5px #fff;
+}
+
+/* The Dropdown List (Hidden by default) */
+.nav-menu {
+    background: rgba(20, 20, 20, 0.95);
+    border: 1px solid var(--steel);
+    border-top: none;
+    margin-top: 0; /* Connects directly to button */
+    max-height: 0; /* Hidden */
+    overflow: hidden; /* Hides content when closed */
+    transition: max-height 0.4s ease-in-out, border-color 0.3s;
+    width: 240px;
+    backdrop-filter: blur(5px);
+}
+
+/* The Open State */
+.nav-menu.open {
+    max-height: 60vh; /* Expands to show content */
+    border-color: var(--crimson);
+    overflow-y: auto; /* Allows scrolling if list is long */
+    box-shadow: -5px 5px 20px rgba(0,0,0,0.8);
+}
+
+/* Scrollbar for the menu */
+.nav-menu::-webkit-scrollbar { width: 4px; }
+.nav-menu::-webkit-scrollbar-thumb { background: var(--blood-deep); }
+
+.nav-link {
+    display: block;
+    padding: 0.8rem 1.2rem;
+    color: var(--ash);
+    text-decoration: none;
+    border-bottom: 1px solid #333;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+    background: var(--blood-dark);
+    color: #fff;
+    padding-left: 1.5rem; /* Slide effect */
+    border-left: 3px solid var(--crimson);
+}
+
+/* Mobile Adjustment */
+@media(max-width: 600px) {
+    .nav { top: 1rem; right: 1rem; }
+    .nav-menu { width: 80vw; }
+}
 
         /* Hero */
         .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;background:linear-gradient(135deg,var(--paper) 0%, #000 100%); padding-top: 4rem;}
@@ -178,8 +250,10 @@
 </div>
 
 <nav class="nav">
-    <button class="nav-toggle" onclick="document.getElementById('navMenu').classList.toggle('open')">Chapters</button>
-    <div class="nav-menu" id="navMenu"></div>
+    <button class="nav-toggle" id="navToggle" onclick="toggleNav()">CASE FILES</button>
+    <div class="nav-menu" id="navMenu">
+        <!-- Links injected by JS -->
+    </div>
 </nav>
 
 <section class="hero">
@@ -215,8 +289,6 @@
 
 <script>
 let contentData = null;
-
-// Ensure this URL points to your valid JSON file
 const DATA_URL = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/content.json';
 
 async function loadContent(){
@@ -235,7 +307,6 @@ async function loadContent(){
 function renderPage(){
   /* 1. Render Hero */
   const hc = document.getElementById('heroCarousel');
-  // Safe check if heroCarousel exists in JSON
   if(contentData.heroCarousel) {
       contentData.heroCarousel.forEach(it=>{
         const f=document.createElement('div');
@@ -249,14 +320,19 @@ function renderPage(){
   document.getElementById('heroSubtitle').textContent = contentData.subtitle || "";
   document.getElementById('heroAuthor').textContent = contentData.author || "";
 
-  /* 2. Render Nav */
+  /* 2. Render Nav (UPDATED FOR DROPDOWN) */
   const nav = document.getElementById('navMenu');
   contentData.chapters.forEach(ch => {
     const a = document.createElement('a');
     a.href = `#${ch.id}`;
     a.className = 'nav-link';
-    a.textContent = ch.number + (ch.title ? `: ${ch.title}` : '');
-    a.onclick = () => nav.classList.remove('open');
+    a.textContent = `${ch.number}: ${ch.title}`;
+    
+    // Close menu when a link is clicked
+    a.onclick = () => {
+        nav.classList.remove('open');
+    };
+    
     nav.appendChild(a);
   });
 
@@ -268,10 +344,8 @@ function renderPage(){
     s.className = 'chapter';
     s.id = ch.id;
 
-    // Split images into "features" (Sidebar) and "inline" (Text)
     const sidebarImages = (ch.images || []).filter(img => img.type !== 'inline');
     
-    // Start building HTML
     let h = `
       <div class="chapter-container">
         <div class="chapter-content">
@@ -283,9 +357,8 @@ function renderPage(){
             </div>
     `;
 
-    // Process Paragraphs
     ch.content.forEach(p => {
-        // 1. Handle Inline Images {{INLINE_IMAGE:id}}
+        // Handle Inline Images
         p = p.replace(/{{INLINE_IMAGE:([^}]+)}}/g, (match, imgId) => {
             const imgObj = (ch.images || []).find(i => i.id === imgId);
             if(imgObj) {
@@ -298,7 +371,7 @@ function renderPage(){
             return '';
         });
 
-        // 2. Handle Annotations {{key|text}}
+        // Handle Annotations
         p = p.replace(/{{([^|]+)\|([^}]+)}}/g, '<span class="annotation-trigger" data-ann="$1" data-chap="'+ch.id+'">$2</span>');
 
         h += `<p>${p}</p>`;
@@ -306,7 +379,7 @@ function renderPage(){
 
     h += `</div>`; // Close Prose
 
-    // Sidebar (Rail) Images
+    // Sidebar Images
     h += `<div class="image-rail">`;
     sidebarImages.forEach(img => {
         h += `
@@ -322,7 +395,6 @@ function renderPage(){
     s.innerHTML = h;
     cont.appendChild(s);
 
-    // Attach Event Listeners for Annotations inside this chapter
     s.querySelectorAll('.annotation-trigger').forEach(tr => {
       tr.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -331,7 +403,7 @@ function renderPage(){
     });
   });
 
-  // Intersection Observer for fade-in effect
+  // Intersection Observer
   const io = new IntersectionObserver(entries => {
       entries.forEach(e => {
           if(e.isIntersecting) e.target.classList.add('visible');
@@ -342,6 +414,10 @@ function renderPage(){
 }
 
 /* --- Interaction Functions --- */
+
+function toggleNav() {
+    document.getElementById('navMenu').classList.toggle('open');
+}
 
 function showAnn(chapId, key){
   const chap = contentData.chapters.find(c => c.id === chapId);
@@ -372,6 +448,16 @@ document.addEventListener('keydown', e => {
     document.getElementById('lightbox').classList.remove('active');
     closeAnn();
   }
+});
+
+// Close nav if clicking outside
+document.addEventListener('click', function(event) {
+    const navBox = document.querySelector('.nav');
+    const menu = document.getElementById('navMenu');
+    // If menu is open AND click is NOT inside nav box
+    if (menu && menu.classList.contains('open') && !navBox.contains(event.target)) {
+        menu.classList.remove('open');
+    }
 });
 
 loadContent();
