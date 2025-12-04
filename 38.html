@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>.38 Special</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --blood-deep: #8B0000;
+            --blood-dark: #5C0000;
+            --crimson: #DC143C;
+            --iron: #2B2B2B;
+            --steel: #4A4A4A;
+            --ash: #D3D3D3;
+            --amber: #FFB347;
+            --shadow: rgba(0, 0, 0, 0.8);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Crimson Pro', serif;
+            background: var(--iron);
+            color: var(--ash);
+            line-height: 1.8;
+            overflow-x: hidden;
+        }
+
+        /* Geometric background system */
+        .geometry {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.15;
+        }
+
+        .geometry-line {
+            position: absolute;
+            background: var(--blood-deep);
+        }
+
+        .geometry-line.vertical {
+            width: 1px;
+            height: 100%;
+            top: 0;
+        }
+
+        .geometry-line.horizontal {
+            height: 1px;
+            width: 100%;
+            left: 0;
+        }
+
+        .geometry-line.v1 { left: 15%; }
+        .geometry-line.v2 { left: 35%; }
+        .geometry-line.v3 { left: 65%; }
+        .geometry-line.v4 { left: 85%; }
+        .geometry-line.h1 { top: 20%; }
+        .geometry-line.h2 { top: 50%; }
+        .geometry-line.h3 { top: 80%; }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        .nav-toggle {
+            background: var(--blood-deep);
+            color: var(--ash);
+            border: 1px solid var(--crimson);
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+        }
+
+        .nav-toggle:hover {
+            background: var(--crimson);
+            box-shadow: 0 0 20px rgba(220, 20, 60, 0.5);
+        }
+
+        .nav-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--iron);
+            border: 1px solid var(--blood-deep);
+            margin-top: 0.5rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .nav-menu.open {
+            max-height: 800px;
+        }
+
+        .nav-link {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            color: var(--ash);
+            text-decoration: none;
+            border-bottom: 1px solid var(--steel);
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            background: var(--blood-deep);
+            padding-left: 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--iron) 0%, var(--blood-dark) 100%);
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                repeating-linear-gradient(
+                    90deg,
+                    transparent,
+                    transparent 100px,
+                    rgba(139, 0, 0, 0.1) 100px,
+                    rgba(139, 0, 0, 0.1) 101px
+                ),
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 100px,
+                    rgba(139, 0, 0, 0.1) 100px,
+                    rgba(139, 0, 0, 0.1) 101px
+                );
+            opacity: 0.3;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 1200px;
+            padding: 2rem;
+        }
+
+        /* Hero rotating carousel - square auto-rotating image display */
+        .hero-carousel {
+            width: 400px;
+            height: 400px;
+            max-width: 90%;
+            margin: 0 auto 3rem auto;
+            position: relative;
+            perspective: 1000px;
+        }
+
+        .hero-carousel-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: rotate 30s infinite linear;
+        }
+
+        @keyframes rotate {
+            from { transform: rotateY(0deg); }
+            to { transform: rotateY(360deg); }
+        }
+
+        .hero-carousel-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border: 2px solid var(--crimson);
+            box-shadow: 0 0 40px rgba(220, 20, 60, 0.3);
+            overflow: hidden;
+        }
+
+        .hero-carousel-face img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(40%) contrast(1.2);
+        }
+
+        .hero-carousel-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            padding: 1rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--ash);
+            text-align: center;
+        }
+
+        .hero-carousel-face:nth-child(1) { transform: rotateY(0deg) translateZ(200px); }
+        .hero-carousel-face:nth-child(2) { transform: rotateY(60deg) translateZ(200px); }
+        .hero-carousel-face:nth-child(3) { transform: rotateY(120deg) translateZ(200px); }
+        .hero-carousel-face:nth-child(4) { transform: rotateY(180deg) translateZ(200px); }
+        .hero-carousel-face:nth-child(5) { transform: rotateY(240deg) translateZ(200px); }
+        .hero-carousel-face:nth-child(6) { transform: rotateY(300deg) translateZ(200px); }
+
+        .hero-carousel:hover .hero-carousel-container {
+            animation-play-state: paused;
+        }
+
+        @media (max-width: 768px) {
+            .hero-carousel {
+                width: 300px;
+                height: 300px;
+            }
+            .hero-carousel-face:nth-child(1) { transform: rotateY(0deg) translateZ(150px); }
+            .hero-carousel-face:nth-child(2) { transform: rotateY(60deg) translateZ(150px); }
+            .hero-carousel-face:nth-child(3) { transform: rotateY(120deg) translateZ(150px); }
+            .hero-carousel-face:nth-child(4) { transform: rotateY(180deg) translateZ(150px); }
+            .hero-carousel-face:nth-child(5) { transform: rotateY(240deg) translateZ(150px); }
+            .hero-carousel-face:nth-child(6) { transform: rotateY(300deg) translateZ(150px); }
+        }
+
+        .hero-title {
+            font-size: clamp(2.5rem, 8vw, 6rem);
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            color: var(--crimson);
+            text-shadow: 2px 2px 0 var(--blood-dark), 4px 4px 10px var(--shadow);
+            letter-spacing: -0.02em;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1rem, 2vw, 1.5rem);
+            color: var(--ash);
+            font-weight: 400;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .hero-author {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--amber);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 3rem;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--crimson);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: translateX(-50%) translateY(0); }
+            50% { opacity: 1; transform: translateX(-50%) translateY(-10px); }
+        }
+
+        /* Chapter Sections */
+        .chapter {
+            position: relative;
+            min-height: 100vh;
+            padding: 8rem 2rem;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .chapter.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chapter-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .chapter-header {
+            margin-bottom: 4rem;
+        }
+
+        .chapter-number {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--crimson);
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            margin-bottom: 1rem;
+        }
+
+        .chapter-title {
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 700;
+            color: var(--ash);
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .chapter-title::after {
+            content: '';
+            position: absolute;
+            bottom: -1rem;
+            left: 0;
+            width: 100px;
+            height: 3px;
+            background: var(--blood-deep);
+        }
+
+        .chapter-meta {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--steel);
+            margin-top: 1.5rem;
+        }
+
+        .chapter-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 3rem;
+        }
+
+        @media (min-width: 968px) {
+            .chapter-content {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        .prose {
+            font-size: clamp(1.1rem, 2vw, 1.3rem);
+            line-height: 1.9;
+            color: var(--ash);
+        }
+
+        .prose p {
+            margin-bottom: 1.5rem;
+        }
+
+        .prose p:first-of-type::first-letter {
+            font-size: 4em;
+            line-height: 0.8;
+            float: left;
+            margin: 0.1em 0.1em 0 0;
+            color: var(--crimson);
+            font-weight: 700;
+        }
+
+        .prose em {
+            font-style: italic;
+            color: var(--amber);
+        }
+
+        .prose strong {
+            font-weight: 700;
+            color: var(--crimson);
+        }
+
+        /* Annotations */
+        .annotation-trigger {
+            color: var(--amber);
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            cursor: help;
+            position: relative;
+            transition: color 0.2s ease;
+        }
+
+        .annotation-trigger:hover {
+            color: var(--crimson);
+        }
+
+        .annotation-panel {
+            position: sticky;
+            top: 8rem;
+            height: fit-content;
+        }
+
+        .annotation-box {
+            background: var(--blood-dark);
+            border: 1px solid var(--crimson);
+            padding: 2rem;
+            display: none;
+            animation: slideIn 0.3s ease;
+            position: relative;
+        }
+
+        .annotation-box.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .annotation-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--crimson);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: 1rem;
+        }
+
+        .annotation-content {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: var(--ash);
+        }
+
+        .annotation-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--ash);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .annotation-close:hover {
+            color: var(--crimson);
+        }
+
+        /* Image containers */
+        .chapter-image {
+            margin: 3rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chapter-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+            filter: grayscale(30%) contrast(1.1);
+            transition: filter 0.4s ease;
+        }
+
+        .chapter-image:hover img {
+            filter: grayscale(0%) contrast(1);
+        }
+
+        .image-caption {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--steel);
+            margin-top: 0.5rem;
+            text-align: right;
+            font-style: italic;
+        }
+
+        .chapter-image.bordered {
+            border: 3px solid var(--blood-deep);
+            padding: 1rem;
+            background: var(--iron);
+        }
+
+        .chapter-hero-image {
+            position: relative;
+            height: 60vh;
+            margin: -4rem -2rem 4rem -2rem;
+            overflow: hidden;
+        }
+
+        .chapter-hero-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(50%) contrast(1.2);
+        }
+
+        .chapter-hero-image::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(to bottom, transparent, var(--iron));
+        }
+
+        .prose-image {
+            float: right;
+            width: 40%;
+            margin: 0 0 1.5rem 2rem;
+            border: 2px solid var(--blood-deep);
+        }
+
+        .prose-image.left {
+            float: left;
+            margin: 0 2rem 1.5rem 0;
+        }
+
+        .prose-image img {
+            width: 100%;
+            display: block;
+            filter: grayscale(50%);
+        }
+
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 3rem 0;
+        }
+
+        .image-gallery img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            filter: grayscale(40%) contrast(1.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .image-gallery img:hover {
+            filter: grayscale(0%) contrast(1);
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(220, 20, 60, 0.5);
+        }
+
+        .chapter.has-background {
+            position: relative;
+        }
+
+        .chapter-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.1;
+        }
+
+        .chapter-background img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(100%) contrast(1.5);
+        }
+
+        .chapter.has-background .chapter-container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .lightbox.active {
+            display: flex;
+        }
+
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            box-shadow: 0 0 50px rgba(220, 20, 60, 0.5);
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            color: var(--ash);
+            font-size: 3rem;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .lightbox-close:hover {
+            color: var(--crimson);
+        }
+
+        .chapter:nth-child(even) .chapter-content {
+            direction: rtl;
+        }
+
+        .chapter:nth-child(even) .prose {
+            direction: ltr;
+        }
+
+        .footer {
+            background: var(--blood-dark);
+            padding: 3rem 2rem;
+            text-align: center;
+            border-top: 1px solid var(--crimson);
+        }
+
+        .footer-text {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--steel);
+        }
+
+        @media (max-width: 768px) {
+            .nav {
+                top: 1rem;
+                right: 1rem;
+            }
+
+            .chapter {
+                padding: 4rem 1.5rem;
+            }
+
+            .chapter-content {
+                grid-template-columns: 1fr !important;
+            }
+
+            .annotation-panel {
+                position: static;
+                margin-top: 2rem;
+            }
+
+            .chapter-hero-image {
+                height: 40vh;
+                margin: -2rem -1.5rem 2rem -1.5rem;
+            }
+
+            .prose-image {
+                float: none;
+                width: 100%;
+                margin: 1.5rem 0;
+            }
+
+            .image-gallery {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        ::selection {
+            background: var(--crimson);
+            color: var(--iron);
+        }
+    </style>
+</head>
+<body>
+    <div class="geometry">
+        <div class="geometry-line vertical v1"></div>
+        <div class="geometry-line vertical v2"></div>
+        <div class="geometry-line vertical v3"></div>
+        <div class="geometry-line vertical v4"></div>
+        <div class="geometry-line horizontal h1"></div>
+        <div class="geometry-line horizontal h2"></div>
+        <div class="geometry-line horizontal h3"></div>
+    </div>
+
+    <nav class="nav">
+        <button class="nav-toggle" onclick="toggleNav()">Chapters</button>
+        <div class="nav-menu" id="navMenu"></div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-carousel">
+                <div class="hero-carousel-container" id="heroCarousel"></div>
+            </div>
+            <h1 class="hero-title" id="heroTitle"></h1>
+            <p class="hero-subtitle" id="heroSubtitle"></p>
+            <p class="hero-author" id="heroAuthor"></p>
+        </div>
+        <div class="scroll-indicator">↓ Scroll to Begin</div>
+    </section>
+
+    <div id="chapters-container"></div>
+
+    <footer class="footer">
+        <p class="footer-text">© 2024 Inky | www.inkrealm.info</p>
+        <p class="footer-text" style="margin-top: 1rem; opacity: 0.7;">
+            Design inspired by <a href="https://spec.tass.com/moscow-today/" style="color: var(--crimson); text-decoration: none;" target="_blank" rel="noopener">TASS Moscow Today</a>
+        </p>
+    </footer>
+
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <span class="lightbox-close">×</span>
+        <img id="lightbox-img" src="" alt="">
+    </div>
+
+    <script>
+        let contentData = null;
+
+        // Load content from JSON
+        async function loadContent() {
+            try {
+                const response = await fetch('content.json');
+                contentData = await response.json();
+                renderPage();
+            } catch (error) {
+                console.error('Error loading content:', error);
+                document.body.innerHTML = '<p style="color: var(--crimson); text-align: center; padding: 2rem;">Error loading content. Please ensure content.json is in the same directory.</p>';
+            }
+        }
+
+        function renderPage() {
+            // Render hero section
+            document.getElementById('heroTitle').innerHTML = contentData.title;
+            document.getElementById('heroSubtitle').textContent = contentData.subtitle;
+            document.getElementById('heroAuthor').textContent = contentData.author;
+
+            // Render hero carousel
+            const heroCarousel = document.getElementById('heroCarousel');
+            contentData.heroCarousel.forEach(item => {
+                const face = document.createElement('div');
+                face.className = 'hero-carousel-face';
+                face.innerHTML = `
+                    <img src="${item.src}" alt="${item.alt}">
+                    <div class="hero-carousel-caption">${item.caption}</div>
+                `;
+                heroCarousel.appendChild(face);
+            });
+
+            // Render navigation
+            const navMenu = document.getElementById('navMenu');
+            contentData.chapters.forEach(chapter => {
+                const link = document.createElement('a');
+                link.href = `#${chapter.id}`;
+                link.className = 'nav-link';
+                link.textContent = chapter.number;
+                link.onclick = () => document.getElementById('navMenu').classList.remove('open');
+                navMenu.appendChild(link);
+            });
+
+            // Render chapters
+            const chaptersContainer = document.getElementById('chapters-container');
+            contentData.chapters.forEach((chapter, index) => {
+                const section = renderChapter(chapter, index);
+                chaptersContainer.appendChild(section);
+            });
+
+            // Initialize scroll observers
+            initScrollObservers();
+        }
+
+        function renderChapter(chapter, index) {
+            const section = document.createElement('section');
+            section.className = 'chapter';
+            if (chapter.backgroundImage) {
+                section.classList.add('has-background');
+            }
+            section.id = chapter.id;
+
+            let html = '';
+
+            // Background image if specified
+            if (chapter.backgroundImage) {
+                html += `
+                    <div class="chapter-background">
+                        <img src="${chapter.backgroundImage.src}" alt="${chapter.backgroundImage.alt}">
+                    </div>
+                `;
+            }
+
+            html += '<div class="chapter-container">';
+
+            // Hero image if specified
+            if (chapter.heroImage) {
+                html += `
+                    <div class="chapter-hero-image">
+                        <img src="${chapter.heroImage.src}" alt="${chapter.heroImage.alt}">
+                    </div>
+                `;
+            }
+
+            // Chapter header
+            html += `
+                <div class="chapter-header">
+                    <div class="chapter-number">${chapter.number}</div>
+                    <h2 class="chapter-title">${chapter.title}</h2>
+                    ${chapter.meta ? `<div class="chapter-meta">${chapter.meta}</div>` : ''}
+                </div>
+                <div class="chapter-content">
+                    <div class="prose">
+            `;
+
+            // Process content paragraphs
+            chapter.content.forEach((para, pIndex) => {
+                // Check for inline image marker
+                if (para.includes('{{INLINE_IMAGE:')) {
+                    const match = para.match(/{{INLINE_IMAGE:([^}]+)}}/);
+                    if (match) {
+                        const imageId = match[1];
+                        const image = chapter.images.find(img => img.id === imageId);
+                        if (image) {
+                            html += `
+                                <div class="prose-image ${image.float === 'left' ? 'left' : ''}">
+                                    <img src="${image.src}" alt="${image.alt}">
+                                    <div class="image-caption">${image.caption}</div>
+                                </div>
+                            `;
+                        }
+                        para = para.replace(/{{INLINE_IMAGE:[^}]+}}/, '');
+                    }
+                }
+
+                // Process annotation triggers
+                para = para.replace(/{{([^|]+)\|([^}]+)}}/g, (match, key, text) => {
+                    return `<span class="annotation-trigger" data-annotation="${key}">${text}</span>`;
+                });
+
+                html += `<p>${para}</p>`;
+            });
+
+            // Add end-of-chapter images
+            if (chapter.images) {
+                chapter.images.forEach(img => {
+                    if (img.position === 'end' && img.type !== 'prose-inline') {
+                        if (img.type === 'gallery') {
+                            html += '<div class="image-gallery">';
+                            img.images.forEach(galleryImg => {
+                                html += `<img src="${galleryImg.src}" alt="${galleryImg.alt}" onclick="openLightbox(this)">`;
+                            });
+                            html += '</div>';
+                        } else {
+                            html += `
+                                <div class="chapter-image ${img.type || ''}">
+                                    <img src="${img.src}" alt="${img.alt}">
+                                    ${img.caption ? `<div class="image-caption">${img.caption}</div>` : ''}
+                                </div>
+                            `;
+                        }
+                    }
+                });
+            }
+
+            html += '</div>'; // Close prose
+
+            // Annotation panel
+            html += '<div class="annotation-panel">';
+            if (chapter.annotations) {
+                Object.keys(chapter.annotations).forEach(key => {
+                    const ann = chapter.annotations[key];
+                    html += `
+                        <div class="annotation-box" id="annotation-${key}">
+                            <button class="annotation-close" onclick="closeAnnotation('${key}')">×</button>
+                            <div class="annotation-label">${ann.label}</div>
+                            <div class="annotation-content">${ann.content}</div>
+                        </div>
+                    `;
+                });
+            }
+            html += '</div>'; // Close annotation-panel
+
+            html += '</div></div>'; // Close chapter-content and chapter-container
+
+            section.innerHTML = html;
+
+            // Attach annotation event listeners
+            setTimeout(() => {
+                section.querySelectorAll('.annotation-trigger').forEach(trigger => {
+                    trigger.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const annotationId = this.getAttribute('data-annotation');
+                        const annotationBox = document.getElementById(`annotation-${annotationId}`);
+                        
+                        const chapterSection = this.closest('.chapter');
+                        chapterSection.querySelectorAll('.annotation-box').forEach(box => {
+                            if (box !== annotationBox) {
+                                box.classList.remove('active');
+                            }
+                        });
+                        
+                        annotationBox.classList.toggle('active');
+                    });
+                });
+            }, 0);
+
+            return section;
+        }
+
+        function toggleNav() {
+            document.getElementById('navMenu').classList.toggle('open');
+        }
+
+        function closeAnnotation(id) {
+            document.getElementById(`annotation-${id}`).classList.remove('active');
+        }
+
+        function initScrollObservers() {
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.1
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.chapter').forEach(chapter => {
+                observer.observe(chapter);
+            });
+        }
+
+        function openLightbox(img) {
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightbox-img');
+            lightboxImg.src = img.src;
+            lightboxImg.alt = img.alt;
+            lightbox.classList.add('active');
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.remove('active');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeLightbox();
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            const nav = document.querySelector('.nav');
+            const menu = document.getElementById('navMenu');
+            if (!nav.contains(e.target) && menu.classList.contains('open')) {
+                menu.classList.remove('open');
+            }
+        });
+
+        // Load content on page load
+        loadContent();
+    </script>
+</body>
+</html>
