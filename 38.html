@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>.38 Special</title>
+    <title>.38 SPECIAL</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -353,21 +353,55 @@
         }
 
         .chapter-content {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 3rem;
-        }
-
-        @media (min-width: 968px) {
-            .chapter-content {
-                grid-template-columns: 2fr 1fr;
-            }
+            display: flex;
+            gap: 4rem;
+            align-items: flex-start;
         }
 
         .prose {
+            flex: 1;
+            max-width: 65%;
             font-size: clamp(1.1rem, 2vw, 1.3rem);
             line-height: 1.9;
             color: var(--ash);
+        }
+
+        .image-rail {
+            position: sticky;
+            top: 8rem;
+            width: 30%;
+            max-height: calc(100vh - 10rem);
+            overflow-y: auto;
+            padding-right: 1rem;
+        }
+
+        .image-rail::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .image-rail::-webkit-scrollbar-track {
+            background: var(--iron);
+        }
+
+        .image-rail::-webkit-scrollbar-thumb {
+            background: var(--blood-deep);
+            border-radius: 3px;
+        }
+
+        @media (max-width: 968px) {
+            .chapter-content {
+                flex-direction: column;
+            }
+            .prose {
+                max-width: 100%;
+            }
+            .image-rail {
+                position: static;
+                width: 100%;
+                max-height: none;
+                overflow-y: visible;
+                margin-top: 3rem;
+            }
         }
 
         .prose p {
@@ -468,128 +502,102 @@
             color: var(--crimson);
         }
 
-        /* Image containers */
-        .chapter-image {
-            margin: 3rem 0;
-            position: relative;
-            overflow: hidden;
+        /* Image Rail Styles */
+        .rail-image {
+            width: 100%;
+            margin-bottom: 3rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .chapter-image img {
+        .rail-image img {
             width: 100%;
             height: auto;
             display: block;
-            filter: grayscale(30%) contrast(1.1);
-            transition: filter 0.4s ease;
+            filter: grayscale(40%) contrast(1.1);
+            border: 2px solid var(--steel);
+            transition: all 0.3s ease;
         }
 
-        .chapter-image:hover img {
+        .rail-image:hover img {
             filter: grayscale(0%) contrast(1);
+            border-color: var(--crimson);
+            box-shadow: 0 0 20px rgba(220, 20, 60, 0.4);
         }
 
-        .image-caption {
+        .rail-image-caption {
             font-family: 'IBM Plex Mono', monospace;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--steel);
             margin-top: 0.5rem;
-            text-align: right;
             font-style: italic;
+            text-align: center;
         }
 
-        .chapter-image.bordered {
-            border: 3px solid var(--blood-deep);
-            padding: 1rem;
-            background: var(--iron);
+        /* Annotations Modal */
+        .annotation-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--blood-dark);
+            border: 2px solid var(--crimson);
+            padding: 3rem;
+            max-width: 600px;
+            width: 90%;
+            z-index: 10000;
+            box-shadow: 0 0 50px rgba(220, 20, 60, 0.5);
         }
 
-        .chapter-hero-image {
-            position: relative;
-            height: 60vh;
-            margin: -4rem -2rem 4rem -2rem;
-            overflow: hidden;
-        }
-
-        .chapter-hero-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: grayscale(50%) contrast(1.2);
-        }
-
-        .chapter-hero-image::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 50%;
-            background: linear-gradient(to bottom, transparent, var(--iron));
-        }
-
-        .prose-image {
-            float: right;
-            width: 40%;
-            margin: 0 0 1.5rem 2rem;
-            border: 2px solid var(--blood-deep);
-        }
-
-        .prose-image.left {
-            float: left;
-            margin: 0 2rem 1.5rem 0;
-        }
-
-        .prose-image img {
-            width: 100%;
+        .annotation-modal.active {
             display: block;
-            filter: grayscale(50%);
         }
 
-        .image-gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-            margin: 3rem 0;
-        }
-
-        .image-gallery img {
-            width: 100%;
-            height: 250px;
-            object-fit: cover;
-            filter: grayscale(40%) contrast(1.1);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .image-gallery img:hover {
-            filter: grayscale(0%) contrast(1);
-            transform: scale(1.05);
-            box-shadow: 0 0 30px rgba(220, 20, 60, 0.5);
-        }
-
-        .chapter.has-background {
-            position: relative;
-        }
-
-        .chapter-background {
-            position: absolute;
+        .annotation-modal-overlay {
+            display: none;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 0;
-            opacity: 0.1;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
         }
 
-        .chapter-background img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: grayscale(100%) contrast(1.5);
+        .annotation-modal-overlay.active {
+            display: block;
         }
 
-        .chapter.has-background .chapter-container {
-            position: relative;
-            z-index: 1;
+        .annotation-modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--ash);
+            font-size: 2rem;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .annotation-modal-close:hover {
+            color: var(--crimson);
+        }
+
+        .annotation-modal-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--crimson);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: 1.5rem;
+        }
+
+        .annotation-modal-content {
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: var(--ash);
         }
 
         .lightbox {
@@ -733,6 +741,13 @@
         </p>
     </footer>
 
+    <div class="annotation-modal-overlay" id="annotation-modal-overlay" onclick="closeAnnotationModal()"></div>
+    <div class="annotation-modal" id="annotation-modal">
+        <button class="annotation-modal-close" onclick="closeAnnotationModal()">×</button>
+        <div class="annotation-modal-label" id="annotation-modal-label"></div>
+        <div class="annotation-modal-content" id="annotation-modal-content"></div>
+    </div>
+
     <div class="lightbox" id="lightbox" onclick="closeLightbox()">
         <span class="lightbox-close">×</span>
         <img id="lightbox-img" src="" alt="">
@@ -796,36 +811,9 @@
         function renderChapter(chapter, index) {
             const section = document.createElement('section');
             section.className = 'chapter';
-            if (chapter.backgroundImage) {
-                section.classList.add('has-background');
-            }
             section.id = chapter.id;
 
-            let html = '';
-
-            // Background image if specified
-            if (chapter.backgroundImage) {
-                const bgSrc = typeof chapter.backgroundImage === 'string' ? chapter.backgroundImage : chapter.backgroundImage.src;
-                const bgAlt = typeof chapter.backgroundImage === 'string' ? 'Background' : chapter.backgroundImage.alt;
-                html += `
-                    <div class="chapter-background">
-                        <img src="${bgSrc}" alt="${bgAlt}">
-                    </div>
-                `;
-            }
-
-            html += '<div class="chapter-container">';
-
-            // Hero image if specified
-            if (chapter.heroImage) {
-                const heroSrc = typeof chapter.heroImage === 'string' ? chapter.heroImage : chapter.heroImage.src;
-                const heroAlt = typeof chapter.heroImage === 'string' ? chapter.title : chapter.heroImage.alt;
-                html += `
-                    <div class="chapter-hero-image">
-                        <img src="${heroSrc}" alt="${heroAlt}">
-                    </div>
-                `;
-            }
+            let html = '<div class="chapter-container">';
 
             // Chapter header
             html += `
@@ -838,73 +826,34 @@
                     <div class="prose">
             `;
 
-            // Process content paragraphs
+            // Process content paragraphs (NO inline images anymore)
             chapter.content.forEach((para, pIndex) => {
-                // Check for inline image marker
-                if (para.includes('{{INLINE_IMAGE:')) {
-                    const match = para.match(/{{INLINE_IMAGE:([^}]+)}}/);
-                    if (match) {
-                        const imageId = match[1];
-                        const image = chapter.images.find(img => img.id === imageId);
-                        if (image) {
-                            html += `
-                                <div class="prose-image ${image.float === 'left' ? 'left' : ''}">
-                                    <img src="${image.src}" alt="${image.alt}">
-                                    <div class="image-caption">${image.caption}</div>
-                                </div>
-                            `;
-                        }
-                        para = para.replace(/{{INLINE_IMAGE:[^}]+}}/, '');
-                    }
-                }
-
+                // Remove any inline image markers
+                para = para.replace(/{{INLINE_IMAGE:[^}]+}}/g, '');
+                
                 // Process annotation triggers
                 para = para.replace(/{{([^|]+)\|([^}]+)}}/g, (match, key, text) => {
-                    return `<span class="annotation-trigger" data-annotation="${key}">${text}</span>`;
+                    return `<span class="annotation-trigger" data-annotation="${key}" data-chapter="${chapter.id}">${text}</span>`;
                 });
 
                 html += `<p>${para}</p>`;
             });
 
-            // Add end-of-chapter images
-            if (chapter.images) {
-                chapter.images.forEach(img => {
-                    if (img.position === 'end' && img.type !== 'prose-inline') {
-                        if (img.type === 'gallery') {
-                            html += '<div class="image-gallery">';
-                            img.images.forEach(galleryImg => {
-                                html += `<img src="${galleryImg.src}" alt="${galleryImg.alt}" onclick="openLightbox(this)">`;
-                            });
-                            html += '</div>';
-                        } else {
-                            html += `
-                                <div class="chapter-image ${img.type || ''}">
-                                    <img src="${img.src}" alt="${img.alt}">
-                                    ${img.caption ? `<div class="image-caption">${img.caption}</div>` : ''}
-                                </div>
-                            `;
-                        }
-                    }
-                });
-            }
-
             html += '</div>'; // Close prose
 
-            // Annotation panel
-            html += '<div class="annotation-panel">';
-            if (chapter.annotations) {
-                Object.keys(chapter.annotations).forEach(key => {
-                    const ann = chapter.annotations[key];
+            // IMAGE RAIL - all images go here
+            html += '<div class="image-rail">';
+            if (chapter.images && chapter.images.length > 0) {
+                chapter.images.forEach(img => {
                     html += `
-                        <div class="annotation-box" id="annotation-${key}">
-                            <button class="annotation-close" onclick="closeAnnotation('${key}')">×</button>
-                            <div class="annotation-label">${ann.label}</div>
-                            <div class="annotation-content">${ann.content}</div>
+                        <div class="rail-image" onclick="openLightbox(this)">
+                            <img src="${img.src}" alt="${img.alt}" data-caption="${img.caption || ''}">
+                            <div class="rail-image-caption">${img.caption || ''}</div>
                         </div>
                     `;
                 });
             }
-            html += '</div>'; // Close annotation-panel
+            html += '</div>'; // Close image-rail
 
             html += '</div></div>'; // Close chapter-content and chapter-container
 
@@ -916,16 +865,8 @@
                     trigger.addEventListener('click', function(e) {
                         e.preventDefault();
                         const annotationId = this.getAttribute('data-annotation');
-                        const annotationBox = document.getElementById(`annotation-${annotationId}`);
-                        
-                        const chapterSection = this.closest('.chapter');
-                        chapterSection.querySelectorAll('.annotation-box').forEach(box => {
-                            if (box !== annotationBox) {
-                                box.classList.remove('active');
-                            }
-                        });
-                        
-                        annotationBox.classList.toggle('active');
+                        const chapterId = this.getAttribute('data-chapter');
+                        showAnnotation(chapterId, annotationId);
                     });
                 });
             }, 0);
@@ -937,8 +878,25 @@
             document.getElementById('navMenu').classList.toggle('open');
         }
 
-        function closeAnnotation(id) {
-            document.getElementById(`annotation-${id}`).classList.remove('active');
+        function showAnnotation(chapterId, annotationId) {
+            const chapter = contentData.chapters.find(ch => ch.id === chapterId);
+            if (!chapter || !chapter.annotations || !chapter.annotations[annotationId]) return;
+            
+            const ann = chapter.annotations[annotationId];
+            const modal = document.getElementById('annotation-modal');
+            const overlay = document.getElementById('annotation-modal-overlay');
+            const modalLabel = document.getElementById('annotation-modal-label');
+            const modalContent = document.getElementById('annotation-modal-content');
+            
+            modalLabel.textContent = ann.label;
+            modalContent.textContent = ann.content;
+            overlay.classList.add('active');
+            modal.classList.add('active');
+        }
+
+        function closeAnnotationModal() {
+            document.getElementById('annotation-modal').classList.remove('active');
+            document.getElementById('annotation-modal-overlay').classList.remove('active');
         }
 
         function initScrollObservers() {
@@ -961,9 +919,10 @@
             });
         }
 
-        function openLightbox(img) {
+        function openLightbox(element) {
             const lightbox = document.getElementById('lightbox');
             const lightboxImg = document.getElementById('lightbox-img');
+            const img = element.querySelector('img');
             lightboxImg.src = img.src;
             lightboxImg.alt = img.alt;
             lightbox.classList.add('active');
