@@ -189,20 +189,32 @@
 .chapter {
     min-height: 100vh;
     padding: 6rem 2rem;
+    
+    /* Animation Start State */
     opacity: 0;
     transform: translateY(30px);
     transition: opacity 1s ease, transform 1s ease;
+    
     border-bottom: 1px dashed var(--steel);
 
-    /* --- MOBILE MEMORY FIXES --- */
-    contain: content; 
-    content-visibility: auto; 
-    contain-intrinsic-size: 1000px; /* Prevents scroll jumping */
+    /* --- SAFE MOBILE SETTINGS --- */
+    /* Removed 'content-visibility' and 'contain' because they cause bugs on iOS */
+    transform: translateZ(0); /* Forces GPU rendering without hiding content */
 }
 
+/* Ensure the visible state overrides everything */
 .chapter.visible {
-    opacity: 1;
-    transform: translateY(0);
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+/* Failsafe: On small screens, force visibility if Javascript lags */
+@media (max-width: 768px) {
+    .chapter {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+    }
 }
 
 .chapter-container {
