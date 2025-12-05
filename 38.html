@@ -764,6 +764,43 @@
 
 <div id="chapters-container"></div>
 
+<!-- TTS Controls Panel -->
+<div class="tts-controls" id="ttsControls">
+    <div class="tts-header">
+        <span class="tts-title">Text-to-Speech</span>
+        <button class="tts-close" id="ttsClose">×</button>
+    </div>
+    
+    <div class="tts-main-controls">
+        <button class="tts-btn" id="ttsPlayPause" title="Play/Pause">
+            <span class="tts-icon">▶</span>
+        </button>
+        <button class="tts-btn" id="ttsStop" title="Stop">■</button>
+        
+        <div class="tts-slider-group">
+            <label>Speed:</label>
+            <input type="range" id="ttsSpeed" min="0.5" max="2" step="0.1" value="1">
+            <span id="ttsSpeedValue">1.0x</span>
+        </div>
+        
+        <div class="tts-voice-selector">
+            <label>Voice:</label>
+            <select id="ttsVoice">
+                <option value="">Loading voices...</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="tts-progress">
+        <div class="tts-progress-bar" id="ttsProgressBar"></div>
+        <div class="tts-chapter-info" id="ttsChapterInfo">Ready</div>
+    </div>
+</div>
+
+<!-- TTS Toggle Button (floating button) -->
+<button class="tts-toggle" id="ttsToggle" title="Text-to-Speech">
+    🔊
+</button>
 <footer class="footer">
 
     <p class="footer-text">© 2024 Inky | www.inkrealm.info</p>
@@ -786,6 +823,7 @@
 
 <script>
 let contentData = null;
+let ttsManager = null; // Add this line
 const DATA_URL = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/content.json';
 
 async function loadContent(){
@@ -794,6 +832,7 @@ async function loadContent(){
     if(!res.ok) throw new Error(res.status);
     contentData = await res.json();
     renderPage();
+    initializeTTS(); // Initialize TTS after content loads
   } catch(err){
     console.error(err);
     document.getElementById('heroTitle').textContent = "Error Loading Content";
@@ -931,6 +970,353 @@ function renderPage(){
   document.querySelectorAll('.chapter').forEach(c => io.observe(c));
 }
 
+/* --- TTS MANAGER --- */
+function initializeTTS() {
+    ttsManager = new TTSManager();
+}
+
+class TTSManager {
+    constructor() {
+        this.synth = window.speechSynthesis;
+        this.currentUtterance = null;
+        this.isPlaying = false;
+        this.currentChapterIndex = 0;
+        this.currentParagraphIndex = 0;
+        this.currentWordIndex = 0;
+        this.voices = [];
+        this.selectedVoice = null;
+        this.rate = 1.0;
+        this.highlightedElements = [];
+        
+        this.init();
+    }
+    
+    init() {
+        this.loadVoices();
+        this.setupEventListeners();
+        this.updateUI();
+    }
+    
+    loadVoices() {
+        // Load voices with a delay to ensure they're available
+        const loadVoices = () => {
+            this.voices = this.synth.getVoices();
+            if (this.voices.length > 0) {
+                this.populateVoiceSelect();
+            } else {
+                // Try again in 500ms if voices aren't loaded yet
+                setTimeout(loadVoices, 500);
+            }
+        };
+        
+        loadVoices();
+        
+        // Listen for voices changed event
+        this.synth.onvoiceschanged = () => {
+            this.voices = this.synth.getVoices();
+            this.populateVoiceSelect();
+        };
+    }
+    
+    populateVoiceSelect() {
+        const select = document.getElementById('ttsVoice');
+        if (!select) return;
+        
+        select.innerHTML = '';
+        
+        // Filter for English voices
+        const englishVoices = this.voices.filter(voice => 
+            voice.lang.startsWith('en')
+        );
+        
+        if (englishVoices.length === 0) {
+            select.innerHTML = '<option value="">No voices available</option>';
+            return;
+        }
+        
+        // Add default option
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Select a voice...';
+        select.appendChild(defaultOption);
+        
+        // Add voice options
+        englishVoices.forEach(voice => {
+            const option = document.createElement('option');
+            option.value = voice.name;
+            option.textContent = `${voice.name} (${voice.lang})`;
+            select.appendChild(option);
+            
+            // Pre-select a natural-sounding voice if available
+            if (!this.selectedVoice && voice.name.includes('Natural')) {
+                this.selectedVoice = voice;
+                option.selected = true;
+            }
+        });
+        
+        // If no voice selected yet, use first available
+        if (!this.selectedVoice && englishVoices.length > 0) {
+            this.selectedVoice = englishVoices[0];
+            select.selectedIndex = 1;
+        }
+    }
+    
+    setupEventListeners() {
+        // Play/Pause button
+        const playPauseBtn = document.getElementById('ttsPlayPause');
+        if (playPauseBtn) {
+            playPauseBtn.addEventListener('click', () => this.togglePlayPause());
+        }
+        
+        // Stop button
+        const stopBtn = document.getElementById('ttsStop');
+        if (stopBtn) {
+            stopBtn.addEventListener('click', () => this.stop());
+        }
+        
+        // Speed control
+        const speedSlider = document.getElementById('ttsSpeed');
+        const speedValue = document.getElementById('ttsSpeedValue');
+        
+        if (speedSlider && speedValue) {
+            speedSlider.addEventListener('input', (e) => {
+                this.rate = parseFloat(e.target.value);
+                speedValue.textContent = `${this.rate.toFixed(1)}x`;
+                
+                // Update current utterance if playing
+                if (this.currentUtterance && this.isPlaying) {
+                    this.currentUtterance.rate = this.rate;
+                    this.synth.cancel();
+                    this.synth.speak(this.currentUtterance);
+                }
+            });
+        }
+        
+        // Voice selection
+        const voiceSelect = document.getElementById('ttsVoice');
+        if (voiceSelect) {
+            voiceSelect.addEventListener('change', (e) => {
+                const voiceName = e.target.value;
+                this.selectedVoice = this.voices.find(v => v.name === voiceName);
+                
+                // Update current utterance if playing
+                if (this.currentUtterance && this.isPlaying) {
+                    this.currentUtterance.voice = this.selectedVoice;
+                    this.synth.cancel();
+                    this.synth.speak(this.currentUtterance);
+                }
+            });
+        }
+        
+        // Toggle TTS panel
+        const toggleBtn = document.getElementById('ttsToggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                document.getElementById('ttsControls').classList.toggle('active');
+            });
+        }
+        
+        // Close TTS panel
+        const closeBtn = document.getElementById('ttsClose');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                document.getElementById('ttsControls').classList.remove('active');
+            });
+        }
+        
+        // Close TTS panel when clicking outside
+        document.addEventListener('click', (e) => {
+            const ttsControls = document.getElementById('ttsControls');
+            const ttsToggle = document.getElementById('ttsToggle');
+            
+            if (ttsControls && ttsControls.classList.contains('active') &&
+                !ttsControls.contains(e.target) && 
+                ttsToggle && !ttsToggle.contains(e.target)) {
+                ttsControls.classList.remove('active');
+            }
+        });
+    }
+    
+    togglePlayPause() {
+        if (this.isPlaying) {
+            this.pause();
+        } else {
+            this.speak();
+        }
+    }
+    
+    speak() {
+        // Stop any current speech
+        this.stop();
+        
+        // Find current chapter
+        this.findCurrentChapter();
+        
+        // Get current chapter
+        const currentChapter = contentData.chapters[this.currentChapterIndex];
+        if (!currentChapter) {
+            this.updateStatus('No chapters found');
+            return;
+        }
+        
+        // Get text from current paragraph position
+        const paragraphs = currentChapter.content.slice(this.currentParagraphIndex);
+        let textToSpeak = paragraphs.join(' ');
+        
+        // Clean up HTML tags and extra spaces
+        textToSpeak = textToSpeak
+            .replace(/<[^>]*>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+        
+        if (!textToSpeak) {
+            // Move to next chapter if available
+            if (this.currentChapterIndex < contentData.chapters.length - 1) {
+                this.currentChapterIndex++;
+                this.currentParagraphIndex = 0;
+                this.speak();
+            } else {
+                this.updateStatus('End of story');
+            }
+            return;
+        }
+        
+        // Create utterance
+        this.currentUtterance = new SpeechSynthesisUtterance(textToSpeak);
+        this.currentUtterance.rate = this.rate;
+        this.currentUtterance.voice = this.selectedVoice;
+        this.currentUtterance.pitch = 1;
+        this.currentUtterance.volume = 1;
+        
+        // Set up event handlers
+        this.currentUtterance.onstart = () => {
+            this.isPlaying = true;
+            this.updateUI();
+            this.updateStatus(`Reading: ${currentChapter.title}`);
+        };
+        
+        this.currentUtterance.onend = () => {
+            this.isPlaying = false;
+            this.currentParagraphIndex = 0;
+            
+            // Move to next chapter if available
+            if (this.currentChapterIndex < contentData.chapters.length - 1) {
+                this.currentChapterIndex++;
+                this.updateStatus(`Next: ${contentData.chapters[this.currentChapterIndex].title}`);
+            } else {
+                this.updateStatus('End of story');
+            }
+            
+            this.clearHighlights();
+            this.updateUI();
+        };
+        
+        this.currentUtterance.onerror = (event) => {
+            console.error('Speech synthesis error:', event);
+            this.isPlaying = false;
+            this.updateStatus('Error occurred');
+            this.updateUI();
+        };
+        
+        this.currentUtterance.onboundary = (event) => {
+            this.onBoundary(event);
+        };
+        
+        // Start speaking
+        this.synth.speak(this.currentUtterance);
+    }
+    
+    pause() {
+        if (this.synth.speaking) {
+            this.synth.pause();
+            this.isPlaying = false;
+            this.updateUI();
+            this.updateStatus('Paused');
+        }
+    }
+    
+    stop() {
+        if (this.synth.speaking || this.synth.paused) {
+            this.synth.cancel();
+            this.isPlaying = false;
+            this.clearHighlights();
+            this.updateUI();
+            this.updateStatus('Stopped');
+        }
+    }
+    
+    onBoundary(event) {
+        // Simple highlighting - you can enhance this later
+        this.clearHighlights();
+        
+        // Find the current paragraph element
+        const chapterElement = document.querySelector(`#${contentData.chapters[this.currentChapterIndex].id}`);
+        if (!chapterElement) return;
+        
+        // Simple progress update
+        this.updateProgress();
+    }
+    
+    findCurrentChapter() {
+        // Find which chapter is currently in view
+        const chapters = document.querySelectorAll('.chapter');
+        let foundChapter = 0;
+        
+        chapters.forEach((chapter, index) => {
+            const rect = chapter.getBoundingClientRect();
+            if (rect.top < window.innerHeight / 2) {
+                foundChapter = index;
+            }
+        });
+        
+        this.currentChapterIndex = foundChapter;
+        this.currentParagraphIndex = 0; // Start from beginning of chapter
+    }
+    
+    clearHighlights() {
+        // Remove any existing highlights
+        document.querySelectorAll('.tts-highlight').forEach(el => {
+            el.classList.remove('tts-highlight');
+        });
+        document.querySelectorAll('.tts-current-word').forEach(el => {
+            el.classList.remove('tts-current-word');
+        });
+    }
+    
+    updateProgress() {
+        const progressBar = document.querySelector('.tts-progress-bar');
+        if (!progressBar) return;
+        
+        const currentChapter = contentData.chapters[this.currentChapterIndex];
+        if (!currentChapter) return;
+        
+        const totalChapters = contentData.chapters.length;
+        const progress = totalChapters > 0 ? ((this.currentChapterIndex + 1) / totalChapters) * 100 : 0;
+        
+        progressBar.style.width = `${progress}%`;
+    }
+    
+    updateStatus(message) {
+        const statusElement = document.getElementById('ttsChapterInfo');
+        if (statusElement) {
+            statusElement.textContent = message;
+        }
+    }
+    
+    updateUI() {
+        const playPauseBtn = document.getElementById('ttsPlayPause');
+        if (!playPauseBtn) return;
+        
+        if (this.isPlaying) {
+            playPauseBtn.classList.add('playing');
+            playPauseBtn.querySelector('.tts-icon').textContent = '⏸';
+        } else {
+            playPauseBtn.classList.remove('playing');
+            playPauseBtn.querySelector('.tts-icon').textContent = '▶';
+        }
+    }
+}
+
 /* --- Interaction Functions --- */
 
 function toggleNav() {
@@ -978,147 +1364,31 @@ document.addEventListener('click', function(event) {
     }
 });
 
-loadContent();
-    window.onscroll = function() {
+// Keyboard shortcuts for TTS
+document.addEventListener('keydown', (e) => {
+    if (e.altKey && e.key === 't') {
+        e.preventDefault();
+        document.getElementById('ttsControls').classList.toggle('active');
+    }
+    
+    if (e.altKey && e.key === ' ') {
+        e.preventDefault();
+        if (ttsManager) {
+            ttsManager.togglePlayPause();
+        }
+    }
+});
+
+// Reading progress
+window.onscroll = function() {
     let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
     let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
     let scrolled = (winScroll / height) * 100;
     document.getElementById("readingProgress").style.width = scrolled + "%";
 };
+
+loadContent();
 </script>
-    <script>
-        // Add this to the TTSManager class or as separate functions
 
-// Chapter navigation during TTS
-function addChapterNavigation() {
-    const chapterNav = document.createElement('div');
-    chapterNav.className = 'tts-chapter-nav';
-    chapterNav.innerHTML = `
-        <button class="tts-prev-chapter" id="ttsPrevChapter">←</button>
-        <button class="tts-next-chapter" id="ttsNextChapter">→</button>
-    `;
-    document.body.appendChild(chapterNav);
-    
-    // Event listeners
-    document.getElementById('ttsPrevChapter')?.addEventListener('click', () => {
-        if (ttsManager && ttsManager.currentChapterIndex > 0) {
-            ttsManager.stop();
-            ttsManager.currentChapterIndex--;
-            ttsManager.currentParagraphIndex = 0;
-            
-            // Scroll to chapter
-            const chapterId = contentData.chapters[ttsManager.currentChapterIndex].id;
-            document.getElementById(chapterId)?.scrollIntoView({ behavior: 'smooth' });
-            
-            // Start reading
-            setTimeout(() => ttsManager.speak(), 500);
-        }
-    });
-    
-    document.getElementById('ttsNextChapter')?.addEventListener('click', () => {
-        if (ttsManager && ttsManager.currentChapterIndex < contentData.chapters.length - 1) {
-            ttsManager.stop();
-            ttsManager.currentChapterIndex++;
-            ttsManager.currentParagraphIndex = 0;
-            
-            // Scroll to chapter
-            const chapterId = contentData.chapters[ttsManager.currentChapterIndex].id;
-            document.getElementById(chapterId)?.scrollIntoView({ behavior: 'smooth' });
-            
-            // Start reading
-            setTimeout(() => ttsManager.speak(), 500);
-        }
-    });
-}
-
-// Save TTS settings to localStorage
-function saveTTSSettings() {
-    const settings = {
-        rate: ttsManager?.rate || 1,
-        voice: ttsManager?.selectedVoice?.name || '',
-        autoPlay: true // or false based on preference
-    };
-    localStorage.setItem('ttsSettings', JSON.stringify(settings));
-}
-
-function loadTTSSettings() {
-    const saved = localStorage.getItem('ttsSettings');
-    if (saved) {
-        const settings = JSON.parse(saved);
-        if (ttsManager) {
-            ttsManager.rate = settings.rate;
-            // Set voice when voices are loaded
-        }
-    }
-}
-
-// Auto-scroll to keep current paragraph in view
-function setupAutoScroll() {
-    let autoScrollInterval = null;
-    
-    function startAutoScroll() {
-        autoScrollInterval = setInterval(() => {
-            const highlighted = document.querySelector('.tts-current-word');
-            if (highlighted) {
-                highlighted.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center',
-                    inline: 'nearest'
-                });
-            }
-        }, 500);
-    }
-    
-    function stopAutoScroll() {
-        if (autoScrollInterval) {
-            clearInterval(autoScrollInterval);
-            autoScrollInterval = null;
-        }
-    }
-    
-    // Call these from TTS manager events
-    window.ttsAutoScroll = {
-        start: startAutoScroll,
-        stop: stopAutoScroll
-    };
-}
-    </script>
-        <!-- TTS Controls Panel -->
-<div class="tts-controls" id="ttsControls">
-    <div class="tts-header">
-        <span class="tts-title">Text-to-Speech</span>
-        <button class="tts-close" id="ttsClose">×</button>
-    </div>
-    
-    <div class="tts-main-controls">
-        <button class="tts-btn" id="ttsPlayPause" title="Play/Pause">
-            <span class="tts-icon">▶</span>
-        </button>
-        <button class="tts-btn" id="ttsStop" title="Stop">■</button>
-        
-        <div class="tts-slider-group">
-            <label>Speed:</label>
-            <input type="range" id="ttsSpeed" min="0.5" max="2" step="0.1" value="1">
-            <span id="ttsSpeedValue">1.0x</span>
-        </div>
-        
-        <div class="tts-voice-selector">
-            <label>Voice:</label>
-            <select id="ttsVoice">
-                <option value="">Loading voices...</option>
-            </select>
-        </div>
-    </div>
-    
-    <div class="tts-progress">
-        <div class="tts-progress-bar" id="ttsProgressBar"></div>
-        <div class="tts-chapter-info" id="ttsChapterInfo">Ready</div>
-    </div>
-</div>
-
-<!-- TTS Toggle Button (floating button) -->
-<button class="tts-toggle" id="ttsToggle" title="Text-to-Speech">
-    🔊
-</button>
 </body>
 </html>
