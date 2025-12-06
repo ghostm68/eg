@@ -587,7 +587,7 @@ async function loadContent(){
     if(!res.ok) throw new Error(res.status);
     contentData = await res.json();
     renderPage();
-    initializeTTS(); // Start Audio Engine
+    initializeTTS(); 
   } catch(err){
     console.error(err);
     document.getElementById('heroTitle').textContent = "Error Loading Content";
@@ -625,10 +625,12 @@ function renderPage(){
   /* 3. Render Chapters */
   const cont = document.getElementById('chapters-container');
   
-  contentData.chapters.forEach(ch => {
+  contentData.chapters.forEach((ch, index) => {
     const s = document.createElement('section');
     s.className = 'chapter';
     s.id = ch.id;
+    // Add index dataset for TTS lookup
+    s.dataset.index = index; 
 
     /* IMAGE LOGIC */
     let sidebarImages = (ch.images || []);
@@ -641,13 +643,14 @@ function renderPage(){
     }
     
     // HTML Builder
+    // Added 'onclick' to the title to trigger TTS manually
     let h = `
       <div class="chapter-container">
         <div class="chapter-content">
           <div class="prose">
             <div class="chapter-header">
                 <div class="chapter-number">${ch.number}</div>
-                <h2 class="chapter-title">${ch.title}</h2>
+                <h2 class="chapter-title" onclick="playChapter(${index})" style="cursor:pointer; text-decoration:underline; text-decoration-color:var(--crimson);">${ch.title} <span style="font-size:0.5em; opacity:0.5; vertical-align:middle;">🔊</span></h2>
                 ${ch.meta ? `<div class="chapter-meta">${ch.meta}</div>` : ''}
             </div>
     `;
@@ -716,6 +719,13 @@ function initializeTTS() {
     ttsManager = new TTSManager();
 }
 
+// Global function to play specific chapter (called from HTML onclick)
+function playChapter(index) {
+    if(ttsManager) {
+        ttsManager.playSpecificChapter(index);
+    }
+}
+
 class TTSManager {
     constructor() {
         this.synth = window.speechSynthesis;
@@ -763,7 +773,6 @@ class TTSManager {
     
     selectBestVoice() {
         if (this.voices.length === 0) return;
-        
         const savedVoiceName = localStorage.getItem('ttsVoice');
         if (savedVoiceName) {
             const savedVoice = this.voices.find(v => v.name === savedVoiceName);
@@ -773,7 +782,6 @@ class TTSManager {
                 return;
             }
         }
-        
         if (this.isMobile) {
             const mobileVoice = this.voices.find(v => v.name.includes('Samantha') || v.name.includes('Alex') || v.name.toLowerCase().includes('english'));
             this.selectedVoice = mobileVoice || this.voices[0];
@@ -799,14 +807,12 @@ class TTSManager {
         const select = document.getElementById('ttsVoice');
         if (!select) return;
         select.innerHTML = '';
-        
         if (this.voices.length === 0) {
             const option = document.createElement('option');
             option.textContent = this.isMobile ? 'Mobile Limitation' : 'No voices';
             select.appendChild(option);
             return;
         }
-        
         this.voices.forEach(voice => {
             const option = document.createElement('option');
             option.value = voice.name;
@@ -857,17 +863,41 @@ class TTSManager {
         });
     }
     
+    // NEW: Method to play a specific chapter directly
+    playSpecificChapter(index) {
+        this.stop();
+        this.currentChapterIndex = index;
+        this.currentParagraphIndex = 0;
+        
+        // Show controls if hidden
+        document.getElementById('ttsControls').classList.add('active');
+        
+        // Slight delay to ensure stop() clears the queue
+        setTimeout(() => this.speak(), 100);
+    }
+
     togglePlayPause() {
         this.isPlaying ? this.pause() : this.speak();
     }
     
     speak() {
-        this.stop();
+        // If we are already stopped/paused, find where the user is looking
+        if (!this.isPlaying && !this.synth.paused) {
+            // Only find position if we aren't already set to a specific chapter via click
+            // Check if we have a "pending" chapter index that wasn't user-selected?
+            // Actually, best to just re-scan every time Play is hit from the main button
+            this.findCurrentReadingPosition(); 
+        }
+
+        this.stop(); // Clear previous
+        
         if (!this.selectedVoice && this.voices.length > 0) this.selectedVoice = this.voices[0];
         
-        this.findCurrentReadingPosition();
         const currentChapter = contentData.chapters[this.currentChapterIndex];
-        if (!currentChapter) return;
+        if (!currentChapter) {
+            console.warn("Chapter not found index:", this.currentChapterIndex);
+            return;
+        }
         
         const paragraphs = currentChapter.content.slice(this.currentParagraphIndex);
         let text = paragraphs.join(' ').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -919,14 +949,25 @@ class TTSManager {
         setTimeout(() => { if (this.isPlaying) this.speak(); }, 50);
     }
     
+    // UPDATED POSITION FINDER
     findCurrentReadingPosition() {
         const chapters = document.querySelectorAll('.chapter');
+        // Default to 0
+        let found = 0;
+        
+        // Loop to find which chapter is currently mostly on screen
         chapters.forEach((chapter, index) => {
             const rect = chapter.getBoundingClientRect();
-            if (rect.top < window.innerHeight / 2) {
-                this.currentChapterIndex = index;
+            
+            // Logic: Is the top of this chapter above the bottom of the screen?
+            // And is the bottom of this chapter below the top of the screen?
+            // Basically: Is it on screen?
+            if (rect.top < window.innerHeight * 0.5) {
+                found = index;
             }
         });
+        
+        this.currentChapterIndex = found;
         this.currentParagraphIndex = 0;
     }
     
@@ -1023,5 +1064,6 @@ window.onscroll = function() {
 
 loadContent();
 </script>
+
 </body>
 </html>
