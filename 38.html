@@ -513,24 +513,43 @@
 #vintage-map-38 {
     display: block;
     width: 100%;
-    /* Taller height to fit the full grid without cropping */
-    height: 400px; 
-    object-fit: contain; /* Ensures the whole map fits inside the box */
-    background-color: #e8e0d3;
-    border-top: 2px solid #5a4a3a;
-    border-bottom: 2px solid #5a4a3a;
+    height: 350px; /* Slightly taller to accommodate labels */
+    max-height: 400px;
+    object-fit: contain; /* Changed from cover to contain to prevent cutoff */
+    object-position: center;
+    border-top: 2px solid #7a6a5a;
+    border-bottom: 2px solid #7a6a5a;
+    background-color: #e8e0d3; /* Matches aged paper */
     pointer-events: none;
     user-select: none;
-    position: relative;
-    z-index: 5;
+    box-shadow: 
+        inset 0 3px 10px rgba(0,0,0,0.12), 
+        inset 0 -3px 10px rgba(0,0,0,0.12),
+        0 2px 8px rgba(0,0,0,0.15); /* Gives it depth like a real map */
 }
 
 @media (max-width: 768px) {
-    #vintage-map-38 {
-        height: 280px; /* Still tall enough on mobile */
-        object-fit: cover; /* Crop slightly on mobile to keep text readable */
-        object-position: center;
+    #vintage-map-38 { 
+        height: 280px; /* Taller on mobile to show detail */
     }
+}
+
+@media (min-width: 1200px) {
+    #vintage-map-38 { 
+        height: 400px; /* Full detail on large screens */
+    }
+}
+
+/* Optional: Add a subtle vignette effect for extra authenticity */
+#vintage-map-38::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    box-shadow: inset 0 0 100px rgba(74, 58, 46, 0.15);
+    pointer-events: none;
 }
 </style>
 </head>
@@ -603,155 +622,410 @@
 
     <!-- TTS Toggle Button -->
     <button class="tts-toggle" id="ttsToggle" title="Text-to-Speech">🔊</button>
-<svg id="vintage-map-38" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 400" role="img">
+<svg id="vintage-map-38" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 400" preserveAspectRatio="xMidYMid slice" role="img">
   <defs>
-    <!-- Paper Texture -->
     <filter id="inkPaper">
-      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" result="noise"/>
-      <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.3 0" in="noise" result="coloredNoise"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise"/>
+      <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.45 0" in="noise" result="coloredNoise"/>
       <feBlend in="SourceGraphic" in2="coloredNoise" mode="multiply"/>
     </filter>
     
-    <!-- Crosshatch Pattern for Blocks -->
+    <!-- Hatching patterns for different building types -->
     <pattern id="hatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-      <line x1="0" y1="0" x2="0" y2="4" stroke="#8a7c6e" stroke-width="1.5" />
+      <line x1="0" y1="0" x2="0" y2="4" stroke="#8a7c6e" stroke-width="1" />
     </pattern>
     
-    <!-- Brick Pattern for Landmarks -->
-    <pattern id="brick" width="6" height="6" patternUnits="userSpaceOnUse">
+    <pattern id="hatch-dense" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+      <line x1="0" y1="0" x2="0" y2="3" stroke="#7a6c5e" stroke-width="0.9" />
+    </pattern>
+    
+    <pattern id="brick" width="8" height="6" patternUnits="userSpaceOnUse">
+      <rect width="8" height="6" fill="#9a8c7e"/>
+      <rect x="0" y="0" width="4" height="3" fill="none" stroke="#6a5c4e" stroke-width="0.5"/>
+      <rect x="4" y="0" width="4" height="3" fill="none" stroke="#6a5c4e" stroke-width="0.5"/>
+      <rect x="2" y="3" width="4" height="3" fill="none" stroke="#6a5c4e" stroke-width="0.5"/>
+    </pattern>
+    
+    <!-- Warehouse/industrial pattern -->
+    <pattern id="warehouse" width="6" height="6" patternUnits="userSpaceOnUse">
       <rect width="6" height="6" fill="#7a6c5e"/>
-      <line x1="0" y1="0" x2="6" y2="0" stroke="#333" stroke-width="0.5"/>
-      <line x1="0" y1="3" x2="6" y2="3" stroke="#333" stroke-width="0.5"/>
-      <line x1="3" y1="0" x2="3" y2="6" stroke="#333" stroke-width="0.5"/>
+      <line x1="0" y1="0" x2="6" y2="0" stroke="#5a4c3e" stroke-width="0.5"/>
+      <line x1="0" y1="3" x2="6" y2="3" stroke="#5a4c3e" stroke-width="0.5"/>
+      <line x1="3" y1="0" x2="3" y2="6" stroke="#5a4c3e" stroke-width="0.5"/>
     </pattern>
   </defs>
-
-  <!-- Background -->
+  
+  <!-- Aged Paper Background -->
   <rect width="100%" height="100%" fill="#e8e0d3" />
-
-  <!-- THE HUDSON RIVER & PIERS (Left Side) -->
-  <g transform="translate(0,0)">
-    <rect x="0" y="0" width="80" height="400" fill="#aab8c2" opacity="0.4"/>
-    <!-- The Piers -->
-    <g fill="#5a4a3a" opacity="0.8">
-      <rect x="0" y="40" width="60" height="20" />
-      <rect x="0" y="90" width="60" height="20" />
-      <rect x="0" y="140" width="60" height="20" />
-      <rect x="0" y="190" width="60" height="20" />
-      <rect x="0" y="240" width="60" height="20" /> <!-- Pier 84 ish -->
-      <rect x="0" y="290" width="60" height="20" />
+  
+  <!-- Coffee stains and age spots -->
+  <g opacity="0.12">
+    <ellipse cx="150" cy="90" rx="45" ry="35" fill="#8a7250" transform="rotate(-15 150 90)"/>
+    <circle cx="820" cy="340" r="40" fill="#7a6250"/>
+    <ellipse cx="500" cy="60" rx="30" ry="25" fill="#8a7250"/>
+    <circle cx="680" cy="180" r="22" fill="#9a8270"/>
+  </g>
+  
+  <!-- Street Grid - 1938 Configuration -->
+  <g stroke="#7c7c7c" stroke-width="1" fill="none">
+    <!-- AVENUES (West to East) -->
+    <!-- 12th Ave (West Side Highway - partial, industrial) -->
+    <line x1="70" y1="0" x2="70" y2="400" stroke-width="2.5" opacity="0.85" stroke-dasharray="8,4"/>
+    
+    <!-- 11th Ave - SURFACE RAILROAD TRACKS (removed mid-30s but some remain) -->
+    <line x1="175" y1="0" x2="175" y2="400" stroke-width="3" opacity="0.9"/>
+    <line x1="171" y1="0" x2="171" y2="400" stroke-width="0.8" stroke-dasharray="6,6" opacity="0.6"/>
+    <line x1="179" y1="0" x2="179" y2="400" stroke-width="0.8" stroke-dasharray="6,6" opacity="0.6"/>
+    
+    <!-- 10th Ave -->
+    <line x1="280" y1="0" x2="280" y2="400" stroke-width="2"/>
+    
+    <!-- 9th Ave - NINTH AVENUE EL (Elevated Railway) -->
+    <line x1="385" y1="0" x2="385" y2="400" stroke-width="2.5"/>
+    <!-- El structure supports -->
+    <g stroke="#5a4c3e" opacity="0.5">
+      <line x1="383" y1="30" x2="383" y2="35" stroke-width="2"/>
+      <line x1="383" y1="90" x2="383" y2="95" stroke-width="2"/>
+      <line x1="383" y1="150" x2="383" y2="155" stroke-width="2"/>
+      <line x1="383" y1="210" x2="383" y2="215" stroke-width="2"/>
+      <line x1="383" y1="270" x2="383" y2="275" stroke-width="2"/>
+      <line x1="383" y1="330" x2="383" y2="335" stroke-width="2"/>
     </g>
-    <text x="10" y="380" font-family="Georgia, serif" font-size="14" fill="#000" font-style="italic" transform="rotate(-90 10,380)">HUDSON RIVER</text>
+    
+    <!-- 8th Ave (Broadway intersection area) -->
+    <line x1="490" y1="0" x2="490" y2="400" stroke-width="2.5" opacity="0.95"/>
+    
+    <!-- 7th Ave -->
+    <line x1="595" y1="0" x2="595" y2="400" stroke-width="2"/>
+    
+    <!-- 6th Ave -->
+    <line x1="700" y1="0" x2="700" y2="400" stroke-width="2"/>
+    
+    <!-- 5th Ave -->
+    <line x1="805" y1="0" x2="805" y2="400" stroke-width="1.8"/>
+    
+    <!-- Broadway (diagonal) -->
+    <line x1="910" y1="0" x2="910" y2="400" stroke-width="1.5"/>
+    
+    <!-- STREETS (North to South - W 50s down to W 30s) -->
+    <line x1="0" y1="20" x2="1000" y2="20" stroke-width="0.8"/> <!-- W 50th -->
+    <line x1="0" y1="45" x2="1000" y2="45" stroke-width="0.8"/> <!-- W 49th -->
+    <line x1="0" y1="70" x2="1000" y2="70" stroke-width="0.8"/> <!-- W 48th -->
+    <line x1="0" y1="95" x2="1000" y2="95" stroke-width="0.8"/> <!-- W 47th -->
+    <line x1="0" y1="120" x2="1000" y2="120" stroke-width="0.8"/> <!-- W 46th -->
+    <line x1="0" y1="145" x2="1000" y2="145" stroke-width="0.8"/> <!-- W 45th -->
+    <line x1="0" y1="170" x2="1000" y2="170" stroke-width="0.8"/> <!-- W 44th -->
+    <line x1="0" y1="195" x2="1000" y2="195" stroke-width="0.8"/> <!-- W 43rd -->
+    
+    <!-- W 42ND STREET - THE MAIN ARTERY -->
+    <line x1="0" y1="220" x2="1000" y2="220" stroke-width="3" opacity="0.95"/>
+    
+    <line x1="0" y1="245" x2="1000" y2="245" stroke-width="0.8"/> <!-- W 41st -->
+    <line x1="0" y1="270" x2="1000" y2="270" stroke-width="0.8"/> <!-- W 40th -->
+    
+    <!-- W 39TH - BATTLE ROW (notorious gang territory) -->
+    <line x1="0" y1="295" x2="1000" y2="295" stroke-width="1.2" opacity="0.85"/>
+    
+    <line x1="0" y1="320" x2="1000" y2="320" stroke-width="0.8"/> <!-- W 38th -->
+    <line x1="0" y1="345" x2="1000" y2="345" stroke-width="0.8"/> <!-- W 37th -->
+    <line x1="0" y1="370" x2="1000" y2="370" stroke-width="0.8"/> <!-- W 36th -->
   </g>
-
-  <!-- STREET GRID -->
-  <g stroke="#333" stroke-width="1" fill="none">
-    <!-- Avenues (Vertical) -->
-    <line x1="180" y1="0" x2="180" y2="400" stroke-width="2"/> <!-- 11th -->
-    <line x1="280" y1="0" x2="280" y2="400" stroke-width="2"/> <!-- 10th -->
-    <line x1="380" y1="0" x2="380" y2="400" stroke-width="1"/> <!-- 9th (Under El) -->
-    <line x1="480" y1="0" x2="480" y2="400" stroke-width="2"/> <!-- 8th -->
-    <line x1="580" y1="0" x2="580" y2="400" stroke-width="2"/> <!-- 7th -->
-    <line x1="680" y1="0" x2="680" y2="400" stroke-width="2"/> <!-- 6th -->
-    <line x1="780" y1="0" x2="780" y2="400" stroke-width="1.5"/> <!-- 5th -->
-    <line x1="880" y1="0" x2="880" y2="400" stroke-width="1.5"/> <!-- Madison -->
-
-    <!-- Streets (Horizontal) -->
-    <line x1="80" y1="30" x2="1000" y2="30" /> <!-- W 50 -->
-    <line x1="80" y1="70" x2="1000" y2="70" /> <!-- W 48 -->
-    <line x1="80" y1="110" x2="1000" y2="110" /> <!-- W 46 -->
-    <line x1="80" y1="150" x2="1000" y2="150" /> <!-- W 44 -->
+  
+  <!-- TENEMENT BLOCKS - Dense 1938 housing -->
+  <g fill="url(#hatch)" stroke="#555" stroke-width="0.5" opacity="0.8">
+    <!-- Each row represents one city block between streets -->
     
-    <!-- 42nd Street (Thick) -->
-    <line x1="80" y1="190" x2="1000" y2="190" stroke-width="3"/> 
+    <!-- W 49th-50th blocks -->
+    <rect x="77" y="23" width="93" height="19" />
+    <rect x="182" y="23" width="93" height="19" />
+    <rect x="287" y="23" width="93" height="19" />
+    <rect x="392" y="23" width="93" height="19" />
+    <rect x="497" y="23" width="93" height="19" />
+    <rect x="602" y="23" width="93" height="19" />
+    <rect x="707" y="23" width="93" height="19" />
     
-    <line x1="80" y1="230" x2="1000" y2="230" /> <!-- W 40 -->
-    <line x1="80" y1="270" x2="1000" y2="270" /> <!-- W 38 -->
-    <line x1="80" y1="310" x2="1000" y2="310" /> <!-- W 36 -->
-    <line x1="80" y1="350" x2="1000" y2="350" /> <!-- W 34 -->
+    <!-- W 48th-49th blocks -->
+    <rect x="77" y="48" width="93" height="19" />
+    <rect x="182" y="48" width="93" height="19" />
+    <rect x="287" y="48" width="93" height="19" />
+    <rect x="392" y="48" width="93" height="19" />
+    <rect x="497" y="48" width="93" height="19" />
+    <rect x="602" y="48" width="93" height="19" />
+    <rect x="707" y="48" width="93" height="19" />
+    
+    <!-- W 47th-48th blocks -->
+    <rect x="77" y="73" width="93" height="19" />
+    <rect x="182" y="73" width="93" height="19" />
+    <rect x="287" y="73" width="93" height="19" />
+    <rect x="392" y="73" width="93" height="19" />
+    <rect x="497" y="73" width="93" height="19" />
+    <rect x="602" y="73" width="93" height="19" />
+    <rect x="707" y="73" width="93" height="19" />
+    
+    <!-- W 46th-47th blocks -->
+    <rect x="77" y="98" width="93" height="19" />
+    <rect x="182" y="98" width="93" height="19" />
+    <rect x="287" y="98" width="93" height="19" />
+    <rect x="392" y="98" width="93" height="19" />
+    <rect x="497" y="98" width="93" height="19" />
+    <rect x="602" y="98" width="93" height="19" />
+    <rect x="707" y="98" width="93" height="19" />
+    
+    <!-- W 45th-46th blocks -->
+    <rect x="77" y="123" width="93" height="19" />
+    <rect x="182" y="123" width="93" height="19" />
+    <rect x="287" y="123" width="93" height="19" />
+    <rect x="392" y="123" width="93" height="19" />
+    <rect x="497" y="123" width="93" height="19" />
+    <rect x="602" y="123" width="93" height="19" />
+    <rect x="707" y="123" width="93" height="19" />
+    
+    <!-- W 44th-45th blocks -->
+    <rect x="77" y="148" width="93" height="19" />
+    <rect x="182" y="148" width="93" height="19" />
+    <rect x="287" y="148" width="93" height="19" />
+    <rect x="392" y="148" width="93" height="19" />
+    <rect x="497" y="148" width="93" height="19" />
+    <rect x="602" y="148" width="93" height="19" />
+    <rect x="707" y="148" width="93" height="19" />
+    
+    <!-- W 43rd-44th blocks -->
+    <rect x="77" y="173" width="93" height="19" />
+    <rect x="182" y="173" width="93" height="19" />
+    <rect x="287" y="173" width="93" height="19" />
+    <rect x="392" y="173" width="93" height="19" />
+    <rect x="497" y="173" width="93" height="19" />
+    <rect x="602" y="173" width="93" height="19" />
+    <rect x="707" y="173" width="93" height="19" />
+    
+    <!-- W 42nd-43rd blocks -->
+    <rect x="77" y="198" width="93" height="19" />
+    <rect x="182" y="198" width="93" height="19" />
+    <rect x="287" y="198" width="93" height="19" />
+    <rect x="392" y="198" width="93" height="19" />
+    <rect x="497" y="198" width="93" height="19" />
+    <rect x="602" y="198" width="93" height="19" />
+    <rect x="707" y="198" width="93" height="19" />
+    
+    <!-- W 41st-42nd blocks -->
+    <rect x="77" y="223" width="93" height="19" />
+    <rect x="182" y="223" width="93" height="19" />
+    <rect x="287" y="223" width="93" height="19" />
+    <rect x="392" y="223" width="93" height="19" />
+    <rect x="497" y="223" width="93" height="19" />
+    <rect x="602" y="223" width="93" height="19" />
+    <rect x="707" y="223" width="93" height="19" />
+    
+    <!-- W 40th-41st blocks -->
+    <rect x="77" y="248" width="93" height="19" />
+    <rect x="182" y="248" width="93" height="19" />
+    <rect x="287" y="248" width="93" height="19" />
+    <rect x="392" y="248" width="93" height="19" />
+    <rect x="497" y="248" width="93" height="19" />
+    <rect x="602" y="248" width="93" height="19" />
+    <rect x="707" y="248" width="93" height="19" />
+    
+    <!-- W 39th-40th blocks (BATTLE ROW area) -->
+    <rect x="77" y="273" width="93" height="19" />
+    <rect x="182" y="273" width="93" height="19" />
+    <rect x="287" y="273" width="93" height="19" />
+    <rect x="392" y="273" width="93" height="19" />
+    <rect x="497" y="273" width="93" height="19" />
+    <rect x="602" y="273" width="93" height="19" />
+    <rect x="707" y="273" width="93" height="19" />
+    
+    <!-- W 38th-39th blocks -->
+    <rect x="77" y="298" width="93" height="19" />
+    <rect x="182" y="298" width="93" height="19" />
+    <rect x="287" y="298" width="93" height="19" />
+    <rect x="392" y="298" width="93" height="19" />
+    <rect x="497" y="298" width="93" height="19" />
+    <rect x="602" y="298" width="93" height="19" />
+    <rect x="707" y="298" width="93" height="19" />
+    
+    <!-- W 37th-38th blocks -->
+    <rect x="77" y="323" width="93" height="19" />
+    <rect x="182" y="323" width="93" height="19" />
+    <rect x="287" y="323" width="93" height="19" />
+    <rect x="392" y="323" width="93" height="19" />
+    <rect x="497" y="323" width="93" height="19" />
+    <rect x="602" y="323" width="93" height="19" />
+    <rect x="707" y="323" width="93" height="19" />
+    
+    <!-- W 36th-37th blocks -->
+    <rect x="77" y="348" width="93" height="19" />
+    <rect x="182" y="348" width="93" height="19" />
+    <rect x="287" y="348" width="93" height="19" />
+    <rect x="392" y="348" width="93" height="19" />
+    <rect x="497" y="348" width="93" height="19" />
+    <rect x="602" y="348" width="93" height="19" />
+    <rect x="707" y="348" width="93" height="19" />
   </g>
-
-  <!-- THE 9th AVENUE EL (The Train) -->
-  <g stroke="#222" stroke-width="3">
-    <!-- Main Track Line -->
-    <line x1="380" y1="0" x2="380" y2="400" />
-    <!-- Cross Ties (The Ladder Look) -->
-    <line x1="375" y1="20" x2="385" y2="20" stroke-width="2"/>
-    <line x1="375" y1="60" x2="385" y2="60" stroke-width="2"/>
-    <line x1="375" y1="100" x2="385" y2="100" stroke-width="2"/>
-    <line x1="375" y1="140" x2="385" y2="140" stroke-width="2"/>
-    <line x1="375" y1="180" x2="385" y2="180" stroke-width="2"/>
-    <line x1="375" y1="220" x2="385" y2="220" stroke-width="2"/>
-    <line x1="375" y1="260" x2="385" y2="260" stroke-width="2"/>
-    <line x1="375" y1="300" x2="385" y2="300" stroke-width="2"/>
-    <line x1="375" y1="340" x2="385" y2="340" stroke-width="2"/>
+  
+  <!-- LANDMARK BUILDINGS - 1938 Specific -->
+  <g fill="url(#brick)" stroke="#4a3c2e" stroke-width="0.8" opacity="0.95">
+    
+    <!-- McGraw-Hill Building (1931) - Art Deco Tower at 42nd & 9th -->
+    <rect x="287" y="198" width="93" height="19" />
+    <rect x="320" y="193" width="27" height="5" fill="#6a7c8e" stroke="#4a5c6e"/> <!-- tower top -->
+    
+    <!-- NEW YORKER HOTEL (1930) - 8th Ave at 34th/35th - 42 STORIES -->
+    <rect x="497" y="348" width="93" height="19" />
+    <rect x="530" y="340" width="27" height="8" fill="#7a8c9e" stroke="#5a6c7e"/> <!-- hotel tower -->
+    <text x="543" y="358" font-family="'Courier New', monospace" font-size="5" fill="#1a0a0a" text-anchor="middle" font-weight="bold">NEW YORKER</text>
+    
+    <!-- Hotel Lincoln (1928) - 8th Ave at 44th/45th -->
+    <rect x="497" y="148" width="93" height="19" />
+    <text x="543" y="158" font-family="'Courier New', monospace" font-size="5" fill="#2a1a1a" text-anchor="middle">HOTEL</text>
+    
+    <!-- St. Malachy's "Actor's Chapel" (1920) at W 49th -->
+    <rect x="497" y="23" width="40" height="19" />
+    <polygon points="517,23 507,15 527,15" fill="#8a7c6e" stroke="#5a4c3e"/> <!-- church spire -->
+    
+    <!-- Film Center Building (1928-29) at 44th/45th & 9th -->
+    <rect x="392" y="148" width="93" height="19" />
+    
+    <!-- Actors' Temple (1923) at W 47th -->
+    <rect x="392" y="73" width="45" height="19" />
+    <polygon points="414.5,73 407,66 422,66" fill="#7a6c5e" stroke="#5a4c3e"/>
   </g>
-
-  <!-- TENEMENT BLOCKS (Dense Hatching) -->
-  <g fill="url(#hatch)" stroke="#444" stroke-width="0.5" opacity="0.7">
-    <!-- Blocks 11th-10th -->
-    <rect x="190" y="35" width="80" height="30" />
-    <rect x="190" y="75" width="80" height="30" />
-    <rect x="190" y="115" width="80" height="30" />
-    <rect x="190" y="155" width="80" height="30" />
-    <rect x="190" y="195" width="80" height="30" />
-    <rect x="190" y="235" width="80" height="30" />
-    
-    <!-- Blocks 10th-9th (St Jude Area) -->
-    <rect x="290" y="35" width="80" height="30" />
-    <rect x="290" y="75" width="80" height="30" />
-    <rect x="290" y="115" width="80" height="30" /> <!-- St Jude Block -->
-    <rect x="290" y="155" width="80" height="30" />
-    <rect x="290" y="195" width="80" height="30" />
-    
-    <!-- Blocks 9th-8th -->
-    <rect x="390" y="35" width="80" height="30" />
-    <rect x="390" y="75" width="80" height="30" />
-    <rect x="390" y="155" width="80" height="30" />
-    <rect x="390" y="195" width="80" height="30" />
+  
+  <!-- INDUSTRIAL/WAREHOUSE areas along Hudson -->
+  <g fill="url(#warehouse)" stroke="#4a3c2e" stroke-width="0.6" opacity="0.85">
+    <rect x="10" y="25" width="55" height="18" />
+    <rect x="10" y="75" width="55" height="18" />
+    <rect x="10" y="125" width="55" height="18" />
+    <rect x="10" y="175" width="55" height="18" />
+    <rect x="10" y="225" width="55" height="18" />
+    <rect x="10" y="275" width="55" height="18" />
+    <rect x="10" y="325" width="55" height="18" />
   </g>
-
-  <!-- LANDMARKS (Specific Geometry) -->
-  <g fill="url(#brick)" stroke="#222" stroke-width="1">
-    
-    <!-- McGraw-Hill Building (330 W 42nd) - Art Deco Steps -->
-    <rect x="300" y="195" width="60" height="25" />
-    <rect x="320" y="192" width="20" height="3" fill="#333" /> <!-- The Tower Cap -->
-    
-    <!-- St. Malachy's (W 49th) -->
-    <rect x="400" y="35" width="40" height="20" />
-    <path d="M420 35 L425 25 L430 35 Z" fill="#333" /> <!-- Spire -->
-    
-    <!-- Film Center Building (9th Ave) -->
-    <rect x="390" y="155" width="80" height="30" />
+  
+  <!-- PIERS - Active shipping docks 1938 -->
+  <g stroke="#5a4a3a" stroke-width="3" fill="none" opacity="0.7">
+    <line x1="0" y1="35" x2="70" y2="35" />
+    <line x1="0" y1="85" x2="70" y2="85" />
+    <line x1="0" y1="135" x2="70" y2="135" />
+    <line x1="0" y1="185" x2="70" y2="185" />
+    <line x1="0" y1="235" x2="70" y2="235" />
+    <line x1="0" y1="285" x2="70" y2="285" />
+    <line x1="0" y1="335" x2="70" y2="335" />
   </g>
-
-  <!-- LABELS (Dark High Contrast) -->
-  <g font-family="'Courier New', Courier, monospace" font-weight="900" fill="#000" font-size="11">
-    <!-- Vertical Text -->
-    <text x="175" y="390" transform="rotate(-90 175,390)">11TH AVE</text>
-    <text x="275" y="390" transform="rotate(-90 275,390)">10TH AVE</text>
-    <text x="370" y="390" transform="rotate(-90 370,390)" font-size="12" fill="#8B0000">9TH AVE EL</text>
-    <text x="475" y="390" transform="rotate(-90 475,390)">8TH AVE</text>
-    <text x="575" y="390" transform="rotate(-90 575,390)">7TH AVE</text>
-    
-    <!-- Horizontal Text -->
-    <text x="90" y="185" font-size="14">W 42ND ST</text>
-    <text x="90" y="265">W 38TH ST</text>
-    <text x="90" y="25" font-size="10">W 50TH</text>
-    
-    <!-- Landmarks -->
-    <text x="300" y="190" font-family="Georgia, serif" font-size="9" fill="#000">McGraw-Hill</text>
-    <text x="300" y="130" font-family="Georgia, serif" font-size="10" font-weight="bold" fill="#000">St. Jude's</text>
-    <text x="200" y="290" font-family="Georgia, serif" font-size="10" fill="#8B0000" font-style="italic">BATTLE ROW</text>
-    
-    <!-- The Big Stamp -->
-    <text x="650" y="300" font-family="Georgia, serif" font-size="36" fill="#8B0000" opacity="0.3" text-anchor="middle" transform="rotate(-10 650,300)" style="letter-spacing: 3px; font-weight: 900;">HELL'S KITCHEN</text>
-    <text x="650" y="325" font-family="'Courier New', monospace" font-size="12" fill="#000" text-anchor="middle" transform="rotate(-10 650,325)">SURVEY OF 1938</text>
+  
+  <!-- Pier numbers -->
+  <g font-family="'Courier New', monospace" font-size="6" fill="#2a1a1a" opacity="0.85">
+    <text x="35" y="32">PIER 86</text>
+    <text x="35" y="82">PIER 84</text>
+    <text x="35" y="132">PIER 81</text>
+    <text x="35" y="182">PIER 79</text>
+    <text x="35" y="232">PIER 76</text>
+    <text x="35" y="282">PIER 72</text>
   </g>
-
-  <!-- Ink Texture Overlay -->
-  <rect width="100%" height="100%" fill="transparent" filter="url(#inkPaper)" opacity="0.35" pointer-events="none"/>
+  
+  <!-- NOTORIOUS LOCATIONS - 1938 landmarks -->
+  <g font-family="Georgia, serif" font-size="7" fill="#3a0a0a" opacity="0.9" font-style="italic">
+    <!-- Landmark Tavern (1868) - survived Prohibition -->
+    <text x="182" y="115">⚑ Landmark Tavern</text>
+    
+    <!-- Hotel Lincoln (1928) - 8th Ave at 44th -->
+    <text x="497" y="165">▣ Hotel Lincoln</text>
+    
+    <!-- New Yorker Hotel (1930) - 8th Ave at 34th/35th -->
+    <text x="497" y="375">▣ New Yorker Hotel</text>
+    
+    <!-- 1930s Hell's Kitchen establishments -->
+    <text x="287" y="255" font-size="6">○ Subway Inn</text>
+    <text x="182" y="185" font-size="6">○ Jimmy's Gym</text>
+    <text x="392" y="310" font-size="6">○ Rosie's Diner</text>
+    <text x="287" y="330" font-size="6">◆ McGinty's Bar</text>
+    <text x="182" y="240" font-size="6">● Pool Hall</text>
+    
+    <!-- Battle Row - W 39th between 10th-11th -->
+    <rect x="182" y="284" width="93" height="8" fill="none" stroke="#8B0000" stroke-width="1" stroke-dasharray="2,2" opacity="0.5"/>
+    <text x="200" y="290" fill="#8B0000" font-size="6" opacity="0.85">BATTLE ROW</text>
+    
+    <!-- Speakeasy markers (hidden) -->
+    <text x="290" y="135" font-size="6" opacity="0.6">◆</text>
+    <text x="395" y="260" font-size="6" opacity="0.6">◆</text>
+    <text x="188" y="310" font-size="6" opacity="0.6">◆</text>
+    <text x="605" y="200" font-size="6" opacity="0.6">◆</text>
+  </g>
+  
+  <!-- Street Labels -->
+  <g font-family="'Courier New', Courier, monospace" font-weight="bold" fill="#1a1a1a" font-size="8" opacity="0.95">
+    <!-- Avenue Labels - moved up to prevent cutoff -->
+    <text x="70" y="388" font-size="7" text-anchor="middle">12TH</text>
+    <text x="175" y="388" font-size="7" text-anchor="middle">11TH AVE</text>
+    <text x="280" y="388" font-size="7" text-anchor="middle">10TH AVE</text>
+    <text x="385" y="388" font-size="7" text-anchor="middle">9TH AVE</text>
+    <text x="490" y="388" font-size="7" text-anchor="middle">8TH AVE</text>
+    <text x="595" y="388" font-size="7" text-anchor="middle">7TH AVE</text>
+    <text x="700" y="388" font-size="7" text-anchor="middle">6TH AVE</text>
+    
+    <!-- Select Street Labels -->
+    <text x="5" y="42" font-size="7">W 49TH</text>
+    <text x="5" y="92" font-size="7">W 47TH</text>
+    <text x="5" y="142" font-size="7">W 45TH</text>
+    <text x="5" y="217" font-size="9" font-weight="900">W 42ND ST</text>
+    <text x="5" y="267" font-size="7">W 40TH</text>
+    <text x="5" y="292" font-size="7.5">W 39TH</text>
+    <text x="5" y="367" font-size="7">W 36TH</text>
+  </g>
+  
+  <!-- Geographic markers -->
+  <g font-family="Georgia, serif" font-size="8" fill="#2a1a1a" opacity="0.85" font-style="italic">
+    <text x="20" y="200" transform="rotate(-90 20,200)">HUDSON RIVER</text>
+    <text x="540" y="215">Theater District</text>
+    <text x="340" y="205">McGraw-Hill Bldg</text>
+    <text x="400" y="155">Film Center</text>
+  </g>
+  
+  <!-- THE STAMP - HELL'S KITCHEN 1938 -->
+  <g opacity="0.35">
+    <text x="500" y="240" font-family="Georgia, serif" font-size="34" fill="#8B0000" text-anchor="middle" transform="rotate(-7 500,240)" style="letter-spacing: 4px; font-weight: 900;">HELL'S KITCHEN</text>
+    <text x="500" y="262" font-family="'Courier New', monospace" font-size="9" fill="#4a2a2a" text-anchor="middle" transform="rotate(-7 500,262)" style="letter-spacing: 1px;">NINETEEN THIRTY-EIGHT</text>
+    <text x="500" y="275" font-family="'Courier New', monospace" font-size="7" fill="#5a3a2a" text-anchor="middle" transform="rotate(-7 500,275)">Midtown West • Manhattan Island • New York</text>
+  </g>
+  
+  <!-- Ninth Avenue El notation -->
+  <g font-family="'Courier New', monospace" font-size="6" fill="#1a0a0a" opacity="0.85">
+    <text x="355" y="12" transform="rotate(-90 355,12)">NINTH AVE ELEVATED RY</text>
+  </g>
+  
+  <!-- Compass Rose (period accurate) -->
+  <g transform="translate(950, 360)" opacity="0.55">
+    <circle cx="0" cy="0" r="18" fill="none" stroke="#4a3a2a" stroke-width="0.8"/>
+    <polygon points="0,-14 -2.5,-5 2.5,-5" fill="#4a3a2a"/>
+    <polygon points="0,14 -2.5,5 2.5,5" fill="#6a5a4a"/>
+    <polygon points="-14,0 -5,-2.5 -5,2.5" fill="#6a5a4a"/>
+    <polygon points="14,0 5,-2.5 5,2.5" fill="#6a5a4a"/>
+    <text x="0" y="-22" font-family="Georgia, serif" font-size="9" text-anchor="middle" fill="#3a2a1a" font-weight="bold">N</text>
+    <circle cx="0" cy="0" r="2" fill="#4a3a2a"/>
+  </g>
+  
+  <!-- Date stamp -->
+  <g transform="translate(850, 30)">
+    <rect x="0" y="0" width="120" height="24" fill="none" stroke="#3a2a1a" stroke-width="1" opacity="0.6"/>
+    <text x="60" y="10" font-family="'Courier New', monospace" font-size="7" text-anchor="middle" fill="#1a1a1a" opacity="0.85">SURVEY MAP</text>
+    <text x="60" y="19" font-family="'Courier New', monospace" font-size="8" text-anchor="middle" fill="#1a1a1a" opacity="0.9" font-weight="bold">1938</text>
+  </g>
+  
+  <!-- Fold marks -->
+  <g stroke="#6a5a4a" stroke-width="0.5" opacity="0.15" stroke-dasharray="3,3">
+    <line x1="0" y1="200" x2="1000" y2="200"/>
+    <line x1="500" y1="0" x2="500" y2="400"/>
+  </g>
+  
+  <!-- Corner damage/wear -->
+  <g opacity="0.2">
+    <path d="M 0,0 L 15,0 L 0,15 Z" fill="#5a4a3a"/>
+    <path d="M 1000,0 L 985,0 L 1000,15 Z" fill="#5a4a3a"/>
+    <path d="M 0,400 L 15,400 L 0,385 Z" fill="#5a4a3a"/>
+    <path d="M 1000,400 L 985,400 L 1000,385 Z" fill="#5a4a3a"/>
+  </g>
+  
+  <!-- Age/ink texture overlay -->
+  <rect width="100%" height="100%" fill="transparent" filter="url(#inkPaper)" opacity="0.45"/>
 </svg>
     <footer class="footer">
         <p class="footer-text">© 2025 Inky | www.inkrealm.info</p>
