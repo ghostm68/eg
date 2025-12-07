@@ -510,40 +510,21 @@
         background: var(--blood-dark);
         box-shadow: 0 0 10px rgba(220, 20, 60, 0.3);
     }
-/* VINTAGE MAP STYLES (FIXED) */
+/* STATIC MAP TEXTURE */
 #vintage-map-38 {
     display: block;
     width: 100%;
-    height: 220px;
+    height: 180px; /* Slimmer profile */
     object-fit: cover;
-    position: relative;
-    z-index: 5;
     border-top: 1px solid var(--steel);
     border-bottom: 1px solid var(--steel);
-    background-color: #e3dcd2; /* Force paper color */
+    background-color: #e3dcd2;
+    pointer-events: none; /* The mouse sees right through it - NO GLITCHES */
+    user-select: none;
 }
 
-/* Fix for the "Jumpy" Pins */
-.map-pin { 
-    pointer-events: auto; 
-    cursor: help; 
-    /* This anchors the animation so it doesn't wobble */
-    transform-box: fill-box;
-    transform-origin: center bottom;
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.map-pin:hover {
-    /* Lift up and scale slightly - no flickering */
-    transform: translateY(-10px) scale(1.1);
-    z-index: 10;
-}
-
-/* Mobile Adjustment */
 @media (max-width: 768px) {
-    #vintage-map-38 {
-        height: 150px;
-    }
+    #vintage-map-38 { height: 120px; }
 }
 </style>
 </head>
@@ -616,94 +597,73 @@
 
     <!-- TTS Toggle Button -->
     <button class="tts-toggle" id="ttsToggle" title="Text-to-Speech">🔊</button>
-<!-- Vintage 1930s Street Atlas SVG (Fixed) -->
-<svg id="vintage-map-38" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMid slice" role="img" aria-labelledby="mapTitle">
-  <title id="mapTitle">.38 SPECIAL — City Map</title>
-
+<svg id="vintage-map-38" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" preserveAspectRatio="xMidYMid slice" role="img">
   <defs>
-    <!-- Paper Texture Filter -->
-    <filter id="paperGrain">
-      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" result="noise"/>
-      <feColorMatrix in="noise" values="0 0 0 0 0.9  0 0 0 0 0.85  0 0 0 0 0.8  0 0 0 1 0" result="coloredNoise"/>
+    <!-- Simple Ink Bleed Filter -->
+    <filter id="inkPaper">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" result="noise"/>
+      <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.4 0" in="noise" result="coloredNoise"/>
       <feBlend in="SourceGraphic" in2="coloredNoise" mode="multiply"/>
     </filter>
-    
-    <!-- Pin Icon Definition -->
-    <g id="mapPinIcon">
-        <path d="M15,0 C6.7,0 0,6.7 0,15 C0,26 15,40 15,40 C15,40 30,26 30,15 C30,6.7 23.3,0 15,0 Z" fill="#DC143C" stroke="#2b2b2b" stroke-width="1"/>
-        <circle cx="15" cy="15" r="6" fill="#1a1a1a"/>
-    </g>
   </defs>
 
-  <!-- Background Paper (Beige) -->
+  <!-- Paper Background -->
   <rect width="100%" height="100%" fill="#e3dcd2" />
-  
-  <!-- The City Grid (Ink Lines) -->
+
+  <!-- Street Grid (W 40th to W 50th) -->
   <g stroke="#8c8c8c" stroke-width="1" fill="none">
     <!-- Vertical Avenues -->
-    <line x1="200" y1="0" x2="200" y2="300" /> <!-- 10th Ave -->
-    <line x1="400" y1="0" x2="400" y2="300" /> <!-- 9th Ave -->
-    <line x1="600" y1="0" x2="600" y2="300" stroke-width="2"/> <!-- 8th Ave -->
-    <line x1="800" y1="0" x2="800" y2="300" /> <!-- 7th Ave -->
-    
+    <line x1="100" y1="0" x2="100" y2="200" stroke-width="2"/> <!-- 11th Ave -->
+    <line x1="300" y1="0" x2="300" y2="200" stroke-width="2"/> <!-- 10th Ave -->
+    <line x1="500" y1="0" x2="500" y2="200" stroke-width="2"/> <!-- 9th Ave -->
+    <line x1="700" y1="0" x2="700" y2="200" stroke-width="2"/> <!-- 8th Ave -->
+    <line x1="900" y1="0" x2="900" y2="200" stroke-width="2"/> <!-- 7th Ave -->
+
     <!-- Horizontal Streets -->
-    <line x1="0" y1="50" x2="1050" y2="50" /> <!-- 40th St -->
-    <line x1="0" y1="150" x2="1050" y2="150" stroke-width="2"/> <!-- 42nd St -->
-    <line x1="0" y1="250" x2="1050" y2="250" /> <!-- 44th St -->
+    <line x1="0" y1="20" x2="1000" y2="20" /> 
+    <line x1="0" y1="60" x2="1000" y2="60" /> 
+    <line x1="0" y1="100" x2="1000" y2="100" stroke-width="2"/> <!-- 42nd St -->
+    <line x1="0" y1="140" x2="1000" y2="140" /> 
+    <line x1="0" y1="180" x2="1000" y2="180" /> 
   </g>
 
-  <!-- City Blocks (The "Grey Squares" fixed to look like Ink Hatching) -->
-  <g fill="#d1c6b6" stroke="none">
-    <rect x="220" y="60" width="160" height="80" />
-    <rect x="420" y="60" width="160" height="80" />
-    <rect x="620" y="60" width="160" height="80" />
+  <!-- Tenement Blocks (Hatched texture) -->
+  <pattern id="hatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+    <line x1="0" y1="0" x2="0" y2="4" stroke="#a89f91" stroke-width="1" />
+  </pattern>
+
+  <g fill="url(#hatch)" stroke="#555" stroke-width="0.5">
+    <!-- Row 1 -->
+    <rect x="120" y="25" width="160" height="30" />
+    <rect x="320" y="25" width="160" height="30" />
+    <rect x="520" y="25" width="160" height="30" />
+    <rect x="720" y="25" width="160" height="30" />
     
-    <rect x="220" y="160" width="160" height="80" />
-    <rect x="420" y="160" width="160" height="80" />
-    <rect x="620" y="160" width="160" height="80" />
+    <!-- Row 2 -->
+    <rect x="120" y="65" width="160" height="30" />
+    <rect x="320" y="65" width="160" height="30" />
+    <rect x="520" y="65" width="160" height="30" />
+    <rect x="720" y="65" width="160" height="30" />
+
+    <!-- Row 3 -->
+    <rect x="120" y="105" width="160" height="30" />
+    <rect x="320" y="105" width="160" height="30" />
+    <rect x="520" y="105" width="160" height="30" />
+    <rect x="720" y="105" width="160" height="30" />
   </g>
 
-  <!-- Street Names (Text) -->
-  <g font-family="'Courier New', Courier, monospace" font-size="10" fill="#555" font-weight="bold" opacity="0.6">
-    <text x="210" y="280" transform="rotate(-90 210,280)">10TH AVE</text>
-    <text x="410" y="280" transform="rotate(-90 410,280)">9TH AVE</text>
-    <text x="610" y="280" transform="rotate(-90 610,280)">8TH AVE</text>
-    <text x="50" y="145">W 42ND ST</text>
+  <!-- Labels (Non-interactive) -->
+  <g font-family="'Courier New', Courier, monospace" font-weight="bold" fill="#333" font-size="10" opacity="0.7">
+    <text x="310" y="190" transform="rotate(-90 310,190)">10TH AVE</text>
+    <text x="510" y="190" transform="rotate(-90 510,190)">9TH AVE</text>
+    <text x="20" y="95">W 42ND ST</text>
+    
+    <!-- The "Stamp" -->
+    <text x="850" y="170" font-family="Georgia, serif" font-size="16" fill="#8B0000" opacity="0.6" transform="rotate(-15 850,170)">HELL'S KITCHEN</text>
   </g>
 
-  <!-- Hudson River (Right Side) -->
-  <rect x="1050" y="0" width="150" height="300" fill="#a4b8c4" opacity="0.3"/>
-  <text x="1100" y="280" font-family="Georgia, serif" font-size="14" fill="#2b2b2b" font-style="italic" opacity="0.6" transform="rotate(-90 1100,280)">Hudson River</text>
-
-  <!-- LOCATIONS (Pins) -->
-  <g id="pins">
-    <!-- St. Jude's (West Side) -->
-    <g class="map-pin" transform="translate(300, 90)">
-      <use href="#mapPinIcon" width="30" height="40" x="-15" y="-40" />
-      <text x="0" y="15" font-family="Georgia, serif" font-size="12" fill="#000" text-anchor="middle" font-weight="bold">St. Jude's</text>
-    </g>
-
-    <!-- CBS Studio (Midtown) -->
-    <g class="map-pin" transform="translate(850, 140)">
-      <use href="#mapPinIcon" width="30" height="40" x="-15" y="-40" />
-      <text x="0" y="15" font-family="Georgia, serif" font-size="12" fill="#000" text-anchor="middle" font-weight="bold">CBS</text>
-    </g>
-
-    <!-- Pier 54 (Docks) -->
-    <g class="map-pin" transform="translate(1050, 200)">
-      <use href="#mapPinIcon" width="30" height="40" x="-15" y="-40" />
-      <text x="-20" y="5" font-family="Georgia, serif" font-size="12" fill="#000" text-anchor="end" font-weight="bold">Pier 54</text>
-    </g>
-  </g>
-
-  <!-- Paper Texture Overlay -->
-  <rect width="100%" height="100%" fill="transparent" filter="url(#paperGrain)" opacity="0.5" pointer-events="none"/>
-  
-  <!-- Map Label -->
-  <g transform="translate(20, 20)">
-     <rect x="0" y="0" width="180" height="24" fill="#1a1a1a" rx="2"/>
-     <text x="90" y="17" font-family="'IBM Plex Mono', monospace" font-size="10" fill="#f3e9da" text-anchor="middle" letter-spacing="1">MAP OF EVIDENCE</text>
-  </g>
+  <!-- Texture Overlay -->
+  <rect width="100%" height="100%" fill="transparent" filter="url(#inkPaper)" opacity="0.6"/>
 </svg>
     <footer class="footer">
         <p class="footer-text">© 2025 Inky | www.inkrealm.info</p>
