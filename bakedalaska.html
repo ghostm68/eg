@@ -640,38 +640,157 @@ Private personal information, ព័ត៌មានផ្ទាល់ខ្ល�
     0%, 100% { opacity: 0; }
     50% { opacity: 1; }
 }
-
-#novel-slideout::-webkit-scrollbar {
-    width: 8px;
-}
-
-#novel-slideout::-webkit-scrollbar-track {
+#novel-slideout {
+    position: fixed;
+    top: 0;
+    right: -100%;  /* Start off-screen to the right */
+    width: 100%;
+    max-width: 900px;
+    height: 100vh;
     background: #000;
+    z-index: 9999;
+    transition: right 0.8s cubic-bezier(0.23, 1, 0.32, 1);  /* Animate right property */
+    overflow-y: auto;
+    border-left: 2px solid var(--glitch);
+    box-shadow: -10px 0 50px rgba(0, 0, 0, 0.9);
 }
 
-#novel-slideout::-webkit-scrollbar-thumb {
-    background: #333;
-    border: 1px solid var(--glitch);
+#novel-slideout.active {
+    right: 0;  /* Slide to right edge */
+}
+/* === QUANTUM CALIBRATION MONITORS === */
+.quantum-monitor {
+    background: rgba(255, 0, 0, 0.05);
+    border: 1px solid #333;
+    padding: 15px;
+    margin: 20px 0;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    position: relative;
+    overflow: hidden;
 }
 
-#novel-slideout::-webkit-scrollbar-thumb:hover {
+.monitor-line {
+    display: flex;
+    justify-content: space-between;
+    margin: 5px 0;
+    color: #666;
+}
+
+.monitor-label {
+    color: #999;
+    letter-spacing: 1px;
+}
+
+.monitor-value {
+    color: var(--glitch);
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.monitor-status {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #333;
+    color: var(--glitch);
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+}
+
+.scan-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
     background: var(--glitch);
+    box-shadow: 0 0 10px var(--glitch);
+    animation: scan 2s ease-in-out;
+}
+
+@keyframes scan {
+    0% { top: 0; opacity: 0; }
+    50% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+}
+
+/* === CHAPTER TITLE SCRAMBLE === */
+.chapter-title.scrambling {
+    animation: blur-fade 0.1s ease-in-out;
+}
+
+@keyframes blur-fade {
+    0%, 100% { filter: blur(0px); opacity: 1; }
+    50% { filter: blur(3px); opacity: 0.5; }
+}
+/* === NAVIGATION FOOTER === */
+.novel-footer {
+    margin-top: 80px;
+    padding: 40px 0;
+    border-top: 1px solid #333;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    position: relative;
+    z-index: 2;
+}
+
+.footer-column h4 {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--glitch);
+    letter-spacing: 3px;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+.footer-column a {
+    display: block;
+    color: #999;
+    text-decoration: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    margin: 10px 0;
+    transition: all 0.3s ease;
+    position: relative;
+    padding-left: 0;
+}
+
+.footer-column a::before {
+    content: '→';
+    position: absolute;
+    left: -20px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    color: var(--glitch);
+}
+
+.footer-column a:hover {
+    color: var(--glitch);
+    padding-left: 25px;
+}
+
+.footer-column a:hover::before {
+    left: 0;
+    opacity: 1;
+}
+
+.footer-stats {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.footer-stats span {
+    display: block;
+    margin: 8px 0;
 }
 
 @media (max-width: 768px) {
-    #novel-slideout {
-        max-width: 100%;
+    .novel-footer {
+        grid-template-columns: 1fr;
+        gap: 30px;
     }
-    #novel-content {
-        padding: 20px;
-    }
-    #novel-trigger {
-        top: 10px;
-        right: 10px;
-        padding: 8px 16px;
-        font-size: 0.65rem;
-    }
-}
+}			
     </style>
 	<link rel="preconnect" href="https://raw.githubusercontent.com">
 <link rel="dns-prefetch" href="https://raw.githubusercontent.com">
@@ -3028,10 +3147,104 @@ window.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 	<script>
-// Novel slideout functionality
 (function() {
     const NOVEL_DATA_URL = 'novel-data.json';
     let novelData = null;
+    
+    // Scramble characters
+    const scrambleChars = '▓█░▒ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    
+    function randomChar() {
+        return scrambleChars[Math.floor(Math.random() * scrambleChars.length)];
+    }
+    
+    function scrambleText(element, finalText, duration = 1000) {
+        const steps = 20;
+        const stepDuration = duration / steps;
+        let currentStep = 0;
+        
+        const interval = setInterval(() => {
+            if (currentStep >= steps) {
+                element.textContent = finalText;
+                clearInterval(interval);
+                return;
+            }
+            
+            const progress = currentStep / steps;
+            let scrambled = '';
+            
+            for (let i = 0; i < finalText.length; i++) {
+                if (i < finalText.length * progress) {
+                    scrambled += finalText[i];
+                } else {
+                    scrambled += randomChar();
+                }
+            }
+            
+            element.textContent = scrambled;
+            element.classList.add('scrambling');
+            currentStep++;
+        }, stepDuration);
+    }
+    
+    function createQuantumMonitor(chapterNumber) {
+        const monitors = [
+            { label: 'QUANTUM_STATE', value: 'STABLE' },
+            { label: 'NEURAL_SYNC', value: '98.7%' },
+            { label: 'COHERENCE', value: 'OPTIMAL' }
+        ];
+        
+        const altMonitors = [
+            { label: 'SIGNAL_LOCK', value: 'LOCKED' },
+            { label: 'INTERFERENCE', value: '0.02%' },
+            { label: 'PROTOCOL', value: 'ACTIVE' }
+        ];
+        
+        const useAlt = Math.random() > 0.5;
+        const selectedMonitors = useAlt ? altMonitors : monitors;
+        
+        const div = document.createElement('div');
+        div.className = 'quantum-monitor';
+        
+        let html = '';
+        selectedMonitors.forEach(m => {
+            html += `<div class="monitor-line">
+                <span class="monitor-label">${m.label}</span>
+                <span class="monitor-value" data-final="${m.value}">${randomChar().repeat(m.value.length)}</span>
+            </div>`;
+        });
+        
+        html += `<div class="monitor-status">/// SECTION_${chapterNumber.toUpperCase().replace(/\s/g, '_')}_LOADED</div>`;
+        html += '<div class="scan-line"></div>';
+        
+        div.innerHTML = html;
+        return div;
+    }
+    
+    function animateMonitor(monitor) {
+        const values = monitor.querySelectorAll('.monitor-value');
+        
+        values.forEach(valueEl => {
+            const finalValue = valueEl.getAttribute('data-final');
+            let scrambleCount = 0;
+            const maxScrambles = 15;
+            
+            const scrambleInterval = setInterval(() => {
+                if (scrambleCount >= maxScrambles) {
+                    valueEl.textContent = finalValue;
+                    clearInterval(scrambleInterval);
+                    return;
+                }
+                
+                let scrambled = '';
+                for (let i = 0; i < finalValue.length; i++) {
+                    scrambled += randomChar();
+                }
+                valueEl.textContent = scrambled;
+                scrambleCount++;
+            }, 80);
+        });
+    }
     
     async function loadNovelData() {
         try {
@@ -3052,15 +3265,80 @@ window.addEventListener('DOMContentLoaded', function() {
             const chapterEl = document.createElement('div');
             chapterEl.className = 'novel-chapter';
             
-            chapterEl.innerHTML = `
-                <div class="chapter-number">CHAPTER ${chapter.number}</div>
-                <h2 class="chapter-title">${chapter.title}</h2>
-                <div class="chapter-content">
-                    ${formatChapterContent(chapter.content)}
-                </div>
-            `;
+            const chapterNumber = document.createElement('div');
+            chapterNumber.className = 'chapter-number';
+            chapterNumber.textContent = `CHAPTER ${chapter.number}`;
+            
+            const chapterTitle = document.createElement('h2');
+            chapterTitle.className = 'chapter-title';
+            chapterTitle.setAttribute('data-final-title', chapter.title);
+            chapterTitle.textContent = randomChar().repeat(chapter.title.length);
+            
+            const monitor = createQuantumMonitor(chapter.number);
+            
+            const chapterContent = document.createElement('div');
+            chapterContent.className = 'chapter-content';
+            chapterContent.innerHTML = formatChapterContent(chapter.content);
+            
+            chapterEl.appendChild(chapterNumber);
+            chapterEl.appendChild(chapterTitle);
+            chapterEl.appendChild(monitor);
+            chapterEl.appendChild(chapterContent);
             
             content.appendChild(chapterEl);
+        });
+        
+        // Add footer
+        const footer = document.createElement('div');
+        footer.className = 'novel-footer';
+        footer.innerHTML = `
+            <div class="footer-column">
+                <h4>Return to</h4>
+                <a href="https://wordstar.nexus/bakedalaska">Baked Alaska</a>
+                <a href="https://wordstar.nexus">Wordstar Nexus</a>
+                <a href="https://inkrealm.info">Inkrealm</a>
+            </div>
+            <div class="footer-column">
+                <h4>Explore</h4>
+                <a href="https://wordstar.nexus/typewriter">Typewriter</a>
+                <a href="https://wordstar.nexus/birch">Birch</a>
+                <a href="https://wordstar.nexus/displaywriter">Display Writer</a>
+            </div>
+            <div class="footer-column">
+                <h4>Novel Stats</h4>
+                <div class="footer-stats">
+                    <span>Word Count: ${novelData.wordCount.toLocaleString()}</span>
+                    <span>Chapters: ${novelData.chapterCount}</span>
+                    <span>Author: ${novelData.author}</span>
+                </div>
+            </div>
+        `;
+        content.appendChild(footer);
+        
+        // Setup intersection observer for animations
+        setupScrollAnimations();
+    }
+    
+    function setupScrollAnimations() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && !entry.target.classList.contains('animated')) {
+                    entry.target.classList.add('animated');
+                    
+                    if (entry.target.classList.contains('chapter-title')) {
+                        const finalTitle = entry.target.getAttribute('data-final-title');
+                        scrambleText(entry.target, finalTitle, 1500);
+                    }
+                    
+                    if (entry.target.classList.contains('quantum-monitor')) {
+                        setTimeout(() => animateMonitor(entry.target), 500);
+                    }
+                }
+            });
+        }, { threshold: 0.3 });
+        
+        document.querySelectorAll('.chapter-title, .quantum-monitor').forEach(el => {
+            observer.observe(el);
         });
     }
     
@@ -3112,6 +3390,7 @@ window.addEventListener('DOMContentLoaded', function() {
         document.getElementById('reading-progress').style.width = progress + '%';
     });
 })();
+</script>
 </script>
 </body>
 </html>
