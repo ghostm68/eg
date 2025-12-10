@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CineScript: Kinetic Type Cast</title>
+
+<!-- Web fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Unicase:wght@400;600;700&family=Eczar:wght@400;600;700&family=Stoke:wght@300;400&family=Lustria&family=Sumana:wght@400;700&family=Gloock&family=Bodoni+Moda:wght@400;600;700&family=Poiret+One&family=Yeseva+One&family=Bungee&family=Bespoke+Stencil&family=Trispace:wght@300;400;700&family=Moirai+One&family=Unbounded:wght@400;700&family=Amatic+SC:wght@400;700&family=Frijole&family=Slackside+One&family=Rubik+Wet+Paint&family=Rock+Salt&family=Sedgwick+Ave&family=Permanent+Marker&family=Chonburi&family=Trade+Winds&family=Pirata+One&family=Sawarabi+Mincho&family=MedievalSharp&family=UnifrakturCook:wght@700&family=Gravitas+One&family=Faster+One&family=Freckle+Face&family=Butcherman&family=Creepster&family=Righteous&family=Audiowide&family=Bonbon&family=Gwendolyn:wght@400;700&family=Parisienne&family=GFS+Neohellenic:wght@400;700&family=Albert+Sans:wght@300;400;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#0b0b0d;
+    --panel: rgba(255,255,255,0.03);
+    --accent: #00e092;
+    --muted: #9fb6a8;
+    --ui-fg: #e9fff3;
+  }
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--ui-fg);font-family:Inter,system-ui,Segoe UI,Roboto,Arial;}
+  .app {
+    display:grid;
+    grid-template-columns: 380px 1fr;
+    height:100vh;
+  }
+
+  /* left panel */
+  .panel {
+    padding:24px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-right:1px solid rgba(255,255,255,0.03);
+    box-sizing:border-box;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  .panel h1{margin:0;font-size:18px; letter-spacing: -0.5px;}
+  .panel p{margin:0;color:var(--muted);font-size:13px; line-height:1.4;}
+  
+  .control-group {display:flex; flex-direction:column; gap:6px;}
+  label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+  
+  select,input[type="color"],input[type="range"],input[type="number"],button,textarea {
+    width:100%;
+    box-sizing:border-box;
+    padding:10px;
+    border-radius:6px;
+    border:1px solid rgba(255,255,255,0.08);
+    background:rgba(0,0,0,0.3);
+    color:var(--ui-fg);
+    outline:none;
+    font-size:14px;
+    font-family:inherit;
+    transition:border-color 0.2s;
+  }
+  select:focus, input:focus, textarea:focus { border-color:var(--accent); }
+
+  textarea#editor{
+    height:150px;
+    resize:vertical;
+    line-height:1.5;
+  }
+
+  .controls-row{display:flex;gap:10px}
+  .controls-row > *{flex:1}
+  
+  button.primary{
+    margin-top:8px;
+    background:var(--accent);
+    color:#003822;
+    border:none;
+    font-weight:700;
+    cursor:pointer;
+    padding:12px;
+    font-size:15px;
+    transition:filter 0.2s;
+  }
+  button.primary:hover{filter:brightness(1.1);}
+  button:disabled{opacity:0.5;cursor:not-allowed;filter:grayscale(1);}
+
+  /* right area */
+  .stage {
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:40px;
+    background: radial-gradient(circle at center, #1a1a1e 0%, #000 100%);
+  }
+  .canvas-wrap{
+    width:100%;
+    max-width:1280px;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    position:relative;
+    border:1px solid rgba(255,255,255,0.05);
+  }
+  canvas#renderCanvas{width:100%;height:100%;display:block; object-fit:contain;}
+  
+  .overlay-badge {
+    position:absolute; padding:6px 10px; border-radius:4px;
+    background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);
+    border:1px solid rgba(255,255,255,0.1);
+    font-size:12px; color:var(--muted);
+  }
+  .top-left {left:12px;top:12px;}
+  .btm-right {right:12px;bottom:12px;}
+
+  #progressPct { color:var(--accent); font-weight:bold; }
+  
+  /* Scrollbar polish */
+  ::-webkit-scrollbar {width: 6px;}
+  ::-webkit-scrollbar-track {background: transparent;}
+  ::-webkit-scrollbar-thumb {background: rgba(255,255,255,0.1); border-radius: 3px;}
+  ::-webkit-scrollbar-thumb:hover {background: rgba(255,255,255,0.2);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="panel">
+    <div>
+      <h1>CineScript</h1>
+      <p>Kinetic Type Generator</p>
+    </div>
+
+    <div class="control-group">
+      <label for="font">Typography</label>
+      <select id="font"></select>
+    </div>
+
+    <div class="controls-row">
+       <div class="control-group">
+        <label for="bgColor">Background</label>
+        <input id="bgColor" type="color" value="#070709">
+      </div>
+      <div class="control-group">
+        <label for="textColor">Text Color</label>
+        <input id="textColor" type="color" value="#ffffff">
+      </div>
+    </div>
+
+    <div class="controls-row">
+      <div class="control-group">
+        <label for="fontSize">Size (px)</label>
+        <input id="fontSize" type="number" value="64" min="16" max="300">
+      </div>
+      <div class="control-group">
+        <label for="speed">Speed (cps)</label>
+        <input id="speed" type="range" min="5" max="60" value="25" title="Characters per second">
+      </div>
+    </div>
+
+    <div class="controls-row">
+      <div class="control-group">
+        <label for="width">Width</label>
+        <input id="width" type="number" value="1280" min="320" max="3840">
+      </div>
+      <div class="control-group">
+        <label for="height">Height</label>
+        <input id="height" type="number" value="720" min="240" max="2160">
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label for="editor">Script</label>
+      <textarea id="editor" placeholder="Type your text here...">The quick brown fox jumps over the lazy dog.
+
+Film noir style or neon cyberpunk?</textarea>
+    </div>
+
+    <button id="renderBtn" class="primary">Render Video</button>
+    <div id="status" style="font-size:12px;color:var(--muted);text-align:center;">Ready</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <div class="overlay-badge top-left">Live Preview</div>
+      <canvas id="renderCanvas" width="1280" height="720"></canvas>
+      <div class="overlay-badge btm-right" id="progressBox" style="display:none">Rendering <span id="progressPct">0%</span></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const fonts = [
+  "Cormorant Unicase", "Eczar", "Stoke", "Lustria", "Sumana", "Gloock",
+  "Bodoni Moda", "Poiret One", "Yeseva One", "Bungee", "Bespoke Stencil",
+  "Trispace", "Moirai One", "Unbounded", "Amatic SC", "Frijole",
+  "Slackside One", "Rubik Wet Paint", "Rock Salt", "Sedgwick Ave",
+  "Permanent Marker", "Chonburi", "Trade Winds", "Pirata One",
+  "Sawarabi Mincho", "MedievalSharp", "UnifrakturCook", "Gravitas One",
+  "Faster One", "Freckle Face", "Butcherman", "Creepster", "Righteous",
+  "Audiowide", "Bonbon", "Gwendolyn", "Parisienne", "GFS Neohellenic",
+  "Albert Sans"
+];
+
+// Populate Font Selector
+const fontSelect = document.getElementById('font');
+fonts.sort().forEach(font => {
+  const opt = document.createElement('option');
+  opt.value = font;
+  opt.textContent = font;
+  fontSelect.appendChild(opt);
+});
+// Set a default
+fontSelect.value = "Albert Sans";
+
+// --- Elements ---
+const editor = document.getElementById('editor');
+const bgColorInput = document.getElementById('bgColor');
+const textColorInput = document.getElementById('textColor');
+const fontSizeInput = document.getElementById('fontSize');
+const speedInput = document.getElementById('speed');
+const renderBtn = document.getElementById('renderBtn');
+const status = document.getElementById('status');
+const canvas = document.getElementById('renderCanvas');
+const progressBox = document.getElementById('progressBox');
+const progressPct = document.getElementById('progressPct');
+const widthInput = document.getElementById('width');
+const heightInput = document.getElementById('height');
+
+let isRendering = false;
+
+// --- Helper: Text Wrapping ---
+// Returns array of strings that fit within maxWidth
+function getLines(ctx, text, maxWidth) {
+  const sections = text.split('\n'); // Respect manual line breaks
+  const lines = [];
+
+  sections.forEach(section => {
+    const words = section.split(' ');
+    let currentLine = words[0];
+
+    for (let i = 1; i < words.length; i++) {
+      const word = words[i];
+      const width = ctx.measureText(currentLine + " " + word).width;
+      if (width < maxWidth) {
+        currentLine += " " + word;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+      }
+    }
+    lines.push(currentLine);
+  });
+  return lines;
+}
+
+// --- Preview Logic ---
+function drawPreview() {
+  if(isRendering) return; // Don't fight the renderer
+
+  const ctx = canvas.getContext('2d', {alpha:false});
+  const w = canvas.width;
+  const h = canvas.height;
+  
+  // Clear
+  ctx.fillStyle = bgColorInput.value;
+  ctx.fillRect(0,0,w,h);
+
+  // Text Settings
+  const fontSize = parseInt(fontSizeInput.value,10) || 64;
+  const fontName = fontSelect.value;
+  ctx.font = `${fontSize}px "${fontName}"`;
+  ctx.fillStyle = textColorInput.value;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'center';
+
+  const padding = w * 0.05;
+  const maxWidth = w - (padding * 2);
+  const lineHeight = fontSize * 1.2;
+
+  const lines = getLines(ctx, editor.value || " ", maxWidth);
+  
+  // Vertical centering
+  const totalHeight = lines.length * lineHeight;
+  let startY = (h - totalHeight) / 2 + (lineHeight/2);
+
+  lines.forEach((line, i) => {
+    ctx.fillText(line, w/2, startY + (i * lineHeight));
+  });
+}
+
+// --- Sync Canvas Size ---
+function syncSize() {
+  canvas.width = parseInt(widthInput.value) || 1280;
+  canvas.height = parseInt(heightInput.value) || 720;
+  drawPreview();
+}
+
+// --- Event Listeners ---
+const inputs = [fontSelect, bgColorInput, textColorInput, fontSizeInput, editor, widthInput, heightInput];
+inputs.forEach(el => el.addEventListener('input', () => {
+    if(el === widthInput || el === heightInput) syncSize();
+    else drawPreview();
+}));
+
+syncSize(); // Init
+
+// --- Core Rendering Logic ---
+async function renderVideo() {
+  if (isRendering) return;
+  isRendering = true;
+  renderBtn.disabled = true;
+  progressBox.style.display = 'block';
+  status.textContent = 'Loading font...';
+
+  const fontName = fontSelect.value;
+  const fontSize = parseInt(fontSizeInput.value,10);
+  
+  // 1. Ensure Font is Loaded before recording
+  try {
+    await document.fonts.load(`${fontSize}px "${fontName}"`);
+  } catch(e) {
+    console.warn("Font load check failed, proceeding anyway", e);
+  }
+
+  status.textContent = 'Rendering...';
+
+  // Setup Offscreen Canvas
+  const w = parseInt(widthInput.value) || 1280;
+  const h = parseInt(heightInput.value) || 720;
+  const off = document.createElement('canvas');
+  off.width = w; 
+  off.height = h;
+  const ctx = off.getContext('2d', {alpha:false});
+  
+  // Static props
+  const bg = bgColorInput.value;
+  const fg = textColorInput.value;
+  ctx.font = `${fontSize}px "${fontName}"`;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'center';
+
+  const padding = w * 0.05;
+  const maxWidth = w - (padding * 2);
+  const lineHeight = fontSize * 1.2;
+  
+  // Calculate Layout
+  // We need to flatten the text into characters but preserve the line structure visually
+  const fullText = editor.value;
+  const lines = getLines(ctx, fullText, maxWidth);
+  
+  // We need to map "Character Index" -> "What to draw"
+  // Let's reconstruct the full text as it appears visually (with newlines where wrapping happened)
+  // Actually, simplest way: Just animate the `count` of characters and re-run getLines logic
+  // or (better for perf) pre-calculate line breaks.
+  
+  // Let's stick to simple: Re-run split logic? No, text creates jitter.
+  // Better: Create a flat string with \n inserted where the wrapper broke lines.
+  const flatVisualText = lines.join('\n'); 
+  const totalChars = flatVisualText.length;
+  
+  const cps = parseInt(speedInput.value) || 20;
+  const duration = Math.max(1, totalChars / cps); // Seconds
+  const fps = 30;
+  const totalFrames = Math.ceil(duration * fps);
+  
+  // Stream Setup
+  const stream = off.captureStream(fps);
+  const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+  const chunks = [];
+  recorder.ondataavailable = e => { if(e.data.size) chunks.push(e.data); };
+  
+  recorder.onstop = () => {
+    const blob = new Blob(chunks, {type: 'video/webm'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cinescript_${Date.now()}.webm`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    // Reset UI
+    isRendering = false;
+    renderBtn.disabled = false;
+    progressBox.style.display = 'none';
+    status.textContent = 'Render complete!';
+    drawPreview(); // Restore preview
+  };
+
+  recorder.start();
+
+  let frame = 0;
+  
+  function renderFrame() {
+    if(frame > totalFrames + 15) { // +15 frames padding at end
+      recorder.stop();
+      return;
+    }
+
+    // Clear
+    ctx.fillStyle = bg;
+    ctx.fillRect(0,0,w,h);
+    
+    // Config
+    ctx.fillStyle = fg;
+    ctx.font = `${fontSize}px "${fontName}"`;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+
+    // Calculate how many chars to show
+    const pct = Math.min(1, frame / totalFrames);
+    const charCount = Math.floor(pct * totalChars);
+    
+    // Draw Text
+    const currentString = flatVisualText.substring(0, charCount);
+    // We split by \n because we baked our visual line breaks into flatVisualText earlier
+    const currentLines = currentString.split('\n');
+    
+    const totalH = lines.length * lineHeight; // Use total height of FINAL text to keep vertical position stable
+    const startY = (h - totalH) / 2 + (lineHeight/2);
+
+    currentLines.forEach((lineText, i) => {
+      ctx.fillText(lineText, w/2, startY + (i * lineHeight));
+    });
+
+    // Update UI Preview
+    const previewCtx = canvas.getContext('2d');
+    previewCtx.drawImage(off, 0, 0, canvas.width, canvas.height);
+    progressPct.textContent = Math.floor(pct * 100) + "%";
+
+    frame++;
+    // Use setTimeout to ensure we don't block main thread too much, aiming for FPS
+    setTimeout(renderFrame, 1000/fps);
+  }
+
+  renderFrame();
+}
+
+renderBtn.addEventListener('click', renderVideo);
+
+</script>
+</body>
+</html>
