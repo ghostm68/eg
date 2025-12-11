@@ -18,22 +18,25 @@
     --ui-fg: #e9fff3;
   }
   html,body{height:100%;margin:0;background:var(--bg);color:var(--ui-fg);font-family:Inter,system-ui,Segoe UI,Roboto,Arial;}
+  
   .app {
     display:grid;
-    grid-template-columns: 340px 1fr; /* Made sidebar slightly narrower too */
+    grid-template-columns: 340px 1fr;
     height:100vh;
+    overflow: hidden; /* Prevent body scroll on desktop */
   }
 
-  /* left panel */
+  /* --- LEFT PANEL --- */
   .panel {
-    padding:15px; /* Reduced from 24px */
+    padding:15px;
     background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
     border-right:1px solid rgba(255,255,255,0.03);
     box-sizing:border-box;
-    overflow-y:auto;
+    overflow-y:auto; /* Scroll inside panel */
     display:flex;
     flex-direction:column;
-    gap:10px; /* Reduced from 16px */
+    gap:10px;
+    z-index: 2;
   }
   .panel h1{margin:0;font-size:16px; letter-spacing: -0.5px;}
   .panel p{margin:0;color:var(--muted);font-size:12px; line-height:1.4;}
@@ -44,7 +47,7 @@
   select,input[type="color"],input[type="range"],input[type="number"],button,textarea,input[type="file"] {
     width:100%;
     box-sizing:border-box;
-    padding:6px 8px; /* Slimmer inputs */
+    padding:8px;
     border-radius:4px;
     border:1px solid rgba(255,255,255,0.08);
     background:rgba(0,0,0,0.3);
@@ -57,18 +60,11 @@
   select:focus, input:focus, textarea:focus { border-color:var(--accent); }
   
   /* Compact file input */
-  input[type="file"] {
-    font-size: 11px;
-    padding: 6px;
-  }
-  input[type="file"]::-webkit-file-upload-button {
-    padding: 2px 6px;
-    margin-right: 8px;
-    font-size: 11px;
-  }
+  input[type="file"] { font-size: 11px; padding: 6px; }
+  input[type="file"]::-webkit-file-upload-button { padding: 2px 6px; margin-right: 8px; font-size: 11px; }
 
   textarea#editor{
-    height:80px; /* Reduced from 150px to save space */
+    height:80px;
     resize:vertical;
     line-height:1.4;
   }
@@ -83,7 +79,7 @@
     border:none;
     font-weight:700;
     cursor:pointer;
-    padding:10px;
+    padding:12px;
     font-size:14px;
     transition:filter 0.2s;
   }
@@ -95,13 +91,11 @@
     border:none;
     color: var(--muted);
     font-size: 11px;
-    padding: 4px;
+    padding: 6px;
     margin-top: 4px;
     cursor: pointer;
   }
-  button.secondary:hover { background: rgba(255,255,255,0.15); color: white;}
 
-  /* Pro Tip Styling */
   .pro-tip {
     font-size: 10px;
     color: #666;
@@ -111,7 +105,7 @@
   }
   .pro-tip strong { color: var(--muted); font-weight: 600; }
 
-  /* right area */
+  /* --- RIGHT STAGE --- */
   .stage {
     position:relative;
     display:flex;
@@ -119,6 +113,7 @@
     justify-content:center;
     padding:20px;
     background: radial-gradient(circle at center, #1a1a1e 0%, #000 100%);
+    overflow: hidden;
   }
   .canvas-wrap{
     width:100%;
@@ -132,13 +127,13 @@
   canvas#renderCanvas{width:100%;height:100%;display:block; object-fit:contain;}
   
   .overlay-badge {
-    position:absolute; padding:6px 10px; border-radius:4px;
+    position:absolute; padding:4px 8px; border-radius:4px;
     background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);
     border:1px solid rgba(255,255,255,0.1);
-    font-size:12px; color:var(--muted);
+    font-size:10px; color:var(--muted); pointer-events:none;
   }
-  .top-left {left:12px;top:12px;}
-  .btm-right {right:12px;bottom:12px;}
+  .top-left {left:8px;top:8px;}
+  .btm-right {right:8px;bottom:8px;}
 
   #progressPct { color:var(--accent); font-weight:bold; }
   
@@ -146,6 +141,33 @@
   ::-webkit-scrollbar {width: 6px;}
   ::-webkit-scrollbar-track {background: transparent;}
   ::-webkit-scrollbar-thumb {background: rgba(255,255,255,0.1); border-radius: 3px;}
+
+  /* --- MOBILE RESPONSIVENESS --- */
+  @media (max-width: 900px) {
+    .app {
+      display: block; /* Disable Grid */
+      height: auto;
+      overflow: auto; /* Enable body scroll */
+    }
+    
+    /* Stick the Preview to the top */
+    .stage {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 10px;
+      height: auto;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      background: #000; /* Solid background so controls don't show through */
+    }
+    
+    .panel {
+      border-right: none;
+      padding-bottom: 80px; /* Extra space at bottom for scrolling */
+    }
+
+    textarea#editor { height: 100px; } /* Little bigger on mobile for thumbs */
+  }
 </style>
 </head>
 <body>
