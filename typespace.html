@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>TypeSpace: Interactive 3D Type</title>
+  <title>TypeSpace: Interactive Type</title>
   <style>
     :root{--bg:#070709;--panel:rgba(0,0,0,0.7);--accent:#00ff77;--warning:#ff4444;}
     html,body{height:100%;margin:0;background:var(--bg);font-family:Inter, system-ui, -apple-system, monospace;overflow:hidden;}
@@ -56,20 +56,8 @@
 
     /* --- MOBILE OPTIMIZATION --- */
     @media (max-width: 768px) {
-      /* Hide the big UI panel on mobile to save space */
-      #ui {
-        top: auto; bottom: 90px; left: 12px; right: 12px;
-        min-width: auto;
-        padding: 12px;
-        display:none; /* Hidden by default on mobile, could add a toggle */
-      }
-      /* But keep the font selector accessible? Let's just create a simplified mobile view */
-      #text-input { 
-        bottom: 20px; 
-        width: 90%;
-        font-size: 16px;
-      }
-      /* Just show a small clean/clear button */
+      #ui { display:none; }
+      #text-input { bottom: 20px; width: 90%; font-size: 16px; }
       .mobile-controls {
         position: fixed; top: 12px; right: 12px; z-index: 50;
         display: flex; gap: 8px;
@@ -92,7 +80,6 @@
   <div id="ui">
     <h1>TypeSpace v2</h1>
     <div class="hint">Type to drop letters.<br>Space adds gap. Backspace removes.</div>
-    
     <select id="font-selector" aria-label="Font selector">
       <option value="helvetiker">Helvetiker (Bold)</option>
       <option value="optimer">Optimer</option>
@@ -100,16 +87,13 @@
       <option value="droid_sans">Droid Sans</option>
       <option value="droid_serif">Droid Serif</option>
     </select>
-    
     <textarea id="notes" placeholder="Add notes..."></textarea>
-
     <div class="btn-group">
       <button id="save-btn" class="ui-btn save-text">Save Text File</button>
       <button id="save-json" class="ui-btn">Save Scene JSON</button>
       <button id="save-screenshot" class="ui-btn">Save Screenshot</button>
       <button id="clear-btn" class="ui-btn clear-btn">Clear Scene</button>
     </div>
-
     <div class="controls-hint">
       <b>WASD</b> Move • <b>Drag</b> Orbit • <b>Scroll</b> Zoom
     </div>
@@ -145,7 +129,15 @@
     scene.fog = new THREE.FogExp2(0x070709, 0.02);
 
     const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 500);
-    camera.position.set(0, 5, 18);
+    
+    // --- SMART CAMERA LOGIC ---
+    // If the screen is narrow (mobile portrait), we pull the camera back significantly (Z=34).
+    // On desktop, we keep it close (Z=18).
+    // This makes the letters look small and neat on phone screens too.
+    const isMobile = innerWidth < 800;
+    const camDist = isMobile ? 34 : 18; 
+    const camHeight = isMobile ? 8 : 5;
+    camera.position.set(0, camHeight, camDist);
 
     const renderer = new THREE.WebGLRenderer({antialias:true});
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -206,7 +198,7 @@
     let currentFontKey = 'helvetiker';
 
     // --- State ---
-    const letters = []; // { mesh, char, width, isSpace }
+    const letters = []; 
     let cursorX = 0;
     const initialHeight = 8; 
     const finalHeight = 0.8; 
@@ -290,63 +282,45 @@
 
     async function changeFont(key){
         await loadFont(key);
-        // Re-generate meshes
         const currentChars = letters.map(l => l.char);
         clearScene();
-        // Restore text in input because clearScene wiped it
         const input = document.getElementById('text-input');
         input.value = currentChars.join(''); 
-        
-        for(let c of currentChars) {
-            addCharacter(c);
-        }
-        // Snap to floor
+        for(let c of currentChars) { addCharacter(c); }
         letters.forEach(l => { if(l.mesh) l.mesh.position.y = finalHeight; });
     }
 
-    // --- NEW: Input Event Logic (Mobile Compatible) ---
+    // --- Input Logic ---
     const input = document.getElementById('text-input');
-    
-    // We listen to 'input' which handles typing, backspace, paste, and autocorrect
     input.addEventListener('input', (e) => {
         const currentVal = input.value;
         const currentLen = currentVal.length;
         const previousLen = letters.length;
-        
         const diff = currentLen - previousLen;
 
         if (diff > 0) {
-            // Characters added (typing or paste)
             const newChars = currentVal.slice(previousLen);
-            for(let char of newChars) {
-                addCharacter(char);
-            }
+            for(let char of newChars) { addCharacter(char); }
         } else if (diff < 0) {
-            // Characters removed (backspace)
             const removeCount = Math.abs(diff);
-            for(let i=0; i < removeCount; i++) {
-                removeLast();
-            }
+            for(let i=0; i < removeCount; i++) { removeLast(); }
         }
     });
 
-    // Keep focus unless clicking UI
     document.body.addEventListener('click', (e) => {
        if(!e.target.closest('button, select, textarea')) {
          input.focus();
        }
     });
 
-    // UI Listeners
+    // Listeners
     const fontSelector = document.getElementById('font-selector');
     const notes = document.getElementById('notes');
     fontSelector.addEventListener('change', (e) => changeFont(e.target.value));
     document.getElementById('clear-btn').addEventListener('click', clearScene);
     
-    // Mobile UI Listeners
     document.getElementById('mob-clear').addEventListener('click', clearScene);
     document.getElementById('mob-font').addEventListener('click', () => {
-        // Cycle fonts for mobile button
         const keys = Object.keys(fontFiles);
         const idx = keys.indexOf(currentFontKey);
         const next = keys[(idx + 1) % keys.length];
@@ -354,7 +328,7 @@
         changeFont(next);
     });
 
-    // Save Functions
+    // Save
     document.getElementById('save-btn').addEventListener('click', ()=>{
       const content = letters.map(l=>l.char).join('') + "\n\nNotes:\n" + notes.value;
       const blob = new Blob([content], {type:'text/plain'});
