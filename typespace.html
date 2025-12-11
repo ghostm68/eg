@@ -2,15 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>TypeSpace: Interactive Type</title>
+  <!-- FORCE 1024px WIDTH: This makes the phone act like a desktop screen -->
+  <meta name="viewport" content="width=1024, user-scalable=yes" />
+  <title>TypeSpace: Interactive 3D Type</title>
   <style>
     :root{--bg:#070709;--panel:rgba(0,0,0,0.7);--accent:#00ff77;--warning:#ff4444;}
     html,body{height:100%;margin:0;background:var(--bg);font-family:Inter, system-ui, -apple-system, monospace;overflow:hidden;}
     #canvas-container{position:fixed;inset:0;z-index:1;}
     canvas{display:block}
 
-    /* UI Overlay */
+    /* UI Overlay - Always visible now */
     #ui {
       position:fixed;left:12px;top:12px;padding:16px;border-radius:12px;
       background:var(--panel);color:#e7ffe9;backdrop-filter:blur(10px);
@@ -18,7 +19,6 @@
       z-index:10;min-width:240px;font-size:13px;
       border: 1px solid rgba(255,255,255,0.05);
       box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-      transition: opacity 0.3s;
     }
     #ui h1{margin:0 0 12px 0;font-size:16px;font-weight:600;letter-spacing:-0.5px;color:#fff;}
     
@@ -27,7 +27,7 @@
     /* The Input Field */
     #text-input{
       position:fixed;left:50%;transform:translateX(-50%);bottom:30px;
-      width:80%;max-width:600px;
+      width:600px; /* Fixed width since we are on 1024 viewport */
       padding:14px 18px;border-radius:50px;
       border:1px solid rgba(0,255,119,0.3);
       background:rgba(0,0,0,0.85);
@@ -53,30 +53,13 @@
     button.clear-btn{color:var(--warning);border-color:rgba(255,68,68,0.15);margin-top:4px;}
 
     textarea#notes{width:100%;height:50px;margin-bottom:8px;padding:8px;border-radius:6px;background:rgba(0,0,0,0.3);color:#fff;border:1px solid rgba(255,255,255,0.1);resize:vertical;font-family:sans-serif;}
-
-    /* --- MOBILE OPTIMIZATION --- */
-    @media (max-width: 768px) {
-      #ui { display:none; }
-      #text-input { bottom: 20px; width: 90%; font-size: 16px; }
-      .mobile-controls {
-        position: fixed; top: 12px; right: 12px; z-index: 50;
-        display: flex; gap: 8px;
-      }
-      .mobile-btn {
-        background: rgba(0,0,0,0.6); color: white; border: 1px solid rgba(255,255,255,0.2);
-        padding: 6px 12px; border-radius: 20px; font-size: 12px; backdrop-filter: blur(4px);
-      }
-    }
-    @media (min-width: 769px) {
-      .mobile-controls { display: none; }
-    }
   </style>
 </head>
 <body>
 
   <div id="canvas-container"></div>
 
-  <!-- Desktop UI Panel -->
+  <!-- UI Panel (Always Desktop Style) -->
   <div id="ui">
     <h1>TypeSpace v2</h1>
     <div class="hint">Type to drop letters.<br>Space adds gap. Backspace removes.</div>
@@ -97,12 +80,6 @@
     <div class="controls-hint">
       <b>WASD</b> Move • <b>Drag</b> Orbit • <b>Scroll</b> Zoom
     </div>
-  </div>
-
-  <!-- Mobile Only Controls -->
-  <div class="mobile-controls">
-    <button class="mobile-btn" id="mob-clear">Clear</button>
-    <button class="mobile-btn" id="mob-font">Change Font</button>
   </div>
 
   <input id="text-input" type="text" placeholder="Type here..." autocomplete="off" spellcheck="false" />
@@ -129,15 +106,8 @@
     scene.fog = new THREE.FogExp2(0x070709, 0.02);
 
     const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 500);
-    
-    // --- SMART CAMERA LOGIC ---
-    // If the screen is narrow (mobile portrait), we pull the camera back significantly (Z=34).
-    // On desktop, we keep it close (Z=18).
-    // This makes the letters look small and neat on phone screens too.
-    const isMobile = innerWidth < 800;
-    const camDist = isMobile ? 34 : 18; 
-    const camHeight = isMobile ? 8 : 5;
-    camera.position.set(0, camHeight, camDist);
+    // Standard Desktop Camera Position
+    camera.position.set(0, 5, 18);
 
     const renderer = new THREE.WebGLRenderer({antialias:true});
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -318,15 +288,6 @@
     const notes = document.getElementById('notes');
     fontSelector.addEventListener('change', (e) => changeFont(e.target.value));
     document.getElementById('clear-btn').addEventListener('click', clearScene);
-    
-    document.getElementById('mob-clear').addEventListener('click', clearScene);
-    document.getElementById('mob-font').addEventListener('click', () => {
-        const keys = Object.keys(fontFiles);
-        const idx = keys.indexOf(currentFontKey);
-        const next = keys[(idx + 1) % keys.length];
-        fontSelector.value = next;
-        changeFont(next);
-    });
 
     // Save
     document.getElementById('save-btn').addEventListener('click', ()=>{
