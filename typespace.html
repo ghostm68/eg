@@ -2,23 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <!-- SEO & Description -->
-<meta name="description" content="An interactive 3D typography playground. Type to drop letters from the sky, customize physics and lighting, and export high-res screenshots of your creations.">
-<meta name="keywords" content="3D typography, WebGL, Three.js, kinetic type, interactive art, falling text, browser experiment">
-<meta name="author" content="TypeSpace">
-
-<!-- Social / Open Graph (Facebook, LinkedIn, Discord) -->
-<meta property="og:type" content="website">
-<meta property="og:title" content="TypeSpace | Interactive 3D Typography">
-<meta property="og:description" content="Type to drop 3D letters into a scene. Customize lighting, materials, and physics in real-time.">
-<!-- <meta property="og:image" content="URL_TO_A_SCREENSHOT_OF_TYPESPACE.png"> -->
-
-<!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="TypeSpace">
-<meta name="twitter:description" content="A physics-based 3D text experiment in your browser.">
-  <title>Interactive Letter Space v2</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>TypeSpace: Interactive 3D Type</title>
   <style>
     :root{--bg:#070709;--panel:rgba(0,0,0,0.7);--accent:#00ff77;--warning:#ff4444;}
     html,body{height:100%;margin:0;background:var(--bg);font-family:Inter, system-ui, -apple-system, monospace;overflow:hidden;}
@@ -33,26 +18,28 @@
       z-index:10;min-width:240px;font-size:13px;
       border: 1px solid rgba(255,255,255,0.05);
       box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      transition: opacity 0.3s;
     }
     #ui h1{margin:0 0 12px 0;font-size:16px;font-weight:600;letter-spacing:-0.5px;color:#fff;}
     
     #font-selector{width:100%;margin-bottom:12px;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.3);color:#e7ffe9;outline:none;}
     
+    /* The Input Field */
     #text-input{
-      position:fixed;left:50%;transform:translateX(-50%);bottom:24px;width:60%;max-width:600px;
+      position:fixed;left:50%;transform:translateX(-50%);bottom:30px;
+      width:80%;max-width:600px;
       padding:14px 18px;border-radius:50px;
       border:1px solid rgba(0,255,119,0.3);
-      background:rgba(0,0,0,0.8);
-      color:#fff;font-family:monospace;font-size:18px;outline:none;z-index:10;
+      background:rgba(0,0,0,0.85);
+      color:#fff;font-family:monospace;font-size:18px;outline:none;z-index:100;
       text-align:center; box-shadow: 0 5px 20px rgba(0,0,0,0.6);
       transition: all 0.2s ease;
     }
-    #text-input:focus{border-color:var(--accent);box-shadow: 0 0 15px rgba(0,255,119,0.2);}
+    #text-input:focus{border-color:var(--accent);box-shadow: 0 0 15px rgba(0,255,119,0.2); background: #000;}
 
     .hint{color:#888;font-size:11px;margin-bottom:12px;line-height:1.4;}
     .controls-hint{font-size:11px;color:#666;margin-top:12px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;}
     
-    /* Buttons */
     .btn-group {display:flex; flex-direction:column; gap:8px;}
     button.ui-btn{
       display:block;width:100%;padding:10px;border-radius:6px;
@@ -64,17 +51,46 @@
     button.ui-btn:hover{background:rgba(255,255,255,0.1);}
     button.save-text{color:var(--accent);border-color:rgba(0,255,119,0.15);}
     button.clear-btn{color:var(--warning);border-color:rgba(255,68,68,0.15);margin-top:4px;}
-    button.clear-btn:hover{background:rgba(255,68,68,0.1);}
 
     textarea#notes{width:100%;height:50px;margin-bottom:8px;padding:8px;border-radius:6px;background:rgba(0,0,0,0.3);color:#fff;border:1px solid rgba(255,255,255,0.1);resize:vertical;font-family:sans-serif;}
+
+    /* --- MOBILE OPTIMIZATION --- */
+    @media (max-width: 768px) {
+      /* Hide the big UI panel on mobile to save space */
+      #ui {
+        top: auto; bottom: 90px; left: 12px; right: 12px;
+        min-width: auto;
+        padding: 12px;
+        display:none; /* Hidden by default on mobile, could add a toggle */
+      }
+      /* But keep the font selector accessible? Let's just create a simplified mobile view */
+      #text-input { 
+        bottom: 20px; 
+        width: 90%;
+        font-size: 16px;
+      }
+      /* Just show a small clean/clear button */
+      .mobile-controls {
+        position: fixed; top: 12px; right: 12px; z-index: 50;
+        display: flex; gap: 8px;
+      }
+      .mobile-btn {
+        background: rgba(0,0,0,0.6); color: white; border: 1px solid rgba(255,255,255,0.2);
+        padding: 6px 12px; border-radius: 20px; font-size: 12px; backdrop-filter: blur(4px);
+      }
+    }
+    @media (min-width: 769px) {
+      .mobile-controls { display: none; }
+    }
   </style>
 </head>
 <body>
 
   <div id="canvas-container"></div>
 
+  <!-- Desktop UI Panel -->
   <div id="ui">
-    <h1>Letter Space v2</h1>
+    <h1>TypeSpace v2</h1>
     <div class="hint">Type to drop letters.<br>Space adds gap. Backspace removes.</div>
     
     <select id="font-selector" aria-label="Font selector">
@@ -85,7 +101,7 @@
       <option value="droid_serif">Droid Serif</option>
     </select>
     
-    <textarea id="notes" placeholder="Add notes to saved file..."></textarea>
+    <textarea id="notes" placeholder="Add notes..."></textarea>
 
     <div class="btn-group">
       <button id="save-btn" class="ui-btn save-text">Save Text File</button>
@@ -99,7 +115,13 @@
     </div>
   </div>
 
-  <input id="text-input" type="text" placeholder="Type here..." autocomplete="off" />
+  <!-- Mobile Only Controls -->
+  <div class="mobile-controls">
+    <button class="mobile-btn" id="mob-clear">Clear</button>
+    <button class="mobile-btn" id="mob-font">Change Font</button>
+  </div>
+
+  <input id="text-input" type="text" placeholder="Type here..." autocomplete="off" spellcheck="false" />
 
   <script type="importmap">
   {
@@ -120,19 +142,17 @@
     const container = document.getElementById('canvas-container');
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x070709);
-    // Add some fog for depth
     scene.fog = new THREE.FogExp2(0x070709, 0.02);
 
     const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 500);
     camera.position.set(0, 5, 18);
 
     const renderer = new THREE.WebGLRenderer({antialias:true});
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap pixel ratio for performance
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(innerWidth, innerHeight);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.0;
     container.appendChild(renderer.domElement);
 
     // --- Lighting ---
@@ -143,7 +163,6 @@
     dirLight.position.set(5, 20, 10);
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.set(2048,2048);
-    dirLight.shadow.bias = -0.0001;
     scene.add(dirLight);
     
     const spotLight = new THREE.SpotLight(0x00ff77, 50);
@@ -154,14 +173,9 @@
     spotLight.distance = 40;
     scene.add(spotLight);
 
-    // --- Environment ---
-    // Floor
+    // --- Floor ---
     const groundGeo = new THREE.PlaneGeometry(300,300);
-    const groundMat = new THREE.MeshStandardMaterial({
-        color:0x1a1a1a, 
-        metalness:0.2, 
-        roughness:0.8
-    });
+    const groundMat = new THREE.MeshStandardMaterial({color:0x1a1a1a, metalness:0.2, roughness:0.8});
     const groundMesh = new THREE.Mesh(groundGeo, groundMat);
     groundMesh.rotation.x = -Math.PI/2;
     groundMesh.receiveShadow = true;
@@ -175,12 +189,11 @@
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.maxPolarAngle = Math.PI / 2 - 0.05; // Don't go below ground
+    controls.maxPolarAngle = Math.PI / 2 - 0.05;
     controls.target.set(0,1,0);
 
     // --- Font Management ---
     const loader = new FontLoader();
-    // Removed duplicate/broken fonts to ensure honesty in UI
     const fontFiles = {
       helvetiker: 'https://threejs.org/examples/fonts/helvetiker_bold.typeface.json',
       optimer: 'https://threejs.org/examples/fonts/optimer_regular.typeface.json',
@@ -193,19 +206,13 @@
     let currentFontKey = 'helvetiker';
 
     // --- State ---
-    // Structure: { mesh: THREE.Mesh | null, char: string, width: number, isSpace: boolean }
-    const letters = []; 
+    const letters = []; // { mesh, char, width, isSpace }
     let cursorX = 0;
-    const initialHeight = 8; // Drop height
-    const finalHeight = 0.8; // Resting height (center of letter)
+    const initialHeight = 8; 
+    const finalHeight = 0.8; 
     
-    // Shared Material (Physical for better looks)
     const textMaterial = new THREE.MeshPhysicalMaterial({
-        color: 0xffffff,
-        metalness: 0.1,
-        roughness: 0.2,
-        clearcoat: 1.0,
-        clearcoatRoughness: 0.1
+        color: 0xffffff, metalness: 0.1, roughness: 0.2, clearcoat: 1.0, clearcoatRoughness: 0.1
     });
 
     async function loadFont(key){
@@ -213,108 +220,58 @@
           try {
             currentFont = await new Promise((resolve, reject) => loader.load(fontFiles[key], resolve, null, reject));
             currentFontKey = key;
-          } catch(e) { console.error("Font load error", e); }
+          } catch(e) { console.error("Font error", e); }
       }
     }
-
-    // Init
     await loadFont(currentFontKey);
 
     // --- Core Functions ---
-
     function createLetterMesh(char){
       if(!currentFont) return null;
-      
-      const config = {
-          font: currentFont, 
-          size: 2, 
-          height: 0.4, 
-          curveSegments: 6, 
-          bevelEnabled: true, 
-          bevelThickness: 0.06, 
-          bevelSize: 0.04, 
-          bevelOffset: 0, 
-          bevelSegments: 3
-      };
-
+      const config = { font: currentFont, size: 2, height: 0.4, curveSegments: 6, bevelEnabled: true, bevelThickness: 0.06, bevelSize: 0.04, bevelOffset: 0, bevelSegments: 3 };
       const geom = new TextGeometry(char, config);
-      
-      // Calculate true width for kerning
       geom.computeBoundingBox();
       const width = geom.boundingBox.max.x - geom.boundingBox.min.x;
-      
-      // Center geometry locally so rotation works nicely
       geom.center(); 
-
       const mesh = new THREE.Mesh(geom, textMaterial);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      
+      mesh.castShadow = true; mesh.receiveShadow = true;
       return { mesh, width };
     }
 
     function addCharacter(char){
         let item;
-
         if (char === ' ') {
-            // Handle Spacebar
-            const spaceWidth = 1.0;
-            item = { mesh: null, char: ' ', width: spaceWidth, isSpace: true };
-            // Move cursor
-            cursorX += spaceWidth;
+            item = { mesh: null, char: ' ', width: 1.0, isSpace: true };
+            cursorX += 1.0;
         } else {
-            // Handle Visible Character
             const { mesh, width } = createLetterMesh(char);
-            
-            // Random organic rotation on Z
             mesh.rotation.z = (Math.random() - 0.5) * 0.25; 
-            
-            // Calculate position: cursorX + half width (since geometry is centered)
             const xPos = cursorX + (width / 2);
-            
-            // Start high up for drop animation
             mesh.position.set(xPos, initialHeight, 0);
-            
             scene.add(mesh);
             item = { mesh, char, width, isSpace: false };
-            
-            // Advance cursor: width + slight padding
             cursorX += width + 0.3;
         }
-
         letters.push(item);
-        
-        // Move camera target slightly to follow typing
         moveCameraTarget(cursorX);
     }
 
     function removeLast(){
         const last = letters.pop();
         if(!last) return;
-
         if(last.mesh) {
             scene.remove(last.mesh);
-            // MEMORY MANAGEMENT: Dispose geometry to prevent leaks
             last.mesh.geometry.dispose(); 
-            // We share the material, so don't dispose it unless we unique-ify per letter
         }
-        
-        // Move cursor back by the width of the removed item plus padding
-        // If it was a space, remove space width. If char, remove char width + padding.
         const padding = last.isSpace ? 0 : 0.3;
         cursorX -= (last.width + padding);
         if(cursorX < 0) cursorX = 0;
-
         moveCameraTarget(cursorX);
     }
 
     function clearScene(){
-        // Clean up everything
         letters.forEach(l => {
-            if(l.mesh) {
-                scene.remove(l.mesh);
-                l.mesh.geometry.dispose();
-            }
+            if(l.mesh) { scene.remove(l.mesh); l.mesh.geometry.dispose(); }
         });
         letters.length = 0;
         cursorX = 0;
@@ -324,14 +281,8 @@
     }
 
     function moveCameraTarget(x){
-        // Smoothly shift attention, but don't snap camera position, just look-at point
         const targetX = x > 0 ? x : 0;
-        // We lerp the controls target in the animate loop usually, 
-        // but for typing we want a direct update or the OrbitControls might fight us.
-        // Let's just set the target X.
         controls.target.set(targetX / 2, 1, 0);
-        
-        // Also move the spotlight to follow the text
         spotLight.position.x = targetX / 2;
         spotLight.target.position.set(targetX / 2, 0, 0);
         spotLight.target.updateMatrixWorld();
@@ -339,47 +290,69 @@
 
     async function changeFont(key){
         await loadFont(key);
-        // Rebuild existing text
-        const currentChars = letters.map(l => l.char); // Save content
-        clearScene(); // Wipe
-        // Re-type instantly
+        // Re-generate meshes
+        const currentChars = letters.map(l => l.char);
+        clearScene();
+        // Restore text in input because clearScene wiped it
+        const input = document.getElementById('text-input');
+        input.value = currentChars.join(''); 
+        
         for(let c of currentChars) {
             addCharacter(c);
         }
-        // Snap letters to floor immediately to avoid mass-drop animation on font change
-        letters.forEach(l => {
-            if(l.mesh) l.mesh.position.y = finalHeight;
-        });
+        // Snap to floor
+        letters.forEach(l => { if(l.mesh) l.mesh.position.y = finalHeight; });
     }
 
-    // --- UI Listeners ---
+    // --- NEW: Input Event Logic (Mobile Compatible) ---
     const input = document.getElementById('text-input');
-    const fontSelector = document.getElementById('font-selector');
-    const notes = document.getElementById('notes');
+    
+    // We listen to 'input' which handles typing, backspace, paste, and autocorrect
+    input.addEventListener('input', (e) => {
+        const currentVal = input.value;
+        const currentLen = currentVal.length;
+        const previousLen = letters.length;
+        
+        const diff = currentLen - previousLen;
 
-    input.addEventListener('keydown', (ev)=>{
-      if(ev.key === 'Backspace'){
-        ev.preventDefault();
-        removeLast();
-      } else if(ev.key === 'Delete' || ev.key === 'Escape'){
-        // Escape clears scene
-        clearScene();
-      } else if(ev.key.length === 1 && !ev.ctrlKey && !ev.metaKey){
-        ev.preventDefault();
-        addCharacter(ev.key);
-      }
+        if (diff > 0) {
+            // Characters added (typing or paste)
+            const newChars = currentVal.slice(previousLen);
+            for(let char of newChars) {
+                addCharacter(char);
+            }
+        } else if (diff < 0) {
+            // Characters removed (backspace)
+            const removeCount = Math.abs(diff);
+            for(let i=0; i < removeCount; i++) {
+                removeLast();
+            }
+        }
     });
 
-    // Keep focus
+    // Keep focus unless clicking UI
     document.body.addEventListener('click', (e) => {
-       if(e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SELECT' && e.target.tagName !== 'TEXTAREA') {
+       if(!e.target.closest('button, select, textarea')) {
          input.focus();
        }
     });
 
+    // UI Listeners
+    const fontSelector = document.getElementById('font-selector');
+    const notes = document.getElementById('notes');
     fontSelector.addEventListener('change', (e) => changeFont(e.target.value));
-    
     document.getElementById('clear-btn').addEventListener('click', clearScene);
+    
+    // Mobile UI Listeners
+    document.getElementById('mob-clear').addEventListener('click', clearScene);
+    document.getElementById('mob-font').addEventListener('click', () => {
+        // Cycle fonts for mobile button
+        const keys = Object.keys(fontFiles);
+        const idx = keys.indexOf(currentFontKey);
+        const next = keys[(idx + 1) % keys.length];
+        fontSelector.value = next;
+        changeFont(next);
+    });
 
     // Save Functions
     document.getElementById('save-btn').addEventListener('click', ()=>{
@@ -413,7 +386,7 @@
       a.click();
     });
 
-    // --- WASD Movement ---
+    // WASD Move
     const keyState = {};
     window.addEventListener('keydown', (e)=>{ keyState[e.key.toLowerCase()] = true; });
     window.addEventListener('keyup', (e)=>{ keyState[e.key.toLowerCase()] = false; });
@@ -431,42 +404,32 @@
       if(keyState['d']) camera.position.addScaledVector(right, speed);
     }
 
-    // --- Animation Loop ---
+    // Animation Loop
     const clock = new THREE.Clock();
-
     function animate(){
       const dt = clock.getDelta();
-      
       updateCameraMove(dt);
       controls.update();
 
-      // Drop Animation Logic
-      // Iterate backwards or just forEach. forEach is fine for simple stuff.
       for(const item of letters){
           if(item.mesh){
-              // If mesh is above floor, fall down
               if(item.mesh.position.y > finalHeight + 0.01){
-                  // Simple Lerp for ease-out effect
                   item.mesh.position.y += (finalHeight - item.mesh.position.y) * 10 * dt;
               }
           }
       }
-
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
     }
 
-    // Handle Resize
     window.addEventListener('resize', () => {
         camera.aspect = innerWidth / innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(innerWidth, innerHeight);
     });
 
-    // Start
     input.focus();
     animate();
-
   </script>
 </body>
 </html>
