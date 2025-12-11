@@ -4,21 +4,8 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>CineScript: Kinetic Type Cast</title>
-<!-- SEO & Description -->
-<meta name="description" content="Turn text into cinematic video instantly in your browser. Choose from curated fonts, control typing speed, and export high-quality WebM videos for social media.">
-<meta name="keywords" content="text to video, kinetic typography, video generator, type animation, instagram text tool, browser rendering">
-<meta name="author" content="TypeCast">
+<meta name="description" content="Turn text into cinematic video instantly in your browser.">
 
-<!-- Social / Open Graph (Facebook, LinkedIn, Discord) -->
-<meta property="og:type" content="website">
-<meta property="og:title" content="TypeCast | Cinematic Text Video Generator">
-<meta property="og:description" content="Write text, pick a style, and render a video instantly. No servers, no watermarks, pure browser rendering.">
-<!-- <meta property="og:image" content="URL_TO_A_SCREENSHOT_OF_TYPECAST.png"> -->
-
-<!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="TypeCast">
-<meta name="twitter:description" content="Create beautiful kinetic typography videos directly in your browser.">
 <!-- Web fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Unicase:wght@400;600;700&family=Eczar:wght@400;600;700&family=Stoke:wght@300;400&family=Lustria&family=Sumana:wght@400;700&family=Gloock&family=Bodoni+Moda:wght@400;600;700&family=Poiret+One&family=Yeseva+One&family=Bungee&family=Bespoke+Stencil&family=Trispace:wght@300;400;700&family=Moirai+One&family=Unbounded:wght@400;700&family=Amatic+SC:wght@400;700&family=Frijole&family=Slackside+One&family=Rubik+Wet+Paint&family=Rock+Salt&family=Sedgwick+Ave&family=Permanent+Marker&family=Chonburi&family=Trade+Winds&family=Pirata+One&family=Sawarabi+Mincho&family=MedievalSharp&family=UnifrakturCook:wght@700&family=Gravitas+One&family=Faster+One&family=Freckle+Face&family=Butcherman&family=Creepster&family=Righteous&family=Audiowide&family=Bonbon&family=Gwendolyn:wght@400;700&family=Parisienne&family=GFS+Neohellenic:wght@400;700&family=Albert+Sans:wght@300;400;700&display=swap" rel="stylesheet">
 
@@ -54,7 +41,7 @@
   .control-group {display:flex; flex-direction:column; gap:6px;}
   label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
   
-  select,input[type="color"],input[type="range"],input[type="number"],button,textarea {
+  select,input[type="color"],input[type="range"],input[type="number"],button,textarea,input[type="file"] {
     width:100%;
     box-sizing:border-box;
     padding:10px;
@@ -68,6 +55,23 @@
     transition:border-color 0.2s;
   }
   select:focus, input:focus, textarea:focus { border-color:var(--accent); }
+  
+  /* File input styling tweak */
+  input[type="file"] {
+    font-size: 12px;
+    padding: 8px;
+    cursor: pointer;
+  }
+  input[type="file"]::-webkit-file-upload-button {
+    background: var(--accent);
+    border: none;
+    color: #003822;
+    padding: 4px 8px;
+    margin-right: 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+  }
 
   textarea#editor{
     height:150px;
@@ -91,6 +95,17 @@
   }
   button.primary:hover{filter:brightness(1.1);}
   button:disabled{opacity:0.5;cursor:not-allowed;filter:grayscale(1);}
+  
+  button.secondary {
+    background: rgba(255,255,255,0.1);
+    border:none;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 6px;
+    margin-top: 4px;
+    cursor: pointer;
+  }
+  button.secondary:hover { background: rgba(255,255,255,0.15); color: white;}
 
   /* right area */
   .stage {
@@ -145,13 +160,20 @@
 
     <div class="controls-row">
        <div class="control-group">
-        <label for="bgColor">Background</label>
+        <label for="bgColor">Bg Color</label>
         <input id="bgColor" type="color" value="#070709">
       </div>
       <div class="control-group">
         <label for="textColor">Text Color</label>
         <input id="textColor" type="color" value="#ffffff">
       </div>
+    </div>
+
+    <!-- New Background Image Control -->
+    <div class="control-group">
+        <label>png.jpg.webp(Overrides Color)</label>
+        <input type="file" id="bgImageInput" accept="image/*">
+        <button id="removeBgImg" class="secondary" style="display:none;">remove img</button>
     </div>
 
     <div class="controls-row">
@@ -218,7 +240,6 @@ fonts.sort().forEach(font => {
   opt.textContent = font;
   fontSelect.appendChild(opt);
 });
-// Set a default
 fontSelect.value = "Albert Sans";
 
 // --- Elements ---
@@ -234,13 +255,15 @@ const progressBox = document.getElementById('progressBox');
 const progressPct = document.getElementById('progressPct');
 const widthInput = document.getElementById('width');
 const heightInput = document.getElementById('height');
+const bgImageInput = document.getElementById('bgImageInput');
+const removeBgImgBtn = document.getElementById('removeBgImg');
 
 let isRendering = false;
+let uploadedImg = null; // Store the image object
 
 // --- Helper: Text Wrapping ---
-// Returns array of strings that fit within maxWidth
 function getLines(ctx, text, maxWidth) {
-  const sections = text.split('\n'); // Respect manual line breaks
+  const sections = text.split('\n');
   const lines = [];
 
   sections.forEach(section => {
@@ -262,17 +285,49 @@ function getLines(ctx, text, maxWidth) {
   return lines;
 }
 
+// --- Image Handling ---
+bgImageInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+        const img = new Image();
+        img.onload = () => {
+            uploadedImg = img;
+            removeBgImgBtn.style.display = 'block';
+            drawPreview();
+        };
+        img.src = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+});
+
+removeBgImgBtn.addEventListener('click', () => {
+    uploadedImg = null;
+    bgImageInput.value = ""; // clear file input
+    removeBgImgBtn.style.display = 'none';
+    drawPreview();
+});
+
 // --- Preview Logic ---
 function drawPreview() {
-  if(isRendering) return; // Don't fight the renderer
+  if(isRendering) return;
 
   const ctx = canvas.getContext('2d', {alpha:false});
   const w = canvas.width;
   const h = canvas.height;
   
-  // Clear
-  ctx.fillStyle = bgColorInput.value;
-  ctx.fillRect(0,0,w,h);
+  // Background: Image or Color?
+  if(uploadedImg) {
+      // Draw image stretched to fit
+      ctx.drawImage(uploadedImg, 0, 0, w, h);
+      // Optional: Add a slight dim layer to make text pop? 
+      // ctx.fillStyle = "rgba(0,0,0,0.3)"; ctx.fillRect(0,0,w,h);
+  } else {
+      ctx.fillStyle = bgColorInput.value;
+      ctx.fillRect(0,0,w,h);
+  }
 
   // Text Settings
   const fontSize = parseInt(fontSizeInput.value,10) || 64;
@@ -324,7 +379,6 @@ async function renderVideo() {
   const fontName = fontSelect.value;
   const fontSize = parseInt(fontSizeInput.value,10);
   
-  // 1. Ensure Font is Loaded before recording
   try {
     await document.fonts.load(`${fontSize}px "${fontName}"`);
   } catch(e) {
@@ -352,23 +406,13 @@ async function renderVideo() {
   const maxWidth = w - (padding * 2);
   const lineHeight = fontSize * 1.2;
   
-  // Calculate Layout
-  // We need to flatten the text into characters but preserve the line structure visually
   const fullText = editor.value;
   const lines = getLines(ctx, fullText, maxWidth);
-  
-  // We need to map "Character Index" -> "What to draw"
-  // Let's reconstruct the full text as it appears visually (with newlines where wrapping happened)
-  // Actually, simplest way: Just animate the `count` of characters and re-run getLines logic
-  // or (better for perf) pre-calculate line breaks.
-  
-  // Let's stick to simple: Re-run split logic? No, text creates jitter.
-  // Better: Create a flat string with \n inserted where the wrapper broke lines.
   const flatVisualText = lines.join('\n'); 
   const totalChars = flatVisualText.length;
   
   const cps = parseInt(speedInput.value) || 20;
-  const duration = Math.max(1, totalChars / cps); // Seconds
+  const duration = Math.max(1, totalChars / cps);
   const fps = 30;
   const totalFrames = Math.ceil(duration * fps);
   
@@ -392,7 +436,7 @@ async function renderVideo() {
     renderBtn.disabled = false;
     progressBox.style.display = 'none';
     status.textContent = 'Render complete!';
-    drawPreview(); // Restore preview
+    drawPreview();
   };
 
   recorder.start();
@@ -400,31 +444,32 @@ async function renderVideo() {
   let frame = 0;
   
   function renderFrame() {
-    if(frame > totalFrames + 15) { // +15 frames padding at end
+    if(frame > totalFrames + 15) {
       recorder.stop();
       return;
     }
 
-    // Clear
-    ctx.fillStyle = bg;
-    ctx.fillRect(0,0,w,h);
+    // DRAW BACKGROUND (Image or Color)
+    if(uploadedImg) {
+        ctx.drawImage(uploadedImg, 0, 0, w, h);
+    } else {
+        ctx.fillStyle = bg;
+        ctx.fillRect(0,0,w,h);
+    }
     
-    // Config
+    // Config Text
     ctx.fillStyle = fg;
     ctx.font = `${fontSize}px "${fontName}"`;
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'center';
 
-    // Calculate how many chars to show
     const pct = Math.min(1, frame / totalFrames);
     const charCount = Math.floor(pct * totalChars);
     
-    // Draw Text
     const currentString = flatVisualText.substring(0, charCount);
-    // We split by \n because we baked our visual line breaks into flatVisualText earlier
     const currentLines = currentString.split('\n');
     
-    const totalH = lines.length * lineHeight; // Use total height of FINAL text to keep vertical position stable
+    const totalH = lines.length * lineHeight;
     const startY = (h - totalH) / 2 + (lineHeight/2);
 
     currentLines.forEach((lineText, i) => {
@@ -437,7 +482,6 @@ async function renderVideo() {
     progressPct.textContent = Math.floor(pct * 100) + "%";
 
     frame++;
-    // Use setTimeout to ensure we don't block main thread too much, aiming for FPS
     setTimeout(renderFrame, 1000/fps);
   }
 
