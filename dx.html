@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dreamweaver — Modern Template</title>
+  <link href="https://fonts.cdnfonts.com/css/voodoo" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { 
+      font-family: 'Voodoo', sans-serif;
+      background:#fff;
+      color:#000; 
+      overflow-x:hidden;
+      cursor: default;
+      position: relative;
+      letter-spacing: 1px;
+    }
+
+    /* ---------- SUBTLE STATIC/SCANLINE OVERLAY ---------- */
+    .static-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.01) 0px, rgba(0, 0, 0, 0.01) 1px, transparent 1px, transparent 2px);
+      z-index: 9998;
+      pointer-events: none;
+      opacity: 0.03;
+      animation: staticFlicker 10s infinite alternate;
+      mix-blend-mode: multiply;
+    }
+    
+    .scanlines {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(to bottom, transparent 95%, rgba(0, 0, 0, 0.02) 95%);
+      background-size: 100% 6px;
+      z-index: 9997;
+      pointer-events: none;
+      opacity: 0.1;
+    }
+    
+    @keyframes staticFlicker {
+      0%, 100% { opacity: 0.02; }
+      50% { opacity: 0.04; }
+    }
+
+    /* ---------- FLOATING BACKGROUND IMAGES ---------- */
+    #floating-container {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 0; /* Behind content */
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .floating-img {
+      position: absolute;
+      width: 150px; /* Base size */
+      height: auto;
+      opacity: 0;
+      filter: grayscale(100%);
+      mix-blend-mode: multiply;
+    }
+
+    /* ---------- SPLASH SCREEN ---------- */
+    .splash-screen {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: #000;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.8s ease;
+    }
+    
+    .splash-screen.fade-out { opacity: 0; pointer-events: none; }
+    
+    .splash-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      position: relative;
+      width: 100%;
+    }
+    
+    /* Splash Image - Dynamic Cycle */
+    .splash-img-container {
+        width: 300px;
+        height: 300px;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 1px solid #333;
+        box-shadow: 0 0 50px rgba(255, 0, 0, 0.2);
+    }
+
+    .splash-gif {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      filter: grayscale(100%) contrast(1.2);
+    }
+    
+    .splash-logo {
+      font-family: 'Voodoo', sans-serif;
+      font-size: 3.5rem;
+      color: #ff0000;
+      letter-spacing: 5px;
+      text-shadow: 0 0 10px red;
+      animation: neonPulse 2s infinite alternate;
+    }
+    
+    /* Scanline overlay on splash */
+    .splash-content::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(0deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
+      background-size: 100% 8px;
+      pointer-events: none;
+      animation: scanlinesSweep 2s linear infinite;
+      opacity: 0.3;
+    }
+
+    /* ---------- HERO & DRAMATIC TITLE ---------- */
+    .hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 2rem;
+      opacity: 0;
+      position: relative;
+      z-index: 2; /* Above floating images */
+    }
+    
+    .hero.visible {
+      animation: heroFadeIn 1.5s ease forwards;
+    }
+    
+    /* Dramatic Title Styling */
+    .hero h1 {
+      font-family: 'Voodoo', sans-serif;
+      font-size: 8vw; /* Larger */
+      font-weight: normal;
+      letter-spacing: 5px;
+      color: #000;
+      position: relative;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      cursor: default;
+    }
+
+    .hero.visible h1 {
+      animation: dramaticEntrance 2.5s cubic-bezier(0.1, 0.7, 1.0, 0.1) forwards;
+    }
+    
+    /* The Glitch/Ghost effect */
+    .hero h1::before, .hero h1::after {
+      content: 'dreamweaver';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      opacity: 0.8;
+    }
+    
+    .hero h1::before {
+      color: #ff0000;
+      z-index: -1;
+      animation: glitch-anim-1 3s infinite linear alternate-reverse;
+    }
+    
+    .hero h1::after {
+      color: #00ffff;
+      z-index: -2;
+      animation: glitch-anim-2 2s infinite linear alternate-reverse;
+      opacity: 0.4;
+    }
+
+    .hero p {
+      font-size: 1.5rem;
+      background: rgba(255,255,255,0.8); /* Readability over floating images */
+      padding: 5px 15px;
+      box-shadow: 0 0 20px rgba(255,255,255,1);
+    }
+
+    /* ---------- CONTENT AREAS ---------- */
+    .notes-area, .gallery-scroll, .previous-notes, .footer {
+      position: relative;
+      z-index: 2; /* Above floating images */
+      background: rgba(255,255,255,0.9); /* Slight opacity to see floating behind */
+    }
+    
+    .notes-area {
+      width: 100%; max-width: 1200px; margin: 2rem auto; padding: 0 2rem;
+    }
+    
+    .notes-textarea {
+      width: 100%; height: 400px;
+      background: rgba(245,245,245,0.9);
+      border: 1px solid #000;
+      color: #000;
+      font-family: 'Voodoo', sans-serif;
+      font-size: 18px;
+      padding: 20px;
+      resize: vertical;
+      line-height: 1.6;
+      box-shadow: 5px 5px 0px rgba(0,0,0,0.1);
+    }
+    
+    .notes-textarea:focus {
+      outline: none;
+      border-color: #ff0000;
+      box-shadow: 5px 5px 0px rgba(255,0,0,0.2);
+    }
+
+    /* ---------- FULLSCREEN NOTES SLIDE-UP ---------- */
+    .notes-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #000;
+      z-index: 10000; /* High z-index */
+      transform: translateY(100%); /* Start hidden below */
+      transition: transform 0.6s cubic-bezier(0.86, 0, 0.07, 1);
+      display: flex;
+      flex-direction: column;
+      padding: 40px;
+    }
+    
+    .notes-overlay.open {
+      transform: translateY(0);
+    }
+
+    .notes-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      border-bottom: 1px solid #ff0000;
+      padding-bottom: 20px;
+    }
+
+    .notes-header h2 {
+      color: #ff0000;
+      font-size: 2rem;
+      letter-spacing: 2px;
+    }
+
+    .close-notes-btn {
+      background: transparent;
+      border: 1px solid #ff0000;
+      color: #ff0000;
+      font-family: 'Voodoo', sans-serif;
+      font-size: 1.5rem;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .close-notes-btn:hover {
+      background: #ff0000;
+      color: #000;
+    }
+
+    .notes-content-full {
+      flex: 1;
+      overflow-y: auto;
+      color: #fff;
+      font-family: 'Voodoo', sans-serif;
+      font-size: 18px;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      padding-right: 20px;
+    }
+
+    /* Trigger Button Styling */
+    .notes-trigger-container {
+      text-align: center;
+      margin: 4rem 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .notes-trigger-btn {
+      background: #000;
+      color: #fff;
+      font-family: 'Voodoo', sans-serif;
+      font-size: 1.5rem;
+      padding: 20px 60px;
+      border: 2px solid #000;
+      cursor: pointer;
+      transition: 0.3s;
+      letter-spacing: 3px;
+    }
+
+    .notes-trigger-btn:hover {
+      background: #fff;
+      color: #ff0000;
+      border-color: #ff0000;
+      box-shadow: 0 0 30px rgba(255,0,0,0.4);
+    }
+
+
+    /* ---------- GALLERY ---------- */
+    .gallery-scroll {
+      width: 100%; margin: 3rem 0; padding: 20px 0;
+      overflow-x: auto; white-space: nowrap;
+      background: #f0f0f0;
+      border-top: 2px solid #000; border-bottom: 2px solid #000;
+    }
+    
+    .scroll-img {
+      display: inline-block;
+      height: 150px; /* Larger */
+      margin: 0 10px;
+      filter: grayscale(100%);
+      transition: 0.3s;
+      cursor: pointer;
+      border: 1px solid #ccc;
+    }
+    
+    .scroll-img:hover {
+      filter: grayscale(0%);
+      transform: scale(1.05);
+      border-color: red;
+    }
+
+    /* ---------- MENU ---------- */
+    .menu-btn {
+      position:fixed; top:20px; right:20px; z-index:1001;
+      cursor:pointer; font-size:1.2rem; padding:10px 18px;
+      background:#000; color:#fff; border: 1px solid #fff;
+      font-family: 'Voodoo', sans-serif;
+    }
+    .menu-btn:hover { background: #ff0000; border-color:#ff0000; }
+
+    .menu {
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      background:rgba(0,0,0,0.95); color:#fff;
+      transform:translateY(-100%); transition:transform 0.6s cubic-bezier(.77,0,.175,1);
+      z-index:1000; display:flex; flex-direction:column;
+      justify-content:center; align-items:center;
+    }
+    .menu.open { transform:translateY(0); }
+    .menu a { font-size:3rem; margin:1rem; text-decoration:none; color:#fff; transition:0.3s; }
+    .menu a:hover { color:#ff0000; letter-spacing:5px; }
+
+    /* ---------- FOOTER ---------- */
+    .footer {
+      background: #000; padding: 40px; text-align: center; color: #fff;
+    }
+    .footer a { color: #888; text-decoration: none; margin: 0 15px; transition: 0.3s; }
+    .footer a:hover { color: #ff0000; }
+
+    /* ---------- ANIMATIONS ---------- */
+    @keyframes heroFadeIn {
+      from { opacity: 0; } to { opacity: 1; }
+    }
+
+    @keyframes dramaticEntrance {
+      0% { transform: scale(3); filter: blur(20px); opacity: 0; color: #ff0000; }
+      50% { filter: blur(0px); opacity: 1; color: #ff0000; }
+      70% { transform: scale(0.9); color: #000; }
+      100% { transform: scale(1); color: #000; }
+    }
+    
+    @keyframes glitch-anim-1 {
+      0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px, 2px); }
+      20% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -2px); }
+      40% { clip-path: inset(40% 0 50% 0); transform: translate(-2px, 2px); }
+      60% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }
+      80% { clip-path: inset(10% 0 70% 0); transform: translate(-2px, 2px); }
+      100% { clip-path: inset(30% 0 20% 0); transform: translate(2px, -2px); }
+    }
+    
+    @keyframes glitch-anim-2 {
+      0% { clip-path: inset(10% 0 60% 0); transform: translate(2px, -2px); }
+      20% { clip-path: inset(80% 0 5% 0); transform: translate(-2px, 2px); }
+      40% { clip-path: inset(30% 0 20% 0); transform: translate(2px, -2px); }
+      60% { clip-path: inset(15% 0 80% 0); transform: translate(-2px, 2px); }
+      80% { clip-path: inset(55% 0 10% 0); transform: translate(2px, -2px); }
+      100% { clip-path: inset(40% 0 30% 0); transform: translate(-2px, 2px); }
+    }
+    
+    @keyframes neonPulse {
+      from { text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000; }
+      to { text-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000, 0 0 60px #ff0000; }
+    }
+    
+    @keyframes scanlinesSweep {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100%); }
+    }
+
+    /* READER IFRAME */
+    .reader { width:100%; height:0; border:0; transition: height 0.5s; }
+    .reader.active { height: 100vh; margin-top: 2rem; border-top: 2px solid red; }
+
+  </style>
+</head>
+<body>
+
+  <!-- Background Layer for Floating Images -->
+  <div id="floating-container"></div>
+
+  <!-- Static and Scanline Overlays -->
+  <div class="static-overlay"></div>
+  <div class="scanlines"></div>
+
+  <!-- Splash Screen (Now Cycles Images) -->
+  <div class="splash-screen" id="splashScreen">
+    <div class="splash-content">
+      <div class="splash-img-container">
+        <img src="" class="splash-gif" id="splashImage" alt="Loading...">
+      </div>
+      <div class="splash-logo">LOADING...</div>
+    </div>
+  </div>
+
+  <!-- Menu -->
+  <div class="menu-btn" onclick="toggleMenu()">MENU</div>
+  <div class="menu" id="menu">
+    <a href="#" onclick="loadPage('page1.html')">PAGE ONE</a>
+    <a href="#" onclick="loadPage('page2.html')">PAGE TWO</a>
+    <a href="#" onclick="loadPage('page3.html')">ARCHIVES</a>
+    <a href="#" onclick="toggleMenu()">CLOSE</a>
+  </div>
+
+  <!-- Main Hero -->
+  <section class="hero" id="hero">
+    <h1>dreamweaver</h1>
+    <p>Notes, archives, explorations.</p>
+  </section>
+
+  <!-- Notes Text Area -->
+  <section class="notes-area">
+    <textarea class="notes-textarea" id="notesTextarea">
+The novel, BRIMLESS (THE CONSENSUS)
+-in case you missed the download or
+were reading it here- can be accessed
+at www.inkrealm.info along with the
+first volume...
+
+We are weighing a re-design of this
+space.
+
+Dreamweaver notes will return sometime
+in early December.
+    </textarea>
+  </section>
+
+  <!-- Scrolling Gallery -->
+  <div class="gallery-scroll" id="galleryScroll">
+    <div class="gallery-scroll-container" id="scrollContainer">
+      <!-- Populated via JS -->
+    </div>
+  </div>
+
+  <!-- Fullscreen Slide-Up Notes Trigger -->
+  <div class="notes-trigger-container">
+    <button class="notes-trigger-btn" onclick="openPreviousNotes()">
+      ACCESS PREVIOUS NOTES DATABASE
+    </button>
+  </div>
+
+  <!-- Fullscreen Slide-Up Overlay -->
+  <div class="notes-overlay" id="notesOverlay">
+    <div class="notes-header">
+      <h2>ARCHIVED NOTES</h2>
+      <button class="close-notes-btn" onclick="closePreviousNotes()">CLOSE X</button>
+    </div>
+    <div class="notes-content-full" id="notesContent">
+      <!-- Notes loaded via JS -->
+    </div>
+  </div>
+
+  <iframe id="reader" class="reader"></iframe>
+
+  <footer class="footer">
+    <div class="footer-links-row">
+      <a href="https://wordstar.nexus/home">Home</a>
+      <a href="https://wordstar.nexus/displaywriter">Articles</a>
+      <a href="https://inkrealm.info/">Ink Realm</a>
+      <a href="https://wordstar.nexus/contact">Contact</a>
+      <a href="https://wordstar.nexus/bakedalaska">Baked Alaska</a>
+      <a href="https://wordstar.nexus/nc17">NC17</a>
+      <a href="https://wordstar.nexus/netherlands">Netherlands</a>
+    </div>
+    <p style="margin-top:20px; font-size:12px; color:#444;">© 2025 DREAMWEAVER</p>
+  </footer>
+
+  <script>
+    // --- 1. DATA: THE IMAGE LIST ---
+    const imageUrls = [
+      'https://github.com/ghostm68/pantheon/raw/main/VAPORGRAM176lotta48724ever64233.jpg',
+      'https://github.com/ghostm68/pantheon/raw/main/Kristina.wordstar.gif',
+      'https://github.com/ghostm68/pantheon/raw/main/H.wordstardream.gif',
+      'https://github.com/ghostm68/pantheon/raw/main/dgagz.gif',
+      'https://github.com/ghostm68/pantheon/raw/main/juliamecey5beee1f88167a9e.gif',
+      'https://github.com/ghostm68/pantheon/raw/main/sierra1744829382462.gif',
+      'https://github.com/ghostm68/pantheon/raw/main/membershipkcardtexas.jpg',
+      'https://github.com/ghostm68/pantheon/raw/main/indiaeisley.gif',
+      'https://github.com/ghostm68/pantheon/raw/main/rachelchaleff22625.jpg',
+      'https://github.com/ghostm68/pantheon/raw/main/liblot20251204_141923127.jpg',
+      'https://github.com/ghostm68/pantheon/raw/main/zelda.gif',
+      'https://github.com/ghostm68/pantheon/raw/main/laracosima.wordstar.gif',  
+      'https://github.com/ghostm68/pantheon/raw/main/wagners.wordstar.jpg',
+      'https://github.com/ghostm68/pantheon/raw/main/laurasophie.h.gif',  
+      'https://github.com/ghostm68/pantheon/raw/main/myrnaloy.wordstar.gif',
+      'https://github.com/ghostm68/pantheon/raw/main/barbarastanwyck.0045723a2d04a.gif',  
+      'https://github.com/ghostm68/pantheon/raw/main/bf.theroadtowellville.gif',
+      'https://github.com/ghostm68/pantheon/raw/main/deepelemblues.twoskinnygirls.gif',
+      'https://github.com/ghostm68/pantheon/raw/main/VAPORGRAM.wildfiremap1736434961088.gif',
+      'https://github.com/ghostm68/pantheon/raw/main/Detroit.jpeg',
+      'https://raw.githubusercontent.com/ghostm68/99/main/5379e792-a434-4666-8e51-bb8e41de678b_inky_gif.gif',
+      'https://github.com/ghostm68/pantheon/raw/main/robyn.jpeg',
+      'https://github.com/ghostm68/pantheon/raw/main/gg.gif',
+      'https://github.com/ghostm68/pantheon/raw/main/woody.jpeg',
+      'https://github.com/ghostm68/pantheon/raw/main/demi.jpeg',  
+      'https://github.com/ghostm68/pantheon/raw/main/lotta.jpeg',
+      'https://github.com/ghostm68/pantheon/raw/main/inka.jpeg',
+      'https://github.com/ghostm68/pantheon/raw/main/selena.jpeg',
+      'https://github.com/ghostm68/pantheon/raw/main/paula.jpeg',
+      'https://github.com/ghostm68/pantheon/raw/main/Margaret.jpeg',
+      'https://github.com/ghostm68/pantheon/raw/main/misfits.jpg',
+      'https://github.com/ghostm68/pantheon/raw/main/haunting-of-hill-house_.jpeg',
+      'https://github.com/ghostm68/pantheon/raw/main/angelina.jpeg',
+      'https://github.com/ghostm68/pantheon/raw/main/jennifer.jpg',
+      'https://github.com/ghostm68/pantheon/raw/main/White-Goddess.jpg'
+    ];
+
+    const splashScreen = document.getElementById('splashScreen');
+    const splashImage = document.getElementById('splashImage');
+    const hero = document.getElementById('hero');
+    const menu = document.getElementById('menu');
+    const reader = document.getElementById('reader');
+    const scrollContainer = document.getElementById('scrollContainer');
+    const floatingContainer = document.getElementById('floating-container');
+    const notesOverlay = document.getElementById('notesOverlay');
+    const notesContent = document.getElementById('notesContent');
+
+    // --- 2. FLOATING BACKGROUND IMAGES LOGIC ---
+    function createFloatingImages() {
+      // Use logic to create randomness, limiting count to keep performance okay
+      const numImages = Math.min(20, imageUrls.length); 
+      
+      // Shuffle array to get random selection
+      const shuffled = [...imageUrls].sort(() => 0.5 - Math.random());
+
+      for (let i = 0; i < numImages; i++) {
+        const img = document.createElement('img');
+        img.src = shuffled[i];
+        img.className = 'floating-img';
+        
+        // Random initial position
+        const leftPos = Math.random() * 90;
+        const topPos = Math.random() * 90;
+        
+        img.style.left = `${leftPos}%`;
+        img.style.top = `${topPos}%`;
+        
+        // Random opacity max
+        const maxOp = (Math.random() * 0.15) + 0.05; 
+        
+        floatingContainer.appendChild(img);
+        
+        // Animate the image with dynamic motion
+        animateImage(img, maxOp);
+      }
+    }
+    
+    function animateImage(img, maxOp) {
+      const moveImage = () => {
+        // More dramatic movement
+        const newLeft = Math.random() * 90;
+        const newTop = Math.random() * 90;
+        const rotation = Math.random() * 360;
+        const scale = 0.5 + Math.random() * 1.0;
+        
+        img.style.transform = `translate(${newLeft - 50}%, ${newTop - 50}%) rotate(${rotation}deg) scale(${scale})`;
+        
+        // Random duration for more dynamic feel
+        const duration = 10 + Math.random() * 15; // 10-25 seconds
+        
+        img.style.transition = `transform ${duration}s ease-in-out, opacity ${duration/2}s ease`;
+        img.style.opacity = maxOp;
+
+        // Occasionally fade out completely
+        if(Math.random() > 0.7) {
+             img.style.opacity = 0;
+        }
+        
+        // Schedule next movement
+        setTimeout(moveImage, duration * 1000);
+      };
+      // Start
+      moveImage();
+    }
+
+    // --- 3. SPLASH SCREEN SEQUENCE ---
+    function runSplashScreen() {
+      let idx = 0;
+      // Rapid fire image swap to look like data loading
+      const interval = setInterval(() => {
+        splashImage.src = imageUrls[Math.floor(Math.random() * imageUrls.length)];
+      }, 150); // Change image every 150ms
+
+      // End splash screen after 3.5 seconds
+      setTimeout(() => {
+        clearInterval(interval);
+        splashScreen.classList.add('fade-out');
+        hero.classList.add('visible'); // Trigger dramatic title entrance
+        
+        // Initialize floating background AFTER splash clears to save resources
+        setTimeout(createFloatingImages, 500);
+      }, 3500);
+    }
+
+    // --- 4. GALLERY LOGIC ---
+    function initGallery() {
+      imageUrls.forEach((imgSrc) => {
+        const img = document.createElement('img');
+        img.className = 'scroll-img';
+        img.src = imgSrc;
+        img.loading = 'lazy';
+        img.onclick = () => openImageModal(imgSrc);
+        scrollContainer.appendChild(img);
+      });
+    }
+
+    function openImageModal(src) {
+      const modal = document.createElement('div');
+      modal.style.position = 'fixed'; top:0; left:0; width:'100%'; height:'100%';
+      modal.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:20000; display:flex; justify-content:center; align-items:center; cursor:pointer;";
+      
+      const img = document.createElement('img');
+      img.src = src;
+      img.style.cssText = "max-width:90%; max-height:90%; border:2px solid red; box-shadow:0 0 50px red;";
+      
+      modal.appendChild(img);
+      modal.onclick = () => document.body.removeChild(modal);
+      document.body.appendChild(modal);
+    }
+
+    // --- 5. FULL SCREEN NOTES LOGIC ---
+    function openPreviousNotes() {
+      notesOverlay.classList.add('open');
+      if (!notesContent.dataset.loaded) {
+        loadNotesContent();
+      }
+    }
+
+    function closePreviousNotes() {
+      notesOverlay.classList.remove('open');
+    }
+
+    async function loadNotesContent() {
+      notesContent.textContent = "INITIALIZING CONNECTION...";
+      try {
+        const response = await fetch('https://wordstar.nexus/dreamweaver.txt');
+        if (!response.ok) throw new Error("Connection failed");
+        const text = await response.text();
+        notesContent.textContent = text;
+        notesContent.dataset.loaded = true;
+      } catch (e) {
+        notesContent.textContent = "ERROR: COULD NOT RETRIEVE ARCHIVES.\n\n" + e.message;
+      }
+    }
+
+    // --- 6. MENU & UTILS ---
+    function toggleMenu() {
+      menu.classList.toggle('open');
+    }
+    
+    function loadPage(url) {
+      reader.src = url;
+      reader.classList.add('active');
+      toggleMenu();
+    }
+
+    // --- INIT ---
+    document.addEventListener('DOMContentLoaded', () => {
+      // Start splash
+      runSplashScreen();
+      // Setup Gallery
+      initGallery();
+      // Auto-save logic for the main textarea
+      const saved = localStorage.getItem('dreamweaver-notes');
+      if (saved) document.getElementById('notesTextarea').value = saved;
+      document.getElementById('notesTextarea').addEventListener('input', (e) => {
+        localStorage.setItem('dreamweaver-notes', e.target.value);
+      });
+    });
+
+  </script>
+</body>
+</html>
