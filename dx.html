@@ -17,14 +17,33 @@
       letter-spacing: 1px;
     }
 
-    /* ---------- CUSTOM CURSOR CANVAS ---------- */
-    #cursorCanvas {
+    /* ---------- CUSTOM RED TRIANGLE CURSOR ---------- */
+    #custom-cursor {
       position: fixed;
       top: 0; left: 0;
-      width: 100%; height: 100%;
+      width: 20px;
+      height: 20px;
+      background-color: #ff0000;
+      /* Makes a triangle shape */
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
       pointer-events: none; /* Let clicks pass through */
-      z-index: 999999; /* Top of everything */
-      mix-blend-mode: exclusion; /* Cool effect over images */
+      z-index: 999999;
+      transform: translate(-50%, -50%); /* Center on mouse */
+      transition: width 0.2s ease, height 0.2s ease, transform 0.2s ease;
+      will-change: transform, top, left;
+    }
+
+    /* Expand effect on hover */
+    #custom-cursor.hover-active {
+      width: 40px;
+      height: 40px;
+      transform: translate(-50%, -50%) rotate(180deg); /* Flip upside down on hover */
+    }
+
+    /* Restore default cursor on mobile devices */
+    @media (hover: none) and (pointer: coarse) {
+      #custom-cursor { display: none; }
+      * { cursor: auto !important; }
     }
 
     /* ---------- SUBTLE STATIC/SCANLINE OVERLAY ---------- */
@@ -218,7 +237,7 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
       border-radius: 4px;
       white-space: pre-wrap;
-      cursor: text; /* Restore text cursor inside inputs */
+      cursor: none; /* Hide default, use custom */
     }
     
     .notes-textarea:focus {
@@ -242,7 +261,7 @@
       display: flex;
       flex-direction: column;
       padding: 40px;
-      cursor: auto;
+      cursor: none;
     }
     
     .notes-overlay.open {
@@ -271,7 +290,7 @@
       font-family: 'Voodoo', sans-serif;
       font-size: 1.5rem;
       padding: 10px 20px;
-      cursor: pointer;
+      cursor: none;
       transition: all 0.3s;
     }
     .close-notes-btn:hover { background: #ff0000; color: #000; }
@@ -302,7 +321,7 @@
       font-size: 1.5rem;
       padding: 20px 60px;
       border: 2px solid #000;
-      cursor: pointer; /* This will be overridden by JS cursor but hints logic */
+      cursor: none;
       transition: 0.3s;
       letter-spacing: 3px;
     }
@@ -344,7 +363,7 @@
       margin: 0 10px;
       filter: grayscale(100%);
       transition: 0.3s;
-      cursor: none; /* Custom cursor handles this */
+      cursor: none; 
       border: 1px solid #ccc;
       vertical-align: middle;
     }
@@ -360,7 +379,7 @@
     /* ---------- MENU ---------- */
     .menu-btn {
       position:fixed; top:20px; right:20px; z-index:1001;
-      cursor:pointer; font-size:1.2rem; padding:10px 18px;
+      cursor:none; font-size:1.2rem; padding:10px 18px;
       background:#000; color:#fff; border: 1px solid #fff;
       font-family: 'Voodoo', sans-serif;
     }
@@ -372,17 +391,17 @@
       transform:translateY(-100%); transition:transform 0.6s cubic-bezier(.77,0,.175,1);
       z-index:1000; display:flex; flex-direction:column;
       justify-content:center; align-items:center;
-      cursor: auto;
+      cursor: none;
     }
     .menu.open { transform:translateY(0); }
-    .menu a { font-size:3rem; margin:1rem; text-decoration:none; color:#fff; transition:0.3s; }
+    .menu a { font-size:3rem; margin:1rem; text-decoration:none; color:#fff; transition:0.3s; cursor: none;}
     .menu a:hover { color:#ff0000; letter-spacing:5px; }
 
     /* ---------- FOOTER ---------- */
     .footer {
       background: #000; padding: 40px; text-align: center; color: #fff;
     }
-    .footer a { color: #888; text-decoration: none; margin: 0 15px; transition: 0.3s; }
+    .footer a { color: #888; text-decoration: none; margin: 0 15px; transition: 0.3s; cursor: none;}
     .footer a:hover { color: #ff0000; }
 
     /* ---------- ANIMATIONS ---------- */
@@ -432,8 +451,8 @@
 </head>
 <body>
 
-  <!-- FLUID RED CURSOR CANVAS -->
-  <canvas id="cursorCanvas"></canvas>
+  <!-- CUSTOM CURSOR ELEMENT -->
+  <div id="custom-cursor"></div>
 
   <!-- Background Layer for Floating Images -->
   <div id="floating-container"></div>
@@ -574,94 +593,25 @@ in early December.
     const notesOverlay = document.getElementById('notesOverlay');
     const notesContent = document.getElementById('notesContent');
 
-    // --- 0. FLUID CURSOR LOGIC ---
+    // --- 0. CUSTOM CURSOR LOGIC ---
     function initCursor() {
-      const canvas = document.getElementById('cursorCanvas');
-      const ctx = canvas.getContext('2d');
-      let width = window.innerWidth;
-      let height = window.innerHeight;
-      let mouse = { x: width / 2, y: height / 2 };
-      let points = [];
+      const cursor = document.getElementById('custom-cursor');
       
-      // Resize handling
-      window.addEventListener('resize', () => {
-        width = window.innerWidth;
-        height = window.innerHeight;
-        canvas.width = width;
-        canvas.height = height;
-      });
-      canvas.width = width;
-      canvas.height = height;
-
-      // Mouse tracking
-      window.addEventListener('mousemove', (e) => {
-        mouse.x = e.clientX;
-        mouse.y = e.clientY;
+      // Update position
+      document.addEventListener('mousemove', (e) => {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
       });
 
-      // Point class
-      class Point {
-        constructor(x, y) {
-          this.x = x;
-          this.y = y;
-          this.age = 0;
-        }
-      }
-
-      const addPoint = (x, y) => {
-        points.push(new Point(x, y));
-      };
-
-      const render = () => {
-        ctx.clearRect(0, 0, width, height);
-        
-        // Add current mouse position
-        addPoint(mouse.x, mouse.y);
-
-        // Draw the path
-        if (points.length > 3) {
-          ctx.beginPath();
-          ctx.lineCap = 'round';
-          ctx.lineJoin = 'round';
-          
-          // Move to first point
-          ctx.moveTo(points[0].x, points[0].y);
-          
-          for (let i = 1; i < points.length - 2; i++) {
-            const xc = (points[i].x + points[i + 1].x) / 2;
-            const yc = (points[i].y + points[i + 1].y) / 2;
-            ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
-            
-            // Varying line width and opacity based on age
-            const ageRatio = i / points.length;
-            ctx.lineWidth = 4 + (ageRatio * 6); // Thicker at the head (mouse)
-          }
-
-          // Curve through the last two points
-          ctx.quadraticCurveTo(
-            points[points.length - 2].x, 
-            points[points.length - 2].y, 
-            points[points.length - 1].x, 
-            points[points.length - 1].y
-          );
-          
-          ctx.strokeStyle = '#ff0000'; // RED STROKE
-          ctx.stroke();
-        }
-
-        // Age points and remove old ones
-        points.forEach(p => p.age++);
-        // Keep trail short (~25 frames)
-        if (points.length > 25) {
-          points.shift();
-        }
-
-        requestAnimationFrame(render);
-      };
-
-      render();
+      // Add hover effect to interactive elements
+      // Select anchors, buttons, the menu button, scrolling images, and textarea
+      const interactives = document.querySelectorAll('a, button, .menu-btn, .scroll-img, textarea, input');
+      
+      interactives.forEach(el => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('hover-active'));
+        el.addEventListener('mouseleave', () => cursor.classList.remove('hover-active'));
+      });
     }
-
 
     // --- 2. FLOATING BACKGROUND IMAGES LOGIC ---
     function createFloatingImages() {
@@ -721,6 +671,8 @@ in early December.
     function initGallery() {
       createImageSet();
       createImageSet();
+      // Re-initialize cursor listeners for dynamic content
+      setTimeout(initCursor, 500);
     }
     
     function createImageSet() {
@@ -785,7 +737,6 @@ in early December.
 
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
-      initCursor(); // Start the custom red cursor
       runSplashScreen();
       initGallery();
       const saved = localStorage.getItem('dreamweaver-notes');
@@ -793,6 +744,9 @@ in early December.
       document.getElementById('notesTextarea').addEventListener('input', (e) => {
         localStorage.setItem('dreamweaver-notes', e.target.value);
       });
+      
+      // Initialize cursor immediately
+      initCursor();
     });
 
   </script>
