@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ITS OWN OWNER // READER</title>
   		    <meta name='robots' content='index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1' />
-	   <title data-rh="true">www.wordstar.nexus - literature, film, art and more...</title>
+	   <title data-rh="true">www.wordstar.nexus/ioo - literature, alaska, ai...</title>
     <meta data-rh="true" name="description" content="A writer's website, featuring an unedited manuscript and original art as well as videos. Video and audio downloads. The writer often places notes and even new stories on the homepage. Wordstar includes a rotating typewriter. A unique place for creative souls. A Portal to escape the ordinary. Eclectic and frequently updated."/>
-    <meta data-rh="true" property="og:url" content="https://www.wordstar.nexus"/>
+    <meta data-rh="true" property="og:url" content="https://www.wordstar.nexus/ioo"/>
     <meta data-rh="true" property="og:type" content="website"/>
     <meta data-rh="true" property="og:title" content="WORDSTAR - writing, music, and the visual arts"/>
     <meta http-equiv="onion-location" content="http://yd3r4tdjgg7you3tuq7uyy5hl7tbwzowmd4pcgf6gpgk24hyawcvsjqd.onion" />
@@ -850,7 +850,10 @@ function updateModelSelectWithResults() {
       }, 200);
     }
 
-    // === LOGIC ===
+   // === NOVEL DATA (your existing data remains here) ===
+const NOVEL_DATA = { /* your novel data */ };
+
+// === LOGIC ===
 const puterModelSelect = document.getElementById('puter-model-select');
 const AVAILABLE_PUTER_MODELS = [
   // === TIER 1: Highly Likely to Work ===
@@ -907,8 +910,8 @@ const AVAILABLE_PUTER_MODELS = [
 // Model testing utility
 const MODEL_TEST_LOG = [];
 let isTestingModels = false;
-
 let currentChapterIndex = 0;
+
 const contentDisplay = document.getElementById('content-display');
 const chapterList = document.getElementById('chapter-list');
 const chapterTitleDisplay = document.getElementById('chapter-title-display');
@@ -920,41 +923,6 @@ const progressBar = document.getElementById('reading-progress');
 const askAiBtn = document.getElementById('askAiBtn');
 const aiInput = document.getElementById('aiInput');
 const aiResponse = document.getElementById('aiResponse');
-
-function init() {
-  // 0. Populate AI Models with tiers
-  populateModelSelect();
-  
-  // 1. Set word count
-  wordCountDisplay.textContent = NOVEL_DATA.wordCount.toLocaleString() + ' WORDS';
-
-  // 2. Render TOC
-  NOVEL_DATA.chapters.forEach((chap, index) => {
-    const div = document.createElement('div');
-    div.className = `chapter-item cursor-pointer p-4 border-b border-[#222] text-xs font-mono uppercase tracking-wide ${index === 0 ? 'active' : ''}`;
-    div.innerHTML = `<span class="text-red-600 mr-2">${chap.number}</span> ${chap.title}`;
-    div.addEventListener('click', () => loadChapter(index));
-    chapterList.appendChild(div);
-  });
-
-  // 3. Load first chapter
-  loadChapter(0);
-
-  // 4. Setup AI event listener
-  setupAI();
-  
-  // 5. Add model testing button if it doesn't exist
-  addModelTestButton();
-  
-  // 6. Setup navigation event listeners
-  prevBtn.addEventListener('click', () => {
-    if (currentChapterIndex > 0) loadChapter(currentChapterIndex - 1);
-  });
-
-  nextBtn.addEventListener('click', () => {
-    if (currentChapterIndex < NOVEL_DATA.chapters.length - 1) loadChapter(currentChapterIndex + 1);
-  });
-}
 
 function populateModelSelect() {
   // Clear existing options
@@ -1026,8 +994,8 @@ async function testAllModels() {
   // Test models in batches
   const batches = [
     AVAILABLE_PUTER_MODELS.filter(m => m.tier === 1),
-    AVAILABLE_PUTER_MODELS.filter(m => m.tier === 2).slice(0, 3), // Test first 3 of tier 2
-    AVAILABLE_PUTER_MODELS.filter(m => m.tier === 3).slice(0, 2), // Test first 2 of tier 3
+    AVAILABLE_PUTER_MODELS.filter(m => m.tier === 2).slice(0, 3),
+    AVAILABLE_PUTER_MODELS.filter(m => m.tier === 3).slice(0, 2),
   ];
   
   for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
@@ -1041,7 +1009,7 @@ async function testAllModels() {
         
         // Quick test with timeout
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
         
         const response = await puter.ai.chat(testPrompt, {
           model: model.value,
@@ -1096,14 +1064,14 @@ async function testAllModels() {
     aiResponse.textContent += `• ${m.model}\n`;
   });
   
-  // Store results in localStorage for future reference
+  // Store results
   localStorage.setItem('puterModelTestResults', JSON.stringify({
     date: new Date().toISOString(),
     results: MODEL_TEST_LOG,
     workingModels: workingModels.map(m => m.value)
   }));
   
-  // Update model select with working models first
+  // Update model select
   updateModelSelectWithResults();
   
   testBtn.disabled = false;
@@ -1118,10 +1086,9 @@ function updateModelSelectWithResults() {
   const results = JSON.parse(storedResults);
   const workingModels = results.workingModels || [];
   
-  // Reorder options to show working models first
+  // Reorder options
   const modelOptions = Array.from(puterModelSelect.options);
   
-  // Sort: working models first, then by tier
   modelOptions.sort((a, b) => {
     const aIsWorking = workingModels.includes(a.value);
     const bIsWorking = workingModels.includes(b.value);
@@ -1135,7 +1102,7 @@ function updateModelSelectWithResults() {
     return (aModel?.tier || 99) - (bModel?.tier || 99);
   });
   
-  // Clear and re-add sorted options
+  // Clear and re-add
   puterModelSelect.innerHTML = '';
   modelOptions.forEach(opt => {
     const model = AVAILABLE_PUTER_MODELS.find(m => m.value === opt.value);
@@ -1163,11 +1130,10 @@ function loadChapter(index) {
   chapterNumDisplay.textContent = `CHAPTER ${chapter.number}`;
   chapterTitleDisplay.textContent = chapter.title;
 
-  // Update Content (with fade effect)
+  // Update Content
   contentDisplay.style.opacity = '0';
   
   setTimeout(() => {
-    // Formatting: Replace \n\n with paragraphs
     const formattedContent = chapter.content
       .split(/\n\n+/)
       .map(p => `<p>${p.trim()}</p>`)
@@ -1187,6 +1153,26 @@ function loadChapter(index) {
   }, 200);
 }
 
+function logModelUsage(modelValue, modelLabel, success, error = '') {
+  const usageLog = JSON.parse(localStorage.getItem('puterModelUsage') || '[]');
+  
+  usageLog.push({
+    timestamp: new Date().toISOString(),
+    model: modelValue,
+    label: modelLabel,
+    success: success,
+    error: error,
+    chapter: currentChapterIndex + 1
+  });
+  
+  // Keep only last 100 entries
+  if (usageLog.length > 100) {
+    usageLog.splice(0, usageLog.length - 100);
+  }
+  
+  localStorage.setItem('puterModelUsage', JSON.stringify(usageLog));
+}
+
 function setupAI() {
   askAiBtn.addEventListener('click', async () => {
     const query = aiInput.value.trim();
@@ -1198,7 +1184,7 @@ function setupAI() {
       return;
     }
     
-    // Check if this model was previously tested
+    // Check if model was previously tested
     const storedResults = localStorage.getItem('puterModelTestResults');
     let modelWarning = '';
     
@@ -1207,7 +1193,7 @@ function setupAI() {
       const modelResult = results.results?.find(r => r.value === selectedModel);
       
       if (modelResult && modelResult.status !== 'WORKING') {
-        modelWarning = `\n\n⚠ MODEL STATUS: ${modelResult.status} - This model failed previous test`;
+        modelWarning = `\n\n⚠ MODEL STATUS: ${modelResult.status}`;
       }
     }
     
@@ -1244,19 +1230,13 @@ RESPONSE GUIDELINES:
         temperature: 0.8
       });
       
-      // Add model info to response
       aiResponse.textContent = `[${selectedModelLabel}]\n\n${response}`;
-      
-      // Log successful query
       logModelUsage(selectedModel, selectedModelLabel, true);
       
     } catch (error) {
       console.error('AI Error:', error);
-      
-      // Log failed query
       logModelUsage(selectedModel, selectedModelLabel, false, error.message);
       
-      // Try fallback model if current fails
       if (!selectedModel.includes('gpt-3.5-turbo')) {
         aiResponse.textContent = `ERROR: ${error.message}\n\nAttempting fallback to GPT-3.5...`;
         
@@ -1290,27 +1270,42 @@ RESPONSE GUIDELINES:
   });
 }
 
-function logModelUsage(modelValue, modelLabel, success, error = '') {
-  const usageLog = JSON.parse(localStorage.getItem('puterModelUsage') || '[]');
+function init() {
+  // 0. Populate AI Models with tiers
+  populateModelSelect();
   
-  usageLog.push({
-    timestamp: new Date().toISOString(),
-    model: modelValue,
-    label: modelLabel,
-    success: success,
-    error: error,
-    chapter: currentChapterIndex + 1
+  // 1. Set word count
+  wordCountDisplay.textContent = NOVEL_DATA.wordCount.toLocaleString() + ' WORDS';
+
+  // 2. Render TOC
+  NOVEL_DATA.chapters.forEach((chap, index) => {
+    const div = document.createElement('div');
+    div.className = `chapter-item cursor-pointer p-4 border-b border-[#222] text-xs font-mono uppercase tracking-wide ${index === 0 ? 'active' : ''}`;
+    div.innerHTML = `<span class="text-red-600 mr-2">${chap.number}</span> ${chap.title}`;
+    div.addEventListener('click', () => loadChapter(index));
+    chapterList.appendChild(div);
   });
+
+  // 3. Load first chapter
+  loadChapter(0);
+
+  // 4. Setup AI
+  setupAI();
   
-  // Keep only last 100 entries
-  if (usageLog.length > 100) {
-    usageLog.splice(0, usageLog.length - 100);
-  }
+  // 5. Add model testing button
+  addModelTestButton();
   
-  localStorage.setItem('puterModelUsage', JSON.stringify(usageLog));
+  // 6. Setup navigation
+  prevBtn.addEventListener('click', () => {
+    if (currentChapterIndex > 0) loadChapter(currentChapterIndex - 1);
+  });
+
+  nextBtn.addEventListener('click', () => {
+    if (currentChapterIndex < NOVEL_DATA.chapters.length - 1) loadChapter(currentChapterIndex + 1);
+  });
 }
 
-// Initialize the app when DOM is loaded
+// Initialize the app
 document.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
