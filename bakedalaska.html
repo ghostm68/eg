@@ -1066,15 +1066,12 @@
     <!-- AI Analysis Panel -->
 <div id="novel-ai-panel">
     <details>
-        <summary>▶ FULL NOVEL READER</summary>
+        <summary>▶ AI LITERARY ANALYSIS</summary>
         <div class="ai-controls">
-            <iframe 
-                id="novel-reader-iframe"
-                src="https://wordstar.nexus/ioo" 
-                style="width: 100%; height: 600px; border: 1px solid #333; background: #000; display: block;" 
-                title="Its Own Owner Reader"
-                frameborder="0">
-            </iframe>
+            <select id="novel-model-select"></select>
+            <textarea id="novel-ai-input" placeholder="Query current chapter or entire novel..."></textarea>
+            <button id="novel-ai-execute">EXECUTE ANALYSIS</button>
+            <div id="novel-ai-response"></div>
         </div>
     </details>
 </div>
@@ -3653,161 +3650,144 @@ window.addEventListener('DOMContentLoaded', function() {
     });
 })();
 
-// === AI SYSTEM ===
+// === AI SYSTEM (UPDATED FIX) ===
 const NOVEL_AI_MODELS = [
-    // TIER 0: Recommended for Literary Analysis
     { value: 'deepseek-chat', label: 'DEEPSEEK CHAT V3 ⭐', tier: 0 },
-    { value: 'openrouter/anthropic/claude-sonnet-4-20250514', label: 'CLAUDE SONNET 4 👑', tier: 0 },
-    { value: 'deepseek-reasoner', label: 'DEEPSEEK R1 (REASONING) 🧠', tier: 0 },
-    
-    // TIER 1: GPT-5 Series (Latest)
-    { value: 'gpt-5.2-pro', label: 'GPT-5.2 PRO (MAX QUALITY) 💎', tier: 1 },
-    { value: 'gpt-5.2', label: 'GPT-5.2 (DEEP REASONING)', tier: 1 },
-    { value: 'gpt-5.2-chat', label: 'GPT-5.2 CHAT (FAST)', tier: 1 },
-    
-    // TIER 2: Reliable & Free
+    { value: 'gpt-5.2-pro', label: 'GPT-5.2 PRO 💎', tier: 1 },
     { value: 'gpt-3.5-turbo', label: 'GPT-3.5 TURBO', tier: 2 },
-    { value: 'google/gemma-2-9b-it:free', label: 'GEMMA 2 9B (FREE)', tier: 2 },
-    { value: 'google/gemma-3-12b-it:free', label: 'GEMMA 3 12B (FREE)', tier: 2 },
-    
-    // TIER 3: Premium OpenRouter
-    { value: 'openrouter/openai/gpt-4o', label: 'GPT-4o', tier: 3 },
-    { value: 'openrouter/openai/chatgpt-4o-latest', label: 'CHATGPT-4o (LATEST)', tier: 3 },
-    { value: 'openrouter/openai/o1', label: 'OPENAI o1 (REASONING)', tier: 3 },
     { value: 'openrouter/anthropic/claude-3.5-sonnet', label: 'CLAUDE 3.5 SONNET', tier: 3 },
-    { value: 'openrouter/anthropic/claude-3-opus', label: 'CLAUDE 3 OPUS', tier: 3 },
-    { value: 'openrouter/google/gemini-pro-1.5', label: 'GEMINI 1.5 PRO', tier: 3 },
-    { value: 'openrouter/google/gemini-2.0-flash-exp:free', label: 'GEMINI 2.0 FLASH (FREE)', tier: 3 },
-    { value: 'openrouter/meta-llama/llama-3.3-70b-instruct', label: 'LLAMA 3.3 70B', tier: 3 },
-    { value: 'openrouter/meta-llama/llama-3.1-405b-instruct', label: 'LLAMA 3.1 405B', tier: 3 },
-    
-    // TIER 4: Experimental
-    { value: 'openrouter/xai/grok-2-1212', label: 'GROK 2 (LATEST)', tier: 4 },
-    { value: 'openrouter/mistralai/mistral-large-2411', label: 'MISTRAL LARGE (2024)', tier: 4 },
-    { value: 'openrouter/cohere/command-r-plus', label: 'COMMAND R+', tier: 4 },
     { value: 'liquid/lfm-40b', label: 'LIQUID LFM 40B 💧', tier: 4 },
-    { value: 'liquid/lfm-7b', label: 'LIQUID LFM 7B', tier: 4 },
-    
-    // TIER 5: Specialized
-    { value: 'openrouter/deepseek/deepseek-coder', label: 'DEEPSEEK CODER', tier: 5 },
-    { value: 'openrouter/qwen/qwen-2.5-72b-instruct', label: 'QWEN 2.5 72B', tier: 5 },
-    { value: 'openrouter/qwen/qwq-32b-preview', label: 'QWQ 32B (REASONING)', tier: 5 },
-    { value: 'openrouter/nvidia/llama-3.1-nemotron-70b-instruct', label: 'NEMOTRON 70B (NVIDIA)', tier: 5 },
 ];
+
 function populateNovelModelSelect() {
     const select = document.getElementById('novel-model-select');
-    select.innerHTML = '';
+    // Prevent duplicates if already populated
+    if (select.options.length > 0) return;
     
-    const tier0 = NOVEL_AI_MODELS.filter(m => m.tier === 0);
-    const tier1 = NOVEL_AI_MODELS.filter(m => m.tier === 1);
-    const tier2 = NOVEL_AI_MODELS.filter(m => m.tier === 2);
-    const tier3 = NOVEL_AI_MODELS.filter(m => m.tier === 3);
-    const tier4 = NOVEL_AI_MODELS.filter(m => m.tier === 4);
-    const tier5 = NOVEL_AI_MODELS.filter(m => m.tier === 5);
-    
-    const addGroup = (models, tierName, desc) => {
-        if (models.length > 0) {
-            const optgroup = document.createElement('optgroup');
-            optgroup.label = `▲ ${tierName}: ${desc}`;
-            models.forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m.value;
-                opt.textContent = m.label;
-                optgroup.appendChild(opt);
-            });
-            select.appendChild(optgroup);
-        }
-    };
-    
-    addGroup(tier0, 'RECOMMENDED', 'Best for Literary Work');
-    addGroup(tier1, 'GPT-5 SERIES', 'Latest OpenAI 2025');
-    addGroup(tier2, 'RELIABLE', 'Tested & Free');
-    addGroup(tier3, 'PREMIUM', 'OpenRouter Models');
-    addGroup(tier4, 'EXPERIMENTAL', 'Advanced & Novel');
-    addGroup(tier5, 'SPECIALIZED', 'Domain Specific');
-    
-    select.value = 'deepseek-chat'; // Changed default to DeepSeek
+    NOVEL_AI_MODELS.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.value;
+        opt.textContent = m.label;
+        select.appendChild(opt);
+    });
+    // Ensure a default is selected to prevent empty value errors
+    select.value = 'deepseek-chat'; 
 }
+
+// Fixed Context Function - Cannot Crash
 function getCurrentChapterContext() {
-    const slideout = document.getElementById('novel-slideout'); // Get the element
-    const scrollTop = slideout.scrollTop;
-    const chapters = document.querySelectorAll('.novel-chapter');
-    
-    for (let i = 0; i < chapters.length; i++) {
-        const chapter = chapters[i];
-        const rect = chapter.getBoundingClientRect();
-        if (rect.top >= 0 && rect.top < window.innerHeight / 2) {
-            const title = chapter.querySelector('.chapter-title').textContent;
-            const content = chapter.querySelector('.chapter-content').textContent;
-            const number = chapter.querySelector('.chapter-number').textContent;
-            return { number, title, content: content.substring(0, 2000) };
+    try {
+        // Explicitly get the slideout here to avoid scope issues
+        const slideout = document.getElementById('novel-slideout');
+        if (!slideout) return null;
+
+        const chapters = document.querySelectorAll('.novel-chapter');
+        if (!chapters || chapters.length === 0) return null;
+        
+        for (let i = 0; i < chapters.length; i++) {
+            const chapter = chapters[i];
+            const rect = chapter.getBoundingClientRect();
+            
+            // Check if chapter is roughly in the top half of the screen
+            if (rect.top >= -100 && rect.top < window.innerHeight / 1.5) {
+                // Safely get elements
+                const titleEl = chapter.querySelector('.chapter-title');
+                const contentEl = chapter.querySelector('.chapter-content');
+                const numEl = chapter.querySelector('.chapter-number');
+
+                if (titleEl && contentEl) {
+                    return {
+                        number: numEl ? numEl.textContent : "Unknown",
+                        title: titleEl.getAttribute('data-final-title') || titleEl.textContent, // Use data attribute for unscrambled text
+                        content: contentEl.textContent.substring(0, 1500) // Limit text to prevent lag
+                    };
+                }
+            }
         }
+    } catch (e) {
+        console.warn("Context gathering failed, using generic prompt", e);
+        return null;
     }
-    
     return null;
 }
 
 async function executeNovelAI() {
     const btn = document.getElementById('novel-ai-execute');
     const output = document.getElementById('novel-ai-response');
-    const input = document.getElementById('novel-ai-input').value.trim();
-    const model = document.getElementById('novel-model-select').value;
-    const modelLabel = document.getElementById('novel-model-select').selectedOptions[0].text;
+    const inputField = document.getElementById('novel-ai-input');
+    const input = inputField.value.trim();
     
+    // Safety check for model selection
+    let model = document.getElementById('novel-model-select').value;
+    if (!model) model = 'deepseek-chat';
+
     if (!input) {
-        output.textContent = 'ERROR: NO QUERY PROVIDED';
+        output.textContent = 'ERROR: PLEASE ENTER A QUERY';
         return;
     }
     
+    // UI Loading State
     btn.disabled = true;
-    btn.textContent = 'ANALYZING...';
+    btn.textContent = 'TRANSMITTING...';
     output.textContent = 'ESTABLISHING CONNECTION...';
     output.classList.add('novel-ai-loading');
     
-    const context = getCurrentChapterContext();
-    const prompt = context 
-        ? `NOVEL: "Its Own Owner" by Inky
-GENRE: Cyberpunk / Arctic Thriller / Body Horror
-CURRENT CHAPTER: ${context.number} - "${context.title}"
+    // Safety Timeout: Re-enable button if AI hangs for 15 seconds
+    const safetyTimeout = setTimeout(() => {
+        if (btn.disabled) {
+            btn.disabled = false;
+            btn.textContent = 'EXECUTE ANALYSIS';
+            output.classList.remove('novel-ai-loading');
+            if (output.textContent === 'ESTABLISHING CONNECTION...') {
+                output.textContent = 'TIMEOUT: NETWORK LAG. TRY AGAIN.';
+            }
+        }
+    }, 15000);
 
-EXCERPT:
-"${context.content}..."
-
-QUERY: ${input}
-
-ANALYSIS GUIDELINES:
-- Reference specific passages from the chapter
-- Connect to broader themes (technology/nature, control/freedom, corporate power)
-- Consider Yupik cultural elements and Arctic setting
-- Analyze character dynamics (Inky/Shadow, Shy, Orion, Vespera)
-- Keep response under 250 words
-- Use cyberpunk/terminal aesthetic in language`
-        : `NOVEL: "Its Own Owner" by Inky (${novelData.wordCount} words, 29 chapters)
-GENRE: Cyberpunk / Arctic Thriller / Body Horror
-
-QUERY: ${input}
-
-Provide a high-level analysis of the novel's themes, structure, or characters. Keep response under 250 words.`;
-    
     try {
+        // Get context SAFELY
+        const context = getCurrentChapterContext();
+        
+        const prompt = context 
+            ? `CONTEXT: Novel "Its Own Owner" by Inky. 
+               CURRENT CHAPTER: ${context.number} - ${context.title}
+               TEXT: "${context.content}..."
+               
+               USER QUERY: ${input}
+               
+               INSTRUCTION: Answer as a literary analyst / cyberpunk terminal. Short, cryptic but helpful response.`
+            : `CONTEXT: Novel "Its Own Owner". General analysis requested.
+               USER QUERY: ${input}
+               INSTRUCTION: Answer as a literary analyst.`;
+
+        // Execute API Call
         const response = await puter.ai.chat(prompt, {
             model: model,
-            max_tokens: 400,
-            temperature: 0.8
+            max_tokens: 300,
+            temperature: 0.7
         });
         
-        output.textContent = `[${modelLabel}]\n\n${response}`;
-        output.classList.remove('novel-ai-loading');
+        output.textContent = response;
+
     } catch (error) {
-        output.textContent = `CONNECTION FAILURE: ${error.message}`;
-        output.classList.remove('novel-ai-loading');
+        console.error("AI Error:", error);
+        output.textContent = `CONNECTION_FAILURE: ${error.message || "Unknown Error"}`;
     } finally {
+        // Cleanup
+        clearTimeout(safetyTimeout);
         btn.disabled = false;
         btn.textContent = 'EXECUTE ANALYSIS';
+        output.classList.remove('novel-ai-loading');
     }
 }
 
-// AI event listeners
+// Initialize AI when slideout opens
+document.getElementById('novel-trigger').addEventListener('click', () => {
+    // Ensure dropdown is populated when reader opens
+    populateNovelModelSelect();
+});
+
+// Event Listeners
 document.getElementById('novel-ai-execute').addEventListener('click', executeNovelAI);
 document.getElementById('novel-ai-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && e.ctrlKey) {
