@@ -147,6 +147,84 @@
       outline: none;
       border-color: var(--accent-color);
     }
+	  /* Add to your CSS */
+.ai-loading {
+  position: relative;
+  color: transparent;
+}
+
+.ai-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ff3333;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+/* Enhanced styling for model select */
+#puter-model-select optgroup {
+  font-size: 10px;
+  font-weight: bold;
+  color: #666;
+  padding: 4px;
+}
+
+#puter-model-select optgroup[label*="RELIABLE"] {
+  color: #10b981;
+  border-top: 1px solid #10b981;
+}
+
+#puter-model-select optgroup[label*="PREMIUM"] {
+  color: #3b82f6;
+  border-top: 1px solid #3b82f6;
+}
+
+#puter-model-select optgroup[label*="EXPERIMENTAL"] {
+  color: #f59e0b;
+  border-top: 1px solid #f59e0b;
+}
+
+#puter-model-select optgroup[label*="SPECIALIZED"] {
+  color: #8b5cf6;
+  border-top: 1px solid #8b5cf6;
+}
+
+#puter-model-select option {
+  font-size: 11px;
+  padding: 2px 4px;
+}
+
+/* Loading animation */
+.loading-pulse {
+  position: relative;
+  background: linear-gradient(90deg, #111 25%, #222 50%, #111 75%);
+  background-size: 200% 100%;
+  animation: pulse 1.5s ease-in-out infinite;
+  border-left: 2px solid #ff3333 !important;
+}
+
+@keyframes pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Success/Failure indicators */
+.response-success {
+  border-left: 2px solid #10b981 !important;
+}
+
+.response-error {
+  border-left: 2px solid #ef4444 !important;
+}	  
   </style>
 </head>
 <body class="selection-red min-h-screen flex flex-col md:flex-row">
@@ -188,6 +266,10 @@
             <select id="puter-model-select" class="w-full bg-black border border-[#333] text-gray-500 text-xs p-2 mb-2 focus:border-red-600 outline-none uppercase"></select>
             <textarea id="aiInput" class="w-full ai-input p-2 text-xs h-16 placeholder-[#333] mb-2 font-mono" placeholder="QUERY CURRENT CHAPTER..."></textarea>
             <button id="askAiBtn" class="w-full border border-red-900 text-red-900 hover:bg-red-600 hover:text-black py-2 text-xs uppercase font-bold transition-all">EXECUTE</button>
+			<!-- Add this inside your AI panel, after the EXECUTE button -->
+<button id="modelTestBtn" class="w-full border border-cyan-900 text-cyan-900 hover:bg-cyan-600 hover:text-black py-2 text-xs uppercase font-bold transition-all mt-2 hidden">
+    TEST ALL MODELS
+</button>
             <div id="aiResponse" class="mt-3 text-xs text-gray-400 whitespace-pre-wrap font-mono min-h-[40px] max-h-[150px] overflow-y-auto custom-scrollbar border-l-2 border-[#222] pl-2"></div>
         </div>
       </details>
@@ -401,13 +483,299 @@
   ]
 };
 
-    // === LOGIC ===
-    const puterModelSelect = document.getElementById('puter-model-select');
-    const AVAILABLE_PUTER_MODELS = [
-      { value: 'deepseek-chat', label: 'DEEPSEEK V3' },
-      { value: 'google/gemma-2-9b-it:free', label: 'GEMMA 9B' },
-      { value: 'gpt-3.5-turbo', label: 'GPT-3.5' }
-    ];
+   // === LOGIC ===
+const puterModelSelect = document.getElementById('puter-model-select');
+const AVAILABLE_PUTER_MODELS = [
+  // === TIER 1: Highly Likely to Work ===
+  { value: 'gpt-3.5-turbo', label: 'GPT-3.5 TURBO (BASELINE)', tier: 1 },
+  { value: 'deepseek-chat', label: 'DEEPSEEK CHAT (GOOD)', tier: 1 },
+  { value: 'google/gemma-2-9b-it:free', label: 'GEMMA 9B (FREE)', tier: 1 },
+  
+  // === TIER 2: OpenRouter Models (Should Work) ===
+  // OpenAI
+  { value: 'openrouter/openai/gpt-4o', label: 'GPT-4o (RECOMMENDED)', tier: 2 },
+  { value: 'openrouter/openai/gpt-4-turbo', label: 'GPT-4 TURBO', tier: 2 },
+  { value: 'openrouter/openai/gpt-4o-mini', label: 'GPT-4o MINI', tier: 2 },
+  
+  // Anthropic
+  { value: 'openrouter/anthropic/claude-3-opus', label: 'CLAUDE 3 OPUS (BEST)', tier: 2 },
+  { value: 'openrouter/anthropic/claude-3-sonnet', label: 'CLAUDE 3 SONNET', tier: 2 },
+  { value: 'openrouter/anthropic/claude-3-haiku', label: 'CLAUDE 3 HAIKU (FAST)', tier: 2 },
+  
+  // Google
+  { value: 'openrouter/google/gemini-pro', label: 'GEMINI PRO', tier: 2 },
+  { value: 'openrouter/google/gemini-ultra', label: 'GEMINI ULTRA', tier: 2 },
+  
+  // Meta
+  { value: 'openrouter/meta-llama/llama-3-70b-instruct', label: 'LLAMA 3 70B', tier: 2 },
+  { value: 'openrouter/meta-llama/llama-3-8b-instruct', label: 'LLAMA 3 8B', tier: 2 },
+  { value: 'openrouter/meta-llama/llama-3.1-70b-instruct', label: 'LLAMA 3.1 70B', tier: 2 },
+  
+  // === TIER 3: Experimental / Might Require API Key ===
+  // xAI (Grok)
+  { value: 'openrouter/xai/grok-beta', label: 'GROK BETA (EXPERIMENTAL)', tier: 3 },
+  { value: 'openrouter/xai/grok-1', label: 'GROK-1', tier: 3 },
+  { value: 'openrouter/xai/grok-2', label: 'GROK-2', tier: 3 },
+  
+  // Mistral
+  { value: 'openrouter/mistralai/mistral-large', label: 'MISTRAL LARGE', tier: 3 },
+  { value: 'openrouter/mistralai/mistral-medium', label: 'MISTRAL MEDIUM', tier: 3 },
+  { value: 'openrouter/mistralai/mixtral-8x7b', label: 'MIXTRAL 8x7B', tier: 3 },
+  
+  // Cohere
+  { value: 'openrouter/cohere/command-r-plus', label: 'COMMAND R+', tier: 3 },
+  { value: 'openrouter/cohere/command-r', label: 'COMMAND R', tier: 3 },
+  
+  // === TIER 4: Specialized / Research ===
+  { value: 'openrouter/deepseek/deepseek-coder', label: 'DEEPSEEK CODER', tier: 4 },
+  { value: 'openrouter/qwen/qwen-2.5-72b-instruct', label: 'QWEN 2.5 72B', tier: 4 },
+  { value: 'openrouter/microsoft/wizardlm-2-8x22b', label: 'WIZARDLM 2', tier: 4 },
+  
+  // === Google Gemma variants ===
+  { value: 'openrouter/google/gemma-2-27b-it', label: 'GEMMA 2 27B', tier: 3 },
+  { value: 'openrouter/google/gemma-2-9b-it', label: 'GEMMA 2 9B', tier: 3 },
+  { value: 'openrouter/google/gemma-7b-it', label: 'GEMMA 7B', tier: 3 },
+];
+
+// Model testing utility
+const MODEL_TEST_LOG = [];
+let isTestingModels = false;
+
+let currentChapterIndex = 0;
+const contentDisplay = document.getElementById('content-display');
+const chapterList = document.getElementById('chapter-list');
+const chapterTitleDisplay = document.getElementById('chapter-title-display');
+const chapterNumDisplay = document.getElementById('chapter-num-display');
+const wordCountDisplay = document.getElementById('word-count');
+const prevBtn = document.getElementById('prev-btn');
+const nextBtn = document.getElementById('next-btn');
+const progressBar = document.getElementById('reading-progress');
+const askAiBtn = document.getElementById('askAiBtn');
+const aiInput = document.getElementById('aiInput');
+const aiResponse = document.getElementById('aiResponse');
+const modelTestBtn = document.getElementById('modelTestBtn'); // You'll need to add this button
+
+function init() {
+  // 0. Populate AI Models with tiers
+  populateModelSelect();
+  
+  // 1. Set word count
+  wordCountDisplay.textContent = NOVEL_DATA.wordCount.toLocaleString() + ' WORDS';
+
+  // 2. Render TOC
+  NOVEL_DATA.chapters.forEach((chap, index) => {
+    const div = document.createElement('div');
+    div.className = `chapter-item cursor-pointer p-4 border-b border-[#222] text-xs font-mono uppercase tracking-wide ${index === 0 ? 'active' : ''}`;
+    div.innerHTML = `<span class="text-red-600 mr-2">${chap.number}</span> ${chap.title}`;
+    div.addEventListener('click', () => loadChapter(index));
+    chapterList.appendChild(div);
+  });
+
+  // 3. Load first chapter
+  loadChapter(0);
+
+  // 4. Setup AI event listener
+  setupAI();
+  
+  // 5. Add model testing button if it doesn't exist
+  addModelTestButton();
+}
+
+function populateModelSelect() {
+  // Clear existing options
+  puterModelSelect.innerHTML = '';
+  
+  // Group by tier
+  const tier1 = AVAILABLE_PUTER_MODELS.filter(m => m.tier === 1);
+  const tier2 = AVAILABLE_PUTER_MODELS.filter(m => m.tier === 2);
+  const tier3 = AVAILABLE_PUTER_MODELS.filter(m => m.tier === 3);
+  const tier4 = AVAILABLE_PUTER_MODELS.filter(m => m.tier === 4);
+  
+  // Add tier labels as optgroups
+  const addTierGroup = (models, tierName, description) => {
+    if (models.length > 0) {
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = `▲ ${tierName}: ${description}`;
+      models.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.value;
+        opt.textContent = m.label;
+        optgroup.appendChild(opt);
+      });
+      puterModelSelect.appendChild(optgroup);
+    }
+  };
+  
+  addTierGroup(tier1, 'RELIABLE', 'Tested & Working');
+  addTierGroup(tier2, 'PREMIUM', 'OpenRouter Models');
+  addTierGroup(tier3, 'EXPERIMENTAL', 'Might Need API Key');
+  addTierGroup(tier4, 'SPECIALIZED', 'Research Models');
+  
+  // Set default to GPT-4o
+  puterModelSelect.value = 'openrouter/openai/gpt-4o';
+}
+
+function addModelTestButton() {
+  // Add a test button to the AI panel
+  const aiPanel = document.querySelector('.ai-panel details div');
+  if (aiPanel && !document.getElementById('modelTestBtn')) {
+    const testBtn = document.createElement('button');
+    testBtn.id = 'modelTestBtn';
+    testBtn.className = 'w-full border border-cyan-900 text-cyan-900 hover:bg-cyan-600 hover:text-black py-2 text-xs uppercase font-bold transition-all mt-2';
+    testBtn.textContent = 'TEST ALL MODELS';
+    testBtn.addEventListener('click', testAllModels);
+    aiPanel.appendChild(testBtn);
+  }
+}
+
+async function testAllModels() {
+  if (isTestingModels) {
+    alert('Model test already in progress');
+    return;
+  }
+  
+  isTestingModels = true;
+  const testBtn = document.getElementById('modelTestBtn');
+  const originalText = testBtn.textContent;
+  const originalResponse = aiResponse.textContent;
+  
+  // Clear previous test log
+  MODEL_TEST_LOG.length = 0;
+  
+  testBtn.disabled = true;
+  testBtn.textContent = 'TESTING...';
+  aiResponse.textContent = '=== MODEL COMPATIBILITY TEST ===\n';
+  
+  const testPrompt = "Respond with 'OK' if you can read this. Keep response to one word.";
+  
+  // Test models in batches
+  const batches = [
+    AVAILABLE_PUTER_MODELS.filter(m => m.tier === 1),
+    AVAILABLE_PUTER_MODELS.filter(m => m.tier === 2).slice(0, 3), // Test first 3 of tier 2
+    AVAILABLE_PUTER_MODELS.filter(m => m.tier === 3).slice(0, 2), // Test first 2 of tier 3
+  ];
+  
+  for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+    const batch = batches[batchIndex];
+    
+    for (let modelIndex = 0; modelIndex < batch.length; modelIndex++) {
+      const model = batch[modelIndex];
+      
+      try {
+        aiResponse.textContent += `\nTesting: ${model.label}... `;
+        
+        // Quick test with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
+        const response = await puter.ai.chat(testPrompt, {
+          model: model.value,
+          max_tokens: 10,
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (response && response.trim().toLowerCase().includes('ok')) {
+          aiResponse.textContent += '✓ WORKING';
+          MODEL_TEST_LOG.push({
+            model: model.label,
+            value: model.value,
+            status: 'WORKING',
+            tier: model.tier
+          });
+        } else {
+          aiResponse.textContent += '✗ NO RESPONSE';
+          MODEL_TEST_LOG.push({
+            model: model.label,
+            value: model.value,
+            status: 'NO_RESPONSE',
+            tier: model.tier
+          });
+        }
+      } catch (error) {
+        aiResponse.textContent += `✗ ERROR: ${error.message.substring(0, 30)}...`;
+        MODEL_TEST_LOG.push({
+          model: model.label,
+          value: model.value,
+          status: 'ERROR',
+          error: error.message,
+          tier: model.tier
+        });
+      }
+      
+      // Small delay between tests
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+  
+  // Generate summary
+  const workingModels = MODEL_TEST_LOG.filter(m => m.status === 'WORKING');
+  const totalTested = MODEL_TEST_LOG.length;
+  
+  aiResponse.textContent += `\n\n=== TEST SUMMARY ===\n`;
+  aiResponse.textContent += `Working: ${workingModels.length}/${totalTested}\n`;
+  aiResponse.textContent += `Failed: ${totalTested - workingModels.length}\n\n`;
+  aiResponse.textContent += `WORKING MODELS:\n`;
+  workingModels.forEach(m => {
+    aiResponse.textContent += `• ${m.model}\n`;
+  });
+  
+  // Store results in localStorage for future reference
+  localStorage.setItem('puterModelTestResults', JSON.stringify({
+    date: new Date().toISOString(),
+    results: MODEL_TEST_LOG,
+    workingModels: workingModels.map(m => m.value)
+  }));
+  
+  // Update model select with working models first
+  updateModelSelectWithResults();
+  
+  testBtn.disabled = false;
+  testBtn.textContent = originalText;
+  isTestingModels = false;
+}
+
+function updateModelSelectWithResults() {
+  const storedResults = localStorage.getItem('puterModelTestResults');
+  if (!storedResults) return;
+  
+  const results = JSON.parse(storedResults);
+  const workingModels = results.workingModels || [];
+  
+  // Reorder options to show working models first
+  const modelOptions = Array.from(puterModelSelect.options);
+  
+  // Sort: working models first, then by tier
+  modelOptions.sort((a, b) => {
+    const aIsWorking = workingModels.includes(a.value);
+    const bIsWorking = workingModels.includes(b.value);
+    
+    if (aIsWorking && !bIsWorking) return -1;
+    if (!aIsWorking && bIsWorking) return 1;
+    
+    const aModel = AVAILABLE_PUTER_MODELS.find(m => m.value === a.value);
+    const bModel = AVAILABLE_PUTER_MODELS.find(m => m.value === b.value);
+    
+    return (aModel?.tier || 99) - (bModel?.tier || 99);
+  });
+  
+  // Clear and re-add sorted options
+  puterModelSelect.innerHTML = '';
+  modelOptions.forEach(opt => {
+    const model = AVAILABLE_PUTER_MODELS.find(m => m.value === opt.value);
+    const isWorking = workingModels.includes(opt.value);
+    
+    const newOpt = document.createElement('option');
+    newOpt.value = opt.value;
+    newOpt.textContent = `${isWorking ? '✓ ' : ''}${opt.textContent}`;
+    newOpt.style.color = isWorking ? '#10b981' : '#9ca3af';
+    puterModelSelect.appendChild(newOpt);
+  });
+}
+
+// Rest of your functions (loadChapter, setupAI, etc.) remain the same
+// ... [keep your existing loadChapter, setupAI, and other functions]
 
     let currentChapterIndex = 0;
     const contentDisplay = document.getElementById('content-display');
@@ -482,51 +850,468 @@
       }, 200);
     }
 
-    // AI Logic
-    document.getElementById('askAiBtn').addEventListener('click', async () => {
-        const btn = document.getElementById('askAiBtn');
-        const output = document.getElementById('aiResponse');
-        const input = document.getElementById('aiInput').value;
-        const currentChapter = NOVEL_DATA.chapters[currentChapterIndex];
-        const model = document.getElementById('puter-model-select').value;
-        
-        if(!input) return;
-        
-        btn.disabled = true;
-        btn.textContent = "TRANSMITTING...";
-        output.textContent = "ESTABLISHING CONNECTION...";
-        
-        // Limit context to 2000 chars to avoid token limits on smaller models
-        const contextText = currentChapter.content.substring(0, 2000);
-        
-        const prompt = `
-        CONTEXT: You are 'Inky', analyzing the novel 'Its Own Owner'.
-        CURRENT CHAPTER: ${currentChapter.title}
-        TEXT FRAGMENT: "${contextText}..."
-        USER QUERY: ${input}
-        STYLE: Analytical, Literary, Cyberpunk. Keep it brief.
-        `;
+    // === LOGIC ===
+const puterModelSelect = document.getElementById('puter-model-select');
+const AVAILABLE_PUTER_MODELS = [
+  // === TIER 1: Highly Likely to Work ===
+  { value: 'gpt-3.5-turbo', label: 'GPT-3.5 TURBO (BASELINE)', tier: 1 },
+  { value: 'deepseek-chat', label: 'DEEPSEEK CHAT (GOOD)', tier: 1 },
+  { value: 'google/gemma-2-9b-it:free', label: 'GEMMA 9B (FREE)', tier: 1 },
+  
+  // === TIER 2: OpenRouter Models (Should Work) ===
+  // OpenAI
+  { value: 'openrouter/openai/gpt-4o', label: 'GPT-4o (RECOMMENDED)', tier: 2 },
+  { value: 'openrouter/openai/gpt-4-turbo', label: 'GPT-4 TURBO', tier: 2 },
+  { value: 'openrouter/openai/gpt-4o-mini', label: 'GPT-4o MINI', tier: 2 },
+  
+  // Anthropic
+  { value: 'openrouter/anthropic/claude-3-opus', label: 'CLAUDE 3 OPUS (BEST)', tier: 2 },
+  { value: 'openrouter/anthropic/claude-3-sonnet', label: 'CLAUDE 3 SONNET', tier: 2 },
+  { value: 'openrouter/anthropic/claude-3-haiku', label: 'CLAUDE 3 HAIKU (FAST)', tier: 2 },
+  
+  // Google
+  { value: 'openrouter/google/gemini-pro', label: 'GEMINI PRO', tier: 2 },
+  { value: 'openrouter/google/gemini-ultra', label: 'GEMINI ULTRA', tier: 2 },
+  
+  // Meta
+  { value: 'openrouter/meta-llama/llama-3-70b-instruct', label: 'LLAMA 3 70B', tier: 2 },
+  { value: 'openrouter/meta-llama/llama-3-8b-instruct', label: 'LLAMA 3 8B', tier: 2 },
+  { value: 'openrouter/meta-llama/llama-3.1-70b-instruct', label: 'LLAMA 3.1 70B', tier: 2 },
+  
+  // === TIER 3: Experimental / Might Require API Key ===
+  // xAI (Grok)
+  { value: 'openrouter/xai/grok-beta', label: 'GROK BETA (EXPERIMENTAL)', tier: 3 },
+  { value: 'openrouter/xai/grok-1', label: 'GROK-1', tier: 3 },
+  { value: 'openrouter/xai/grok-2', label: 'GROK-2', tier: 3 },
+  
+  // Mistral
+  { value: 'openrouter/mistralai/mistral-large', label: 'MISTRAL LARGE', tier: 3 },
+  { value: 'openrouter/mistralai/mistral-medium', label: 'MISTRAL MEDIUM', tier: 3 },
+  { value: 'openrouter/mistralai/mixtral-8x7b', label: 'MIXTRAL 8x7B', tier: 3 },
+  
+  // Cohere
+  { value: 'openrouter/cohere/command-r-plus', label: 'COMMAND R+', tier: 3 },
+  { value: 'openrouter/cohere/command-r', label: 'COMMAND R', tier: 3 },
+  
+  // === TIER 4: Specialized / Research ===
+  { value: 'openrouter/deepseek/deepseek-coder', label: 'DEEPSEEK CODER', tier: 4 },
+  { value: 'openrouter/qwen/qwen-2.5-72b-instruct', label: 'QWEN 2.5 72B', tier: 4 },
+  { value: 'openrouter/microsoft/wizardlm-2-8x22b', label: 'WIZARDLM 2', tier: 4 },
+  
+  // === Google Gemma variants ===
+  { value: 'openrouter/google/gemma-2-27b-it', label: 'GEMMA 2 27B', tier: 3 },
+  { value: 'openrouter/google/gemma-2-9b-it', label: 'GEMMA 2 9B', tier: 3 },
+  { value: 'openrouter/google/gemma-7b-it', label: 'GEMMA 7B', tier: 3 },
+];
 
-        try {
-            const response = await puter.ai.chat(prompt, { model: model });
-            output.textContent = response;
-        } catch (err) {
-            output.textContent = "CONNECTION_FAILURE: " + err.message;
+// Model testing utility
+const MODEL_TEST_LOG = [];
+let isTestingModels = false;
+
+let currentChapterIndex = 0;
+const contentDisplay = document.getElementById('content-display');
+const chapterList = document.getElementById('chapter-list');
+const chapterTitleDisplay = document.getElementById('chapter-title-display');
+const chapterNumDisplay = document.getElementById('chapter-num-display');
+const wordCountDisplay = document.getElementById('word-count');
+const prevBtn = document.getElementById('prev-btn');
+const nextBtn = document.getElementById('next-btn');
+const progressBar = document.getElementById('reading-progress');
+const askAiBtn = document.getElementById('askAiBtn');
+const aiInput = document.getElementById('aiInput');
+const aiResponse = document.getElementById('aiResponse');
+
+function init() {
+  // 0. Populate AI Models with tiers
+  populateModelSelect();
+  
+  // 1. Set word count
+  wordCountDisplay.textContent = NOVEL_DATA.wordCount.toLocaleString() + ' WORDS';
+
+  // 2. Render TOC
+  NOVEL_DATA.chapters.forEach((chap, index) => {
+    const div = document.createElement('div');
+    div.className = `chapter-item cursor-pointer p-4 border-b border-[#222] text-xs font-mono uppercase tracking-wide ${index === 0 ? 'active' : ''}`;
+    div.innerHTML = `<span class="text-red-600 mr-2">${chap.number}</span> ${chap.title}`;
+    div.addEventListener('click', () => loadChapter(index));
+    chapterList.appendChild(div);
+  });
+
+  // 3. Load first chapter
+  loadChapter(0);
+
+  // 4. Setup AI event listener
+  setupAI();
+  
+  // 5. Add model testing button if it doesn't exist
+  addModelTestButton();
+  
+  // 6. Setup navigation event listeners
+  prevBtn.addEventListener('click', () => {
+    if (currentChapterIndex > 0) loadChapter(currentChapterIndex - 1);
+  });
+
+  nextBtn.addEventListener('click', () => {
+    if (currentChapterIndex < NOVEL_DATA.chapters.length - 1) loadChapter(currentChapterIndex + 1);
+  });
+}
+
+function populateModelSelect() {
+  // Clear existing options
+  puterModelSelect.innerHTML = '';
+  
+  // Group by tier
+  const tier1 = AVAILABLE_PUTER_MODELS.filter(m => m.tier === 1);
+  const tier2 = AVAILABLE_PUTER_MODELS.filter(m => m.tier === 2);
+  const tier3 = AVAILABLE_PUTER_MODELS.filter(m => m.tier === 3);
+  const tier4 = AVAILABLE_PUTER_MODELS.filter(m => m.tier === 4);
+  
+  // Add tier labels as optgroups
+  const addTierGroup = (models, tierName, description) => {
+    if (models.length > 0) {
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = `▲ ${tierName}: ${description}`;
+      models.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.value;
+        opt.textContent = m.label;
+        optgroup.appendChild(opt);
+      });
+      puterModelSelect.appendChild(optgroup);
+    }
+  };
+  
+  addTierGroup(tier1, 'RELIABLE', 'Tested & Working');
+  addTierGroup(tier2, 'PREMIUM', 'OpenRouter Models');
+  addTierGroup(tier3, 'EXPERIMENTAL', 'Might Need API Key');
+  addTierGroup(tier4, 'SPECIALIZED', 'Research Models');
+  
+  // Set default to GPT-4o
+  puterModelSelect.value = 'openrouter/openai/gpt-4o';
+}
+
+function addModelTestButton() {
+  // Add a test button to the AI panel
+  const aiPanel = document.querySelector('.ai-panel details div');
+  if (aiPanel && !document.getElementById('modelTestBtn')) {
+    const testBtn = document.createElement('button');
+    testBtn.id = 'modelTestBtn';
+    testBtn.className = 'w-full border border-cyan-900 text-cyan-900 hover:bg-cyan-600 hover:text-black py-2 text-xs uppercase font-bold transition-all mt-2';
+    testBtn.textContent = 'TEST ALL MODELS';
+    testBtn.addEventListener('click', testAllModels);
+    aiPanel.appendChild(testBtn);
+  }
+}
+
+async function testAllModels() {
+  if (isTestingModels) {
+    alert('Model test already in progress');
+    return;
+  }
+  
+  isTestingModels = true;
+  const testBtn = document.getElementById('modelTestBtn');
+  const originalText = testBtn.textContent;
+  const originalResponse = aiResponse.textContent;
+  
+  // Clear previous test log
+  MODEL_TEST_LOG.length = 0;
+  
+  testBtn.disabled = true;
+  testBtn.textContent = 'TESTING...';
+  aiResponse.textContent = '=== MODEL COMPATIBILITY TEST ===\n';
+  
+  const testPrompt = "Respond with 'OK' if you can read this. Keep response to one word.";
+  
+  // Test models in batches
+  const batches = [
+    AVAILABLE_PUTER_MODELS.filter(m => m.tier === 1),
+    AVAILABLE_PUTER_MODELS.filter(m => m.tier === 2).slice(0, 3), // Test first 3 of tier 2
+    AVAILABLE_PUTER_MODELS.filter(m => m.tier === 3).slice(0, 2), // Test first 2 of tier 3
+  ];
+  
+  for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+    const batch = batches[batchIndex];
+    
+    for (let modelIndex = 0; modelIndex < batch.length; modelIndex++) {
+      const model = batch[modelIndex];
+      
+      try {
+        aiResponse.textContent += `\nTesting: ${model.label}... `;
+        
+        // Quick test with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
+        const response = await puter.ai.chat(testPrompt, {
+          model: model.value,
+          max_tokens: 10,
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (response && response.trim().toLowerCase().includes('ok')) {
+          aiResponse.textContent += '✓ WORKING';
+          MODEL_TEST_LOG.push({
+            model: model.label,
+            value: model.value,
+            status: 'WORKING',
+            tier: model.tier
+          });
+        } else {
+          aiResponse.textContent += '✗ NO RESPONSE';
+          MODEL_TEST_LOG.push({
+            model: model.label,
+            value: model.value,
+            status: 'NO_RESPONSE',
+            tier: model.tier
+          });
         }
-        btn.disabled = false;
-        btn.textContent = "EXECUTE";
-    });
+      } catch (error) {
+        aiResponse.textContent += `✗ ERROR: ${error.message.substring(0, 30)}...`;
+        MODEL_TEST_LOG.push({
+          model: model.label,
+          value: model.value,
+          status: 'ERROR',
+          error: error.message,
+          tier: model.tier
+        });
+      }
+      
+      // Small delay between tests
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+  
+  // Generate summary
+  const workingModels = MODEL_TEST_LOG.filter(m => m.status === 'WORKING');
+  const totalTested = MODEL_TEST_LOG.length;
+  
+  aiResponse.textContent += `\n\n=== TEST SUMMARY ===\n`;
+  aiResponse.textContent += `Working: ${workingModels.length}/${totalTested}\n`;
+  aiResponse.textContent += `Failed: ${totalTested - workingModels.length}\n\n`;
+  aiResponse.textContent += `WORKING MODELS:\n`;
+  workingModels.forEach(m => {
+    aiResponse.textContent += `• ${m.model}\n`;
+  });
+  
+  // Store results in localStorage for future reference
+  localStorage.setItem('puterModelTestResults', JSON.stringify({
+    date: new Date().toISOString(),
+    results: MODEL_TEST_LOG,
+    workingModels: workingModels.map(m => m.value)
+  }));
+  
+  // Update model select with working models first
+  updateModelSelectWithResults();
+  
+  testBtn.disabled = false;
+  testBtn.textContent = originalText;
+  isTestingModels = false;
+}
 
-    // Event Listeners
-    prevBtn.addEventListener('click', () => {
-      if (currentChapterIndex > 0) loadChapter(currentChapterIndex - 1);
-    });
+function updateModelSelectWithResults() {
+  const storedResults = localStorage.getItem('puterModelTestResults');
+  if (!storedResults) return;
+  
+  const results = JSON.parse(storedResults);
+  const workingModels = results.workingModels || [];
+  
+  // Reorder options to show working models first
+  const modelOptions = Array.from(puterModelSelect.options);
+  
+  // Sort: working models first, then by tier
+  modelOptions.sort((a, b) => {
+    const aIsWorking = workingModels.includes(a.value);
+    const bIsWorking = workingModels.includes(b.value);
+    
+    if (aIsWorking && !bIsWorking) return -1;
+    if (!aIsWorking && bIsWorking) return 1;
+    
+    const aModel = AVAILABLE_PUTER_MODELS.find(m => m.value === a.value);
+    const bModel = AVAILABLE_PUTER_MODELS.find(m => m.value === b.value);
+    
+    return (aModel?.tier || 99) - (bModel?.tier || 99);
+  });
+  
+  // Clear and re-add sorted options
+  puterModelSelect.innerHTML = '';
+  modelOptions.forEach(opt => {
+    const model = AVAILABLE_PUTER_MODELS.find(m => m.value === opt.value);
+    const isWorking = workingModels.includes(opt.value);
+    
+    const newOpt = document.createElement('option');
+    newOpt.value = opt.value;
+    newOpt.textContent = `${isWorking ? '✓ ' : ''}${opt.textContent}`;
+    newOpt.style.color = isWorking ? '#10b981' : '#9ca3af';
+    puterModelSelect.appendChild(newOpt);
+  });
+}
 
-    nextBtn.addEventListener('click', () => {
-      if (currentChapterIndex < NOVEL_DATA.chapters.length - 1) loadChapter(currentChapterIndex + 1);
-    });
+function loadChapter(index) {
+  currentChapterIndex = index;
+  const chapter = NOVEL_DATA.chapters[index];
 
-    init();
+  // Update Active State in TOC
+  document.querySelectorAll('.chapter-item').forEach((el, i) => {
+    if (i === index) el.classList.add('active');
+    else el.classList.remove('active');
+  });
+
+  // Update Header
+  chapterNumDisplay.textContent = `CHAPTER ${chapter.number}`;
+  chapterTitleDisplay.textContent = chapter.title;
+
+  // Update Content (with fade effect)
+  contentDisplay.style.opacity = '0';
+  
+  setTimeout(() => {
+    // Formatting: Replace \n\n with paragraphs
+    const formattedContent = chapter.content
+      .split(/\n\n+/)
+      .map(p => `<p>${p.trim()}</p>`)
+      .join('');
+    
+    contentDisplay.innerHTML = formattedContent;
+    contentDisplay.style.opacity = '1';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Update Progress Bar
+    const percent = ((index + 1) / NOVEL_DATA.chapters.length) * 100;
+    progressBar.style.width = `${percent}%`;
+
+    // Update Buttons
+    prevBtn.disabled = index === 0;
+    nextBtn.disabled = index === NOVEL_DATA.chapters.length - 1;
+  }, 200);
+}
+
+function setupAI() {
+  askAiBtn.addEventListener('click', async () => {
+    const query = aiInput.value.trim();
+    const selectedModel = puterModelSelect.value;
+    const selectedModelLabel = puterModelSelect.options[puterModelSelect.selectedIndex].text;
+    
+    if (!query) {
+      aiResponse.textContent = 'ERROR: NO QUERY PROVIDED';
+      return;
+    }
+    
+    // Check if this model was previously tested
+    const storedResults = localStorage.getItem('puterModelTestResults');
+    let modelWarning = '';
+    
+    if (storedResults) {
+      const results = JSON.parse(storedResults);
+      const modelResult = results.results?.find(r => r.value === selectedModel);
+      
+      if (modelResult && modelResult.status !== 'WORKING') {
+        modelWarning = `\n\n⚠ MODEL STATUS: ${modelResult.status} - This model failed previous test`;
+      }
+    }
+    
+    const currentChapter = NOVEL_DATA.chapters[currentChapterIndex];
+    const contextLimit = 1200;
+    const chapterContent = currentChapter.content.length > contextLimit 
+      ? currentChapter.content.substring(0, contextLimit) + "..."
+      : currentChapter.content;
+    
+    const prompt = `
+MODEL: ${selectedModelLabel}
+ROLE: You are 'Inky', a literary analysis AI for the cyberpunk novel 'Its Own Owner'
+CHAPTER: ${currentChapter.title}
+CONTEXT: "${chapterContent}"
+QUERY: ${query}
+${modelWarning}
+RESPONSE GUIDELINES:
+- Analyze the text in relation to the query
+- Use cyberpunk/analytical tone
+- Reference specific elements from the text
+- Keep under 250 words
+- End with relevant questions or insights
+`;
+    
+    try {
+      aiResponse.textContent = `INITIATING ${selectedModelLabel.toUpperCase()}...`;
+      askAiBtn.disabled = true;
+      askAiBtn.textContent = 'PROCESSING';
+      aiResponse.classList.add('loading-pulse');
+      
+      const response = await puter.ai.chat(prompt, {
+        model: selectedModel,
+        max_tokens: 400,
+        temperature: 0.8
+      });
+      
+      // Add model info to response
+      aiResponse.textContent = `[${selectedModelLabel}]\n\n${response}`;
+      
+      // Log successful query
+      logModelUsage(selectedModel, selectedModelLabel, true);
+      
+    } catch (error) {
+      console.error('AI Error:', error);
+      
+      // Log failed query
+      logModelUsage(selectedModel, selectedModelLabel, false, error.message);
+      
+      // Try fallback model if current fails
+      if (!selectedModel.includes('gpt-3.5-turbo')) {
+        aiResponse.textContent = `ERROR: ${error.message}\n\nAttempting fallback to GPT-3.5...`;
+        
+        try {
+          const fallbackResponse = await puter.ai.chat(prompt, {
+            model: 'gpt-3.5-turbo',
+            max_tokens: 300,
+            temperature: 0.7
+          });
+          
+          aiResponse.textContent = `[FALLBACK: GPT-3.5]\n\n${fallbackResponse}`;
+        } catch (fallbackError) {
+          aiResponse.textContent = `CRITICAL ERROR: All models failed\n${fallbackError.message}`;
+        }
+      } else {
+        aiResponse.textContent = `ERROR: ${error.message}`;
+      }
+    } finally {
+      askAiBtn.disabled = false;
+      askAiBtn.textContent = 'EXECUTE';
+      aiResponse.classList.remove('loading-pulse');
+    }
+  });
+  
+  // Enter key support
+  aiInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      e.preventDefault();
+      askAiBtn.click();
+    }
+  });
+}
+
+function logModelUsage(modelValue, modelLabel, success, error = '') {
+  const usageLog = JSON.parse(localStorage.getItem('puterModelUsage') || '[]');
+  
+  usageLog.push({
+    timestamp: new Date().toISOString(),
+    model: modelValue,
+    label: modelLabel,
+    success: success,
+    error: error,
+    chapter: currentChapterIndex + 1
+  });
+  
+  // Keep only last 100 entries
+  if (usageLog.length > 100) {
+    usageLog.splice(0, usageLog.length - 100);
+  }
+  
+  localStorage.setItem('puterModelUsage', JSON.stringify(usageLog));
+}
+
+// Initialize the app when DOM is loaded
+document.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
