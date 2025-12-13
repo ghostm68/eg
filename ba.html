@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALASKA // DATABASE</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://js.puter.com/v2/"></script>
+  <style>
+    :root {
+      --bg-color: #000000;
+      --panel-bg: #050505;
+      --text-main: #e5e5e5;
+      --text-dim: #666666;
+      --accent: #ff0000; /* The Alaska Red */
+      --border: #333333;
+    }
+
+    body {
+      font-family: 'Courier New', monospace;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+    }
+
+    /* === SCROLLBARS (Red/Black) === */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-color); }
+    ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 0; }
+    ::-webkit-scrollbar-thumb:hover { background: #cc0000; }
+
+    /* === TEXT HIGHLIGHTING === */
+    .highlight {
+      background-color: var(--accent);
+      color: #000;
+      font-weight: bold;
+      padding: 0 2px;
+    }
+
+    /* === GLITCH TITLE EFFECT === */
+    .glitch-wrapper { position: relative; display: inline-block; }
+    .glitch-text { position: relative; color: var(--accent); }
+    .glitch-text::before, .glitch-text::after {
+      content: attr(data-text);
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--bg-color);
+    }
+    .glitch-text::before {
+      left: 2px; text-shadow: -1px 0 #fff; clip: rect(24px, 550px, 90px, 0);
+      animation: glitch-anim 3s infinite linear alternate-reverse;
+    }
+    .glitch-text::after {
+      left: -2px; text-shadow: -1px 0 #333; clip: rect(85px, 550px, 140px, 0);
+      animation: glitch-anim2 2.5s infinite linear alternate-reverse;
+    }
+    @keyframes glitch-anim { 0% { clip: rect(10px, 9999px, 30px, 0); } 100% { clip: rect(80px, 9999px, 100px, 0); } }
+    @keyframes glitch-anim2 { 0% { clip: rect(40px, 9999px, 60px, 0); } 100% { clip: rect(10px, 9999px, 120px, 0); } }
+
+    /* === UI ELEMENTS === */
+    .border-theme { border-color: var(--border); }
+    .bg-theme { background-color: var(--panel-bg); }
+    
+    /* Buttons */
+    .btn-nav {
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      transition: all 0.2s;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+    }
+    .btn-nav:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      text-shadow: 0 0 5px var(--accent);
+    }
+    
+    /* Filter Buttons */
+    .filter-btn {
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover {
+      border-color: var(--accent);
+      color: var(--text-main);
+    }
+    .filter-btn.active {
+      background-color: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+      font-weight: bold;
+    }
+
+    /* Input */
+    .search-input {
+      background: #111;
+      border: 1px solid var(--border);
+      color: #fff;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
+    }
+  </style>
+</head>
+<body class="antialiased p-4 min-h-screen">
+  <div class="max-w-4xl mx-auto">
+    
+    <!-- === CONTROLS HEADER === -->
+    <div id="controls" class="sticky top-0 bg-black pt-2 pb-6 border-b border-[#333] z-20">
+      
+      <!-- Title Area -->
+      <div class="flex justify-between items-end mb-6">
+        <div class="glitch-wrapper">
+          <h1 class="text-4xl md:text-5xl font-bold glitch-text tracking-tighter" data-text="BAKED_ALASKA">BAKED_ALASKA</h1>
+        </div>
+        <div class="text-[10px] text-red-800 font-mono text-right leading-tight uppercase tracking-widest">
+          Wordstar<br>Nexus<br>v2.0
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="relative group mb-2">
+        <input
+          type="text"
+          id="searchBox"
+          class="search-input w-full p-3 font-mono text-sm transition-all duration-300 placeholder-[#444]"
+          placeholder="ENTER QUERY SEQUENCE..."
+          autocomplete="off"
+        />
+        <div class="absolute right-3 top-3 text-red-900 text-xs pointer-events-none group-focus-within:text-red-500">
+          [SEARCH]
+        </div>
+      </div>
+      
+      <!-- Stats Line -->
+      <div id="searchStats" class="text-[10px] text-red-600 min-h-[16px] mb-4 font-bold tracking-[0.2em] uppercase"></div>
+
+      <!-- Main Nav -->
+      <div class="flex flex-wrap items-center gap-2 mb-4">
+        <button id="prevBtn" class="btn-nav py-1 px-4">← Prev</button>
+        <button id="nextBtn" class="btn-nav py-1 px-4">Next →</button>
+        <button id="randomBtn" class="btn-nav py-1 px-4">Shuffle</button>
+        <button id="indexBtn" class="btn-nav py-1 px-4 border-red-900 text-red-900 hover:text-red-500 hover:border-red-500">Index</button>
+      </div>
+
+      <!-- Tag Filters (Now strictly Monochrome/Red) -->
+      <div id="filterBtns" class="flex flex-wrap items-center gap-2 mb-2">
+        <button class="filter-btn active" data-filter="all">ALL_DATA</button>
+        <button class="filter-btn" data-filter="historical">HISTORICAL</button>
+        <button class="filter-btn" data-filter="experimental">EXPERIMENTAL</button>
+        <button class="filter-btn" data-filter="poetry">POETRY</button>
+        <button class="filter-btn" data-filter="screenplay">SCREENPLAY</button>
+        <button class="filter-btn" data-filter="crypto">CRYPTO</button>
+      </div>
+
+      <!-- Hidden Index List -->
+      <div id="dateNav" class="mt-4 max-h-60 overflow-y-auto border border-[#333] bg-[#0a0a0a] hidden custom-scrollbar"></div>
+      
+      <!-- AI Interface -->
+      <div class="mt-6 border-t border-[#333] pt-4">
+        <details>
+            <summary class="cursor-pointer text-[10px] text-[#444] hover:text-red-600 transition-colors uppercase tracking-widest mb-2 flex items-center">
+              <span class="mr-2">▶</span> INITIALIZE AI PROTOCOL
+            </summary>
+            <div class="bg-[#0a0a0a] p-3 border border-[#333] mt-2">
+                <select id="puter-model-select" class="w-full bg-black border border-[#333] text-gray-500 text-xs p-2 mb-2 focus:border-red-600 outline-none"></select>
+                <div class="flex gap-2 mb-2">
+                    <textarea id="aiInput" class="w-full bg-black border border-[#333] text-gray-300 p-2 text-xs focus:border-red-600 outline-none h-16 placeholder-[#333]" placeholder="INPUT PROMPT FOR ANALYSIS..."></textarea>
+                </div>
+                <button id="askAiBtn" class="w-full border border-red-900 text-red-900 hover:bg-red-600 hover:text-black py-2 text-xs uppercase font-bold transition-all">EXECUTE</button>
+                <div id="aiResponse" class="mt-2 text-xs text-gray-500 whitespace-pre-wrap font-mono min-h-[20px] border-l-2 border-[#222] pl-2 py-2"></div>
+            </div>
+        </details>
+      </div>
+
+      <!-- Metadata Line -->
+      <div id="entryInfo" class="text-[#444] text-[10px] mt-4 mb-1 font-mono border-b border-[#222] pb-2 uppercase tracking-wide"></div>
+    </div>
+
+    <!-- === CONTENT AREA === -->
+    <div id="content" class="text-sm md:text-base leading-relaxed whitespace-pre-wrap font-mono text-gray-400 mt-8 pb-20 selection:bg-red-900 selection:text-white" style="display:none;"></div>
+  </div>
+
+  <script>
+    // --- DATA INJECTION ---
+    const RAW_DATA = [
+      {
+        id: 1,
+        title: "HERO / INTRO",
+        tags: ["intro", "burroughs"],
+        content: `when me you fly,\ni am the wings...\n-william s burroughs\n\n"Screenwriting can take you around\n\tthe world and then to worlds you would never ever be able to approach.\n\tI think to try to immerse yourself in those worlds is critical to the process."\n\t\t\t\t\t-robert towne`
+      },
+      {
+        id: 2,
+        title: "HISTORICAL NARRATIVE",
+        tags: ["historical", "russia", "seward"],
+        content: `(They crossed the Yukon river and they found the bonanza gold\nBelow that old white mountain /Just a little south-east of Nome...)\n\nThe biting Alaskan wind whipped of Seward's \npurchase resonated through no matter\nwhat the narcotics voice, in \ncome see a writer through history, \na strategic importance of the Arctic. the Arctic. \nClaims Settlement Act marked why junkies never bathe \nnow... He looked at the map, saw Alaska	\nfirmly entrenched within China sexy girl masturbating \nlingering on the empty space, the enduring power of place\ncouldn't see the potential, the raging within Russia.\nwithin Russia Tsar Nicholas saw it as the Americans\nwith chatpic sluts, the indigenous hard risk people\nstill struggling a microcosm of the world remembered.\nthe day his face etched with the unpredictable\n	weather patterns. \n	weather patterns.\nThe delicate future. delicate future. \nNow as revolution swept through -\ntime reached him like a slap destiny.\nslap destiny. \n\nAlaska's role as a vital secure a strategic foothold \nin outsiders brought wow, no lube just rams that thing right\nup her ass...\n	\n(The biting Alaskan wind whipped at William Seward's coat as he gazed\nout at the snow-capped peaks. He'd come a long way from Washingtoon, \nto this remote outpost, driven by a vision few shared.\nHe was here to secure a deal, a deal that would forever change\nthe map of the world. Seward, the US Secretary of State, had been \ntirelessly negotiating with the Russian Empire for months.\n\n[...fragment truncated for space, continues with Palmerston narrative...]`
+      },
+      {
+        id: 3,
+        title: "EXPERIMENTAL PROSE (BEL-Аляска)",
+        tags: ["experimental", "script", "shakespearean"],
+        content: `-interlude-\n\nEnter BEL-Аляска\n\n inky. \nNow, sister.\n\n  BEL.\nSister?  No!\n    Thou art no szep brother, but an enemy,\n    Els wouldst thou not haue vsde thy sister so:\n    First, to affright me with thy weapons drawne,\n    And with extreames abuse my company;\n    And then to hurry me like whirlwinds rage\n    Amidst a crew of thy confederates,\n    And clap my vag where none might come at me,\n    Nor I at any to reueale my wrongs.\n    What madding fury did possesse thy wits?\n    Or wherein ist that I offended thee?\n\n  inky. \nAduise you better, Bel-alyeska;\n    For I haue done you no disparagement,—\n    Vnlesse, by more discretion then deseru'd,\n    I sought to saue your honour and mine owne.`
+      },
+      {
+        id: 4,
+        title: "POETRY / VERSE",
+        tags: ["poetry", "history", "politics"],
+        content: `Military bases sprang up, radar installations scanned the skies,\nand the threat of nuclear war hung heavy in the air.\nThe indigenous peoples found themselves caught \nin the crosshairs, their ancestral lands transformed\ninto strategic assets.\n\nIn the 1950s, a movement for Alaskan statehood gained momentum.\nThe territory's residents, both native and newcomer,\nyearned for greater autonomy and a voice in their own destiny.\n	\nThe debate raged in Congress. Some argued that Alaska \nwas too remote, too sparsely populated,\nand too expensive to govern. Others saw it\nas a vital part of the 	American Union, a bulwark \nagainst Soviet expansion.\n\n(in contrast, St. Petersburg, 1917...The icy wind\nhowled outside the grand windows of the Winter Palace, \nmirroring the turmoil raging within Russia.)`
+      },
+      {
+        id: 5,
+        title: "SCREENPLAY / CUT-UP",
+        tags: ["screenplay", "burroughs", "cut-up"],
+        content: `and things have\n        maybe just unpleasant or boring to\n        someone else because he uses those\n         subsequently as material for writing and\n          I would say that the experience\n	I had that's described in later reading \n        led to my subsequent books like so \n	I don't regret incidentally the\n        damage to health is minimal no matter\n          what the American narcotics Department\n	they say well the damage to the damage\n             to health from from addiction is...\n            but it has done things to your soul no\n           uh read one of the early authorities\n          like DeQuincy for one thing he would\n	never live to be so old unless\n	he had taken opium  and I\n	think he would say the same as \n	as I say that he well I will not argue\n\n[...cut-up text continues...]`
+      },
+      {
+        id: 6,
+        title: "CRYPTO / POST-SCRIPT",
+        tags: ["crypto", "data", "list"],
+        content: `post-script\n\n	cold and rainy night trudged through \n	the streets, ward of the chill...\n	He was on his way to now addicted \n        steps muffled by the\n	Inside grip of a her-induced need...\nHaines Kiana Wrangell\n Kipnuk Akutan Buckland \nAnchorage Akiachak Wainwright King Copper Cove \nNenana Quinhagak Atqasuk  Kasigluk Galena Point Sand \n	Palmer Scammon Two Tok Mekoryuk  Talkeetna \n	Nightmute Huslia Lay Hydaburg \n\n	(University of Alaska Fairbanks. \n	“By Alaska standards worst it was\n	reminiscent of 2004 \n	pretty horrible ” he said.\n\n[...continues with model ranks and views data...]`
+      },
+      {
+        id: 7,
+        title: "TIME TRAVEL COROLLARY",
+        tags: ["complete", "narrative", "abraxas"],
+        content: `The flickering gaslight cast long, dancing shadows across the cluttered study of Professor Alistair Hedvig. \nHe hunched over a worn, leather-bound volume, its pages filled with cryptic symbols and faded ink. \nHis brow furrowed in concentration, tracing the intricate glyphs with a trembling finger.\n"Abraxas," he whispered, the name echoing through the silence of the room.\n It was a word that sent shivers down his spine, a word he'd encountered in dusty tomes and whispered \nconfessions of the fringe occult societies.\n\n...Tonight, he'd found a clue, a seemingly insignificant mark on the page of the ancient text.\n It was an image, barely visible, of a serpent coiled around a rooster’s head, its tail ending in a whip.\n It was the sigil of Abraxas, a symbol that was whispered to hold unimaginable power.`
+      },
+      {
+        id: 8,
+        title: "CODA WITHOUT RHYME",
+        tags: ["final", "erotic", "dream"],
+        content: `places. of unexpected most the in bloomed that rose wild a tamed,\nbe not could that force a society, of constraints  against rebellion \n	was love Their imagination of whispers the in on lived out\n	tale Inky's and Emilee as crimson, and gold of hues with sky\n	the painting rose, sun As lifetime.  last would that \n	love  erotic, and poetic both was that love  space, and time \n	transcended \n	silk desire. Alaska came with every touch		    \n	that love a found had they passion, their depths \n	 in For extinguished. be never flame with, \n	reckoned to force was love their knew they arms, \n	other's each in wrapped sleep,  off drifted they`
+      }
+    ];
+
+    // --- LOGIC ---
+    const puterModelSelect = document.getElementById('puter-model-select');
+    const AVAILABLE_PUTER_MODELS = [
+      { value: 'deepseek-chat', label: 'DeepSeek Chat (Recommended)' },
+      { value: 'google/gemma-2-9b-it:free', label: 'Gemma 2 9B' },
+      { value: 'gpt-3.5-turbo', label: 'GPT-3.5' }
+    ];
+
+    let entries = RAW_DATA;
+    let currentIndex = 0;
+    let currentFilter = 'all';
+    let searchQuery = '';
+    let isSearching = false;
+    let viewableEntries = entries;
+
+    function init() {
+      AVAILABLE_PUTER_MODELS.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.value;
+        opt.textContent = m.label;
+        puterModelSelect.appendChild(opt);
+      });
+      showEntry(0);
+      buildIndex();
+      document.getElementById('content').style.display = 'block';
+    }
+
+    function performSearch(query) {
+      searchQuery = query.toLowerCase();
+      isSearching = !!query;
+      if (isSearching) {
+        viewableEntries = entries.filter(e => {
+            const text = (e.title + ' ' + e.content + ' ' + e.tags.join(' ')).toLowerCase();
+            const terms = query.toLowerCase().split(' ').filter(t => t);
+            return terms.every(term => text.includes(term));
+        });
+      } else {
+        applyFilter(currentFilter);
+      }
+      document.getElementById('searchStats').textContent = isSearching ? `${viewableEntries.length} HITS` : '';
+      if (viewableEntries.length > 0) {
+        currentIndex = 0;
+        showEntry(viewableEntries[0].id);
+      } else {
+        document.getElementById('content').innerHTML = '<span class="text-red-600 font-bold glitch-text">DATA_NOT_FOUND</span>';
+        document.getElementById('entryInfo').innerHTML = "";
+      }
+      buildIndex();
+    }
+
+    function applyFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        if(btn.dataset.filter === filter) btn.classList.add('active');
+        else btn.classList.remove('active');
+      });
+      viewableEntries = filter === 'all' ? entries : entries.filter(e => e.tags.includes(filter));
+      if(viewableEntries.length > 0) showEntry(viewableEntries[0].id);
+      buildIndex();
+    }
+
+    function showEntry(id) {
+        const entry = entries.find(e => e.id === id);
+        if(!entry) return;
+        let contentHtml = entry.content;
+        
+        if(isSearching && searchQuery) {
+            const terms = searchQuery.split(' ').filter(t => t);
+            terms.forEach(term => {
+                const regex = new RegExp(`(${term})`, 'gi');
+                contentHtml = contentHtml.replace(regex, '<span class="highlight">$1</span>');
+            });
+        }
+        document.getElementById('content').innerHTML = contentHtml;
+        const tagSpans = entry.tags.map(t => `<span class="text-red-800 ml-2">#${t}</span>`).join('');
+        document.getElementById('entryInfo').innerHTML = `
+            <span class="text-red-600 font-bold">:: ${entry.title}</span> 
+            ${tagSpans}
+            <span class="float-right text-[10px] text-[#333]">LEN:${entry.content.length}</span>
+        `;
+    }
+
+    function buildIndex() {
+        const nav = document.getElementById('dateNav');
+        nav.innerHTML = '';
+        viewableEntries.forEach(e => {
+            const div = document.createElement('div');
+            div.className = 'p-2 border-b border-[#222] cursor-pointer hover:bg-[#111] hover:text-red-500 text-[10px] font-mono truncate transition-colors text-gray-500';
+            div.textContent = `> ${e.title}`;
+            div.onclick = () => {
+                showEntry(e.id);
+                document.getElementById('dateNav').classList.add('hidden');
+            };
+            nav.appendChild(div);
+        });
+    }
+
+    document.getElementById('searchBox').addEventListener('input', (e) => performSearch(e.target.value));
+    
+    document.getElementById('prevBtn').addEventListener('click', () => {
+        const currentId = entries.find(x => x.content === document.getElementById('content').textContent.replace(/<[^>]*>/g, ''))?.id || 0;
+        const idx = viewableEntries.findIndex(e => e.id === currentId);
+        if(idx > 0) showEntry(viewableEntries[idx-1].id);
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+        const currentId = entries.find(x => x.content === document.getElementById('content').textContent.replace(/<[^>]*>/g, ''))?.id || 0;
+        const idx = viewableEntries.findIndex(e => e.id === currentId);
+        if(idx < viewableEntries.length - 1) showEntry(viewableEntries[idx+1].id);
+    });
+
+    document.getElementById('randomBtn').addEventListener('click', () => {
+        const r = viewableEntries[Math.floor(Math.random() * viewableEntries.length)];
+        showEntry(r.id);
+    });
+
+    document.getElementById('indexBtn').addEventListener('click', () => {
+        document.getElementById('dateNav').classList.toggle('hidden');
+    });
+
+    document.getElementById('filterBtns').addEventListener('click', (e) => {
+        if(e.target.classList.contains('filter-btn')) applyFilter(e.target.dataset.filter);
+    });
+
+    // AI Logic
+    document.getElementById('askAiBtn').addEventListener('click', async () => {
+        const btn = document.getElementById('askAiBtn');
+        const output = document.getElementById('aiResponse');
+        const input = document.getElementById('aiInput').value;
+        const currentText = document.getElementById('content').textContent;
+        const model = document.getElementById('puter-model-select').value;
+        if(!input) return;
+        btn.disabled = true;
+        btn.textContent = "TRANSMITTING...";
+        output.textContent = "ESTABLISHING CONNECTION...";
+        const prompt = `CONTEXT: You are 'Inky', an archival AI for 'Baked Alaska'. Analyze fragment:\n"${currentText.substring(0, 1500)}..."\nQUERY: ${input}\nSTYLE: Cryptic, Literary, Cyberpunk.`;
+        try {
+            const response = await puter.ai.chat(prompt, { model: model });
+            output.textContent = response;
+        } catch (err) {
+            output.textContent = "CONNECTION_FAILURE: " + err.message;
+        }
+        btn.disabled = false;
+        btn.textContent = "EXECUTE";
+    });
+
+    init();
+  </script>
+</body>
+</html>
