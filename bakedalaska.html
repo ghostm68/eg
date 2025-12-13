@@ -3511,7 +3511,9 @@ window.addEventListener('DOMContentLoaded', function() {
             const chapterTitle = document.createElement('h2');
             chapterTitle.className = 'chapter-title';
             chapterTitle.setAttribute('data-final-title', chapter.title);
-            chapterTitle.textContent = randomChar().repeat(chapter.title.length);
+            
+            // FIX: Generates random mixed characters instead of repeating one char
+            chapterTitle.textContent = Array.from({length: chapter.title.length}, () => randomChar()).join('');
             
             const monitor = createQuantumMonitor(chapter.number);
             
@@ -3536,7 +3538,7 @@ window.addEventListener('DOMContentLoaded', function() {
             indexList.appendChild(idxLink);
         });
         
-        // Add footer
+        // Add footer logic (kept same as before)
         const footer = document.createElement('div');
         footer.className = 'novel-footer';
         footer.innerHTML = `
@@ -3553,30 +3555,28 @@ window.addEventListener('DOMContentLoaded', function() {
                 <a href="https://wordstar.nexus/displaywriter">Display Writer</a>
             </div>
           <div class="footer-column">
-    <h4>Novel Stats</h4>
-    <div class="footer-stats">
-        <span>Word Count: ${novelData.wordCount.toLocaleString()}</span>
-        <span>Chapters: 29 (24 sections)</span>
-        <span>Author: ${novelData.author}</span>
-    </div>
-</div>
-        `;
+            <h4>Novel Stats</h4>
+            <div class="footer-stats">
+                <span>Word Count: ${novelData.wordCount.toLocaleString()}</span>
+                <span>Chapters: 29 (24 sections)</span>
+                <span>Author: ${novelData.author}</span>
+            </div>
+        </div>`;
         content.appendChild(footer);
         
-        // Setup intersection observer for animations
         setupScrollAnimations();
     }
     
-    function setupScrollAnimations() {
+  function setupScrollAnimations() {
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting && !entry.target.classList.contains('animated')) {
                     entry.target.classList.add('animated');
                     
+                    // FIX: Actually calls the scramble function now
                     if (entry.target.classList.contains('chapter-title')) {
                         const finalTitle = entry.target.getAttribute('data-final-title');
-                        // Use a simpler unscramble here if needed, or call existing function
-                        // Assuming scrambleText is defined in scope or inline
+                        scrambleText(entry.target, finalTitle, 1500);
                     }
                     
                     if (entry.target.classList.contains('quantum-monitor')) {
