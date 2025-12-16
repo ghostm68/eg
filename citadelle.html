@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WORDSTAR.NEXUS | G-NEXUS 9 TERMINAL</title>
+
+    <!-- WORDSTAR META -->
+    <meta name="description" content="G-NEXUS 9. Accessing the Google Monolith. 9-Model Gemini/Gemma Parallel Processing Unit.">
+    <meta name="keywords" content="WordStar, Gemini 1.5, Gemma 2, AI Comparison, Google AI, Puter.js, Brutalist, Retro Computing">
+    <meta name="author" content="WORDSTAR.NEXUS">
+    <meta name="theme-color" content="#001030">
+
+    <!-- FONT: Courier Prime for that Daisy Wheel look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Puter SDK -->
+    <script src="https://js.puter.com/v2"></script>
+    
+    <style>
+        :root {
+            /* WordStar / DOS Palette */
+            --ws-blue: #001030;       /* Deep Mainframe Blue */
+            --ws-cyan: #00FFFF;       /* Active Text */
+            --ws-yellow: #FFFF00;     /* Highlights/Headers */
+            --ws-white: #E0E0E0;      /* Body Text */
+            --ws-grey: #556677;       /* Borders */
+            --ws-alert: #FF3333;      /* Errors */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier Prime', 'Courier New', monospace;
+            background: var(--ws-blue);
+            color: var(--ws-white);
+            padding: 0;
+            line-height: 1.3;
+            overflow-x: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* WORDSTAR STATUS LINE (Fixed Top) */
+        .status-line {
+            background: var(--ws-white);
+            color: var(--ws-blue);
+            padding: 4px 15px;
+            font-weight: bold;
+            font-size: 14px;
+            border-bottom: 2px solid var(--ws-grey);
+            display: flex;
+            justify-content: space-between;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            z-index: 100;
+        }
+
+        .status-left span { margin-right: 20px; }
+        
+        /* MAIN CONTAINER */
+        .container {
+            flex: 1;
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        /* HEADER AREA */
+        header {
+            border-bottom: 2px double var(--ws-cyan);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 32px;
+            color: var(--ws-yellow);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        .subtitle {
+            color: var(--ws-cyan);
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        /* INPUT AREA */
+        .input-section {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--ws-grey);
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: stretch;
+        }
+
+        #prompt-input {
+            flex: 1;
+            background: #000;
+            border: 1px solid var(--ws-cyan);
+            color: var(--ws-cyan);
+            font-family: 'Courier Prime', monospace;
+            font-size: 16px;
+            padding: 10px;
+            resize: none;
+            outline: none;
+            height: 60px;
+        }
+
+        #prompt-input::placeholder { color: #005555; }
+
+        #run-button {
+            width: 150px;
+            background: var(--ws-cyan);
+            color: var(--ws-blue);
+            border: 2px solid var(--ws-white);
+            font-family: 'Courier Prime', monospace;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px #000;
+            transition: transform 0.1s;
+        }
+
+        #run-button:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px #000;
+        }
+        
+        #run-button:disabled {
+            background: var(--ws-grey);
+            cursor: wait;
+        }
+
+        /* THE 3x3 GRID */
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 10px;
+            flex: 1;
+            min-height: 0; /* Important for flex scrolling */
+        }
+
+        .model-box {
+            background: #000510;
+            border: 1px solid var(--ws-grey);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            min-height: 200px; /* Backup height */
+        }
+
+        .model-header {
+            background: var(--ws-blue);
+            border-bottom: 1px solid var(--ws-cyan);
+            color: var(--ws-yellow);
+            padding: 5px 10px;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .model-meta {
+            font-size: 10px;
+            color: var(--ws-cyan);
+            opacity: 0.7;
+        }
+
+        .model-output {
+            padding: 10px;
+            font-size: 12px;
+            color: var(--ws-white);
+            flex: 1;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            scrollbar-width: thin;
+            scrollbar-color: var(--ws-cyan) var(--ws-blue);
+        }
+
+        /* BLINKING BLOCK CURSOR ANIMATION */
+        .cursor-block {
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            background: var(--ws-cyan);
+            animation: blink 1s step-end infinite;
+            vertical-align: middle;
+            margin-left: 2px;
+        }
+        
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* FOOTER / SYSTEM STATUS */
+        .system-footer {
+            margin-top: 10px;
+            border-top: 1px solid var(--ws-grey);
+            padding-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--ws-cyan);
+        }
+
+        /* DAEMON (Replaces AIM Buddy) */
+        .daemon-box {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 260px;
+            background: var(--ws-blue);
+            border: 2px solid var(--ws-white);
+            box-shadow: 6px 6px 0px #000;
+            z-index: 999;
+            font-family: 'Courier Prime', monospace;
+        }
+
+        .daemon-header {
+            background: var(--ws-white);
+            color: var(--ws-blue);
+            padding: 5px;
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .daemon-content {
+            padding: 10px;
+            height: 100px;
+            overflow-y: auto;
+            font-size: 12px;
+            border-bottom: 1px solid var(--ws-grey);
+        }
+
+        .daemon-actions {
+            display: flex;
+        }
+
+        .daemon-btn {
+            flex: 1;
+            background: var(--ws-blue);
+            color: var(--ws-yellow);
+            border: none;
+            border-right: 1px solid var(--ws-grey);
+            padding: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+        
+        .daemon-btn:hover { background: #002050; }
+        .daemon-btn:last-child { border-right: none; }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .models-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .models-grid { grid-template-columns: 1fr; }
+            .status-line { font-size: 10px; }
+            h1 { font-size: 24px; }
+            .daemon-box { width: 200px; bottom: 10px; right: 10px; }
+        }
+
+        /* Loading State */
+        .generating { color: var(--ws-cyan); }
+    </style>
+</head>
+<body>
+
+    <!-- WORDSTAR STATUS BAR -->
+    <div class="status-line">
+        <div class="status-left">
+            <span>C:NEXUS.WS</span>
+            <span>P01 L01 C01</span>
+            <span>INSERT ON</span>
+        </div>
+        <div class="status-right">
+            <span>MEM: 640K</span>
+            <span>GOOGLE_CLSTR: CONNECTED</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>WORDSTAR<span style="color:var(--ws-white);">.NEXUS</span></h1>
+            <div class="subtitle">G-NEXUS 9 // PARALLEL PROCESSING UNIT</div>
+        </header>
+
+        <div class="input-section">
+            <textarea id="prompt-input" placeholder="ENTER QUERY SEQUENCE..."></textarea>
+            <button id="run-button">EXECUTE</button>
+        </div>
+
+        <div class="models-grid">
+            <!-- 1. GEMINI 1.5 PRO -->
+            <div class="model-box">
+                <div class="model-header">
+                    <span>GEMINI 1.5 PRO</span>
+                    <span class="model-meta">FLAGS:HIGH</span>
+                </div>
+                <div class="model-output" id="out-1"></div>
+            </div>
+
+            <!-- 2. GEMINI 1.5 FLASH -->
+            <div class="model-box">
+                <div class="model-header">
+                    <span>GEMINI 1.5 FLASH</span>
+                    <span class="model-meta">FLAGS:SPEED</span>
+                </div>
+                <div class="model-output" id="out-2"></div>
+            </div>
+
+            <!-- 3. GEMMA 2 27B -->
+            <div class="model-box">
+                <div class="model-header">
+                    <span>GEMMA 2 27B</span>
+                    <span class="model-meta">WGHT:HEAVY</span>
+                </div>
+                <div class="model-output" id="out-3"></div>
+            </div>
+
+            <!-- 4. GEMMA 2 9B -->
+            <div class="model-box">
+                <div class="model-header">
+                    <span>GEMMA 2 9B</span>
+                    <span class="model-meta">WGHT:STD</span>
+                </div>
+                <div class="model-output" id="out-4"></div>
+            </div>
+
+            <!-- 5. GEMINI 1.0 PRO -->
+            <div class="model-box">
+                <div class="model-header">
+                    <span>GEMINI 1.0 PRO</span>
+                    <span class="model-meta">LEGACY:TRUE</span>
+                </div>
+                <div class="model-output" id="out-5"></div>
+            </div>
+
+            <!-- 6. CODEGEMMA 7B -->
+            <div class="model-box">
+                <div class="model-header">
+                    <span>CODEGEMMA 7B</span>
+                    <span class="model-meta">SPEC:DEV</span>
+                </div>
+                <div class="model-output" id="out-6"></div>
+            </div>
+
+            <!-- 7. GEMMA 7B (v1) -->
+            <div class="model-box">
+                <div class="model-header">
+                    <span>GEMMA 7B V1</span>
+                    <span class="model-meta">ARCH:OLD</span>
+                </div>
+                <div class="model-output" id="out-7"></div>
+            </div>
+
+            <!-- 8. GEMMA 2 2B -->
+            <div class="model-box">
+                <div class="model-header">
+                    <span>GEMMA 2 2B</span>
+                    <span class="model-meta">NODE:EDGE</span>
+                </div>
+                <div class="model-output" id="out-8"></div>
+            </div>
+
+            <!-- 9. FLASH 8B (EXPERIMENTAL) -->
+            <div class="model-box">
+                <div class="model-header">
+                    <span>FLASH 1.5 8B</span>
+                    <span class="model-meta">EXP:TRUE</span>
+                </div>
+                <div class="model-output" id="out-9"></div>
+            </div>
+        </div>
+
+        <div class="system-footer">
+            <span>© 2025 WORDSTAR.NEXUS | INKREALM</span>
+            <span>SYSTEM READY</span>
+        </div>
+    </div>
+
+    <!-- SYSTEM DAEMON -->
+    <div class="daemon-box">
+        <div class="daemon-header">SYSTEM DAEMON</div>
+        <div class="daemon-content" id="daemon-log">
+            > SYSTEM BOOT...<br>
+            > 9 CORES DETECTED...<br>
+            > WAITING FOR INPUT_
+        </div>
+        <div class="daemon-actions">
+            <button class="daemon-btn" onclick="saveLog()">SAVE.LOG</button>
+            <button class="daemon-btn" onclick="clearAll()">CLR.SCR</button>
+        </div>
+    </div>
+
+    <script>
+        // THE GOOGLE 9 LINEUP
+        // Note: We use specific strings. Puter usually handles these well.
+        // If a specific string fails, we catch the error in the box.
+        const models = [
+            { id: 1, name: 'google/gemini-1.5-pro', label: 'GEMINI 1.5 PRO' },
+            { id: 2, name: 'google/gemini-1.5-flash', label: 'GEMINI 1.5 FLASH' },
+            { id: 3, name: 'google/gemma-2-27b-it', label: 'GEMMA 2 27B' },
+            { id: 4, name: 'google/gemma-2-9b-it', label: 'GEMMA 2 9B' },
+            { id: 5, name: 'google/gemini-pro', label: 'GEMINI 1.0 PRO' },
+            { id: 6, name: 'google/codegemma-7b-it', label: 'CODEGEMMA 7B' },
+            { id: 7, name: 'google/gemma-7b-it', label: 'GEMMA 7B v1' },
+            { id: 8, name: 'google/gemma-2-2b-it', label: 'GEMMA 2 2B' },
+            { id: 9, name: 'google/gemini-1.5-flash-8b', label: 'FLASH 8B EXP' }
+        ];
+
+        const btn = document.getElementById('run-button');
+        const daemonLog = document.getElementById('daemon-log');
+        let sessionData = {};
+
+        function log(msg) {
+            daemonLog.innerHTML += `> ${msg}<br>`;
+            daemonLog.scrollTop = daemonLog.scrollHeight;
+        }
+
+        // Main Execution
+        btn.addEventListener('click', async () => {
+            const prompt = document.getElementById('prompt-input').value.trim();
+            if(!prompt) return log("ERR: EMPTY INPUT");
+
+            btn.disabled = true;
+            btn.textContent = "PROCESSING";
+            log("INITIATING BATCH PROCESS...");
+            
+            // Clear screens
+            models.forEach(m => document.getElementById(`out-${m.id}`).innerHTML = '<span class="generating">_</span>');
+
+            sessionData = { prompt: prompt, timestamp: new Date(), results: [] };
+
+            const promises = models.map(model => runModel(model, prompt));
+            await Promise.all(promises);
+
+            btn.disabled = false;
+            btn.textContent = "EXECUTE";
+            log("BATCH COMPLETE.");
+        });
+
+        async function runModel(model, prompt) {
+            const outDiv = document.getElementById(`out-${model.id}`);
+            let textBuffer = "";
+            
+            try {
+                // Remove cursor temporarily
+                outDiv.innerHTML = "";
+                
+                // Fallback for CodeGemma if specific model fails, use Gemma 7b with coding prompt
+                let modelName = model.name;
+                
+                const stream = await puter.ai.chat(prompt, {
+                    model: modelName,
+                    stream: true
+                });
+
+                for await (const chunk of stream) {
+                    if (chunk.text) {
+                        textBuffer += chunk.text;
+                        // Simple typewriter update (add block cursor)
+                        outDiv.innerHTML = textBuffer + '<span class="cursor-block"></span>';
+                        // Auto scroll
+                        outDiv.scrollTop = outDiv.scrollHeight;
+                    }
+                }
+                
+                // Finalize (remove cursor)
+                outDiv.innerHTML = textBuffer;
+                sessionData.results.push({ model: model.label, text: textBuffer });
+                
+            } catch (err) {
+                outDiv.innerHTML = `<span style="color:var(--ws-alert)">ERR: ${err.message}</span>`;
+                // If 404/Invalid, sometimes helpful to try a generic fallback
+                log(`FAIL: ${model.label}`);
+            }
+        }
+
+        function clearAll() {
+            models.forEach(m => document.getElementById(`out-${m.id}`).textContent = "");
+            document.getElementById('prompt-input').value = "";
+            log("BUFFER CLEARED");
+        }
+
+        function saveLog() {
+            if(!sessionData.results || sessionData.results.length === 0) return log("ERR: NO DATA");
+            
+            let content = `WORDSTAR.NEXUS LOG // ${sessionData.timestamp}\n`;
+            content += `QUERY: ${sessionData.prompt}\n`;
+            content += "========================================\n\n";
+            
+            sessionData.results.forEach(res => {
+                content += `[ ${res.model} ]\n----------------------------------------\n${res.text}\n\n`;
+            });
+            
+            const blob = new Blob([content], {type: 'text/plain'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'NEXUS9_LOG.TXT';
+            a.click();
+            log("FILE SAVED TO DISK");
+        }
+
+        // Enter key shortcut
+        document.getElementById('prompt-input').addEventListener('keydown', (e) => {
+            if(e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                btn.click();
+            }
+        });
+    </script>
+</body>
+</html>
