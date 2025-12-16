@@ -420,15 +420,22 @@
         // Note: We use specific strings. Puter usually handles these well.
         // If a specific string fails, we catch the error in the box.
         const models = [
+            // The Heavy Hitters
             { id: 1, name: 'google/gemini-1.5-pro', label: 'GEMINI 1.5 PRO' },
-            { id: 2, name: 'google/gemini-1.5-flash', label: 'GEMINI 1.5 FLASH' },
-            { id: 3, name: 'google/gemma-2-27b-it', label: 'GEMMA 2 27B' },
-            { id: 4, name: 'google/gemma-2-9b-it', label: 'GEMMA 2 9B' },
+            { id: 2, name: 'google/gemma-2-27b-it', label: 'GEMMA 2 27B' }, // Proven working
+            { id: 3, name: 'google/gemini-1.5-flash', label: 'GEMINI 1.5 FLASH' },
+            
+            // The Mid-Range
+            { id: 4, name: 'google/gemma-2-9b-it', label: 'GEMMA 2 9B' },   // Proven working
             { id: 5, name: 'google/gemini-pro', label: 'GEMINI 1.0 PRO' },
-            { id: 6, name: 'google/codegemma-7b-it', label: 'CODEGEMMA 7B' },
-            { id: 7, name: 'google/gemma-7b-it', label: 'GEMMA 7B v1' },
-            { id: 8, name: 'google/gemma-2-2b-it', label: 'GEMMA 2 2B' },
-            { id: 9, name: 'google/gemini-1.5-flash-8b', label: 'FLASH 8B EXP' }
+            { id: 6, name: 'google/gemma-7b-it', label: 'GEMMA 7B' },
+            
+            // The Light/Experimental (Fallbacks included)
+            { id: 7, name: 'google/gemma-2-2b-it', label: 'GEMMA 2 2B' },
+            // If CodeGemma fails, we fallback to standard 9b with a system prompt context later
+            { id: 8, name: 'google/codegemma-7b-it', label: 'CODEGEMMA 7B' }, 
+            // Swapped 8b (unstable) for a reliable backup or duplicate flash for speed comparison
+            { id: 9, name: 'google/gemini-1.5-flash', label: 'FLASH (REDUX)' } 
         ];
 
         const btn = document.getElementById('run-button');
@@ -441,13 +448,44 @@
         }
 
         // Main Execution
-        btn.addEventListener('click', async () => {
+       btn.addEventListener('click', async () => {
             const prompt = document.getElementById('prompt-input').value.trim();
             if(!prompt) return log("ERR: EMPTY INPUT");
 
             btn.disabled = true;
-            btn.textContent = "PROCESSING";
-            log("INITIATING BATCH PROCESS...");
+            btn.textContent = "PROCESSING...";
+            
+            // 1. Reset Session
+            sessionData = { prompt: prompt, timestamp: new Date(), results: [] };
+            
+            // 2. Clear screens
+            models.forEach(m => {
+                document.getElementById(`out-${m.id}`).innerHTML = '<span class="generating">WAITING_FOR_SIGNAL...</span>';
+            });
+
+            log("INITIATING RIPPLE FIRE SEQUENCE...");
+
+            // 3. Launch models one by one with a delay
+            const promises = [];
+            
+            for (const model of models) {
+                // Update status to show it's activating
+                document.getElementById(`out-${model.id}`).innerHTML = '<span class="generating">CONNECTING...</span>';
+                
+                // Add to the promise stack
+                promises.push(runModel(model, prompt));
+                
+                // THE FIX: Wait 500ms before triggering the next one
+                // This prevents browser connection saturation
+                await new Promise(r => setTimeout(r, 500));
+            }
+
+            await Promise.all(promises);
+
+            btn.disabled = false;
+            btn.textContent = "EXECUTE";
+            log("CITADELLE SYNC COMPLETE.");
+        });
             
             // Clear screens
             models.forEach(m => document.getElementById(`out-${m.id}`).innerHTML = '<span class="generating">_</span>');
