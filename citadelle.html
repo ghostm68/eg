@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CITADELLE.HERMES | NOUS EDITION</title>
+    <title>CITADELLE.NOVA | AMAZON GRID</title>
 
-    <meta name="description" content="CITADELLE.HERMES. 9-Model Array. Hermes 405B, DeepHermes, Claude Opus.">
+    <meta name="description" content="CITADELLE.NOVA. 9-Model Array. Amazon Nova Premier, GPT-4o, Hermes 3.">
     <meta name="robots" content="noindex">
     <meta name="theme-color" content="#001030">
 
@@ -23,7 +23,7 @@
             --ws-white: #E0E0E0;      
             --ws-grey: #556677;       
             --ws-alert: #FF3333;      
-            --ws-orange: #FF9900; /* New color for Hermes/Nous */
+            --ws-purple: #DDA0DD; /* Nova / Amazon Color */
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -32,10 +32,12 @@
             font-family: 'Courier Prime', monospace;
             background: var(--ws-blue);
             color: var(--ws-white);
-            height: 100vh;
+            /* SCROLL ENABLED: Min-height allows scrolling */
+            min-height: 100vh;
+            overflow-y: scroll;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            padding-bottom: 40px; /* Space for footer */
         }
 
         .status-line {
@@ -49,19 +51,20 @@
             justify-content: space-between;
             text-transform: uppercase;
             letter-spacing: 1px;
-            z-index: 100;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
 
         .container {
-            flex: 1;
             max-width: 100%;
-            padding: 15px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
         }
 
         header {
-            border-bottom: 2px double var(--ws-orange);
+            border-bottom: 2px double var(--ws-purple);
             padding-bottom: 10px;
             margin-bottom: 15px;
             display: flex;
@@ -79,7 +82,7 @@
         }
 
         .subtitle {
-            color: var(--ws-orange);
+            color: var(--ws-purple);
             font-size: 12px;
             font-weight: bold;
         }
@@ -87,8 +90,14 @@
         .input-section {
             display: flex;
             gap: 10px;
-            margin-bottom: 15px;
-            height: 50px;
+            margin-bottom: 20px;
+            height: 60px;
+            position: sticky;
+            top: 35px; /* Stick below status line */
+            z-index: 900;
+            background: var(--ws-blue);
+            padding: 10px 0;
+            border-bottom: 1px solid var(--ws-grey);
         }
 
         #prompt-input {
@@ -97,17 +106,17 @@
             border: 1px solid var(--ws-grey);
             color: var(--ws-cyan);
             font-family: 'Courier Prime', monospace;
-            font-size: 15px;
-            padding: 8px;
+            font-size: 16px;
+            padding: 10px;
             resize: none;
             outline: none;
         }
         
-        #prompt-input:focus { border-color: var(--ws-orange); }
+        #prompt-input:focus { border-color: var(--ws-purple); }
 
         #run-button {
             width: 140px;
-            background: var(--ws-orange);
+            background: var(--ws-purple);
             color: #000;
             border: 2px solid var(--ws-white);
             font-family: 'Courier Prime', monospace;
@@ -119,13 +128,11 @@
         
         #run-button:disabled { background: var(--ws-grey); cursor: not-allowed; }
 
+        /* THE GRID - NOW SCROLLABLE */
         .models-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            gap: 8px;
-            flex: 1;
-            min-height: 0;
+            gap: 12px;
         }
 
         .model-box {
@@ -133,15 +140,16 @@
             border: 1px solid var(--ws-grey);
             display: flex;
             flex-direction: column;
-            overflow: hidden;
             position: relative;
+            /* TALLER BOXES FOR BETTER READING */
+            height: 350px; 
         }
 
         .model-header {
             background: #0a1a2a;
             border-bottom: 1px solid var(--ws-grey);
             color: var(--ws-cyan);
-            padding: 4px 8px;
+            padding: 6px 10px;
             font-size: 11px;
             font-weight: bold;
             display: flex;
@@ -149,21 +157,21 @@
             align-items: center;
         }
 
+        /* Highlight Amazon Nova Models */
+        .nova-model .model-header { border-bottom: 1px solid var(--ws-purple); }
+        .nova-model .model-output { color: #E6E6FA; }
+
         .model-meta { color: var(--ws-yellow); opacity: 0.8; }
 
         .model-output {
-            padding: 8px;
-            font-size: 11px;
+            padding: 10px;
+            font-size: 12px;
             color: var(--ws-white);
             flex: 1;
             overflow-y: auto;
             white-space: pre-wrap;
-            line-height: 1.35;
+            line-height: 1.4;
         }
-
-        /* Highlight Nous/Reasoning models */
-        .nous-model .model-header { border-bottom-color: var(--ws-orange); }
-        .nous-model .model-output { color: #ffeebb; }
 
         .cursor-block {
             display: inline-block;
@@ -174,6 +182,7 @@
         }
         @keyframes blink { 50% { opacity: 0; } }
 
+        /* DAEMON LOG */
         .daemon-box {
             position: fixed;
             bottom: 20px;
@@ -218,32 +227,33 @@
         .daemon-btn:hover { background: #002050; }
 
         @media (max-width: 1024px) {
-            .models-grid { grid-template-columns: repeat(2, 1fr); overflow-y: auto; }
-            .model-box { min-height: 250px; }
+            .models-grid { grid-template-columns: repeat(2, 1fr); }
         }
-        @media (max-width: 600px) {
+        @media (max-width: 700px) {
             .models-grid { grid-template-columns: 1fr; }
+            .model-box { height: 300px; }
             .daemon-box { display: none; }
+            .input-section { position: static; }
         }
     </style>
 </head>
 <body>
 
     <div class="status-line">
-        <div>CITADELLE.HERMES // V.9.2</div>
-        <div>NOUS_GATEWAY: ACTIVE</div>
-        <div>STATUS: STABLE</div>
+        <div>CITADELLE.NOVA // V.9.3</div>
+        <div>AMAZON_LINK: ACTIVE</div>
+        <div>SCROLL: UNLOCKED</div>
     </div>
 
     <div class="container">
         <header>
             <div>
-                <h1>CITADELLE<span style="color:var(--ws-white);">.NOUS</span></h1>
-                <div class="subtitle">HERMES 3 / CLAUDE / DEEPSEEK ARRAY</div>
+                <h1>CITADELLE<span style="color:var(--ws-white);">.NOVA</span></h1>
+                <div class="subtitle">AMAZON PREMIER / HERMES / MISTRAL ARRAY</div>
             </div>
             <div style="text-align:right; font-size:10px; color:var(--ws-grey);">
-                <span style="color:var(--ws-orange)">●</span> REROUTED<br>
-                GOOGLE NODES: BYPASSED
+                <span style="color:var(--ws-purple)">●</span> AWS CONNECTED<br>
+                HYBRID FEDERATION
             </div>
         </header>
 
@@ -262,11 +272,11 @@
                 <div class="model-output" id="out-1"></div>
             </div>
 
-            <!-- 2. CLAUDE 3.5 SONNET -->
-            <div class="model-box">
+            <!-- 2. AMAZON NOVA PREMIER -->
+            <div class="model-box nova-model">
                 <div class="model-header">
-                    <span>CLAUDE 3.5 SONNET</span>
-                    <span class="model-meta">ANTHROPIC</span>
+                    <span>NOVA PREMIER</span>
+                    <span class="model-meta">AMZN:MAX</span>
                 </div>
                 <div class="model-output" id="out-2"></div>
             </div>
@@ -281,7 +291,7 @@
             </div>
 
             <!-- 4. DEEPHERMES 3 24B (Reasoning) -->
-            <div class="model-box nous-model">
+            <div class="model-box">
                 <div class="model-header">
                     <span>DEEPHERMES 3</span>
                     <span class="model-meta">NOUS:24B</span>
@@ -289,8 +299,8 @@
                 <div class="model-output" id="out-4"></div>
             </div>
 
-            <!-- 5. HERMES 3 405B (The Monster) -->
-            <div class="model-box nous-model">
+            <!-- 5. HERMES 3 405B -->
+            <div class="model-box">
                 <div class="model-header">
                     <span>HERMES 3 405B</span>
                     <span class="model-meta">LLAMA:MAX</span>
@@ -316,20 +326,20 @@
                 <div class="model-output" id="out-7"></div>
             </div>
 
-            <!-- 8. CLAUDE 3 OPUS -->
+            <!-- 8. GEMMA 2 27B -->
             <div class="model-box">
                 <div class="model-header">
-                    <span>CLAUDE 3 OPUS</span>
-                    <span class="model-meta">SLOW:HEAVY</span>
+                    <span>GEMMA 2 27B</span>
+                    <span class="model-meta">GOOG:OPEN</span>
                 </div>
                 <div class="model-output" id="out-8"></div>
             </div>
 
-            <!-- 9. GPT-4o MINI (Safety) -->
-            <div class="model-box">
+            <!-- 9. AMAZON NOVA PRO -->
+            <div class="model-box nova-model">
                 <div class="model-header">
-                    <span>GPT-4o MINI</span>
-                    <span class="model-meta">BACKUP:FAST</span>
+                    <span>NOVA PRO</span>
+                    <span class="model-meta">AMZN:PRO</span>
                 </div>
                 <div class="model-output" id="out-9"></div>
             </div>
@@ -339,8 +349,8 @@
     <div class="daemon-box">
         <div class="daemon-header">SYSTEM DAEMON</div>
         <div class="daemon-content" id="daemon-log">
-            > REROUTING...<br>
-            > NOUS RESEARCH LINKED...<br>
+            > NOVA LINKS DETECTED...<br>
+            > CLAUDE NODES OFFLINE...<br>
             > WAITING FOR QUERY_
         </div>
         <div class="daemon-actions">
@@ -350,20 +360,17 @@
     </div>
 
     <script>
-        // THE NOUS / HERMES / CLAUDE CONFIGURATION
+        // THE NOVA / HERMES HYBRID
         const models = [
             { id: 1, name: 'gpt-4o', label: 'GPT-4o' },
-            { id: 2, name: 'claude-3-5-sonnet', label: 'CLAUDE 3.5 SONNET' },
+            { id: 2, name: 'amazon/nova-premier-v1', label: 'NOVA PREMIER' },
             { id: 3, name: 'deepseek-chat', label: 'DEEPSEEK V3' },
-            // NOUS MODELS
             { id: 4, name: 'nousresearch/deephermes-3-mistral-24b-preview', label: 'DEEPHERMES 3' },
             { id: 5, name: 'nousresearch/hermes-3-llama-3.1-405b', label: 'HERMES 3 405B' },
-            // STABLE MID-RANGE
             { id: 6, name: 'moonshotai/kimi-k2', label: 'KIMI K2' },
             { id: 7, name: 'mistral-large-latest', label: 'MISTRAL LARGE' },
-            // HEAVY / BACKUP
-            { id: 8, name: 'claude-3-opus', label: 'CLAUDE 3 OPUS' },
-            { id: 9, name: 'gpt-4o-mini', label: 'GPT-4o MINI' }
+            { id: 8, name: 'google/gemma-2-27b-it', label: 'GEMMA 2 27B' },
+            { id: 9, name: 'amazon/nova-pro-v1', label: 'NOVA PRO' }
         ];
 
         const btn = document.getElementById('run-button');
@@ -387,7 +394,7 @@
                 document.getElementById(`out-${m.id}`).innerHTML = '<span style="color:var(--ws-grey)">WAITING_SIGNAL...</span>';
             });
 
-            log("INITIATING HERMES PROTOCOL...");
+            log("INITIATING NOVA PROTOCOL...");
 
             const promises = [];
             
@@ -397,8 +404,8 @@
                 
                 promises.push(runModel(model, prompt));
                 
-                // 500ms Delay to keep browser happy
-                await new Promise(r => setTimeout(r, 500));
+                // 600ms Delay - slightly longer for heavy models like Nova Premier
+                await new Promise(r => setTimeout(r, 600));
             }
 
             await Promise.all(promises);
@@ -415,9 +422,6 @@
             try {
                 outDiv.innerHTML = "";
                 
-                // Note: Claude Opus and Hermes 405B are SLOW to start.
-                // We increase the timeout/expectancy mentally.
-                
                 const stream = await puter.ai.chat(prompt, {
                     model: model.name,
                     stream: true
@@ -427,6 +431,7 @@
                     if (chunk.text) {
                         textBuffer += chunk.text;
                         outDiv.innerHTML = textBuffer + '<span class="cursor-block"></span>';
+                        // Auto-scroll the specific box
                         outDiv.scrollTop = outDiv.scrollHeight;
                     }
                 }
@@ -435,8 +440,7 @@
                 sessionData.results.push({ model: model.label, text: textBuffer });
                 
             } catch (err) {
-                // Formatting error for easy reading
-                outDiv.innerHTML = `<span class="error">DOWNSTREAM_ERROR</span><br><span style="font-size:9px;color:#666">${err.message}</span>`;
+                outDiv.innerHTML = `<span class="error">CONNECTION_REFUSED</span><br><span style="font-size:9px;color:#666">${err.message}</span>`;
                 log(`FAIL: ${model.label}`);
             }
         }
@@ -450,7 +454,7 @@
         function saveLog() {
             if(!sessionData.results || sessionData.results.length === 0) return log("ERR: NO DATA");
             
-            let content = `CITADELLE.HERMES LOG // ${sessionData.timestamp}\n`;
+            let content = `CITADELLE.NOVA LOG // ${sessionData.timestamp}\n`;
             content += `QUERY: ${sessionData.prompt}\n`;
             content += "========================================\n\n";
             
@@ -462,7 +466,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'HERMES_LOG.TXT';
+            a.download = 'NOVA_LOG.TXT';
             a.click();
             log("FILE SAVED TO DISK");
         }
