@@ -416,11 +416,10 @@
     </div>
 
 <script>
-    // --- THE POLLINATIONS TRIAD ---
-    // Pollinations doesn't need complex IDs, just the model slug
+    // --- THE POLLINATIONS TRIAD (REVISED) ---
     const models = [
         { id: 1, name: 'openai', label: 'GPT-4o (OPENAI)' },
-        { id: 2, name: 'llama', label: 'LLAMA 3.1 (META)' },
+        { id: 2, name: 'searchgpt', label: 'WEB SEARCH (GPT-4)' }, // Usually more reliable than Llama
         { id: 3, name: 'mistral', label: 'MISTRAL (FRANCE)' }
     ];
 
@@ -500,8 +499,8 @@
                 
                 promises.push(runModel(model, prompt));
                 
-                // 300ms Delay
-                await new Promise(r => setTimeout(r, 300));
+                // 1000ms Delay - Increased to give Pollinations API more breathing room
+                await new Promise(r => setTimeout(r, 1000));
             }
 
             await Promise.all(promises);
@@ -520,35 +519,30 @@
             outDiv.style.color = '#E0E0E0';
             outDiv.innerHTML = "";
             
-            // Pollinations API Endpoint (No Key Needed)
-            // Note: We use GET for simplicity, but POST is better for long prompts.
-            // Using GET here for maximum compatibility.
             const encodedPrompt = encodeURIComponent(prompt);
-            const url = `https://text.pollinations.ai/${encodedPrompt}?model=${model.name}`;
+            // Random cache buster to prevent sticky errors
+            const cacheBuster = Math.floor(Math.random() * 100000);
+            const url = `https://text.pollinations.ai/${encodedPrompt}?model=${model.name}&seed=${cacheBuster}`;
 
             const response = await fetch(url);
             
             if (!response.ok) {
-                throw new Error(`Server ${response.status}`);
+                throw new Error(`Server Status ${response.status}`);
             }
 
             const text = await response.text();
 
-            // Typewriter effect (since Pollinations returns full text, not a stream)
+            // Typewriter effect
             let i = 0;
-            const speed = 10; // Fast typing
-            
-            // We create a promise to handle the typing so the main loop waits
             await new Promise(resolve => {
                 function typeStream() {
                     if (i < text.length) {
                         outDiv.innerHTML = text.substring(0, i+1) + '<span class="cursor-block"></span>';
                         outDiv.scrollTop = outDiv.scrollHeight;
-                        i++;
-                        // Randomize speed slightly for "human/machine" feel
+                        i += 3; // Speed up typing
                         setTimeout(typeStream, Math.random() * 20); 
                     } else {
-                        outDiv.innerHTML = text; // Remove cursor at end
+                        outDiv.innerHTML = text; 
                         resolve();
                     }
                 }
@@ -559,7 +553,14 @@
             updateQuantumState();
             
         } catch (err) {
-            outDiv.innerHTML = `<span class="error" style="color:#ff3333">LINK_BROKEN</span><br><span style="font-size:9px;color:#666">${err.message}</span>`;
+            // ERROR HANDLING UPGRADE: Now writes to screen AND the log file
+            const errorMsg = `[CONNECTION LOST: ${err.message}]`;
+            outDiv.innerHTML = `<span class="error" style="color:#ff3333">${errorMsg}</span>`;
+            
+            // IMPORTANT: Push the error to the session data so it saves to the text file
+            sessionData.results.push({ model: model.label, text: errorMsg });
+            updateQuantumState();
+            
             log(`FAIL: ${model.label}`);
         }
     }
@@ -585,7 +586,6 @@
         }
     }
 
-    // Restore on Load
     window.addEventListener('load', () => {
         const saved = localStorage.getItem('citadelle_session');
         if (saved) {
@@ -599,7 +599,6 @@
         }
     });
 
-    // Materialize Button (Mobile Fixed)
     if (saveBtn) {
         saveBtn.addEventListener('click', () => {
             if(!sessionData.results || sessionData.results.length === 0) {
@@ -641,7 +640,6 @@
         });
     }
 
-    // Enter Key
     if (promptInput) {
         promptInput.addEventListener('keydown', (e) => {
             if(e.key === 'Enter' && !e.shiftKey) {
