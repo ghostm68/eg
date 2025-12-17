@@ -415,239 +415,634 @@
         </div>
     </div>
 
-<script>
-    // --- THE POLLINATIONS TRIAD (REVISED) ---
-    const models = [
-        { id: 1, name: 'openai', label: 'GPT-4o (OPENAI)' },
-        { id: 2, name: 'searchgpt', label: 'WEB SEARCH (GPT-4)' }, // Usually more reliable than Llama
-        { id: 3, name: 'mistral', label: 'MISTRAL (FRANCE)' }
-    ];
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CITADELLE.CORE | PROTOTYPE GRID</title>
 
-    // DOM Elements
-    const btn = document.getElementById('run-button');
-    const daemonLog = document.getElementById('daemon-log');
-    const promptInput = document.getElementById('prompt-input');
-    const quantumStatus = document.getElementById('quantum-status');
-    const saveBtn = document.getElementById('save-btn');
+    <meta name="description" content="CITADELLE.CORE. 3-Model Prototype Array. Gemini 2.0, Grok 4, Devstral.">
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#001030">
 
-    let sessionData = {}; 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- PUTER.JS IS BACK -->
+    <script src="https://js.puter.com/v2"></script>
+    
+    <style>
+        :root {
+            --ws-blue: #001030;       
+            --ws-cyan: #00FFFF;       
+            --ws-yellow: #FFFF00;     
+            --ws-white: #E0E0E0;      
+            --ws-grey: #556677;       
+            --ws-alert: #FF3333;      
+            --ws-purple: #DDA0DD; /* Gemini */
+            --ws-orange: #FF4500; /* Grok (Red-Orange) */
+            --ws-green: #00FF33;  /* Mistral */
+        }
 
-    // Helper: Log to Daemon
-    function log(msg) {
-        if (!daemonLog) return;
-        daemonLog.innerHTML += `> ${msg}<br>`;
-        daemonLog.scrollTop = daemonLog.scrollHeight;
-    }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    // --- MAIN CLICK LISTENER ---
-    if (btn) {
-        btn.addEventListener('click', async () => {
-            const prompt = promptInput.value.trim();
+        body {
+            font-family: 'Courier Prime', monospace;
+            background: var(--ws-blue);
+            color: var(--ws-white);
+            min-height: 100vh;
+            overflow-y: scroll;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 40px;
+        }
+
+        /* 1. STATUS LINE */
+        .status-line {
+            background: var(--ws-white);
+            color: var(--ws-blue);
+            padding: 4px 15px;
+            font-weight: bold;
+            font-size: 13px;
+            border-bottom: 2px solid var(--ws-grey);
+            display: flex;
+            justify-content: space-between;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        /* 2. THE GLITCH DECK */
+        .glitch-deck {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #000510;
+            border: 1px solid var(--ws-grey);
+            padding: 10px;
+            margin-bottom: 20px;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .deck-left, .deck-right {
+            flex: 1;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+        .deck-right { text-align: right; }
+        .deck-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .sys-text { color: var(--ws-yellow); font-weight: bold; margin-bottom: 5px; }
+        .sys-sub { color: var(--ws-green); }
+        
+        .monitor-video {
+            width: 180px;
+            height: auto;
+            border: 2px solid var(--ws-cyan);
+            filter: contrast(1.2) brightness(0.9);
+            mix-blend-mode: screen; 
+            animation: quantum-pulse 9s infinite;
+        }
+
+        @keyframes quantum-pulse {
+            0%   { border-color: var(--ws-cyan); box-shadow: 0 0 5px var(--ws-cyan); }
+            45%  { border-color: var(--ws-purple); box-shadow: 0 0 15px var(--ws-purple); opacity: 0.8; }
+            50%  { border-color: var(--ws-white); opacity: 1; }
+            55%  { border-color: var(--ws-purple); box-shadow: 0 0 15px var(--ws-purple); opacity: 0.8; }
+            100% { border-color: var(--ws-cyan); box-shadow: 0 0 5px var(--ws-cyan); }
+        }
+
+        .maika-status {
+            font-size: 9px;
+            color: var(--ws-cyan);
+            font-style: italic;
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .glitch-link {
+            color: var(--ws-cyan);
+            text-decoration: none;
+            background: rgba(0, 255, 255, 0.1);
+            padding: 2px 5px;
+            border: 1px solid var(--ws-grey);
+            display: inline-block;
+            transition: all 0.2s;
+            margin-top: 4px;
+        }
+        .glitch-link:hover { background: var(--ws-cyan); color: #000; }
+
+        /* 3. HEADER */
+        header {
+            border-bottom: 2px double var(--ws-cyan);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        h1 {
+            font-size: 32px;
+            color: var(--ws-yellow);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 2px 2px 0px #000;
+            line-height: 1;
+        }
+        .subtitle { color: var(--ws-cyan); font-size: 12px; font-weight: bold; margin-top: 5px; }
+
+        /* 4. INPUT */
+        .input-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            height: 60px;
+            position: sticky;
+            top: 35px; 
+            z-index: 900;
+            background: var(--ws-blue);
+            padding: 10px 0;
+            border-bottom: 1px solid var(--ws-grey);
+        }
+
+        #prompt-input {
+            flex: 1;
+            background: #000810;
+            border: 1px solid var(--ws-grey);
+            color: var(--ws-cyan);
+            font-family: 'Courier Prime', monospace;
+            font-size: 16px;
+            padding: 10px;
+            resize: none;
+            outline: none;
+        }
+        #prompt-input:focus { border-color: var(--ws-cyan); }
+
+        #run-button {
+            width: 150px;
+            background: var(--ws-cyan);
+            color: #000;
+            border: 2px solid var(--ws-white);
+            font-family: 'Courier Prime', monospace;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px #000;
+        }
+        #run-button:disabled { background: var(--ws-grey); cursor: not-allowed; }
+
+        /* 5. GRID */
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            flex: 1;
+        }
+
+        .model-box {
+            background: #000510;
+            border: 1px solid var(--ws-grey);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            min-height: 60vh;
+        }
+
+        /* Border Colors */
+        .box-gemini { border-color: var(--ws-purple); }
+        .box-grok { border-color: var(--ws-orange); }
+        .box-mistral { border-color: var(--ws-green); }
+
+        .model-header {
+            background: #0a1a2a;
+            border-bottom: 1px solid var(--ws-grey);
+            color: var(--ws-cyan);
+            padding: 8px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .model-output {
+            padding: 15px;
+            font-size: 13px;
+            color: var(--ws-white);
+            flex: 1;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+
+        .cursor-block {
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            background: var(--ws-cyan);
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* 6. DAEMON */
+        .daemon-box {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 280px;
+            background: var(--ws-blue);
+            border: 2px solid var(--ws-white);
+            box-shadow: 8px 8px 0px #000;
+            z-index: 999;
+            font-size: 12px;
+        }
+
+        .daemon-header {
+            background: var(--ws-white);
+            color: var(--ws-blue);
+            padding: 4px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .daemon-content {
+            padding: 10px;
+            height: 100px;
+            overflow-y: auto;
+            border-bottom: 1px solid var(--ws-grey);
+        }
+        .daemon-actions { display: flex; }
+        .daemon-btn {
+            flex: 1;
+            background: var(--ws-blue);
+            color: var(--ws-yellow);
+            border: none;
+            border-right: 1px solid var(--ws-grey);
+            padding: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            text-transform: uppercase;
+            font-size: 11px;
+        }
+        .daemon-btn:hover { background: #002050; }
+
+        @media (max-width: 800px) {
+            .models-grid { grid-template-columns: 1fr; }
+            .model-box { min-height: 400px; }
+            .glitch-deck { flex-direction: column; gap: 10px; text-align: center; }
+            .deck-right { text-align: center; }
+            .daemon-box {
+                position: relative;
+                width: 100%;
+                bottom: auto; 
+                right: auto;
+                margin-top: 20px;
+            }
+            .input-section { position: static; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="status-line">
+        <div class="status-left">
+            <span>C:NEXUS.WS</span>
+            <span>PROTOTYPE CONFIG</span>
+        </div>
+        <div class="status-right">
+            <span>MEM: 640K</span>
+            <span>FREE_TIER: LOCKED</span>
+        </div>
+    </div>
+
+    <div class="container">
+        
+        <div class="glitch-deck">
+            <div class="deck-left">
+                <div class="sys-text">CITADELLE.CORE // V.BETA</div>
+                <div class="sys-sub">GATEWAY: UNMETERED</div>
+            </div>
             
-            // 1. GHOST PROTOCOL
-            if (prompt.toUpperCase() === 'INKREALM' || prompt.toUpperCase() === 'MAIKA') {
-                log(">> [QUANTUM INK GLITCH INIT]...");
-                const glitchText = `
-                |ψ⟩ = α|INKREALM⟩ + β|INKY⟩ + γ|MAIKA_ARCHETYPE⟩
-                [RECOVERY: Ontology leak 73%]
-                ...Inky waters drag back...
-                [ERROR: REALITY MATRIX COMPROMISED]
-                `;
-                const vid = document.querySelector('.monitor-video');
-                if(vid) vid.style.filter = "hue-rotate(90deg) contrast(200%)";
+            <div class="deck-center">
+                <video src="https://raw.githubusercontent.com/ghostm68/pantheon/main/citadelle_20251216_185307209.mp4" 
+                       muted loop playsinline autoplay 
+                       class="monitor-video"></video>
+                <div style="margin-top: 4px; font-size: 10px; color: var(--ws-green);">
+                    C●NNECTED SINCE 16.12.2025
+                </div>
+                <div id="quantum-status" class="maika-status">
+                    QUANTUM CIRCUIT: READY (MAIKA FLAUNTS IT...)
+                </div>
+            </div>
+            
+            <div class="deck-right">
+                <div class="sys-text">STATUS: ONLINE</div>
+                <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">
+                    <a href="https://wordstar.nexus/dejavuglitches" class="glitch-link">[ dejavuglitches ]</a>
+                    <a href="https://wordstar.nexus/" class="glitch-link">[ native page ]</a>
+                </div>
+            </div>
+        </div>
+
+        <header>
+            <div>
+                <h1>CITADELLE<span style="color:var(--ws-white);">.CORE</span></h1>
+                <div class="subtitle">PROTOTYPE TRIAD // GEMINI • GROK • DEVSTRAL</div>
+            </div>
+            <div style="text-align:right; font-size:10px; color:var(--ws-grey);">
+                <span style="color:var(--ws-cyan)">●</span> EXPERIMENTAL LINK<br>
+                ZERO_COST: TRUE
+            </div>
+        </header>
+
+        <div class="input-section">
+            <textarea id="prompt-input" placeholder="ENTER QUERY SEQUENCE..."></textarea>
+            <button id="run-button">EXECUTE</button>
+        </div>
+
+        <!-- THE PROTOTYPE GRID -->
+        <div class="models-grid">
+            <!-- 1. GEMINI 2.0 FLASH (Purple) -->
+            <div class="model-box box-gemini">
+                <div class="model-header">
+                    <span>GEMINI 2.0 FLASH</span>
+                    <span class="model-meta">GOOG:EXP</span>
+                </div>
+                <div class="model-output" id="out-1"></div>
+            </div>
+
+            <!-- 2. GROK 4 FAST (Orange) -->
+            <div class="model-box box-grok">
+                <div class="model-header">
+                    <span>GROK 4 FAST</span>
+                    <span class="model-meta">XAI:REBEL</span>
+                </div>
+                <div class="model-output" id="out-2"></div>
+            </div>
+
+            <!-- 3. DEVSTRAL (Green) -->
+            <div class="model-box box-mistral">
+                <div class="model-header">
+                    <span>DEVSTRAL 2512</span>
+                    <span class="model-meta">MIST:BETA</span>
+                </div>
+                <div class="model-output" id="out-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DAEMON -->
+    <div class="daemon-box">
+        <div class="daemon-header">SYSTEM DAEMON</div>
+        <div class="daemon-content" id="daemon-log">
+            > PROTOTYPE INIT...<br>
+            > EXPERIMENTAL NODES...<br>
+            > QUANTUM SAVE: ACTIVE<br>
+            > WAITING FOR QUERY_
+        </div>
+        <div class="daemon-actions">
+            <button class="daemon-btn" id="save-btn">MATERIALIZE.LOG</button>
+            <button class="daemon-btn" onclick="clearAll()">CLR.SCR</button>
+        </div>
+    </div>
+
+    <script>
+        // --- THE FREE PROTOTYPE LINEUP ---
+        const models = [
+            { id: 1, name: 'google/gemini-2.0-flash-exp:free', label: 'GEMINI 2.0 FLASH' },
+            { id: 2, name: 'x-ai/grok-4-fast:free', label: 'GROK 4 FAST' },
+            { id: 3, name: 'mistralai/devstral-2512:free', label: 'DEVSTRAL 2512' } 
+            // Fallback for #3 if Devstral fails: 'mistralai/mistral-nemo:free'
+        ];
+
+        // DOM Elements
+        const btn = document.getElementById('run-button');
+        const daemonLog = document.getElementById('daemon-log');
+        const promptInput = document.getElementById('prompt-input');
+        const quantumStatus = document.getElementById('quantum-status');
+        const saveBtn = document.getElementById('save-btn');
+
+        let sessionData = {}; 
+
+        function log(msg) {
+            if(!daemonLog) return;
+            daemonLog.innerHTML += `> ${msg}<br>`;
+            daemonLog.scrollTop = daemonLog.scrollHeight;
+        }
+
+        // --- MAIN LISTENER ---
+        if (btn) {
+            btn.addEventListener('click', async () => {
+                const prompt = promptInput.value.trim();
                 
-                let i = 0;
-                const speed = 30;
-                function typeWriter() {
-                    if (i < glitchText.length) {
-                        const char = glitchText.charAt(i);
-                        daemonLog.innerHTML += char === '\n' ? '<br>' : char;
-                        daemonLog.scrollTop = daemonLog.scrollHeight;
-                        i++;
-                        setTimeout(typeWriter, speed);
+                // 1. GHOST PROTOCOL
+                if (prompt.toUpperCase() === 'INKREALM' || prompt.toUpperCase() === 'MAIKA') {
+                    log(">> [QUANTUM INK GLITCH INIT]...");
+                    const glitchText = `
+                    |ψ⟩ = α|INKREALM⟩ + β|INKY⟩ + γ|MAIKA_ARCHETYPE⟩
+                    [RECOVERY: Ontology leak 73%]
+                    ...Inky waters drag back...
+                    [ERROR: REALITY MATRIX COMPROMISED]
+                    `;
+                    const vid = document.querySelector('.monitor-video');
+                    if(vid) vid.style.filter = "hue-rotate(90deg) contrast(200%)";
+                    
+                    let i = 0;
+                    const speed = 30;
+                    function typeWriter() {
+                        if (i < glitchText.length) {
+                            const char = glitchText.charAt(i);
+                            daemonLog.innerHTML += char === '\n' ? '<br>' : char;
+                            daemonLog.scrollTop = daemonLog.scrollHeight;
+                            i++;
+                            setTimeout(typeWriter, speed);
+                        }
+                    }
+                    typeWriter();
+                    return; 
+                }
+
+                // 2. STANDARD EXECUTION
+                if(!prompt) return log("ERR: EMPTY INPUT");
+
+                btn.disabled = true;
+                btn.textContent = "TRANSMITTING...";
+                
+                sessionData = { prompt: prompt, timestamp: new Date(), results: [] };
+                
+                models.forEach(m => {
+                    const el = document.getElementById(`out-${m.id}`);
+                    if(el) el.innerHTML = '<span style="color:var(--ws-grey)">WAITING_SIGNAL...</span>';
+                });
+
+                log("PINGING EXPERIMENTAL NODES...");
+
+                const promises = [];
+                
+                for (const model of models) {
+                    const outDiv = document.getElementById(`out-${model.id}`);
+                    if(outDiv) {
+                        outDiv.innerHTML = '<span class="generating">ESTABLISHING LINK...</span>';
+                        outDiv.style.color = '#00FF33'; 
+                    }
+                    
+                    promises.push(runModel(model, prompt));
+                    
+                    await new Promise(r => setTimeout(r, 600));
+                }
+
+                await Promise.all(promises);
+
+                btn.disabled = false;
+                btn.textContent = "EXECUTE";
+                log("SEQUENCE COMPLETE.");
+            });
+        }
+
+        // --- PUTER ENGINE (BACK TO STREAMING) ---
+        async function runModel(model, prompt) {
+            const outDiv = document.getElementById(`out-${model.id}`);
+            if(!outDiv) return;
+
+            let textBuffer = "";
+            
+            try {
+                if (typeof puter === 'undefined') throw new Error("Puter.js not loaded");
+
+                outDiv.style.color = '#E0E0E0';
+                outDiv.innerHTML = "";
+                
+                const stream = await puter.ai.chat(prompt, {
+                    model: model.name,
+                    stream: true
+                });
+
+                for await (const chunk of stream) {
+                    if (chunk.text) {
+                        textBuffer += chunk.text;
+                        outDiv.innerHTML = textBuffer + '<span class="cursor-block"></span>';
+                        outDiv.scrollTop = outDiv.scrollHeight;
                     }
                 }
-                typeWriter();
-                return; 
+                
+                outDiv.innerHTML = textBuffer;
+                sessionData.results.push({ model: model.label, text: textBuffer });
+                updateQuantumState();
+                
+            } catch (err) {
+                const errMsg = `[LINK FAILED: ${err.message}]`;
+                outDiv.innerHTML = `<span class="error" style="color:#ff3333">${errMsg}</span>`;
+                sessionData.results.push({ model: model.label, text: errMsg });
+                updateQuantumState();
+                log(`FAIL: ${model.label}`);
             }
+        }
 
-            // 2. STANDARD EXECUTION
-            if(!prompt) return log("ERR: EMPTY INPUT");
-
-            btn.disabled = true;
-            btn.textContent = "TRANSMITTING...";
-            
-            // Reset Session
-            sessionData = { prompt: prompt, timestamp: new Date(), results: [] };
-            
-            // Clear Outputs
+        function clearAll() {
             models.forEach(m => {
                 const el = document.getElementById(`out-${m.id}`);
-                if (el) el.innerHTML = '<span style="color:var(--ws-grey)">WAITING_SIGNAL...</span>';
+                if (el) el.textContent = "";
             });
-
-            log("POLLINATING NEURAL NET...");
-
-            const promises = [];
-            
-            for (const model of models) {
-                const outDiv = document.getElementById(`out-${model.id}`);
-                if (outDiv) {
-                    outDiv.innerHTML = '<span class="generating">ESTABLISHING LINK...</span>';
-                    outDiv.style.color = '#00FF33'; 
-                }
-                
-                promises.push(runModel(model, prompt));
-                
-                // 1000ms Delay - Increased to give Pollinations API more breathing room
-                await new Promise(r => setTimeout(r, 1000));
-            }
-
-            await Promise.all(promises);
-
-            btn.disabled = false;
-            btn.textContent = "EXECUTE";
-            log("SEQUENCE COMPLETE.");
-        });
-    }
-
-    // --- NEW ENGINE (POLLINATIONS.AI) ---
-    async function runModel(model, prompt) {
-        const outDiv = document.getElementById(`out-${model.id}`);
-        
-        try {
-            outDiv.style.color = '#E0E0E0';
-            outDiv.innerHTML = "";
-            
-            const encodedPrompt = encodeURIComponent(prompt);
-            // Random cache buster to prevent sticky errors
-            const cacheBuster = Math.floor(Math.random() * 100000);
-            const url = `https://text.pollinations.ai/${encodedPrompt}?model=${model.name}&seed=${cacheBuster}`;
-
-            const response = await fetch(url);
-            
-            if (!response.ok) {
-                throw new Error(`Server Status ${response.status}`);
-            }
-
-            const text = await response.text();
-
-            // Typewriter effect
-            let i = 0;
-            await new Promise(resolve => {
-                function typeStream() {
-                    if (i < text.length) {
-                        outDiv.innerHTML = text.substring(0, i+1) + '<span class="cursor-block"></span>';
-                        outDiv.scrollTop = outDiv.scrollHeight;
-                        i += 3; // Speed up typing
-                        setTimeout(typeStream, Math.random() * 20); 
-                    } else {
-                        outDiv.innerHTML = text; 
-                        resolve();
-                    }
-                }
-                typeStream();
-            });
-            
-            sessionData.results.push({ model: model.label, text: text });
-            updateQuantumState();
-            
-        } catch (err) {
-            // ERROR HANDLING UPGRADE: Now writes to screen AND the log file
-            const errorMsg = `[CONNECTION LOST: ${err.message}]`;
-            outDiv.innerHTML = `<span class="error" style="color:#ff3333">${errorMsg}</span>`;
-            
-            // IMPORTANT: Push the error to the session data so it saves to the text file
-            sessionData.results.push({ model: model.label, text: errorMsg });
-            updateQuantumState();
-            
-            log(`FAIL: ${model.label}`);
+            if (promptInput) promptInput.value = "";
+            log("BUFFER CLEARED");
         }
-    }
 
-    function clearAll() {
-        models.forEach(m => {
-            const el = document.getElementById(`out-${m.id}`);
-            if (el) el.textContent = "";
-        });
-        if (promptInput) promptInput.value = "";
-        log("BUFFER CLEARED");
-    }
-
-    // --- QUANTUM / MATERIALIZE LOGIC ---
-
-    function updateQuantumState() {
-        if(sessionData && sessionData.results) {
-            localStorage.setItem('citadelle_session', JSON.stringify(sessionData));
-            if(quantumStatus) {
-                quantumStatus.style.color = '#00FF33';
-                setTimeout(() => { quantumStatus.style.color = 'var(--ws-cyan)'; }, 500);
-            }
-        }
-    }
-
-    window.addEventListener('load', () => {
-        const saved = localStorage.getItem('citadelle_session');
-        if (saved) {
-            try {
-                sessionData = JSON.parse(saved);
-                if (sessionData.results && sessionData.results.length > 0) {
-                    log(`>> RECOVERED ${sessionData.results.length} NODES FROM QUANTUM STATE`);
-                    if(quantumStatus) quantumStatus.textContent = 'QUANTUM CIRCUIT: RESTORED';
-                }
-            } catch (e) { console.error('Quantum corruption'); }
-        }
-    });
-
-    if (saveBtn) {
-        saveBtn.addEventListener('click', () => {
-            if(!sessionData.results || sessionData.results.length === 0) {
-                log("ERR: QUANTUM VOID - NO DATA");
-                return;
-            }
-
-            if(quantumStatus) {
-                quantumStatus.textContent = 'MATERIALIZING...';
-                quantumStatus.style.color = '#00FFFF';
-            }
-
-            let content = `CITADELLE.TRIAD LOG // ${sessionData.timestamp}\n`;
-            content += `QUERY: ${sessionData.prompt}\n`;
-            content += "========================================\n\n";
-            
-            sessionData.results.forEach(res => {
-                content += `[ ${res.model} ]\n----------------------------------------\n${res.text}\n\n`;
-            });
-            
-            const blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `CITADELLE_${Date.now()}.txt`;
-            document.body.appendChild(a);
-            a.click(); 
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            log(">> LOG MATERIALIZED TO DISK");
-
-            setTimeout(() => {
+        // --- QUANTUM SAVE ---
+        function updateQuantumState() {
+            if(sessionData && sessionData.results) {
+                localStorage.setItem('citadelle_session', JSON.stringify(sessionData));
                 if(quantumStatus) {
-                    quantumStatus.textContent = 'QUANTUM CIRCUIT: READY (MAIKA FLAUNTS IT...)';
-                    quantumStatus.style.color = 'var(--ws-cyan)';
+                    quantumStatus.style.color = '#00FF33';
+                    setTimeout(() => { quantumStatus.style.color = 'var(--ws-cyan)'; }, 500);
                 }
-            }, 1000);
-        });
-    }
+            }
+        }
 
-    if (promptInput) {
-        promptInput.addEventListener('keydown', (e) => {
-            if(e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                btn.click();
+        window.addEventListener('load', () => {
+            const saved = localStorage.getItem('citadelle_session');
+            if (saved) {
+                try {
+                    sessionData = JSON.parse(saved);
+                    if (sessionData.results && sessionData.results.length > 0) {
+                        log(`>> RECOVERED ${sessionData.results.length} NODES FROM QUANTUM STATE`);
+                        if(quantumStatus) quantumStatus.textContent = 'QUANTUM CIRCUIT: RESTORED';
+                    }
+                } catch (e) { console.error('Quantum corruption'); }
             }
         });
-    }
-</script>
+
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                if(!sessionData.results || sessionData.results.length === 0) {
+                    log("ERR: QUANTUM VOID - NO DATA");
+                    return;
+                }
+
+                if(quantumStatus) {
+                    quantumStatus.textContent = 'MATERIALIZING...';
+                    quantumStatus.style.color = '#00FFFF';
+                }
+
+                let content = `CITADELLE.PROTOTYPE LOG // ${sessionData.timestamp}\n`;
+                content += `QUERY: ${sessionData.prompt}\n`;
+                content += "========================================\n\n";
+                
+                sessionData.results.forEach(res => {
+                    content += `[ ${res.model} ]\n----------------------------------------\n${res.text}\n\n`;
+                });
+                
+                const blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `CITADELLE_${Date.now()}.txt`;
+                document.body.appendChild(a);
+                a.click(); 
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                log(">> LOG MATERIALIZED TO DISK");
+
+                setTimeout(() => {
+                    if(quantumStatus) {
+                        quantumStatus.textContent = 'QUANTUM CIRCUIT: READY (MAIKA FLAUNTS IT...)';
+                        quantumStatus.style.color = 'var(--ws-cyan)';
+                    }
+                }, 1000);
+            });
+        }
+
+        if (promptInput) {
+            promptInput.addEventListener('keydown', (e) => {
+                if(e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    btn.click();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
 </body>
 </html>
