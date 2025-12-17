@@ -760,8 +760,10 @@
     });
 
     // Materialize Button Logic
+  // Materialize Button Logic (Mobile Fix)
     if (saveBtn) {
         saveBtn.addEventListener('click', () => {
+            // 1. Check for data
             if(!sessionData.results || sessionData.results.length === 0) {
                 log("ERR: QUANTUM VOID - NO DATA");
                 if(quantumStatus) {
@@ -775,39 +777,43 @@
                 return;
             }
 
+            // 2. Visual Feedback (Immediate)
             if(quantumStatus) {
                 quantumStatus.textContent = 'MATERIALIZING...';
                 quantumStatus.style.color = '#00FFFF';
             }
 
+            // 3. GENERATE & DOWNLOAD IMMEDIATELY (Critical for Mobile)
+            // We moved this OUT of the setTimeout
+            let content = `CITADELLE.CORE LOG // ${sessionData.timestamp}\n`;
+            content += `QUERY: ${sessionData.prompt}\n`;
+            content += "========================================\n\n";
+            
+            sessionData.results.forEach(res => {
+                content += `[ ${res.model} ]\n----------------------------------------\n${res.text}\n\n`;
+            });
+            
+            const blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `CITADELLE_${Date.now()}.txt`;
+            document.body.appendChild(a);
+            a.click(); // This now happens exactly when you tap!
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            log(">> LOG MATERIALIZED TO DISK");
+
+            // 4. Reset Status Text (Delayed for effect)
             setTimeout(() => {
-                let content = `CITADELLE.CORE LOG // ${sessionData.timestamp}\n`;
-                content += `QUERY: ${sessionData.prompt}\n`;
-                content += "========================================\n\n";
-                
-                sessionData.results.forEach(res => {
-                    content += `[ ${res.model} ]\n----------------------------------------\n${res.text}\n\n`;
-                });
-                
-                const blob = new Blob([content], {type: 'text/plain'});
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `CITADELLE_${Date.now()}.TXT`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                
-                log(">> LOG MATERIALIZED TO DISK");
-                
                 if(quantumStatus) {
                     quantumStatus.textContent = 'QUANTUM CIRCUIT: READY (MAIKA FLAUNTS IT...)';
                     quantumStatus.style.color = 'var(--ws-cyan)';
                 }
-            }, 800);
+            }, 1000); 
         }); 
-    } // <--- THIS WAS THE MISSING CLOSING BRACE IN PREVIOUS VERSIONS
+    }
 
     // Enter Key Handler
     if (promptInput) {
