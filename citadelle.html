@@ -597,158 +597,153 @@
     const btn = document.getElementById('run-button');
     const daemonLog = document.getElementById('daemon-log');
     const promptInput = document.getElementById('prompt-input');
-    const quantumStatus = document.getElementById('quantum-status'); // For the header status
-    const saveBtn = document.getElementById('save-btn'); // For the daemon button
+    const quantumStatus = document.getElementById('quantum-status');
+    const saveBtn = document.getElementById('save-btn');
 
     let sessionData = {}; // Stores the current query and results
 
     // --- HELPER FUNCTIONS ---
 
     function log(msg) {
+        if (!daemonLog) return;
         daemonLog.innerHTML += `> ${msg}<br>`;
         daemonLog.scrollTop = daemonLog.scrollHeight;
     }
 
     // --- MAIN EXECUTION LOGIC ---
-    btn.addEventListener('click', async () => {
-        const prompt = promptInput.value.trim();
-        
-        // --- 1. THE GHOST PROTOCOL (EASTER EGG) ---
-        if (prompt.toUpperCase() === 'INKREALM' || prompt.toUpperCase() === 'MAIKA') {
-            log(">> [QUANTUM INK GLITCH INIT]...");
+    if (btn) {
+        btn.addEventListener('click', async () => {
+            const prompt = promptInput.value.trim();
             
-            const glitchText = `
-            |ψ⟩ = α|INKREALM⟩ + β|INKY⟩ + γ|MAIKA_ARCHETYPE⟩
-            [RECOVERY: Ontology leak 73%]
-            ...Inky waters drag back...
-            [ERROR: REALITY MATRIX COMPROMISED]
-            `;
-            
-            // Glitch Visuals: Hue Rotate the Video
-            const vid = document.querySelector('.monitor-video');
-            if(vid) vid.style.filter = "hue-rotate(90deg) contrast(200%)";
-            
-            // Typewriter Logic into Daemon Log
-            let i = 0;
-            const speed = 30;
-            function typeWriter() {
-                if (i < glitchText.length) {
-                    const char = glitchText.charAt(i);
-                    daemonLog.innerHTML += char === '\n' ? '<br>' : char;
-                    daemonLog.scrollTop = daemonLog.scrollHeight;
-                    i++;
-                    setTimeout(typeWriter, speed);
+            // --- 1. THE GHOST PROTOCOL (EASTER EGG) ---
+            if (prompt.toUpperCase() === 'INKREALM' || prompt.toUpperCase() === 'MAIKA') {
+                log(">> [QUANTUM INK GLITCH INIT]...");
+                
+                const glitchText = `
+                |ψ⟩ = α|INKREALM⟩ + β|INKY⟩ + γ|MAIKA_ARCHETYPE⟩
+                [RECOVERY: Ontology leak 73%]
+                ...Inky waters drag back...
+                [ERROR: REALITY MATRIX COMPROMISED]
+                `;
+                
+                // Glitch Visuals
+                const vid = document.querySelector('.monitor-video');
+                if(vid) vid.style.filter = "hue-rotate(90deg) contrast(200%)";
+                
+                // Typewriter Logic
+                let i = 0;
+                const speed = 30;
+                function typeWriter() {
+                    if (i < glitchText.length) {
+                        const char = glitchText.charAt(i);
+                        daemonLog.innerHTML += char === '\n' ? '<br>' : char;
+                        daemonLog.scrollTop = daemonLog.scrollHeight;
+                        i++;
+                        setTimeout(typeWriter, speed);
+                    }
                 }
+                typeWriter();
+                return; // STOP HERE
             }
+            // -------------------------------------------
+
+            // --- 2. STANDARD AI EXECUTION ---
+            if(!prompt) return log("ERR: EMPTY INPUT");
+
+            btn.disabled = true;
+            btn.textContent = "PROCESSING...";
             
-            typeWriter();
-            return; // STOP HERE (Don't run the AIs)
-        }
-        // -------------------------------------------
+            // Reset Session
+            sessionData = { prompt: prompt, timestamp: new Date(), results: [] };
+            
+            // Clear Outputs
+            models.forEach(m => {
+                const el = document.getElementById(`out-${m.id}`);
+                if (el) el.innerHTML = '<span style="color:var(--ws-grey)">WAITING_SIGNAL...</span>';
+            });
 
-        // --- 2. STANDARD AI EXECUTION ---
-        if(!prompt) return log("ERR: EMPTY INPUT");
+            log("INITIATING NOVA PROTOCOL...");
 
-        btn.disabled = true;
-        btn.textContent = "PROCESSING...";
-        
-        // Reset Session Data
-        sessionData = { prompt: prompt, timestamp: new Date(), results: [] };
-        
-        // Clear Model Output Areas
-        models.forEach(m => {
-            document.getElementById(`out-${m.id}`).innerHTML = '<span style="color:var(--ws-grey)">WAITING_SIGNAL...</span>';
+            const promises = [];
+            
+            // Launch Models
+            for (const model of models) {
+                const outDiv = document.getElementById(`out-${model.id}`);
+                if (outDiv) {
+                    outDiv.innerHTML = '<span class="generating">CONNECTING...</span>';
+                    outDiv.style.color = '#00FF33';
+                }
+                
+                promises.push(runModel(model, prompt));
+                
+                // 500ms Delay to avoid traffic jams
+                await new Promise(r => setTimeout(r, 500));
+            }
+
+            await Promise.all(promises);
+
+            btn.disabled = false;
+            btn.textContent = "EXECUTE";
+            log("SEQUENCE COMPLETE.");
         });
+    }
 
-        log("INITIATING NOVA PROTOCOL...");
-
-        const promises = [];
-        
-        // Launch Models Sequentially (Ripple Fire)
-        for (const model of models) {
-            const outDiv = document.getElementById(`out-${model.id}`);
-            outDiv.innerHTML = '<span class="generating">CONNECTING...</span>';
-            outDiv.style.color = '#00FF33'; // Green connecting status
-            
-            promises.push(runModel(model, prompt));
-            
-            // 500ms Delay between initiating each model's request
-            await new Promise(r => setTimeout(r, 500));
-        }
-
-        // Wait for all models to finish
-        await Promise.all(promises);
-
-        // Re-enable button and reset text
-        btn.disabled = false;
-        btn.textContent = "EXECUTE";
-        log("SEQUENCE COMPLETE.");
-    });
-
-    // Function to run a single AI model and handle its output
+    // Function to run a single AI model
     async function runModel(model, prompt) {
         const outDiv = document.getElementById(`out-${model.id}`);
-        let textBuffer = ""; // Buffer for streaming text
+        if (!outDiv) return;
+
+        let textBuffer = "";
         
         try {
-            // Clear initial status message
+            outDiv.style.color = '#E0E0E0'; // Reset color
             outDiv.innerHTML = "";
             
-            // Call the Puter.ai API
+            // Check if Puter loaded
+            if (typeof puter === 'undefined') {
+                throw new Error("Puter.js not loaded");
+            }
+
             const stream = await puter.ai.chat(prompt, {
                 model: model.name,
                 stream: true
             });
 
-            // Process the streamed response
             for await (const chunk of stream) {
                 if (chunk.text) {
                     textBuffer += chunk.text;
-                    outDiv.innerHTML = textBuffer + '<span class="cursor-block"></span>'; // Add blinking cursor
-                    outDiv.scrollTop = outDiv.scrollHeight; // Auto-scroll
+                    outDiv.innerHTML = textBuffer + '<span class="cursor-block"></span>';
+                    outDiv.scrollTop = outDiv.scrollHeight;
                 }
             }
             
-            // Finalize output (remove cursor)
             outDiv.innerHTML = textBuffer;
-            
-            // Store result for saving
             sessionData.results.push({ model: model.label, text: textBuffer });
             
-            // *** AUTO-SAVE TO QUANTUM CLOUD ***
+            // AUTO-SAVE
             updateQuantumState(); 
             
         } catch (err) {
-            // Handle errors gracefully
             outDiv.innerHTML = `<span class="error">CONNECTION_REFUSED</span><br><span style="font-size:9px;color:#666">${err.message}</span>`;
             log(`FAIL: ${model.label}`);
         }
     }
 
-    // Function to clear the editor and logs
-    function clearAll() {
-        models.forEach(m => document.getElementById(`out-${m.id}`).textContent = "");
-        promptInput.value = "";
-        log("BUFFER CLEARED");
-    }
+    // --- QUANTUM / MATERIALIZE LOGIC ---
 
-    // --- QUANTUM / MATERIALIZE LOGIC (for the Daemon/Log Saving) ---
-
-    // 1. HELPER: Auto-Save to Browser Memory (The "Quantum Cloud")
     function updateQuantumState() {
         if(sessionData && sessionData.results) {
             localStorage.setItem('citadelle_session', JSON.stringify(sessionData));
-            // Subtle flash on status bar to show it saved
             if(quantumStatus) {
-                quantumStatus.style.color = '#00FF33'; // Flash Green
+                quantumStatus.style.color = '#00FF33';
                 setTimeout(() => {
-                    quantumStatus.style.color = 'var(--ws-cyan)'; // Return to Cyan
+                    quantumStatus.style.color = 'var(--ws-cyan)';
                 }, 500);
             }
         }
     }
 
-    // 2. RESTORE: Check memory on page load (Crash Recovery)
+    // Restore on Load
     window.addEventListener('load', () => {
         const saved = localStorage.getItem('citadelle_session');
         if (saved) {
@@ -758,70 +753,71 @@
                     log(`>> RECOVERED ${sessionData.results.length} NODES FROM QUANTUM STATE`);
                     if(quantumStatus) quantumStatus.textContent = 'QUANTUM CIRCUIT: RESTORED';
                 }
-            } catch (e) { console.error('Quantum corruption detected, clearing state.'); localStorage.removeItem('citadelle_session'); }
+            } catch (e) { console.error('Quantum corruption'); }
         } else {
              if(quantumStatus) quantumStatus.textContent = 'QUANTUM CIRCUIT: READY (MAIKA FLAUNTS IT...)';
         }
     });
 
-    // 3. MATERIALIZE (The Save Log Function)
-    saveBtn.addEventListener('click', () => {
-        if(!sessionData.results || sessionData.results.length === 0) {
-            log("ERR: QUANTUM VOID - NO DATA");
+    // Materialize Button Logic
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            if(!sessionData.results || sessionData.results.length === 0) {
+                log("ERR: QUANTUM VOID - NO DATA");
+                if(quantumStatus) {
+                    quantumStatus.textContent = 'VOID DETECTED';
+                    quantumStatus.style.color = '#FF3333';
+                    setTimeout(() => {
+                        quantumStatus.textContent = 'QUANTUM CIRCUIT: READY (MAIKA FLAUNTS IT...)';
+                        quantumStatus.style.color = 'var(--ws-cyan)';
+                    }, 2000);
+                }
+                return;
+            }
+
             if(quantumStatus) {
-                quantumStatus.textContent = 'VOID DETECTED';
-                quantumStatus.style.color = '#FF3333'; // Red
-                setTimeout(() => {
+                quantumStatus.textContent = 'MATERIALIZING...';
+                quantumStatus.style.color = '#00FFFF';
+            }
+
+            setTimeout(() => {
+                let content = `CITADELLE.CORE LOG // ${sessionData.timestamp}\n`;
+                content += `QUERY: ${sessionData.prompt}\n`;
+                content += "========================================\n\n";
+                
+                sessionData.results.forEach(res => {
+                    content += `[ ${res.model} ]\n----------------------------------------\n${res.text}\n\n`;
+                });
+                
+                const blob = new Blob([content], {type: 'text/plain'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `CITADELLE_${Date.now()}.TXT`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                log(">> LOG MATERIALIZED TO DISK");
+                
+                if(quantumStatus) {
                     quantumStatus.textContent = 'QUANTUM CIRCUIT: READY (MAIKA FLAUNTS IT...)';
                     quantumStatus.style.color = 'var(--ws-cyan)';
-                }, 2000);
-            }
-            return;
-        }
+                }
+            }, 800);
+        }); 
+    } // <--- THIS WAS THE MISSING CLOSING BRACE IN PREVIOUS VERSIONS
 
-        // Animation Effect for "Materializing"
-        if(quantumStatus) {
-            quantumStatus.textContent = 'MATERIALIZING...';
-            quantumStatus.style.color = '#00FFFF'; // Cyan
-        }
-
-        // Artificial delay for "System Feel"
-        setTimeout(() => {
-            let content = `CITADELLE.CORE LOG // ${sessionData.timestamp}\n`;
-            content += `QUERY: ${sessionData.prompt}\n`;
-            content += "========================================\n\n";
-            
-            sessionData.results.forEach(res => {
-                content += `[ ${res.model} ]\n----------------------------------------\n${res.text}\n\n`;
-            });
-            
-            const blob = new Blob([content], {type: 'text/plain'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `CITADELLE_${Date.now()}.TXT`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            log(">> LOG MATERIALIZED TO DISK");
-            
-            // Reset Status to Maika's message
-            if(quantumStatus) {
-                quantumStatus.textContent = 'QUANTUM CIRCUIT: READY (MAIKA FLAUNTS IT...)';
-                quantumStatus.style.color = 'var(--ws-cyan)';
+    // Enter Key Handler
+    if (promptInput) {
+        promptInput.addEventListener('keydown', (e) => {
+            if(e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                btn.click();
             }
-        }, 800); // Delay in milliseconds
+        });
     }
-    
-    // 4. INPUT HANDLER (Enter Key for Prompt)
-    promptInput.addEventListener('keydown', (e) => {
-        if(e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            btn.click();
-        }
-    });
 
 </script>
 </body>
