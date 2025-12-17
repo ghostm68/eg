@@ -368,32 +368,32 @@
 
         <!-- THE PROTOTYPE GRID -->
         <div class="models-grid">
-            <!-- 1. GEMINI 2.0 FLASH (Purple) -->
-            <div class="model-box box-gemini">
-                <div class="model-header">
-                    <span>DEEPSEEK</span>
-                    <span class="model-meta">CH:EXP</span>
-                </div>
-                <div class="model-output" id="out-1"></div>
-            </div>
+           <!-- 1. DEEPSEEK V3.1 (Purple) -->
+<div class="model-box box-gemini">
+    <div class="model-header">
+        <span>DEEPSEEK V3.1</span>
+        <span class="model-meta">CH:V3.1</span>
+    </div>
+    <div class="model-output" id="out-1"></div>
+</div>
 
-            <!-- 2. GROK 4 FAST (Orange) -->
-            <div class="model-box box-grok">
-                <div class="model-header">
-                    <span>HERMES</span>
-                    <span class="model-meta">REBEL</span>
-                </div>
-                <div class="model-output" id="out-2"></div>
-            </div>
+<!-- 2. NOVA 2 LITE (Orange) -->
+<div class="model-box box-grok">
+    <div class="model-header">
+        <span>NOVA 2 LITE</span>
+        <span class="model-meta">AWS:V1</span>
+    </div>
+    <div class="model-output" id="out-2"></div>
+</div>
 
-            <!-- 3. DEVSTRAL (Green) -->
-            <div class="model-box box-mistral">
-                <div class="model-header">
-                    <span>DEVSTRAL 2512</span>
-                    <span class="model-meta">MIST:alpha</span>
-                </div>
-                <div class="model-output" id="out-3"></div>
-            </div>
+<!-- 3. DEVSTRAL (Green) -->
+<div class="model-box box-mistral">
+    <div class="model-header">
+        <span>DEVSTRAL 2512</span>
+        <span class="model-meta">MIST:alpha</span>
+    </div>
+    <div class="model-output" id="out-3"></div>
+</div>
         </div>
     </div>
 
@@ -414,11 +414,11 @@
 
     <!-- Puter JS -->
     <script src="https://js.puter.com/v2/"></script>
-  <script>
+ <script>
     // --- THE FREE PROTOTYPE LINEUP ---
     const models = [
-        { id: 1, name: 'deepseek/deepseek-chat:free', label: 'DEEPSEEK' },
-        { id: 2, name: 'nousresearch/hermes-3-llama-3.1-405b:free', label: 'HERMES' },
+        { id: 1, name: 'deepseek/deepseek-chat-v3.1:free', label: 'DEEPSEEK' },
+        { id: 2, name: 'amazon/nova-2-lite-v1:free', label: 'NOVA 2 LITE' },
         { id: 3, name: 'mistralai/devstral-2512:free', label: 'DEVSTRAL 2512' } 
         // Fallback for #3 if Devstral fails: 'mistralai/mistral-nemo:free'
     ];
@@ -471,14 +471,17 @@
             }
 
             // 2. STANDARD EXECUTION
-            if(!prompt) return log("ERR: EMPTY INPUT");
+            if(!prompt) {
+                log("ERR: EMPTY INPUT");
+                return;
+            }
 
             btn.disabled = true;
             btn.textContent = "TRANSMITTING...";
             
             sessionData = { 
                 prompt: prompt, 
-                timestamp: new Date().toISOString(), 
+                timestamp: new Date().toLocaleString(), 
                 results: [] 
             };
             
@@ -501,7 +504,7 @@
                 promises.push(runModel(model, prompt));
                 
                 // Stagger requests
-                await new Promise(r => setTimeout(r, 600));
+                await new Promise(r => setTimeout(r, 500));
             }
 
             await Promise.allSettled(promises);
@@ -527,10 +530,14 @@
             outDiv.style.color = '#E0E0E0';
             outDiv.innerHTML = "";
             
+            log(`CONNECTING: ${model.label}`);
+            
             const stream = await puter.ai.chat(prompt, {
                 model: model.name,
                 stream: true
             });
+
+            log(`${model.label}: STREAMING...`);
 
             for await (const chunk of stream) {
                 if (chunk.text) {
@@ -543,10 +550,23 @@
             outDiv.innerHTML = textBuffer;
             sessionData.results.push({ model: model.label, text: textBuffer });
             updateQuantumState();
+            log(`${model.label}: COMPLETE`);
             
         } catch (err) {
             console.error(`Error with ${model.name}:`, err);
-            const errMsg = `[LINK FAILED: ${err.message}]`;
+            
+            // Try fallback for Devstral if it fails
+            if (model.name === 'mistralai/devstral-2512:free' && err.message.includes('not found') || err.message.includes('unavailable')) {
+                log(`${model.label}: TRYING FALLBACK...`);
+                try {
+                    const fallbackModel = { ...model, name: 'mistralai/mistral-nemo:free', label: 'MISTRAL NEMO' };
+                    return runModel(fallbackModel, prompt);
+                } catch (fallbackErr) {
+                    // Continue with error display
+                }
+            }
+            
+            const errMsg = `[LINK FAILED: ${err.message || 'Unknown error'}]`;
             outDiv.innerHTML = `<span style="color:var(--ws-alert)">${errMsg}</span>`;
             sessionData.results.push({ model: model.label, text: errMsg });
             updateQuantumState();
@@ -567,12 +587,16 @@
     // --- QUANTUM SAVE ---
     function updateQuantumState() {
         if(sessionData && sessionData.results) {
-            localStorage.setItem('citadelle_session', JSON.stringify(sessionData));
-            if(quantumStatus) {
-                quantumStatus.style.color = '#00FF33';
-                setTimeout(() => { 
-                    quantumStatus.style.color = 'var(--ws-cyan)'; 
-                }, 500);
+            try {
+                localStorage.setItem('citadelle_session', JSON.stringify(sessionData));
+                if(quantumStatus) {
+                    quantumStatus.style.color = '#00FF33';
+                    setTimeout(() => { 
+                        quantumStatus.style.color = 'var(--ws-cyan)'; 
+                    }, 500);
+                }
+            } catch (e) {
+                console.error('LocalStorage error:', e);
             }
         }
     }
@@ -647,9 +671,12 @@
         promptInput.addEventListener('keydown', (e) => {
             if(e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                if (btn) btn.click();
+                if (btn && !btn.disabled) btn.click();
             }
         });
+        
+        // Auto-focus on load
+        promptInput.focus();
     }
 </script>
 </body>
