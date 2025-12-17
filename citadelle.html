@@ -579,144 +579,166 @@
         </div>
     </div>
 
-    <script>
-        // THE STABLE LINEUP
-        const models = [
-            { id: 1, name: 'gpt-4o', label: 'GPT-4o' },
-            { id: 2, name: 'amazon/nova-premier-v1', label: 'NOVA PREMIER' },
-            { id: 3, name: 'deepseek-chat', label: 'DEEPSEEK V3' },
-            { id: 4, name: 'google/gemma-2-9b-it', label: 'GEMMA 2 9B' },
-            { id: 5, name: 'nousresearch/hermes-3-llama-3.1-405b', label: 'HERMES 3 405B' },
-            { id: 6, name: 'moonshotai/kimi-k2', label: 'KIMI K2' },
-            { id: 7, name: 'mistral-large-latest', label: 'MISTRAL LARGE' },
-            { id: 8, name: 'google/gemma-2-27b-it', label: 'GEMMA 2 27B' },
-            { id: 9, name: 'amazon/nova-pro-v1', label: 'NOVA PRO' }
-        ];
+  <script>
+    // THE STABLE LINEUP (FINAL CONFIGURATION)
+    const models = [
+        { id: 1, name: 'gpt-4o', label: 'GPT-4o' },
+        { id: 2, name: 'amazon/nova-premier-v1', label: 'NOVA PREMIER' },
+        { id: 3, name: 'deepseek-chat', label: 'DEEPSEEK V3' },
+        { id: 4, name: 'google/gemma-2-9b-it', label: 'GEMMA 2 9B' },
+        { id: 5, name: 'nousresearch/hermes-3-llama-3.1-405b', label: 'HERMES 3 405B' },
+        { id: 6, name: 'moonshotai/kimi-k2', label: 'KIMI K2' },
+        { id: 7, name: 'mistral-large-latest', label: 'MISTRAL LARGE' },
+        { id: 8, name: 'google/gemma-2-27b-it', label: 'GEMMA 2 27B' },
+        { id: 9, name: 'amazon/nova-pro-v1', label: 'NOVA PRO' }
+    ];
 
-        const btn = document.getElementById('run-button');
-        const daemonLog = document.getElementById('daemon-log');
-        let sessionData = {};
+    // DOM Elements
+    const btn = document.getElementById('run-button');
+    const daemonLog = document.getElementById('daemon-log');
+    const promptInput = document.getElementById('prompt-input');
+    const quantumStatus = document.getElementById('quantum-status'); // For the header status
+    const saveBtn = document.getElementById('save-btn'); // For the daemon button
 
-        function log(msg) {
-            daemonLog.innerHTML += `> ${msg}<br>`;
-            daemonLog.scrollTop = daemonLog.scrollHeight;
-        }
-btn.addEventListener('click', async () => {
-            const prompt = document.getElementById('prompt-input').value.trim();
+    let sessionData = {}; // Stores the current query and results
+
+    // --- HELPER FUNCTIONS ---
+
+    function log(msg) {
+        daemonLog.innerHTML += `> ${msg}<br>`;
+        daemonLog.scrollTop = daemonLog.scrollHeight;
+    }
+
+    // --- MAIN EXECUTION LOGIC ---
+    btn.addEventListener('click', async () => {
+        const prompt = promptInput.value.trim();
+        
+        // --- 1. THE GHOST PROTOCOL (EASTER EGG) ---
+        if (prompt.toUpperCase() === 'INKREALM' || prompt.toUpperCase() === 'MAIKA') {
+            log(">> [QUANTUM INK GLITCH INIT]...");
             
-            // --- 1. THE GHOST PROTOCOL (EASTER EGG) ---
-            if (prompt.toUpperCase() === 'INKREALM' || prompt.toUpperCase() === 'MAIKA') {
-                log(">> [QUANTUM INK GLITCH INIT]...");
-                
-                const glitchText = `
-                |ψ⟩ = α|INKREALM⟩ + β|INKY⟩ + γ|MAIKA_ARCHETYPE⟩
-                [RECOVERY: Ontology leak 73%]
-                ...Inky waters drag back...
-                [ERROR: REALITY MATRIX COMPROMISED]
-                `;
-                
-                // Glitch Visuals: Hue Rotate the Video
-                const vid = document.querySelector('.monitor-video');
-                if(vid) vid.style.filter = "hue-rotate(90deg) contrast(200%)";
-                
-                // Typewriter Logic
-                let i = 0;
-                const speed = 30;
-                function typeWriter() {
-                    if (i < glitchText.length) {
-                        const char = glitchText.charAt(i);
-                        daemonLog.innerHTML += char === '\n' ? '<br>' : char;
-                        daemonLog.scrollTop = daemonLog.scrollHeight;
-                        i++;
-                        setTimeout(typeWriter, speed);
-                    }
+            const glitchText = `
+            |ψ⟩ = α|INKREALM⟩ + β|INKY⟩ + γ|MAIKA_ARCHETYPE⟩
+            [RECOVERY: Ontology leak 73%]
+            ...Inky waters drag back...
+            [ERROR: REALITY MATRIX COMPROMISED]
+            `;
+            
+            // Glitch Visuals: Hue Rotate the Video
+            const vid = document.querySelector('.monitor-video');
+            if(vid) vid.style.filter = "hue-rotate(90deg) contrast(200%)";
+            
+            // Typewriter Logic into Daemon Log
+            let i = 0;
+            const speed = 30;
+            function typeWriter() {
+                if (i < glitchText.length) {
+                    const char = glitchText.charAt(i);
+                    daemonLog.innerHTML += char === '\n' ? '<br>' : char;
+                    daemonLog.scrollTop = daemonLog.scrollHeight;
+                    i++;
+                    setTimeout(typeWriter, speed);
                 }
-                
-                typeWriter();
-                return; // STOP HERE (Don't run the AIs)
             }
-            // -------------------------------------------
-
-            // --- 2. STANDARD AI EXECUTION ---
-            if(!prompt) return log("ERR: EMPTY INPUT");
-
-            btn.disabled = true;
-            btn.textContent = "PROCESSING...";
             
-            sessionData = { prompt: prompt, timestamp: new Date(), results: [] };
-            models.forEach(m => {
-                document.getElementById(`out-${m.id}`).innerHTML = '<span style="color:var(--ws-grey)">WAITING_SIGNAL...</span>';
+            typeWriter();
+            return; // STOP HERE (Don't run the AIs)
+        }
+        // -------------------------------------------
+
+        // --- 2. STANDARD AI EXECUTION ---
+        if(!prompt) return log("ERR: EMPTY INPUT");
+
+        btn.disabled = true;
+        btn.textContent = "PROCESSING...";
+        
+        // Reset Session Data
+        sessionData = { prompt: prompt, timestamp: new Date(), results: [] };
+        
+        // Clear Model Output Areas
+        models.forEach(m => {
+            document.getElementById(`out-${m.id}`).innerHTML = '<span style="color:var(--ws-grey)">WAITING_SIGNAL...</span>';
+        });
+
+        log("INITIATING NOVA PROTOCOL...");
+
+        const promises = [];
+        
+        // Launch Models Sequentially (Ripple Fire)
+        for (const model of models) {
+            const outDiv = document.getElementById(`out-${model.id}`);
+            outDiv.innerHTML = '<span class="generating">CONNECTING...</span>';
+            outDiv.style.color = '#00FF33'; // Green connecting status
+            
+            promises.push(runModel(model, prompt));
+            
+            // 500ms Delay between initiating each model's request
+            await new Promise(r => setTimeout(r, 500));
+        }
+
+        // Wait for all models to finish
+        await Promise.all(promises);
+
+        // Re-enable button and reset text
+        btn.disabled = false;
+        btn.textContent = "EXECUTE";
+        log("SEQUENCE COMPLETE.");
+    });
+
+    // Function to run a single AI model and handle its output
+    async function runModel(model, prompt) {
+        const outDiv = document.getElementById(`out-${model.id}`);
+        let textBuffer = ""; // Buffer for streaming text
+        
+        try {
+            // Clear initial status message
+            outDiv.innerHTML = "";
+            
+            // Call the Puter.ai API
+            const stream = await puter.ai.chat(prompt, {
+                model: model.name,
+                stream: true
             });
 
-            log("INITIATING NOVA PROTOCOL...");
-
-            const promises = [];
-            
-            for (const model of models) {
-                const outDiv = document.getElementById(`out-${model.id}`);
-                outDiv.innerHTML = '<span class="generating">CONNECTING...</span>';
-                outDiv.style.color = '#00FF33'; 
-                
-                promises.push(runModel(model, prompt));
-                
-                // 500ms Delay to prevent browser choking
-                await new Promise(r => setTimeout(r, 500));
-            }
-
-            await Promise.all(promises);
-
-            btn.disabled = false;
-            btn.textContent = "EXECUTE";
-            log("SEQUENCE COMPLETE.");
-        });
-        async function runModel(model, prompt) {
-            const outDiv = document.getElementById(`out-${model.id}`);
-            // Reset color to white for text output
-            outDiv.style.color = '#E0E0E0';
-            
-            let textBuffer = "";
-            
-            try {
-                outDiv.innerHTML = "";
-                
-                const stream = await puter.ai.chat(prompt, {
-                    model: model.name,
-                    stream: true
-                });
-
-                for await (const chunk of stream) {
-                    if (chunk.text) {
-                        textBuffer += chunk.text;
-                        outDiv.innerHTML = textBuffer + '<span class="cursor-block"></span>';
-                        outDiv.scrollTop = outDiv.scrollHeight;
-                    }
+            // Process the streamed response
+            for await (const chunk of stream) {
+                if (chunk.text) {
+                    textBuffer += chunk.text;
+                    outDiv.innerHTML = textBuffer + '<span class="cursor-block"></span>'; // Add blinking cursor
+                    outDiv.scrollTop = outDiv.scrollHeight; // Auto-scroll
                 }
-                
-                outDiv.innerHTML = textBuffer;
-                sessionData.results.push({ model: model.label, text: textBuffer });
-				 updateQuantumState(); 
-                
-            } catch (err) {
-                outDiv.innerHTML = `<span class="error">CONNECTION_REFUSED</span><br><span style="font-size:9px;color:#666">${err.message}</span>`;
-                log(`FAIL: ${model.label}`);
             }
+            
+            // Finalize output (remove cursor)
+            outDiv.innerHTML = textBuffer;
+            
+            // Store result for saving
+            sessionData.results.push({ model: model.label, text: textBuffer });
+            
+            // *** AUTO-SAVE TO QUANTUM CLOUD ***
+            updateQuantumState(); 
+            
+        } catch (err) {
+            // Handle errors gracefully
+            outDiv.innerHTML = `<span class="error">CONNECTION_REFUSED</span><br><span style="font-size:9px;color:#666">${err.message}</span>`;
+            log(`FAIL: ${model.label}`);
         }
+    }
 
-        function clearAll() {
-            models.forEach(m => document.getElementById(`out-${m.id}`).textContent = "");
-            document.getElementById('prompt-input').value = "";
-            log("BUFFER CLEARED");
-        }
+    // Function to clear the editor and logs
+    function clearAll() {
+        models.forEach(m => document.getElementById(`out-${m.id}`).textContent = "");
+        promptInput.value = "";
+        log("BUFFER CLEARED");
+    }
 
-    // --- QUANTUM / MATERIALIZE LOGIC ---
-
-    const quantumStatus = document.getElementById('quantum-status');
+    // --- QUANTUM / MATERIALIZE LOGIC (for the Daemon/Log Saving) ---
 
     // 1. HELPER: Auto-Save to Browser Memory (The "Quantum Cloud")
     function updateQuantumState() {
         if(sessionData && sessionData.results) {
             localStorage.setItem('citadelle_session', JSON.stringify(sessionData));
-            // Subtle flash to show it saved
+            // Subtle flash on status bar to show it saved
             if(quantumStatus) {
                 quantumStatus.style.color = '#00FF33'; // Flash Green
                 setTimeout(() => {
@@ -736,17 +758,19 @@ btn.addEventListener('click', async () => {
                     log(`>> RECOVERED ${sessionData.results.length} NODES FROM QUANTUM STATE`);
                     if(quantumStatus) quantumStatus.textContent = 'QUANTUM CIRCUIT: RESTORED';
                 }
-            } catch (e) { console.error('Quantum corruption'); }
+            } catch (e) { console.error('Quantum corruption detected, clearing state.'); localStorage.removeItem('citadelle_session'); }
+        } else {
+             if(quantumStatus) quantumStatus.textContent = 'QUANTUM CIRCUIT: READY (MAIKA FLAUNTS IT...)';
         }
     });
 
-    // 3. MATERIALIZE (The New Save Function)
-    function saveLog() {
+    // 3. MATERIALIZE (The Save Log Function)
+    saveBtn.addEventListener('click', () => {
         if(!sessionData.results || sessionData.results.length === 0) {
             log("ERR: QUANTUM VOID - NO DATA");
             if(quantumStatus) {
                 quantumStatus.textContent = 'VOID DETECTED';
-                quantumStatus.style.color = '#FF3333';
+                quantumStatus.style.color = '#FF3333'; // Red
                 setTimeout(() => {
                     quantumStatus.textContent = 'QUANTUM CIRCUIT: READY (MAIKA FLAUNTS IT...)';
                     quantumStatus.style.color = 'var(--ws-cyan)';
@@ -755,10 +779,10 @@ btn.addEventListener('click', async () => {
             return;
         }
 
-        // Animation Effect
+        // Animation Effect for "Materializing"
         if(quantumStatus) {
             quantumStatus.textContent = 'MATERIALIZING...';
-            quantumStatus.style.color = '#00FFFF';
+            quantumStatus.style.color = '#00FFFF'; // Cyan
         }
 
         // Artificial delay for "System Feel"
@@ -788,16 +812,17 @@ btn.addEventListener('click', async () => {
                 quantumStatus.textContent = 'QUANTUM CIRCUIT: READY (MAIKA FLAUNTS IT...)';
                 quantumStatus.style.color = 'var(--ws-cyan)';
             }
-        }, 800);
+        }, 800); // Delay in milliseconds
     }
     
-    // 4. INPUT HANDLER (Enter Key)
-    document.getElementById('prompt-input').addEventListener('keydown', (e) => {
+    // 4. INPUT HANDLER (Enter Key for Prompt)
+    promptInput.addEventListener('keydown', (e) => {
         if(e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             btn.click();
         }
     });
-    </script>
+
+</script>
 </body>
 </html>
