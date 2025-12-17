@@ -368,10 +368,39 @@
     .deck-right { text-align: center; }
     .monitor-video { width: 100%; max-width: 210px; }
 }
-/* Stat bar */
-#stat-bar { background-color: #2a2a2a; border-top: 2px solid #ff0000; padding: 1px 2px; display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: #888; }
-#quantum-status { font-style: italic; }
-		}
+/* Center Column Layout */
+.deck-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+/* The Maika/Quantum Status Line */
+.maika-status {
+    font-size: 9px;
+    color: var(--ws-cyan);
+    font-style: italic;
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: color 0.3s;
+}
+
+/* Right Column Link Stacking */
+.link-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-end; /* Aligns links to the right */
+    margin-top: 5px;
+}
+
+/* Responsive fix for the added content */
+@media (max-width: 600px) {
+    .link-stack { align-items: center; }
+}
     </style>
 
 <body>
@@ -390,25 +419,40 @@
     </div>
 
     <div class="container">
-        <!-- 2. THE GLITCH DECK (Video & System Status) -->
-        <div class="glitch-deck">
-            <div class="deck-left">
-                <div class="sys-text">CITADELLE.CORE // V.6</div>
-                <div class="sys-sub">GATEWAY: SECURE</div>
-            </div>
-            
-            <div class="deck-center">
-                <video src="https://raw.githubusercontent.com/ghostm68/pantheon/main/citadelle_20251216_185307209.mp4" 
-                       muted loop playsinline autoplay 
-                       class="monitor-video"></video><span style="color:var(--ws-green)">C●NNECTED SINCE 16.12.2025</span>
-            </div><div id="stat-bar">
-        <div id="quantum-status">Quantum circuit: Ready (while maika "flaunts" it...)</div>
-            <div class="deck-right">
-                <div class="sys-text">STATUS: ONLINE</div>
-                <a href="https://wordstar.nexus/dejavuglitches" class="glitch-link">[ dejavuglitches ]</a>
-				<a href="https://wordstar.nexus/" class="glitch-link">[ native page ]</a>
-            </div>
+    <div class="glitch-deck">
+    <!-- LEFT: System Info -->
+    <div class="deck-left">
+        <div class="sys-text">CITADELLE.CORE // V.6</div>
+        <div class="sys-sub">GATEWAY: SECURE</div>
+    </div>
+    
+    <!-- CENTER: Video + Quantum Status -->
+    <div class="deck-center">
+        <!-- The Video -->
+        <video src="https://raw.githubusercontent.com/ghostm68/pantheon/main/citadelle_20251216_185307209.mp4" 
+               muted loop playsinline autoplay 
+               class="monitor-video"></video>
+        
+        <!-- Connection Date -->
+        <div style="margin-top: 4px; font-size: 10px; color: var(--ws-green);">
+            C●NNECTED SINCE 16.12.2025
         </div>
+        
+        <!-- The Quantum Status Line (Target for JS) -->
+        <div id="quantum-status" class="maika-status">
+            QUANTUM CIRCUIT: READY (MAIKA FLAUNTS IT...)
+        </div>
+    </div>
+    
+    <!-- RIGHT: Links -->
+    <div class="deck-right">
+        <div class="sys-text">STATUS: ONLINE</div>
+        <div class="link-stack">
+            <a href="https://wordstar.nexus/dejavuglitches" class="glitch-link">[ dejavuglitches ]</a>
+            <a href="https://wordstar.nexus/" class="glitch-link">[ native page ]</a>
+        </div>
+    </div>
+</div>
 
         <!-- 3. MAIN HEADER -->
         <header>
@@ -607,6 +651,7 @@
                 
                 outDiv.innerHTML = textBuffer;
                 sessionData.results.push({ model: model.label, text: textBuffer });
+				 updateQuantumState(); 
                 
             } catch (err) {
                 outDiv.innerHTML = `<span class="error">CONNECTION_REFUSED</span><br><span style="font-size:9px;color:#666">${err.message}</span>`;
@@ -620,9 +665,61 @@
             log("BUFFER CLEARED");
         }
 
-        function saveLog() {
-            if(!sessionData.results || sessionData.results.length === 0) return log("ERR: NO DATA");
-            
+    // --- QUANTUM / MATERIALIZE LOGIC ---
+
+    const quantumStatus = document.getElementById('quantum-status');
+
+    // 1. HELPER: Auto-Save to Browser Memory (The "Quantum Cloud")
+    function updateQuantumState() {
+        if(sessionData && sessionData.results) {
+            localStorage.setItem('citadelle_session', JSON.stringify(sessionData));
+            // Subtle flash to show it saved
+            if(quantumStatus) {
+                quantumStatus.style.color = '#00FF33'; // Flash Green
+                setTimeout(() => {
+                    quantumStatus.style.color = 'var(--ws-cyan)'; // Return to Cyan
+                }, 500);
+            }
+        }
+    }
+
+    // 2. RESTORE: Check memory on page load (Crash Recovery)
+    window.addEventListener('load', () => {
+        const saved = localStorage.getItem('citadelle_session');
+        if (saved) {
+            try {
+                sessionData = JSON.parse(saved);
+                if (sessionData.results && sessionData.results.length > 0) {
+                    log(`>> RECOVERED ${sessionData.results.length} NODES FROM QUANTUM STATE`);
+                    if(quantumStatus) quantumStatus.textContent = 'QUANTUM CIRCUIT: RESTORED';
+                }
+            } catch (e) { console.error('Quantum corruption'); }
+        }
+    });
+
+    // 3. MATERIALIZE (The New Save Function)
+    function saveLog() {
+        if(!sessionData.results || sessionData.results.length === 0) {
+            log("ERR: QUANTUM VOID - NO DATA");
+            if(quantumStatus) {
+                quantumStatus.textContent = 'VOID DETECTED';
+                quantumStatus.style.color = '#FF3333';
+                setTimeout(() => {
+                    quantumStatus.textContent = 'QUANTUM CIRCUIT: READY (MAIKA FLAUNTS IT...)';
+                    quantumStatus.style.color = 'var(--ws-cyan)';
+                }, 2000);
+            }
+            return;
+        }
+
+        // Animation Effect
+        if(quantumStatus) {
+            quantumStatus.textContent = 'MATERIALIZING...';
+            quantumStatus.style.color = '#00FFFF';
+        }
+
+        // Artificial delay for "System Feel"
+        setTimeout(() => {
             let content = `CITADELLE.CORE LOG // ${sessionData.timestamp}\n`;
             content += `QUERY: ${sessionData.prompt}\n`;
             content += "========================================\n\n";
@@ -635,17 +732,29 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'CITADELLE_LOG.TXT';
+            a.download = `CITADELLE_${Date.now()}.TXT`;
+            document.body.appendChild(a);
             a.click();
-            log("FILE SAVED TO DISK");
-        }
-        
-        document.getElementById('prompt-input').addEventListener('keydown', (e) => {
-            if(e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                btn.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            log(">> LOG MATERIALIZED TO DISK");
+            
+            // Reset Status to Maika's message
+            if(quantumStatus) {
+                quantumStatus.textContent = 'QUANTUM CIRCUIT: READY (MAIKA FLAUNTS IT...)';
+                quantumStatus.style.color = 'var(--ws-cyan)';
             }
-        });
+        }, 800);
+    }
+    
+    // 4. INPUT HANDLER (Enter Key)
+    document.getElementById('prompt-input').addEventListener('keydown', (e) => {
+        if(e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            btn.click();
+        }
+    });
     </script>
 </body>
 </html>
