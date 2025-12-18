@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IBM Writing Assistant</title>
+        <title>IBM Writing Assistant</title>
+    <script src="https://cdn.jsdelivr.net/npm/typo-js@1.2.1/typo.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -297,7 +298,7 @@
             <span class="f-key" onclick="spellCheckIBM()">F7 Spell</span>
             <span class="f-key" onclick="mergeFieldsIBM()">F8 Merge</span>
             <span class="f-key" onclick="reformParagraphIBM()">F9 Reform</span>
-            <span class="f-key" onclick="toggleMenuIBM()">F10 Menu</span>
+            <span class="f-key" onclick="toggleMenuIBM()">F10 Export</span>
         </div>
 
         <div class="toolbar">
@@ -319,7 +320,7 @@
         IBM Writing Assistant 2.0 |  KIMI-AI reDESIGN | CLAUDE-AI tWeaks | by WORDSTAR.NEXUS &synonym: INKREALM.INFO
     </div>
 
-    <script>
+<script>
         const splashScreen = document.getElementById('splash-screen');
         const editorContainer = document.getElementById('editor-container');
         const nineBtn = document.getElementById('nine-btn');
@@ -430,15 +431,49 @@
             textEditor.innerHTML = content;
         }
 
-        // Spell checker
+        // Spell checker with Typo.js
+        let dictionary = null;
+        
+        // Initialize dictionary
+        fetch('https://cdn.jsdelivr.net/npm/typo-js@1.2.1/dictionaries/en_US/en_US.aff')
+            .then(r => r.text())
+            .then(aff => {
+                fetch('https://cdn.jsdelivr.net/npm/typo-js@1.2.1/dictionaries/en_US/en_US.dic')
+                    .then(r => r.text())
+                    .then(dic => {
+                        dictionary = new Typo('en_US', aff, dic);
+                    })
+                    .catch(() => console.log('Dictionary loading failed - spell check disabled'));
+            })
+            .catch(() => console.log('Dictionary loading failed - spell check disabled'));
+
         function spellCheckIBM() {
+            if (!dictionary) {
+                alert('SPELL CHECK UNAVAILABLE\n\nDictionary not loaded. Please refresh and try again.');
+                return;
+            }
+
             const text = textEditor.innerText;
-            const words = text.split(/\s+/);
-            const possibleErrors = words.filter(word => 
-                word.includes('??') || word.length > 20
-            ).length;
+            const words = text.split(/\s+/).filter(w => w.length > 0);
+            const misspelled = [];
             
-            alert(`IBM Spell Check 2.0\n\n${possibleErrors} possible issues found.\n\nWords checked: ${words.length}`);
+            words.forEach(word => {
+                // Remove punctuation for checking
+                const cleanWord = word.replace(/[^a-zA-Z]/g, '');
+                if (cleanWord.length > 0 && !dictionary.check(cleanWord)) {
+                    misspelled.push(word);
+                }
+            });
+            
+            if (misspelled.length === 0) {
+                alert('IBM SPELL CHECK 2.0\n\nNo misspellings detected.\n\nWords checked: ' + words.length);
+            } else {
+                const uniqueMisspelled = [...new Set(misspelled)];
+                alert('IBM SPELL CHECK 2.0\n\n' + misspelled.length + ' possible misspelling(s) found:\n\n' + 
+                      uniqueMisspelled.slice(0, 15).join(', ') + 
+                      (uniqueMisspelled.length > 15 ? '...' : '') +
+                      '\n\nTotal words checked: ' + words.length);
+            }
         }
 
         // Reform paragraph (word wrap)
@@ -455,9 +490,44 @@
             document.execCommand('insertText', false, reformed);
         }
 
-        // Toggle menu (scroll to links)
+        // Export options (F10)
         function toggleMenuIBM() {
-            alert('IBM Writing Assistant 2.0\n\nF3  - Save document\nF4  - Open document\nF5  - Print\nF6  - Find & Replace\nF7  - Spell Check\nF8  - Mail Merge\nF9  - Reform Paragraph\nF10 - This menu');
+            const format = prompt('EXPORT FORMAT:\n\n1 - HTML (current)\n2 - Plain Text\n3 - Markdown\n4 - Show Menu\n\nEnter choice (1-4):');
+            
+            if (format === '1' || !format) {
+                saveDocument(); // Default HTML save
+            } else if (format === '2') {
+                // Plain text export
+                const text = textEditor.innerText;
+                const blob = new Blob([text], { type: 'text/plain' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'document-' + new Date().toISOString().slice(0,10) + '.txt';
+                link.click();
+            } else if (format === '3') {
+                // Markdown export (basic conversion)
+                const html = textEditor.innerHTML;
+                let markdown = html
+                    .replace(/<strong>(.*?)<\/strong>/g, '**$1**')
+                    .replace(/<b>(.*?)<\/b>/g, '**$1**')
+                    .replace(/<em>(.*?)<\/em>/g, '*$1*')
+                    .replace(/<i>(.*?)<\/i>/g, '*$1*')
+                    .replace(/<u>(.*?)<\/u>/g, '_$1_')
+                    .replace(/<br>/g, '\n')
+                    .replace(/<div>/g, '\n')
+                    .replace(/<\/div>/g, '')
+                    .replace(/<p>/g, '\n')
+                    .replace(/<\/p>/g, '\n')
+                    .replace(/<[^>]+>/g, ''); // Remove remaining tags
+                
+                const blob = new Blob([markdown], { type: 'text/markdown' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'document-' + new Date().toISOString().slice(0,10) + '.md';
+                link.click();
+            } else if (format === '4') {
+                alert('IBM WRITING ASSISTANT 2.0\n\nF3  - Save document\nF4  - Open document\nF5  - Print\nF6  - Find & Replace\nF7  - Spell Check\nF8  - Mail Merge\nF9  - Reform Paragraph\nF10 - Export Options');
+            }
         }
 
         // F-key shortcuts
@@ -519,3 +589,7 @@
     </script>
 </body>
 </html>
+
+
+
+    
