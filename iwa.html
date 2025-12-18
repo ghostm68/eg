@@ -4,251 +4,518 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IBM Writing Assistant</title>
-    <link rel="stylesheet" href="cyberpunk-2077.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #000;
+            color: #33ff33;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* CRT Scanline Effect */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* CRT Flicker */
+        @keyframes flicker {
+            0% { opacity: 0.97; }
+            50% { opacity: 1; }
+            100% { opacity: 0.97; }
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 255, 0, 0.02);
+            pointer-events: none;
+            animation: flicker 0.15s infinite;
+            z-index: 9998;
+        }
+
+        /* Terminal Splash Screen */
+        .splash-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+            text-align: center;
+            text-shadow: 0 0 10px #33ff33;
+        }
+
+        .splash-screen h1 {
+            font-size: 3rem;
+            letter-spacing: 0.5rem;
+            margin-bottom: 2rem;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 10px #33ff33, 0 0 20px #33ff33; }
+            to { text-shadow: 0 0 20px #33ff33, 0 0 30px #33ff33, 0 0 40px #33ff33; }
+        }
+
+        .splash-screen p {
+            font-size: 1.2rem;
+            margin: 1rem 0;
+            letter-spacing: 0.1rem;
+        }
+
+        /* SVG 9 Button */
+        #nine-btn {
+            margin: 3rem 0;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        #nine-btn:hover svg {
+            filter: drop-shadow(0 0 15px #33ff33) drop-shadow(0 0 25px #33ff33);
+        }
+
+        #nine-btn svg {
+            filter: drop-shadow(0 0 5px #33ff33);
+            transition: all 0.3s ease;
+        }
+
+        .menu-links {
+            margin-top: 2rem;
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .menu-links a {
+            color: #33ff33;
+            text-decoration: none;
+            font-size: 1.1rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid #33ff33;
+            transition: all 0.3s ease;
+        }
+
+        .menu-links a:hover {
+            background: #33ff33;
+            color: #000;
+            box-shadow: 0 0 10px #33ff33;
+        }
+
+        /* Editor Container */
+        .editor-container {
+            padding: 2rem;
+            min-height: 100vh;
+            background: #000;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .toolbar {
+            background-color: #505050;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .toolbar button {
+            background-color: #e0e0e0;
+            border: 2px solid #505050;
+            color: #202020;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .toolbar button:hover {
+            background-color: #505050;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .toolbar button:active {
+            transform: translateY(0);
+        }
+
+        .text-editor {
+            border: 2px solid #33ff33;
+            padding: 1.5rem;
+            min-height: 500px;
+            margin-top: 1rem;
+            background-color: #ffffff;
+            color: #000;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            line-height: 1.6;
+            outline: none;
+            box-shadow: 0 0 20px rgba(51, 255, 51, 0.3);
+        }
+
+        /* IBM Strip */
+        #ibm-strip {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 24px;
+            background: #000;
+            color: #33ff33;
+            font: 12px/24px 'Courier New', monospace;
+            letter-spacing: 1px;
+            text-align: center;
+            z-index: 999;
+            text-shadow: 0 0 5px #33ff33;
+            border-top: 1px solid #33ff33;
+        }
+
+        /* F-key Bar */
+        #f-key-bar {
+            background: #000;
+            color: #33ff33;
+            font: 13px 'Courier New', monospace;
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border-bottom: 2px solid #33ff33;
+            text-shadow: 0 0 5px #33ff33;
+        }
+
+        .f-key {
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .f-key:hover {
+            background: rgba(51, 255, 51, 0.1);
+            border-color: #33ff33;
+            box-shadow: 0 0 8px rgba(51, 255, 51, 0.3);
+        }
+
+        .f-key:active {
+            background: rgba(51, 255, 51, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .splash-screen h1 {
+                font-size: 2rem;
+                letter-spacing: 0.3rem;
+            }
+
+            .splash-screen p {
+                font-size: 1rem;
+            }
+
+            #f-key-bar {
+                font-size: 11px;
+                padding: 0.5rem;
+                gap: 0.5rem;
+            }
+
+            .f-key {
+                font-size: 11px;
+            }
+        }
+    </style>
 </head>
-  <style>
-    body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f8ff;
-    color: #000;
-    margin: 0;
-    padding: 0;
-}
-
-.splash-screen {
-    text-align: center;
-    padding-top: 20%;
-}
-
-.menu-options p {
-    margin: 10px 0;
-}
-
-.footer {
-    margin-top: 20px;
-    font-style: italic;
-}
-
-.editor-container {
-    padding: 20px;
-}
-
-.hidden {
-    display: none;
-}
-
-.toolbar {
-    background-color: #0047ab;
-    color: white;
-    padding: 10px;
-}
-
-.toolbar button {
-    background-color: white;
-    border: 1px solid #0047ab;
-    color: #0047ab;
-    padding: 5px 10px;
-    margin-right: 5px;
-    cursor: pointer;
-}
-
-.toolbar button:hover {
-    background-color: #0047ab;
-    color: white;
-}
-
-.text-editor {
-    border: 1px solid #0047ab;
-    padding: 10px;
-    min-height: 400px;
-    margin-top: 10px;
-    background-color: white;
-    
-}
-
-  </style>
 <body>
-    <!-- Splash Screen -->
+    <!-- Terminal Splash Screen -->
     <div id="splash-screen" class="splash-screen">
-        <b>I. W. A.</b><br>
-        <div>
-            <i>Select nine to continue...</i><br>
-			<!-- inside splash-screen div, just before the closing </div> -->
-<button id="open-btn" style="margin-top:1rem;padding:.75rem 2rem;font-size:1.3rem;background:#0047ab;color:#fff;border:none;border-radius:4px;">
-  <small>📱</small>
-</button>
- <section class="showcase">
-        <header>  <ul><h1 class="cyberpunk glitched">
-		<font color="yellow">
-              <a href="https://inkrealm.info">&#x2658; Main</a></br>
-           
-          <img width="188" src="https://winworldpc.com/res/img/screenshots/3ce6009d96110da588196263bc9cf15bcac572fcd3b30188608debeb801329c3.png"> 
-       <a href="https://wordstar.nexus/">&#x2602; Nexus</a></br>
-		</font color="yellow">
-		  </div>
+        <h1>I.W.A.</h1>
+        <p>IBM WRITING ASSISTANT v2.0</p>
+        <p>Copyright © 1985, 2025 International Business Machines</p>
+        
+        <!-- SVG 9 Button -->
+        <button id="nine-btn" aria-label="Press 9 to continue">
+            <svg width="120" height="160" viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg">
+                <!-- Pixelated 9 -->
+                <rect x="20" y="20" width="80" height="12" fill="#33ff33"/>
+                <rect x="20" y="20" width="12" height="64" fill="#33ff33"/>
+                <rect x="88" y="20" width="12" height="64" fill="#33ff33"/>
+                <rect x="20" y="72" width="80" height="12" fill="#33ff33"/>
+                <rect x="88" y="84" width="12" height="64" fill="#33ff33"/>
+                <rect x="20" y="136" width="80" height="12" fill="#33ff33"/>
+            </svg>
+        </button>
+
+        <p><i>Select nine to continue...</i></p>
+        <p><i>or press any number 1-9</i></p>
+
+        <div class="menu-links">
+            <a href="https://inkrealm.info">♟ Main</a>
+            <a href="https://wordstar.nexus/">☂ Nexus</a>
+        </div>
     </div>
 
     <!-- Main Editor -->
     <div id="editor-container" class="editor-container hidden">
- 
+        <!-- F-key Bar -->
+        <div id="f-key-bar">
+            <span class="f-key" onclick="saveDocument()">F3 Save</span>
+            <span class="f-key" onclick="openDocument()">F4 Open</span>
+            <span class="f-key" onclick="printDocument()">F5 Print</span>
+            <span class="f-key" onclick="findReplace()">F6 Find</span>
+            <span class="f-key" onclick="spellCheckIBM()">F7 Spell</span>
+            <span class="f-key" onclick="mergeFieldsIBM()">F8 Merge</span>
+            <span class="f-key" onclick="reformParagraphIBM()">F9 Reform</span>
+            <span class="f-key" onclick="toggleMenuIBM()">F10 Menu</span>
+        </div>
+
         <div class="toolbar">
             <button onclick="formatText('bold')">Bold</button>
             <button onclick="formatText('italic')">Italic</button>
             <button onclick="formatText('underline')">Underline</button>
             <button onclick="saveDocument()">Save</button>
             <button onclick="openDocument()">Open</button>
+            <button onclick="printDocument()">Print</button>
         </div>
+        
         <div contenteditable="true" id="text-editor" class="text-editor">
             Start typing here...
         </div>
     </div>
-<!-- ===== IBM IWA 2.0 overlay additions ===== -->
-<style>
-  /* green-phosphor IBM copyright strip */
-  #ibm-strip{
-    position:fixed;
-    bottom:0; left:0; right:0;
-    height:16px;
-    background:#000;
-    color:#33ff33;
-    font:11px/16px 'Courier New',monospace;
-    letter-spacing:.6px;
-    text-align:center;
-    z-index:999;
-  }
-  /* F-key helper row under the existing footer */
-  #f-key-bar{
-    background:#111;
-    color:#aaa;
-    font:12px 'Courier New',monospace;
-    padding:2px 8px;
-    display:flex;
-    justify-content:space-around;
-    border-top:1px solid #333;
-  }
-  .f-key{ cursor:pointer; }
-  .f-key:hover{ color:#fff; }
-</style>
 
-<div id="ibm-strip">
-  Copyright © 1985,2025 IBM Corp.  IBM Writing Assistant 2.0  |  KIMI-AI reDESIGN  |  WORDSTAR.NEXUS  &synonym:  INKREALM.INFO
-</div>
+    <!-- IBM Copyright Strip -->
+    <div id="ibm-strip">
+        IBM Writing Assistant 2.0 | CLAUDE-AI & KIMI-AI reDESIGN | WORDSTAR.NEXUS & INKREALM.INFO
+    </div>
 
-<div id="f-key-bar">
-  <span class="f-key" onclick="saveDocument()">F3 Save</span>
-  <span class="f-key" onclick="openDocument()">F4 Open</span>
-  <span class="f-key" onclick="printDocument()">F5 Print</span>
-  <span class="f-key" onclick="findReplace()">F6 Find</span>
-  <span class="f-key" onclick="spellCheckIBM()">F7 Spell</span>
-  <span class="f-key" onclick="mergeFieldsIBM()">F8 Merge</span>
-  <span class="f-key" onclick="reformParagraphIBM()">F9 Reform</span>
-  <span class="f-key" onclick="toggleMenuIBM()">F10 Menu</span>
-</div>
-
-<script>
-/* ---- IBM IWA style mail-merge ---- */
-function mergeFieldsIBM(){
-  const raw=editor.value;
-  let out=raw, m;
-  while((m=/(<<[^>]+>>)/.exec(out))!==null){
-     const val=prompt('Replace field “'+m[1]+'” with:');
-     if(val===null)break;
-     out=out.split(m[1]).join(val);
-  }
-  if(out!==raw){
-     if(confirm('Apply merged text?')) editor.value=out;
-  }
-}
-
-/* ---- dummy spell checker (just counts ??) ---- */
-function spellCheckIBM(){
-  const qs=(editor.value.match(/\?\?/g)||[]).length;
-  alert(qs+' possible misspellings (IBM Spell 2.0)');
-}
-
-/* ---- classic WordStar “Reform Paragraph” ---- */
-function reformParagraphIBM(){
-  const sel=editor.value.substring(editor.selectionStart,editor.selectionEnd);
-  if(!sel){ alert('Select a paragraph first'); return; }
-  const wrapped=sel.replace(/\s+/g,' ').trim();
-  editor.setRangeText(wrapped, editor.selectionStart, editor.selectionEnd, 'select');
-}
-
-/* ---- F10 toggles the existing footer menu ---- */
-function toggleMenuIBM(){
-  document.getElementById('footer').scrollIntoView({behavior:'smooth'});
-}
-
-/* ---- hook F-keys without clashing with Ctrl shortcuts ---- */
-document.addEventListener('keydown',e=>{
-  if(e.key==='F3'){e.preventDefault(); saveDocument();}
-  if(e.key==='F4'){e.preventDefault(); openDocument();}
-  if(e.key==='F5'){e.preventDefault(); printDocument();}
-  if(e.key==='F6'){e.preventDefault(); findReplace();}
-  if(e.key==='F7'){e.preventDefault(); spellCheckIBM();}
-  if(e.key==='F8'){e.preventDefault(); mergeFieldsIBM();}
-  if(e.key==='F9'){e.preventDefault(); reformParagraphIBM();}
-  if(e.key==='F10'){e.preventDefault(); toggleMenuIBM();}
-});
-</script>
-<!-- ===== end IBM overlay ===== -->
-<!-- ===== end retro IBM IWA 2.0 extras ===== -->
     <script>
-     document.addEventListener('DOMContentLoaded', function() {
-    const splashScreen = document.getElementById('splash-screen');
-    const editorContainer = document.getElementById('editor-container');
+        const splashScreen = document.getElementById('splash-screen');
+        const editorContainer = document.getElementById('editor-container');
+        const nineBtn = document.getElementById('nine-btn');
+        const textEditor = document.getElementById('text-editor');
 
-    document.addEventListener('keydown', function(e) {
-        if (e.key >= '1' && e.key <= '9') {
+        // Enter editor function
+        function enterEditor() {
             splashScreen.classList.add('hidden');
             editorContainer.classList.remove('hidden');
+            textEditor.focus();
         }
-    });
-});
 
-function formatText(command) {
-    document.execCommand(command, false, null);
-}
+        // Button click
+        nineBtn.addEventListener('click', enterEditor);
 
-function saveDocument() {
-    const text = document.getElementById('text-editor').innerHTML;
-    const blob = new Blob([text], { type: 'text/html' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'document.html';
-    link.click();
-}
+        // Keyboard entry (1-9)
+        document.addEventListener('keydown', (e) => {
+            if (!editorContainer.classList.contains('hidden')) return;
+            if (e.key >= '1' && e.key <= '9') {
+                enterEditor();
+            }
+        });
 
-function openDocument() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'text/html';
-    input.onchange = function(event) {
-        const file = event.target.files[0];
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById('text-editor').innerHTML = e.target.result;
-        };
-        reader.readAsText(file);
-    };
-    input.click();
-}
- // replace the current DOMContentLoaded block with this
-document.addEventListener('DOMContentLoaded', () => {
-  const splash = document.getElementById('splash-screen');
-  const editor = document.getElementById('editor-container');
-  const openBtn = document.getElementById('open-btn');
+        // Text formatting
+        function formatText(command) {
+            document.execCommand(command, false, null);
+            textEditor.focus();
+        }
 
-  const go = () => {
-    splash.classList.add('hidden');
-    editor.classList.remove('hidden');
-  };
+        // Save document
+        function saveDocument() {
+            const text = textEditor.innerHTML;
+            const blob = new Blob([text], { type: 'text/html' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'document-' + new Date().toISOString().slice(0,10) + '.html';
+            link.click();
+        }
 
-  openBtn.addEventListener('click', go);          // touch / mouse
-  document.addEventListener('keydown', e => {     // keep keyboard path
-    if (e.key >= '1' && e.key <= '9') go();
-  });
-});
+        // Open document
+        function openDocument() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'text/html,text/plain';
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    textEditor.innerHTML = e.target.result;
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // Print document
+        function printDocument() {
+            window.print();
+        }
+
+        // Find and replace
+        function findReplace() {
+            const searchText = prompt('Find text:');
+            if (!searchText) return;
+            
+            const replaceText = prompt('Replace with:');
+            if (replaceText === null) return;
+            
+            const content = textEditor.innerHTML;
+            const regex = new RegExp(searchText, 'gi');
+            const newContent = content.replace(regex, replaceText);
+            
+            if (content !== newContent) {
+                textEditor.innerHTML = newContent;
+                alert('Text replaced successfully');
+            } else {
+                alert('Text not found');
+            }
+        }
+
+        // Mail merge fields
+        function mergeFieldsIBM() {
+            let content = textEditor.innerHTML;
+            const fieldPattern = /<<([^>]+)>>/g;
+            let match;
+            const fields = [];
+            
+            while ((match = fieldPattern.exec(content)) !== null) {
+                if (!fields.includes(match[1])) {
+                    fields.push(match[1]);
+                }
+            }
+            
+            if (fields.length === 0) {
+                alert('No merge fields found. Use <<fieldname>> format.');
+                return;
+            }
+            
+            fields.forEach(field => {
+                const value = prompt(`Replace field "<<${field}>>" with:`);
+                if (value !== null) {
+                    const regex = new RegExp(`<<${field}>>`, 'g');
+                    content = content.replace(regex, value);
+                }
+            });
+            
+            textEditor.innerHTML = content;
+        }
+
+        // Spell checker
+        function spellCheckIBM() {
+            const text = textEditor.innerText;
+            const words = text.split(/\s+/);
+            const possibleErrors = words.filter(word => 
+                word.includes('??') || word.length > 20
+            ).length;
+            
+            alert(`IBM Spell Check 2.0\n\n${possibleErrors} possible issues found.\n\nWords checked: ${words.length}`);
+        }
+
+        // Reform paragraph (word wrap)
+        function reformParagraphIBM() {
+            const selection = window.getSelection();
+            if (selection.toString().length === 0) {
+                alert('Please select a paragraph first');
+                return;
+            }
+            
+            const selectedText = selection.toString();
+            const reformed = selectedText.replace(/\s+/g, ' ').trim();
+            
+            document.execCommand('insertText', false, reformed);
+        }
+
+        // Toggle menu (scroll to links)
+        function toggleMenuIBM() {
+            alert('IBM Writing Assistant 2.0\n\nF3  - Save document\nF4  - Open document\nF5  - Print\nF6  - Find & Replace\nF7  - Spell Check\nF8  - Mail Merge\nF9  - Reform Paragraph\nF10 - This menu');
+        }
+
+        // F-key shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (splashScreen.classList.contains('hidden')) {
+                switch(e.key) {
+                    case 'F3':
+                        e.preventDefault();
+                        saveDocument();
+                        break;
+                    case 'F4':
+                        e.preventDefault();
+                        openDocument();
+                        break;
+                    case 'F5':
+                        e.preventDefault();
+                        printDocument();
+                        break;
+                    case 'F6':
+                        e.preventDefault();
+                        findReplace();
+                        break;
+                    case 'F7':
+                        e.preventDefault();
+                        spellCheckIBM();
+                        break;
+                    case 'F8':
+                        e.preventDefault();
+                        mergeFieldsIBM();
+                        break;
+                    case 'F9':
+                        e.preventDefault();
+                        reformParagraphIBM();
+                        break;
+                    case 'F10':
+                        e.preventDefault();
+                        toggleMenuIBM();
+                        break;
+                }
+            }
+        });
+
+        // Auto-save draft to localStorage every 30 seconds
+        setInterval(() => {
+            if (!editorContainer.classList.contains('hidden')) {
+                localStorage.setItem('ibm-draft', textEditor.innerHTML);
+            }
+        }, 30000);
+
+        // Load draft on startup
+        window.addEventListener('load', () => {
+            const draft = localStorage.getItem('ibm-draft');
+            if (draft && draft !== 'Start typing here...') {
+                if (confirm('Recover previous draft?')) {
+                    textEditor.innerHTML = draft;
+                }
+            }
+        });
     </script>
 </body>
 </html>
