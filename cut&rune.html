@@ -1,180 +1,601 @@
-<!DOCTYPE html><html><head><base href="https://wordstar.nexus/">
-<meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">	
-<title>The Third Mind Desk</title>
-<style>
-  body, html {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    font-family: 'Arial', sans-serif;
-    background-color: #000;
-    color: #fff;
-    overflow: auto; /* or overflow: scroll; */ 
-}
-    .container {
-        display: flex;
-        justify-content: space-between;
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-    .column {
-        flex: 1;
-        background-color: #fff;
-        border-radius: 5px;
-        padding: 20px;
-        margin: 0 10px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    textarea {
-        width: 100%;
-        height: 200px;
-        margin-bottom: 10px;
-    }
-    button {
-        background-color: #ed2521;
-        border: none;
-        color: white;
-        padding: 10px 20px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 16px;
-        margin: 4px 2px;
-        cursor: pointer;
-        border-radius: 4px;
-    }
-    #output {
-        white-space: pre-wrap;
-    }
-    .widget {
-    background-color: rgba(255,255,255,0.1);
-    border: 1px solid #444;
-    border-radius: 5px;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-#compass {
-    grid-column: 2;
-    grid-row: 1 / 3;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-#status {
-    grid-column: 3;
-    grid-row: 1 / 3;
-}
-#calendar {
-    grid-column: 1;
-    grid-row: 1 / 3;
-}
-#map {
-    grid-column: 1 / 4;
-    grid-row: 3;
-}
-.widget-title {
-    font-size: 0.8em;
-    margin-bottom: 5px;
-    color: #aaa;
-}
-#toolbar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: rgba(0,0,0,0.8);
-    display: flex;
-    justify-content: center;
-    padding: 5px;
-}
-.tool-icon {
-    width: 40px;
-    height: 40px;
-    margin: 0 10px;
-    background-color: #fff;
-    border-radius: 50%;
-    cursor: pointer;
-}
-</style>
-<style>
-/* width */
-::-webkit-scrollbar {
-  width: 20px;
-}
-
-/* Track */
-::-webkit-scrollbar-track {
-  box-shadow: inset 0 0 5px grey; 
-  border-radius: 10px;
-}
- 
-/* Handle */
-::-webkit-scrollbar-thumb {
-  background: red; 
-  border-radius: 10px;
-}
-
-/* Handle on hover */
-::-webkit-scrollbar-thumb:hover {
-  background: #b30000; 
-}
-</style> 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
-<style>
-	
-        button {
-            background-color: #ff3333;
-            color: white;
-            cursor: pointer;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Third Mind Desk</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #000;
+            color: #fff;
+            overflow-x: hidden;
+            padding: 2rem;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 16px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000;
+            border: 1px solid #333;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ff0033;
+            border-radius: 2px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #cc0000;
+        }
+
+        /* Header */
+        h1 {
+            color: #ff0033;
+            text-align: center;
+            font-size: 2.5rem;
+            letter-spacing: 0.3rem;
+            margin-bottom: 3rem;
+            text-shadow: 0 0 10px #ff0033;
+        }
+
+        h2 {
+            color: #ff0033;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            letter-spacing: 0.1rem;
+        }
+
+        /* Layout Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        /* Section Styling */
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            padding: 1.5rem;
+            border-radius: 4px;
+        }
+
+        /* Text Areas */
+        textarea {
+            width: 100%;
+            background: #1a1a1a;
+            color: #fff;
+            border: 2px solid #333;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #ff0033;
+        }
+
+        /* Buttons */
+        button {
+            background: #ff0033;
+            color: #fff;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            margin: 0.5rem 0.5rem 0.5rem 0;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
         button:hover {
-            background-color: #cc0000;
-	}
-     #output {
-            margin-top: 20px;
+            background: #cc0000;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Module Buttons */
+        .module-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .module-btn {
+            background: #333;
+            font-size: 0.85rem;
+            padding: 0.6rem 1rem;
+        }
+
+        .module-btn:hover {
+            background: #ff0033;
+        }
+
+        /* Output Displays */
+        #mixerOutput, #anagramOutput {
+            background: #000;
+            border: 2px solid #333;
+            padding: 1rem;
+            min-height: 100px;
+            margin-top: 1rem;
+            color: #fff;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        #anagramOutput {
+            list-style: none;
+            padding: 1rem;
+        }
+
+        #anagramOutput li {
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            animation: swimIn 0.5s ease forwards;
+            color: #aaa;
+        }
+
+        #anagramOutput li:nth-child(even) {
+            color: #666;
+        }
+
+        @keyframes swimIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Atari Screen Section */
+        .atari-container {
+            grid-column: 1 / 4;
+            margin: 3rem 0;
+        }
+
+        #screen {
+            width: 100%;
+            max-width: 800px;
+            height: 314px;
+            background-color: #808080;
+            border: 10px solid #404040;
+            position: relative;
+            overflow: hidden;
+            margin: 0 auto 2rem;
+            padding: 20px;
+        }
+
+        #content h1 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        #content p {
+            margin: 0.5rem 0;
+            font-size: 1rem;
+        }
+
+        /* Keyboard */
+        #keyboard {
+            width: 100%;
+            max-width: 800px;
+            background-color: #2a2a2a;
+            margin: 0 auto 2rem;
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            grid-gap: 4px;
+            padding: 15px;
+        }
+
+        .key {
+            background-color: #404040;
+            color: white;
+            border: 2px solid #606060;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            user-select: none;
+            cursor: pointer;
             padding: 10px;
-            background-color: #3a3a3a;
-            border-radius: 5px;
-            min-height: 50px;
-        }   </style>	
-		<style>
-@import url('https://fonts.googleapis.com/css2?family=Runes&display=swap');
-</style>
+            transition: all 0.1s ease;
+        }
+
+        .key:hover {
+            background-color: #606060;
+        }
+
+        .key:active {
+            background-color: #ff0033;
+        }
+
+        /* Rune Translator Section */
+        .translator-section {
+            background: rgba(255, 0, 51, 0.1);
+            border: 2px solid #ff0033;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .translator-section h2 {
+            margin-bottom: 1.5rem;
+        }
+
+        #translator-input {
+            width: 80%;
+            max-width: 600px;
+            padding: 1rem;
+            background: #000;
+            color: #fff;
+            border: 2px solid #333;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        #translator-output {
+            background: #000;
+            border: 2px solid #ff0033;
+            padding: 2rem;
+            min-height: 80px;
+            margin-top: 1rem;
+            font-size: 2rem;
+            color: #ff0033;
+            text-shadow: 0 0 10px #ff0033;
+            letter-spacing: 0.5rem;
+        }
+
+        /* Dictionary Section */
+        .dictionary-section {
+            grid-column: 1 / 4;
+            margin-top: 3rem;
+        }
+
+        .dict-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            align-items: center;
+        }
+
+        #dictionary-search {
+            flex: 1;
+            padding: 0.75rem;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+        }
+
+        #dictionary-search:focus {
+            outline: none;
+            border-color: #ff0033;
+        }
+
+        #dictionary-result {
+            background: #000;
+            border: 2px solid #333;
+            padding: 1.5rem;
+            min-height: 200px;
+            color: #aaa;
+        }
+
+        .word-title {
+            color: #ff0033;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .phonetic {
+            color: #666;
+            font-size: 0.9rem;
+            margin-left: 1rem;
+        }
+
+        .part-of-speech {
+            color: #ff0033;
+            font-size: 0.85rem;
+            font-style: italic;
+        }
+
+        .synonym-tag {
+            display: inline-block;
+            background: #333;
+            color: #fff;
+            padding: 0.3rem 0.8rem;
+            margin: 0.2rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+        }
+
+        .synonym-tag:hover {
+            background: #ff0033;
+        }
+
+        .loading {
+            color: #ff0033;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Clock Widget */
+        .clock-widget {
+            background: rgba(255, 0, 51, 0.05);
+            border: 1px solid #ff0033;
+            padding: 0.75rem;
+        }
+
+        #clock-container {
+            display: flex;
+            justify-content: space-between;
+            background-color: #000;
+            padding: 8px;
+            border: 1px solid #333;
+            margin-top: 0.5rem;
+        }
+
+        #hours-panel, #minutes-panel {
+            flex: 1;
+            margin: 0 3px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .time-cell {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            color: #ff0033;
+            border: 1px solid #333;
+            margin: 1px;
+        }
+
+        .current-time {
+            background-color: #ff0033;
+            color: #fff;
+            border-radius: 50%;
+        }
+
+        /* Compass */
+        .compass-widget {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        /* Codex */
+        .codex {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid #333;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            font-size: 0.85rem;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .codex h3 {
+            color: #ff0033;
+            margin-bottom: 1rem;
+        }
+
+        .codex ul {
+            margin-left: 2rem;
+            margin-top: 0.5rem;
+        }
+
+        .codex li {
+            margin-bottom: 0.5rem;
+        }
+
+        .codex b {
+            color: #aaa;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #ff0033;
+            color: #000;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            text-align: center;
+            font-weight: bold;
+            z-index: 1000;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .atari-container,
+            .dictionary-section {
+                grid-column: 1;
+            }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
 </head>
 <body>
-	   <div id="military-clock" class="widget" style="grid-column: 2; grid-row: 1 / 3; transform: scale(0.55); top right;">
-    <div class="widget-title">CLOCK</div>
-    <div id="clock-container" style="display: flex; justify-content: space-between; background-color: #000; padding: 10px; border-radius: 5px;">
-        <div id="hours-panel" style="flex: 1; margin-right: 5px;"></div>
-        <div id="minutes-panel" style="flex: 1; margin-left: 5px;"></div>
+    <h1>THE THIRD MIND DESK</h1>
+
+    <!-- Main Cut-Up Grid -->
+    <div class="main-grid">
+        <!-- Column 1: Text 1 -->
+        <div class="section">
+            <h2>TEXT 1</h2>
+            <textarea id="text1" placeholder="Enter source text...">Enter text here.</textarea>
+        </div>
+
+        <!-- Column 2: Text 2 (Cut Output) -->
+        <div class="section">
+            <h2>TEXT 2</h2>
+            <textarea id="text2" readonly>The cut text will appear here.</textarea>
+            <button onclick="mixTexts()">RECUT TEXT 1</button>
+        </div>
+
+        <!-- Column 3: Anagram Chair + Clock -->
+        <div class="section">
+            <h2>CHAIR</h2>
+            <textarea id="text3" placeholder="Type to generate anagrams..."></textarea>
+            <ul id="anagramOutput"></ul>
+            
+            <!-- Compact Clock Widget -->
+            <div class="clock-widget" style="margin-top: 1.5rem;">
+                <h2 style="font-size: 0.9rem; margin-bottom: 0.5rem;">MILITARY TIME</h2>
+                <div id="clock-container">
+                    <div id="hours-panel"></div>
+                    <div id="minutes-panel"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nova Express Mixer -->
+        <div class="section" style="grid-column: 1 / 4;">
+            <h2>NOVA EXPRESS MIXER</h2>
+            <textarea id="mixerSource" placeholder="Paste text to remix..."></textarea>
+            <div class="module-buttons">
+                <button onclick="pullFromNotepad()">← PULL TEXT 1</button>
+                <button onclick="pullFromAi()">← PULL TEXT 2</button>
+                <button class="module-btn" data-algo="scramble">SCRAMBLE</button>
+                <button class="module-btn" data-algo="fold">FOLD-IN</button>
+                <button class="module-btn" data-algo="chunks">CHUNKS</button>
+                <button class="module-btn" data-algo="reverse">REVERSE</button>
+                <button onclick="pushToNotepad()">PUSH →</button>
+            </div>
+            <textarea id="mixerOutput" readonly placeholder="Mixed output appears here..."></textarea>
+        </div>
     </div>
-    <style>
-    .time-cell {
-        display: inline-block;
-        width: 32px;
-        height: 32px;
-        line-height: 32px;
-        text-align: right;
-        font-family: 'Courier New', monospace;
-        font-size: 0.99em;
-        color: #ff0000;
-        border: 1px solid #333;
-        margin: 1.1px;
-    }
-    .current-time {
-        background-color: #ff0000;
-        color: #fff;
-        border-radius: 50%;
-    }
-</style>
+
+    <!-- Atari 64 BASIC Section -->
+    <div class="atari-container">
+        <h2 style="text-align: center; margin-bottom: 1rem;">64 BASIC V3</h2>
+        <div id="screen">
+            <div id="content">
+                <h1>64 BASIC V3</h1>
+                <p>64K RAM SYSTEM EXPRESS</p>
+                <p>READY.</p>
+                <p>_</p>
+            </div>
+        </div>
+        <div id="keyboard"></div>
+        <div style="text-align: center;">
+            <button id="powerBtn">POWER ON/OFF</button>
+            <button id="resetBtn">RESET</button>
+            <button id="loadBtn">LOAD PROGRAM</button>
+            <button id="saveButton">SAVE NOTES</button>
+        </div>
+    </div>
+
+    <!-- Rune Translator -->
+    <div class="translator-section">
+        <h2>RUNE TRANSLATOR</h2>
+        <input type="text" id="translator-input" placeholder="Enter text to convert to runes...">
+        <button onclick="translateToRunes()">TRANSLATE</button>
+        <div id="translator-output">Runes appear here...</div>
+    </div>
+
+    <!-- Dictionary / Lexicon -->
+    <div class="dictionary-section section">
+        <h2>LEXICON & THESAURUS</h2>
+        <div class="dict-controls">
+            <input type="text" id="dictionary-search" placeholder="Enter word to search...">
+            <button id="search-button">SEARCH</button>
+            <button id="random-word">GHOST</button>
+            <button id="clear-dict">CLEAR</button>
+        </div>
+        <div id="dictionary-status"></div>
+        <div id="dictionary-result">
+            <div style="color:#666; text-align: center;">
+                Ready.<br>
+                <small>4 lexical sources + thesaurus</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Codex with Compass -->
+    <div class="codex">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem;">
+            <div style="flex: 1;">
+                <h3>RUNIC CODEX</h3>
+                <p>These runes draw from two strains of history:</p>
+                <ul>
+                    <li>
+                        <b>Elder Futhark:</b> The oldest runic alphabet (ca. 150–800 CE)
+                        <ul>
+                            <li><b>ᛀ:</b> Represents the beginning, creation, primal force</li>
+                            <li><b>ᛐ:</b> Symbolizes knowledge, wisdom, hidden knowledge</li>
+                            <li><b>ᛔ:</b> Represents crossroads, choice, turning point</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <b>Younger Futhark:</b> Viking Age alphabet (ca. 800–1100 CE)
+                        <ul>
+                            <li><b>ᛪ:</b> Represents strength, resilience, enduring power</li>
+                            <li><b>ᛥ:</b> Symbolizes communication, connection, spoken word</li>
+                            <li><b>ᛨ:</b> Represents nature, growth, cycle of life</li>
+                        </ul>
+                    </li>
+                </ul>
+                <p>Originally inscribed on stone, wood, and metal for divination and communication. In modern times, runes serve as symbols of ancient wisdom and are used in art, literature, and mystical practice.</p>
+            </div>
+            <div style="text-align: center;">
+                <div style="color: #ff0033; font-size: 0.9rem; margin-bottom: 0.5rem;">COMPASS</div>
+                <svg width="120" height="120" viewBox="0 0 200 200">
+                    <circle cx="100" cy="100" r="98" fill="none" stroke="#333" stroke-width="2"></circle>
+                    <path id="compass-needle" d="M100 10 L90 100 L100 190 L110 100 Z" fill="#ff0033"></path>
+                    <text x="100" y="30" text-anchor="middle" fill="#fff" font-size="20">N</text>
+                    <text x="170" y="105" text-anchor="middle" fill="#fff" font-size="20">E</text>
+                    <text x="100" y="180" text-anchor="middle" fill="#fff" font-size="20">S</text>
+                    <text x="30" y="105" text-anchor="middle" fill="#fff" font-size="20">W</text>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        THE WORD IS A VIRUS | NOVA EXPRESS v1.0 | CUT-UP ONLINE
+    </div>
+
     <script>
+        /* =========================
+           CLOCK
+        ========================= */
         function updateClock() {
             const now = new Date();
             const currentHour = now.getHours();
@@ -203,36 +624,27 @@
 
         updateClock();
         setInterval(updateClock, 1000);
-    </script>
-</div>
-    <h1>The Third Mind Desk</h1>
-    <div class="container">
-        <div class="column">
-            <h2>Text 1</h2>
-            <textarea id="text1">Enter text here.</textarea>
-        </div>
-        <div class="column">
-            <h2>Text 2</h2>
-            <textarea id="text2" readonly="">The cut text will appear here.</textarea>
-        </div>
-        <div>
-    <h2>chair</h2>
-    <textarea id="text3" placeholder="Enter text for anagrams" style="width: 100%; height: 100px; margin-bottom: 10px;"></textarea>
-    <ul id="anagramOutput" style="list-style-type: none; padding: 0; margin-top: 10px;"></ul>
-</div>
-    </div>
-    <div style="text-align: center; margin-top: 20px;">
-        <button onclick="mixTexts()">Recut Text 1</button>
-    </div>
-    <div id="output" style="margin-top: 20px;"></div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
-    <script>
+        /* =========================
+           COMPASS
+        ========================= */
+        function updateCompass() {
+            const needle = document.getElementById('compass-needle');
+            const heading = Math.random() * 360;
+            needle.style.transform = `rotate(${heading}deg)`;
+            needle.style.transformOrigin = 'center';
+        }
+
+        setInterval(updateCompass, 5000);
+        updateCompass();
+
+        /* =========================
+           CUT-UP LOGIC
+        ========================= */
         function mixTexts() {
             const text1 = document.getElementById('text1').value.split(/\s+/);
             const shuffledText = _.shuffle(text1);
             document.getElementById('text2').value = shuffledText.join(' ');
-            document.getElementById('output').textContent = '';
         }
 
         function generateAnagrams() {
@@ -245,7 +657,7 @@
                 let remainingChars = shuffled;
 
                 while (remainingChars.length > 0) {
-                    const wordLength = Math.floor(Math.random() * 8) + 2; // Random word length between 2 and 9
+                    const wordLength = Math.floor(Math.random() * 8) + 2;
                     const word = remainingChars.slice(0, wordLength);
                     anagramWords.push(word);
                     remainingChars = remainingChars.slice(wordLength);
@@ -254,94 +666,78 @@
                 anagrams.push(anagramWords.join(' '));
             }
 
-            document.getElementById('anagramOutput').innerHTML = anagrams.map(anagram => `<li>${anagram}</li>`).join('');
+            const output = document.getElementById('anagramOutput');
+            output.innerHTML = anagrams.map((anagram, i) => {
+                return `<li style="animation-delay: ${i * 0.1}s">${anagram}</li>`;
+            }).join('');
         }
 
-        // Add event listener for real-time anagram generation
         document.getElementById('text3').addEventListener('input', generateAnagrams);
-</script>
 
-	  <div id="container">
-    <div id="compass" class="widget" style="transform: scale(0.5); transform-origin: top left; grid-column: 2; grid-row: 3;">
-    <svg width="108" height="108" viewBox="0 0 200 200">
-        <circle cx="100" cy="100" r="98" fill="none" stroke="#444" stroke-width="2"></circle>
-        <path id="compass-needle" d="M100 10 L90 100 L100 190 L110 100 Z" fill="#f44336"></path>
-        <text x="100" y="30" text-anchor="middle" fill="#fff">N</text>
-        <text x="170" y="105" text-anchor="middle" fill="#fff">E</text>
-        <text x="100" y="180" text-anchor="middle" fill="#fff">S</text>
-        <text x="30" y="105" text-anchor="middle" fill="#fff">W</text>
-    </svg>
-</div>
-<div id="toolbar">
-</div>
-
-<script>
-// Compass
-function updateCompass(heading) {
-    const needle = document.getElementById('compass-needle');
-    needle.style.transform = `rotate(${heading}deg)`;
-}
-
-
-// Calendar
-function updateCalendar() {
-    const calendarContent = document.getElementById('calendar-content');
-    const now = moment();
-    let calendarHTML = `<h3>${now.format('MMMM YYYY')}</h3><table>`;
-    calendarHTML += '<tr><th>Su</th><th>Mo</th><th>Tu</th><th>We</th><th>Th</th><th>Fr</th><th>Sa</th></tr>';
-    const daysInMonth = now.daysInMonth();
-    const firstDayOfMonth = moment(now).startOf('month').day();
-    let dayCount = 1;
-    for (let i = 0; i < 6; i++) {
-        calendarHTML += '<tr>';
-        for (let j = 0; j < 7; j++) {
-            if (i === 0 && j < firstDayOfMonth) {
-                calendarHTML += '<td></td>';
-            } else if (dayCount > daysInMonth) {
-                calendarHTML += '<td></td>';
-            } else {
-                calendarHTML += `<td>${dayCount}</td>`;
-                dayCount++;
-            }
+        /* =========================
+           NOVA EXPRESS MIXER
+        ========================= */
+        function pullFromNotepad() {
+            document.getElementById('mixerSource').value = document.getElementById('text1').value;
         }
-        calendarHTML += '</tr>';
-        if (dayCount > daysInMonth) break;
-    }
-    calendarHTML += '</table>';
-    calendarContent.innerHTML = calendarHTML;
-}
 
-// Map
-function initMap() {
-    const map = L.map('map-container').setView([51.505, -0.09], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-}
+        function pullFromAi() {
+            document.getElementById('mixerSource').value = document.getElementById('text2').value;
+        }
 
-// Initialize and update
-updateCompass(0);
-updateStatus();
-updateCalendar();
-initMap();
+        function pushToNotepad() {
+            const mix = document.getElementById('mixerOutput').value;
+            if (!mix) return;
+            const notepad = document.getElementById('text1');
+            notepad.value += (notepad.value ? '\n\n--- NOVA EXPRESS ---\n' : '') + mix;
+        }
 
-setInterval(() => {
-    updateCompass(Math.random() * 360);
-    updateStatus();
-}, 5000);
+        const modules = {
+            scramble: (text) => {
+                const words = text.split(/\s+/);
+                return _.shuffle(words).join(' ');
+            },
 
-// Simulating device orientation for compass
-window.addEventListener('deviceorientation', (event) => {
-    updateCompass(event.alpha || 0);
-});
-</script>
- <div id="translator">
-        <i>translations appear above compass and typing will crowd the 64v3...</i>
-        
-    <input type="text" id="input" placeholder="Enter text to convert to runes">
-    <button onclick="translateToRunes()">Translate</button>
-    <div id="output"></div>
-    <script>
+            fold: (text) => {
+                const lines = text.split('\n').filter(l => l.trim() !== '');
+                const half = Math.floor(lines.length / 2);
+                const first = lines.slice(0, half);
+                const second = lines.slice(half);
+                let result = [];
+                for(let i = 0; i < Math.max(first.length, second.length); i++) {
+                    if(first[i]) result.push(first[i]);
+                    if(second[i]) result.push(second[i]);
+                }
+                return result.join('\n');
+            },
+
+            chunks: (text) => {
+                const words = text.split(/\s+/);
+                let chunks = [];
+                while(words.length > 0) {
+                    let size = Math.floor(Math.random() * 4) + 1;
+                    chunks.push(words.splice(0, size).join(' '));
+                }
+                return _.shuffle(chunks).join(' ');
+            },
+
+            reverse: (text) => {
+                return text.split(' ').reverse().join(' ');
+            }
+        };
+
+        document.querySelectorAll('.module-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const algo = btn.dataset.algo;
+                const source = document.getElementById('mixerSource').value;
+                if (!source.trim()) return;
+                document.getElementById('mixerOutput').value = modules[algo](source);
+            });
+        });
+
+        /* =========================
+           RUNE TRANSLATOR
+        ========================= */
         function letterToRune(letter) {
             const runes = {
                 'a': 'ᚨ', 'b': 'ᛒ', 'c': 'ᚲ', 'd': 'ᛞ', 'e': 'ᛖ', 'f': 'ᚠ', 'g': 'ᚷ',
@@ -352,254 +748,231 @@ window.addEventListener('deviceorientation', (event) => {
             return runes[letter.toLowerCase()] || letter;
         }
 
-        function textToRunes(text) {
-            return text.split('').map(letterToRune).join('');
-        }
-
         function translateToRunes() {
-            const input = document.getElementById('input').value;
-            const output = document.getElementById('output');
-            output.textContent = textToRunes(input);
+            const input = document.getElementById('translator-input').value;
+            const output = document.getElementById('translator-output');
+            output.textContent = input.split('').map(letterToRune).join('');
         }
-    </script>	  
-</body></html>
-<html><head><base href="https://inkrealm.info/atari">
 
-
-    <style>
-
-        #screen {
-            width: 800px;
-            height: 314px;
-            background-color: grey;
-            border: 10px solid #808080;
-            position: relative;
-            overflow: hidden;
-        }
-        #content {
-            padding: 20px;
-        }
-        #keyboard {
-            width: 800px;
-            height: 300px;
-            background-color: #A0A0A0;
-            margin-top: 20px;
-            display: grid;
-            grid-template-columns: repeat(16, 1fr);
-            grid-gap: 5px;
-            padding: 10px;
-        }
-        .key {
-            background-color: #404040;
-            color: white;
-            border: 2px solid #808080;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 12px;
-            user-select: none;
-            cursor: pointer;
-        }
-        .key:active {
-            background-color: #606060;
-        }
-        .wide-key {
-            grid-column: span 2;
-        }
-        #controls {
-            margin-top: 20px;
-        }
-        button {
-            background-color: #808080;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            margin: 0 10px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #A0A0A0;
-        }
-    </style>
-</head>
-<body>
-    <div id="screen">
-        <div id="content">
-            <h1>64 BASIC V3</h1>
-            <p>64K RAM SYSTEM EXPRESS</p>
-            <p>READY.</p>
-            <p>_</p>
-        </div>
-    </div>
-    <div id="keyboard"></div>
-    <div id="controls">
-        <button id="powerBtn">Power On/Off</button>
-        <button id="resetBtn">Reset</button>
-        <button id="loadBtn">Load Program</button>
-	 <button id="saveButton">Save Notes</button>   
-    </div>
-
-    <script>
-const keyboard = document.getElementById('keyboard');
-const powerBtn = document.getElementById('powerBtn');
-const resetBtn = document.getElementById('resetBtn');
-const loadBtn = document.getElementById('loadBtn');
-const content = document.getElementById('content');
-const saveButton = document.getElementById('saveButton');
-
-saveButton.addEventListener('click', () => {
-  // 1. Get the notes content
-  const notesContent = document.getElementById('screen').innerHTML; 
-
-  // 2. Create a Blob object with the notes content
-  const blob = new Blob([notesContent], { type: 'text/html' }); // Use 'text/html' for HTML content
-
-  // 3. Create a URL for the Blob
-  const url = URL.createObjectURL(blob);
-
-  // 4. Create a hidden anchor element
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'notes.html'; // Set the desired filename
-
-  // 5. Append the anchor element to the document
-  document.body.appendChild(link);
-
-  // 6. Simulate a click on the anchor element to trigger the download
-  link.click();
-
-  // 7. Remove the anchor element from the document
-  document.body.removeChild(link);
-
-  // 8. Revoke the URL object (optional, but good practice)
-  URL.revokeObjectURL(url);
-});
-	    
-    const keyboardLayout = [
-    ['ᛀ', 'ᛁ', 'ᛂ', 'ᛃ', 'ᛄ', 'ᛅ', 'ᛆ', 'ᛇ', 'ᛈ', 'ᛉ', 'ᛊ', 'ᛋ', 'ᛦ', 'ᛦ', 'ᛎ'],
-    ['ᛏ', 'ᛐ', 'ᛑ', 'ᛒ', 'ᛓ', 'ᛔ', 'ᛕ', 'ᛖ', 'ᛗ', 'ᛘ', 'ᛙ', 'ᛚ', 'ᛛ', 'ᛜ', 'ᛝ'],
-    ['ᛞ', 'ᛟ', 'ᛠ', 'ᛡ', 'ᛢ', 'ᛣ', 'ᛤ', 'ᛥ', 'ᛦ', 'ᛧ', 'ᛨ', 'ᛩ', 'ᛪ', 'ᚦ', 'ᚨ'],
-    ['ᚠ', 'ᚹ', 'ᚺ', 'ᚻ', 'ᚼ', 'ᚽ', 'ᚾ', 'ᚿ', 'ᛀ', 'ᛁ', 'ᛂ', 'ᛃ', 'ᛞ', 'ᛟ', 'ᛠ'],
-    ['ᛪ', 'ᛥ', 'ᛨ', 'ᛡ', 'ᚽ', 'ᚾ', 'ᚱ', 'ᚷ'] 
-];
-
-function createKeyboard() {
-    keyboardLayout.forEach(row => {
-        row.forEach(key => {
-            const keyElement = document.createElement('div');
-            keyElement.classList.add('key');
-            keyElement.textContent = key;
-            if (key === 'SPACE') {
-                keyElement.style.gridColumn = 'span 6';
-            } else if (['RETURN', 'SHIFT LOCK', 'RUN STOP', 'C='].includes(key)) {
-                keyElement.classList.add('wide-key');
-            }
-            keyElement.addEventListener('click', () => handleKeyPress(key));
-            keyboard.appendChild(keyElement);
+        document.getElementById('translator-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') translateToRunes();
         });
-    });
-}
 
-function handleKeyPress(key) {
-    if (key === 'RETURN') {
-        content.innerHTML += '<p>READY.</p><p>_</p>';
-    } else {
-        const lastLine = content.lastElementChild;
-        if (lastLine.textContent === '_') {
-            lastLine.textContent = key + '_';
-        } else {
-            lastLine.textContent = lastLine.textContent.slice(0, -1) + key + '_';
+        /* =========================
+           ATARI KEYBOARD
+        ========================= */
+        const keyboardLayout = [
+            ['ᛀ', 'ᛁ', 'ᛂ', 'ᛃ', 'ᛄ', 'ᛅ', 'ᛆ', 'ᛇ', 'ᛈ', 'ᛉ', 'ᛊ', 'ᛋ', 'ᛦ', 'ᛦ', 'ᛎ'],
+            ['ᛏ', 'ᛐ', 'ᛑ', 'ᛒ', 'ᛓ', 'ᛔ', 'ᛕ', 'ᛖ', 'ᛗ', 'ᛘ', 'ᛙ', 'ᛚ', 'ᛛ', 'ᛜ', 'ᛝ'],
+            ['ᛞ', 'ᛟ', 'ᛠ', 'ᛡ', 'ᛢ', 'ᛣ', 'ᛤ', 'ᛥ', 'ᛦ', 'ᛧ', 'ᛨ', 'ᛩ', 'ᛪ', 'ᚦ', 'ᚨ'],
+            ['ᚠ', 'ᚹ', 'ᚺ', 'ᚻ', 'ᚼ', 'ᚽ', 'ᚾ', 'ᚿ', 'ᛀ', 'ᛁ', 'ᛂ', 'ᛃ', 'ᛞ', 'ᛟ', 'ᛠ'],
+            ['ᛪ', 'ᛥ', 'ᛨ', 'ᛡ', 'ᚽ', 'ᚾ', 'ᚱ', 'ᚷ', 'SPACE', 'SPACE', 'SPACE', 'SPACE', '⌫', '⌫', '↵']
+        ];
+
+        function createKeyboard() {
+            const keyboard = document.getElementById('keyboard');
+            keyboardLayout.forEach(row => {
+                row.forEach(key => {
+                    const keyElement = document.createElement('div');
+                    keyElement.classList.add('key');
+                    keyElement.textContent = key;
+                    
+                    if (key === 'SPACE') {
+                        keyElement.style.gridColumn = 'span 1';
+                    } else if (key === '⌫' || key === '↵') {
+                        keyElement.style.gridColumn = 'span 1';
+                    }
+                    
+                    keyElement.addEventListener('click', () => handleKeyPress(key));
+                    keyboard.appendChild(keyElement);
+                });
+            });
         }
-    }
-}
 
-let isPowerOn = true;
+        function handleKeyPress(key) {
+            const content = document.getElementById('content');
+            const lastLine = content.lastElementChild;
+            
+            if (key === '↵') {
+                content.innerHTML += '<p>READY.</p><p>_</p>';
+            } else if (key === '⌫') {
+                if (lastLine.textContent.length > 1) {
+                    lastLine.textContent = lastLine.textContent.slice(0, -2) + '_';
+                }
+            } else if (key === 'SPACE') {
+                lastLine.textContent = lastLine.textContent.slice(0, -1) + ' _';
+            } else {
+                lastLine.textContent = lastLine.textContent.slice(0, -1) + key + '_';
+            }
+        }
 
-powerBtn.addEventListener('click', () => {
-    isPowerOn = !isPowerOn;
-    content.style.display = isPowerOn ? 'block' : 'none';
-    powerBtn.textContent = isPowerOn ? 'Power Off' : 'Power On';
-});
+        createKeyboard();
 
-resetBtn.addEventListener('click', () => {
-    if (isPowerOn) {
-        content.innerHTML = '<h1>64 BASIC V3</h1><p>64K RAM SYSTEM EXPRESS</p><p>READY.</p><p>_</p>';
-    }
-});
+        // Atari controls
+        let isPowerOn = true;
 
-loadBtn.addEventListener('click', () => {
-    if (isPowerOn) {
-        content.innerHTML += '<p>LOADING...</p>';
-        setTimeout(() => {
-            content.innerHTML += '<p>READY.</p><p>_</p>';
-        }, 2000);
-    }
-});
+        document.getElementById('powerBtn').addEventListener('click', () => {
+            const content = document.getElementById('content');
+            isPowerOn = !isPowerOn;
+            content.style.display = isPowerOn ? 'block' : 'none';
+        });
 
-createKeyboard();
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            if (isPowerOn) {
+                document.getElementById('content').innerHTML = 
+                    '<h1>64 BASIC V3</h1><p>64K RAM SYSTEM EXPRESS</p><p>READY.</p><p>_</p>';
+            }
+        });
 
-// External Keyboard Input
-document.addEventListener('keydown', (event) => {
-    const key = event.key;
-    content.innerHTML += key;
-});
+        document.getElementById('loadBtn').addEventListener('click', () => {
+            if (isPowerOn) {
+                const content = document.getElementById('content');
+                content.innerHTML += '<p>LOADING...</p>';
+                setTimeout(() => {
+                    content.innerHTML += '<p>READY.</p><p>_</p>';
+                }, 2000);
+            }
+        });
 
-// Saving to localStorage
-function saveNotes() {
-    localStorage.setItem('notes', content.innerHTML);
-}
+        document.getElementById('saveButton').addEventListener('click', () => {
+            const notesContent = document.getElementById('screen').innerHTML;
+            const blob = new Blob([notesContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'atari-notes-' + new Date().toISOString().slice(0,10) + '.html';
+            link.click();
+            URL.revokeObjectURL(url);
+        });
 
-// Loading from localStorage
-function loadNotes() {
-    content.innerHTML = localStorage.getItem('notes') || '<h1>64 BASIC V3</h1><p>64K RAM SYSTEM EXPRESS</p><p>READY.</p><p>_</p>';
-}
+        // External keyboard input
+        document.addEventListener('keydown', (event) => {
+            if (document.activeElement.tagName !== 'TEXTAREA' && 
+                document.activeElement.tagName !== 'INPUT') {
+                const key = event.key;
+                if (key.length === 1) {
+                    handleKeyPress(key);
+                }
+            }
+        });
 
-loadNotes(); // Load notes on page load
+        /* =========================
+           DICTIONARY - WEBSTER'S MULTI-SOURCE
+        ========================= */
+        const dictionaryUrls = [
+            'https://raw.githubusercontent.com/matthewreagan/WebstersEnglishDictionary/master/dictionary.json',
+            'https://gist.githubusercontent.com/BideoWego/60fbd40d5d1f0f1beca11ba95221dd38/raw/58fb4cce910fbf5fa67a2f0f1f619c09d7b1b373/dictionary.json',
+            'https://raw.githubusercontent.com/adambom/dictionary/master/dictionary.json',
+            'https://raw.githubusercontent.com/hathibelagal/German-English-JSON-Dictionary/master/german_english.json'
+        ];
 
-// Add save button or event listener to trigger saveNotes()
+        async function lookupWord(word) {
+            const resultBox = document.getElementById('dictionary-result');
+            const status = document.getElementById('dictionary-status');
+            
+            if (!word) return;
+
+            resultBox.innerHTML = '<div class="loading">SEARCHING WEBSTER\'S SOURCES...</div>';
+            status.textContent = 'ACCESSING LEXICAL NODES...';
+
+            try {
+                const responses = await Promise.all(dictionaryUrls.map(url => axios.get(url)));
+                const dictionaries = responses.map(response => response.data);
+                
+                let definitionsFound = false;
+                let resultHTML = `
+                    <div style="margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;">
+                        <span class="word-title">${word}</span>
+                    </div>
+                `;
+
+                // Check English dictionaries (first 3 sources)
+                dictionaries.forEach((dictionary, index) => {
+                    if (index < 3) {
+                        if (dictionary[word.toLowerCase()]) {
+                            definitionsFound = true;
+                            const definition = dictionary[word.toLowerCase()];
+                            resultHTML += `
+                                <div style="margin-bottom: 1rem;">
+                                    <span class="part-of-speech">English (Source ${index + 1})</span>
+                                    <p style="margin: 0.5rem 0; color: #aaa; line-height: 1.6;">${definition}</p>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        // German-English dictionary
+                        const germanTranslations = Object.entries(dictionary).filter(([key, value]) => 
+                            value.toLowerCase().includes(word.toLowerCase()) || 
+                            key.toLowerCase() === word.toLowerCase()
+                        );
+                        
+                        if (germanTranslations.length > 0) {
+                            definitionsFound = true;
+                            resultHTML += `
+                                <div style="margin-bottom: 1rem;">
+                                    <span class="part-of-speech">German Translations</span>
+                                    <ul style="margin: 0.5rem 0 0 1rem; padding:0; list-style-type: square; color:#aaa;">
+                            `;
+                            germanTranslations.slice(0, 5).forEach(([german, english]) => {
+                                resultHTML += `<li style="margin-bottom:4px;">${german} — ${english}</li>`;
+                            });
+                            resultHTML += `</ul></div>`;
+                        }
+                    }
+                });
+
+                if (definitionsFound) {
+                    resultBox.innerHTML = resultHTML;
+                    status.textContent = 'DATA RETRIEVED.';
+                } else {
+                    resultBox.innerHTML = `<div style="color:#ff0033;">[NO RESULTS]: Term "${word}" not found in Webster's sources.</div>`;
+                    status.textContent = 'SEARCH COMPLETE.';
+                }
+                
+            } catch (error) {
+                console.error('Error fetching dictionary data:', error);
+                resultBox.innerHTML = `<div style="color:#ff0033;">[ERROR]: ${error.message}</div>`;
+                status.textContent = 'SEARCH FAILED.';
+            }
+        }
+
+        document.getElementById('search-button').addEventListener('click', () => {
+            lookupWord(document.getElementById('dictionary-search').value);
+        });
+
+        document.getElementById('dictionary-search').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') lookupWord(e.target.value);
+        });
+
+        document.getElementById('clear-dict').addEventListener('click', () => {
+            document.getElementById('dictionary-result').innerHTML = 
+                '<div style="color:#666; text-align: center;">Ready.<br><small>4 lexical sources + thesaurus</small></div>';
+            document.getElementById('dictionary-search').value = '';
+            document.getElementById('dictionary-status').textContent = '';
+        });
+
+        // Ghost word generator
+        const ghostWords = [
+            "virus", "nova", "silence", "cut", "fold", "machine", "control", "agent", 
+            "interzone", "scanner", "flicker", "dust", "image", "sound", "fear", "death", 
+            "monopoly", "station", "flesh", "ticket", "explode", "dream", "reality", 
+            "studio", "leech", "terminal", "language", "addict", "junk", "needle"
+        ];
+
+        document.getElementById('random-word').addEventListener('click', () => {
+            const random = ghostWords[Math.floor(Math.random() * ghostWords.length)];
+            document.getElementById('dictionary-search').value = random;
+            lookupWord(random);
+        });
+
+        /* =========================
+           CONSOLE MESSAGE
+        ========================= */
+        console.log(
+            "%c NOVA EXPRESS %c v1.0 ONLINE ", 
+            "background: #ff0033; color: #000; font-weight: bold; padding: 4px;", 
+            "background: #000; color: #ff0033; border: 1px solid #ff0033; padding: 3px;"
+        );
     </script>
-	<div id="codex" style="font-size: 0.8em; font-weight: bold;">
-  <p>
-    These runes draw from two strains of history:
-  </p>
-  <ul>
-    <li>
-      <b>Elder Futhark:</b>
-      <ul>
-        <li>
-          <b>ᛀ:</b> Represents the beginning, creation, or a primal force.
-        </li>
-        <li>
-          <b>ᛐ:</b> Symbolizes knowledge, wisdom, or hidden knowledge.
-        </li>
-        <li>
-          <b>ᛔ:</b> Represents a crossroads, choice, or a turning point.
-        </li>
-      </ul>
-    </li>
-    <li>
-      <b>Younger Futhark:</b>
-      <ul>
-        <li>
-          <b>ᛪ:</b> Represents strength, resilience, or enduring power.
-        </li>
-        <li>
-          <b>ᛥ:</b> Symbolizes communication, connection, or the spoken word.
-        </li>
-        <li>
-          <b>ᛨ:</b> Represents nature, growth, or the cycle of life.
-        </li>
-      </ul>
-    </li>
-  </ul>
-  <p>
-    Originally, runes were inscribed on objects, used for divination, and carved into stone.
-    In modern times, they are often used in art, literature, and as a symbol of ancient wisdom.
-  </p>
-</div>
-   
-</body>
-</html>
-
 </body>
 </html>
