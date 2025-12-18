@@ -102,86 +102,96 @@
             Start typing here...
         </div>
     </div>
-<!-- ===== IBM IWA 2.0 retro additions ===== -->
+<!-- ===== IBM IWA 2.0 overlay additions ===== -->
 <style>
-  /* IBM-style copyright */
-  #ibm-footer{
+  /* green-phosphor IBM copyright strip */
+  #ibm-strip{
     position:fixed;
-    bottom:0;
-    left:0;
-    right:0;
+    bottom:0; left:0; right:0;
+    height:16px;
     background:#000;
     color:#33ff33;
-    font:11px 'Courier New',monospace;
-    padding:2px 6px;
+    font:11px/16px 'Courier New',monospace;
     letter-spacing:.6px;
+    text-align:center;
+    z-index:999;
   }
-  /* fake dot-matrix preview */
-  #preview-body{
-    font:12px/1.4 'Courier New',monospace;
-    white-space:pre-wrap;
-    margin:18px;
+  /* F-key helper row under the existing footer */
+  #f-key-bar{
+    background:#111;
+    color:#aaa;
+    font:12px 'Courier New',monospace;
+    padding:2px 8px;
+    display:flex;
+    justify-content:space-around;
+    border-top:1px solid #333;
   }
+  .f-key{ cursor:pointer; }
+  .f-key:hover{ color:#fff; }
 </style>
 
-<footer id="ibm-footer">
-  Copyright © 1985,2025 IBM Corp. IBM Writing Assistant 2.0  |  KIMI-AI DESIGN  |  WORDSTAR.NEXUS  |  SYNONYM INKREALM.INFO
-</footer>
+<div id="ibm-strip">
+  Copyright © 1985,2025 IBM Corp.  IBM Writing Assistant 2.0  |  KIMI-AI DESIGN  |  WORDSTAR.NEXUS  |  INKREALM.INFO
+</div>
+
+<div id="f-key-bar">
+  <span class="f-key" onclick="saveDocument()">F3 Save</span>
+  <span class="f-key" onclick="openDocument()">F4 Open</span>
+  <span class="f-key" onclick="printDocument()">F5 Print</span>
+  <span class="f-key" onclick="findReplace()">F6 Find</span>
+  <span class="f-key" onclick="spellCheckIBM()">F7 Spell</span>
+  <span class="f-key" onclick="mergeFieldsIBM()">F8 Merge</span>
+  <span class="f-key" onclick="reformParagraphIBM()">F9 Reform</span>
+  <span class="f-key" onclick="toggleMenuIBM()">F10 Menu</span>
+</div>
 
 <script>
-/* ---------- F-key mappings (IBM IWA style) ---------- */
-document.addEventListener('keydown', e=>{
-  if(e.key==='F3'){ e.preventDefault(); saveDocument(); }   // original IBM IWA F3=Save
-  if(e.key==='F4'){ e.preventDefault(); openDocument(); }   // F4=Open
-  if(e.key==='F10'){ e.preventDefault();
-     document.querySelector('.toolbar').scrollIntoView({behavior:'smooth'});
-   }                                                         // F10=Menu
-});
-
-/* ---------- mail-merge helper ---------- */
-function mergeFields(html){
-  const re=/<<([^>]+)>>/g;
-  let m, out=html;
-  while((m=re.exec(html))!==null){
-     const val=prompt('Value for field “'+m[1]+'”:');
-     if(val===null) break;
-     out=out.split(m[0]).join(val);
+/* ---- IBM IWA style mail-merge ---- */
+function mergeFieldsIBM(){
+  const raw=editor.value;
+  let out=raw, m;
+  while((m=/(<<[^>]+>>)/.exec(out))!==null){
+     const val=prompt('Replace field “'+m[1]+'” with:');
+     if(val===null)break;
+     out=out.split(m[1]).join(val);
   }
-  return out;
+  if(out!==raw){
+     if(confirm('Apply merged text?')) editor.value=out;
+  }
 }
 
-/* ---------- override save to do merge ---------- */
-const oldSave=saveDocument;
-saveDocument=()=>{
-   const editor=document.getElementById('text-editor');
-   editor.innerHTML=mergeFields(editor.innerHTML);
-   oldSave();                         // now run original save
-};
-
-/* ---------- dot-matrix print-preview ---------- */
-function printPreview(){
-  const w=window.open('','preview','width=640,height=400,scrollbars=1');
-  const css='<style>body{font:12px/1.4 "Courier New",monospace;white-space:pre-wrap;margin:18px}</style>';
-  const pages=document.getElementById('text-editor').innerText
-                 .replace(/\n/g,'\r\n')
-                 .split(/(\r?\n){66}/);          // 66 lines per page (classic)
-  let html=css+'<div id="preview-body">';
-  pages.forEach((page,i)=>{
-     html+='\r\n--- PAGE '+(i+1)+' ---\r\n'+page;
-  });
-  html+='</div>';
-  w.document.write(html);
-  w.document.close();
+/* ---- dummy spell checker (just counts ??) ---- */
+function spellCheckIBM(){
+  const qs=(editor.value.match(/\?\?/g)||[]).length;
+  alert(qs+' possible misspellings (IBM Spell 2.0)');
 }
 
-/* add preview button to toolbar */
-document.addEventListener('DOMContentLoaded',()=>{
-  const btn=document.createElement('button');
-  btn.textContent='Preview';
-  btn.onclick=printPreview;
-  document.querySelector('.toolbar').appendChild(btn);
+/* ---- classic WordStar “Reform Paragraph” ---- */
+function reformParagraphIBM(){
+  const sel=editor.value.substring(editor.selectionStart,editor.selectionEnd);
+  if(!sel){ alert('Select a paragraph first'); return; }
+  const wrapped=sel.replace(/\s+/g,' ').trim();
+  editor.setRangeText(wrapped, editor.selectionStart, editor.selectionEnd, 'select');
+}
+
+/* ---- F10 toggles the existing footer menu ---- */
+function toggleMenuIBM(){
+  document.getElementById('footer').scrollIntoView({behavior:'smooth'});
+}
+
+/* ---- hook F-keys without clashing with Ctrl shortcuts ---- */
+document.addEventListener('keydown',e=>{
+  if(e.key==='F3'){e.preventDefault(); saveDocument();}
+  if(e.key==='F4'){e.preventDefault(); openDocument();}
+  if(e.key==='F5'){e.preventDefault(); printDocument();}
+  if(e.key==='F6'){e.preventDefault(); findReplace();}
+  if(e.key==='F7'){e.preventDefault(); spellCheckIBM();}
+  if(e.key==='F8'){e.preventDefault(); mergeFieldsIBM();}
+  if(e.key==='F9'){e.preventDefault(); reformParagraphIBM();}
+  if(e.key==='F10'){e.preventDefault(); toggleMenuIBM();}
 });
 </script>
+<!-- ===== end IBM overlay ===== -->
 <!-- ===== end retro IBM IWA 2.0 extras ===== -->
     <script>
      document.addEventListener('DOMContentLoaded', function() {
