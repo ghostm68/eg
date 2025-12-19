@@ -23,8 +23,27 @@
     #viewport { background: #000; position: relative; border-bottom: 1px solid var(--red); }
     
     .editor-section { grid-column: span 1; background: var(--white); color: #000; display: flex; flex-direction: column; }
-    .editor-header { background: #e5e5e5; border-bottom: 1px solid #ccc; padding: 8px 20px; font-family: 'Special Elite', serif; font-size: 12px; color: var(--red); letter-spacing: 1px; }
+  /* THE KINETIC HEADER */
+    .editor-header { 
+        background: var(--red); 
+        color: white;
+        padding: 6px 20px; 
+        font-family: 'Special Elite', serif; 
+        font-size: 11px; 
+        letter-spacing: 1px;
+        display: flex;
+        justify-content: space-between;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        z-index: 10;
+        transform: rotate(-0.5deg) translateY(-2px); /* Makes it look like a physical label */
+    }
 
+    .teletype-text::after {
+        content: "|";
+        animation: blink 1s infinite;
+    }
+
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
     #editor { 
         flex-grow: 1; padding: 30px; font-family: 'Special Elite', serif; font-size: 1.25rem; 
         line-height: 1.6; outline: none; overflow-y: auto; color: #111;
@@ -55,7 +74,7 @@
   <header class="flex items-center justify-between px-6">
     <div class="flex items-center gap-4">
         <div id="power-light" class="w-2 h-2 bg-zinc-800 rounded-full"></div>
-        <h1 class="text-white font-bold tracking-tighter text-md uppercase">ConceptWeave_v4.6_LiveWire</h1>
+        <h1 class="text-white font-bold tracking-tighter text-md uppercase">ConceptWeave_v4.7</h1>
         <button id="power-toggle" class="power-btn" onclick="togglePower()">POWER: OFF</button>
     </div>
     <div class="flex gap-4">
@@ -77,8 +96,11 @@
 
   <div class="grid grid-cols-[1fr_300px] col-span-2 border-t border-red-800">
     <section class="editor-section">
-      <div class="editor-header">>> HARDWARE_INPUT_READY // <span id="word-count">0</span> WORDS</div>
-      <div id="editor" contenteditable="true" spellcheck="false">Connect the power to begin the session...</div>
+      <div class="editor-header">
+          <div class="teletype-text" id="teletype">>> INITIALIZING_HARDWARE...</div>
+          <div id="word-count">0 WORDS</div>
+      </div>
+      <div id="editor" contenteditable="true" spellcheck="false">Switch the power to ON and begin excavation...</div>
     </section>
 
     <aside class="monitor-panel">
@@ -88,16 +110,53 @@
     </aside>
   </div>
 
-
   <footer>
-    <div>SYSTEM: STABLE // ENHANCED BY GEMINI AI</div>
-    <div class="flex gap-4 uppercase italic"><span>InkRealm Construct</span><span>|</span><span>Selective Creative Endeavor</span></div>
+    <div>TERMINAL_STATUS: ACTIVE // AUDIO_CORE: HUM_SYNC</div>
+    <div class="flex gap-4 uppercase italic"><span>InkRealm Construct</span><span>|</span><span>Gemini AI Evolution</span></div>
   </footer>
 </div>
 
-
 <script>
-    // --- AUDIO CORE (The Gemini Amendment) ---
+    // --- TELETYPE LOGIC ---
+    const statusMessages = [
+        ">> HARDWARE_INPUT_ACTIVE",
+        ">> ENCRYPTING_STORY_DATA",
+        ">> POLLINATIONS_AI_LINKED",
+        ">> FRACTAL_PATH_OPEN",
+        ">> SENSORY_INPUT_STABLE",
+        ">> NOIR_PROTOCOL_INITIATED"
+    ];
+    let messageIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+
+    function typeStatus() {
+        const target = document.getElementById('teletype');
+        const currentMsg = statusMessages[messageIndex];
+        
+        if (isDeleting) {
+            target.innerText = currentMsg.substring(0, charIndex - 1);
+            charIndex--;
+        } else {
+            target.innerText = currentMsg.substring(0, charIndex + 1);
+            charIndex++;
+        }
+
+        let speed = isDeleting ? 50 : 100;
+
+        if (!isDeleting && charIndex === currentMsg.length) {
+            speed = 3000; // Pause at end of phrase
+            isDeleting = true;
+        } else if (isDeleting && charIndex === 3) { // Keep the ">> "
+            isDeleting = false;
+            messageIndex = (messageIndex + 1) % statusMessages.length;
+            speed = 500;
+        }
+
+        setTimeout(typeStatus, speed);
+    }
+
+    // --- AUDIO CORE ---
     let audioCtx, humOsc, gainNode, filter;
     let isPowered = false;
 
@@ -106,15 +165,11 @@
         humOsc = audioCtx.createOscillator();
         gainNode = audioCtx.createGain();
         filter = audioCtx.createBiquadFilter();
-
         humOsc.type = 'sawtooth';
-        humOsc.frequency.setValueAtTime(55, audioCtx.currentTime); // Low 'A' hum
-        
+        humOsc.frequency.setValueAtTime(55, audioCtx.currentTime);
         filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(120, audioCtx.currentTime); // Muffle the harshness
-
-        gainNode.gain.setValueAtTime(0, audioCtx.currentTime); // Start silent
-
+        filter.frequency.setValueAtTime(120, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
         humOsc.connect(filter);
         filter.connect(gainNode);
         gainNode.connect(audioCtx.destination);
@@ -125,23 +180,20 @@
         if (!audioCtx) initAudio();
         const btn = document.getElementById('power-toggle');
         const light = document.getElementById('power-light');
-        
         if (!isPowered) {
             isPowered = true;
-            btn.innerText = "POWER: ON";
-            btn.classList.add('power-on');
+            btn.innerText = "POWER: ON"; btn.classList.add('power-on');
             light.classList.add('bg-red-600', 'animate-pulse');
-            gainNode.gain.setTargetAtTime(0.05, audioCtx.currentTime, 0.5); // Fade in hum
+            gainNode.gain.setTargetAtTime(0.04, audioCtx.currentTime, 0.5);
         } else {
             isPowered = false;
-            btn.innerText = "POWER: OFF";
-            btn.classList.remove('power-on');
+            btn.innerText = "POWER: OFF"; btn.classList.remove('power-on');
             light.classList.remove('bg-red-600', 'animate-pulse');
-            gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2); // Fade out
+            gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
         }
     }
 
-    // --- LOGIC & GRAPH ---
+    // --- GRAPH & LOGIC ---
     const lexicon = {
         name: "World",
         children: [
@@ -169,7 +221,6 @@
         const nodes = currentNode.children || [];
         const links = nodes.map(d => ({ source: currentNode.name, target: d.name }));
         const displayNodes = [{ name: currentNode.name, isParent: true }, ...nodes];
-
         document.getElementById('path-log').innerHTML = history.map((h, i) => `<div class="log-item" onclick="jumpTo(${i})">> ${h.name}</div>`).join('');
         document.getElementById('word-menu').innerHTML = nodes.map(n => `<div class="log-item" onclick="handleNodeClick('${n.name}')">${n.name}</div>`).join('');
 
@@ -202,7 +253,7 @@
 
     async function excavate(word) {
         try {
-            const res = await fetch(`https://text.pollinations.ai/4 noir words related to ${word}. Commas only.`);
+            const res = await fetch(`https://text.pollinations.ai/4 visceral noir synonyms for ${word}. Commas only.`);
             const data = await res.text();
             const aiWords = data.split(',').map(w => ({ name: w.trim().replace('.', '') }));
             let targetNode = currentNode.children.find(n => n.name === word);
@@ -212,21 +263,21 @@
 
     function insertText(w) { 
         document.getElementById('editor').innerHTML += ` <span style="color:red">${w}</span> `;
-        typingActivity = 15;
-        saveAll();
+        typingActivity = 15; saveAll();
     }
 
     function jumpTo(index) { currentNode = history[index]; history = history.slice(0, index); update(); }
     function goHome() { history = []; currentNode = lexicon; update(); }
     
     function saveAll() {
-        localStorage.setItem('noir_editor_v46', document.getElementById('editor').innerHTML);
-        const words = document.getElementById('editor').innerText.trim().split(/\s+/).length;
-        document.getElementById('word-count').innerText = words;
+        localStorage.setItem('noir_editor_v47', document.getElementById('editor').innerHTML);
+        const txt = document.getElementById('editor').innerText.trim();
+        const count = txt.length > 0 ? txt.split(/\s+/).length : 0;
+        document.getElementById('word-count').innerText = count + " WORDS";
     }
 
     function loadAll() {
-        const saved = localStorage.getItem('noir_editor_v46');
+        const saved = localStorage.getItem('noir_editor_v47');
         if(saved) document.getElementById('editor').innerHTML = saved;
         saveAll();
     }
@@ -236,7 +287,7 @@
     function exportDraft() {
         const text = document.getElementById('editor').innerText;
         const blob = new Blob([text], {type: 'text/plain'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'noir-log.txt'; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'noir-manuscript.txt'; a.click();
     }
 
     const editor = document.getElementById('editor');
@@ -244,11 +295,9 @@
     let points = [];
     
     editor.addEventListener('input', () => { 
-        typingActivity = 15; 
-        saveAll(); 
-        // Audio reaction: hum gets louder/richer when typing
+        typingActivity = 15; saveAll(); 
         if(isPowered) {
-            filter.frequency.setTargetAtTime(250, audioCtx.currentTime, 0.1);
+            filter.frequency.setTargetAtTime(220, audioCtx.currentTime, 0.1);
             setTimeout(() => filter.frequency.setTargetAtTime(120, audioCtx.currentTime, 0.5), 200);
         }
     });
@@ -268,10 +317,8 @@
     function dragged(e, d) { d.fx = e.x; d.fy = e.y; }
     function dragended(e, d) { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
 
-    window.onload = loadAll;
+    window.onload = () => { loadAll(); typeStatus(); };
     update();
 </script>
-</body>
-</html>
 </body>
 </html>
