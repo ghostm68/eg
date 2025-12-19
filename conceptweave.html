@@ -277,13 +277,48 @@
     }
 
     async function excavate(word) {
+        // Visual feedback so we know the machine is calling Pollinations
+        const status = document.getElementById('pulse-status');
+        const originalStatus = status.innerText;
+        status.innerText = "LINKING_AI...";
+        status.style.color = "var(--red)";
+
         try {
-            const res = await fetch(`https://text.pollinations.ai/4 visceral noir synonyms for ${word}. Commas only.`);
+            // We use a "system" prompt to ensure the AI doesn't talk back, just gives data
+            const prompt = `system: provide exactly 4 noir synonyms for "${word}". format: word, word, word, word. no chatter.`;
+            const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`);
+            
+            if (!res.ok) throw new Error("Signal Lost");
+            
             const data = await res.text();
-            const aiWords = data.split(',').map(w => ({ name: w.trim().replace('.', '') }));
-            let targetNode = currentNode.children.find(n => n.name === word);
-            if(targetNode) { targetNode.children = aiWords; history.push(currentNode); currentNode = targetNode; update(); }
-        } catch(e) {}
+            
+            // Clean the data: remove periods, split by comma, filter out empty strings
+            const aiWords = data.split(',')
+                .map(w => ({ name: w.trim().replace(/[^a-zA-Z ]/g, "") }))
+                .filter(w => w.name.length > 0)
+                .slice(0, 4);
+
+            if (aiWords.length > 0) {
+                // Find the node in the current view
+                let targetNode = currentNode.children.find(n => n.name === word);
+                
+                if(targetNode) {
+                    targetNode.children = aiWords;
+                    history.push(currentNode);
+                    currentNode = targetNode;
+                    update(); // Redraw the fractal
+                }
+            }
+        } catch(e) { 
+            console.error("AI Excavation Failure:", e);
+            status.innerText = "SIGNAL_INTERFERENCE";
+        } finally {
+            // Restore status after a short delay
+            setTimeout(() => {
+                status.innerText = isPowered ? "Signal_Stable" : "Off_Line";
+                status.style.color = "";
+            }, 1000);
+        }
     }
 
     function insertText(w) { document.getElementById('editor').innerHTML += ` <span style="color:red">${w}</span> `; typingActivity = 15; saveAll(); }
