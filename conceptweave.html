@@ -1,105 +1,37 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>ConceptWeave: Noir Terminal</title>
+  <title>ConceptWeave: Noir Terminal Pro</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Nova+Mono&family=Special+Elite&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --red: #ff0000;
-      --black: #050505;
-      --grey: #1a1a1a;
-      --white: #ffffff;
-    }
-    
-    body { 
-      background: var(--black); 
-      color: var(--white); 
-      font-family: 'Nova Mono', monospace; 
-      margin: 0; overflow: hidden; height: 100vh;
-    }
+    :root { --red: #ff0000; --black: #050505; --grey: #1a1a1a; --white: #ffffff; }
+    body { background: var(--black); color: var(--white); font-family: 'Nova Mono', monospace; margin: 0; overflow: hidden; height: 100vh; }
 
     /* CRT Scanline Overlay */
     body::after {
-      content: " ";
-      display: block;
-      position: absolute;
-      top: 0; left: 0; bottom: 0; right: 0;
+      content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
       background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
                   linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-      z-index: 999;
-      background-size: 100% 3px, 3px 100%;
-      pointer-events: none;
+      z-index: 999; background-size: 100% 3px, 3px 100%; pointer-events: none;
     }
 
-    /* Layout Grid */
-    .app-grid {
-      display: grid;
-      grid-template-columns: 280px 1fr;
-      grid-template-rows: 50px 1fr 320px 30px;
-      height: 100vh;
-    }
-
+    .app-grid { display: grid; grid-template-columns: 280px 1fr; grid-template-rows: 50px 1fr 320px 30px; height: 100vh; }
     header { grid-column: span 2; border-bottom: 1px solid var(--red); background: #000; z-index: 50; }
     .sidebar { background: #0a0a0a; border-right: 1px solid #222; overflow-y: auto; padding: 20px; }
     #viewport { background: #000; position: relative; border-bottom: 1px solid var(--red); }
     
-    /* Typewriter Section */
-    .editor-section { 
-      grid-column: span 1; 
-      background: var(--white); 
-      color: #000; 
-      display: flex; 
-      flex-direction: column;
-    }
+    .editor-section { grid-column: span 1; background: var(--white); color: #000; display: flex; flex-direction: column; }
+    .editor-header { background: #e5e5e5; border-bottom: 1px solid #ccc; padding: 8px 20px; font-family: 'Special Elite', serif; font-size: 12px; color: var(--red); letter-spacing: 1px; }
 
-    .editor-header { 
-      background: #e5e5e5; 
-      border-bottom: 1px solid #ccc; 
-      padding: 8px 20px; 
-      font-family: 'Special Elite', serif;
-      font-size: 12px;
-      color: var(--red);
-      letter-spacing: 1px;
-    }
-
-    #editor {
-      flex-grow: 1;
-      padding: 30px;
-      font-family: 'Special Elite', serif;
-      font-size: 1.25rem;
-      line-height: 1.6;
-      outline: none;
-      overflow-y: auto;
-      color: #111;
-    }
-
-    /* Pulse Monitor Section (The Empty Space Filler) */
-    .monitor-panel {
-      background: #000;
-      border-left: 1px solid #222;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-
+    #editor { flex-grow: 1; padding: 30px; font-family: 'Special Elite', serif; font-size: 1.25rem; line-height: 1.6; outline: none; overflow-y: auto; color: #111; }
+    .monitor-panel { background: #000; border-left: 1px solid #222; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
     .pulse-svg { width: 100%; height: 120px; stroke: var(--red); stroke-width: 2; fill: none; }
 
-    /* Word Menu / Log Styling */
-    .log-item { 
-      font-size: 11px; 
-      padding: 5px 0; 
-      color: #666; 
-      cursor: pointer; 
-      border-bottom: 1px solid #1a1a1a;
-      transition: 0.2s;
-    }
+    .log-item { font-size: 11px; padding: 5px 0; color: #666; cursor: pointer; border-bottom: 1px solid #1a1a1a; transition: 0.2s; }
     .log-item:hover { color: var(--red); border-bottom-color: var(--red); }
 
-    /* D3 Visuals */
     .node-center { fill: var(--red); filter: drop-shadow(0 0 5px var(--red)); }
     .node-orbit { fill: #000; stroke: var(--red); stroke-width: 1px; }
     .label { fill: #fff; font-size: 10px; text-transform: uppercase; pointer-events: none; }
@@ -111,60 +43,48 @@
 <body>
 
 <div class="app-grid">
-  <!-- TOP HEADER -->
   <header class="flex items-center justify-between px-6">
     <div class="flex items-center gap-4">
         <div class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
-        <h1 class="text-white font-bold tracking-tighter text-md uppercase">ConceptWeave_Terminal_v4.2</h1>
+        <h1 class="text-white font-bold tracking-tighter text-md uppercase">ConceptWeave_Terminal_v4.5</h1>
     </div>
     <div class="flex gap-4">
-        <button onclick="goHome()" class="text-[10px] border border-zinc-800 px-3 py-1 hover:border-red-600">RESET_HIERARCHY</button>
+        <button onclick="clearSave()" class="text-[10px] border border-zinc-800 px-3 py-1 hover:border-red-600">WIPE_MEMORY</button>
         <button onclick="exportDraft()" class="text-[10px] border border-zinc-800 px-3 py-1 hover:border-red-600">EXPORT_DRAFT</button>
     </div>
   </header>
 
-  <!-- SIDEBAR: INQUIRY LOG -->
   <aside class="sidebar">
-    <div class="text-[10px] text-zinc-600 mb-4 tracking-widest uppercase">Path_Inquiry</div>
+    <div class="text-[10px] text-zinc-600 mb-4 tracking-widest uppercase">Inquiry_Log</div>
     <div id="path-log" class="mb-8"></div>
-    <div class="text-[10px] text-red-800 mb-2 uppercase">Current_Fractal</div>
+    <div class="text-[10px] text-red-800 mb-2 uppercase">Sub_Fractals</div>
     <div id="word-menu"></div>
   </aside>
 
-  <!-- GRAPH AREA -->
   <main id="viewport">
     <svg id="canvas" class="w-full h-full"></svg>
   </main>
 
-  <!-- BOTTOM: EDITOR & PULSE -->
   <div class="grid grid-cols-[1fr_300px] col-span-2 border-t border-red-800">
     <section class="editor-section">
-      <div class="editor-header">>> TYPEWRITER_INPUT_ACTIVE...</div>
+      <div class="editor-header">>> DATA_STREAM_ENCRYPTED // <span id="word-count">0</span> WORDS</div>
       <div id="editor" contenteditable="true" spellcheck="false">The rain hit the asphalt like a shower of cold lead...</div>
     </section>
 
     <aside class="monitor-panel">
       <div class="text-[9px] text-red-900 mb-2 uppercase tracking-tighter">Narrative_Tension_Monitor</div>
-      <svg class="pulse-svg">
-        <polyline id="pulse-line" points="0,60 300,60"></polyline>
-      </svg>
-      <div id="pulse-status" class="text-[8px] text-zinc-700 mt-4 tracking-widest uppercase">Stationary_State</div>
+      <svg class="pulse-svg"><polyline id="pulse-line" points="0,60 300,60"></polyline></svg>
+      <div id="pulse-status" class="text-[8px] text-zinc-700 mt-4 tracking-widest uppercase">Idle</div>
     </aside>
   </div>
 
-  <!-- FOOTER -->
   <footer>
-    <div>SYSTEM: STABLE // LINK: POLLINATIONS_AI</div>
-    <div class="flex gap-4 uppercase italic">
-        <span>Concept: InkRealm</span>
-        <span>|</span>
-        <span>Enhanced by Gemini AI</span>
-    </div>
+    <div>SYSTEM: STABLE // ENHANCED BY GEMINI AI</div>
+    <div class="flex gap-4 uppercase italic"><span>InkRealm Construct</span><span>|</span><span>Selective Creative Endeavor</span></div>
   </footer>
 </div>
 
 <script>
-    // --- THE HIERARCHY ---
     const lexicon = {
         name: "World",
         children: [
@@ -177,7 +97,7 @@
 
     let currentNode = lexicon;
     let history = [];
-    let typingActivity = 0; // Speed of the pulse
+    let typingActivity = 0;
 
     const svg = d3.select("#canvas");
     const width = window.innerWidth - 280;
@@ -193,32 +113,20 @@
         const links = nodes.map(d => ({ source: currentNode.name, target: d.name }));
         const displayNodes = [{ name: currentNode.name, isParent: true }, ...nodes];
 
-        // Update Log (Path)
-        document.getElementById('path-log').innerHTML = history.map((h, i) => 
-            `<div class="log-item" onclick="jumpTo(${i})">> ${h.name}</div>`).join('');
+        document.getElementById('path-log').innerHTML = history.map((h, i) => `<div class="log-item" onclick="jumpTo(${i})">> ${h.name}</div>`).join('');
+        document.getElementById('word-menu').innerHTML = nodes.map(n => `<div class="log-item" onclick="handleNodeClick('${n.name}')">${n.name}</div>`).join('');
 
-        // Update Word Menu
-        document.getElementById('word-menu').innerHTML = nodes.map(n => 
-            `<div class="log-item" onclick="handleNodeClick('${n.name}')">${n.name}</div>`).join('');
-
-        // D3 Render
         const link = svg.selectAll(".link").data(links, d => d.target).join("line").attr("class", "link");
         const node = svg.selectAll(".node-group").data(displayNodes, d => d.name).join("g").attr("class", "node-group")
             .on("click", (e, d) => handleNodeClick(d.name))
             .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
 
-        node.selectAll("circle").data(d => [d]).join("circle")
-            .attr("r", d => d.isParent ? 12 : 7)
-            .attr("class", d => d.isParent ? "node-center" : "node-orbit");
-
-        node.selectAll("text").data(d => [d]).join("text")
-            .attr("class", "label").attr("dy", 26).attr("text-anchor", "middle")
-            .text(d => d.name);
+        node.selectAll("circle").data(d => [d]).join("circle").attr("r", d => d.isParent ? 12 : 7).attr("class", d => d.isParent ? "node-center" : "node-orbit");
+        node.selectAll("text").data(d => [d]).join("text").attr("class", "label").attr("dy", 26).attr("text-anchor", "middle").text(d => d.name);
 
         simulation.nodes(displayNodes);
         simulation.force("link").links(links);
         simulation.alpha(1).restart();
-
         simulation.on("tick", () => {
             link.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
             node.attr("transform", d => `translate(${d.x},${d.y})`);
@@ -229,82 +137,66 @@
         if(name === currentNode.name) return;
         const target = currentNode.children?.find(c => c.name === name);
         if(target && target.children) {
-            history.push(currentNode);
-            currentNode = target;
-            update();
+            history.push(currentNode); currentNode = target; update();
         } else {
-            insertText(name);
-            await excavate(name);
+            insertText(name); await excavate(name);
         }
     }
 
     async function excavate(word) {
         try {
-            const prompt = `Provide 4 short noir sensory words related to ${word}. Commas only.`;
-            const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`);
+            const res = await fetch(`https://text.pollinations.ai/4 short noir words related to ${word}. Commas only.`);
             const data = await res.text();
             const aiWords = data.split(',').map(w => ({ name: w.trim().replace('.', '') }));
-            
             let targetNode = currentNode.children.find(n => n.name === word);
-            if(targetNode) {
-                targetNode.children = aiWords;
-                history.push(currentNode);
-                currentNode = targetNode;
-                update();
-            }
-        } catch(e) { console.log("AI Offline"); }
+            if(targetNode) { targetNode.children = aiWords; history.push(currentNode); currentNode = targetNode; update(); }
+        } catch(e) {}
     }
 
     function insertText(w) { 
-        const ed = document.getElementById('editor');
-        ed.innerHTML += ` <span style="color:red">${w}</span> `;
-        typingActivity = 10; // Trigger pulse spike
+        document.getElementById('editor').innerHTML += ` <span style="color:red">${w}</span> `;
+        typingActivity = 10;
+        saveAll();
     }
 
-    function jumpTo(index) {
-        currentNode = history[index];
-        history = history.slice(0, index);
-        update();
-    }
-
+    function jumpTo(index) { currentNode = history[index]; history = history.slice(0, index); update(); }
     function goHome() { history = []; currentNode = lexicon; update(); }
     
+    // --- AUTOSAVE LOGIC ---
+    function saveAll() {
+        localStorage.setItem('noir_editor_content', document.getElementById('editor').innerHTML);
+        const words = document.getElementById('editor').innerText.trim().split(/\s+/).length;
+        document.getElementById('word-count').innerText = words;
+    }
+
+    function loadAll() {
+        const saved = localStorage.getItem('noir_editor_content');
+        if(saved) document.getElementById('editor').innerHTML = saved;
+        saveAll();
+    }
+
+    function clearSave() { if(confirm("Wipe all data?")) { localStorage.clear(); location.reload(); } }
+
     function exportDraft() {
         const text = document.getElementById('editor').innerText;
         const blob = new Blob([text], {type: 'text/plain'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'noir-log.txt';
-        a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'noir-log.txt'; a.click();
     }
 
-    // --- REACTIVE PULSE MONITOR LOGIC ---
     const editor = document.getElementById('editor');
     const pulseLine = document.getElementById('pulse-line');
     let points = [];
     
-    editor.addEventListener('input', () => { typingActivity = 15; });
+    editor.addEventListener('input', () => { typingActivity = 15; saveAll(); });
 
     setInterval(() => {
-        // Calculate the next y point
-        const base = 60;
-        const jitter = typingActivity > 0 ? (Math.random() - 0.5) * typingActivity * 4 : (Math.random() - 0.5) * 5;
-        const y = base + jitter;
-        
-        points.push(y);
-        if(points.length > 60) points.shift();
-        
-        const pathData = points.map((p, i) => `${i * 5},${p}`).join(' ');
-        pulseLine.setAttribute('points', pathData);
-        
-        // Cool down typing activity
+        const y = 60 + (typingActivity > 0 ? (Math.random() - 0.5) * typingActivity * 4 : (Math.random() - 0.5) * 5);
+        points.push(y); if(points.length > 60) points.shift();
+        pulseLine.setAttribute('points', points.map((p, i) => `${i * 5},${p}`).join(' '));
         if (typingActivity > 0) {
-            typingActivity -= 0.5;
-            document.getElementById('pulse-status').innerText = "Tension_Rising";
-            document.getElementById('pulse-status').style.color = "var(--red)";
+            typingActivity -= 0.5; document.getElementById('pulse-status').innerText = "Rising_Tension";
         } else {
-            document.getElementById('pulse-status').innerText = "Stationary_State";
-            document.getElementById('pulse-status').style.color = "#444";
+            document.getElementById('pulse-status').innerText = "Stationary";
         }
     }, 50);
 
@@ -312,6 +204,7 @@
     function dragged(e, d) { d.fx = e.x; d.fy = e.y; }
     function dragended(e, d) { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
 
+    window.onload = loadAll;
     update();
 </script>
 </body>
