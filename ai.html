@@ -2,9 +2,8 @@
 <html lang="en" class="👗">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>wnia</title>
-	
 	
 <link rel="icon" type="image/svg+xml" href="https://cdn.jsdelivr.net/gh/ghostm68/inktwo@main/svg/inky.svg">
 	
@@ -26,13 +25,19 @@
   
   <style>
     :root { --red: #ff0000; --black: #050505; --grey: #1a1a1a; --white: #ffffff; }
+    
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+    
     body { 
       background: var(--black); 
       color: var(--white); 
       font-family: 'Nova Mono', monospace; 
       margin: 0; 
       overflow: hidden; 
-      height: 100vh; 
+      height: 100vh;
+      touch-action: manipulation;
     }
 
     /* CRT Scanline Overlay */
@@ -56,7 +61,7 @@
       grid-template-columns: 200px 1fr; 
       grid-template-rows: 50px 1fr 320px 30px; 
       height: 100vh; 
-      overflow: hidden; /* Prevent overall overflow */
+      overflow: hidden;
     }
     
     header { 
@@ -74,7 +79,7 @@
       overflow-y: auto; 
       padding: 20px; 
       grid-row: 2;
-      height: calc(100vh - 400px); /* Fixed height */
+      height: calc(100vh - 400px);
     }
     
     #viewport { 
@@ -83,42 +88,39 @@
       border-bottom: 1px solid var(--red);
       overflow: hidden;
       grid-row: 2;
-      height: calc(100vh - 400px); /* Fixed height */
+      height: calc(100vh - 400px);
     }
     
-    /* BOTTOM CONTAINER - CRITICAL FIX */
     .bottom-container {
       display: grid;
       grid-template-columns: 200px 1fr;
       grid-column: span 2;
       grid-row: 3;
       border-top: 1px solid var(--red);
-      height: 320px; /* Fixed height */
+      height: 320px;
       min-height: 320px;
-      overflow: visible !important; /* Force visibility */
+      overflow: visible !important;
     }
     
-    /* NARROW CHAT SECTION */
     .chat-section { 
       background: var(--red); 
       color: var(--white); 
       display: flex; 
       flex-direction: column;
       width: 200px;
-      height: 320px !important; /* Force height */
+      height: 320px !important;
       min-height: 320px;
-      overflow: hidden; /* Contain children */
+      overflow: hidden;
     }
     
-    /* WIDE WITCH SECTION */
     .witch-section { 
       background: #000; 
       display: flex; 
       flex-direction: column; 
       border-left: 1px solid #222;
-      height: 320px !important; /* Force height */
+      height: 320px !important;
       min-height: 320px;
-      overflow: hidden; /* Contain children */
+      overflow: hidden;
     }
     
     .editor-header { 
@@ -136,7 +138,6 @@
       min-height: 36px;
     }
     
-    /* CHAT MESSAGES AREA */
     #chat-container { 
       flex: 1; 
       padding: 10px 12px; 
@@ -147,10 +148,10 @@
       color: var(--white); 
       background: var(--red);
       min-height: 0;
-      height: calc(100% - 86px); /* Header + Input area = 86px */
+      height: calc(100% - 86px);
+      -webkit-overflow-scrolling: touch;
     }
     
-    /* CHAT INPUT AREA - FIXED AT BOTTOM */
     .chat-input-area {
       background: #1a1a1a;
       border-top: 1px solid #333;
@@ -177,14 +178,15 @@
     .link-item {
       font-size: 10px;
       color: var(--white);
-      padding: 3px 0;
+      padding: 8px 0;
       cursor: pointer;
       transition: 0.2s;
       text-transform: uppercase;
       border-bottom: 1px solid #333;
+      user-select: none;
     }
     
-    .link-item:hover {
+    .link-item:hover, .link-item:active {
       color: var(--red);
       text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
       border-bottom-color: var(--red);
@@ -205,7 +207,6 @@
       flex-shrink: 0;
     }
     
-    /* Video Styling */
     .video-bg {
       position: absolute;
       top: 0;
@@ -217,20 +218,19 @@
       mix-blend-mode: screen;
     }
     
-    /* QR Code Styling */
     #ton-qr {
       width: 60px;
       border: 1px solid var(--white);
       padding: 2px;
       background: #000;
-      cursor: zoom-in;
+      cursor: pointer;
       transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
       position: relative;
       z-index: 10001;
     }
     
-    #ton-qr:hover {
+    #ton-qr:hover, #ton-qr:active {
       box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
       border-color: var(--red);
     }
@@ -240,10 +240,8 @@
       z-index: 999999;
       border-color: var(--white);
       box-shadow: 0 0 100px rgba(0, 0, 0, 0.9), 0 0 50px rgba(255, 255, 255, 0.8);
-      cursor: zoom-out;
     }
     
-    /* Chat Bubbles */
     .chat-bubble {
       margin: 6px 0;
       padding: 8px;
@@ -268,7 +266,6 @@
       border-color: rgba(255, 0, 0, 0.2);
     }
     
-    /* Splash Screen */
     .splash-screen {
       position: fixed;
       top: 0;
@@ -313,7 +310,6 @@
       80% { transform: translate(2px, -2px); }
     }
     
-    /* Witch Symbol */
     .witch-symbol {
       stroke-dasharray: 1000;
       stroke-dashoffset: 1000;
@@ -326,16 +322,15 @@
       100% { stroke-dashoffset: 1000; }
     }
     
-    /* Input Styling */
     #chat-input {
       background: #000;
       color: var(--white);
       border: 1px solid #333;
-      font-size: 0.9rem;
+      font-size: 16px; /* Prevents iOS zoom */
       padding: 8px 10px;
       flex: 1;
       font-family: 'VT323', monospace;
-      min-width: 0; /* Allow shrinking */
+      min-width: 0;
     }
     
     #chat-input:focus {
@@ -345,10 +340,9 @@
     
     #chat-input::placeholder {
       color: #666;
-      font-size: 0.8rem;
+      font-size: 14px;
     }
     
-    /* Send Button */
     .send-button {
       background: #000;
       color: var(--white);
@@ -361,14 +355,14 @@
       cursor: pointer;
       font-family: 'Nova Mono', monospace;
       white-space: nowrap;
+      user-select: none;
     }
     
-    .send-button:hover {
+    .send-button:hover, .send-button:active {
       background: var(--red);
       border-color: var(--red);
     }
     
-    /* Status Text */
     .status-text {
       color: #888;
     }
@@ -377,7 +371,6 @@
       color: var(--red);
     }
     
-    /* Social Feed Container */
     .social-feed-container {
       width: 100%;
       height: 160px;
@@ -386,13 +379,13 @@
       overflow: hidden;
     }
     
-    /* Witch Grid */
     .witch-grid {
       display: flex;
       flex-direction: column;
       height: 100%;
       padding: 15px;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
     
     .witch-top {
@@ -413,7 +406,6 @@
       margin-top: 10px;
     }
     
-    /* Scrollbars */
     #chat-container::-webkit-scrollbar,
     .sidebar::-webkit-scrollbar,
     .witch-grid::-webkit-scrollbar {
@@ -433,7 +425,6 @@
       border-radius: 3px;
     }
     
-    /* Section labels */
     .section-label {
       font-size: 9px;
       color: #666;
@@ -442,7 +433,6 @@
       margin-bottom: 8px;
     }
     
-    /* Support section */
     .support-section {
       display: flex;
       flex-direction: column;
@@ -450,17 +440,125 @@
       margin-top: 5px;
     }
     
-    /* Message count */
-    .message-count {
-      margin-left: auto;
-      color: #666;
-      font-size: 0.7rem;
+    /* MOBILE OPTIMIZATIONS */
+    @media (max-width: 768px) {
+      .app-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: 50px 1fr 400px 30px;
+      }
+      
+      .sidebar {
+        display: none;
+      }
+      
+      #viewport {
+        height: calc(100vh - 480px);
+      }
+      
+      .bottom-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: 200px 200px;
+        height: 400px;
+        min-height: 400px;
+      }
+      
+      .chat-section {
+        width: 100%;
+        height: 200px !important;
+        min-height: 200px;
+        border-bottom: 1px solid #222;
+      }
+      
+      .witch-section {
+        width: 100%;
+        height: 200px !important;
+        min-height: 200px;
+        border-left: none;
+        border-top: 1px solid #222;
+      }
+      
+      #chat-container {
+        height: calc(100% - 86px);
+        font-size: 0.85rem;
+      }
+      
+      .chat-bubble {
+        font-size: 0.85rem;
+        padding: 6px;
+      }
+      
+      .witch-svg {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 8px;
+      }
+      
+      .social-feed-container {
+        height: 100px;
+        margin: 5px 0;
+      }
+      
+      .witch-grid {
+        padding: 10px;
+      }
+      
+      .section-label {
+        font-size: 8px;
+      }
+      
+      header .flex {
+        padding: 0 10px;
+      }
+      
+      header h1 {
+        font-size: 0.8rem;
+      }
+      
+      header button {
+        font-size: 8px;
+        padding: 4px 8px;
+      }
+      
+      footer {
+        flex-direction: column;
+        gap: 4px;
+        font-size: 7px;
+        padding: 4px 10px;
+        height: auto;
+        min-height: 30px;
+      }
+      
+      .splash-title {
+        font-size: 2rem;
+        margin-bottom: 20px;
+      }
+      
+      .splash-text {
+        font-size: 1rem;
+        padding: 0 20px;
+      }
     }
     
-    /* DEBUG: Make input area super visible */
-    .debug-input {
-      border: 2px solid #00ff00 !important;
-      background: rgba(0, 255, 0, 0.1) !important;
+    @media (max-width: 480px) {
+      .chat-input-area {
+        padding: 6px;
+      }
+      
+      #chat-input {
+        font-size: 16px;
+        padding: 6px 8px;
+      }
+      
+      .send-button {
+        font-size: 0.8rem;
+        padding: 0 10px;
+        min-width: 45px;
+      }
+      
+      .editor-header {
+        font-size: 10px;
+        padding: 6px 10px;
+      }
     }
   </style>
 </head>
@@ -488,13 +586,13 @@
       <h1 class="text-white font-bold tracking-tighter text-md uppercase">ink_realm_v4.5</h1>
     </div>
     <div class="flex gap-4">
-      <button onclick="clearChat()" class="text-[10px] border border-zinc-800 px-3 py-1 hover:border-red-600 text-white">CLEAR_LOG</button>
-      <button onclick="exportChat()" class="text-[10px] border border-zinc-800 px-3 py-1 hover:border-red-600 text-white">EXPORT_LOG</button>
+      <button onclick="clearChat()" class="text-[10px] border border-zinc-800 px-3 py-1 hover:border-red-600 text-white">CLEAR</button>
+      <button onclick="exportChat()" class="text-[10px] border border-zinc-800 px-3 py-1 hover:border-red-600 text-white">EXPORT</button>
     </div>
   </header>
 
   <aside class="sidebar">
-	     <!-- TON QR Code -->
+    <!-- TON QR Code -->
     <div class="mt-6">
       <div class="section-label">TON_WALLET</div>
       <img id="ton-qr" 
@@ -511,35 +609,31 @@
     <div class="section-label mt-6">Quick_Links</div>
     <div class="link-item" onclick="window.open('https://inkrealm.instatus.com/', '_blank')">STATUS</div>
     <div class="link-item" onclick="window.open('tel:+16468019713', '_blank')">CONTACT</div>
-    
- 
   </aside>
 
   <main id="viewport">
-    <video class="video-bg" src="https://github.com/ghostm68/pantheon/raw/main/inkrealm.info_1696009559686.mp4" muted autoplay loop></video>
+    <video class="video-bg" src="https://github.com/ghostm68/pantheon/raw/main/inkrealm.info_1696009559686.mp4" muted autoplay loop playsinline></video>
     <div class="overlay"></div>
   </main>
 
-  <!-- BOTTOM SECTION - FIXED HEIGHTS -->
+  <!-- BOTTOM SECTION -->
   <div class="bottom-container">
-    <!-- LEFT: NARROW CHAT SECTION -->
+    <!-- CHAT SECTION -->
     <section class="chat-section">
       <div class="editor-header">
         >> AI_CHAT
       </div>
       
-      <!-- CHAT MESSAGES AREA -->
       <div id="chat-container">
         <div class="chat-bubble bot-message">
            AI interface active. Type a message below.
         </div>
       </div>
       
-      <!-- CHAT INPUT AREA - NOW VISIBLE -->
       <div class="chat-input-area">
         <input type="text" 
                id="chat-input" 
-               placeholder="Type message here..."
+               placeholder="Type message..."
                onkeypress="if(event.key === 'Enter') sendMessage()">
         <button onclick="sendMessage()" 
                 class="send-button">
@@ -548,10 +642,9 @@
       </div>
     </section>
 
-    <!-- RIGHT: WIDE WITCH SECTION -->
+    <!-- WITCH SECTION -->
     <section class="witch-section">
       <div class="witch-grid">
-        <!-- Witch Protection Area -->
         <div class="witch-top">
           <div class="section-label">Witch_Protection_Grid</div>
           <svg class="witch-svg" viewBox="0 0 100 100">
@@ -562,7 +655,6 @@
           <div id="witch-status" class="text-[8px] text-zinc-700 mt-2 uppercase status-text">Protected</div>
         </div>
         
-        <!-- Social Feed -->
         <div class="witch-middle">
           <div class="section-label">inna</div>
           <div class="social-feed-container">
@@ -570,7 +662,6 @@
           </div>
         </div>
         
-        <!-- Support Section -->
         <div class="support-section">
           <div class="text-center">
             <div class="text-[8px] text-zinc-600 mb-1">Support System</div>
@@ -581,15 +672,13 @@
                      alt="Donate with PayPal button" />
             </form>
           </div>
-          
-  
         </div>
       </div>
     </section>
   </div>
 
   <footer>
-    <div class="text-zinc-600">SYSTEM: PROTECTED BY WITCHES // TON: UQAc99MvKIcewbQFmOF_RvqpkAXZno0wiz3_BMsP87pJjSnB</div>
+    <div class="text-zinc-600">PROTECTED BY WITCHES // TON: UQAc99MvKIcewbQFmOF_RvqpkAXZno0wiz3_BMsP87pJjSnB</div>
     <div class="flex gap-4 uppercase italic text-zinc-500">
       <span>InkRealm Construct</span><span>|</span><span>Selective Creative Endeavor</span>
     </div>
@@ -606,7 +695,6 @@
       this.style.display = 'none';
     }, 500);
     
-    // Force input area visibility
     setTimeout(() => {
       const inputArea = document.querySelector('.chat-input-area');
       if (inputArea) {
@@ -626,19 +714,14 @@
     
     if (!message) return;
     
-    // Add user message
     const userBubble = document.createElement('div');
     userBubble.className = 'chat-bubble user-message';
     userBubble.textContent = message;
     document.getElementById('chat-container').appendChild(userBubble);
     
-    messageCount++;
-    updateMessageCount();
-    
-    // Clear input
     input.value = '';
+    input.blur(); // Hide mobile keyboard after send
     
-    // Show typing indicator
     const typingIndicator = document.createElement('div');
     typingIndicator.className = 'chat-bubble bot-message';
     typingIndicator.textContent = '...';
@@ -647,7 +730,6 @@
     document.getElementById('chat-container').scrollTop = document.getElementById('chat-container').scrollHeight;
     
     try {
-      // Pollinations AI call - simple single message
       const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(message)}`);
       
       if (!response.ok) {
@@ -656,50 +738,36 @@
       
       const aiResponse = await response.text();
       
-      // Remove typing indicator
       const typingEl = document.getElementById('typing-indicator');
       if (typingEl) typingEl.remove();
       
-      // Add AI response
       const botBubble = document.createElement('div');
       botBubble.className = 'chat-bubble bot-message';
       botBubble.textContent = aiResponse.trim();
       document.getElementById('chat-container').appendChild(botBubble);
       
-      messageCount++;
-      updateMessageCount();
-      
     } catch (error) {
       console.error('AI Error:', error);
       
-      // Remove typing indicator
       const typingEl = document.getElementById('typing-indicator');
       if (typingEl) typingEl.remove();
       
-      // Show error
       const errorBubble = document.createElement('div');
       errorBubble.className = 'chat-bubble bot-message';
       errorBubble.textContent = 'Error: Signal interference.';
       document.getElementById('chat-container').appendChild(errorBubble);
     }
     
-    // Scroll to bottom
     document.getElementById('chat-container').scrollTop = document.getElementById('chat-container').scrollHeight;
-  }
-
-  function updateMessageCount() {
-    document.getElementById('message-count').textContent = messageCount;
   }
 
   function clearChat() {
     if (confirm("Clear all chat history?")) {
       document.getElementById('chat-container').innerHTML = `
         <div class="chat-bubble bot-message">
-          System: AI interface active. Type a message below.
+          AI interface active. Type a message below.
         </div>
       `;
-      messageCount = 1;
-      updateMessageCount();
     }
   }
 
@@ -714,7 +782,6 @@
     a.click();
   }
 
-  // Witch Protection Animation
   function animateWitch() {
     const status = document.getElementById('witch-status');
     const texts = ['Protected', 'Scanning', 'Warding', 'Secure', 'Charged'];
@@ -726,11 +793,9 @@
     }, 2000);
   }
 
-  // Initialize
   window.onload = function() {
     animateWitch();
     
-    // Auto-hide splash after 5 seconds
     setTimeout(() => {
       if (document.getElementById('splash-screen').style.display !== 'none') {
         document.getElementById('splash-screen').click();
