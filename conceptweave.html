@@ -68,87 +68,46 @@
 
 <meta name="p:domain_verify" content="3b55be68eb5ca93c0411d8779e1fa6c2"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ConceptWeave: Noir Terminal Pro</title>
+
+  <title>Wordstar Nexus: 2741 Terminal</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Nova+Mono&family=Special+Elite&display=swap" rel="stylesheet">
- <style>
+  <style>
     :root { --red: #ff0000; --black: #050505; --dark-grey: #121212; --white: #d1d1d1; }
-    
     * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-    
-    body { 
-      background: var(--black); color: var(--white); font-family: 'Nova Mono', monospace; 
-      margin: 0; overflow-x: hidden; height: 100vh; width: 100vw;
-      touch-action: manipulation;
-    }
-
-    /* CRT Scanline Overlay */
-    body::after {
-      content: " "; display: block; position: fixed; top: 0; left: 0; bottom: 0; right: 0;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
-      z-index: 999; background-size: 100% 2px; pointer-events: none; opacity: 0.3;
-    }
-
-    /* App Grid Structure */
-    .app-grid { 
-      display: grid; 
-      grid-template-columns: 280px 1fr; 
-      grid-template-rows: 50px 1fr 320px 30px; 
-      height: 100vh; 
-    }
-
+    body { background: var(--black); color: var(--white); font-family: 'Nova Mono', monospace; margin: 0; overflow: hidden; height: 100vh; width: 100vw; touch-action: manipulation; }
+    body::after { content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%); z-index: 999; background-size: 100% 3px; pointer-events: none; opacity: 0.3; }
+    .app-grid { display: grid; grid-template-columns: 280px 1fr; grid-template-rows: 50px 1fr 320px 30px; height: 100vh; }
     header { grid-column: span 2; border-bottom: 1px solid var(--red); background: #000; z-index: 50; }
     .sidebar { background: #080808; border-right: 1px solid #222; overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch;}
     #viewport { background: #000; position: relative; border-bottom: 1px solid var(--red); overflow: hidden; }
-    
-    .bottom-shelf { 
-      grid-row: 3; grid-column: span 2; 
-      display: grid; grid-template-columns: 1fr 300px; 
-      height: 320px; overflow: hidden;
-    }
-
+    .bottom-shelf { grid-row: 3; grid-column: span 2; display: grid; grid-template-columns: 1fr 300px; height: 320px; overflow: hidden; }
     .editor-section { background: var(--dark-grey); display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid var(--red); }
-    .editor-header { background: var(--red); color: white; padding: 4px 15px; font-family: 'Special Elite', serif; font-size: 10px; display: flex; justify-content: space-between; z-index: 10; }
-    
-    #editor { 
-      flex-grow: 1; padding: 25px; font-family: 'Special Elite', serif; font-size: 1.2rem; 
-      line-height: 1.6; outline: none; overflow-y: auto; color: var(--white); 
-      caret-color: var(--red); background: var(--dark-grey);
-      -webkit-overflow-scrolling: touch;
-    }
-
+    .editor-header { background: var(--red); color: white; padding: 4px 15px; font-family: 'Special Elite', serif; font-size: 10px; display: flex; justify-content: space-between; z-index: 10; transform: rotate(-0.5deg) translateY(-2px); box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+    #editor { flex-grow: 1; padding: 25px; font-family: 'Special Elite', serif; font-size: 1.2rem; line-height: 1.6; outline: none; overflow-y: auto; color: var(--white); caret-color: var(--red); background: var(--dark-grey); -webkit-overflow-scrolling: touch; }
     .monitor-panel { background: #000; border-left: 1px solid #222; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 15px; }
     .pulse-svg { width: 100%; height: 80px; stroke: var(--red); stroke-width: 2; fill: none; }
-
-    .log-item { font-size: 11px; padding: 8px 0; color: #555; cursor: pointer; border-bottom: 1px solid #111; transition: 0.2s; }
+    .log-item { font-size: 11px; padding: 5px 0; color: #555; cursor: pointer; border-bottom: 1px solid #111; transition: 0.2s; }
     .log-item:hover { color: var(--red); }
-
     .node-center { fill: var(--red); filter: drop-shadow(0 0 5px var(--red)); }
     .node-orbit { fill: #000; stroke: var(--red); stroke-width: 1px; }
     .label { fill: #fff; font-size: 9px; text-transform: uppercase; pointer-events: none; opacity: 0.7; }
-    
+    .power-btn { font-size: 9px; padding: 2px 8px; border: 1px solid #333; color: #444; cursor: pointer; }
+    .power-on { color: var(--red); border-color: var(--red); box-shadow: 0 0 5px var(--red); }
     footer { grid-column: span 2; background: #000; border-top: 1px solid #222; font-size: 8px; color: #444; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; height: 30px; }
+    .teletype-text::after { content: "|"; animation: blink 1s infinite; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-    /* MOBILE ADAPTATION */
     @media (max-width: 768px) {
-      .app-grid {
-        grid-template-columns: 1fr;
-        grid-template-rows: 50px auto 350px 300px 100px 40px;
-        height: auto;
-        overflow-y: auto;
-      }
+      .app-grid { grid-template-columns: 1fr; grid-template-rows: 50px auto 350px 300px 100px 40px; height: auto; overflow-y: auto; }
       header { position: sticky; top: 0; }
-      .sidebar { grid-row: 2; border-right: none; border-bottom: 1px solid #222; max-height: 200px; }
+      .sidebar { grid-row: 2; border-right: none; max-height: 200px; }
       #viewport { grid-row: 3; height: 350px; }
       .bottom-shelf { grid-row: 4 / 6; grid-template-columns: 1fr; grid-template-rows: 300px 100px; height: auto; }
       .editor-section { height: 300px; }
       .monitor-panel { height: 100px; border-left: none; border-top: 1px solid #222; }
-      footer { grid-row: 6; flex-direction: column; height: auto; padding: 10px; text-align: center; gap: 5px;}
     }
-
-    .teletype-text::after { content: "|"; animation: blink 1s infinite; }
-    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
   </style>
 </head>
 <body>
@@ -157,8 +116,8 @@
   <header class="flex items-center justify-between px-4">
     <div class="flex items-center gap-3">
         <div id="power-light" class="w-2 h-2 bg-zinc-900 rounded-full"></div>
-        <h1 class="text-white font-bold tracking-tighter text-xs uppercase">ConceptWeave_v4.12</h1>
-        <button id="power-toggle" class="text-[9px] border border-zinc-800 px-2 py-1 text-zinc-500" onclick="togglePower()">PWR: OFF</button>
+        <h1 class="text-white font-bold tracking-tighter text-xs uppercase">WORDSTAR_NEXUS // 2741</h1>
+        <button id="power-toggle" class="power-btn" onclick="togglePower()">PWR: OFF</button>
     </div>
     <div class="flex gap-2">
         <button onclick="clearSave()" class="text-[9px] border border-zinc-800 px-2 py-1">WIPE</button>
@@ -168,7 +127,7 @@
 
   <aside class="sidebar">
     <div class="text-[10px] text-zinc-700 mb-2 uppercase italic tracking-widest">Inquiry_Path</div>
-    <div id="path-log" class="mb-4"></div>
+    <div id="path-log" class="mb-8"></div>
     <div class="text-[10px] text-red-900 mb-2 uppercase font-bold tracking-widest">Fractal_Nodes</div>
     <div id="word-menu"></div>
   </aside>
@@ -180,7 +139,7 @@
   <div class="bottom-shelf">
     <section class="editor-section">
       <div class="editor-header">
-          <div class="teletype-text" id="teletype">>> AWAITING_COMMAND...</div>
+          <div class="teletype-text" id="teletype">>> AWAITING_CMD...</div>
           <div id="word-count">0W</div>
       </div>
       <div id="editor" contenteditable="true" spellcheck="false"></div>
@@ -193,18 +152,19 @@
   </div>
 
   <footer>
-    <div>SYSTEM: POCKET_NOIR // STABLE</div>
-    <div class="flex gap-4 uppercase"><span>InkRealm Construct</span><span>|</span><span>Gemini AI Evolution</span></div>
+    <div>PROJECT: CONCEPTWEAVE // TERMINAL: 2741</div>
+    <div class="flex gap-4 uppercase italic"><span>InkRealm</span><span>|</span><span>Gemini AI Evolution</span></div>
   </footer>
 </div>
 
 <script>
-    const statusMessages = [">> SIGNAL_STABLE", ">> ENCRYPTING_DATA", ">> AI_LINK_ACTIVE", ">> VOLTAGE_NOMINAL", ">> POCKET_NOIR_v4.12"];
+    const statusMessages = [">> 2741_LINK_STABLE", ">> SELECTRIC_ELEMENT_SYNC", ">> EXCAVATING_PATH", ">> VOLTAGE_NOMINAL", ">> NOIR_CORE_ACTIVE"];
     let messageIndex = 0, charIndex = 0, isDeleting = false;
 
     function typeStatus() {
         const target = document.getElementById('teletype');
         const currentMsg = statusMessages[messageIndex];
+        if(!target) return;
         target.innerText = isDeleting ? currentMsg.substring(0, charIndex - 1) : currentMsg.substring(0, charIndex + 1);
         charIndex = isDeleting ? charIndex - 1 : charIndex + 1;
         let speed = isDeleting ? 40 : 80;
@@ -227,30 +187,31 @@
         if (!audioCtx) initAudio();
         const btn = document.getElementById('power-toggle'), light = document.getElementById('power-light');
         if (!isPowered) {
-            isPowered = true; btn.innerText = "PWR: ON"; btn.style.color = "var(--red)"; light.classList.add('bg-red-600', 'animate-pulse');
+            isPowered = true; btn.innerText = "PWR: ON"; btn.classList.add('power-on'); light.classList.add('bg-red-600', 'animate-pulse');
             gainNode.gain.setTargetAtTime(0.04, audioCtx.currentTime, 0.5);
         } else {
-            isPowered = false; btn.innerText = "PWR: OFF"; btn.style.color = "#555"; light.classList.remove('bg-red-600', 'animate-pulse');
+            isPowered = false; btn.innerText = "PWR: OFF"; btn.classList.remove('power-on'); light.classList.remove('bg-red-600', 'animate-pulse');
             gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
         }
     }
 
-    const lexicon = {
-        name: "World",
-        children: [
-            { name: "Violence", children: [{name: "Laceration"}, {name: "Contusion"}] },
-            { name: "Atmosphere", children: [{name: "Neon"}, {name: "Steam"}, {name: "Asphalt"}] },
-            { name: "The Mind", children: [{name: "Amnesia"}, {name: "Paranoia"}] },
-            { name: "Evidence", children: [{name: "Ledger"}, {name: "Cigarette"}] }
-        ]
-    };
+    const lexicon = { name: "World", children: [
+        { name: "Violence", children: [{name: "Laceration"}, {name: "Contusion"}] },
+        { name: "Atmosphere", children: [{name: "Neon"}, {name: "Steam"}, {name: "Asphalt"}] },
+        { name: "The Mind", children: [{name: "Amnesia"}, {name: "Paranoia"}] },
+        { name: "Evidence", children: [{name: "Ledger"}, {name: "Cigarette"}] }
+    ]};
 
     let currentNode = lexicon, history = [], typingActivity = 0;
     const svg = d3.select("#canvas");
     let width = window.innerWidth <= 768 ? window.innerWidth : window.innerWidth - 280;
     let height = window.innerWidth <= 768 ? 350 : window.innerHeight - 400;
 
-    const simulation = d3.forceSimulation().force("link", d3.forceLink().id(d => d.name).distance(100)).force("charge", d3.forceManyBody().strength(-400)).force("center", d3.forceCenter(width / 2, height / 2));
+    // HIGH TORQUE SIMULATION: Stronger charge, tighter links
+    const simulation = d3.forceSimulation()
+        .force("link", d3.forceLink().id(d => d.name).distance(110))
+        .force("charge", d3.forceManyBody().strength(-800))
+        .force("center", d3.forceCenter(width / 2, height / 2));
 
     function update() {
         const nodes = currentNode.children || [];
@@ -259,9 +220,13 @@
         document.getElementById('path-log').innerHTML = history.map((h, i) => `<div class="log-item" onclick="jumpTo(${i})">> ${h.name}</div>`).join('');
         document.getElementById('word-menu').innerHTML = nodes.map(n => `<div class="log-item" onclick="handleNodeClick('${n.name}')">${n.name}</div>`).join('');
         const link = svg.selectAll(".link").data(links, d => d.target).join("line").attr("stroke", "#111");
-        const node = svg.selectAll(".node-group").data(displayNodes, d => d.name).join("g").attr("class", "node-group").on("click", (e, d) => handleNodeClick(d.name)).call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
-        node.selectAll("circle").data(d => [d]).join("circle").attr("r", d => d.isParent ? 10 : 6).attr("class", d => d.isParent ? "node-center" : "node-orbit");
-        node.selectAll("text").data(d => [d]).join("text").attr("class", "label").attr("dy", 22).attr("text-anchor", "middle").text(d => d.name);
+        const node = svg.selectAll(".node-group").data(displayNodes, d => d.name).join("g").attr("class", "node-group")
+            .on("click", (e, d) => handleNodeClick(d.name))
+            .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
+
+        node.selectAll("circle").data(d => [d]).join("circle").attr("r", d => d.isParent ? 12 : 7).attr("class", d => d.isParent ? "node-center" : "node-orbit");
+        node.selectAll("text").data(d => [d]).join("text").attr("class", "label").attr("dy", 24).attr("text-anchor", "middle").text(d => d.name);
+
         simulation.nodes(displayNodes); simulation.force("link").links(links); simulation.alpha(1).restart();
         simulation.on("tick", () => {
             link.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
@@ -272,92 +237,80 @@
     async function handleNodeClick(name) {
         if(name === currentNode.name) return;
         const target = currentNode.children?.find(c => c.name === name);
-        if(target && target.children) { history.push(currentNode); currentNode = target; update(); }
-        else { insertText(name); await excavate(name); }
+        if(target && target.children) {
+            history.push(currentNode); currentNode = target; update();
+        } else {
+            insertText(name); await excavate(name);
+        }
     }
 
+    // HIGH TORQUE EXCAVATOR: More robust cleaning and visual feedback
     async function excavate(word) {
-        // Visual feedback so we know the machine is calling Pollinations
-        const status = document.getElementById('pulse-status');
-        const originalStatus = status.innerText;
-        status.innerText = "LINKING_AI...";
-        status.style.color = "var(--red)";
+        const pulseTag = document.getElementById('pulse-status');
+        pulseTag.innerText = "EXCAVATING...";
+        pulseTag.style.color = "var(--red)";
 
         try {
-            // We use a "system" prompt to ensure the AI doesn't talk back, just gives data
-            const prompt = `system: provide exactly 4 noir synonyms for "${word}". format: word, word, word, word. no chatter.`;
+            const prompt = `system: provide 4 visceral noir synonyms for "${word}". format: word, word, word, word.`;
             const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`);
-            
-            if (!res.ok) throw new Error("Signal Lost");
-            
             const data = await res.text();
             
-            // Clean the data: remove periods, split by comma, filter out empty strings
-            const aiWords = data.split(',')
+            // Capture words regardless of commas, bullets, or newlines
+            const aiWords = data.split(/[\n,]+/)
                 .map(w => ({ name: w.trim().replace(/[^a-zA-Z ]/g, "") }))
-                .filter(w => w.name.length > 0)
+                .filter(w => w.name.length > 1)
                 .slice(0, 4);
 
             if (aiWords.length > 0) {
-                // Find the node in the current view
                 let targetNode = currentNode.children.find(n => n.name === word);
-                
                 if(targetNode) {
                     targetNode.children = aiWords;
                     history.push(currentNode);
                     currentNode = targetNode;
-                    update(); // Redraw the fractal
+                    update();
                 }
             }
-        } catch(e) { 
-            console.error("AI Excavation Failure:", e);
-            status.innerText = "SIGNAL_INTERFERENCE";
-        } finally {
-            // Restore status after a short delay
-            setTimeout(() => {
-                status.innerText = isPowered ? "Signal_Stable" : "Off_Line";
-                status.style.color = "";
-            }, 1000);
+        } catch(e) { console.log("Signal Lost"); }
+        finally {
+            setTimeout(() => { pulseTag.innerText = isPowered ? "Signal_Stable" : "Off_Line"; pulseTag.style.color = ""; }, 1000);
         }
     }
 
     function insertText(w) { document.getElementById('editor').innerHTML += ` <span style="color:red">${w}</span> `; typingActivity = 15; saveAll(); }
     function jumpTo(index) { currentNode = history[index]; history = history.slice(0, index); update(); }
     function goHome() { history = []; currentNode = lexicon; update(); }
-    
     function saveAll() {
-        localStorage.setItem('noir_editor_v412', document.getElementById('editor').innerHTML);
+        localStorage.setItem('wordstar_2741_v4', document.getElementById('editor').innerHTML);
         const txt = document.getElementById('editor').innerText.trim();
         document.getElementById('word-count').innerText = (txt.length > 0 ? txt.split(/\s+/).length : 0) + "W";
     }
-    
     function loadAll() {
-        const saved = localStorage.getItem('noir_editor_v412');
+        const saved = localStorage.getItem('wordstar_2741_v4');
         if(saved && saved.trim().length > 25) { document.getElementById('editor').innerHTML = saved; }
         else { 
             document.getElementById('editor').innerHTML = 
-                "_PROTOCOL:<br>" +
-                "i. POWER ON (Top Left) to initialize.<br>" +
-                "ii. CLICK nodes above to excavate depth.<br>" +
-                "iii. RED nodes trigger AI sensory branches.<br>" +
-                "iv. TYPING makes the bio-monitor surge.<br>" +
-                "v. EXPORT (Top Right) to extract draft.<br><br>" +
-                "The detective's cigarette was the only thing working harder than his liver, and the neon rain was turning the sidewalk into a smear of spilled ink...";
+            "_2741_PROTOCOL:<br>i. POWER ON to initialize hum.<br>ii. CLICK nodes above to excavate depth.<br>iii. RED nodes trigger AI sensory branches.<br>iv. TYPE to pulse the voltage monitor.<br>v. EXPORT to extract the final dossier.<br><br>------------------------------------------<br><br>" + 
+            "The 2741 hummed in its desk, the element poised like a hammer. The detective's cigarette was the only thing working harder than his liver, and the neon rain was turning the sidewalk into a smear of spilled ink..."; 
         }
         saveAll();
     }
-    
     function clearSave() { if(confirm("Wipe Memory?")) { localStorage.clear(); location.reload(); } }
-    function exportDraft() { const blob = new Blob([document.getElementById('editor').innerText], {type: 'text/plain'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'noir-log.txt'; a.click(); }
-
-    editor.addEventListener('input', () => { typingActivity = 15; saveAll(); if(isPowered) { filter.frequency.setTargetAtTime(220, audioCtx.currentTime, 0.1); setTimeout(() => filter.frequency.setTargetAtTime(120, audioCtx.currentTime, 0.5), 200); } });
+    function exportDraft() { const blob = new Blob([document.getElementById('editor').innerText], {type: 'text/plain'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = '2741-draft.txt'; a.click(); }
+    
+    editor.addEventListener('input', () => { 
+        typingActivity = 15; saveAll(); 
+        if(isPowered) {
+            filter.frequency.setTargetAtTime(220, audioCtx.currentTime, 0.1);
+            setTimeout(() => filter.frequency.setTargetAtTime(120, audioCtx.currentTime, 0.5), 200);
+        }
+    });
 
     setInterval(() => {
         const jitter = (Math.random() - 0.5) * (typingActivity > 0 ? typingActivity * 4 : 5);
         points.push(40 + jitter); if(points.length > 60) points.shift();
         pulseLine.setAttribute('points', points.map((p, i) => `${i * 5},${p}`).join(' '));
         if (typingActivity > 0) { typingActivity -= 0.5; document.getElementById('pulse-status').innerText = "Voltage"; }
-        else { document.getElementById('pulse-status').innerText = isPowered ? "Signal" : "Offline"; }
+        else { document.getElementById('pulse-status').innerText = isPowered ? "Stable" : "Off_Line"; }
     }, 50);
 
     function dragstarted(e, d) { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
@@ -365,12 +318,7 @@
     function dragended(e, d) { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
     
     window.onload = () => { loadAll(); typeStatus(); update(); };
-    window.onresize = () => { 
-        width = window.innerWidth <= 768 ? window.innerWidth : window.innerWidth - 280;
-        height = window.innerWidth <= 768 ? 350 : window.innerHeight - 400;
-        simulation.force("center", d3.forceCenter(width / 2, height / 2));
-        simulation.alpha(0.3).restart();
-    };
+    window.onresize = () => { location.reload(); };
 </script>
 </body>
 </html>
