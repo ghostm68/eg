@@ -5,11 +5,11 @@
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Nova+Mono&family=Special+Elite&display=swap" rel="stylesheet">
-  <style>
+ <style>
     :root { --red: #ff0000; --black: #050505; --grey: #1a1a1a; --white: #ffffff; }
     body { background: var(--black); color: var(--white); font-family: 'Nova Mono', monospace; margin: 0; overflow: hidden; height: 100vh; }
 
-    /* CRT Scanline Overlay */
+    /* CRT Overlay */
     body::after {
       content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
       background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
@@ -25,7 +25,12 @@
     .editor-section { grid-column: span 1; background: var(--white); color: #000; display: flex; flex-direction: column; }
     .editor-header { background: #e5e5e5; border-bottom: 1px solid #ccc; padding: 8px 20px; font-family: 'Special Elite', serif; font-size: 12px; color: var(--red); letter-spacing: 1px; }
 
-    #editor { flex-grow: 1; padding: 30px; font-family: 'Special Elite', serif; font-size: 1.25rem; line-height: 1.6; outline: none; overflow-y: auto; color: #111; }
+    #editor { 
+        flex-grow: 1; padding: 30px; font-family: 'Special Elite', serif; font-size: 1.25rem; 
+        line-height: 1.6; outline: none; overflow-y: auto; color: #111;
+        caret-color: var(--red); /* THE RED CURSOR */
+    }
+
     .monitor-panel { background: #000; border-left: 1px solid #222; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
     .pulse-svg { width: 100%; height: 120px; stroke: var(--red); stroke-width: 2; fill: none; }
 
@@ -35,18 +40,23 @@
     .node-center { fill: var(--red); filter: drop-shadow(0 0 5px var(--red)); }
     .node-orbit { fill: #000; stroke: var(--red); stroke-width: 1px; }
     .label { fill: #fff; font-size: 10px; text-transform: uppercase; pointer-events: none; }
-    .link { stroke: #222; }
+    
+    /* Power Button Styling */
+    .power-btn { font-size: 9px; padding: 2px 8px; border: 1px solid #444; color: #444; cursor: pointer; transition: 0.3s; }
+    .power-on { color: var(--red); border-color: var(--red); box-shadow: 0 0 5px var(--red); }
 
     footer { grid-column: span 2; background: #000; border-top: 1px solid #222; font-size: 9px; color: #555; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
   </style>
 </head>
 <body>
 
+
 <div class="app-grid">
   <header class="flex items-center justify-between px-6">
     <div class="flex items-center gap-4">
-        <div class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
-        <h1 class="text-white font-bold tracking-tighter text-md uppercase">ConceptWeave_Terminal_v4.5</h1>
+        <div id="power-light" class="w-2 h-2 bg-zinc-800 rounded-full"></div>
+        <h1 class="text-white font-bold tracking-tighter text-md uppercase">ConceptWeave_v4.6_LiveWire</h1>
+        <button id="power-toggle" class="power-btn" onclick="togglePower()">POWER: OFF</button>
     </div>
     <div class="flex gap-4">
         <button onclick="clearSave()" class="text-[10px] border border-zinc-800 px-3 py-1 hover:border-red-600">WIPE_MEMORY</button>
@@ -67,16 +77,17 @@
 
   <div class="grid grid-cols-[1fr_300px] col-span-2 border-t border-red-800">
     <section class="editor-section">
-      <div class="editor-header">>> DATA_STREAM_ENCRYPTED // <span id="word-count">0</span> WORDS</div>
-      <div id="editor" contenteditable="true" spellcheck="false">The rain hit the asphalt like a shower of cold lead...</div>
+      <div class="editor-header">>> HARDWARE_INPUT_READY // <span id="word-count">0</span> WORDS</div>
+      <div id="editor" contenteditable="true" spellcheck="false">Connect the power to begin the session...</div>
     </section>
 
     <aside class="monitor-panel">
-      <div class="text-[9px] text-red-900 mb-2 uppercase tracking-tighter">Narrative_Tension_Monitor</div>
+      <div class="text-[9px] text-red-900 mb-2 uppercase tracking-tighter">Atmospheric_Pressure</div>
       <svg class="pulse-svg"><polyline id="pulse-line" points="0,60 300,60"></polyline></svg>
-      <div id="pulse-status" class="text-[8px] text-zinc-700 mt-4 tracking-widest uppercase">Idle</div>
+      <div id="pulse-status" class="text-[8px] text-zinc-700 mt-4 tracking-widest uppercase">Off_Line</div>
     </aside>
   </div>
+
 
   <footer>
     <div>SYSTEM: STABLE // ENHANCED BY GEMINI AI</div>
@@ -84,7 +95,53 @@
   </footer>
 </div>
 
+
 <script>
+    // --- AUDIO CORE (The Gemini Amendment) ---
+    let audioCtx, humOsc, gainNode, filter;
+    let isPowered = false;
+
+    function initAudio() {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        humOsc = audioCtx.createOscillator();
+        gainNode = audioCtx.createGain();
+        filter = audioCtx.createBiquadFilter();
+
+        humOsc.type = 'sawtooth';
+        humOsc.frequency.setValueAtTime(55, audioCtx.currentTime); // Low 'A' hum
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(120, audioCtx.currentTime); // Muffle the harshness
+
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime); // Start silent
+
+        humOsc.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        humOsc.start();
+    }
+
+    function togglePower() {
+        if (!audioCtx) initAudio();
+        const btn = document.getElementById('power-toggle');
+        const light = document.getElementById('power-light');
+        
+        if (!isPowered) {
+            isPowered = true;
+            btn.innerText = "POWER: ON";
+            btn.classList.add('power-on');
+            light.classList.add('bg-red-600', 'animate-pulse');
+            gainNode.gain.setTargetAtTime(0.05, audioCtx.currentTime, 0.5); // Fade in hum
+        } else {
+            isPowered = false;
+            btn.innerText = "POWER: OFF";
+            btn.classList.remove('power-on');
+            light.classList.remove('bg-red-600', 'animate-pulse');
+            gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2); // Fade out
+        }
+    }
+
+    // --- LOGIC & GRAPH ---
     const lexicon = {
         name: "World",
         children: [
@@ -116,7 +173,7 @@
         document.getElementById('path-log').innerHTML = history.map((h, i) => `<div class="log-item" onclick="jumpTo(${i})">> ${h.name}</div>`).join('');
         document.getElementById('word-menu').innerHTML = nodes.map(n => `<div class="log-item" onclick="handleNodeClick('${n.name}')">${n.name}</div>`).join('');
 
-        const link = svg.selectAll(".link").data(links, d => d.target).join("line").attr("class", "link");
+        const link = svg.selectAll(".link").data(links, d => d.target).join("line").attr("stroke", "#222");
         const node = svg.selectAll(".node-group").data(displayNodes, d => d.name).join("g").attr("class", "node-group")
             .on("click", (e, d) => handleNodeClick(d.name))
             .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
@@ -145,7 +202,7 @@
 
     async function excavate(word) {
         try {
-            const res = await fetch(`https://text.pollinations.ai/4 short noir words related to ${word}. Commas only.`);
+            const res = await fetch(`https://text.pollinations.ai/4 noir words related to ${word}. Commas only.`);
             const data = await res.text();
             const aiWords = data.split(',').map(w => ({ name: w.trim().replace('.', '') }));
             let targetNode = currentNode.children.find(n => n.name === word);
@@ -155,27 +212,26 @@
 
     function insertText(w) { 
         document.getElementById('editor').innerHTML += ` <span style="color:red">${w}</span> `;
-        typingActivity = 10;
+        typingActivity = 15;
         saveAll();
     }
 
     function jumpTo(index) { currentNode = history[index]; history = history.slice(0, index); update(); }
     function goHome() { history = []; currentNode = lexicon; update(); }
     
-    // --- AUTOSAVE LOGIC ---
     function saveAll() {
-        localStorage.setItem('noir_editor_content', document.getElementById('editor').innerHTML);
+        localStorage.setItem('noir_editor_v46', document.getElementById('editor').innerHTML);
         const words = document.getElementById('editor').innerText.trim().split(/\s+/).length;
         document.getElementById('word-count').innerText = words;
     }
 
     function loadAll() {
-        const saved = localStorage.getItem('noir_editor_content');
+        const saved = localStorage.getItem('noir_editor_v46');
         if(saved) document.getElementById('editor').innerHTML = saved;
         saveAll();
     }
 
-    function clearSave() { if(confirm("Wipe all data?")) { localStorage.clear(); location.reload(); } }
+    function clearSave() { if(confirm("Wipe Memory?")) { localStorage.clear(); location.reload(); } }
 
     function exportDraft() {
         const text = document.getElementById('editor').innerText;
@@ -187,16 +243,24 @@
     const pulseLine = document.getElementById('pulse-line');
     let points = [];
     
-    editor.addEventListener('input', () => { typingActivity = 15; saveAll(); });
+    editor.addEventListener('input', () => { 
+        typingActivity = 15; 
+        saveAll(); 
+        // Audio reaction: hum gets louder/richer when typing
+        if(isPowered) {
+            filter.frequency.setTargetAtTime(250, audioCtx.currentTime, 0.1);
+            setTimeout(() => filter.frequency.setTargetAtTime(120, audioCtx.currentTime, 0.5), 200);
+        }
+    });
 
     setInterval(() => {
         const y = 60 + (typingActivity > 0 ? (Math.random() - 0.5) * typingActivity * 4 : (Math.random() - 0.5) * 5);
         points.push(y); if(points.length > 60) points.shift();
         pulseLine.setAttribute('points', points.map((p, i) => `${i * 5},${p}`).join(' '));
         if (typingActivity > 0) {
-            typingActivity -= 0.5; document.getElementById('pulse-status').innerText = "Rising_Tension";
+            typingActivity -= 0.5; document.getElementById('pulse-status').innerText = "Voltage_Spike";
         } else {
-            document.getElementById('pulse-status').innerText = "Stationary";
+            document.getElementById('pulse-status').innerText = isPowered ? "Stationary_Stable" : "Off_Line";
         }
     }, 50);
 
@@ -207,5 +271,7 @@
     window.onload = loadAll;
     update();
 </script>
+</body>
+</html>
 </body>
 </html>
