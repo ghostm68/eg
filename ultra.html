@@ -3628,38 +3628,6 @@ const logFragments = [
 let isSpeaking = false;
 let utterance = null;
 let selectedVoice = null;
-let voices = [];
-
-// Load voices properly for mobile
-function loadVoices() {
-  voices = speechSynthesis.getVoices();
-  
-  if (voices.length > 0) {
-    selectBestVoice();
-  } else {
-    // Mobile needs this event
-    speechSynthesis.onvoiceschanged = () => {
-      voices = speechSynthesis.getVoices();
-      selectBestVoice();
-    };
-  }
-}
-
-function selectBestVoice() {
-  if (voices.length === 0) return;
-  
-  // Prioritize female voices
-  const femaleVoice = voices.find(v => 
-    v.lang.startsWith('en') && (
-      v.name.includes('Samantha') ||
-      v.name.includes('Victoria') ||
-      v.name.includes('Female') ||
-      v.name.includes('female')
-    )
-  );
-  
-  selectedVoice = femaleVoice || voices.find(v => v.lang.startsWith('en')) || voices[0];
-}
 
 function toggleTTS() {
   const trigger = document.querySelector('.tts-trigger');
@@ -3673,18 +3641,26 @@ function toggleTTS() {
     return;
   }
   
-  // Ensure voices are loaded
-  if (voices.length === 0) {
-    loadVoices();
-  }
+  // Get voices on demand
+  const voices = speechSynthesis.getVoices();
+  
+  // Select best female voice
+  const femaleVoice = voices.find(v => 
+    v.lang.startsWith('en') && (
+      v.name.includes('Samantha') ||
+      v.name.includes('Victoria') ||
+      v.name.includes('Female') ||
+      v.name.includes('female')
+    )
+  ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
   
   utterance = new SpeechSynthesisUtterance(screenplay);
   utterance.rate = 0.9;
   utterance.pitch = 1.1;
   utterance.volume = 1.0;
   
-  if (selectedVoice) {
-    utterance.voice = selectedVoice;
+  if (femaleVoice) {
+    utterance.voice = femaleVoice;
   }
   
   utterance.onstart = () => {
@@ -3709,8 +3685,12 @@ function toggleTTS() {
   speechSynthesis.speak(utterance);
 }
 
-// Initialize voices on page load
-window.addEventListener('load', loadVoices);
+// Pre-load voices for mobile
+if ('speechSynthesis' in window) {
+  speechSynthesis.onvoiceschanged = () => {
+    speechSynthesis.getVoices();
+  };
+}
 </script>
 </body>
 </html>
