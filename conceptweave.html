@@ -149,24 +149,171 @@
 </div>
 
 <script>
-    document.getElementById('splash-screen').addEventListener('click', function() {
-        this.style.opacity = '0';
-        this.style.transition = 'opacity 0.5s';
-        document.querySelector('.app-grid').style.display = 'grid';
-        setTimeout(() => { this.style.display = 'none'; }, 500);
-        update();
-    });
+    // --- 1. INITIALIZATION & DATA ---
+    const statusMessages = [
+        ">> 2741_LINK_ESTABLISHED",
+        ">> SELECTRIC_ELEMENT_ROTATING",
+        ">> DATA_STREAM_VIA_ATS/360",
+        ">> TERMINAL_LOCK_ENGAGED",
+        ">> NOIR_PROTOCOL_v4.14"
+    ];
+    let messageIndex = 0, charIndex = 0, isDeleting = false;
+    let audioCtx, humOsc, gainNode, filter, isPowered = false;
+    let typingActivity = 0;
 
-    function animateWitch() {
-        const status = document.getElementById('witch-status');
-        const footer = document.getElementById('footer-status');
-        const texts = ['Protected', 'Scanning', 'Warding', 'Secure', 'Charged'];
-        let index = 0;
-        setInterval(() => {
-            if(status) status.textContent = texts[index];
-            if(footer) footer.textContent = `WITCH_PROTOCOL_${texts[index].toUpperCase()}`;
-            index = (index + 1) % texts.length;
-        }, 3000);
+    const lexicon = { 
+        name: "World", 
+        children: [
+            { name: "Violence", children: [{name: "Laceration"}, {name: "Contusion"}] },
+            { name: "Atmosphere", children: [{name: "Neon"}, {name: "Steam"}] },
+            { name: "Mind", children: [{name: "Amnesia"}, {name: "Paranoia"}] },
+            { name: "Evidence", children: [{name: "Ledger"}, {name: "Cigarette"}] }
+        ]
+    };
+    let currentNode = JSON.parse(JSON.stringify(lexicon));
+    let history = [];
+
+    // --- 2. D3 SETUP (ZOOM & SIMULATION) ---
+    const svg = d3.select("#canvas");
+    let width = window.innerWidth <= 768 ? window.innerWidth : window.innerWidth - 280;
+    let height = window.innerWidth <= 768 ? 350 : window.innerHeight - 400;
+
+    // Create groups for Zoom/Pan to act upon
+    const linkGroup = svg.append("g").attr("class", "links");
+    const nodeGroup = svg.append("g").attr("class", "nodes");
+
+    const simulation = d3.forceSimulation()
+        .force("link", d3.forceLink().id(d => d.name).distance(100))
+        .force("charge", d3.forceManyBody().strength(-600))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("x", d3.forceX(width / 2).strength(0.1))
+        .force("y", d3.forceY(height / 2).strength(0.1))
+        .force("collide", d3.forceCollide(35));
+
+    const zoom = d3.zoom()
+        .scaleExtent([0.5, 3])
+        .on("zoom", (event) => {
+            linkGroup.attr("transform", event.transform);
+            nodeGroup.attr("transform", event.transform);
+        });
+    svg.call(zoom);
+
+    // --- 3. CORE UPDATE ENGINE ---
+    function update() {
+        const nodes = currentNode.children || [];
+        const links = nodes.map(d => ({ source: currentNode.name, target: d.name }));
+        const displayNodes = [{ name: currentNode.name, isParent: true }, ...nodes];
+
+        // UI Updates
+        document.getElementById('path-log').innerHTML = history.map((h, i) => 
+            `<div class="log-item" onclick="jumpTo(${i})">> ${h.name}</div>`).join('');
+        document.getElementById('word-menu').innerHTML = nodes.map(n => 
+            `<div class="log-item" onclick="handleNodeClick('${n.name}')">${n.name}</div>`).join('');
+
+        // D3 Link Render
+        const link = linkGroup.selectAll(".link")
+            .data(links, d => d.target)
+            .join("line")
+            .attr("class", "link")
+            .attr("stroke", "#222");
+
+        // D3 Node Render
+        const node = nodeGroup.selectAll(".node-container")
+            .data(displayNodes, d => d.name)
+            .join("g")
+            .attr("class", "node-container")
+            .on("click", (e, d) => handleNodeClick(d.name))
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+
+        node.selectAll("circle").data(d => [d]).join("circle")
+            .attr("r", d => d.isParent ? 12 : 7)
+            .attr("class", d => d.isParent ? "node-center" : "node-orbit");
+
+        node.selectAll("text").data(d => [d]).join("text")
+            .attr("class", "label").attr("dy", 26).attr("text-anchor", "middle")
+            .text(d => d.name);
+
+        simulation.nodes(displayNodes);
+        simulation.force("link").links(links);
+        simulation.alpha(1).restart();
+
+        simulation.on("tick", () => {
+            link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+            
+            node.attr("transform", d => {
+                // HARD BOUNDING BOX LOGIC
+                const radius = 25;
+                d.x = Math.max(radius, Math.min(width - radius, d.x));
+                d.y = Math.max(radius, Math.min(height - radius, d.y));
+                return `translate(${d.x},${d.y})`;
+            });
+        });
+    }
+
+    async function handleNodeClick(name) {
+        insertText(name); 
+        if(name === currentNode.name) return;
+        const target = currentNode.children?.find(c => c.name === name);
+        if(target && target.children) { 
+            history.push(currentNode); 
+            currentNode = target; 
+            update(); 
+        } else { 
+            await excavate(name); 
+        }
+    }
+
+    async function excavate(word) {
+        try {
+            const res = await fetch(`https://text.pollinations.ai/Visceral noir synonyms for ${word}. Commas only.`);
+            const data = await res.text();
+            const aiWords = data.split(',').map(w => ({ name: w.trim().replace('.', '') }));
+            let targetNode = currentNode.children.find(n => n.name === word);
+            if(targetNode) { 
+                targetNode.children = aiWords; 
+                history.push(currentNode); 
+                currentNode = targetNode; 
+                update(); 
+            }
+        } catch(e) { console.warn("Signal Interference"); }
+    }
+
+    // --- 4. UI, AUDIO & CHAT LOGIC ---
+    function typeStatus() {
+        const target = document.getElementById('teletype');
+        if(!target) return;
+        const currentMsg = statusMessages[messageIndex];
+        target.innerText = isDeleting ? currentMsg.substring(0, charIndex - 1) : currentMsg.substring(0, charIndex + 1);
+        charIndex = isDeleting ? charIndex - 1 : charIndex + 1;
+        let speed = isDeleting ? 40 : 80;
+        if (!isDeleting && charIndex === currentMsg.length) { speed = 3000; isDeleting = true; }
+        else if (isDeleting && charIndex === 3) { isDeleting = false; messageIndex = (messageIndex + 1) % statusMessages.length; speed = 500; }
+        setTimeout(typeStatus, speed);
+    }
+
+    function initAudio() {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        humOsc = audioCtx.createOscillator(); gainNode = audioCtx.createGain(); filter = audioCtx.createBiquadFilter();
+        humOsc.type = 'sawtooth'; humOsc.frequency.setValueAtTime(55, audioCtx.currentTime);
+        filter.type = 'lowpass'; filter.frequency.setValueAtTime(120, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+        humOsc.connect(filter); filter.connect(gainNode); gainNode.connect(audioCtx.destination); humOsc.start();
+    }
+
+    function togglePower() {
+        if (!audioCtx) initAudio();
+        const btn = document.getElementById('power-toggle'), light = document.getElementById('power-light');
+        if (!isPowered) {
+            isPowered = true; btn.innerText = "PWR: ON"; btn.style.color = "var(--red)"; light.classList.add('bg-red-600', 'animate-pulse');
+            gainNode.gain.setTargetAtTime(0.04, audioCtx.currentTime, 0.5);
+        } else {
+            isPowered = false; btn.innerText = "PWR: OFF"; btn.style.color = "#555"; light.classList.remove('bg-red-600', 'animate-pulse');
+            gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
+        }
     }
 
     async function sendMessage() {
@@ -190,117 +337,18 @@
         container.scrollTop = container.scrollHeight;
     }
 
-    function clearChat() { if (confirm("Wipe history?")) document.getElementById('chat-container').innerHTML = `<div class="chat-bubble bot-message">Reset.</div>`; }
-
-    // FIXED STATUS MESSAGES ARRAY
-    const statusMessages = [
-        ">> 2741_LINK_ESTABLISHED",
-        ">> SELECTRIC_ELEMENT_ROTATING",
-        ">> DATA_STREAM_VIA_ATS/360",
-        ">> TERMINAL_LOCK_ENGAGED",
-        ">> NOIR_PROTOCOL_v4.14"
-    ];
-    let messageIndex = 0, charIndex = 0, isDeleting = false;
-
-    function typeStatus() {
-        const target = document.getElementById('teletype');
-        if(!target) return;
-        const currentMsg = statusMessages[messageIndex];
-        target.innerText = isDeleting ? currentMsg.substring(0, charIndex - 1) : currentMsg.substring(0, charIndex + 1);
-        charIndex = isDeleting ? charIndex - 1 : charIndex + 1;
-        let speed = isDeleting ? 40 : 80;
-        if (!isDeleting && charIndex === currentMsg.length) { speed = 3000; isDeleting = true; }
-        else if (isDeleting && charIndex === 3) { isDeleting = false; messageIndex = (messageIndex + 1) % statusMessages.length; speed = 500; }
-        setTimeout(typeStatus, speed);
-    }
-
-    let audioCtx, humOsc, gainNode, filter, isPowered = false;
-    function initAudio() {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        humOsc = audioCtx.createOscillator(); gainNode = audioCtx.createGain(); filter = audioCtx.createBiquadFilter();
-        humOsc.type = 'sawtooth'; humOsc.frequency.setValueAtTime(55, audioCtx.currentTime);
-        filter.type = 'lowpass'; filter.frequency.setValueAtTime(120, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-        humOsc.connect(filter); filter.connect(gainNode); gainNode.connect(audioCtx.destination); humOsc.start();
-    }
-
-    function togglePower() {
-        if (!audioCtx) initAudio();
-        const btn = document.getElementById('power-toggle'), light = document.getElementById('power-light');
-        if (!isPowered) {
-            isPowered = true; btn.innerText = "PWR: ON"; btn.style.color = "var(--red)"; light.classList.add('bg-red-600', 'animate-pulse');
-            gainNode.gain.setTargetAtTime(0.04, audioCtx.currentTime, 0.5);
-        } else {
-            isPowered = false; btn.innerText = "PWR: OFF"; btn.style.color = "#555"; light.classList.remove('bg-red-600', 'animate-pulse');
-            gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
-        }
-    }
-
-    const lexicon = { name: "World", children: [
-        { name: "Violence", children: [{name: "Laceration"}, {name: "Contusion"}] },
-        { name: "Atmosphere", children: [{name: "Neon"}, {name: "Steam"}] },
-        { name: "Mind", children: [{name: "Amnesia"}, {name: "Paranoia"}] },
-        { name: "Evidence", children: [{name: "Ledger"}, {name: "Cigarette"}] }
-    ]};
-
-    let currentNode = lexicon, history = [], typingActivity = 0;
-    const svg = d3.select("#canvas");
-    let width = window.innerWidth <= 768 ? window.innerWidth : window.innerWidth - 280;
-    let height = window.innerWidth <= 768 ? 350 : window.innerHeight - 400;
-
-    const simulation = d3.forceSimulation().force("link", d3.forceLink().id(d => d.name).distance(100)).force("charge", d3.forceManyBody().strength(-600)).force("center", d3.forceCenter(width / 2, height / 2));
-
-    function update() {
-        const nodes = currentNode.children || [];
-        const links = nodes.map(d => ({ source: currentNode.name, target: d.name }));
-        const displayNodes = [{ name: currentNode.name, isParent: true }, ...nodes];
-        document.getElementById('path-log').innerHTML = history.map((h, i) => `<div class="log-item" onclick="jumpTo(${i})">> ${h.name}</div>`).join('');
-        document.getElementById('word-menu').innerHTML = nodes.map(n => `<div class="log-item" onclick="handleNodeClick('${n.name}')">${n.name}</div>`).join('');
-        const link = svg.selectAll(".link").data(links, d => d.target).join("line").attr("stroke", "#111");
-        const node = svg.selectAll(".node-group").data(displayNodes, d => d.name).join("g").attr("class", "node-group").on("click", (e, d) => handleNodeClick(d.name)).call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
-        node.selectAll("circle").data(d => [d]).join("circle").attr("r", d => d.isParent ? 10 : 6).attr("class", d => d.isParent ? "node-center" : "node-orbit");
-        node.selectAll("text").data(d => [d]).join("text").attr("class", "label").attr("dy", 22).attr("text-anchor", "middle").text(d => d.name);
-        simulation.nodes(displayNodes); simulation.force("link").links(links); simulation.alpha(1).restart();
-        simulation.on("tick", () => {
-            link.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
-            node.attr("transform", d => `translate(${d.x},${d.y})`);
-        });
-    }
-
-    async function handleNodeClick(name) {
-        // IMPROVED: Now every node clicked is inserted into text immediately
-        insertText(name);
-
-        if(name === currentNode.name) return;
-        const target = currentNode.children?.find(c => c.name === name);
-        if(target && target.children) { history.push(currentNode); currentNode = target; update(); }
-        else { await excavate(name); }
-    }
-
-    async function excavate(word) {
-        try {
-            const res = await fetch(`https://text.pollinations.ai/Visceral noir synonyms for ${word}. Commas only.`);
-            const data = await res.text();
-            const aiWords = data.split(',').map(w => ({ name: w.trim().replace('.', '') }));
-            let targetNode = currentNode.children.find(n => n.name === word);
-            if(targetNode) { targetNode.children = aiWords; history.push(currentNode); currentNode = targetNode; update(); }
-        } catch(e) {}
-    }
-
     function insertText(w) { 
         document.getElementById('editor').innerHTML += ` <span style="color:red">${w}</span> `; 
+        typingActivity = 15; 
         saveAll(); 
     }
-    
-    function jumpTo(index) { currentNode = history[index]; history = history.slice(0, index); update(); }
-    function goHome() { history = []; currentNode = lexicon; update(); }
-    
+
     function saveAll() {
         localStorage.setItem('noir_editor_2741_v414', document.getElementById('editor').innerHTML);
         const txt = document.getElementById('editor').innerText.trim();
         document.getElementById('word-count').innerText = (txt.length > 0 ? txt.split(/\s+/).length : 0) + "W";
     }
-    
+
     function loadAll() {
         const saved = localStorage.getItem('noir_editor_2741_v414');
         if(saved && saved.trim().length > 50) { document.getElementById('editor').innerHTML = saved; }
@@ -317,12 +365,37 @@
         }
         saveAll();
     }
-    
+
+    function animateWitch() {
+        const status = document.getElementById('witch-status');
+        const footer = document.getElementById('footer-status');
+        const texts = ['Protected', 'Scanning', 'Warding', 'Secure', 'Charged'];
+        let index = 0;
+        setInterval(() => {
+            if(status) status.textContent = texts[index];
+            if(footer) footer.textContent = `WITCH_PROTOCOL_${texts[index].toUpperCase()}`;
+            index = (index + 1) % texts.length;
+        }, 3000);
+    }
+
+    // --- 5. BOOT PROCESS & HANDLERS ---
+    document.getElementById('splash-screen').addEventListener('click', function() {
+        this.style.opacity = '0';
+        this.style.transition = 'opacity 0.5s';
+        document.querySelector('.app-grid').style.display = 'grid';
+        setTimeout(() => { this.style.display = 'none'; }, 500);
+        update(); 
+    });
+
+    function jumpTo(index) { currentNode = history[index]; history = history.slice(0, index); update(); }
+    function goHome() { history = []; currentNode = JSON.parse(JSON.stringify(lexicon)); update(); }
+    function clearChat() { if (confirm("Wipe history?")) document.getElementById('chat-container').innerHTML = `<div class="chat-bubble bot-message">Reset.</div>`; }
     function exportDraft() { const blob = new Blob([document.getElementById('editor').innerText], {type: 'text/plain'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = '2741-manuscript.txt'; a.click(); }
 
     document.getElementById('editor').addEventListener('input', saveAll);
 
     window.onload = () => { loadAll(); typeStatus(); animateWitch(); };
+
     function dragstarted(e, d) { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
     function dragged(e, d) { d.fx = e.x; d.fy = e.y; }
     function dragended(e, d) { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
