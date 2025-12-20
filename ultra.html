@@ -3323,17 +3323,27 @@ The Synthesis: In the final scene at the Chalet, when the baby kicks, the sound 
 		         <div class="cube-geo-label">realm</div>
           <div class="cube-container">
             <div class="cube">
-              <a href="https://inkrealm.info" class="cube-face cube-front">ink<br>realm<br>
-              <a href="https://inkrealm.info/1991" class="cube-face cube-right">cinema<br>list<br>
-              <a href="https://inkrealm.info/tvc15" class="cube-face cube-top">tv<br>c15<br>
-              <a href="https://inkrealm.info/minraud" class="cube-face cube-left">express<br>cut<br>
+              <a href="https://inkrealm.info" class="cube-face cube-front">ink<br>realm</a>
+              <a href="https://inkrealm.info/1991" class="cube-face cube-right">cinema<br>list</a>
+              <a href="https://inkrealm.info/tvc15" class="cube-face cube-top">tv<br>c15</a>
+              <a href="https://inkrealm.info/minraud" class="cube-face cube-left">express<br>cut</a>
             </div>
           </div>
         </div>
+     
       </div>
     </div>
-   
-    
+	
+     <div class="searchform-overlay">
+        <a href="javascript:;" class="btn-close-search"><i class="fas fa-times"></i></a>
+        <div class="searchform">
+          <p>Start typing and press Enter to search</p>
+          <form role="search" method="get" class="search-form" action="https://wordstar.nexus/daslexikon">
+            <input type="text" class="search-field" placeholder="Search and hit enter..." name="s" />
+            <button class="search-button" type="submit"><i class="fa fa-search"></i></button>
+          </form>
+        </div>
+    </div>
     <div class="menu-section">
       <h3 class="menu-section-title">Contact</h3>
       <a href="https://inkrealm.instatus.com/" class="menu-link" target="_blank">SYSTEM STATUS</a>
@@ -4301,5 +4311,120 @@ function initTTS() {
 // Initialize on page load
 window.addEventListener('load', initTTS);
 </script>
+	<script>
+	     class TextScramble {
+            constructor(el) {
+                this.el = el;
+                this.chars = '!<>-_\\/[]{}—=+*^?#@%&';
+                this.update = this.update.bind(this);
+                this.isAnimating = false;
+            }
+            
+            setText(newText, callback) {
+                cancelAnimationFrame(this.frameRequest);
+                const oldText = this.el.innerText;
+                const length = Math.max(oldText.length, newText.length);
+                this.queue = [];
+                
+                for (let i = 0; i < length; i++) {
+                    const from = oldText[i] || "";
+                    const to = newText[i] || "";
+                    const start = Math.floor(Math.random() * 5);
+                    const end = start + Math.floor(Math.random() * 10) + 5;
+                    this.queue.push({ from, to, start, end });
+                }
+                
+                this.frame = 0;
+                this.update(callback);
+            }
+            
+            update(callback) {
+                let output = "";
+                let complete = 0;
+                
+                for (let i = 0, n = this.queue.length; i < n; i++) {
+                    let { from, to, start, end, char } = this.queue[i];
+                    
+                    if (this.frame >= end) {
+                        complete++;
+                        output += to;
+                    } else if (this.frame >= start) {
+                        if (!char || Math.random() < 0.35)
+                            char = this.chars[Math.floor(Math.random() * this.chars.length)];
+                        output += char;
+                        this.queue[i].char = char;
+                    } else {
+                        output += from;
+                    }
+                }
+                
+                this.el.innerText = output;
+                
+                if (complete === this.queue.length) {
+                    if (callback) callback();
+                    return;
+                }
+                
+                this.frame++;
+                this.frameRequest = requestAnimationFrame(() => this.update(callback));
+            }
+        }
+
+        const siteName = "NEXUS";
+        
+        document.querySelectorAll(".scramble-link").forEach(link => {
+            const scrambler = new TextScramble(link);
+            const original = link.textContent;
+            
+            link.addEventListener("mouseenter", () => {
+                if (scrambler.isAnimating) return;
+                scrambler.isAnimating = true;
+                
+                scrambler.setText(siteName, () => {
+                    setTimeout(() => {
+                        scrambler.setText(original, () => {
+                            scrambler.isAnimating = false;
+                        });
+                    }, 250);
+                });
+            });
+        });
+        
+    </script>		
+	<script>
+		       
+        // Search Overlay Toggle
+        const searchButtons = document.querySelectorAll('.header-icon .fa-search');
+        const searchOverlay = document.querySelector('.searchform-overlay');
+        const closeSearch = document.querySelector('.btn-close-search');
+        
+        searchButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (searchOverlay) {
+                    searchOverlay.classList.add('active');
+                    setTimeout(() => {
+                        const searchInput = searchOverlay.querySelector('.search-field');
+                        if (searchInput) searchInput.focus();
+                    }, 100);
+                }
+            });
+        });
+        
+        if (closeSearch) {
+            closeSearch.addEventListener('click', function(e) {
+                e.preventDefault();
+                searchOverlay.classList.remove('active');
+            });
+        }
+        
+        // Close search overlay with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && searchOverlay && searchOverlay.classList.contains('active')) {
+                searchOverlay.classList.remove('active');
+            }
+        });
+    </script>
+	</script>
 </body>
 </html>
