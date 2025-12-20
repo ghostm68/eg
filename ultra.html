@@ -989,51 +989,79 @@ footer {
   const canvas = document.getElementById('sigil-canvas');
   const ctx = canvas.getContext('2d');
 
-  function forgeSigil() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    
-    // COMPLEXITY: 1-4 layers instead of 5-10
-    const layers = 1 + Math.floor(Math.random() * 4);
-    
-    ctx.strokeStyle = Math.random() > 0.3 ? "#ff0000" : "#ffffff";
-    ctx.lineWidth = Math.random() > 0.5 ? 1 : 2;
-
-    for (let i = 0; i < layers; i++) {
-        const radius = (i + 1) * (30 + Math.random() * 20);
-        
-        // Simpler shapes: 50% chance of just lines, 50% polygons
-        if (Math.random() > 0.5) {
-            // Simple crossed lines
-            const angle = Math.random() * Math.PI * 2;
-            ctx.beginPath();
-            ctx.moveTo(centerX, centerY);
-            ctx.lineTo(centerX + radius * Math.cos(angle), centerY + radius * Math.sin(angle));
-            ctx.stroke();
-        } else {
-            // Simple polygon (3-5 sides instead of 3-9)
-            const sides = Math.floor(Math.random() * 3) + 3;
-            ctx.beginPath();
-            for (let j = 0; j <= sides; j++) {
-                const angle = (j / sides) * Math.PI * 2;
-                const x = centerX + radius * Math.cos(angle);
-                const y = centerY + radius * Math.sin(angle);
-                if (j === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            }
-            ctx.stroke();
-        }
-    }
-    
-    // Occasional center dot or circle (traditional sigil feature)
-    if (Math.random() > 0.6) {
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, 3, 0, Math.PI * 2);
-        ctx.fillStyle = ctx.strokeStyle;
-        ctx.fill();
-    }
+function forgeSigil() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+  
+  // Create points around a circle (Kamea-style)
+  const numPoints = 7 + Math.floor(Math.random() * 5); // 7-11 points
+  const radius = 120;
+  const points = [];
+  
+  for (let i = 0; i < numPoints; i++) {
+    const angle = (i / numPoints) * Math.PI * 2;
+    points.push({
+      x: centerX + radius * Math.cos(angle),
+      y: centerY + radius * Math.sin(angle)
+    });
   }
+  
+  // Draw flowing curves between random points
+  ctx.strokeStyle = Math.random() > 0.3 ? "#ff0000" : "#ffffff";
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  
+  const connections = 3 + Math.floor(Math.random() * 4); // 3-6 flowing lines
+  const usedPoints = new Set();
+  
+  ctx.beginPath();
+  let currentPoint = Math.floor(Math.random() * numPoints);
+  ctx.moveTo(points[currentPoint].x, points[currentPoint].y);
+  usedPoints.add(currentPoint);
+  
+  for (let i = 0; i < connections; i++) {
+    // Pick a new random point
+    let nextPoint;
+    do {
+      nextPoint = Math.floor(Math.random() * numPoints);
+    } while (usedPoints.has(nextPoint) && usedPoints.size < numPoints);
+    
+    usedPoints.add(nextPoint);
+    
+    // Create curved path using quadratic curve
+    const current = points[currentPoint];
+    const next = points[nextPoint];
+    
+    // Control point for curve (slightly offset toward center)
+    const cpX = (current.x + next.x) / 2 + (Math.random() - 0.5) * 40;
+    const cpY = (current.y + next.y) / 2 + (Math.random() - 0.5) * 40;
+    
+    ctx.quadraticCurveTo(cpX, cpY, next.x, next.y);
+    currentPoint = nextPoint;
+  }
+  ctx.stroke();
+  
+  // Add some decorative elements
+  // Random circles at connection points
+  if (Math.random() > 0.5) {
+    usedPoints.forEach(idx => {
+      ctx.beginPath();
+      ctx.arc(points[idx].x, points[idx].y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = ctx.strokeStyle;
+      ctx.fill();
+    });
+  }
+  
+  // Optional: add a center mark
+  if (Math.random() > 0.6) {
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 4, 0, Math.PI * 2);
+    ctx.strokeStyle = ctx.strokeStyle;
+    ctx.stroke();
+  }
+}
 
   // --- AUDIO CORE ---
   let audioCtx, humOsc, gainNode, filter, isPowered = false;
