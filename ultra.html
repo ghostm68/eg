@@ -1157,45 +1157,22 @@ function forgeSigil() {
   }
 }
   // --- AUDIO CORE ---
-  let audioCtx, humOsc, gainNode, filter, isPowered = false;
-  
-  function initAudio() {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    humOsc = audioCtx.createOscillator();
-    gainNode = audioCtx.createGain();
-    filter = audioCtx.createBiquadFilter();
-    
-    humOsc.type = 'sawtooth';
-    humOsc.frequency.setValueAtTime(55, audioCtx.currentTime);
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(120, audioCtx.currentTime);
-    gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-    
-    humOsc.connect(filter);
-    filter.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    humOsc.start();
-  }
-
+  let audioCtx, humOsc, isPowered = false;
   function togglePower() {
-    if (!audioCtx) initAudio();
-    
-    const btn = document.getElementById('power-toggle');
-    const light = document.getElementById('power-light');
-    
-    if (!isPowered) {
-      isPowered = true;
-      btn.innerText = "POWER: ON";
-      btn.classList.add('power-on');
-      light.classList.add('bg-red-600', 'animate-pulse');
-      gainNode.gain.setTargetAtTime(0.04, audioCtx.currentTime, 0.5);
-    } else {
-      isPowered = false;
-      btn.innerText = "POWER: OFF";
-      btn.classList.remove('power-on');
-      light.classList.remove('bg-red-600', 'animate-pulse');
-      gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
+    if(!audioCtx) {
+        audioCtx = new AudioContext();
+        humOsc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        humOsc.type = 'sawtooth'; humOsc.frequency.value = 55;
+        gain.gain.value = 0.02;
+        humOsc.connect(gain); gain.connect(audioCtx.destination);
+        humOsc.start();
     }
+    isPowered = !isPowered;
+    document.getElementById('power-toggle').innerText = isPowered ? "POWER: ON" : "POWER: OFF";
+    document.getElementById('power-toggle').classList.toggle('power-on');
+    audioCtx.resume();
+    if(!isPowered) audioCtx.suspend();
   }
 
   // --- LOGS ---
