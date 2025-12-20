@@ -100,6 +100,55 @@ footer {
   .chat-section { height: 300px; }
   .sigil-forge { height: 250px; }
 }
+ .slide-menu {
+        height: 90%;
+        padding: 30px 20px;
+      }
+
+      .menu-title {
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+      }
+
+      .menu-section-title {
+        font-size: 0.9rem;
+      }
+
+      .menu-link {
+        font-size: 12px;
+        padding: 8px 0;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #viewport {
+        min-height: 40vh;
+      }
+	  
+    #ton-qr {
+      width: 60px;
+      border: 1px solid var(--white);
+      padding: 2px;
+      background: #000;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+      position: relative;
+      z-index: 10001;
+    }
+    
+    #ton-qr:hover, #ton-qr:active {
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+      border-color: var(--red);
+    }
+    
+    #ton-qr.expanded {
+      transform: scale(3.5);
+      z-index: 999999;
+      border-color: var(--white);
+      box-shadow: 0 0 100px rgba(0, 0, 0, 0.9), 0 0 50px rgba(255, 255, 255, 0.8);
+    }
+    	
 </style>
 </head>
 
@@ -114,11 +163,26 @@ footer {
     </div>
     <div style="font-size:10px; color:#444">STABILITY: PROTECTED_BY_WITCHES</div>
     <button onclick="exportDraft()" class="text-red-700 text-[10px] font-bold">EXTRACT_DOSSIER</button>
+	    <svg style="width: 24px; height: 24px; stroke: var(--red); stroke-width: 1.5; fill: none;" viewBox="0 0 100 100">
+        <path class="witch-symbol" d="M50,10 L60,30 L80,35 L65,50 L70,70 L50,60 L30,70 L35,50 L20,35 L40,30 Z" />
+        <circle cx="50" cy="85" r="10" />
+        <path d="M50,95 L50,75" />
+      </svg>
+    </div>
+    <div class="flex gap-4">
+      <button onclick="toggleMenu()" class="text-[10px] border border-zinc-800 px-3 py-1 hover:border-red-600 text-white menu-trigger">x</button>
+    </div> 
   </header>
 
-  <aside class="sidebar text-[10px]">
-    <div class="text-zinc-600 mb-2 uppercase tracking-widest">TON_WALLET</div>
-    <img id="ton-qr" src="https://raw.githubusercontent.com/ghostm68/pantheon/main/inkrealm.ton03.jpeg" style="width:100%; border:1px solid #222;">
+  <aside class="sidebar text-[10px]">  <div class="mt-6">
+      <div class="section-label">TON_WALLET</div>
+      <img id="ton-qr" 
+           src="https://raw.githubusercontent.com/ghostm68/pantheon/main/inkrealm.ton03.jpeg" 
+           alt="TON WALLET"
+           onclick="this.classList.toggle('expanded')"
+           title="Click to Enlarge">
+      <div class="text-[8px] text-zinc-700 mt-1">UQAc99MvKIcewbQFmOF_RvqpkAXZno0wiz3_BMsP87pJjSnB</div>
+    </div>
     
     <div class="text-zinc-600 mt-6 mb-2 uppercase tracking-widest">Directives</div>
     <div class="cursor-pointer hover:text-red-600 py-1" onclick="window.open('https://www.inkrealm.info')">> DOMAIN</div>
@@ -140,6 +204,9 @@ footer {
   <div class="bottom-container">
     <section class="chat-section">
       <div class="editor-header">>> COMMS_INFORMANTS</div>
+		
+      <button onclick="clearChat()" class="chat-control-btn">CLEAR</button>
+      <button onclick="exportChat()" class="chat-control-btn">EXPORT</button>
       <div id="chat-container">
         <div class="chat-bubble bot-message">Link established. Awaiting query.</div>
       </div>
@@ -160,8 +227,37 @@ footer {
     <div class="flex gap-4 uppercase italic"><span>Concept: InkRealm</span><span>|</span><span>Enhanced by Gemini AI</span></div>
   </footer>
 </div>
+<!-- Slide-up Menu -->
+<div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()"></div>
+<div class="slide-menu" id="slide-menu">
+  <div class="menu-content">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+      <h2 class="menu-title" style="margin-bottom: 0;">Navigation</h2>
+      <button onclick="toggleMenu()" class="text-[10px] border border-zinc-800 px-3 py-1 hover:border-red-600 text-white" style="background: #000;">CLOSE</button>
+    </div>
+    
+    <div class="menu-section">
+      <h3 class="menu-section-title">Main</h3>
+      <a href="https://www.inkrealm.info" class="menu-link" target="_blank">INKREALM.INFO</a>
+      <a href="https://partyrock.aws/u/Inkrealm/Hm8CrqFrG/Nexus-Universe-Explorer" class="menu-link" target="_blank">NEXUS UNIVERSE</a>
+    </div>
+
+    <div class="menu-section">
+      <h3 class="menu-section-title">Contact</h3>
+      <a href="https://inkrealm.instatus.com/" class="menu-link" target="_blank">SYSTEM STATUS</a>
+      <a href="tel:+16468019713" class="menu-link">PHONE CONTACT</a>
+    </div>
+  </div>
+</div>
 
 <script>
+  // Menu Toggle
+  function toggleMenu() {
+    const overlay = document.getElementById('menu-overlay');
+    const menu = document.getElementById('slide-menu');
+    overlay.classList.toggle('active');
+    menu.classList.toggle('active');
+  }
   // --- SIGIL FORGE ENGINE ---
   const canvas = document.getElementById('sigil-canvas');
   const ctx = canvas.getContext('2d');
