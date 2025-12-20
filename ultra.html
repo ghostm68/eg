@@ -3,13 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>wnia</title>
+  <title>ink_realm_v4.5</title>
 	
   <link rel="icon" type="image/svg+xml" href="https://cdn.jsdelivr.net/gh/ghostm68/inktwo@main/svg/inky.svg">
   <link rel="apple-touch-icon" type="image/png" href="https://github.com/ghostm68/pantheon/raw/main/inkrealm.info.2025.png" />
   
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Nova+Mono&family=Special+Elite&family=Advent+Pro:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nova+Mono&family=Special+Elite&family=VT323&display=swap" rel="stylesheet">
   
   <style>
 :root { --red: #ff0000; --black: #050505; --grey: #1a1a1a; --white: #ffffff; }
@@ -21,359 +20,167 @@ body {
   color: var(--white); 
   font-family: 'Nova Mono', monospace; 
   margin: 0; 
-  overflow-x: hidden;
-  position: relative;
+  overflow: hidden; /* Prevents whole-page scroll, we use internal scrolls */
+  height: 100vh;
 }
 
-/* CRT Scanline Overlay */
+/* CRT Overlay */
 body::after {
-  content: " "; 
-  display: block; 
-  position: fixed; 
-  top: 0; left: 0; 
-  width: 100%; height: 100%;
+  content: " "; display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.08) 50%), 
               linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 0, 0, 0.01), rgba(0, 0, 0, 0.02));
-  z-index: 1; 
-  background-size: 100% 2px, 2px 100%; 
-  pointer-events: none;
+  z-index: 999; background-size: 100% 2px, 2px 100%; pointer-events: none;
 }
 
 .app-grid { 
   display: grid; 
   grid-template-columns: 200px 1fr; 
-  grid-template-rows: 50px 1fr auto 30px;
+  grid-template-rows: 50px 1fr 350px 30px;
   height: 100vh;
   position: relative;
-  z-index: 2;
 }
 
 header { 
-  grid-column: span 2; 
-  border-bottom: 1px solid var(--red); 
-  background: #000; 
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  z-index: 3;
+  grid-column: span 2; border-bottom: 1px solid var(--red); background: #000; 
+  display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
 }
 
-/* --- SCROLLBARS --- */
-/* 1. Sidebar Scrollbar: GREY */
-.sidebar::-webkit-scrollbar { width: 6px; }
+/* --- SCROLLBARS: 3 VARYING COLORS --- */
+/* 1. Sidebar: GREY */
+.sidebar::-webkit-scrollbar { width: 5px; }
 .sidebar::-webkit-scrollbar-track { background: #000; }
-.sidebar::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+.sidebar::-webkit-scrollbar-thumb { background: #444; }
 
-/* 2. Chat Scrollbar: RED */
-#chat-container::-webkit-scrollbar { width: 6px; }
-#chat-container::-webkit-scrollbar-track { background: #000; }
-#chat-container::-webkit-scrollbar-thumb { background: var(--red); border-radius: 3px; }
+/* 2. Story Area: WHITE */
+.story-panel::-webkit-scrollbar { width: 5px; }
+.story-panel::-webkit-scrollbar-track { background: #000; }
+.story-panel::-webkit-scrollbar-thumb { background: var(--white); }
 
-/* 3. Witch/Iframe Scrollbar: WHITE */
-.social-feed-container::-webkit-scrollbar { width: 6px; }
-.social-feed-container::-webkit-scrollbar-track { background: #000; }
-.social-feed-container::-webkit-scrollbar-thumb { background: var(--white); border-radius: 3px; }
+/* 3. Logs and Chat: RED */
+.log-panel::-webkit-scrollbar, #chat-container::-webkit-scrollbar { width: 5px; }
+.log-panel::-webkit-scrollbar-track, #chat-container::-webkit-scrollbar-track { background: #000; }
+.log-panel::-webkit-scrollbar-thumb, #chat-container::-webkit-scrollbar-thumb { background: var(--red); }
 
 .sidebar { 
-  background: #0a0a0a; 
-  border-right: 1px solid #222; 
-  overflow-y: auto; 
-  padding: 20px; 
+  background: #0a0a0a; border-right: 1px solid #222; overflow-y: auto; padding: 20px; 
 }
 
+/* --- VIEWPORT SPLIT --- */
 #viewport { 
-  background: #000; 
-  position: relative; 
-  border-bottom: 1px solid var(--red);
-  overflow-y: auto;
+  display: grid; grid-template-columns: 1fr 320px; background: #000; border-bottom: 1px solid var(--red); overflow: hidden;
 }
 
+.story-panel {
+  padding: 30px; overflow-y: auto; border-right: 1px solid #222;
+  font-family: 'Special Elite', serif; font-size: 13px; line-height: 1.7;
+}
+
+.log-panel {
+  padding: 20px; overflow-y: auto; font-family: 'VT323', monospace; font-size: 13px; color: #777; background: #050505;
+}
+
+/* --- BOTTOM SECTION FIXED --- */
 .bottom-container {
-  display: grid;
-  grid-template-columns: 240px 1fr; /* Widened slightly to prevent overlap */
-  grid-column: span 2;
-  border-top: 1px solid var(--red);
-  height: 350px; /* Fixed height for the bottom row */
-  background: #000;
-  position: relative;
+  display: grid; grid-template-columns: 240px 1fr; grid-column: span 2;
+  border-top: 1px solid var(--red); height: 350px; position: relative; background: #000;
 }
 
 .chat-section { 
-  background: var(--red); 
-  color: var(--white); 
-  display: flex; 
-  flex-direction: column;
-  overflow: hidden;
-  border-right: 1px solid #000;
+  background: var(--red); display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid #000;
 }
 
-.witch-section { 
-  background: #000; 
-  display: flex; 
-  flex-direction: column; 
-  overflow: hidden;
-}
+.witch-section { background: #000; display: flex; flex-direction: column; overflow: hidden; }
 
 .editor-header { 
-  background: #1a1a1a; 
-  border-bottom: 1px solid #000; 
-  padding: 8px 15px; 
-  font-family: 'Special Elite', serif; 
-  font-size: 11px; 
-  color: var(--white); 
-  letter-spacing: 1px; 
-  height: 36px;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
+  background: #1a1a1a; padding: 8px 15px; font-family: 'Special Elite', serif; font-size: 11px; height: 36px; display: flex; align-items: center; 
 }
 
-.chat-header-controls {
-  display: flex;
-  gap: 10px;
-}
+#chat-container { flex: 1; padding: 12px; overflow-y: auto; background: var(--red); }
 
-.chat-control-btn {
-  background: transparent;
-  color: #777;
-  border: 1px solid #333;
-  font-size: 9px;
-  padding: 3px 8px;
-  cursor: pointer;
-  font-family: 'Nova Mono', monospace;
-  text-transform: uppercase;
-}
+.chat-bubble { margin-bottom: 8px; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.2); font-family: 'VT323', monospace; font-size: 1rem; }
+.user-message { background: #1a1a1a; text-align: right; }
+.bot-message { background: #000; }
 
-#chat-container { 
-  flex: 1; 
-  padding: 10px 12px; 
-  font-family: 'VT323', monospace; 
-  overflow-y: auto; 
-  background: var(--red);
-}
+.chat-input-area { background: #1a1a1a; padding: 8px; display: flex; gap: 8px; }
+#chat-input { background: #000; color: #fff; border: 1px solid #333; flex: 1; padding: 8px; font-family: 'VT323'; font-size: 18px; }
 
-.chat-input-area {
-  background: #1a1a1a;
-  border-top: 1px solid #333;
-  display: flex;
-  padding: 8px;
-  gap: 8px;
-}
+.witch-grid { display: flex; height: 100%; padding: 15px; gap: 15px; }
+.social-feed-container { flex: 1; border: 1px solid #333; overflow: hidden; position: relative; background: #000; }
+iframe { width: 100%; height: 100%; border: none; }
 
-#chat-input {
-  background: #000;
-  color: var(--white);
-  border: 1px solid #333;
-  font-size: 16px;
-  padding: 8px 10px;
-  flex: 1;
-  font-family: 'VT323', monospace;
-}
-
-.send-button {
-  background: #000;
-  color: var(--white);
-  border: 1px solid #333;
-  padding: 8px 12px;
-  cursor: pointer;
-  font-family: 'Nova Mono', monospace;
-}
-
-.witch-grid {
-  display: flex;
-  flex-direction: row; /* Changed to row to stop vertical crowding */
-  height: 100%;
-  padding: 15px;
-  gap: 15px;
-}
-
-.witch-top {
-  width: 80px;
-  text-align: center;
-}
-
-.witch-middle {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.social-feed-container {
-  flex: 1;
-  width: 100%;
-  border: 1px solid #333;
-  overflow-y: auto; /* Enables scrolling for the container */
-  background: #050505;
-}
-
-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  display: block;
-}
-
-.witch-svg { 
-  width: 60px; height: 60px; 
-  stroke: var(--red); 
-  stroke-width: 1.5; fill: none;
-}
-
-.link-item {
-  font-size: 10px;
-  color: var(--white);
-  padding: 8px 0;
-  cursor: pointer;
-  text-transform: uppercase;
-  border-bottom: 1px solid #333;
-}
-
-.link-item:hover { color: var(--red); border-bottom-color: var(--red); }
+.video-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.1; pointer-events: none; }
 
 footer { 
-  grid-column: span 2; 
-  background: #000; 
-  border-top: 1px solid #222; 
-  font-size: 9px; 
-  color: #555; 
-  display: flex; 
-  align-items: center; 
-  justify-content: space-between; 
-  padding: 0 20px; 
+  grid-column: span 2; background: #000; border-top: 1px solid #222; font-size: 9px; color: #555; 
+  display: flex; align-items: center; justify-content: space-between; padding: 0 20px; 
 }
 
-.video-bg {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  object-fit: cover;
-  opacity: 0.1;
-  pointer-events: none;
-}
+/* Elements */
+.link-item { font-size: 10px; color: #fff; padding: 8px 0; cursor: pointer; border-bottom: 1px solid #222; }
+.link-item:hover { color: var(--red); }
+.section-label { font-size: 9px; color: #666; margin-bottom: 10px; text-transform: uppercase; }
 
-.story-overlay {
-  padding: 30px 40px;
-  font-family: 'Special Elite', serif;
-  font-size: 13px;
-  line-height: 1.7;
-}
+#ton-qr { width: 60px; border: 1px solid #fff; cursor: pointer; transition: transform 0.3s; }
+#ton-qr.expanded { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(5); z-index: 10000; }
 
-#ton-qr {
-  width: 60px;
-  border: 1px solid var(--white);
-  background: #000;
-  cursor: pointer;
-  transition: transform 0.3s;
-}
-
-#ton-qr.expanded {
-  transform: scale(4);
-  position: fixed;
-  top: 50%; left: 50%;
-  margin-left: -30px; margin-top: -30px;
-  z-index: 10000;
-}
-
-.chat-bubble {
-  margin: 6px 0;
-  padding: 8px;
-  border-radius: 3px;
-  font-size: 0.9rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.user-message { background: #1a1a1a; color: var(--white); text-align: right; }
-.bot-message { background: #000; color: var(--white); }
-
-@keyframes draw {
-  0% { stroke-dashoffset: 1000; }
-  50% { stroke-dashoffset: 0; }
-  100% { stroke-dashoffset: 1000; }
-}
 .witch-symbol { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: draw 5s infinite; }
-
-.section-label { font-size: 9px; color: #666; text-transform: uppercase; margin-bottom: 8px; }
-
-/* Menu overlays */
-.menu-overlay {
-  position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.9);
-  z-index: 1000;
-  display: none;
-}
-.menu-overlay.active { display: block; }
-
-.slide-menu {
-  position: fixed;
-  bottom: -100%; left: 0; width: 100%; height: 80%;
-  background: #0a0a0a; border-top: 2px solid var(--red);
-  z-index: 1001;
-  transition: bottom 0.4s;
-  padding: 40px;
-}
-.slide-menu.active { bottom: 0; }
-
-.menu-link { display: block; padding: 10px 0; color: #999; text-decoration: none; border-bottom: 1px solid #1a1a1a; }
-.menu-link:hover { color: var(--red); }
-
-/* MOBILE */
-@media (max-width: 768px) {
-  .app-grid { grid-template-columns: 1fr; grid-template-rows: 50px 1fr auto auto 50px; height: auto; }
-  .sidebar { display: none; } /* Hide sidebar on mobile to save space */
-  .bottom-container { grid-template-columns: 1fr; height: auto; }
-  .chat-section, .witch-section { height: 400px; }
-  .witch-grid { flex-direction: column; }
-}
-
-/* Utilities */
-.flex { display: flex; }
-.items-center { align-items: center; }
-.justify-between { justify-content: space-between; }
-.gap-4 { gap: 16px; }
-.w-2 { width: 8px; }
-.h-2 { height: 8px; }
-.bg-red-600 { background-color: #dc2626; }
-.rounded-full { border-radius: 9999px; }
-.animate-pulse { animation: pulse 2s infinite; }
-.text-white { color: white; }
-.font-bold { font-weight: bold; }
-.uppercase { text-transform: uppercase; }
+@keyframes draw { 0% { stroke-dashoffset: 1000; } 50% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 1000; } }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-  </style>
+.animate-pulse { animation: pulse 2s infinite; }
+
+</style>
 </head>
 
 <body>
 
 <div class="app-grid">
   <header>
-    <div class="flex items-center gap-4">
-      <div class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
-      <h1 class="text-white font-bold uppercase" style="font-size:14px">ink_realm_v4.5</h1>
+    <div style="display:flex; align-items:center; gap:15px">
+      <div style="width:8px; height:8px; background:var(--red); border-radius:50%" class="animate-pulse"></div>
+      <h1 style="font-size:14px; letter-spacing:2px">INK_REALM_V4.5</h1>
       <svg style="width: 24px; height: 24px; stroke: var(--red); stroke-width: 1.5; fill: none;" viewBox="0 0 100 100">
         <path class="witch-symbol" d="M50,10 L60,30 L80,35 L65,50 L70,70 L50,60 L30,70 L35,50 L20,35 L40,30 Z" />
-        <circle cx="50" cy="85" r="10" />
       </svg>
     </div>
-    <button onclick="toggleMenu()" class="chat-control-btn" style="color:#fff">MENU</button>
+    <div style="font-size:10px; color:#444">ZO_SYSTEM_ACTIVE</div>
   </header>
 
   <aside class="sidebar">
     <div class="section-label">TON_WALLET</div>
     <img id="ton-qr" src="https://raw.githubusercontent.com/ghostm68/pantheon/main/inkrealm.ton03.jpeg" onclick="this.classList.toggle('expanded')">
     <div style="font-size: 8px; color: #444; margin-top: 5px; word-break: break-all;">UQAc99MvKIcewbQFmOF_RvqpkAXZno0wiz3_BMsP87pJjSnB</div>
-    
-    <div class="section-label" style="margin-top:20px">Navigation</div>
-    <div class="link-item" onclick="window.open('https://www.inkrealm.info', '_blank')">DOMAIN</div>
-    <div class="link-item" onclick="window.open('https://partyrock.aws/u/Inkrealm/Hm8CrqFrG/Nexus-Universe-Explorer', '_blank')">NEXUS_APP</div>
-    <div class="link-item" onclick="window.open('https://inkrealm.instatus.com/', '_blank')">STATUS</div>
+
+    <div class="section-label" style="margin-top:25px">Portal</div>
+    <div class="link-item" onclick="window.open('https://www.inkrealm.info')">DOMAIN</div>
+    <div class="link-item" onclick="window.open('https://partyrock.aws/u/Inkrealm/Hm8CrqFrG/Nexus-Universe-Explorer')">NEXUS_APP</div>
+    <div class="link-item" onclick="window.open('https://inkrealm.instatus.com/')">STATUS</div>
   </aside>
 
   <main id="viewport">
-    <div class="story-overlay">
-      <p>System Online. All nodes synchronized. The witch-glass is active.</p>
-      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+    <!-- STORY AREA -->
+    <div class="story-panel">
+      <div style="color:var(--red); border-bottom:1px solid #333; margin-bottom:15px; padding-bottom:5px">DOSSIER: ARTIFICT.IO_HUSTLE</div>
+      <p><strong>The Great AI Hustle: ARTIFICT.IO vs. The Silicon Overlords</strong></p>
+      <p>Six months ago, we were just six flat-broke nobodies scavenging the "Miscellaneous" aisle of a bankrupt Radio Shack. Derek—our self-appointed CEO—had been demoing a toaster he swore could mine Bitcoin if you fed it rye bread. The rest of us? We were there for the free extension cords and day-old donuts.</p>
+      <p>When the sheriff slapped padlocks on the doors, we bolted with whatever still blinked: two wheezing beige towers, a CRT monitor that hummed the national anthem on boot-up, and a dot-matrix printer that only screamed in Portuguese. We crammed our loot into Derek's rustbucket van (license plate: "404-CEO") and peeled out to the nearest "incubator"—the back room of a shuttered escape-room joint in a strip mall.</p>
+      <p>The previous tenants had ghosted, leaving plastic prop keys scattered around and a whiteboard scrawled with "FIND THE EXIT." We flipped it over, Sharpied "FIND THE EXIT… TO SUCCESS," and declared it our mission statement. Startup gospel.</p>
+      <p>None of us could code beyond a Chrome extension that Nicolas Cage-ified cat videos. So we got scrappy. We printed the top 10,000 most-Googled questions ever, jammed them into mason jars labeled "Small Talk," "Existential Dread," "Mom's Tech Support," and "Conspiracy Theories." That was our "training data." Our "neural net"? Six brains on Red Bull and spite.</p>
+      <p>We branded it ARTIFICT.IO—close enough to "artifact" to sound profound, fake enough to fool VCs until they squinted. Pitch deck? Slide 1: stock-photo robot stirring a pot of "Innovation Soup." Slide 2: same robot fleeing pitchfork-wielding villagers ("Disruption in Action").</p>
+      <p>Investors mailed checks before we hit "Q&A." By month three, we'd "scaled." Our "chatbot," ARTIE, lived on the beige towers. Users typed queries into a chat window; we'd eavesdrop via baby monitors, rummage the jars, and hammer responses on a hidden keyboard. Latency? "Quantum thinking time."</p>
+      <p>Today, ARTIFICT.IO powers half the Fortune 500's "AI assistants." We're not the smartest—just the hungriest. In a world of flawless algorithms, we proved six hustlers with scavenged junk and memorized Yahoo Answers could out-bluff the bots. The whiteboard still reads "FIND THE EXIT… TO SUCCESS." And damn if we didn't kick down the door.</p>
+    </div>
+
+    <!-- ATMOSPHERIC LOGS AREA -->
+    <div class="log-panel" id="log-stream">
+      <div style="color: var(--red); border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 15px;">
+        // SYSTEM_ORACLE_LOG_V4.5
+      </div>
+      <div id="log-content">
+        <p>> Initializing InkRealm protocol...</p>
+        <p>> Calibrating witch-glass sensors...</p>
+        <p>> Connection to Nexus Universe: STABLE</p>
+        <p>> Waiting for spirit-input...</p>
+      </div>
     </div>
   </main>
 
@@ -381,97 +188,97 @@ footer {
     <video class="video-bg" src="https://github.com/ghostm68/pantheon/raw/main/inkrealm.info_1696009559686.mp4" muted autoplay loop playsinline></video>
     
     <section class="chat-section">
-      <div class="editor-header">
-        <div class="chat-header-controls">
-          <button onclick="clearChat()" class="chat-control-btn">CLEAR</button>
-          <button onclick="exportChat()" class="chat-control-btn">EXPORT</button>
-        </div>
-      </div>
+      <div class="editor-header" style="color:#fff">TERMINAL_CHAT</div>
       <div id="chat-container">
-        <div class="chat-bubble bot-message">AI terminal ready...</div>
+        <div class="chat-bubble bot-message">AI interface active. How shall we disrupt?</div>
       </div>
       <div class="chat-input-area">
-        <input type="text" id="chat-input" placeholder="Type..." onkeypress="if(event.key === 'Enter') sendMessage()">
-        <button onclick="sendMessage()" class="send-button">SEND</button>
+        <input type="text" id="chat-input" placeholder="Enter query..." onkeypress="if(event.key==='Enter') sendMessage()">
       </div>
     </section>
-    
+
     <section class="witch-section">
-      <div class="editor-header">>> _SIGIL_FEED</div>
+      <div class="editor-header" style="color:#fff">>> _SIGIL_STREAM</div>
       <div class="witch-grid">
-        <div class="witch-top">
-          <svg class="witch-svg" viewBox="0 0 100 100">
+        <div style="width:60px; text-align:center">
+          <svg viewBox="0 0 100 100" style="stroke:var(--red); stroke-width:1.5; fill:none; width:60px">
             <path class="witch-symbol" d="M50,10 L60,30 L80,35 L65,50 L70,70 L50,60 L30,70 L35,50 L20,35 L40,30 Z" />
-          </svg> 
+            <circle cx="50" cy="85" r="10" />
+          </svg>
         </div>
-        <div class="witch-middle">
-          <div class="social-feed-container">
-            <iframe src="https://wordstar.nexus/ioo" title="Reader"></iframe>
-          </div>
+        <div class="social-feed-container">
+          <!-- Wordstar Nexus Iframe -->
+          <iframe src="https://wordstar.nexus/ioo"></iframe>
         </div>
       </div>
     </section>
   </div>
 
   <footer>
-    <div>PROTECTED BY WITCHES // TON: UQAc99MvKIcewbQFmOF_RvqpkAXZno0wiz3_BMsP87pJjSnB</div>
-    <div class="flex gap-4"><span>InkRealm Construct</span></div>
+    <div>PROTECTED BY WITCHES // ARTIFICT.IO LEGACY IP</div>
+    <div style="display:flex; gap:10px">
+      <span>InkRealm Construct</span><span>|</span><span>Creative Endeavor</span>
+    </div>
   </footer>
 </div>
 
-<!-- Menu -->
-<div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()"></div>
-<div class="slide-menu" id="slide-menu">
-    <h2 class="menu-title" style="color:var(--red); font-family:'Special Elite'">NAVIGATION</h2>
-    <a href="https://www.inkrealm.info" class="menu-link" target="_blank">INKREALM.INFO</a>
-    <a href="https://inkrealm.instatus.com/" class="menu-link" target="_blank">SYSTEM STATUS</a>
-    <button onclick="toggleMenu()" class="send-button" style="margin-top:20px">CLOSE</button>
-</div>
-
 <script>
-  function toggleMenu() {
-    document.getElementById('menu-overlay').classList.toggle('active');
-    document.getElementById('slide-menu').classList.toggle('active');
-  }
+  // ATMOSPHERIC LOG SCRIPT
+  const logs = [
+    "Resonance detected in sector 7-G...",
+    "Ink-levels fluctuating at 88%...",
+    "Sigil-integrity confirmed: 1.0.4",
+    "Intercepting encrypted whisper from Node-X...",
+    "Synchronizing shadow-nodes...",
+    "Witch-glass opacity adjusted to 15%...",
+    "Derek detected scavenging Radio Shack debris...",
+    "Yahoo Answers JAR #4 accessed successfully...",
+    "Portuguese printer shouting: CALIBRAÇÃO!",
+    "Sequoia Capital pinging our beacon..."
+  ];
 
+  function updateLogs() {
+    const content = document.getElementById('log-content');
+    const stream = document.getElementById('log-stream');
+    const p = document.createElement('p');
+    p.textContent = "> " + logs[Math.floor(Math.random() * logs.length)];
+    if(Math.random() > 0.8) p.style.color = "#fff"; // Randomly highlight a log in white
+    content.appendChild(p);
+    stream.scrollTop = stream.scrollHeight;
+    
+    if (content.children.length > 25) content.removeChild(content.children[0]);
+  }
+  setInterval(updateLogs, 4000);
+
+  // CHAT SCRIPT
   async function sendMessage() {
     const input = document.getElementById('chat-input');
     const container = document.getElementById('chat-container');
     const msg = input.value.trim();
     if (!msg) return;
 
-    const userDiv = document.createElement('div');
-    userDiv.className = 'chat-bubble user-message';
-    userDiv.textContent = msg;
-    container.appendChild(userDiv);
+    const u = document.createElement('div');
+    u.className = 'chat-bubble user-message';
+    u.textContent = msg;
+    container.appendChild(u);
     input.value = '';
 
-    const botDiv = document.createElement('div');
-    botDiv.className = 'chat-bubble bot-message';
-    botDiv.textContent = '...';
-    container.appendChild(botDiv);
+    const b = document.createElement('div');
+    b.className = 'chat-bubble bot-message';
+    b.textContent = '...';
+    container.appendChild(b);
     container.scrollTop = container.scrollHeight;
 
     try {
       const resp = await fetch(`https://text.pollinations.ai/${encodeURIComponent(msg)}`);
       const data = await resp.text();
-      botDiv.textContent = data.trim();
+      b.textContent = data.trim();
     } catch (e) {
-      botDiv.textContent = "Signal lost.";
+      b.textContent = "Signal interference. Try again.";
     }
     container.scrollTop = container.scrollHeight;
   }
-
-  function clearChat() { document.getElementById('chat-container').innerHTML = ''; }
-  
-  function exportChat() {
-    const text = document.getElementById('chat-container').innerText;
-    const blob = new Blob([text], {type: 'text/plain'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'log.txt';
-    a.click();
-  }
 </script>
+
 </body>
 </html>
