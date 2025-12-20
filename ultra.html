@@ -3626,12 +3626,9 @@ const logFragments = [
 </script>
 <script>
 let isSpeaking = false;
-let utterance = null;
-let selectedVoice = null;
 
 function toggleTTS() {
   const trigger = document.querySelector('.tts-trigger');
-  const screenplay = document.querySelector('pre').textContent;
   
   if (isSpeaking) {
     speechSynthesis.cancel();
@@ -3641,33 +3638,11 @@ function toggleTTS() {
     return;
   }
   
-  // Get voices on demand
-  const voices = speechSynthesis.getVoices();
+  const screenplay = document.querySelector('pre').textContent;
+  const utterance = new SpeechSynthesisUtterance(screenplay);
   
-  // Select best female voice
-  const femaleVoice = voices.find(v => 
-    v.lang.startsWith('en') && (
-      v.name.includes('Samantha') ||
-      v.name.includes('Victoria') ||
-      v.name.includes('Female') ||
-      v.name.includes('female')
-    )
-  ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
-  
-  utterance = new SpeechSynthesisUtterance(screenplay);
   utterance.rate = 0.9;
   utterance.pitch = 1.1;
-  utterance.volume = 1.0;
-  
-  if (femaleVoice) {
-    utterance.voice = femaleVoice;
-  }
-  
-  utterance.onstart = () => {
-    trigger.textContent = '■';
-    trigger.classList.add('speaking');
-    isSpeaking = true;
-  };
   
   utterance.onend = () => {
     trigger.textContent = '▶';
@@ -3675,21 +3650,11 @@ function toggleTTS() {
     isSpeaking = false;
   };
   
-  utterance.onerror = (e) => {
-    console.error('TTS Error:', e);
-    trigger.textContent = '▶';
-    trigger.classList.remove('speaking');
-    isSpeaking = false;
-  };
+  trigger.textContent = '■';
+  trigger.classList.add('speaking');
+  isSpeaking = true;
   
   speechSynthesis.speak(utterance);
-}
-
-// Pre-load voices for mobile
-if ('speechSynthesis' in window) {
-  speechSynthesis.onvoiceschanged = () => {
-    speechSynthesis.getVoices();
-  };
 }
 </script>
 </body>
