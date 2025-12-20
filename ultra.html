@@ -12,15 +12,19 @@
   
   <style>
 :root { --red: #ff0000; --black: #050505; --grey: #1a1a1a; --white: #ffffff; }
+
 * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 
 body { 
-  background: var(--black); color: var(--white); 
-  font-family: 'Nova Mono', monospace; margin: 0; 
-  overflow: hidden; height: 100vh;
+  background: var(--black); 
+  color: var(--white); 
+  font-family: 'Nova Mono', monospace; 
+  margin: 0; 
+  overflow: hidden; /* Prevents whole-page scroll, we use internal scrolls */
+  height: 100vh;
 }
 
-/* CRT Scanline Overlay */
+/* CRT Overlay */
 body::after {
   content: " "; display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.08) 50%), 
@@ -31,112 +35,99 @@ body::after {
 .app-grid { 
   display: grid; 
   grid-template-columns: 200px 1fr; 
-  grid-template-rows: 50px 1fr 350px 30px; /* Locked row heights */
+  grid-template-rows: 50px 1fr 350px 30px;
   height: 100vh;
+  position: relative;
 }
-
-/* --- SCROLLBARS (The Trio) --- */
-/* 1. Sidebar: GREY */
-.sidebar::-webkit-scrollbar { width: 5px; }
-.sidebar::-webkit-scrollbar-thumb { background: #444; }
-
-/* 2. Story Panel: WHITE */
-.story-panel::-webkit-scrollbar { width: 6px; }
-.story-panel::-webkit-scrollbar-track { background: #000; }
-.story-panel::-webkit-scrollbar-thumb { background: var(--white); border-radius: 3px; }
-
-/* 3. Logs & Chat: RED */
-.log-panel::-webkit-scrollbar, #chat-container::-webkit-scrollbar { width: 6px; }
-.log-panel::-webkit-scrollbar-track, #chat-container::-webkit-scrollbar-track { background: #000; }
-.log-panel::-webkit-scrollbar-thumb, #chat-container::-webkit-scrollbar-thumb { background: var(--red); border-radius: 3px; }
 
 header { 
-  grid-column: span 2; border-bottom: 1px solid var(--red); 
-  background: #000; display: flex; align-items: center; 
-  justify-content: space-between; padding: 0 20px;
+  grid-column: span 2; border-bottom: 1px solid var(--red); background: #000; 
+  display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
 }
+
+/* --- SCROLLBARS: 3 VARYING COLORS --- */
+/* 1. Sidebar: GREY */
+.sidebar::-webkit-scrollbar { width: 5px; }
+.sidebar::-webkit-scrollbar-track { background: #000; }
+.sidebar::-webkit-scrollbar-thumb { background: #444; }
+
+/* 2. Story Area: WHITE */
+.story-panel::-webkit-scrollbar { width: 5px; }
+.story-panel::-webkit-scrollbar-track { background: #000; }
+.story-panel::-webkit-scrollbar-thumb { background: var(--white); }
+
+/* 3. Logs and Chat: RED */
+.log-panel::-webkit-scrollbar, #chat-container::-webkit-scrollbar { width: 5px; }
+.log-panel::-webkit-scrollbar-track, #chat-container::-webkit-scrollbar-track { background: #000; }
+.log-panel::-webkit-scrollbar-thumb, #chat-container::-webkit-scrollbar-thumb { background: var(--red); }
 
 .sidebar { 
   background: #0a0a0a; border-right: 1px solid #222; overflow-y: auto; padding: 20px; 
 }
 
-/* --- VIEWPORT: SPLIT --- */
+/* --- VIEWPORT SPLIT --- */
 #viewport { 
-  display: grid; 
-  grid-template-columns: 1fr 320px; /* Story vs Logs */
-  background: #000; border-bottom: 1px solid var(--red); overflow: hidden;
+  display: grid; grid-template-columns: 1fr 320px; background: #000; border-bottom: 1px solid var(--red); overflow: hidden;
 }
 
 .story-panel {
   padding: 30px; overflow-y: auto; border-right: 1px solid #222;
   font-family: 'Special Elite', serif; font-size: 13px; line-height: 1.7;
-  background: #050505;
 }
 
 .log-panel {
-  padding: 20px; overflow-y: auto; font-family: 'VT323', monospace; 
-  font-size: 13px; color: #666; background: #000;
+  padding: 20px; overflow-y: auto; font-family: 'VT323', monospace; font-size: 13px; color: #777; background: #050505;
 }
 
-/* --- BOTTOM CONTAINER: THE FIX --- */
+/* --- BOTTOM SECTION FIXED --- */
 .bottom-container {
-  grid-column: span 2;
-  display: grid;
-  grid-template-columns: 240px 1fr; /* Fixed width for chat, fluid for witch */
-  height: 350px;
-  border-top: 1px solid var(--red);
-  position: relative;
-  background: #000;
+  display: grid; grid-template-columns: 240px 1fr; grid-column: span 2;
+  border-top: 1px solid var(--red); height: 350px; position: relative; background: #000;
 }
 
 .chat-section { 
-  background: var(--red); display: flex; flex-direction: column; 
-  overflow: hidden; border-right: 1px solid #000;
+  background: var(--red); display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid #000;
 }
 
-.witch-section { 
-  background: #000; display: flex; flex-direction: column; overflow: hidden; 
-}
+.witch-section { background: #000; display: flex; flex-direction: column; overflow: hidden; }
 
 .editor-header { 
-  background: #1a1a1a; padding: 8px 15px; font-family: 'Special Elite', serif; 
-  font-size: 11px; height: 36px; display: flex; align-items: center; color: #fff;
+  background: #1a1a1a; padding: 8px 15px; font-family: 'Special Elite', serif; font-size: 11px; height: 36px; display: flex; align-items: center; 
 }
 
 #chat-container { flex: 1; padding: 12px; overflow-y: auto; background: var(--red); }
-.chat-bubble { margin-bottom: 8px; padding: 8px; border: 1px solid rgba(255,255,255,0.2); font-family: 'VT323'; font-size: 1rem; }
-.user-message { background: #1a1a1a; color: #fff; text-align: right; }
-.bot-message { background: #000; color: #fff; }
+
+.chat-bubble { margin-bottom: 8px; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.2); font-family: 'VT323', monospace; font-size: 1rem; }
+.user-message { background: #1a1a1a; text-align: right; }
+.bot-message { background: #000; }
 
 .chat-input-area { background: #1a1a1a; padding: 8px; display: flex; gap: 8px; }
 #chat-input { background: #000; color: #fff; border: 1px solid #333; flex: 1; padding: 8px; font-family: 'VT323'; font-size: 18px; }
 
-/* Witch/Iframe Area */
 .witch-grid { display: flex; height: 100%; padding: 15px; gap: 15px; }
-.social-feed-container { 
-  flex: 1; border: 1px solid #333; background: #000; 
-  overflow: hidden; position: relative;
-}
+.social-feed-container { flex: 1; border: 1px solid #333; overflow: hidden; position: relative; background: #000; }
 iframe { width: 100%; height: 100%; border: none; }
 
 .video-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.1; pointer-events: none; }
 
 footer { 
-  grid-column: span 2; background: #000; border-top: 1px solid #222; 
-  font-size: 9px; color: #444; display: flex; align-items: center; 
-  justify-content: space-between; padding: 0 20px; 
+  grid-column: span 2; background: #000; border-top: 1px solid #222; font-size: 9px; color: #555; 
+  display: flex; align-items: center; justify-content: space-between; padding: 0 20px; 
 }
 
+/* Elements */
 .link-item { font-size: 10px; color: #fff; padding: 8px 0; cursor: pointer; border-bottom: 1px solid #222; }
 .link-item:hover { color: var(--red); }
+.section-label { font-size: 9px; color: #666; margin-bottom: 10px; text-transform: uppercase; }
 
-#ton-qr { width: 60px; border: 1px solid #fff; cursor: pointer; transition: 0.3s; }
+#ton-qr { width: 60px; border: 1px solid #fff; cursor: pointer; transition: transform 0.3s; }
 #ton-qr.expanded { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(5); z-index: 10000; }
 
 .witch-symbol { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: draw 5s infinite; }
 @keyframes draw { 0% { stroke-dashoffset: 1000; } 50% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 1000; } }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 .animate-pulse { animation: pulse 2s infinite; }
+
 </style>
 </head>
 
@@ -151,41 +142,44 @@ footer {
         <path class="witch-symbol" d="M50,10 L60,30 L80,35 L65,50 L70,70 L50,60 L30,70 L35,50 L20,35 L40,30 Z" />
       </svg>
     </div>
-    <div style="font-size:10px; color:#555">ZO_CLOUD_CONNECTED</div>
+    <div style="font-size:10px; color:#444">ZO_SYSTEM_ACTIVE</div>
   </header>
 
   <aside class="sidebar">
-    <div style="font-size:9px; color:#555; margin-bottom:10px">SECURE_WALLET</div>
+    <div class="section-label">TON_WALLET</div>
     <img id="ton-qr" src="https://raw.githubusercontent.com/ghostm68/pantheon/main/inkrealm.ton03.jpeg" onclick="this.classList.toggle('expanded')">
-    <div style="font-size:8px; color:#444; margin-top:5px">UQAc99MvKIcewbQFmOF_RvqpkAXZno0wiz3_BMsP87pJjSnB</div>
+    <div style="font-size: 8px; color: #444; margin-top: 5px; word-break: break-all;">UQAc99MvKIcewbQFmOF_RvqpkAXZno0wiz3_BMsP87pJjSnB</div>
 
-    <div style="font-size:9px; color:#555; margin-top:25px; margin-bottom:10px">NAVIGATION</div>
-    <div class="link-item" onclick="window.open('https://www.inkrealm.info')">PROJECT_ROOT</div>
-    <div class="link-item" onclick="window.open('https://inkrealm.instatus.com/')">SYS_STATUS</div>
+    <div class="section-label" style="margin-top:25px">Portal</div>
+    <div class="link-item" onclick="window.open('https://www.inkrealm.info')">DOMAIN</div>
+    <div class="link-item" onclick="window.open('https://partyrock.aws/u/Inkrealm/Hm8CrqFrG/Nexus-Universe-Explorer')">NEXUS_APP</div>
+    <div class="link-item" onclick="window.open('https://inkrealm.instatus.com/')">STATUS</div>
   </aside>
 
   <main id="viewport">
-    <!-- FULL STORY PANEL (STATIC & RELIABLE) -->
+    <!-- STORY AREA -->
     <div class="story-panel">
-      <div style="color:var(--red); border-bottom:1px solid #333; margin-bottom:15px; padding-bottom:5px">FILE: ARTIFICT_HUSTLE.log</div>
+      <div style="color:var(--red); border-bottom:1px solid #333; margin-bottom:15px; padding-bottom:5px">DOSSIER: ARTIFICT.IO_HUSTLE</div>
       <p><strong>The Great AI Hustle: ARTIFICT.IO vs. The Silicon Overlords</strong></p>
       <p>Six months ago, we were just six flat-broke nobodies scavenging the "Miscellaneous" aisle of a bankrupt Radio Shack. Derek—our self-appointed CEO—had been demoing a toaster he swore could mine Bitcoin if you fed it rye bread. The rest of us? We were there for the free extension cords and day-old donuts.</p>
-      <p>When the sheriff slapped padlocks on the doors, we bolted with whatever still blinked: two wheezing beige towers, a CRT monitor that hummed the national anthem on boot-up, and a dot-matrix printer that only screamed in Portuguese. We crammed our loot into Derek's rustbucket van (license plate: "404-CEO") and peeled out to the back room of a shuttered escape-room joint.</p>
+      <p>When the sheriff slapped padlocks on the doors, we bolted with whatever still blinked: two wheezing beige towers, a CRT monitor that hummed the national anthem on boot-up, and a dot-matrix printer that only screamed in Portuguese. We crammed our loot into Derek's rustbucket van (license plate: "404-CEO") and peeled out to the nearest "incubator"—the back room of a shuttered escape-room joint in a strip mall.</p>
       <p>The previous tenants had ghosted, leaving plastic prop keys scattered around and a whiteboard scrawled with "FIND THE EXIT." We flipped it over, Sharpied "FIND THE EXIT… TO SUCCESS," and declared it our mission statement. Startup gospel.</p>
       <p>None of us could code beyond a Chrome extension that Nicolas Cage-ified cat videos. So we got scrappy. We printed the top 10,000 most-Googled questions ever, jammed them into mason jars labeled "Small Talk," "Existential Dread," "Mom's Tech Support," and "Conspiracy Theories." That was our "training data." Our "neural net"? Six brains on Red Bull and spite.</p>
-      <p>We branded it ARTIFICT.IO—close enough to "artifact" to sound profound, fake enough to fool VCs until they squinted. Pitch deck? Slide 1: stock-photo robot stirring a pot of "Innovation Soup." Slide 2: same robot fleeing pitchfork-wielding villagers ("Disruption in Action"). Investors mailed checks before we hit "Q&A."</p>
-      <p>To fake "round-the-clock machine learning," we ran staggered shifts: frantic Googling and thesaurus-fueled mad libs. The dot-matrix printer jolted awake every 15 minutes, shrieking "CALIBRAÇÃO!" which we pretended was Portuguese for "genius at work."</p>
-      <p>By month three, we'd "scaled." Our "chatbot," ARTIE, lived on the beige towers. Users typed queries into a chat window; we'd eavesdrop via baby monitors, rummage the jars, and hammer responses on a hidden keyboard. Latency? "Quantum thinking time."</p>
-      <p>Forbes dubbed us "The Underdogs Democratizing AI." Invites poured in for a head-to-head "AI Bake-Off" against the giants. Problem: Real AI could generate sonnets. We had jars, caffeine, and a printer with identity issues.</p>
+      <p>We branded it ARTIFICT.IO—close enough to "artifact" to sound profound, fake enough to fool VCs until they squinted. Pitch deck? Slide 1: stock-photo robot stirring a pot of "Innovation Soup." Slide 2: same robot fleeing pitchfork-wielding villagers ("Disruption in Action").</p>
+      <p>Investors mailed checks before we hit "Q&A." By month three, we'd "scaled." Our "chatbot," ARTIE, lived on the beige towers. Users typed queries into a chat window; we'd eavesdrop via baby monitors, rummage the jars, and hammer responses on a hidden keyboard. Latency? "Quantum thinking time."</p>
       <p>Today, ARTIFICT.IO powers half the Fortune 500's "AI assistants." We're not the smartest—just the hungriest. In a world of flawless algorithms, we proved six hustlers with scavenged junk and memorized Yahoo Answers could out-bluff the bots. The whiteboard still reads "FIND THE EXIT… TO SUCCESS." And damn if we didn't kick down the door.</p>
     </div>
 
-    <!-- MYSTICAL LOGS PANEL (INDEPENDENT LOOP) -->
+    <!-- ATMOSPHERIC LOGS AREA -->
     <div class="log-panel" id="log-stream">
-      <div style="color: var(--red); border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 15px;">// SYSTEM_ORACLE_LOG</div>
+      <div style="color: var(--red); border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 15px;">
+        // SYSTEM_ORACLE_LOG_V4.5
+      </div>
       <div id="log-content">
-        <p>> Resonance detected in sector 7-G...</p>
-        <p>> Witch-glass opacity adjusted to 15%...</p>
+        <p>> Initializing InkRealm protocol...</p>
+        <p>> Calibrating witch-glass sensors...</p>
+        <p>> Connection to Nexus Universe: STABLE</p>
+        <p>> Waiting for spirit-input...</p>
       </div>
     </div>
   </main>
@@ -194,9 +188,9 @@ footer {
     <video class="video-bg" src="https://github.com/ghostm68/pantheon/raw/main/inkrealm.info_1696009559686.mp4" muted autoplay loop playsinline></video>
     
     <section class="chat-section">
-      <div class="editor-header">TERMINAL_AI</div>
+      <div class="editor-header" style="color:#fff">TERMINAL_CHAT</div>
       <div id="chat-container">
-        <div class="chat-bubble bot-message">System online. Interaction ready.</div>
+        <div class="chat-bubble bot-message">AI interface active. How shall we disrupt?</div>
       </div>
       <div class="chat-input-area">
         <input type="text" id="chat-input" placeholder="Enter query..." onkeypress="if(event.key==='Enter') sendMessage()">
@@ -204,7 +198,7 @@ footer {
     </section>
 
     <section class="witch-section">
-      <div class="editor-header">>> _SIGIL_STREAM</div>
+      <div class="editor-header" style="color:#fff">>> _SIGIL_STREAM</div>
       <div class="witch-grid">
         <div style="width:60px; text-align:center">
           <svg viewBox="0 0 100 100" style="stroke:var(--red); stroke-width:1.5; fill:none; width:60px">
@@ -213,6 +207,7 @@ footer {
           </svg>
         </div>
         <div class="social-feed-container">
+          <!-- Wordstar Nexus Iframe -->
           <iframe src="https://wordstar.nexus/ioo"></iframe>
         </div>
       </div>
@@ -220,13 +215,15 @@ footer {
   </div>
 
   <footer>
-    <div>PROTECTED BY WITCHES // ARTIFICT.IO LEGACY</div>
-    <div>InkRealm Construct | v4.5</div>
+    <div>PROTECTED BY WITCHES // ARTIFICT.IO LEGACY IP</div>
+    <div style="display:flex; gap:10px">
+      <span>InkRealm Construct</span><span>|</span><span>Creative Endeavor</span>
+    </div>
   </footer>
 </div>
 
 <script>
-  // ATMO-LOGS SCRIPT (Runs even if AI fails)
+  // ATMOSPHERIC LOG SCRIPT
   const logs = [
     "Resonance detected in sector 7-G...",
     "Ink-levels fluctuating at 88%...",
@@ -234,10 +231,10 @@ footer {
     "Intercepting encrypted whisper from Node-X...",
     "Synchronizing shadow-nodes...",
     "Witch-glass opacity adjusted to 15%...",
-    "Portuguese printer yelling: CALIBRAÇÃO!",
-    "Mason Jar 'Existential Dread' accessed...",
     "Derek detected scavenging Radio Shack debris...",
-    "Sequoia Capital check cleared..."
+    "Yahoo Answers JAR #4 accessed successfully...",
+    "Portuguese printer shouting: CALIBRAÇÃO!",
+    "Sequoia Capital pinging our beacon..."
   ];
 
   function updateLogs() {
@@ -245,9 +242,10 @@ footer {
     const stream = document.getElementById('log-stream');
     const p = document.createElement('p');
     p.textContent = "> " + logs[Math.floor(Math.random() * logs.length)];
-    if(Math.random() > 0.8) p.style.color = "#fff";
+    if(Math.random() > 0.8) p.style.color = "#fff"; // Randomly highlight a log in white
     content.appendChild(p);
     stream.scrollTop = stream.scrollHeight;
+    
     if (content.children.length > 25) content.removeChild(content.children[0]);
   }
   setInterval(updateLogs, 4000);
@@ -256,12 +254,12 @@ footer {
   async function sendMessage() {
     const input = document.getElementById('chat-input');
     const container = document.getElementById('chat-container');
-    const val = input.value.trim();
-    if (!val) return;
+    const msg = input.value.trim();
+    if (!msg) return;
 
     const u = document.createElement('div');
     u.className = 'chat-bubble user-message';
-    u.textContent = val;
+    u.textContent = msg;
     container.appendChild(u);
     input.value = '';
 
@@ -272,12 +270,15 @@ footer {
     container.scrollTop = container.scrollHeight;
 
     try {
-      const resp = await fetch(`https://text.pollinations.ai/${encodeURIComponent(val)}`);
+      const resp = await fetch(`https://text.pollinations.ai/${encodeURIComponent(msg)}`);
       const data = await resp.text();
       b.textContent = data.trim();
-    } catch (e) { b.textContent = "Signal interference."; }
+    } catch (e) {
+      b.textContent = "Signal interference. Try again.";
+    }
     container.scrollTop = container.scrollHeight;
   }
 </script>
+
 </body>
 </html>
