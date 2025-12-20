@@ -840,7 +840,26 @@ footer {
 
 .tts-trigger.speaking {
   animation: pulse 1s infinite;
-}		
+}
+
+/* Mobile touch improvements */
+@media (max-width: 768px) {
+  .tts-trigger {
+    font-size: 20px;
+    padding: 8px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  .tts-trigger:active {
+    transform: scale(0.9);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}	
 	</style>
 </head>
 
@@ -891,7 +910,7 @@ footer {
     <div class="story-panel" id="editor">
       <div style="color:var(--red); border-bottom:1px solid #333; margin-bottom:15px; padding-bottom:5px">
         DOSSIER: N.T.T.S.3.9
-        <span class="tts-trigger" onclick="toggleTTS(document.getElementById('editor'))" title="Read screenplay">▶</span>
+         <span class="tts-trigger" onclick="toggleTTS(this)" title="Read screenplay">▶</span>
       </div>
       
       <p><strong>nATives to Th3 SiMuLAcR@: draft 3.9 </strong></p>
@@ -3634,276 +3653,158 @@ const logFragments = [
 <script>
 let currentSpeech = null;
 let isSpeaking = false;
-let availableVoices = [];
-let selectedVoiceId = null;
 
-// ANDROID FIX: Force voice loading with user interaction
-function loadVoicesForAndroid() {
-  // Android needs a user interaction to load voices
-  const dummyUtterance = new SpeechSynthesisUtterance('');
-  dummyUtterance.volume = 0;
-  window.speechSynthesis.speak(dummyUtterance);
-  window.speechSynthesis.cancel();
-  
-  // Check again after a delay
-  setTimeout(() => {
-    availableVoices = window.speechSynthesis.getVoices();
-    console.log('Android voices loaded:', availableVoices.length);
-  }, 500);
-}
-
-// ANDROID FIX: Modified toggleTTS for mobile
-function toggleTTS(textElement) {
-  // Android: Ensure voices are loaded
-  if (availableVoices.length === 0) {
-    console.log('Loading voices for Android...');
-    loadVoicesForAndroid();
-    
-    // Show loading state
-    const trigger = textElement.querySelector('.tts-trigger') || 
-                   document.querySelector('.tts-trigger');
-    if (trigger) {
-      trigger.textContent = '⌛';
-      trigger.title = 'Loading voices...';
-    }
-    
-    // Try again after voices load
-    setTimeout(() => toggleTTS(textElement), 1000);
-    return;
-  }
-  
-  // Rest of the function remains the same but with Android-specific voice selection:
+function toggleTTS(element) {
+  // Get the closest story-panel or use the passed element
+  const textElement = element.closest('.story-panel') || element;
   const text = textElement.innerText || textElement.textContent;
-  const trigger = textElement.querySelector('.tts-trigger') || 
-                 document.querySelector('.tts-trigger');
+  const trigger = textElement.querySelector('.tts-trigger');
   
   // Stop if already speaking
   if (isSpeaking && currentSpeech) {
     window.speechSynthesis.cancel();
     isSpeaking = false;
     trigger.classList.remove('speaking');
-    trigger.textContent = '▶';
-    trigger.title = 'Read screenplay';
+    trigger.innerHTML = '▶';
+    trigger.title = 'Read aloud';
     return;
   }
   
-  // ANDROID-SPECIFIC VOICE SELECTION
-  let voice = getAndroidFriendlyVoice();
+  // Get voices
+  const voices = window.speechSynthesis.getVoices();
+  
+  // Find female voice (SIMPLIFIED - just look for female)
+  let femaleVoice = null;
+  for (let voice of voices) {
+    if (voice.name.toLowerCase().includes('female')) {
+      femaleVoice = voice;
+      break;
+    }
+  }
+  
+  // Fallback: any voice that's NOT male
+  if (!femaleVoice) {
+    for (let voice of voices) {
+      if (!voice.name.toLowerCase().includes('male')) {
+        femaleVoice = voice;
+        break;
+      }
+    }
+  }
   
   // Create utterance
   const utterance = new SpeechSynthesisUtterance(text);
   
-  if (voice) {
-    utterance.voice = voice;
-    utterance.lang = voice.lang;
-    utterance.pitch = 1.3; // Higher pitch for feminine sound
-    utterance.rate = 0.9;  // Slightly slower for clarity
-  } else {
-    // Android fallback with feminine settings
-    utterance.lang = 'en-US';
-    utterance.pitch = 1.5; // High pitch
-    utterance.rate = 0.95;
-    utterance.volume = 1.0;
+  if (femaleVoice) {
+    utterance.voice = femaleVoice;
+    utterance.lang = femaleVoice.lang;
   }
   
-  // ANDROID FIX: Handle speech errors
+  // FEMALE VOICE SETTINGS (always apply these)
+  utterance.pitch = 1.3;  // Higher pitch = more feminine (0.5-2.0)
+  utterance.rate = 0.95;  // Slightly slower
+  utterance.volume = 1.0;
+  
+  // Event handlers
   utterance.onstart = function() {
     isSpeaking = true;
     trigger.classList.add('speaking');
-    trigger.textContent = '⏸';
+    trigger.innerHTML = '⏸';
     trigger.title = 'Stop reading';
     currentSpeech = utterance;
   };
   
-  utterance.onend = function() {
+  utterance.onend = utterance.onerror = function() {
     isSpeaking = false;
     trigger.classList.remove('speaking');
-    trigger.textContent = '▶';
-    trigger.title = 'Read screenplay';
+    trigger.innerHTML = '▶';
+    trigger.title = 'Read aloud';
     currentSpeech = null;
   };
   
-  utterance.onerror = function(event) {
-    console.error('TTS Error on Android:', event);
-    isSpeaking = false;
-    trigger.classList.remove('speaking');
-    trigger.textContent = '▶';
-    trigger.title = 'Read screenplay';
-    currentSpeech = null;
-    
-    // Android-specific error handling
-    if (event.error === 'interrupted') {
-      alert('Speech was interrupted. Try again.');
-    }
-  };
-  
-  // ANDROID FIX: Ensure speech starts
-  try {
-    window.speechSynthesis.speak(utterance);
-  } catch (error) {
-    console.error('Android speak error:', error);
-    alert('Speech not supported on this device. Try Chrome browser.');
-  }
+  // Start speaking
+  window.speechSynthesis.speak(utterance);
 }
 
-// ANDROID-SPECIFIC VOICE FINDER
-function getAndroidFriendlyVoice() {
+// Initialize voices
+function initTTS() {
+  // Preload voices
   const voices = window.speechSynthesis.getVoices();
   
-  if (voices.length === 0) return null;
-  
-  // Android typically has these voices:
-  const androidVoicePreferences = [
-    // Chrome on Android (English)
-    { pattern: /english.*female/i, priority: 1 },
-    { pattern: /en.*female/i, priority: 1 },
-    { pattern: /female.*us/i, priority: 1 },
-    
-    // Samsung/Android system voices
-    { pattern: /samsung.*female/i, priority: 2 },
-    { pattern: /google tts.*female/i, priority: 2 },
-    
-    // Generic female indicators
-    { pattern: /female/i, priority: 3 },
-    { pattern: /woman/i, priority: 3 },
-    
-    // Language-specific (avoid male voices)
-    { pattern: /en-us/i, priority: 4 },
-    { pattern: /en-gb/i, priority: 4 },
-    
-    // Exclude male voices explicitly
-    { pattern: /male/i, exclude: true },
-    { pattern: /man$/i, exclude: true },
-    { pattern: /deep/i, exclude: true },
-    { pattern: /low/i, exclude: true }
-  ];
-  
-  // Score voices
-  const scoredVoices = voices.map(voice => {
-    let score = 100; // Base score
-    
-    for (const pref of androidVoicePreferences) {
-      if (pref.pattern.test(voice.name.toLowerCase()) || 
-          pref.pattern.test(voice.lang.toLowerCase())) {
-        if (pref.exclude) {
-          score = -1000; // Exclude male voices
-        } else {
-          score += (100 - pref.priority * 10); // Higher priority = higher score
-        }
-      }
-    }
-    
-    // Prefer English voices
-    if (voice.lang.startsWith('en')) score += 50;
-    
-    return { voice, score };
+  // Log available voices for debugging
+  console.log('Available voices:');
+  voices.forEach(v => {
+    console.log(`- ${v.name} (${v.lang}) - ${v.name.toLowerCase().includes('female') ? '♀' : '♂?'}`);
   });
   
-  // Sort by score and return the best
-  scoredVoices.sort((a, b) => b.score - a.score);
-  
-  return scoredVoices.length > 0 && scoredVoices[0].score > 0 
-    ? scoredVoices[0].voice 
-    : voices[0]; // Fallback to first voice
-}
-
-// ANDROID FIX: Touch event handler
-function handleMobileTouch() {
-  // Add touch feedback for mobile
-  document.querySelectorAll('.tts-trigger').forEach(trigger => {
-    trigger.addEventListener('touchstart', function() {
-      this.style.transform = 'scale(0.95)';
-    });
-    
-    trigger.addEventListener('touchend', function() {
-      this.style.transform = 'scale(1)';
-    });
-  });
-  
-  // Preload voices on first touch (Android requirement)
-  document.addEventListener('touchstart', function initAndroidTTS() {
-    loadVoicesForAndroid();
-    document.removeEventListener('touchstart', initAndroidTTS);
-  }, { once: true });
-}
-
-// ANDROID-OPTIMIZED CSS:
-const androidCSS = `
-@media (max-width: 768px) {
-  .tts-trigger {
-    font-size: 20px !important;
-    padding: 10px 15px !important;
-    min-width: 44px !important;
-    min-height: 44px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    -webkit-tap-highlight-color: transparent !important;
-  }
-  
-  .tts-trigger:hover {
-    color: #ff0000 !important;
-    text-shadow: none !important;
-  }
-  
-  .tts-trigger:active {
-    background-color: rgba(255, 0, 0, 0.1) !important;
-    border-radius: 50% !important;
-  }
-  
-  .tts-voice-selector {
-    width: 95vw !important;
-    max-height: 85vh !important;
-    font-size: 16px !important;
-  }
-  
-  .tts-voice-option {
-    padding: 15px !important;
-    margin: 10px 0 !important;
-  }
-  
-  .tts-preview-btn {
-    width: 32px !important;
-    height: 32px !important;
-    font-size: 14px !important;
-  }
-}
-`;
-
-// Initialize with Android support
-function initTTSWithAndroid() {
-  // Add Android CSS
-  const style = document.createElement('style');
-  style.textContent = androidCSS;
-  document.head.appendChild(style);
-  
-  // Handle mobile touch
-  handleMobileTouch();
-  
-  // Load voices
+  // Listen for voice changes
   window.speechSynthesis.onvoiceschanged = function() {
-    availableVoices = window.speechSynthesis.getVoices();
-    console.log('Voices available:', availableVoices.length);
-    
-    // Add settings button if on desktop
-    if (!/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-      addVoiceSettingsButton();
-    }
+    console.log('Voices loaded/changed');
+  };
+}
+
+// Initialize on page load
+window.addEventListener('load', initTTS);
+
+// Add gear icon back (SIMPLE VERSION)
+function addGearIcon() {
+  // Check if gear already exists
+  if (document.querySelector('.tts-gear')) return;
+  
+  const gear = document.createElement('span');
+  gear.className = 'tts-gear';
+  gear.innerHTML = '⚙';
+  gear.title = 'Voice info';
+  gear.style.cssText = `
+    color: #666;
+    cursor: help;
+    font-size: 12px;
+    margin-left: 5px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+    user-select: none;
+    display: inline-block;
+  `;
+  
+  gear.onmouseover = function() { this.style.opacity = '1'; this.style.color = '#ff4444'; };
+  gear.onmouseout = function() { this.style.opacity = '0.6'; this.style.color = '#666'; };
+  
+  gear.onclick = function(e) {
+    e.stopPropagation();
+    showVoiceInfo();
   };
   
-  // Preload on desktop
-  if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    availableVoices = window.speechSynthesis.getVoices();
-  }
-  
-  // Show Android instructions
-  if (/Android/i.test(navigator.userAgent)) {
-    console.log('Android detected - TTS optimized');
+  // Add to existing tts-trigger
+  const trigger = document.querySelector('.tts-trigger');
+  if (trigger && trigger.parentNode) {
+    trigger.parentNode.appendChild(gear);
   }
 }
 
-// Replace your current initTTS() call with:
-window.addEventListener('load', initTTSWithAndroid);
+// Show simple voice info (instead of full selector)
+function showVoiceInfo() {
+  const voices = window.speechSynthesis.getVoices();
+  const femaleVoices = voices.filter(v => v.name.toLowerCase().includes('female'));
+  
+  let message = `TTS Status:\n`;
+  message += `- Total voices: ${voices.length}\n`;
+  message += `- Female voices: ${femaleVoices.length}\n\n`;
+  
+  if (femaleVoices.length > 0) {
+    message += `Using: ${femaleVoices[0].name}\n`;
+    message += `To change voice:\n`;
+    message += `1. Go to system settings\n`;
+    message += `2. Install more female voices\n`;
+  } else {
+    message += `No female voice found.\n`;
+    message += `Using pitch-adjusted voice instead.\n`;
+  }
+  
+  alert(message);
+}
+
+// Add gear after page loads
+setTimeout(addGearIcon, 1000);
 </script>
 </body>
 </html>
