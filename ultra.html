@@ -1017,21 +1017,25 @@ function forgeSigil() {
     });
   }
   
-  // Draw flowing curves between random points
+  // Draw flowing curves between random points with VARIED LINE WEIGHTS
   ctx.strokeStyle = Math.random() > 0.3 ? "#ff0000" : "#ffffff";
-  ctx.lineWidth = 2;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   
   const connections = 3 + Math.floor(Math.random() * 4); // 3-6 flowing lines
   const usedPoints = new Set();
+  const pathIntersections = []; // Track where paths meet for inner shapes
   
-  ctx.beginPath();
   let currentPoint = Math.floor(Math.random() * numPoints);
-  ctx.moveTo(points[currentPoint].x, points[currentPoint].y);
   usedPoints.add(currentPoint);
   
   for (let i = 0; i < connections; i++) {
+    // VARY LINE WEIGHT for each connection
+    ctx.lineWidth = 1 + Math.floor(Math.random() * 3); // 1-3px varied thickness
+    
+    ctx.beginPath();
+    ctx.moveTo(points[currentPoint].x, points[currentPoint].y);
+    
     // Pick a new random point
     let nextPoint;
     do {
@@ -1049,9 +1053,52 @@ function forgeSigil() {
     const cpY = (current.y + next.y) / 2 + (Math.random() - 0.5) * 40;
     
     ctx.quadraticCurveTo(cpX, cpY, next.x, next.y);
+    ctx.stroke();
+    
+    // Store intersection point (the connection point between paths)
+    pathIntersections.push({x: next.x, y: next.y});
+    
     currentPoint = nextPoint;
   }
-  ctx.stroke();
+  
+  // Add INNER SHAPES at intersections
+  pathIntersections.forEach((point, idx) => {
+    if (Math.random() > 0.6) { // 40% chance for inner shape
+      const shapeType = Math.floor(Math.random() * 3); // 0=triangle, 1=square, 2=crescent
+      const size = 8 + Math.floor(Math.random() * 8); // 8-15px
+      
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      
+      switch(shapeType) {
+        case 0: // Triangle
+          ctx.moveTo(point.x, point.y - size);
+          ctx.lineTo(point.x - size * 0.866, point.y + size * 0.5);
+          ctx.lineTo(point.x + size * 0.866, point.y + size * 0.5);
+          ctx.closePath();
+          break;
+          
+        case 1: // Square
+          ctx.rect(point.x - size/2, point.y - size/2, size, size);
+          break;
+          
+        case 2: // Crescent (two overlapping circles)
+          ctx.arc(point.x - size/4, point.y, size/2, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(point.x + size/4, point.y, size/2, 0, Math.PI * 2);
+          break;
+      }
+      
+      // Sometimes fill, sometimes just outline
+      if (Math.random() > 0.5) {
+        ctx.fillStyle = ctx.strokeStyle;
+        ctx.fill();
+      } else {
+        ctx.stroke();
+      }
+    }
+  });
   
   // Add varied decorative circles
   // Circles at connection points - varied sizes
@@ -1060,6 +1107,7 @@ function forgeSigil() {
       const circleSize = 2 + Math.floor(Math.random() * 6); // 2-7px radius
       const isFilled = Math.random() > 0.5;
       
+      ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.arc(points[idx].x, points[idx].y, circleSize, 0, Math.PI * 2);
       
@@ -1067,10 +1115,7 @@ function forgeSigil() {
         ctx.fillStyle = ctx.strokeStyle;
         ctx.fill();
       } else {
-        ctx.strokeStyle = ctx.strokeStyle;
-        ctx.lineWidth = 1;
         ctx.stroke();
-        ctx.lineWidth = 2; // Reset
       }
     }
   });
@@ -1083,6 +1128,7 @@ function forgeSigil() {
       const randY = centerY + (Math.random() - 0.5) * radius * 1.5;
       const randSize = 3 + Math.floor(Math.random() * 8); // 3-10px
       
+      ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.arc(randX, randY, randSize, 0, Math.PI * 2);
       
@@ -1098,6 +1144,7 @@ function forgeSigil() {
   // Center mark - varied
   if (Math.random() > 0.5) {
     const centerSize = 3 + Math.floor(Math.random() * 5); // 3-7px
+    ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(centerX, centerY, centerSize, 0, Math.PI * 2);
     
