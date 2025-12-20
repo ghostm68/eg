@@ -796,6 +796,24 @@ footer {
       50% { stroke-dashoffset: 0; }
       100% { stroke-dashoffset: 1000; }
     }
+.tts-trigger {
+  color: #ff0000;
+  cursor: pointer;
+  font-size: 16px;
+  display: inline-block;
+  margin-left: 10px;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.tts-trigger:hover {
+  color: #fff;
+  text-shadow: 0 0 8px #ff0000;
+}
+
+.tts-trigger.speaking {
+  animation: pulse 1s infinite;
+}		
 	</style>
 </head>
 
@@ -839,7 +857,9 @@ footer {
 
   <main id="viewport">
     <div class="story-panel" id="editor">
-      <div style="color:var(--red); border-bottom:1px solid #333; margin-bottom:15px; padding-bottom:5px">DOSSIER: N.T.T.S.3.9</div>
+      <div style="color:var(--red); border-bottom:1px solid #333; margin-bottom:15px; padding-bottom:5px">DOSSIER: N.T.T.S.3.9
+	  
+  <span class="tts-trigger" onclick="toggleTTS()" title="Read aloud">▶</span></div>
       <p><strong>nATives to Th3 SiMuLAcR@: draft 3.9 </strong></p>
      
 <pre style="
@@ -3580,6 +3600,50 @@ const logFragments = [
     forgeSigil();
   };
 </script>
+<script>
+	let isSpeaking = false;
+let utterance = null;
 
+function toggleTTS() {
+  const trigger = document.querySelector('.tts-trigger');
+  const screenplay = document.querySelector('pre').textContent;
+  
+  if (isSpeaking) {
+    speechSynthesis.cancel();
+    trigger.textContent = '▶';
+    trigger.classList.remove('speaking');
+    isSpeaking = false;
+  } else {
+    utterance = new SpeechSynthesisUtterance(screenplay);
+    utterance.rate = 0.9;
+    utterance.pitch = 0.8;
+    
+    // Select female voice
+    const voices = speechSynthesis.getVoices();
+    const femaleVoice = voices.find(v => 
+      v.name.includes('Samantha') ||    // Mac - warm, clear
+      v.name.includes('Victoria') ||    // Mac - slightly deeper
+      v.name.includes('Google US English Female') ||
+      v.name.includes('Zira') ||        // Windows
+      v.name.includes('Female')
+    );
+    
+    if (femaleVoice) {
+      utterance.voice = femaleVoice;
+    }
+    
+    utterance.onend = () => {
+      trigger.textContent = '▶';
+      trigger.classList.remove('speaking');
+      isSpeaking = false;
+    };
+    
+    speechSynthesis.speak(utterance);
+    trigger.textContent = '■';
+    trigger.classList.add('speaking');
+    isSpeaking = true;
+  }
+}
+</script>
 </body>
 </html>
