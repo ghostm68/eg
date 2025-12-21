@@ -308,8 +308,7 @@ const logFragments = [
   window.onload = () => {
     forgeSigil();
   };
-</script>
-<script>
+
 let currentSpeech = null;
 let isSpeaking = false;
 let availableVoices = [];
