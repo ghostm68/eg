@@ -8,7 +8,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>LEXICON 2741 v4.61 // WEBSTER-GERMAN-LOGIC-SYNONYM-PLUS</title>
+<title>LEXICON 2741 v4.62 // WEBSTER-GERMAN-LOGIC-SYNONYM-PLUS</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Nova+Mono&family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
@@ -32,6 +32,11 @@
         overflow: hidden;
     }
 
+    /* RED CURSOR */
+    * {
+        cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='%23ff0000' opacity='0.7'/%3E%3C/svg%3E") 8 8, auto;
+    }
+    
     /* CRT Overlay */
     body::after {
         content: " ";
@@ -66,6 +71,24 @@
         border-bottom: 1px solid #222;
         position: relative;
         overflow: hidden;
+    }
+    
+    /* BLINKING GREY LIGHT ON TOP */
+    .blink-light {
+        position: absolute;
+        top: 10px;
+        right: 20px;
+        width: 8px;
+        height: 8px;
+        background: #888;
+        border-radius: 50%;
+        animation: blink 2s infinite;
+        box-shadow: 0 0 10px #888;
+    }
+    
+    @keyframes blink {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 1; }
     }
     
     .sidebar {
@@ -132,6 +155,7 @@
         display: flex;
         flex-direction: column;
         font-family: 'Courier Prime', monospace;
+        position: relative;
     }
     
     #chat-container {
@@ -142,6 +166,9 @@
         background: #080808;
         scrollbar-width: thin;
         scrollbar-color: var(--red) transparent;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
     }
     
     #chat-container::-webkit-scrollbar {
@@ -167,44 +194,52 @@
         padding-bottom: 5px;
     }
 
-    /* Definition Card Styles */
+    /* Definition Card Styles - FIXED CLICK ISSUE */
     .path-item {
         background: rgba(255, 255, 255, 0.02);
         border-left: 3px solid var(--red);
         padding: 12px 15px;
         margin-bottom: 10px;
-        cursor: pointer;
         transition: 0.2s;
-        max-height: 200px;
-        overflow-y: auto;
-        scrollbar-width: thin;
-        scrollbar-color: var(--red) transparent;
+        position: relative;
+        user-select: text !important; /* Allow text selection */
+        cursor: text !important; /* Normal text cursor for definitions */
     }
     
-    .path-item::-webkit-scrollbar {
-        width: 4px;
+    /* Clickable header only */
+    .path-item .clickable-header {
+        cursor: pointer !important;
+        user-select: none;
     }
     
-    .path-item::-webkit-scrollbar-track {
-        background: transparent;
+    .path-item:hover { 
+        background: rgba(255, 0, 0, 0.05);
     }
     
-    .path-item::-webkit-scrollbar-thumb {
-        background-color: var(--red);
-        border-radius: 2px;
+    .path-word { 
+        font-weight: bold; 
+        font-size: 11px; 
+        color: var(--red); 
+        text-transform: uppercase; 
+        margin-bottom: 8px;
+        cursor: pointer !important; /* Only header is clickable */
+        user-select: none;
     }
     
-    .path-item:hover { background: rgba(255, 0, 0, 0.1); }
-    
-    .path-item.full-definition {
-        max-height: none;
-        overflow-y: visible;
+    .path-definition { 
+        font-family: 'Courier Prime', monospace; 
+        font-size: 14px; 
+        margin-top: 4px; 
+        color: #bbb; 
+        line-height: 1.5;
+        cursor: text !important; /* Allow text selection */
+        user-select: text !important;
     }
-    
-    .path-word { font-weight: bold; font-size: 11px; color: var(--red); text-transform: uppercase; }
-    .path-definition { font-family: 'Courier Prime', monospace; font-size: 14px; margin-top: 4px; color: #bbb; line-height: 1.5; }
 
-    .german-logic { border-left-color: #d4af37; background: rgba(212, 175, 55, 0.03); }
+    .german-logic { 
+        border-left-color: #d4af37; 
+        background: rgba(212, 175, 55, 0.03); 
+    }
 
     input, button {
         background: transparent;
@@ -246,25 +281,6 @@
     }
     .synonym-chip:hover { border-color: var(--red); color: var(--red); }
     
-    /* New toggle visibility button */
-    .toggle-btn {
-        background: transparent;
-        border: 1px solid #333;
-        color: #888;
-        padding: 4px 8px;
-        font-size: 9px;
-        cursor: pointer;
-        transition: all 0.2s;
-        margin-top: 5px;
-        display: inline-block;
-    }
-    
-    .toggle-btn:hover {
-        background: var(--red);
-        color: white;
-        border-color: var(--red);
-    }
-    
     /* Action buttons styling */
     .action-btn {
         background: rgba(255, 255, 255, 0.05);
@@ -299,41 +315,37 @@
     .status-red {
         background: var(--red);
         box-shadow: 0 0 8px var(--red);
-        animation: pulse 2s infinite;
-    }
-    
-    .status-grey {
-        background: #666;
-        box-shadow: 0 0 4px #666;
-    }
-    
-    @keyframes pulse {
-        0%, 100% { opacity: 0.5; }
-        50% { opacity: 1; }
     }
     
     /* Chat styling */
     .chat-message {
-        margin-bottom: 15px;
-        padding: 10px;
-        border-left: 3px solid;
+        padding: 10px 12px;
+        border-radius: 4px;
+        max-width: 90%;
+        word-wrap: break-word;
     }
     
     .chat-user {
-        border-color: #555;
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(255, 255, 255, 0.05);
+        border-left: 3px solid #555;
+        align-self: flex-end;
+        margin-left: auto;
     }
     
     .chat-ai {
-        border-color: var(--red);
         background: rgba(255, 0, 0, 0.05);
+        border-left: 3px solid var(--red);
+        align-self: flex-start;
     }
     
     .chat-system {
-        border-color: #666;
-        background: rgba(255, 255, 255, 0.01);
+        background: rgba(255, 255, 255, 0.02);
+        border-left: 3px solid #666;
         font-style: italic;
         color: #888;
+        align-self: center;
+        max-width: 100%;
+        text-align: center;
     }
     
     /* Mobile responsive */
@@ -346,6 +358,10 @@
         header {
             grid-column: 1;
             padding: 0 15px;
+        }
+        
+        .blink-light {
+            right: 15px;
         }
         
         .sidebar {
@@ -404,7 +420,6 @@
         }
     }
     
-    /* Small screens */
     @media (max-width: 480px) {
         #splash-screen h1 {
             font-size: 3rem !important;
@@ -436,9 +451,10 @@
     <header>
         <div class="flex items-center gap-4">
             <div class="status-dot status-red"></div>
-            <h1 class="text-xs font-bold uppercase tracking-widest">LEXICON_STATION_v4.61</h1>
+            <h1 class="text-xs font-bold uppercase tracking-widest">LEXICON_STATION_v4.62</h1>
             <span id="status-text" class="text-[9px] text-zinc-600">CORE: ONLINE</span>
         </div>
+        <div class="blink-light"></div> <!-- GREY BLINKING LIGHT -->
         <div class="flex gap-4 items-center">
             <span id="word-count" class="text-[10px] text-zinc-500">0 WORDS</span>
             <button onclick="exportText()" class="text-[9px] px-4 py-1 border-zinc-800 text-red-600 font-bold hover:bg-red-600 hover:text-white">EXTRACT_LOG</button>
@@ -464,7 +480,7 @@
         </div>
 
         <div class="mb-8">
-            <div class="section-title">Logic Trail</div>
+            <div class="section-title">Search History</div>
             <div id="path-history" class="text-[10px] space-y-1"></div>
         </div>
     </aside>
@@ -566,6 +582,7 @@
     let currentWord = '';
     let apiKey = localStorage.getItem('lexicon_api_key') || '';
     let wordHistory = JSON.parse(localStorage.getItem('lexicon_history') || '[]');
+    let chatHistory = JSON.parse(localStorage.getItem('lexicon_chat') || '[]');
 
     // ==============================
     // INITIALIZATION
@@ -580,14 +597,20 @@
         // Load history
         updateHistoryDisplay();
         
+        // Load chat history
+        loadChatHistory();
+        
         // Load editor content
         loadEditor();
         
         // Start teletype effect
         typeStatus();
         
-        // Auto-save editor
-        setInterval(saveEditor, 5000);
+        // Auto-save
+        setInterval(saveAll, 5000);
+        
+        // Prevent definition text from being clickable
+        preventDefinitionClicks();
     });
 
     function hideSplash() {
@@ -600,30 +623,24 @@
         }, 500);
     }
 
+    function preventDefinitionClicks() {
+        // Prevent clicking inside definitions from inserting text
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('path-definition') || 
+                e.target.closest('.path-definition')) {
+                e.stopPropagation();
+            }
+        }, true);
+    }
+
     // ==============================
-    // TOGGLE VISIBILITY EXPLANATION & FUNCTION
+    // TOGGLE VISIBILITY
     // ==============================
-    /*
-    TOGGLE VISIBILITY FUNCTION:
-    ----------------------------
-    This function switches the API key input field between:
-    1. 'password' type (dots/hidden) - Default for security
-    2. 'text' type (visible) - For checking/copying
-    
-    Why it's useful:
-    - Keep API key hidden by default for privacy
-    - Make it visible temporarily to check for typos
-    - Doesn't affect the actual stored key value
-    */
-    
     function toggleKeyVisibility() {
         const input = document.getElementById('apiKey');
         const isHidden = input.type === 'password';
-        
-        // Toggle between password and text type
         input.type = isHidden ? 'text' : 'password';
         
-        // Save the key when user changes it (fires on blur/enter)
         apiKey = input.value.trim();
         if (apiKey) {
             localStorage.setItem('lexicon_api_key', apiKey);
@@ -640,7 +657,6 @@
         updateStatus("LOADING DATASETS...");
         
         try {
-            // Load all dictionary sources in parallel
             const [w1, g, w2] = await Promise.all([
                 fetch(SOURCES.webster).then(r => r.json()),
                 fetch(SOURCES.german).then(r => r.json()),
@@ -660,7 +676,7 @@
     }
 
     // ==============================
-    // MAIN SEARCH FUNCTION
+    // MAIN SEARCH FUNCTION - NO CHAT LOGGING
     // ==============================
     async function searchWord(overrideWord = null) {
         const wordInput = document.getElementById('word-search');
@@ -705,8 +721,7 @@
             // Update history
             updateWordHistory(word);
             
-            // Add to chat log
-            addChatMessage('SYSTEM', `Searched: ${word}`);
+            // DO NOT add to chat log - chat is only for AI
 
         } catch (error) {
             console.error('Search error:', error);
@@ -715,19 +730,17 @@
     }
 
     // ==============================
-    // DATA PROCESSING FUNCTIONS
+    // DATA PROCESSING FUNCTIONS - FIXED CLICK ISSUE
     // ==============================
     function getWebsterDefinition(word) {
         let definition = '';
         let source = '';
         
-        // Try first Webster source
         if (cache.webster) {
             definition = cache.webster[word.toUpperCase()] || cache.webster[word];
             if (definition) source = 'Webster 1913';
         }
         
-        // Try second Webster source if first failed
         if (!definition && cache.webster2) {
             definition = cache.webster2[word.toUpperCase()] || cache.webster2[word];
             if (definition) source = 'Webster (Reagan)';
@@ -735,12 +748,11 @@
         
         if (!definition) return null;
         
-        // Create full definition with toggle
+        // Header clickable, definition text selectable
         const html = `
-            <div class="path-item full-definition" onclick="insertText('${word}')">
-                <div class="path-word">${source}</div>
+            <div class="path-item">
+                <div class="path-word clickable-header" onclick="insertText('${word}')">${source}</div>
                 <div class="path-definition">${definition}</div>
-                <button class="toggle-btn mt-2" onclick="event.stopPropagation(); toggleDefinition('webster')">TOGGLE SCROLL</button>
             </div>
         `;
         
@@ -752,7 +764,6 @@
         
         const hits = [];
         
-        // Search in German-English dictionary
         for (const [german, english] of Object.entries(cache.german)) {
             if (english.toLowerCase().includes(word)) {
                 hits.push({ german, english });
@@ -760,7 +771,6 @@
             }
         }
         
-        // Also search German words that match
         if (hits.length === 0) {
             for (const [german, english] of Object.entries(cache.german)) {
                 if (german.toLowerCase().includes(word)) {
@@ -773,8 +783,8 @@
         if (hits.length === 0) return null;
         
         const html = hits.map(hit => `
-            <div class="path-item german-logic" onclick="insertText('${hit.german}')">
-                <div class="path-word">German: ${hit.german}</div>
+            <div class="path-item german-logic">
+                <div class="path-word clickable-header" onclick="insertText('${hit.german}')">German: ${hit.german}</div>
                 <div class="path-definition">${hit.english}</div>
             </div>
         `).join('');
@@ -804,7 +814,7 @@
     async function getFreeDictionaryDefinition(word) {
         try {
             const response = await fetch(`${SOURCES.dictionaryAPI}${word}`);
-            if (!response.status === 404) return null;
+            if (response.status === 404) return null;
             if (!response.ok) throw new Error(`FreeDict: ${response.status}`);
             
             const data = await response.json();
@@ -816,8 +826,10 @@
             entry.meanings?.forEach((meaning, i) => {
                 meaning.definitions?.forEach((def, j) => {
                     definitionsHtml += `
-                        <div class="path-item" onclick="insertText('${def.definition.substring(0, 50)}...')">
-                            <div class="path-word">${meaning.partOfSpeech} ${i+1}.${j+1}</div>
+                        <div class="path-item">
+                            <div class="path-word clickable-header" onclick="insertText('${def.definition.substring(0, 50).replace(/'/g, "\\'")}')">
+                                ${meaning.partOfSpeech} ${i+1}.${j+1}
+                            </div>
                             <div class="path-definition">${def.definition}</div>
                             ${def.example ? `<div class="text-zinc-600 text-xs mt-1 italic">"${def.example}"</div>` : ''}
                         </div>
@@ -859,22 +871,18 @@
     }
 
     function displayResults(results) {
-        // Webster definition (FULL DEFINITIONS - not truncated)
         document.getElementById('webster-target').innerHTML = 
             results.webster?.html || 
             `<div class="path-item"><div class="path-definition">No Webster definition found</div></div>`;
         
-        // German connections
         document.getElementById('german-target').innerHTML = 
             results.german?.html || 
             `<div class="path-item"><div class="path-definition">No Germanic connections found</div></div>`;
         
-        // Synonyms
         document.getElementById('synonym-target').innerHTML = 
             results.synonyms?.html || 
             `<span class="text-zinc-700 italic">No synonyms available</span>`;
         
-        // Free Dictionary API
         if (results.freeDictionary?.html) {
             document.getElementById('free-dictionary-section').classList.remove('hidden');
             document.getElementById('free-dictionary-target').innerHTML = results.freeDictionary.html;
@@ -882,7 +890,6 @@
             document.getElementById('free-dictionary-section').classList.add('hidden');
         }
         
-        // Update word info
         updateWordInfo(results);
     }
 
@@ -891,7 +898,6 @@
                     results.webster?.source ? 'From ' + results.webster.source : 'Unknown';
         document.getElementById('word-type').textContent = type;
         
-        // Simple etymology guess
         const etymology = guessEtymology(currentWord);
         document.getElementById('word-origin').textContent = etymology;
     }
@@ -910,22 +916,11 @@
                 <div class="path-word">Error</div>
                 <div class="path-definition">${message}</div>
             </div>`;
-        
-        addChatMessage('SYSTEM', `Search failed for: ${currentWord}`);
     }
 
     // ==============================
-    // AI FUNCTIONS (TOKENS TO TEXT EDITOR!)
+    // AI FUNCTIONS - WITH CHAT HISTORY
     // ==============================
-    /*
-    IMPORTANT: The AI functions now insert directly into the text editor
-    instead of using tokens. This means:
-    1. AI responses go straight to the manuscript editor
-    2. No token management needed
-    3. Users can edit AI output immediately
-    4. Everything is in one writing space
-    */
-    
     async function askAI() {
         const input = document.getElementById('chat-input');
         const query = input.value.trim();
@@ -942,7 +937,10 @@
         }
         
         input.value = '';
-        addChatMessage('USER', query);
+        
+        // Add user message to chat
+        addChatMessage('USER', query, 'user');
+        chatHistory.push({ sender: 'USER', message: query });
         
         try {
             const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -977,15 +975,20 @@
             const data = await response.json();
             const answer = data.choices[0].message.content;
             
-            // INSERT DIRECTLY INTO TEXT EDITOR (not chat)
-            insertText(answer, true);
+            // Add AI response to chat
+            addChatMessage('AI', answer, 'ai');
+            chatHistory.push({ sender: 'AI', message: answer });
             
-            // Just show confirmation in chat
-            addChatMessage('AI', `Response inserted into manuscript editor.`);
+            // Save chat history
+            localStorage.setItem('lexicon_chat', JSON.stringify(chatHistory));
+            
+            // INSERT DIRECTLY INTO TEXT EDITOR
+            insertText(answer, true);
             
         } catch (error) {
             console.error('AI error:', error);
-            addChatMessage('ERROR', `AI service unavailable: ${error.message}`);
+            addChatMessage('ERROR', `AI service unavailable: ${error.message}`, 'system');
+            chatHistory.push({ sender: 'ERROR', message: error.message });
         }
     }
 
@@ -997,7 +1000,10 @@
         }
         
         const word = currentWord || 'philosophy';
-        addChatMessage('SYSTEM', `Generating juxtaposition for: ${word}`);
+        
+        // Add system message to chat
+        addChatMessage('SYSTEM', `Generating juxtaposition for: ${word}`, 'system');
+        chatHistory.push({ sender: 'SYSTEM', message: `Generating juxtaposition for: ${word}` });
         
         try {
             const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -1023,25 +1029,30 @@
             const data = await response.json();
             const result = data.choices[0].message.content;
             
-            // INSERT DIRECTLY INTO TEXT EDITOR (not chat)
-            insertText(result, true);
+            // Add to chat
+            addChatMessage('AI', result, 'ai');
+            chatHistory.push({ sender: 'AI', message: result });
             
-            // Just show confirmation in chat
-            addChatMessage('AI', `Juxtaposition for "${word}" inserted into manuscript.`);
+            // Save chat history
+            localStorage.setItem('lexicon_chat', JSON.stringify(chatHistory));
+            
+            // INSERT DIRECTLY INTO TEXT EDITOR
+            insertText(result, true);
             
         } catch (error) {
             console.error('Juxtaposition error:', error);
-            addChatMessage('ERROR', 'Juxtaposition failed');
+            addChatMessage('ERROR', 'Juxtaposition failed', 'system');
+            chatHistory.push({ sender: 'ERROR', message: 'Juxtaposition failed' });
         }
     }
 
     // ==============================
-    // UTILITY FUNCTIONS
+    // CHAT FUNCTIONS
     // ==============================
-    function addChatMessage(sender, message) {
+    function addChatMessage(sender, message, type = 'system') {
         const container = document.getElementById('chat-container');
         const messageDiv = document.createElement('div');
-        messageDiv.className = `chat-message chat-${sender.toLowerCase()}`;
+        messageDiv.className = `chat-message chat-${type}`;
         messageDiv.innerHTML = `
             <div class="text-[9px] text-zinc-700 mb-1">${sender}</div>
             <div>${message}</div>
@@ -1050,37 +1061,47 @@
         container.scrollTop = container.scrollHeight;
     }
 
+    function loadChatHistory() {
+        chatHistory.forEach(item => {
+            addChatMessage(item.sender, item.message, 
+                item.sender === 'USER' ? 'user' : 
+                item.sender === 'AI' ? 'ai' : 'system');
+        });
+    }
+
+    // ==============================
+    // UTILITY FUNCTIONS
+    // ==============================
     function insertText(text, isAI = false) {
         const editor = document.getElementById('editor');
+        
+        // Create span element
+        const span = document.createElement('span');
+        span.style.color = isAI ? 'var(--red)' : 'var(--white)';
+        span.style.fontWeight = isAI ? 'bold' : 'normal';
+        span.textContent = ' ' + text + ' ';
+        
+        // Get current selection
         const selection = window.getSelection();
         
-        if (selection.rangeCount > 0) {
+        if (selection.rangeCount > 0 && selection.getRangeAt(0).commonAncestorContainer.parentElement === editor) {
+            // Insert at cursor position
             const range = selection.getRangeAt(0);
-            const span = document.createElement('span');
-            span.style.color = isAI ? 'var(--red)' : 'var(--white)';
-            span.style.fontWeight = isAI ? 'bold' : 'normal';
-            span.textContent = ' ' + text + ' ';
-            
+            range.deleteContents();
             range.insertNode(span);
             range.setStartAfter(span);
-            range.setEndAfter(span);
-            selection.removeAllRanges();
-            selection.addRange(range);
+            range.collapse(true);
         } else {
-            // If no selection, append to end
-            const span = document.createElement('span');
-            span.style.color = isAI ? 'var(--red)' : 'var(--white)';
-            span.style.fontWeight = isAI ? 'bold' : 'normal';
-            span.textContent = ' ' + text + ' ';
+            // Append to end
             editor.appendChild(span);
+            editor.scrollTop = editor.scrollHeight;
         }
         
-        editor.scrollTop = editor.scrollHeight;
         updateWordCount();
-        saveEditor();
+        saveAll();
         
         if (isAI) {
-            showNotification('AI text inserted into editor', 'success');
+            showNotification('AI text inserted into editor');
         }
     }
 
@@ -1146,9 +1167,13 @@
         setInterval(type, 3000);
     }
 
-    function saveEditor() {
+    function saveAll() {
+        // Save editor
         const content = document.getElementById('editor').innerHTML;
         localStorage.setItem('lexicon_editor', content);
+        
+        // Save chat history
+        localStorage.setItem('lexicon_chat', JSON.stringify(chatHistory));
     }
 
     function loadEditor() {
@@ -1171,13 +1196,13 @@
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
-        showNotification('Text exported', 'success');
+        showNotification('Text exported');
     }
 
     function copyToClipboard() {
         if (!currentWord) return;
         navigator.clipboard.writeText(currentWord);
-        showNotification('Word copied to clipboard', 'success');
+        showNotification('Word copied');
     }
 
     function speakWord() {
@@ -1188,20 +1213,8 @@
         speechSynthesis.speak(utterance);
     }
 
-    function toggleDefinition(id) {
-        const element = document.querySelector(`#${id}-target .path-item`);
-        if (element) {
-            element.classList.toggle('full-definition');
-            const btn = element.querySelector('.toggle-btn');
-            if (btn) {
-                btn.textContent = element.classList.contains('full-definition') ? 'TOGGLE SCROLL' : 'TOGGLE SCROLL';
-            }
-        }
-    }
-
-    function showNotification(message, type = 'info') {
-        // Simple notification
-        console.log(`${type}: ${message}`);
+    function showNotification(message) {
+        console.log(`Notification: ${message}`);
     }
 
     // Auto-focus search on page load
