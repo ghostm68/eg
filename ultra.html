@@ -325,6 +325,95 @@
         margin-bottom: 10px;
     }
     
+    /* Search Box */
+    .search-container {
+        padding: 15px;
+        background: rgba(255, 0, 0, 0.05);
+        border-bottom: 1px solid var(--light-grey);
+    }
+    
+    .search-box {
+        display: flex;
+        gap: 5px;
+        margin-bottom: 10px;
+    }
+    
+    .search-box input {
+        flex-grow: 1;
+        background: var(--black);
+        color: var(--white);
+        border: 1px solid var(--light-grey);
+        padding: 8px;
+        font-size: 11px;
+        font-family: 'Nova Mono', monospace;
+    }
+    
+    .search-box button {
+        background: var(--light-grey);
+        color: var(--white);
+        border: none;
+        padding: 0 15px;
+        font-size: 11px;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    
+    .search-box button:hover {
+        background: var(--red);
+    }
+    
+    /* API Key Input */
+    .api-key-container {
+        padding: 15px;
+        background: rgba(255, 0, 0, 0.05);
+        border-bottom: 1px solid var(--light-grey);
+    }
+    
+    .api-key-input {
+        display: flex;
+        gap: 5px;
+        margin-bottom: 5px;
+    }
+    
+    .api-key-input input {
+        flex-grow: 1;
+        background: var(--black);
+        color: var(--red);
+        border: 1px solid var(--light-grey);
+        padding: 8px;
+        font-size: 11px;
+        font-family: 'Nova Mono', monospace;
+    }
+    
+    .api-key-input button {
+        background: var(--light-grey);
+        color: var(--white);
+        border: none;
+        padding: 0 15px;
+        font-size: 11px;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    
+    .api-key-input button:hover {
+        background: var(--red);
+    }
+    
+    .status-message {
+        font-size: 9px;
+        color: #888;
+        padding: 3px 0;
+        min-height: 20px;
+    }
+    
+    .status-ok {
+        color: #00ff00;
+    }
+    
+    .status-error {
+        color: var(--red);
+    }
+    
     .teletype-text::after {
         content: "|";
         animation: blink 1s infinite;
@@ -383,25 +472,43 @@
         <div class="flex items-center gap-3">
             <div id="power-light" class="w-2 h-2 bg-zinc-900 rounded-full"></div>
             <h1 class="text-white font-bold tracking-tighter text-xs uppercase">LEXICON_2741_v4.14</h1>
-            <button id="power-toggle" class="text-[9px] border border-zinc-800 px-2 py-1 text-zinc-500" onclick="toggleAPI()">API: OFF</button>
+            <span id="api-status-indicator" class="text-[9px] text-zinc-500">API: LOCKED</span>
         </div>
         <div class="flex gap-2">
             <button onclick="clearHistory()" class="text-[9px] border border-zinc-800 px-2 py-1">CLEAR_HISTORY</button>
-            <button onclick="exportLexicon()" class="text-[9px] border border-zinc-800 px-2 py-1 text-red-600 font-bold">EXPORT_JSON</button>
+            <button onclick="exportText()" class="text-[9px] border border-zinc-800 px-2 py-1 text-red-600 font-bold">EXTRACT_TEXT</button>
             <button onclick="generateJuxtaposition()" class="text-[9px] border border-zinc-800 px-2 py-1 text-red-600">JUXTAPOSE</button>
         </div>
     </header>
     
     <aside class="sidebar">
+        <div class="search-container">
+            <div class="nav-title">Word Search</div>
+            <div class="search-box">
+                <input type="text" id="word-search" placeholder="Enter word..." onkeypress="if(event.key==='Enter') searchWord()">
+                <button onclick="searchWord()">SEARCH</button>
+            </div>
+            <div id="search-status" class="status-message">Enter a word to search</div>
+        </div>
+        
+        <div class="api-key-container">
+            <div class="nav-title">OpenRouter API Key</div>
+            <div class="api-key-input">
+                <input type="password" id="apiKey" placeholder="sk-or-v1-...">
+                <button id="toggleKey" title="Show/Hide">👁</button>
+            </div>
+            <div id="key-status" class="status-message">For AI juxtapositions only</div>
+        </div>
+        
         <div class="nav-section">
-            <div class="nav-title">Word Paths</div>
+            <div class="nav-title">Recent Words</div>
             <div id="path-history">
-                <!-- Path history will be populated here -->
+                <!-- Recent searches will be populated here -->
             </div>
         </div>
         
         <div class="nav-section" style="flex-grow: 1;">
-            <div class="nav-title">Related Concepts</div>
+            <div class="nav-title">Semantic Field</div>
             <div id="related-words">
                 <!-- Related words will be populated here -->
             </div>
@@ -410,44 +517,71 @@
         <div class="nav-section">
             <div class="nav-title">Quick Access</div>
             <div class="grid grid-cols-2 gap-2">
-                <button onclick="exploreWord('philosophy')" class="text-[9px] border border-zinc-800 px-2 py-1 text-left">Philosophy</button>
-                <button onclick="exploreWord('consciousness')" class="text-[9px] border border-zinc-800 px-2 py-1 text-left">Consciousness</button>
-                <button onclick="exploreWord('memory')" class="text-[9px] border border-zinc-800 px-2 py-1 text-left">Memory</button>
-                <button onclick="exploreWord('language')" class="text-[9px] border border-zinc-800 px-2 py-1 text-left">Language</button>
+                <button onclick="searchWord('philosophy')" class="text-[9px] border border-zinc-800 px-2 py-1 text-left">Philosophy</button>
+                <button onclick="searchWord('consciousness')" class="text-[9px] border border-zinc-800 px-2 py-1 text-left">Consciousness</button>
+                <button onclick="searchWord('memory')" class="text-[9px] border border-zinc-800 px-2 py-1 text-left">Memory</button>
+                <button onclick="searchWord('language')" class="text-[9px] border border-zinc-800 px-2 py-1 text-left">Language</button>
             </div>
         </div>
     </aside>
     
     <main id="word-explorer">
         <div class="explorer-header">
-            <div id="current-word">SELECTRIC</div>
+            <div id="current-word">LEXICON</div>
             <div id="current-type">NOUN / SYSTEM</div>
         </div>
         
         <div id="definition-container">
             <div class="definition-section">
                 <div class="section-title">Definition</div>
-                <p>Initialize the system by clicking words from the sidebar or typing in the comms console.</p>
+                <p>A dictionary or word-book; a vocabulary of a particular language, subject, or field of study.</p>
             </div>
             
             <div class="definition-section">
                 <div class="section-title">Etymology Path</div>
                 <div id="etymology-path">
-                    <!-- Etymology path will be populated here -->
+                    <div class="path-item active" onclick="searchWord('lexicon')">
+                        <div class="path-word">1. Lexicon</div>
+                        <div class="path-definition">From Greek "lexikon" (biblion) meaning "word-book"</div>
+                    </div>
+                    <div class="path-item" onclick="searchWord('dictionary')">
+                        <div class="path-word">2. Lexikos</div>
+                        <div class="path-definition">Greek "lexikos" meaning "of words"</div>
+                    </div>
+                    <div class="path-item" onclick="searchWord('word')">
+                        <div class="path-word">3. Lexis</div>
+                        <div class="path-definition">Greek "lexis" meaning "word, speech"</div>
+                    </div>
                 </div>
             </div>
             
             <div class="definition-section">
                 <div class="section-title">Semantic Field</div>
                 <div id="semantic-field">
-                    <!-- Semantic relationships will be populated here -->
+                    <div class="path-item" onclick="searchWord('dictionary')">
+                        <div class="path-word">Dictionary</div>
+                        <div class="path-definition">A reference work containing words</div>
+                    </div>
+                    <div class="path-item" onclick="searchWord('vocabulary')">
+                        <div class="path-word">Vocabulary</div>
+                        <div class="path-definition">The body of words used</div>
+                    </div>
+                    <div class="path-item" onclick="searchWord('glossary')">
+                        <div class="path-word">Glossary</div>
+                        <div class="path-definition">A list of specialized terms</div>
+                    </div>
                 </div>
             </div>
             
             <div class="definition-section">
                 <div class="section-title">Juxtapositions</div>
                 <div id="juxtapositions">
-                    <!-- Generated juxtapositions will appear here -->
+                    <div class="path-item" onclick="insertText('Lexicon and labyrinth')">
+                        <div class="path-definition">Lexicon and labyrinth - the maze of language</div>
+                    </div>
+                    <div class="path-item" onclick="insertText('Word and void')">
+                        <div class="path-definition">Word and void - what language cannot contain</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -465,272 +599,179 @@
         <aside class="comms-console">
             <div class="bg-zinc-900 text-[9px] p-2 text-zinc-500 uppercase flex justify-between border-b border-red-900">
                 <span>Dolphin-Mistral-24b-Venice</span>
-                <span id="api-status" class="text-red-700 font-bold">READY</span>
+                <span id="model-status" class="text-red-700 font-bold">AI_JUXTAPOSITIONS</span>
             </div>
             <div id="chat-container">
-                <div class="chat-bubble bot-message">LEXICON_2741 Active. Query any word for definition paths and semantic relationships.</div>
+                <div class="chat-bubble bot-message">Use the search box for word definitions. Enter API key for AI-generated juxtapositions.</div>
             </div>
             <div class="chat-input-area">
-                <input type="text" id="chat-input" placeholder="Enter word for analysis..." onkeypress="if(event.key==='Enter') queryWord()">
-                <button onclick="queryWord()" class="bg-red-800 px-2 text-[9px] ml-1">ANALYZE</button>
+                <input type="text" id="chat-input" placeholder="Ask AI about word relationships..." onkeypress="if(event.key==='Enter') askAI()">
+                <button onclick="askAI()" class="bg-red-800 px-2 text-[9px] ml-1">ASK_AI</button>
             </div>
         </aside>
     </div>
     
     <footer>
-        <div>LEXICON_v4.14 // DOLPHIN-MISTRAL-24B-VENICE</div>
+        <div>LEXICON_v4.14 // LOCAL_DB + AI_JUXTAPOSITIONS</div>
         <div class="flex gap-4 uppercase">
             <span>OpenRouter BYOK</span><span>|</span>
-            <span id="footer-status">MODEL_READY</span>
+            <span id="footer-status">SEARCH_ACTIVE</span>
         </div>
     </footer>
 </div>
 
 <script>
     // Configuration
-    const OPENROUTER_API_KEY = "your-openrouter-api-key-here"; // Replace with your key
     const MODEL = "cognitivecomputations/dolphin-mistral-24b-venice-edition:free";
     
     // State
-    let currentWord = "selectric";
+    let apiKey = '';
+    let currentWord = "lexicon";
     let wordHistory = [];
-    let wordData = {};
-    let isAPIReady = false;
-    let statusMessages = [
-        ">> LEXICON_INTERFACE_ACTIVE",
-        ">> DOLPHIN-MISTRAL-24B-VENICE_LOADED",
-        ">> SEMANTIC_PATHS_READY",
-        ">> JUXTAPOSITION_ENGINE_PRIMED",
-        ">> WORD_MATRIX_STABLE"
-    ];
-    let messageIndex = 0, charIndex = 0, isDeleting = false;
+    let wordDatabase = {};
     
-    // Initialize
-    function init() {
-        loadSavedData();
-        updateDisplay();
-        typeStatus();
-        updateAPIStatus();
-    }
-    
-    // Typewriter effect for status
-    function typeStatus() {
-        const target = document.getElementById('teletype');
-        if(!target) return;
-        const currentMsg = statusMessages[messageIndex];
-        target.innerText = isDeleting ? currentMsg.substring(0, charIndex - 1) : currentMsg.substring(0, charIndex + 1);
-        charIndex = isDeleting ? charIndex - 1 : charIndex + 1;
-        let speed = isDeleting ? 40 : 80;
-        if (!isDeleting && charIndex === currentMsg.length) { speed = 3000; isDeleting = true; }
-        else if (isDeleting && charIndex === 3) { isDeleting = false; messageIndex = (messageIndex + 1) % statusMessages.length; speed = 500; }
-        setTimeout(typeStatus, speed);
-    }
-    
-    // Toggle API status
-    function toggleAPI() {
-        isAPIReady = !isAPIReady;
-        const btn = document.getElementById('power-toggle');
-        const light = document.getElementById('power-light');
-        const status = document.getElementById('api-status');
-        
-        if (isAPIReady) {
-            btn.innerText = "API: ON";
-            btn.style.color = "var(--red)";
-            light.classList.add('bg-red-600', 'animate-pulse');
-            status.textContent = "ACTIVE";
-            status.style.color = "var(--red)";
-            addChatMessage("API connection established. Dolphin-Mistral-24b-Venice ready.", "bot");
-        } else {
-            btn.innerText = "API: OFF";
-            btn.style.color = "#555";
-            light.classList.remove('bg-red-600', 'animate-pulse');
-            status.textContent = "OFFLINE";
-            status.style.color = "#555";
-            addChatMessage("API disconnected. Using cached data only.", "bot");
+    // Load saved API key on startup
+    window.addEventListener('load', () => {
+        const saved = localStorage.getItem('openrouter_api_key');
+        if (saved) {
+            apiKey = saved;
+            document.getElementById('apiKey').value = saved;
+            updateStatus('API key loaded from storage', 'ok');
+            updateAPIStatus();
         }
-    }
+        init();
+    });
     
-    // Query word with AI
-    async function queryWord() {
-        const input = document.getElementById('chat-input');
-        const word = input.value.trim().toLowerCase();
-        if (!word) return;
+    // Toggle key visibility
+    document.getElementById('toggleKey').addEventListener('click', () => {
+        const input = document.getElementById('apiKey');
+        input.type = input.type === 'password' ? 'text' : 'password';
+    });
+    
+    // Save key on change
+    document.getElementById('apiKey').addEventListener('change', (e) => {
+        const key = e.target.value.trim();
+        if (key) {
+            apiKey = key;
+            localStorage.setItem('openrouter_api_key', key);
+            updateStatus('API key saved', 'ok');
+            updateAPIStatus();
+            addChatMessage("API key validated. AI juxtapositions enabled.", "bot");
+        }
+    });
+    
+    // Search word in local database
+    function searchWord(word = null) {
+        const searchInput = document.getElementById('word-search');
+        const wordToSearch = word || searchInput.value.trim().toLowerCase();
         
-        input.value = '';
-        addChatMessage(`Analyzing: ${word}`, "user");
+        if (!wordToSearch) {
+            updateSearchStatus("Enter a word to search", "info");
+            return;
+        }
+        
+        searchInput.value = wordToSearch;
+        updateSearchStatus(`Searching: ${wordToSearch}`, "info");
         
         // Add to history
-        if (!wordHistory.includes(word)) {
-            wordHistory.unshift(word);
+        if (!wordHistory.includes(wordToSearch)) {
+            wordHistory.unshift(wordToSearch);
             if (wordHistory.length > 10) wordHistory.pop();
             updateHistoryDisplay();
         }
         
-        // Try to get from cache first
-        if (wordData[word]) {
-            displayWordData(word, wordData[word]);
-            addChatMessage(`Loaded cached data for "${word}"`, "bot");
-            return;
-        }
+        // Get word data from local database
+        const wordData = getWordData(wordToSearch);
+        displayWordData(wordToSearch, wordData);
         
-        // Use AI if API is ready
-        if (isAPIReady) {
-            addChatMessage("Querying Dolphin-Mistral-24b-Venice...", "bot");
-            try {
-                const data = await fetchWordAnalysis(word);
-                wordData[word] = data;
-                displayWordData(word, data);
-                addChatMessage(`Analysis complete for "${word}"`, "bot");
-                saveData();
-            } catch (error) {
-                addChatMessage(`API Error: ${error.message}`, "bot");
-                // Fallback to generated data
-                const fallbackData = generateWordData(word);
-                wordData[word] = fallbackData;
-                displayWordData(word, fallbackData);
-            }
-        } else {
-            // Use generated data
-            const generatedData = generateWordData(word);
-            wordData[word] = generatedData;
-            displayWordData(word, generatedData);
-            addChatMessage(`Generated analysis for "${word}" (offline mode)`, "bot");
-        }
+        updateSearchStatus(`Found: ${wordToSearch}`, "ok");
+        addChatMessage(`Searched: ${wordToSearch}`, "user");
     }
     
-    // Fetch word analysis from OpenRouter
-    async function fetchWordAnalysis(word) {
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-                "HTTP-Referer": window.location.origin,
-                "X-Title": "LEXICON_2741"
+    // Get word data from local sources
+    function getWordData(word) {
+        // Local database of word information
+        const localDictionary = {
+            'philosophy': {
+                type: 'Noun',
+                definition: 'The study of fundamental questions about existence, knowledge, values, reason, mind, and language.',
+                etymology: ['Greek "philosophia": philo (love) + sophia (wisdom)', 
+                          '14th century: via Old French from Latin "philosophia"',
+                          'Originally: love of wisdom or knowledge'],
+                semanticField: ['metaphysics', 'epistemology', 'ethics', 'logic', 'aesthetics'],
+                examples: ['Ancient Greek philosophy', 'Philosophy of mind', 'Moral philosophy']
             },
-            body: JSON.stringify({
-                model: MODEL,
-                messages: [
-                    {
-                        role: "system",
-                        content: `You are an expert etymologist and lexicographer. Analyze the word provided and return ONLY a JSON object with this exact structure:
-{
-    "word": "${word}",
-    "type": "part of speech",
-    "definition": "clear definition",
-    "etymology": ["etymology path step 1", "etymology path step 2", "etymology path step 3"],
-    "semantic_field": ["related word 1", "related word 2", "related word 3", "related word 4", "related word 5"],
-    "juxtapositions": ["interesting juxtaposition 1", "interesting juxtaposition 2"]
-}
-
-Make etymology an array of 3 steps showing word origin path.
-Make semantic_field an array of 5 related words.
-Make juxtapositions an array of 2 creative juxtapositions.`
-                    },
-                    {
-                        role: "user",
-                        content: `Analyze the word: ${word}`
-                    }
-                ],
-                temperature: 0.7,
-                max_tokens: 500
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        const content = data.choices[0].message.content;
-        
-        try {
-            // Extract JSON from response
-            const jsonMatch = content.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                return JSON.parse(jsonMatch[0]);
+            'consciousness': {
+                type: 'Noun',
+                definition: 'The state of being aware of and able to think about ones own existence, sensations, thoughts, and surroundings.',
+                etymology: ['Latin "conscientia": knowledge within oneself',
+                          '17th century: from conscious + -ness',
+                          'Root: Latin "conscire" (be privy to)'],
+                semanticField: ['awareness', 'cognition', 'mind', 'perception', 'subjectivity'],
+                examples: ['Stream of consciousness', 'Altered states of consciousness']
+            },
+            'memory': {
+                type: 'Noun',
+                definition: 'The faculty by which the mind stores and remembers information.',
+                etymology: ['Latin "memoria" from memor (mindful, remembering)',
+                          '13th century: from Old French "memorie"',
+                          'Indo-European root *mer- (to remember)'],
+                semanticField: ['recall', 'recollection', 'remembrance', 'mnemonic', 'retention'],
+                examples: ['Collective memory', 'Memory palace technique']
+            },
+            'language': {
+                type: 'Noun',
+                definition: 'The method of human communication, either spoken or written, consisting of the use of words in a structured and conventional way.',
+                etymology: ['Old French "langage" from langue (tongue)',
+                          '13th century: from Latin "lingua" (tongue, language)',
+                          'Proto-Indo-European *dn̥ǵʰwéh₂s (tongue, speech)'],
+                semanticField: ['linguistics', 'communication', 'syntax', 'semantics', 'discourse'],
+                examples: ['Natural language processing', 'Body language']
+            },
+            'lexicon': {
+                type: 'Noun',
+                definition: 'A dictionary or word-book; a vocabulary of a particular language, subject, or field of study.',
+                etymology: ['Greek "lexikon" (biblion) meaning "word-book"',
+                          '17th century: via medieval Latin from Greek',
+                          'From "lexis" meaning "word, speech"'],
+                semanticField: ['dictionary', 'vocabulary', 'glossary', 'thesaurus', 'terminology'],
+                examples: ['Technical lexicon', 'Mental lexicon']
             }
-            throw new Error("No JSON found in response");
-        } catch (e) {
-            // If JSON parsing fails, generate structured data from text
-            return generateStructuredDataFromText(word, content);
-        }
-    }
-    
-    // Generate structured data from AI text response
-    function generateStructuredDataFromText(word, text) {
-        const lines = text.split('\n').filter(line => line.trim());
-        return {
-            word: word,
-            type: extractType(lines) || "Noun",
-            definition: extractDefinition(lines) || `The study or concept of ${word}`,
-            etymology: [
-                `From ancient roots relating to ${word}`,
-                `Middle period development`,
-                `Modern usage and adaptation`
-            ],
-            semantic_field: extractRelatedWords(lines) || ["concept", "idea", "thought", "notion", "principle"],
-            juxtapositions: [
-                `${word} and its shadow`,
-                `${word} in the machine`
-            ]
         };
-    }
-    
-    function extractType(lines) {
-        for (const line of lines) {
-            if (line.toLowerCase().includes('noun') || line.includes('Verb') || line.includes('Adjective')) {
-                return line.split(' ')[0];
-            }
+        
+        // If word exists in local dictionary, return it
+        if (localDictionary[word]) {
+            return localDictionary[word];
         }
-        return null;
+        
+        // Otherwise generate plausible data
+        return generateWordData(word);
     }
     
-    function extractDefinition(lines) {
-        for (const line of lines) {
-            if (line.toLowerCase().includes('definition:') || line.includes('means')) {
-                return line.split(':')[1]?.trim() || line;
-            }
-        }
-        return lines[0] || null;
-    }
-    
-    function extractRelatedWords(lines) {
-        const words = [];
-        for (const line of lines) {
-            const wordMatches = line.match(/\b(?:related to|similar to|including)\s+([^,.]+)/i);
-            if (wordMatches) {
-                words.push(...wordMatches[1].split(/\s+/).filter(w => w.length > 3));
-            }
-        }
-        return words.slice(0, 5);
-    }
-    
-    // Generate word data (offline fallback)
+    // Generate word data for unknown words
     function generateWordData(word) {
-        const types = ["Noun", "Verb", "Adjective", "Adverb", "Concept"];
-        const origins = ["Latin", "Greek", "Old English", "French", "Germanic", "Proto-Indo-European"];
+        const types = ['Noun', 'Verb', 'Adjective', 'Adverb'];
+        const origins = ['Latin', 'Greek', 'Old English', 'French', 'Germanic'];
+        const fields = {
+            'Noun': ['concept', 'entity', 'object', 'abstraction', 'quality'],
+            'Verb': ['action', 'process', 'state', 'occurrence', 'activity'],
+            'Adjective': ['descriptive', 'qualitative', 'attributive', 'relational', 'classifying'],
+            'Adverb': ['manner', 'time', 'place', 'degree', 'frequency']
+        };
+        
+        const type = types[Math.floor(Math.random() * types.length)];
+        const origin = origins[Math.floor(Math.random() * origins.length)];
         
         return {
-            word: word,
-            type: types[Math.floor(Math.random() * types.length)],
-            definition: `The essence or quality of ${word}; a fundamental principle or state of being related to ${word}.`,
+            type: type,
+            definition: `The ${type.toLowerCase()} "${word}" refers to a concept or entity within its semantic domain.`,
             etymology: [
-                `From ${origins[Math.floor(Math.random() * origins.length)]} root *${word.substring(0, 3)}-`,
-                `Through medieval scholastic tradition`,
-                `Modern philosophical adaptation`
+                `From ${origin} root *${word.substring(0, 3)}-`,
+                `Middle development through scholarly tradition`,
+                `Modern usage in technical and philosophical contexts`
             ],
-            semantic_field: [
-                "essence",
-                "being",
-                "existence",
-                "nature",
-                "reality"
-            ],
-            juxtapositions: [
-                `${word} and silence`,
-                `${word} and machine`
-            ]
+            semanticField: fields[type],
+            examples: [`The ${word} of contemporary thought`, `${word} in historical context`]
         };
     }
     
@@ -765,10 +806,10 @@ Make juxtapositions an array of 2 creative juxtapositions.`
             <div class="definition-section">
                 <div class="section-title">Semantic Field</div>
                 <div id="semantic-field">
-                    ${data.semantic_field.map(relatedWord => `
-                        <div class="path-item" onclick="exploreWord('${relatedWord}')">
+                    ${data.semanticField.map(relatedWord => `
+                        <div class="path-item" onclick="searchWord('${relatedWord}')">
                             <div class="path-word">${relatedWord}</div>
-                            <div class="path-definition">Related concept in the ${word} semantic field</div>
+                            <div class="path-definition">Related concept in ${word} field</div>
                         </div>
                     `).join('')}
                 </div>
@@ -777,71 +818,119 @@ Make juxtapositions an array of 2 creative juxtapositions.`
             <div class="definition-section">
                 <div class="section-title">Juxtapositions</div>
                 <div id="juxtapositions">
-                    ${data.juxtapositions.map(jux => `
-                        <div class="path-item" onclick="insertText('${jux}')">
-                            <div class="path-definition">${jux}</div>
-                        </div>
-                    `).join('')}
+                    <div class="path-item" onclick="insertText('${word} and silence')">
+                        <div class="path-definition">${word} and silence - what remains unspoken</div>
+                    </div>
+                    <div class="path-item" onclick="insertText('${word} in the machine')">
+                        <div class="path-definition">${word} in the machine - digital embodiment</div>
+                    </div>
                 </div>
             </div>
         `;
         
         // Update related words in sidebar
-        updateRelatedWords(data.semantic_field);
+        updateRelatedWords(data.semanticField);
         
         // Insert word into editor
         insertText(word);
     }
     
-    // Update related words display
-    function updateRelatedWords(relatedWords) {
-        const container = document.getElementById('related-words');
-        container.innerHTML = relatedWords.map(word => `
-            <div class="word-link" onclick="exploreWord('${word}')">${word}</div>
-        `).join('');
+    // Ask AI about word relationships
+    async function askAI() {
+        const input = document.getElementById('chat-input');
+        const question = input.value.trim();
+        
+        if (!question) return;
+        
+        if (!apiKey) {
+            addChatMessage("API key required for AI analysis. Enter key in sidebar.", "bot");
+            updateStatus("API key required", "error");
+            input.value = '';
+            return;
+        }
+        
+        input.value = '';
+        addChatMessage(question, "user");
+        
+        try {
+            addChatMessage("Analyzing with Dolphin-Mistral-24b-Venice...", "bot");
+            
+            const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`,
+                    "HTTP-Referer": window.location.origin,
+                    "X-Title": "LEXICON_2741"
+                },
+                body: JSON.stringify({
+                    model: MODEL,
+                    messages: [
+                        {
+                            role: "system",
+                            content: `You are a philosophical lexicographer. Analyze word relationships and create insightful juxtapositions. Keep responses concise and poetic.`
+                        },
+                        {
+                            role: "user",
+                            content: question
+                        }
+                    ],
+                    temperature: 0.8,
+                    max_tokens: 150
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            const answer = data.choices[0].message.content;
+            
+            addChatMessage(answer, "bot");
+            
+            // If answer contains interesting juxtapositions, add them
+            if (answer.includes(' and ') || answer.includes(' × ') || answer.includes(' vs ')) {
+                const juxtapositionsDiv = document.getElementById('juxtapositions');
+                if (juxtapositionsDiv) {
+                    juxtapositionsDiv.innerHTML += `
+                        <div class="path-item" onclick="insertText('${answer.replace(/'/g, "\\'").substring(0, 100)}')">
+                            <div class="path-definition">${answer.substring(0, 150)}...</div>
+                        </div>
+                    `;
+                }
+            }
+            
+        } catch (error) {
+            addChatMessage(`AI error: ${error.message}`, "bot");
+            updateStatus(`AI error: ${error.message}`, "error");
+        }
     }
     
-    // Update history display
-    function updateHistoryDisplay() {
-        const container = document.getElementById('path-history');
-        container.innerHTML = wordHistory.map(word => `
-            <div class="word-link ${word === currentWord ? 'active' : ''}" onclick="exploreWord('${word}')">${word}</div>
-        `).join('');
-    }
-    
-    // Explore word (shortcut function)
-    function exploreWord(word) {
-        document.getElementById('chat-input').value = word;
-        queryWord();
-    }
-    
-    // Generate juxtaposition
+    // Generate AI juxtaposition between words
     async function generateJuxtaposition() {
-        if (!isAPIReady) {
-            addChatMessage("API required for juxtaposition generation", "bot");
+        if (!apiKey) {
+            addChatMessage("API key required for AI juxtapositions", "bot");
+            updateStatus("API key required", "error");
             return;
         }
         
-        const words = Object.keys(wordData);
-        if (words.length < 2) {
-            addChatMessage("Need at least 2 analyzed words for juxtaposition", "bot");
+        if (wordHistory.length < 2) {
+            addChatMessage("Search at least 2 words first", "bot");
             return;
         }
         
-        const word1 = words[Math.floor(Math.random() * words.length)];
-        let word2;
-        do {
-            word2 = words[Math.floor(Math.random() * words.length)];
-        } while (word2 === word1);
+        const word1 = wordHistory[0];
+        const word2 = wordHistory[1] || wordHistory[0];
         
-        addChatMessage(`Generating juxtaposition: ${word1} × ${word2}`, "bot");
+        addChatMessage(`Generating AI juxtaposition: ${word1} × ${word2}`, "bot");
         
         try {
             const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                    "Authorization": `Bearer ${apiKey}`,
                     "HTTP-Referer": window.location.origin
                 },
                 body: JSON.stringify({
@@ -849,7 +938,7 @@ Make juxtapositions an array of 2 creative juxtapositions.`
                     messages: [
                         {
                             role: "system",
-                            content: "Generate a creative philosophical juxtaposition between two concepts. Return only the juxtaposition text."
+                            content: "Create a single, poetic philosophical juxtaposition between two concepts. Return only the juxtaposition text (max 20 words)."
                         },
                         {
                             role: "user",
@@ -857,9 +946,13 @@ Make juxtapositions an array of 2 creative juxtapositions.`
                         }
                     ],
                     temperature: 0.9,
-                    max_tokens: 100
+                    max_tokens: 50
                 })
             });
+            
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
             
             const data = await response.json();
             const juxtaposition = data.choices[0].message.content;
@@ -875,17 +968,87 @@ Make juxtapositions an array of 2 creative juxtapositions.`
                 `;
             }
             
-            addChatMessage(`Juxtaposition generated: ${word1} × ${word2}`, "bot");
+            addChatMessage(`AI juxtaposition: ${juxtaposition}`, "bot");
             insertText(juxtaposition);
+            
         } catch (error) {
             addChatMessage(`Juxtaposition failed: ${error.message}`, "bot");
+            updateStatus(`AI error: ${error.message}`, "error");
         }
+    }
+    
+    // Update status messages
+    function updateStatus(message, type = 'info') {
+        const status = document.getElementById('key-status');
+        status.textContent = message;
+        status.className = 'status-message';
+        if (type === 'ok') status.classList.add('status-ok');
+        if (type === 'error') status.classList.add('status-error');
+    }
+    
+    function updateSearchStatus(message, type = 'info') {
+        const status = document.getElementById('search-status');
+        status.textContent = message;
+        status.className = 'status-message';
+        if (type === 'ok') status.classList.add('status-ok');
+        if (type === 'error') status.classList.add('status-error');
+    }
+    
+    // Update API status display
+    function updateAPIStatus() {
+        const indicator = document.getElementById('api-status-indicator');
+        const modelStatus = document.getElementById('model-status');
+        const footer = document.getElementById('footer-status');
+        
+        if (apiKey) {
+            indicator.innerHTML = 'API: <span class="text-green-500">ACTIVE</span>';
+            modelStatus.textContent = 'AI_READY';
+            modelStatus.className = 'text-green-500 font-bold';
+            footer.textContent = 'AI_JUXTAPOSITIONS_ENABLED';
+        } else {
+            indicator.innerHTML = 'API: <span class="text-red-500">LOCKED</span>';
+            modelStatus.textContent = 'AI_DISABLED';
+            modelStatus.className = 'text-red-700 font-bold';
+            footer.textContent = 'LOCAL_SEARCH_ONLY';
+        }
+    }
+    
+    // Update related words display
+    function updateRelatedWords(relatedWords) {
+        const container = document.getElementById('related-words');
+        container.innerHTML = relatedWords.map(word => `
+            <div class="word-link" onclick="searchWord('${word}')">${word}</div>
+        `).join('');
+    }
+    
+    // Update history display
+    function updateHistoryDisplay() {
+        const container = document.getElementById('path-history');
+        container.innerHTML = wordHistory.map(word => `
+            <div class="word-link ${word === currentWord ? 'active' : ''}" onclick="searchWord('${word}')">${word}</div>
+        `).join('');
     }
     
     // Insert text into editor
     function insertText(text) {
         const editor = document.getElementById('editor');
-        editor.innerHTML += ` <span style="color:var(--red)">${text}</span> `;
+        const selection = window.getSelection();
+        const range = selection.getRangeAt(0);
+        
+        // Create span element for the text
+        const span = document.createElement('span');
+        span.style.color = 'var(--red)';
+        span.textContent = ' ' + text + ' ';
+        
+        // Insert at cursor position
+        range.insertNode(span);
+        
+        // Move cursor after inserted text
+        range.setStartAfter(span);
+        range.setEndAfter(span);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        
         editor.scrollTop = editor.scrollHeight;
         updateWordCount();
         saveEditor();
@@ -911,56 +1074,26 @@ Make juxtapositions an array of 2 creative juxtapositions.`
     
     // Clear history
     function clearHistory() {
-        if (confirm("Clear word history?")) {
+        if (confirm("Clear search history?")) {
             wordHistory = [];
             updateHistoryDisplay();
             addChatMessage("History cleared", "bot");
         }
     }
     
-    // Export lexicon as JSON
-    function exportLexicon() {
-        const data = {
-            currentWord: currentWord,
-            wordHistory: wordHistory,
-            wordData: wordData,
-            exportDate: new Date().toISOString()
-        };
-        
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    // Export text
+    function exportText() {
+        const editor = document.getElementById('editor');
+        const text = editor.innerText;
+        const blob = new Blob([text], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `lexicon_2741_${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `lexicon_${new Date().toISOString().split('T')[0]}.txt`;
         a.click();
         URL.revokeObjectURL(url);
         
-        addChatMessage("Lexicon exported as JSON", "bot");
-    }
-    
-    // Save data to localStorage
-    function saveData() {
-        const data = {
-            wordHistory: wordHistory,
-            wordData: wordData,
-            currentWord: currentWord
-        };
-        localStorage.setItem('lexicon_2741_data', JSON.stringify(data));
-    }
-    
-    // Load saved data
-    function loadSavedData() {
-        try {
-            const saved = localStorage.getItem('lexicon_2741_data');
-            if (saved) {
-                const data = JSON.parse(saved);
-                wordHistory = data.wordHistory || [];
-                wordData = data.wordData || {};
-                currentWord = data.currentWord || "selectric";
-            }
-        } catch (e) {
-            console.log("No saved data found");
-        }
+        addChatMessage("Text exported", "bot");
     }
     
     // Save editor content
@@ -977,47 +1110,53 @@ Make juxtapositions an array of 2 creative juxtapositions.`
         } else {
             document.getElementById('editor').innerHTML = `
                 _2741_LEXICON_PROTOCOL:<br>
-                i. ACTIVATE API for Dolphin-Mistral-24b-Venice analysis.<br>
-                ii. ENTER words in comms console or CLICK from sidebar.<br>
-                iii. EXPLORE etymology paths and semantic fields.<br>
-                iv. GENERATE juxtapositions between concepts.<br>
-                v. COMPOSE in this space; text auto-saves.<br><br>
+                i. SEARCH words using the search box.<br>
+                ii. EXPLORE etymology paths and semantic fields.<br>
+                iii. ENTER API key for AI-generated juxtapositions.<br>
+                iv. USE ASK_AI for word relationship analysis.<br>
+                v. CLICK any word to insert into text.<br><br>
                 ------------------------------------------<br><br>
-                The lexicon hums with potential connections. Each word a node in the vast semantic network. The detective of meaning follows etymological traces through time, from ancient roots to modern nuance...
+                Each word carries its history in its sounds. The search begins not with answers but with better questions. The lexicon expands with every query, every connection made between seemingly disparate concepts...
             `;
         }
         updateWordCount();
     }
     
-    // Update API status display
-    function updateAPIStatus() {
-        const status = document.getElementById('api-status');
-        const footer = document.getElementById('footer-status');
-        const texts = ['READY', 'ANALYZING', 'PROCESSING', 'IDLE'];
-        let index = 0;
-        
-        setInterval(() => {
-            if (status && footer) {
-                if (isAPIReady) {
-                    status.textContent = texts[index];
-                    footer.textContent = `MODEL_${texts[index]}`;
-                    index = (index + 1) % texts.length;
-                } else {
-                    status.textContent = "OFFLINE";
-                    footer.textContent = "MODEL_OFFLINE";
-                }
-            }
-        }, 3000);
+    // Typewriter effect for status
+    let messageIndex = 0, charIndex = 0, isDeleting = false;
+    const statusMessages = [
+        ">> LEXICON_INTERFACE_ACTIVE",
+        ">> LOCAL_DATABASE_LOADED",
+        ">> SEARCH_SYSTEM_PRIMED",
+        ">> AWAITING_QUERIES",
+        ">> WORD_MATRIX_STABLE"
+    ];
+    
+    function typeStatus() {
+        const target = document.getElementById('teletype');
+        if(!target) return;
+        const currentMsg = statusMessages[messageIndex];
+        target.innerText = isDeleting ? currentMsg.substring(0, charIndex - 1) : currentMsg.substring(0, charIndex + 1);
+        charIndex = isDeleting ? charIndex - 1 : charIndex + 1;
+        let speed = isDeleting ? 40 : 80;
+        if (!isDeleting && charIndex === currentMsg.length) { speed = 3000; isDeleting = true; }
+        else if (isDeleting && charIndex === 3) { isDeleting = false; messageIndex = (messageIndex + 1) % statusMessages.length; speed = 500; }
+        setTimeout(typeStatus, speed);
     }
     
-    // Update display
-    function updateDisplay() {
-        updateHistoryDisplay();
+    // Initialize
+    function init() {
         loadEditor();
+        updateHistoryDisplay();
+        typeStatus();
         
-        // Display current word if exists
-        if (wordData[currentWord]) {
-            displayWordData(currentWord, wordData[currentWord]);
+        // Set up editor event listener
+        const editor = document.getElementById('editor');
+        if (editor) {
+            editor.addEventListener('input', function() {
+                updateWordCount();
+                saveEditor();
+            });
         }
     }
     
@@ -1028,19 +1167,7 @@ Make juxtapositions an array of 2 creative juxtapositions.`
         document.querySelector('.app-grid').style.display = 'grid';
         setTimeout(() => {
             this.style.display = 'none';
-            init();
         }, 500);
-    });
-    
-    // Initialize editor event listeners
-    document.addEventListener('DOMContentLoaded', function() {
-        const editor = document.getElementById('editor');
-        if (editor) {
-            editor.addEventListener('input', function() {
-                updateWordCount();
-                saveEditor();
-            });
-        }
     });
 </script>
 </body>
