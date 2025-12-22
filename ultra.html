@@ -8,17 +8,17 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>LEXICON 2741 v4.50 // WEBSTER-GERMAN-LOGIC</title>
+<title>LEXICON 2741 v4.60 // WEBSTER-GERMAN-LOGIC-SYNONYM</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Nova+Mono&family=Special+Elite&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nova+Mono&family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
     :root {
         --red: #ff0000;
         --black: #050505;
         --dark-grey: #121212;
-        --light-grey: #222222;
+        --mid-grey: #1a1a1a;
         --white: #d1d1d1;
     }
     
@@ -37,17 +37,17 @@
         display: block;
         position: fixed;
         top: 0; left: 0; bottom: 0; right: 0;
-        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
         z-index: 999;
         background-size: 100% 3px;
         pointer-events: none;
-        opacity: 0.3;
+        opacity: 0.2;
     }
     
     .app-grid {
         display: grid;
         grid-template-columns: 320px 1fr;
-        grid-template-rows: 50px 1fr 350px 30px;
+        grid-template-rows: 50px 1fr 380px 30px;
         height: 100vh;
         gap: 1px;
         background: var(--red);
@@ -80,7 +80,7 @@
         grid-row: 3;
         grid-column: span 2;
         display: grid;
-        grid-template-columns: 1fr 400px;
+        grid-template-columns: 1fr 450px;
         background: var(--red);
         gap: 1px;
     }
@@ -94,25 +94,28 @@
     #editor {
         flex-grow: 1;
         padding: 30px;
-        font-family: 'Special Elite', serif;
-        font-size: 1.2rem;
+        font-family: 'Special Elite', serif; /* Dirty Typewriter */
+        font-size: 1.25rem;
         line-height: 1.6;
         outline: none;
         overflow-y: auto;
-        background: #0e0e0e;
+        background: #0d0d0d;
+        color: #e0e0e0;
     }
     
     .comms-console {
         background: var(--black);
         display: flex;
         flex-direction: column;
+        font-family: 'Courier Prime', monospace; /* Clean Typewriter */
     }
     
     #chat-container {
         flex-grow: 1;
         overflow-y: auto;
         padding: 15px;
-        font-size: 11px;
+        font-size: 12px;
+        background: #080808;
     }
     
     .section-title {
@@ -120,22 +123,26 @@
         font-size: 10px;
         text-transform: uppercase;
         letter-spacing: 2px;
-        margin-bottom: 10px;
-        border-bottom: 1px solid #333;
+        margin-bottom: 12px;
+        border-bottom: 1px solid #222;
         padding-bottom: 5px;
     }
 
-    .logic-card {
+    /* Definition Card Styles */
+    .path-item {
         background: rgba(255, 255, 255, 0.02);
         border-left: 3px solid var(--red);
-        padding: 15px;
-        margin-bottom: 25px;
+        padding: 12px 15px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: 0.2s;
     }
+    .path-item:hover { background: rgba(255, 0, 0, 0.1); }
+    
+    .path-word { font-weight: bold; font-size: 11px; color: var(--red); text-transform: uppercase; }
+    .path-definition { font-family: 'Courier Prime', monospace; font-size: 14px; margin-top: 4px; color: #bbb; }
 
-    .german-logic {
-        border-left-color: #d4af37; /* Gold for Germanic roots */
-        background: rgba(212, 175, 55, 0.05);
-    }
+    .german-logic { border-left-color: #d4af37; background: rgba(212, 175, 55, 0.03); }
 
     input, button {
         background: transparent;
@@ -146,182 +153,245 @@
         font-size: 11px;
     }
 
-    button:hover { background: var(--red); }
-
-    .path-item {
-        cursor: pointer;
-        transition: 0.2s;
-    }
-    .path-item:hover { color: var(--red); }
+    button:hover { background: var(--red); color: white; }
 
     #splash-screen {
         position: fixed; inset: 0; background: #000; z-index: 5000;
-        display: flex; flex-direction: column; items-center justify-content: center;
-        text-align: center; border: 10px solid var(--red);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; border: 12px solid var(--red); cursor: pointer;
     }
+
+    .synonym-chip {
+        display: inline-block;
+        padding: 2px 8px;
+        border: 1px solid #222;
+        margin: 0 4px 4px 0;
+        font-size: 10px;
+        cursor: pointer;
+    }
+    .synonym-chip:hover { border-color: var(--red); color: var(--red); }
 </style>
 </head>
 <body>
 
 <div id="splash-screen" onclick="this.style.display='none'">
-    <h1 class="text-red-600 text-6xl font-bold tracking-tighter mb-4">LEXICON_2741</h1>
-    <p class="text-zinc-500 animate-pulse tracking-widest uppercase text-xs">Initialize Word Logic Matrix // Click to Enter</p>
+    <h1 class="text-red-600 text-7xl font-bold tracking-tighter mb-4 italic">LEXICON_2741</h1>
+    <p class="text-zinc-600 animate-pulse tracking-[0.5em] uppercase text-xs">Deploying Webster-Germanic Logic Matrix</p>
+    <p class="text-zinc-800 text-[9px] mt-8 uppercase">Click to Initialize Interface</p>
 </div>
 
 <div class="app-grid">
     <header>
         <div class="flex items-center gap-4">
-            <div class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
-            <h1 class="text-xs font-bold uppercase tracking-tighter">LEXICON_INTERFACE_v4.50</h1>
-            <span id="status-text" class="text-[9px] text-zinc-600">DICTIONARIES: STANDBY</span>
+            <div class="w-3 h-3 bg-red-600 rounded-full shadow-[0_0_10px_rgba(255,0,0,0.8)]"></div>
+            <h1 class="text-xs font-bold uppercase tracking-widest">LEXICON_STATION_v4.60</h1>
+            <span id="status-text" class="text-[9px] text-zinc-600">CORE: ONLINE</span>
         </div>
-        <div class="flex gap-2">
-            <button onclick="exportText()" class="text-[9px] px-4 py-1 border-zinc-800 text-red-600 font-bold">EXTRACT_DOC</button>
+        <div class="flex gap-4 items-center">
+            <span id="word-count" class="text-[10px] text-zinc-500">0 WORDS</span>
+            <button onclick="exportText()" class="text-[9px] px-4 py-1 border-zinc-800 text-red-600 font-bold hover:bg-red-600 hover:text-white">EXTRACT_LOG</button>
         </div>
     </header>
     
-    <aside class="sidebar">
+    <aside class="sidebar border-r border-zinc-900">
         <div class="mb-8">
-            <div class="section-title">Word Search</div>
+            <div class="section-title">Word Query</div>
             <div class="flex gap-1">
-                <input type="text" id="word-search" placeholder="Enter word..." class="w-full" onkeypress="if(event.key==='Enter') searchWord()">
+                <input type="text" id="word-search" placeholder="Query term..." class="w-full" onkeypress="if(event.key==='Enter') searchWord()">
                 <button onclick="searchWord()">EXE</button>
             </div>
         </div>
 
         <div class="mb-8">
-            <div class="section-title">OpenRouter API Key</div>
+            <div class="section-title">OpenRouter Key</div>
             <input type="password" id="apiKey" placeholder="sk-or-v1-..." class="w-full mb-2">
-            <div class="text-[9px] text-zinc-600 uppercase">Required for synthesis/juxtaposition</div>
+            <div class="text-[9px] text-zinc-700 uppercase leading-tight">Enables full AI dialectic & juxtaposition</div>
         </div>
 
         <div class="mb-8">
-            <div class="section-title">Recent Logic Path</div>
+            <div class="section-title">Logic Trail</div>
             <div id="path-history" class="text-[10px] space-y-1"></div>
         </div>
     </aside>
     
     <main id="word-explorer">
         <div id="intro-msg">
-            <h2 class="text-5xl font-bold tracking-tighter text-white mb-4">LOGOS_INIT</h2>
-            <p class="text-zinc-500 max-w-xl">Search for a term to activate the linguistic bridge between Webster's Unabridged and Germanic logical counterparts.</p>
+            <h2 class="text-6xl font-bold tracking-tighter text-white mb-6">LOGOS_CORE</h2>
+            <p class="text-zinc-500 max-w-xl text-lg font-serif">Awaiting the activation of a word. The search will bridge Webster's 1913 definitions with Germanic logical counterparts and synonym-cluster logic.</p>
         </div>
         
         <div id="results-area" class="hidden">
-            <div class="flex justify-between items-end mb-6 border-b border-zinc-800 pb-4">
-                <h2 id="current-word" class="text-6xl font-bold tracking-tighter text-red-600">WORD</h2>
-                <span id="word-type" class="text-zinc-600 italic">NOUN</span>
+            <div class="flex justify-between items-end mb-8 border-b border-zinc-800 pb-4">
+                <h2 id="current-word" class="text-7xl font-bold tracking-tighter text-red-600 italic">WORD</h2>
+                <div class="text-right">
+                    <span id="word-type" class="text-zinc-500 text-xs block uppercase tracking-widest">PART OF SPEECH</span>
+                </div>
             </div>
 
-            <div class="logic-card">
-                <div class="section-title">I. Webster's Logic (1913 Unabridged)</div>
-                <div id="webster-definition" class="text-lg leading-relaxed font-serif text-zinc-300"></div>
-            </div>
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <div class="section-title">I. Webster's Definition (1913 Logic)</div>
+                    <div id="webster-target"></div>
+                </div>
 
-            <div class="logic-card german-logic">
-                <div class="section-title" style="color:#d4af37">II. Germanic Bridge (Linguistic Connection)</div>
-                <div id="german-connection" class="text-md italic text-zinc-400"></div>
-            </div>
-            
-            <div class="logic-card">
-                <div class="section-title">III. Secondary Webster Retrieval</div>
-                <div id="webster-alt" class="text-sm text-zinc-500"></div>
+                <div>
+                    <div class="section-title" style="color:#d4af37">II. Germanic Bridge</div>
+                    <div id="german-target"></div>
+                </div>
+                
+                <div>
+                    <div class="section-title">III. Synonym Logic & Semantic Cluster</div>
+                    <div id="synonym-target" class="flex flex-wrap"></div>
+                </div>
             </div>
         </div>
     </main>
     
     <div class="bottom-shelf">
         <section class="editor-section">
-            <div class="bg-red-600 text-white px-4 py-1 flex justify-between font-serif text-[10px] uppercase">
-                <div id="teletype">>> Editor_Active</div>
-                <div id="word-count">0 Words</div>
+            <div class="bg-red-800 text-white px-4 py-1 flex justify-between font-bold text-[10px] uppercase tracking-tighter">
+                <div id="teletype">>> Manuscript_Editor_Ready</div>
+                <div>Format: Unabridged</div>
             </div>
-            <div id="editor" contenteditable="true" spellcheck="false"></div>
+            <div id="editor" contenteditable="true" spellcheck="false">Start your manuscript here...</div>
         </section>
         
         <aside class="comms-console">
             <div class="bg-zinc-900 text-[9px] p-2 text-zinc-500 uppercase flex justify-between border-b border-red-900">
-                <span>AI Logic Synthesis</span>
-                <span id="ai-status" class="text-red-700">Awaiting Key</span>
+                <span>AI Dialectic Console</span>
+                <span id="ai-status" class="text-green-800 font-bold">READY</span>
             </div>
-            <div id="chat-container"></div>
-            <div class="p-2 bg-black border-t border-zinc-900 flex gap-1">
-                <input type="text" id="chat-input" placeholder="Ask AI..." class="flex-grow text-[10px]" onkeypress="if(event.key==='Enter') askAI()">
-                <button onclick="generateJuxtaposition()" class="text-[9px] bg-red-900 px-2">JUXTAPOSE</button>
+            <div id="chat-container">
+                <div class="text-zinc-500 italic">System: Console active. You may ask general questions or use 'JUXTAPOSE' for conceptual synthesis.</div>
+            </div>
+            <div class="p-3 bg-black border-t border-zinc-900">
+                <div class="flex gap-1">
+                    <input type="text" id="chat-input" placeholder="Enter query..." class="flex-grow text-[11px] p-2" onkeypress="if(event.key==='Enter') askAI()">
+                    <button onclick="askAI()" class="text-[9px] px-3">ASK</button>
+                    <button onclick="generateJuxtaposition()" class="text-[9px] bg-red-900 px-3 font-bold">JUXTAPOSE</button>
+                </div>
             </div>
         </aside>
     </div>
     
-    <footer class="col-span-2 bg-black flex justify-between items-center px-4 text-[9px] text-zinc-700 uppercase">
-        <div>Lexicon 2741 // Sources: Webster 1913, German-English JSON, OpenRouter</div>
-        <div id="footer-status">Ready</div>
+    <footer class="col-span-2 bg-black flex justify-between items-center px-4 text-[9px] text-zinc-800 uppercase">
+        <div>Lexicon 2741 // [Webster 1913] [German-Logic] [Datamuse-Synonym] [AI-Synthesis]</div>
+        <div id="footer-status">© 2025 ALL_LOGIC_IS_LOCAL</div>
     </footer>
 </div>
 
 <script>
-    // Dictionary Data Sources
+    // Data URLs
     const SOURCES = {
-        websterReagan: "https://raw.githubusercontent.com/matthewreagan/WebstersEnglishDictionary/master/dictionary.json",
-        websterAdam: "https://raw.githubusercontent.com/adambom/dictionary/master/dictionary.json",
+        webster: "https://raw.githubusercontent.com/adambom/dictionary/master/dictionary.json",
         german: "https://raw.githubusercontent.com/hathibelagal/German-English-JSON-Dictionary/master/german_english.json"
     };
 
     let cache = { webster: null, german: null };
 
-    // Fetch dictionaries on first search
-    async function loadDictionaries() {
+    // Dictionary Loader
+    async function loadData() {
         if (cache.webster) return;
-        document.getElementById('status-text').innerText = "LOADING CORE MATRICES...";
+        document.getElementById('status-text').innerText = "LOADING DATASETS...";
         try {
-            const [w1, g] = await Promise.all([
-                fetch(SOURCES.websterAdam).then(r => r.json()),
+            const [w, g] = await Promise.all([
+                fetch(SOURCES.webster).then(r => r.json()),
                 fetch(SOURCES.german).then(r => r.json())
             ]);
-            cache.webster = w1;
+            cache.webster = w;
             cache.german = g;
-            document.getElementById('status-text').innerText = "SYSTEM ONLINE";
+            document.getElementById('status-text').innerText = "SYSTEM: READY";
         } catch (e) {
-            document.getElementById('status-text').innerText = "LOAD ERROR";
+            document.getElementById('status-text').innerText = "SYSTEM: ERROR";
         }
     }
 
-    async function searchWord() {
-        const word = document.getElementById('word-search').value.trim().toLowerCase();
+    // Main Search Function
+    async function searchWord(overrideWord = null) {
+        const word = (overrideWord || document.getElementById('word-search').value).trim().toLowerCase();
         if (!word) return;
 
-        await loadDictionaries();
+        await loadData();
         
         document.getElementById('intro-msg').classList.add('hidden');
         document.getElementById('results-area').classList.remove('hidden');
         document.getElementById('current-word').innerText = word.toUpperCase();
 
-        // 1. Webster Search
+        // 1. Webster Cards
+        const websterTarget = document.getElementById('webster-target');
         const def = cache.webster[word.toUpperCase()] || cache.webster[word];
-        document.getElementById('webster-definition').innerHTML = def || "Term not found in 1913 Unabridged.";
+        if (def) {
+            websterTarget.innerHTML = `
+                <div class="path-item" onclick="insertText('${word}')">
+                    <div class="path-word">Webster Primary</div>
+                    <div class="path-definition">${def}</div>
+                </div>`;
+        } else {
+            websterTarget.innerHTML = `<div class="text-zinc-700 italic">No Webster record found.</div>`;
+        }
 
-        // 2. German Logic Bridge
-        // Scans the German dictionary to find the English word within the definitions
+        // 2. German Logic Cards
+        const germanTarget = document.getElementById('german-target');
         let germanHits = [];
         for (let [gWord, eDef] of Object.entries(cache.german)) {
-            if (eDef.toLowerCase().split(/\W+/).includes(word)) {
-                germanHits.push(`${gWord} <span class="text-[10px] opacity-50">[${eDef}]</span>`);
-                if(germanHits.length > 3) break;
+            if (eDef.toLowerCase().includes(word)) {
+                germanHits.push({g: gWord, e: eDef});
+                if(germanHits.length > 2) break;
             }
         }
-        document.getElementById('german-connection').innerHTML = germanHits.length ? 
-            `Germanic Correspondence: <br>${germanHits.join('<br>')}` : 
-            "No direct Germanic correspondence found in core JSON.";
+        germanTarget.innerHTML = germanHits.map(hit => `
+            <div class="path-item german-logic" onclick="insertText('${hit.g}')">
+                <div class="path-word">German Logic: ${hit.g}</div>
+                <div class="path-definition">Defined as: ${hit.e}</div>
+            </div>
+        `).join('') || `<div class="text-zinc-700 italic">No Germanic logic bridge found.</div>`;
+
+        // 3. Datamuse Synonyms
+        const synTarget = document.getElementById('synonym-target');
+        try {
+            const synRes = await fetch(`https://api.datamuse.com/words?rel_syn=${word}&max=15`);
+            const synData = await synRes.json();
+            synTarget.innerHTML = synData.map(s => `
+                <span class="synonym-chip" onclick="searchWord('${s.word}')">${s.word}</span>
+            `).join('') || "No synonyms found.";
+        } catch(e) { synTarget.innerText = "Datamuse link failed."; }
 
         updateHistory(word);
     }
 
-    async function generateJuxtaposition() {
+    // AI Functions
+    async function askAI() {
+        const input = document.getElementById('chat-input');
+        const query = input.value.trim();
         const key = document.getElementById('apiKey').value;
+        if (!query || !key) return;
+
+        input.value = "";
+        addChat("USER", query);
+
+        try {
+            const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${key}`
+                },
+                body: JSON.stringify({
+                    model: "google/gemini-2.0-flash-001",
+                    messages: [{role: "user", content: query}]
+                })
+            });
+            const data = await res.json();
+            addChat("AI", data.choices[0].message.content);
+        } catch (e) { addChat("ERROR", "AI Offline."); }
+    }
+
+    async function generateJuxtaposition() {
         const word = document.getElementById('current-word').innerText;
-        if (!key) return alert("API Key Required");
+        const key = document.getElementById('apiKey').value;
+        if (!key) return alert("API Key Required for Juxtaposition Logic");
 
-        addChat("SYSTEM", `Synthesizing juxtaposition for ${word}...`);
-
+        addChat("SYSTEM", `Synthesizing conceptual opposite for ${word}...`);
         try {
             const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
@@ -333,7 +403,7 @@
                     model: "google/gemini-2.0-flash-001",
                     messages: [{
                         role: "system",
-                        content: "You are a philosophical lexicographer. Provide a brief, brutalist juxtaposition between the current word and a contrasting concept. 1 sentence."
+                        content: "Juxtapose the user's word with a contrasting concept. 1 sentence, brutalist/poetic style."
                     }, {
                         role: "user", content: `Juxtapose: ${word}`
                     }]
@@ -342,36 +412,38 @@
             const data = await res.json();
             const result = data.choices[0].message.content;
             addChat("AI", result);
-            
-            // Auto-insert into editor
-            const ed = document.getElementById('editor');
-            ed.innerHTML += `<p style="color:red; margin-top:10px;">${result}</p>`;
-        } catch (e) {
-            addChat("ERROR", "Synthesis failed.");
-        }
+            insertText(result, true);
+        } catch (e) { addChat("ERROR", "Synthesis failed."); }
     }
 
+    // UI Helpers
     function addChat(sender, msg) {
         const container = document.getElementById('chat-container');
-        container.innerHTML += `<div class="mb-2"><span class="text-red-600 font-bold">${sender}:</span> ${msg}</div>`;
+        container.innerHTML += `<div class="mb-3 border-b border-zinc-900 pb-2"><span class="${sender==='AI'?'text-red-600':'text-zinc-500'} font-bold">${sender}:</span> <span class="text-zinc-300">${msg}</span></div>`;
         container.scrollTop = container.scrollHeight;
+    }
+
+    function insertText(text, isAI = false) {
+        const ed = document.getElementById('editor');
+        const color = isAI ? "red" : "white";
+        ed.innerHTML += ` <span style="color:${color}">${text}</span> `;
+        updateStats();
+    }
+
+    function updateStats() {
+        const text = document.getElementById('editor').innerText;
+        const count = text.trim() ? text.trim().split(/\s+/).length : 0;
+        document.getElementById('word-count').innerText = `${count} WORDS`;
     }
 
     function updateHistory(word) {
         const hist = document.getElementById('path-history');
-        const entry = document.createElement('div');
-        entry.className = "path-item";
-        entry.innerText = `>> ${word.toUpperCase()}`;
-        entry.onclick = () => { document.getElementById('word-search').value = word; searchWord(); };
-        hist.prepend(entry);
+        const el = document.createElement('div');
+        el.className = "cursor-pointer hover:text-red-500";
+        el.innerText = `>> ${word.toUpperCase()}`;
+        el.onclick = () => searchWord(word);
+        hist.prepend(el);
     }
-
-    // Editor Logic
-    document.getElementById('editor').addEventListener('input', () => {
-        const text = document.getElementById('editor').innerText;
-        const count = text.trim() ? text.trim().split(/\s+/).length : 0;
-        document.getElementById('word-count').innerText = `${count} WORDS`;
-    });
 
     function exportText() {
         const text = document.getElementById('editor').innerText;
@@ -381,6 +453,8 @@
         a.download = `lexicon_2741_${Date.now()}.txt`;
         a.click();
     }
+
+    document.getElementById('editor').oninput = updateStats;
 </script>
 </body>
 </html>
