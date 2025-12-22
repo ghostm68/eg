@@ -8,7 +8,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>LEXICON 2741 v4.60 // WEBSTER-GERMAN-LOGIC-SYNONYM</title>
+<title>LEXICON 2741 v4.61 // SCROLL_FIX_DEPLOYED</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Nova+Mono&family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
@@ -41,7 +41,7 @@
         z-index: 999;
         background-size: 100% 3px;
         pointer-events: none;
-        opacity: 0.2;
+        opacity: 0.15;
     }
     
     .app-grid {
@@ -83,18 +83,20 @@
         grid-template-columns: 1fr 450px;
         background: var(--red);
         gap: 1px;
+        overflow: hidden; /* Lock the shelf height */
     }
     
     .editor-section {
         background: var(--dark-grey);
         display: flex;
         flex-direction: column;
+        height: 100%;
     }
     
     #editor {
         flex-grow: 1;
         padding: 30px;
-        font-family: 'Special Elite', serif; /* Dirty Typewriter */
+        font-family: 'Special Elite', serif;
         font-size: 1.25rem;
         line-height: 1.6;
         outline: none;
@@ -103,21 +105,33 @@
         color: #e0e0e0;
     }
     
+    /* CONSOLE FIX: Strict Flexbox Layout */
     .comms-console {
         background: var(--black);
         display: flex;
         flex-direction: column;
-        font-family: 'Courier Prime', monospace; /* Clean Typewriter */
+        font-family: 'Courier+Prime', monospace;
+        height: 100%; /* Fill the shelf */
+        overflow: hidden; /* Prevent parent from scrolling */
     }
     
     #chat-container {
-        flex-grow: 1;
-        overflow-y: auto;
+        flex: 1; /* Take up all available space */
+        overflow-y: scroll; /* Force scrollbar when content overflows */
         padding: 15px;
         font-size: 12px;
         background: #080808;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--red) transparent;
     }
     
+    /* Scrollbar styling for Chrome/Safari */
+    #chat-container::-webkit-scrollbar { width: 5px; }
+    #chat-container::-webkit-scrollbar-thumb { background: var(--red); }
+
     .section-title {
         color: var(--red);
         font-size: 10px;
@@ -128,7 +142,6 @@
         padding-bottom: 5px;
     }
 
-    /* Definition Card Styles */
     .path-item {
         background: rgba(255, 255, 255, 0.02);
         border-left: 3px solid var(--red);
@@ -155,12 +168,6 @@
 
     button:hover { background: var(--red); color: white; }
 
-    #splash-screen {
-        position: fixed; inset: 0; background: #000; z-index: 5000;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        text-align: center; border: 12px solid var(--red); cursor: pointer;
-    }
-
     .synonym-chip {
         display: inline-block;
         padding: 2px 8px;
@@ -170,6 +177,12 @@
         cursor: pointer;
     }
     .synonym-chip:hover { border-color: var(--red); color: var(--red); }
+
+    #splash-screen {
+        position: fixed; inset: 0; background: #000; z-index: 5000;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; border: 12px solid var(--red); cursor: pointer;
+    }
 </style>
 </head>
 <body>
@@ -183,9 +196,9 @@
 <div class="app-grid">
     <header>
         <div class="flex items-center gap-4">
-            <div class="w-3 h-3 bg-red-600 rounded-full shadow-[0_0_10px_rgba(255,0,0,0.8)]"></div>
-            <h1 class="text-xs font-bold uppercase tracking-widest">LEXICON_STATION_v4.60</h1>
-            <span id="status-text" class="text-[9px] text-zinc-600">CORE: ONLINE</span>
+            <div class="w-3 h-3 bg-red-600 rounded-full"></div>
+            <h1 class="text-xs font-bold uppercase tracking-widest">LEXICON_STATION_v4.61</h1>
+            <span id="status-text" class="text-[9px] text-zinc-600 uppercase">System: Operational</span>
         </div>
         <div class="flex gap-4 items-center">
             <span id="word-count" class="text-[10px] text-zinc-500">0 WORDS</span>
@@ -205,7 +218,7 @@
         <div class="mb-8">
             <div class="section-title">OpenRouter Key</div>
             <input type="password" id="apiKey" placeholder="sk-or-v1-..." class="w-full mb-2">
-            <div class="text-[9px] text-zinc-700 uppercase leading-tight">Enables full AI dialectic & juxtaposition</div>
+            <div class="text-[9px] text-zinc-700 uppercase">Enables dialectic engine</div>
         </div>
 
         <div class="mb-8">
@@ -217,30 +230,26 @@
     <main id="word-explorer">
         <div id="intro-msg">
             <h2 class="text-6xl font-bold tracking-tighter text-white mb-6">LOGOS_CORE</h2>
-            <p class="text-zinc-500 max-w-xl text-lg font-serif">Awaiting the activation of a word. The search will bridge Webster's 1913 definitions with Germanic logical counterparts and synonym-cluster logic.</p>
+            <p class="text-zinc-500 max-w-xl text-lg font-serif">Bridge Webster's 1913 definitions with Germanic counterparts. Type a word to begin.</p>
         </div>
         
         <div id="results-area" class="hidden">
             <div class="flex justify-between items-end mb-8 border-b border-zinc-800 pb-4">
                 <h2 id="current-word" class="text-7xl font-bold tracking-tighter text-red-600 italic">WORD</h2>
-                <div class="text-right">
-                    <span id="word-type" class="text-zinc-500 text-xs block uppercase tracking-widest">PART OF SPEECH</span>
-                </div>
+                <span id="word-type" class="text-zinc-500 text-xs block uppercase tracking-widest">TYPE</span>
             </div>
 
             <div class="grid grid-cols-1 gap-4">
                 <div>
-                    <div class="section-title">I. Webster's Definition (1913 Logic)</div>
+                    <div class="section-title">I. Webster's 1913 Definition</div>
                     <div id="webster-target"></div>
                 </div>
-
                 <div>
                     <div class="section-title" style="color:#d4af37">II. Germanic Bridge</div>
                     <div id="german-target"></div>
                 </div>
-                
                 <div>
-                    <div class="section-title">III. Synonym Logic & Semantic Cluster</div>
+                    <div class="section-title">III. Synonym Logic</div>
                     <div id="synonym-target" class="flex flex-wrap"></div>
                 </div>
             </div>
@@ -249,24 +258,26 @@
     
     <div class="bottom-shelf">
         <section class="editor-section">
-            <div class="bg-red-800 text-white px-4 py-1 flex justify-between font-bold text-[10px] uppercase tracking-tighter">
-                <div id="teletype">>> Manuscript_Editor_Ready</div>
+            <div class="bg-red-800 text-white px-4 py-1 flex justify-between font-bold text-[10px] uppercase">
+                <div>>> Manuscript_Editor</div>
                 <div>Format: Unabridged</div>
             </div>
-            <div id="editor" contenteditable="true" spellcheck="false">Start your manuscript here...</div>
+            <div id="editor" contenteditable="true" spellcheck="false"></div>
         </section>
         
         <aside class="comms-console">
             <div class="bg-zinc-900 text-[9px] p-2 text-zinc-500 uppercase flex justify-between border-b border-red-900">
                 <span>AI Dialectic Console</span>
-                <span id="ai-status" class="text-green-800 font-bold">READY</span>
+                <span class="text-green-800 font-bold">ACTIVE</span>
             </div>
+            <!-- SCROLLABLE CHAT AREA -->
             <div id="chat-container">
-                <div class="text-zinc-500 italic">System: Console active. You may ask general questions or use 'JUXTAPOSE' for conceptual synthesis.</div>
+                <div class="text-zinc-500 italic">System: Console active. Waiting for input...</div>
             </div>
+            <!-- STICKY INPUT AREA -->
             <div class="p-3 bg-black border-t border-zinc-900">
                 <div class="flex gap-1">
-                    <input type="text" id="chat-input" placeholder="Enter query..." class="flex-grow text-[11px] p-2" onkeypress="if(event.key==='Enter') askAI()">
+                    <input type="text" id="chat-input" placeholder="Ask AI..." class="flex-grow text-[11px] p-2" onkeypress="if(event.key==='Enter') askAI()">
                     <button onclick="askAI()" class="text-[9px] px-3">ASK</button>
                     <button onclick="generateJuxtaposition()" class="text-[9px] bg-red-900 px-3 font-bold">JUXTAPOSE</button>
                 </div>
@@ -275,13 +286,12 @@
     </div>
     
     <footer class="col-span-2 bg-black flex justify-between items-center px-4 text-[9px] text-zinc-800 uppercase">
-        <div>Lexicon 2741 // [Webster 1913] [German-Logic] [Datamuse-Synonym] [AI-Synthesis]</div>
-        <div id="footer-status">© 2025 ALL_LOGIC_IS_LOCAL</div>
+        <div>Lexicon 2741 // Fixed_Scroll_Matrix_v4.61</div>
+        <div>© 2025</div>
     </footer>
 </div>
 
 <script>
-    // Data URLs
     const SOURCES = {
         webster: "https://raw.githubusercontent.com/adambom/dictionary/master/dictionary.json",
         german: "https://raw.githubusercontent.com/hathibelagal/German-English-JSON-Dictionary/master/german_english.json"
@@ -289,10 +299,9 @@
 
     let cache = { webster: null, german: null };
 
-    // Dictionary Loader
     async function loadData() {
         if (cache.webster) return;
-        document.getElementById('status-text').innerText = "LOADING DATASETS...";
+        document.getElementById('status-text').innerText = "SYSTEM: LOADING...";
         try {
             const [w, g] = await Promise.all([
                 fetch(SOURCES.webster).then(r => r.json()),
@@ -300,82 +309,57 @@
             ]);
             cache.webster = w;
             cache.german = g;
-            document.getElementById('status-text').innerText = "SYSTEM: READY";
-        } catch (e) {
-            document.getElementById('status-text').innerText = "SYSTEM: ERROR";
-        }
+            document.getElementById('status-text').innerText = "SYSTEM: ONLINE";
+        } catch (e) { document.getElementById('status-text').innerText = "SYSTEM: ERROR"; }
     }
 
-    // Main Search Function
     async function searchWord(overrideWord = null) {
         const word = (overrideWord || document.getElementById('word-search').value).trim().toLowerCase();
         if (!word) return;
-
         await loadData();
         
         document.getElementById('intro-msg').classList.add('hidden');
         document.getElementById('results-area').classList.remove('hidden');
         document.getElementById('current-word').innerText = word.toUpperCase();
 
-        // 1. Webster Cards
-        const websterTarget = document.getElementById('webster-target');
         const def = cache.webster[word.toUpperCase()] || cache.webster[word];
-        if (def) {
-            websterTarget.innerHTML = `
-                <div class="path-item" onclick="insertText('${word}')">
-                    <div class="path-word">Webster Primary</div>
-                    <div class="path-definition">${def}</div>
-                </div>`;
-        } else {
-            websterTarget.innerHTML = `<div class="text-zinc-700 italic">No Webster record found.</div>`;
-        }
+        document.getElementById('webster-target').innerHTML = def ? 
+            `<div class="path-item" onclick="insertText('${word}')"><div class="path-word">Webster</div><div class="path-definition">${def}</div></div>` 
+            : `<div class="text-zinc-700 italic">No record found.</div>`;
 
-        // 2. German Logic Cards
-        const germanTarget = document.getElementById('german-target');
-        let germanHits = [];
+        let gHits = [];
         for (let [gWord, eDef] of Object.entries(cache.german)) {
             if (eDef.toLowerCase().includes(word)) {
-                germanHits.push({g: gWord, e: eDef});
-                if(germanHits.length > 2) break;
+                gHits.push({g: gWord, e: eDef});
+                if(gHits.length > 2) break;
             }
         }
-        germanTarget.innerHTML = germanHits.map(hit => `
-            <div class="path-item german-logic" onclick="insertText('${hit.g}')">
-                <div class="path-word">German Logic: ${hit.g}</div>
-                <div class="path-definition">Defined as: ${hit.e}</div>
-            </div>
-        `).join('') || `<div class="text-zinc-700 italic">No Germanic logic bridge found.</div>`;
+        document.getElementById('german-target').innerHTML = gHits.map(h => `
+            <div class="path-item german-logic" onclick="insertText('${h.g}')"><div class="path-word">German Logic: ${h.g}</div><div class="path-definition">${h.e}</div></div>
+        `).join('') || `<div class="text-zinc-700 italic">No bridge found.</div>`;
 
-        // 3. Datamuse Synonyms
-        const synTarget = document.getElementById('synonym-target');
         try {
-            const synRes = await fetch(`https://api.datamuse.com/words?rel_syn=${word}&max=15`);
-            const synData = await synRes.json();
-            synTarget.innerHTML = synData.map(s => `
+            const sRes = await fetch(`https://api.datamuse.com/words?rel_syn=${word}&max=15`);
+            const sData = await sRes.json();
+            document.getElementById('synonym-target').innerHTML = sData.map(s => `
                 <span class="synonym-chip" onclick="searchWord('${s.word}')">${s.word}</span>
-            `).join('') || "No synonyms found.";
-        } catch(e) { synTarget.innerText = "Datamuse link failed."; }
+            `).join('') || "No synonyms.";
+        } catch(e) {}
 
         updateHistory(word);
     }
 
-    // AI Functions
     async function askAI() {
         const input = document.getElementById('chat-input');
         const query = input.value.trim();
         const key = document.getElementById('apiKey').value;
         if (!query || !key) return;
-
         input.value = "";
         addChat("USER", query);
-
         try {
             const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${key}`
-                },
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
                 body: JSON.stringify({
                     model: "google/gemini-2.0-flash-001",
                     messages: [{role: "user", content: query}]
@@ -389,44 +373,40 @@
     async function generateJuxtaposition() {
         const word = document.getElementById('current-word').innerText;
         const key = document.getElementById('apiKey').value;
-        if (!key) return alert("API Key Required for Juxtaposition Logic");
-
-        addChat("SYSTEM", `Synthesizing conceptual opposite for ${word}...`);
+        if (!key) return alert("API Key Required");
+        addChat("SYSTEM", `Synthesizing ${word}...`);
         try {
             const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${key}`
-                },
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
                 body: JSON.stringify({
                     model: "google/gemini-2.0-flash-001",
                     messages: [{
-                        role: "system",
-                        content: "Juxtapose the user's word with a contrasting concept. 1 sentence, brutalist/poetic style."
-                    }, {
-                        role: "user", content: `Juxtapose: ${word}`
-                    }]
+                        role: "system", content: "Juxtapose the word with a contrasting concept. 1 sentence."
+                    }, { role: "user", content: `Juxtapose: ${word}` }]
                 })
             });
             const data = await res.json();
             const result = data.choices[0].message.content;
             addChat("AI", result);
             insertText(result, true);
-        } catch (e) { addChat("ERROR", "Synthesis failed."); }
+        } catch (e) { addChat("ERROR", "Failed."); }
     }
 
-    // UI Helpers
     function addChat(sender, msg) {
         const container = document.getElementById('chat-container');
-        container.innerHTML += `<div class="mb-3 border-b border-zinc-900 pb-2"><span class="${sender==='AI'?'text-red-600':'text-zinc-500'} font-bold">${sender}:</span> <span class="text-zinc-300">${msg}</span></div>`;
+        const div = document.createElement('div');
+        div.className = "mb-3 border-b border-zinc-900 pb-2";
+        div.innerHTML = `<span class="${sender==='AI'?'text-red-600':'text-zinc-500'} font-bold">${sender}:</span> <span class="text-zinc-300">${msg}</span>`;
+        container.appendChild(div);
+        
+        // Auto-scroll logic: ensure the newest message is visible
         container.scrollTop = container.scrollHeight;
     }
 
     function insertText(text, isAI = false) {
         const ed = document.getElementById('editor');
-        const color = isAI ? "red" : "white";
-        ed.innerHTML += ` <span style="color:${color}">${text}</span> `;
+        ed.innerHTML += ` <span style="color:${isAI ? 'red' : 'white'}">${text}</span> `;
         updateStats();
     }
 
@@ -437,12 +417,12 @@
     }
 
     function updateHistory(word) {
-        const hist = document.getElementById('path-history');
-        const el = document.createElement('div');
-        el.className = "cursor-pointer hover:text-red-500";
-        el.innerText = `>> ${word.toUpperCase()}`;
-        el.onclick = () => searchWord(word);
-        hist.prepend(el);
+        const h = document.getElementById('path-history');
+        const d = document.createElement('div');
+        d.className = "cursor-pointer hover:text-red-500";
+        d.innerText = `>> ${word.toUpperCase()}`;
+        d.onclick = () => searchWord(word);
+        h.prepend(d);
     }
 
     function exportText() {
