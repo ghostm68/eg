@@ -8,7 +8,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>LEXICON 2741 v4.61 // SCROLL_FIX_DEPLOYED</title>
+<title>LEXICON 2741 v4.62 // MOBILE_OPTIMIZED</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Nova+Mono&family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
@@ -31,7 +31,7 @@
         overflow: hidden;
     }
 
-    /* CRT Overlay */
+    /* CRT Overlay - Subtler for Mobile */
     body::after {
         content: " ";
         display: block;
@@ -39,11 +39,12 @@
         top: 0; left: 0; bottom: 0; right: 0;
         background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
         z-index: 999;
-        background-size: 100% 3px;
+        background-size: 100% 2px;
         pointer-events: none;
-        opacity: 0.15;
+        opacity: 0.1;
     }
     
+    /* Responsive Grid Logic */
     .app-grid {
         display: grid;
         grid-template-columns: 320px 1fr;
@@ -59,7 +60,8 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 20px;
+        padding: 0 15px;
+        z-index: 1000;
     }
     
     .sidebar {
@@ -73,7 +75,7 @@
         display: flex;
         flex-direction: column;
         overflow-y: auto;
-        padding: 30px;
+        padding: 20px;
     }
     
     .bottom-shelf {
@@ -83,7 +85,7 @@
         grid-template-columns: 1fr 450px;
         background: var(--red);
         gap: 1px;
-        overflow: hidden; /* Lock the shelf height */
+        overflow: hidden;
     }
     
     .editor-section {
@@ -94,30 +96,29 @@
     }
     
     #editor {
-        flex-grow: 1;
-        padding: 30px;
+        flex: 1;
+        padding: 20px;
         font-family: 'Special Elite', serif;
-        font-size: 1.25rem;
-        line-height: 1.6;
+        font-size: 1.15rem;
+        line-height: 1.5;
         outline: none;
         overflow-y: auto;
         background: #0d0d0d;
         color: #e0e0e0;
     }
     
-    /* CONSOLE FIX: Strict Flexbox Layout */
     .comms-console {
         background: var(--black);
         display: flex;
         flex-direction: column;
-        font-family: 'Courier+Prime', monospace;
-        height: 100%; /* Fill the shelf */
-        overflow: hidden; /* Prevent parent from scrolling */
+        font-family: 'Courier Prime', monospace;
+        height: 100%;
+        overflow: hidden;
     }
     
     #chat-container {
-        flex: 1; /* Take up all available space */
-        overflow-y: scroll; /* Force scrollbar when content overflows */
+        flex: 1;
+        overflow-y: scroll;
         padding: 15px;
         font-size: 12px;
         background: #080808;
@@ -127,10 +128,34 @@
         scrollbar-width: thin;
         scrollbar-color: var(--red) transparent;
     }
-    
-    /* Scrollbar styling for Chrome/Safari */
-    #chat-container::-webkit-scrollbar { width: 5px; }
-    #chat-container::-webkit-scrollbar-thumb { background: var(--red); }
+
+    /* MOBILE ADAPTATION */
+    @media (max-width: 768px) {
+        body { overflow-y: auto; height: auto; }
+        
+        .app-grid {
+            grid-template-columns: 1fr;
+            grid-template-rows: 50px auto auto auto auto 30px;
+            height: auto;
+            overflow-x: hidden;
+        }
+        
+        header, .bottom-shelf, footer { grid-column: 1; }
+        
+        .sidebar { order: 2; border-bottom: 1px solid var(--red); }
+        main#word-explorer { order: 3; min-height: 50vh; }
+        .bottom-shelf { 
+            order: 4; 
+            grid-template-columns: 1fr; 
+            grid-template-rows: 400px 450px; 
+            height: auto; 
+        }
+        
+        #editor { font-size: 1.05rem; }
+        
+        header h1 { font-size: 9px; }
+        .text-7xl { font-size: 3.5rem; } /* Shrink JEZEBEL size on mobile */
+    }
 
     .section-title {
         color: var(--red);
@@ -148,9 +173,7 @@
         padding: 12px 15px;
         margin-bottom: 10px;
         cursor: pointer;
-        transition: 0.2s;
     }
-    .path-item:hover { background: rgba(255, 0, 0, 0.1); }
     
     .path-word { font-weight: bold; font-size: 11px; color: var(--red); text-transform: uppercase; }
     .path-definition { font-family: 'Courier Prime', monospace; font-size: 14px; margin-top: 4px; color: #bbb; }
@@ -170,86 +193,81 @@
 
     .synonym-chip {
         display: inline-block;
-        padding: 2px 8px;
+        padding: 4px 10px;
         border: 1px solid #222;
         margin: 0 4px 4px 0;
         font-size: 10px;
         cursor: pointer;
     }
-    .synonym-chip:hover { border-color: var(--red); color: var(--red); }
 
     #splash-screen {
         position: fixed; inset: 0; background: #000; z-index: 5000;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         text-align: center; border: 12px solid var(--red); cursor: pointer;
+        padding: 20px;
     }
 </style>
 </head>
 <body>
 
 <div id="splash-screen" onclick="this.style.display='none'">
-    <h1 class="text-red-600 text-7xl font-bold tracking-tighter mb-4 italic">LEXICON_2741</h1>
-    <p class="text-zinc-600 animate-pulse tracking-[0.5em] uppercase text-xs">Deploying Webster-Germanic Logic Matrix</p>
-    <p class="text-zinc-800 text-[9px] mt-8 uppercase">Click to Initialize Interface</p>
+    <h1 class="text-red-600 text-5xl md:text-7xl font-bold tracking-tighter mb-4 italic">LEXICON_2741</h1>
+    <p class="text-zinc-600 animate-pulse tracking-[0.3em] uppercase text-[10px]">Webster-Germanic Mobile Matrix Activated</p>
+    <p class="text-zinc-800 text-[8px] mt-12 uppercase">Tap to Initialize</p>
 </div>
 
 <div class="app-grid">
     <header>
-        <div class="flex items-center gap-4">
-            <div class="w-3 h-3 bg-red-600 rounded-full"></div>
-            <h1 class="text-xs font-bold uppercase tracking-widest">LEXICON_STATION_v4.61</h1>
-            <span id="status-text" class="text-[9px] text-zinc-600 uppercase">System: Operational</span>
+        <div class="flex items-center gap-3">
+            <div class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
+            <h1 class="text-[10px] font-bold uppercase tracking-widest">LX_STATION_v4.62</h1>
         </div>
-        <div class="flex gap-4 items-center">
-            <span id="word-count" class="text-[10px] text-zinc-500">0 WORDS</span>
-            <button onclick="exportText()" class="text-[9px] px-4 py-1 border-zinc-800 text-red-600 font-bold hover:bg-red-600 hover:text-white">EXTRACT_LOG</button>
+        <div class="flex gap-2 items-center">
+            <span id="word-count" class="text-[9px] text-zinc-600">0W</span>
+            <button onclick="exportText()" class="text-[9px] px-2 py-1 border-zinc-800 text-red-600 font-bold uppercase">Extract</button>
         </div>
     </header>
     
-    <aside class="sidebar border-r border-zinc-900">
-        <div class="mb-8">
-            <div class="section-title">Word Query</div>
+    <aside class="sidebar">
+        <div class="mb-6">
+            <div class="section-title">Query</div>
             <div class="flex gap-1">
-                <input type="text" id="word-search" placeholder="Query term..." class="w-full" onkeypress="if(event.key==='Enter') searchWord()">
+                <input type="text" id="word-search" placeholder="Term..." class="w-full" onkeypress="if(event.key==='Enter') searchWord()">
                 <button onclick="searchWord()">EXE</button>
             </div>
         </div>
-
-        <div class="mb-8">
-            <div class="section-title">OpenRouter Key</div>
-            <input type="password" id="apiKey" placeholder="sk-or-v1-..." class="w-full mb-2">
-            <div class="text-[9px] text-zinc-700 uppercase">Enables dialectic engine</div>
+        <div class="mb-6">
+            <div class="section-title">Key</div>
+            <input type="password" id="apiKey" placeholder="sk-..." class="w-full">
         </div>
-
-        <div class="mb-8">
-            <div class="section-title">Logic Trail</div>
-            <div id="path-history" class="text-[10px] space-y-1"></div>
+        <div>
+            <div class="section-title">Trail</div>
+            <div id="path-history" class="text-[9px] flex flex-wrap gap-2"></div>
         </div>
     </aside>
     
     <main id="word-explorer">
         <div id="intro-msg">
-            <h2 class="text-6xl font-bold tracking-tighter text-white mb-6">LOGOS_CORE</h2>
-            <p class="text-zinc-500 max-w-xl text-lg font-serif">Bridge Webster's 1913 definitions with Germanic counterparts. Type a word to begin.</p>
+            <h2 class="text-5xl font-bold tracking-tighter text-white mb-6">LOGOS</h2>
+            <p class="text-zinc-500 text-md font-serif italic">Bridge definitions with logic. Query a term to begin.</p>
         </div>
         
         <div id="results-area" class="hidden">
-            <div class="flex justify-between items-end mb-8 border-b border-zinc-800 pb-4">
-                <h2 id="current-word" class="text-7xl font-bold tracking-tighter text-red-600 italic">WORD</h2>
-                <span id="word-type" class="text-zinc-500 text-xs block uppercase tracking-widest">TYPE</span>
+            <div class="flex justify-between items-end mb-6 border-b border-zinc-800 pb-2">
+                <h2 id="current-word" class="text-5xl md:text-7xl font-bold tracking-tighter text-red-600 italic">WORD</h2>
             </div>
 
-            <div class="grid grid-cols-1 gap-4">
+            <div class="space-y-6">
                 <div>
-                    <div class="section-title">I. Webster's 1913 Definition</div>
+                    <div class="section-title">I. Webster 1913</div>
                     <div id="webster-target"></div>
                 </div>
                 <div>
-                    <div class="section-title" style="color:#d4af37">II. Germanic Bridge</div>
+                    <div class="section-title" style="color:#d4af37">II. German Bridge</div>
                     <div id="german-target"></div>
                 </div>
                 <div>
-                    <div class="section-title">III. Synonym Logic</div>
+                    <div class="section-title">III. Synonyms</div>
                     <div id="synonym-target" class="flex flex-wrap"></div>
                 </div>
             </div>
@@ -258,35 +276,33 @@
     
     <div class="bottom-shelf">
         <section class="editor-section">
-            <div class="bg-red-800 text-white px-4 py-1 flex justify-between font-bold text-[10px] uppercase">
-                <div>>> Manuscript_Editor</div>
-                <div>Format: Unabridged</div>
+            <div class="bg-red-800 text-white px-4 py-1 flex justify-between font-bold text-[9px] uppercase">
+                <div>>> Manuscript</div>
+                <div id="mobile-word-count">0 WORDS</div>
             </div>
             <div id="editor" contenteditable="true" spellcheck="false"></div>
         </section>
         
         <aside class="comms-console">
             <div class="bg-zinc-900 text-[9px] p-2 text-zinc-500 uppercase flex justify-between border-b border-red-900">
-                <span>AI Dialectic Console</span>
-                <span class="text-green-800 font-bold">ACTIVE</span>
+                <span>AI Console</span>
+                <span class="text-green-800 font-bold">READY</span>
             </div>
-            <!-- SCROLLABLE CHAT AREA -->
             <div id="chat-container">
-                <div class="text-zinc-500 italic">System: Console active. Waiting for input...</div>
+                <div class="text-zinc-500 italic">System: Ready for dialectic.</div>
             </div>
-            <!-- STICKY INPUT AREA -->
             <div class="p-3 bg-black border-t border-zinc-900">
                 <div class="flex gap-1">
-                    <input type="text" id="chat-input" placeholder="Ask AI..." class="flex-grow text-[11px] p-2" onkeypress="if(event.key==='Enter') askAI()">
-                    <button onclick="askAI()" class="text-[9px] px-3">ASK</button>
-                    <button onclick="generateJuxtaposition()" class="text-[9px] bg-red-900 px-3 font-bold">JUXTAPOSE</button>
+                    <input type="text" id="chat-input" placeholder="Query AI..." class="flex-grow text-[11px] p-2" onkeypress="if(event.key==='Enter') askAI()">
+                    <button onclick="askAI()" class="text-[9px] px-2">ASK</button>
+                    <button onclick="generateJuxtaposition()" class="text-[9px] bg-red-900 px-2 font-bold">JUX</button>
                 </div>
             </div>
         </aside>
     </div>
     
-    <footer class="col-span-2 bg-black flex justify-between items-center px-4 text-[9px] text-zinc-800 uppercase">
-        <div>Lexicon 2741 // Fixed_Scroll_Matrix_v4.61</div>
+    <footer class="col-span-2 bg-black flex justify-between items-center px-4 text-[8px] text-zinc-800 uppercase">
+        <div>LX_2741 // 4.62_MOB</div>
         <div>© 2025</div>
     </footer>
 </div>
@@ -301,7 +317,6 @@
 
     async function loadData() {
         if (cache.webster) return;
-        document.getElementById('status-text').innerText = "SYSTEM: LOADING...";
         try {
             const [w, g] = await Promise.all([
                 fetch(SOURCES.webster).then(r => r.json()),
@@ -309,12 +324,12 @@
             ]);
             cache.webster = w;
             cache.german = g;
-            document.getElementById('status-text').innerText = "SYSTEM: ONLINE";
-        } catch (e) { document.getElementById('status-text').innerText = "SYSTEM: ERROR"; }
+        } catch (e) { console.error("Load Error"); }
     }
 
     async function searchWord(overrideWord = null) {
-        const word = (overrideWord || document.getElementById('word-search').value).trim().toLowerCase();
+        const wordInput = document.getElementById('word-search');
+        const word = (overrideWord || wordInput.value).trim().toLowerCase();
         if (!word) return;
         await loadData();
         
@@ -325,7 +340,7 @@
         const def = cache.webster[word.toUpperCase()] || cache.webster[word];
         document.getElementById('webster-target').innerHTML = def ? 
             `<div class="path-item" onclick="insertText('${word}')"><div class="path-word">Webster</div><div class="path-definition">${def}</div></div>` 
-            : `<div class="text-zinc-700 italic">No record found.</div>`;
+            : `<div class="text-zinc-700">No Webster entry.</div>`;
 
         let gHits = [];
         for (let [gWord, eDef] of Object.entries(cache.german)) {
@@ -335,11 +350,11 @@
             }
         }
         document.getElementById('german-target').innerHTML = gHits.map(h => `
-            <div class="path-item german-logic" onclick="insertText('${h.g}')"><div class="path-word">German Logic: ${h.g}</div><div class="path-definition">${h.e}</div></div>
-        `).join('') || `<div class="text-zinc-700 italic">No bridge found.</div>`;
+            <div class="path-item german-logic" onclick="insertText('${h.g}')"><div class="path-word">${h.g}</div><div class="path-definition">${h.e}</div></div>
+        `).join('') || `<div class="text-zinc-700">No bridge.</div>`;
 
         try {
-            const sRes = await fetch(`https://api.datamuse.com/words?rel_syn=${word}&max=15`);
+            const sRes = await fetch(`https://api.datamuse.com/words?rel_syn=${word}&max=10`);
             const sData = await sRes.json();
             document.getElementById('synonym-target').innerHTML = sData.map(s => `
                 <span class="synonym-chip" onclick="searchWord('${s.word}')">${s.word}</span>
@@ -347,6 +362,7 @@
         } catch(e) {}
 
         updateHistory(word);
+        window.scrollTo({top: 0, behavior: 'smooth'}); // Pull user back up to see result
     }
 
     async function askAI() {
@@ -367,13 +383,13 @@
             });
             const data = await res.json();
             addChat("AI", data.choices[0].message.content);
-        } catch (e) { addChat("ERROR", "AI Offline."); }
+        } catch (e) { addChat("ERROR", "Offline."); }
     }
 
     async function generateJuxtaposition() {
         const word = document.getElementById('current-word').innerText;
         const key = document.getElementById('apiKey').value;
-        if (!key) return alert("API Key Required");
+        if (!key) return alert("Key required");
         addChat("SYSTEM", `Synthesizing ${word}...`);
         try {
             const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -399,8 +415,6 @@
         div.className = "mb-3 border-b border-zinc-900 pb-2";
         div.innerHTML = `<span class="${sender==='AI'?'text-red-600':'text-zinc-500'} font-bold">${sender}:</span> <span class="text-zinc-300">${msg}</span>`;
         container.appendChild(div);
-        
-        // Auto-scroll logic: ensure the newest message is visible
         container.scrollTop = container.scrollHeight;
     }
 
@@ -413,14 +427,15 @@
     function updateStats() {
         const text = document.getElementById('editor').innerText;
         const count = text.trim() ? text.trim().split(/\s+/).length : 0;
-        document.getElementById('word-count').innerText = `${count} WORDS`;
+        document.getElementById('word-count').innerText = `${count}W`;
+        document.getElementById('mobile-word-count').innerText = `${count} WORDS`;
     }
 
     function updateHistory(word) {
         const h = document.getElementById('path-history');
         const d = document.createElement('div');
-        d.className = "cursor-pointer hover:text-red-500";
-        d.innerText = `>> ${word.toUpperCase()}`;
+        d.className = "cursor-pointer text-zinc-500 border border-zinc-800 px-1 hover:text-red-500";
+        d.innerText = word.toUpperCase();
         d.onclick = () => searchWord(word);
         h.prepend(d);
     }
