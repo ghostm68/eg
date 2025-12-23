@@ -1390,9 +1390,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const fluxImageContainer = document.getElementById('fluxImageContainer');
     const aiModelSelector = document.getElementById('aiModelSelector');
     
+    // Debug: Check if elements are found
+    console.log('Button found:', fluxGenerateButton);
+    console.log('Input found:', fluxPromptInput);
+    
     // Handle image generation
-    fluxGenerateButton.addEventListener('click', async () => {
+    fluxGenerateButton.addEventListener('click', async function() {
+        console.log('Button clicked!');
+        
         const prompt = fluxPromptInput.value.trim();
+        console.log('Prompt:', prompt);
         
         if (!prompt) {
             alert('Please enter a prompt');
@@ -1405,27 +1412,31 @@ document.addEventListener('DOMContentLoaded', function() {
         fluxGenerateButton.disabled = true;
         
         const selectedModel = aiModelSelector.value;
+        console.log('Selected model:', selectedModel);
         
         try {
             // Build Pollinations image URL
             const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${selectedModel}&width=1024&height=1024&seed=${Math.floor(Math.random() * 1000000)}&nologo=true`;
+            console.log('Image URL:', imageUrl);
             
             // Create image element
             const img = document.createElement('img');
             img.src = imageUrl;
             img.alt = prompt;
             img.style.maxWidth = '100%';
-            img.style.height = 'auto';
+            img.style.maxHeight = '500px';
             img.style.margin = '10px 0';
             img.style.border = '1px solid #ccc';
             img.style.borderRadius = '4px';
+            img.style.display = 'block';
             
             // Create wrapper div for the image
             const wrapper = document.createElement('div');
             wrapper.style.margin = '15px 0';
-            wrapper.style.padding = '10px';
-            wrapper.style.backgroundColor = '#f9f9f9';
+            wrapper.style.padding = '15px';
+            wrapper.style.backgroundColor = '#f5f5f5';
             wrapper.style.borderRadius = '8px';
+            wrapper.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
             
             // Add prompt text above image
             const promptText = document.createElement('p');
@@ -1439,14 +1450,22 @@ document.addEventListener('DOMContentLoaded', function() {
             wrapper.appendChild(img);
             
             // Add to the image container (below the button)
-            fluxImageContainer.prepend(wrapper); // prepend puts newest on top
+            fluxImageContainer.prepend(wrapper);
             
             // Wait for image to load
             await new Promise((resolve, reject) => {
-                img.onload = resolve;
-                img.onerror = reject;
+                img.onload = function() {
+                    console.log('Image loaded successfully');
+                    resolve();
+                };
+                img.onerror = function(err) {
+                    console.error('Image failed to load:', err);
+                    reject(new Error('Image failed to load'));
+                };
                 setTimeout(() => reject(new Error('Image generation timeout')), 30000);
             });
+            
+            console.log('Generation complete!');
             
         } catch (err) {
             console.error('Image generation error:', err);
@@ -1459,15 +1478,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Add Enter key support for the prompt input
-    fluxPromptInput.addEventListener('keypress', (e) => {
+    fluxPromptInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
+            console.log('Enter key pressed');
             fluxGenerateButton.click();
         }
     });
-});
-
-
-	
+});	
 </script>
 <div style="padding: 20px; max-width: 800px; margin: 0 auto;">
     <i>brigid storyboard maker</i><br>
