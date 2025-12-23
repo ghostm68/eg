@@ -4,252 +4,415 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>INK REALM SPLASH</title>
- 
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            overflow: hidden;
+            background: #000;
+            font-family: 'Courier New', monospace;
+        }
+        
+        /* TV Static Effect */
+        .tv-static {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            background: 
+                repeating-radial-gradient(circle at 50% 50%, 
+                    rgba(255, 0, 60, 0.03) 0%,
+                    transparent 2px),
+                repeating-linear-gradient(
+                    0deg,
+                    rgba(255, 255, 255, 0.02) 0px,
+                    rgba(255, 255, 255, 0.02) 1px,
+                    transparent 1px,
+                    transparent 2px
+                );
+            opacity: 0.4;
+            animation: static-flicker 0.15s infinite;
+            pointer-events: none;
+            z-index: 1;
+            mix-blend-mode: overlay;
+        }
+        
+        @keyframes static-flicker {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Headlines */
+        .headline {
+            position: fixed;
+            width: 100vw;
+            height: 50vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+            pointer-events: none;
+        }
+        
+        .headline.top { top: 0; }
+        .headline.bottom { bottom: 0; }
+        
+        .glitch {
+            position: relative;
+            font-family: 'Arial Black', sans-serif;
+            font-size: 15vw;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: -0.05em;
+            color: white;
+            text-shadow: 
+                8px 8px 0 #ff003c,
+                -5px -5px 0 #000;
+            animation: glitch-skew 3s infinite;
+        }
+        
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .glitch::before {
+            color: #ff003c;
+            animation: glitch-1 2.5s infinite;
+            clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+        }
+        
+        .glitch::after {
+            color: rgba(255, 255, 255, 0.8);
+            animation: glitch-2 2s infinite;
+            clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+        }
+        
+        @keyframes glitch-skew {
+            0%, 40% { transform: skew(0deg); }
+            41% { transform: skew(3deg) scaleX(1.01); }
+            42% { transform: skew(-2deg) scaleX(0.99); }
+            43%, 100% { transform: skew(0deg); }
+        }
+        
+        @keyframes glitch-1 {
+            0%, 7% { transform: translate(0); }
+            8% { transform: translate(-2px, 1px); }
+            9% { transform: translate(1px, -1px); }
+            10%, 100% { transform: translate(0); }
+        }
+        
+        @keyframes glitch-2 {
+            0%, 2% { transform: translate(0); }
+            3% { transform: translate(3px, -1px); }
+            4% { transform: translate(-1px, 2px); }
+            5%, 100% { transform: translate(0); }
+        }
+        
+        /* CSS Marquee Container */
+        .css-marquee-container {
+            position: fixed;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            transform: translateY(-50%);
+            overflow: hidden;
+            z-index: 2;
+            pointer-events: none;
+        }
+        
+        .css-marquee-track {
+            display: flex;
+            animation: marquee-backwards 40s linear infinite;
+            white-space: nowrap;
+        }
+        
+        .css-word {
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fff;
+            margin: 0 2rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 0, 60, 0.1);
+            border: 1px solid rgba(255, 0, 60, 0.3);
+        }
+        
+        .css-word:nth-child(odd) {
+            color: #ff003c;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        @keyframes marquee-backwards {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(-50%); }
+        }
+        
+        /* Canvas for Three.js */
+        #three-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+        }
+    </style>
 </head>
-<style>
-.css-marquee-container {
-    position: fixed;
-    top: 25%;
-    left: 0;
-    width: 100%;
-    overflow: hidden;
-    z-index: 2;
-    pointer-events: none;
-}
-
-.css-marquee-track {
-    display: flex;
-    animation: marquee-backwards 120s linear infinite;
-    white-space: nowrap;
-}
-
-.css-word {
-    font-family: 'Courier New', monospace;
-    font-size: 1.2vw;
-    font-weight: bold;
-    color: #fff;
-    margin: 0 2vw;
-    padding: 0.5vw 1vw;
-    background: rgba(255, 0, 60, 0.1);
-    border: 1px solid rgba(255, 0, 60, 0.3);
-}
-
-.css-word:nth-child(odd) {
-    color: #ff003c;
-    background: rgba(255, 255, 255, 0.1);
-}
-
-@keyframes marquee-backwards {
-    0% { transform: translateX(0%); }
-    100% { transform: translateX(-50%); }
-}
-</style>
 <body>
-<!-- Add to your HTML -->
-<div class="css-marquee-container">
-    <div class="css-marquee-track">
-        <!-- Your words repeated twice for seamless loop -->
-        <span class="css-word">dreamweaver</span>
-        <span class="css-word">wip</span>
-        <!-- ... all words ... -->
-        <span class="css-word">everex</span>
-        <!-- Duplicate for seamless loop -->
-        <span class="css-word">dreamweaver</span>
-        <span class="css-word">wip</span>
-        <!-- ... etc -->
+    <!-- TV Static Overlay -->
+    <div class="tv-static"></div>
+    
+    <!-- Canvas for Three.js -->
+    <canvas id="three-canvas"></canvas>
+    
+    <!-- CSS Marquee (Middle of screen) -->
+    <div class="css-marquee-container">
+        <div class="css-marquee-track">
+            <span class="css-word">dreamweaver</span>
+            <span class="css-word">wip</span>
+            <span class="css-word">dejavuglitches</span>
+            <span class="css-word">displaywriter</span>
+            <span class="css-word">bakedalaska</span>
+            <span class="css-word">38</span>
+            <span class="css-word">custompad</span>
+            <span class="css-word">typecast</span>
+            <span class="css-word">typespace</span>
+            <span class="css-word">citadelle</span>
+            <span class="css-word">typewriter</span>
+            <span class="css-word">birch</span>
+            <span class="css-word">cut&rune</span>
+            <span class="css-word">conceptweave</span>
+            <span class="css-word">daslexikondaslexikon</span>
+            <span class="css-word">ai</span>
+            <span class="css-word">netherlands</span>
+            <span class="css-word">90263</span>
+            <span class="css-word">everex</span>
+            <!-- Duplicate for seamless loop -->
+            <span class="css-word">dreamweaver</span>
+            <span class="css-word">wip</span>
+            <span class="css-word">dejavuglitches</span>
+            <span class="css-word">displaywriter</span>
+            <span class="css-word">bakedalaska</span>
+            <span class="css-word">38</span>
+            <span class="css-word">custompad</span>
+            <span class="css-word">typecast</span>
+            <span class="css-word">typespace</span>
+            <span class="css-word">citadelle</span>
+            <span class="css-word">typewriter</span>
+            <span class="css-word">birch</span>
+            <span class="css-word">cut&rune</span>
+            <span class="css-word">conceptweave</span>
+            <span class="css-word">daslexikondaslexikon</span>
+            <span class="css-word">ai</span>
+            <span class="css-word">netherlands</span>
+            <span class="css-word">90263</span>
+            <span class="css-word">everex</span>
+        </div>
     </div>
-</div>
-    <!-- Three.js from CDN -->
+    
+    <!-- Main Headlines -->
+    <div class="headline top">
+        <h1 class="glitch" data-text="WORDSTAR">WORDSTAR</h1>
+    </div>
+    <div class="headline bottom">
+        <h1 class="glitch" data-text="NEXUS">NEXUS</h1>
+    </div>
+    
+    <!-- Three.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Optional: Controls for debugging -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
-<script>
-// Clean configuration - NO HOVER EFFECTS
-const CONFIG = {
-    colors: {
-        red: 0xff003c,
-        white: 0xffffff,
-        black: 0x000000
-    },
-    wordList: [
-        "dreamweaver", "wip", "dejavuglitches", "displaywriter", 
-        "bakedalaska", "38", "custompad", "typecast", "typespace", 
-        "citadelle", "typewriter", "birch", "cut&rune", "conceptweave",
-        "daslexikondaslexikon", "ai", "netherlands", "90263", "everex"
-    ],
-    // Marquee settings
-    fontSize: 0.7,
-    speed: 25, // Pixels per second
-    direction: -1, // -1 = left (backwards scroll)
-    verticalCenter: 0, // Center of screen
-    spacing: 3.0
-};
-
-// TYPEWRITER EFFECT FOR LARGE LETTERS
-function initTypewriterEffect() {
-    const wordstar = document.querySelector('.top .glitch');
-    const nexus = document.querySelector('.bottom .glitch');
     
-    // Type out WORDSTAR
-    typeText(wordstar, "WORDSTAR", 80);
-    // Type out NEXUS slightly delayed
-    setTimeout(() => typeText(nexus, "NEXUS", 100), 400);
-    
-    // After typing completes, start continuous glitch
-    setTimeout(() => {
-        wordstar.style.animation = "glitch-skew 3s infinite";
-        nexus.style.animation = "glitch-skew 3s infinite";
-    }, 2000);
-}
-
-function typeText(element, text, speed) {
-    element.textContent = "";
-    element.setAttribute('data-text', text);
-    
-    let i = 0;
-    const typeInterval = setInterval(() => {
-        if (i < text.length) {
-            element.textContent += text.charAt(i);
-            i++;
-        } else {
-            clearInterval(typeInterval);
-        }
-    }, speed);
-}
-
-// THREE.JS FOR MARQUEE (Backwards scroll, no hover)
-let scene, camera, renderer, wordObjects = [];
-
-function initThreeJS() {
-    // Scene setup
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(CONFIG.colors.black);
-    
-    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 50;
-    
-    renderer = new THREE.WebGLRenderer({ 
-        canvas: document.getElementById('three-canvas'),
-        antialias: true,
-        alpha: true
-    });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(1); // Crisp text
-    
-    // Load font and create marquee
-    const fontLoader = new THREE.FontLoader();
-    fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', createMarquee);
-}
-
-function createMarquee(font) {
-    // Clear scene
-    while(scene.children.length > 0) { 
-        scene.remove(scene.children[0]); 
-    }
-    
-    // Calculate layout
-    let currentX = 0;
-    const words = [];
-    const verticalPos = 0; // Center vertically
-    
-    // Create each word once
-    CONFIG.wordList.forEach((word, index) => {
-        const geometry = new THREE.TextGeometry(word, {
-            font: font,
-            size: CONFIG.fontSize,
-            height: 0.05,
-            curveSegments: 4,
-            bevelEnabled: false
-        });
-        
-        // Center geometry
-        geometry.computeBoundingBox();
-        const width = geometry.boundingBox.max.x - geometry.boundingBox.min.x;
-        
-        // Choose color: alternating red/white
-        const color = index % 2 === 0 ? CONFIG.colors.red : CONFIG.colors.white;
-        const material = new THREE.MeshBasicMaterial({
-            color: color,
-            transparent: true,
-            opacity: 0.9
-        });
-        
-        const mesh = new THREE.Mesh(geometry, material);
-        
-        // Position in a horizontal line
-        mesh.position.set(currentX, verticalPos, 0);
-        mesh.userData = {
-            originalX: currentX,
-            width: width,
-            speed: CONFIG.speed,
-            color: color
+    <!-- Your Script -->
+    <script>
+        // Clean configuration - NO HOVER EFFECTS
+        const CONFIG = {
+            colors: {
+                red: 0xff003c,
+                white: 0xffffff,
+                black: 0x000000
+            },
+            wordList: [
+                "dreamweaver", "wip", "dejavuglitches", "displaywriter", 
+                "bakedalaska", "38", "custompad", "typecast", "typespace", 
+                "citadelle", "typewriter", "birch", "cut&rune", "conceptweave",
+                "daslexikondaslexikon", "ai", "netherlands", "90263", "everex"
+            ],
+            // Marquee settings
+            fontSize: 0.7,
+            speed: 25, // Pixels per second
+            direction: -1, // -1 = left (backwards scroll)
+            verticalCenter: 0, // Center of screen
+            spacing: 3.0
         };
-        
-        scene.add(mesh);
-        words.push(mesh);
-        wordObjects.push(mesh);
-        
-        currentX += width + CONFIG.spacing;
-    });
-    
-    // Center the entire line
-    const totalWidth = currentX;
-    const centerOffset = totalWidth / 2;
-    words.forEach(mesh => {
-        mesh.position.x -= centerOffset;
-        mesh.userData.originalX -= centerOffset;
-        mesh.userData.totalWidth = totalWidth;
-    });
-    
-    // Add ambient light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-    scene.add(ambientLight);
-    
-    // Start animation
-    animate();
-}
 
-function animate() {
-    requestAnimationFrame(animate);
-    
-    // Move words left (backwards marquee)
-    wordObjects.forEach(mesh => {
-        mesh.position.x += CONFIG.direction * CONFIG.speed * 0.016;
-        
-        // Wrap around when off screen left
-        if (mesh.position.x < -mesh.userData.totalWidth / 2 - 50) {
-            mesh.position.x = mesh.userData.totalWidth / 2 + 50;
+        // TYPEWRITER EFFECT FOR LARGE LETTERS
+        function initTypewriterEffect() {
+            const wordstar = document.querySelector('.top .glitch');
+            const nexus = document.querySelector('.bottom .glitch');
+            
+            // Type out WORDSTAR
+            typeText(wordstar, "WORDSTAR", 80);
+            // Type out NEXUS slightly delayed
+            setTimeout(() => typeText(nexus, "NEXUS", 100), 400);
+            
+            // After typing completes, start continuous glitch
+            setTimeout(() => {
+                wordstar.style.animation = "glitch-skew 3s infinite";
+                nexus.style.animation = "glitch-skew 3s infinite";
+            }, 2000);
         }
-        
-        // Subtle vertical float
-        mesh.position.y = Math.sin(Date.now() * 0.001 + mesh.userData.originalX * 0.01) * 2;
-        
-        // Fade effect at edges
-        const screenEdge = window.innerWidth / 100; // Convert to Three.js units
-        const distanceFromCenter = Math.abs(mesh.position.x);
-        if (distanceFromCenter > screenEdge * 0.7) {
-            mesh.material.opacity = 0.3;
-        } else {
-            mesh.material.opacity = 0.9;
+
+        function typeText(element, text, speed) {
+            element.textContent = "";
+            element.setAttribute('data-text', text);
+            
+            let i = 0;
+            const typeInterval = setInterval(() => {
+                if (i < text.length) {
+                    element.textContent += text.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(typeInterval);
+                }
+            }, speed);
         }
-    });
-    
-    renderer.render(scene, camera);
-}
 
-// Handle window resize
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
+        // THREE.JS FOR MARQUEE (Backwards scroll, no hover)
+        let scene, camera, renderer, wordObjects = [];
 
-// Initialize everything when page loads
-window.addEventListener('DOMContentLoaded', () => {
-    initTypewriterEffect();
-    initThreeJS();
-});
-</script>
+        function initThreeJS() {
+            // Scene setup
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(CONFIG.colors.black);
+            
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 50;
+            
+            renderer = new THREE.WebGLRenderer({ 
+                canvas: document.getElementById('three-canvas'),
+                antialias: true,
+                alpha: true
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(1); // Crisp text
+            
+            // Load font and create marquee
+            const fontLoader = new THREE.FontLoader();
+            fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', createMarquee);
+        }
 
+        function createMarquee(font) {
+            // Clear scene
+            while(scene.children.length > 0) { 
+                scene.remove(scene.children[0]); 
+            }
+            
+            // Calculate layout
+            let currentX = 0;
+            const words = [];
+            const verticalPos = 0; // Center vertically
+            
+            // Create each word once
+            CONFIG.wordList.forEach((word, index) => {
+                const geometry = new THREE.TextGeometry(word, {
+                    font: font,
+                    size: CONFIG.fontSize,
+                    height: 0.05,
+                    curveSegments: 4,
+                    bevelEnabled: false
+                });
+                
+                // Center geometry
+                geometry.computeBoundingBox();
+                const width = geometry.boundingBox.max.x - geometry.boundingBox.min.x;
+                
+                // Choose color: alternating red/white
+                const color = index % 2 === 0 ? CONFIG.colors.red : CONFIG.colors.white;
+                const material = new THREE.MeshBasicMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                
+                // Position in a horizontal line
+                mesh.position.set(currentX, verticalPos, 0);
+                mesh.userData = {
+                    originalX: currentX,
+                    width: width,
+                    speed: CONFIG.speed,
+                    color: color
+                };
+                
+                scene.add(mesh);
+                words.push(mesh);
+                wordObjects.push(mesh);
+                
+                currentX += width + CONFIG.spacing;
+            });
+            
+            // Center the entire line
+            const totalWidth = currentX;
+            const centerOffset = totalWidth / 2;
+            words.forEach(mesh => {
+                mesh.position.x -= centerOffset;
+                mesh.userData.originalX -= centerOffset;
+                mesh.userData.totalWidth = totalWidth;
+            });
+            
+            // Add ambient light
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(ambientLight);
+            
+            // Start animation
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Move words left (backwards marquee)
+            wordObjects.forEach(mesh => {
+                mesh.position.x += CONFIG.direction * CONFIG.speed * 0.016;
+                
+                // Wrap around when off screen left
+                if (mesh.position.x < -mesh.userData.totalWidth / 2 - 50) {
+                    mesh.position.x = mesh.userData.totalWidth / 2 + 50;
+                }
+                
+                // Subtle vertical float
+                mesh.position.y = Math.sin(Date.now() * 0.001 + mesh.userData.originalX * 0.01) * 2;
+                
+                // Fade effect at edges
+                const screenEdge = window.innerWidth / 100; // Convert to Three.js units
+                const distanceFromCenter = Math.abs(mesh.position.x);
+                if (distanceFromCenter > screenEdge * 0.7) {
+                    mesh.material.opacity = 0.3;
+                } else {
+                    mesh.material.opacity = 0.9;
+                }
+            });
+            
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Initialize everything when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            initTypewriterEffect();
+            initThreeJS();
+        });
+    </script>
 </body>
 </html>
