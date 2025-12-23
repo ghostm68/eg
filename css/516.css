@@ -43,111 +43,90 @@ body::after {
   opacity: 0.3;
 }
 
-:root {
-    --primary-red: #FF0000;
-    --primary-white: #FFFFFF;
-    --primary-grey: #808080;
-    --black: #000000;
-}
 
+/* --- SPLASH SCREEN BASE --- */
 .splash-screen {
     position: fixed;
-    top: 0;
-    left: 0;
+    inset: 0;
     width: 100%;
-    height: 100%;
+    height: 100dvh;
     background: var(--black);
-    z-index: 99999;
+    z-index: 1000; /* Stays above your CRT overlay */
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 1;
-    transition: opacity 0.8s ease, visibility 0.8s;
-    pointer-events: auto; /* Fixed: Must be auto to allow clicking to enter */
-    cursor: pointer;
-}
-
-.splash-screen.fade-out { 
-    opacity: 0; 
-    visibility: hidden;
-    pointer-events: none;
+    transition: opacity 0.6s ease;
 }
 
 .splash-content {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
-    position: relative;
+    gap: 1.5rem;
     width: 90%;
+    position: relative;
 }
 
-.splash-video {
-    max-width: 400px;
-    width: 100%;
-    filter: grayscale(100%) contrast(1.2);
+/* --- THE GLITCH EFFECTS --- */
+
+/* 1. Typewriter Reveal */
+.logo-text, .logo-x, .logo-dot {
     opacity: 0;
-    animation: splashFadeIn 0.5s ease-in forwards;
+    animation: typewriterReveal 1.2s steps(30) 0.5s forwards;
 }
 
-/* Updated logo styles to include your Red/White/Grey */
+/* 2. RGB Glitch (Targets the Red X specifically) */
+.logo-x {
+    fill: var(--red);
+    animation: typewriterReveal 1.2s steps(30) 0.5s forwards, 
+               rgbGlitch 0.3s ease-in-out 1.2s 3;
+}
+
+/* 3. Neon Pulse (Whole Logo) */
 .splash-logo {
     width: 100%;
     max-width: 800px;
-    opacity: 0;
-    transform-origin: center;
-    animation: logoEntrance 1.5s ease-out 0.3s forwards, 
-               neonPulse 3s ease-in-out 2s infinite;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+    animation: neonPulse 3s ease-in-out 2s infinite;
 }
 
-.splash-logo .logo-text {
-    fill: var(--primary-white);
-    opacity: 0;
-    animation: typewriterReveal 1.2s steps(20) 0.8s forwards;
+/* 4. Scanline Sweep (Splash-only overlay) */
+.splash-content::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
+    background-size: 100% 8px;
+    pointer-events: none;
+    animation: scanlinesSweep 1.5s linear infinite;
 }
 
-.splash-logo .logo-x {
-    fill: var(--primary-red);
-}
-
-.splash-logo .logo-dot {
-    fill: var(--primary-grey);
-}
-
-/* The RGB Glitch Effect on the X specifically */
-.logo-x {
-    animation: rgbGlitch 0.3s ease-in-out 1.5s 3;
-}
-
-/* Animations */
-@keyframes splashFadeIn { to { opacity: 1; } }
-
-@keyframes logoEntrance {
-    0% { opacity: 0; transform: scale(0.9); }
-    100% { opacity: 1; transform: scale(1); }
-}
-
+/* --- ANIMATION KEYFRAMES --- */
 @keyframes typewriterReveal {
     0% { opacity: 0; clip-path: inset(0 100% 0 0); }
     1% { opacity: 1; }
     100% { opacity: 1; clip-path: inset(0 0 0 0); }
 }
 
+@keyframes rgbGlitch {
+    0%, 100% { transform: translate(0, 0); filter: drop-shadow(0 0 5px var(--red)); }
+    25% { transform: translate(-4px, 1px); filter: drop-shadow(-2px 0 red) drop-shadow(2px 0 cyan); }
+    50% { transform: translate(4px, -1px); filter: drop-shadow(2px 0 red) drop-shadow(-2px 0 cyan); }
+    75% { transform: translate(-2px, -1px); filter: drop-shadow(-1px 0 red) drop-shadow(1px 0 cyan); }
+}
+
 @keyframes neonPulse {
-    0%, 100% { filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3)); }
-    50% { filter: drop-shadow(0 0 25px rgba(255, 0, 0, 0.6)); }
+    0%, 100% { filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2)); }
+    50% { filter: drop-shadow(0 0 25px rgba(255, 0, 0, 0.5)); }
 }
 
-/* Add this to hide the site content until splash is gone */
-body > *:not(.splash-screen) {
-    opacity: 0;
-    transition: opacity 1s ease;
+@keyframes scanlinesSweep {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(100%); }
 }
 
-.splash-screen.fade-out ~ * {
-    opacity: 1;
-}
-
+/* Cleanup */
+.splash-screen.fade-out { opacity: 0; pointer-events: none; }
 
 /* =========================================================
    APP GRID LAYOUT
