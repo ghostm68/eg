@@ -20,17 +20,17 @@
     <style>
         /* --- CORE RESETS --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; font-size: 26px; line-height: 1.15; }
+        html { scroll-behavior: smooth; font-size: 16px; line-height: 1.15; }
         body {
             font-family: Inter, sans-serif;
             font-weight: 400;
             background: #000;
             color: #fff;
-            overflow-x: hidden; /* Prevent horizontal scroll */
+            overflow-x: hidden;
         }
         a { color: inherit; text-decoration: none; transition: opacity 0.3s ease; }
         a:hover { opacity: 0.7; }
-        img { display: block; max-width: 100%; }
+        img { display: block; max-width: 100%; height: auto; }
 
         /* --- SPLASH SCREEN --- */
         #splash-screen {
@@ -58,7 +58,7 @@
         .floating-letter {
             position: absolute;
             color: rgba(255, 255, 255, 0.05);
-            font-size: 4rem;
+            font-size: 3rem;
             font-weight: bold;
             animation: float 6s infinite ease-in-out;
         }
@@ -68,10 +68,10 @@
             50% { transform: translateY(-20px) rotate(5deg); opacity: 0.03; }
         }
         
-        .splash-content { text-align: center; z-index: 2; position: relative; }
+        .splash-content { text-align: center; z-index: 2; position: relative; padding: 20px; }
         
         .main-letter {
-            font-size: 10rem; /* Adjusted for mobile safety */
+            font-size: 6rem;
             font-weight: bold;
             color: white;
             margin-bottom: 1rem;
@@ -79,10 +79,10 @@
             transition: all 0.5s ease;
         }
         
-        .name-reveal { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1rem; }
+        .name-reveal { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
         
         .name-letter {
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: bold;
             color: rgba(255, 255, 255, 0.3);
             transition: all 0.5s ease;
@@ -90,7 +90,7 @@
         .name-letter.active { color: white; text-shadow: 0 0 10px rgba(255,255,255,0.8); }
         
         .subtitle {
-            font-size: 1rem;
+            font-size: 0.9rem;
             color: rgba(255, 255, 255, 0.8);
             font-weight: 300;
             letter-spacing: 0.2em;
@@ -103,6 +103,7 @@
         
         .line-loader {
             width: 200px;
+            max-width: 80vw;
             height: 2px;
             background: rgba(255, 255, 255, 0.2);
             border-radius: 1px;
@@ -139,13 +140,14 @@
         .not-found-container {
             position: relative;
             z-index: 1;
-            padding: 40px;
+            padding: 20px;
             max-width: 800px;
+            margin: 0 auto;
         }
 
         .c-nav {
             display: flex;
-            gap: 20px;
+            gap: 15px;
             margin: 20px 0;
             flex-wrap: wrap;
         }
@@ -155,19 +157,49 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 4px;
             display: inline-block;
+            font-size: 0.9rem;
         }
         .c-link:hover { background: rgba(220, 20, 60, 0.1); border-color: #dc143c; }
 
-        iframe, video {
+        /* --- RESPONSIVE MEDIA CONTAINERS --- */
+        .media-container {
+            position: relative;
+            width: 100%;
+            margin: 20px 0;
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
-            margin: 20px 0;
-            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .media-container iframe,
+        .media-container video {
+            width: 100%;
+            height: auto;
+            display: block;
+            border: none;
+            border-radius: 8px;
+        }
+
+        /* Aspect ratio for iframes */
+        .iframe-wrapper {
+            position: relative;
+            width: 100%;
+            padding-bottom: 83.74%; /* 515/615 ratio */
+            height: 0;
+            overflow: hidden;
+        }
+
+        .iframe-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
 
         /* --- GALLERY --- */
         #gallery {
-            max-width: 450px;
+            max-width: 100%;
             margin: 20px 0;
             padding: 20px;
             background: rgba(20, 20, 20, 0.95);
@@ -176,10 +208,11 @@
         }
         
         .section-title {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             color: #dc143c;
             font-weight: 600;
             margin-bottom: 20px;
+            padding-bottom: 10px;
             border-bottom: 2px solid rgba(220, 20, 60, 0.3);
             text-transform: uppercase;
             letter-spacing: 2px;
@@ -198,6 +231,7 @@
             position: relative;
             overflow: hidden;
             border: 1px solid transparent;
+            transition: all 0.3s ease;
         }
         
         .gallery-link:hover {
@@ -216,6 +250,7 @@
             opacity: 0.7;
             filter: grayscale(100%);
             transition: all 0.3s;
+            flex-shrink: 0;
         }
         
         .gallery-link:hover img {
@@ -224,15 +259,106 @@
             border-color: #dc143c;
         }
 
+        .link-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .link-title {
+            font-size: 0.95rem;
+            word-break: break-word;
+        }
+
         /* --- UTILS --- */
         .text-red { color: #dc143c; }
         .mt-2 { margin-top: 2rem; }
         
         /* Noise Overlay */
         .noise {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 0; opacity: 0.05;
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            pointer-events: none; 
+            z-index: 0; 
+            opacity: 0.05;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
+        }
+
+        /* --- MOBILE OPTIMIZATIONS --- */
+        @media (max-width: 768px) {
+            html { font-size: 14px; }
+            
+            .background-video {
+                width: 100%;
+                height: 40vh;
+                top: auto;
+                bottom: 0;
+                opacity: 0.4;
+            }
+
+            .not-found-container {
+                padding: 15px;
+            }
+
+            .main-letter {
+                font-size: 4rem;
+            }
+
+            .name-letter {
+                font-size: 1.2rem;
+            }
+
+            .floating-letter {
+                font-size: 2rem;
+            }
+
+            .c-link {
+                padding: 8px 16px;
+                font-size: 0.85rem;
+            }
+
+            #gallery {
+                padding: 15px;
+            }
+
+            .section-title {
+                font-size: 1rem;
+            }
+
+            .gallery-link {
+                gap: 10px;
+            }
+
+            .gallery-link img {
+                width: 50px;
+                height: 50px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .background-video {
+                height: 30vh;
+                opacity: 0.3;
+            }
+
+            .main-letter {
+                font-size: 3rem;
+            }
+
+            .name-letter {
+                font-size: 1rem;
+            }
+
+            .c-nav {
+                gap: 10px;
+            }
+
+            .c-link {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
         }
     </style>
 </head>
@@ -284,18 +410,31 @@
         </nav>
 
         <!-- Iframe -->
-        <iframe src="https://inkrealm.info/kessler" width="615" height="515" frameborder="0"></iframe>
+        <div class="media-container">
+            <div class="iframe-wrapper">
+                <iframe src="https://inkrealm.info/kessler" frameborder="0"></iframe>
+            </div>
+        </div>
         
         <br><br>
-         <video controls>
-            <source width="286" height="266" src="https://github.com/ghostm68/pantheon/raw/main/mkessler.subclubcommercial.wordstar.nexus_176504.mp4" type="video/mp4">
-            Your browser does not support the video tag.
-        </video><br>
+        
+        <div class="media-container">
+            <video controls>
+                <source src="https://github.com/ghostm68/pantheon/raw/main/mkessler.subclubcommercial.wordstar.nexus_176504.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+        
+        <br>
         <span>insta:@miss.kessler ↗</span>
         <br><br>
         
         <!-- Video 1 -->
-        <video width="386" height="366" src="https://github.com/ghostm68/pantheon/raw/main/kessler.sketchers2.wordstar_1760593486810.mp4" muted loop playsinline autoplay></video>
+        <div class="media-container">
+            <video muted loop playsinline autoplay>
+                <source src="https://github.com/ghostm68/pantheon/raw/main/kessler.sketchers2.wordstar_1760593486810.mp4" type="video/mp4">
+            </video>
+        </div>
         
         <br><br>
 
@@ -318,11 +457,19 @@
         <br><br>
         
         <p class="text-red">upcoming projects...</p>
-        <video width="660" height="600" src="https://github.com/ghostm68/pantheon/raw/main/martakessler.wordstarnexus81524.mp4" muted loop playsinline autoplay></video>
+        <div class="media-container">
+            <video muted loop playsinline autoplay>
+                <source src="https://github.com/ghostm68/pantheon/raw/main/martakessler.wordstarnexus81524.mp4" type="video/mp4">
+            </video>
+        </div>
         
         <br><br>
         <i>photo series initiated...</i><br>
-        <iframe src="https://vite-react-inkrealm.vercel.app/" width="615" height="615" frameborder="0"></iframe>
+        <div class="media-container">
+            <div class="iframe-wrapper">
+                <iframe src="https://vite-react-inkrealm.vercel.app/" frameborder="0"></iframe>
+            </div>
+        </div>
         
         <br><br>
         
@@ -337,9 +484,11 @@
         <br><br>
         
         <!-- Video 2 -->
-        <video controls width="100%">
-            <source src="https://github.com/ghostm68/pantheon/raw/main/kessler_Media_Yfyf6NPGV3U_003_360p.mp4" type="video/mp4">
-        </video>
+        <div class="media-container">
+            <video controls>
+                <source src="https://github.com/ghostm68/pantheon/raw/main/kessler_Media_Yfyf6NPGV3U_003_360p.mp4" type="video/mp4">
+            </video>
+        </div>
         
         <br><br>
         
@@ -364,7 +513,7 @@
             
             let currentStep = 0;
             const totalSteps = letters.length;
-            const stepDuration = 600; // Speed of letter change
+            const stepDuration = 600;
 
             function animateLetters() {
                 try {
@@ -381,12 +530,11 @@
                         currentStep++;
                         setTimeout(animateLetters, stepDuration);
                     } else {
-                        // Animation finished - Hide screen
                         finishSplash();
                     }
                 } catch (e) {
                     console.error("Animation error", e);
-                    finishSplash(); // Force close if error
+                    finishSplash();
                 }
             }
 
@@ -398,11 +546,9 @@
                 }, 800);
             }
 
-            // Start animation
             setTimeout(animateLetters, 500);
 
-            /* 2. SAFETY TIMEOUT (Prevents sticking) */
-            // If animation hangs for any reason, this removes the splash screen after 5 seconds
+            /* 2. SAFETY TIMEOUT */
             setTimeout(() => {
                 if (splashScreen && splashScreen.style.display !== 'none') {
                     console.log("Safety timeout triggered");
