@@ -1384,140 +1384,105 @@ fontSelect.addEventListener('change', () => {
 });
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Get elements
     const fluxPromptInput = document.getElementById('fluxPromptInput');
-	const fluxGenerateButton = document.getElementById('fluxGenerateButton');
+    const fluxGenerateButton = document.getElementById('fluxGenerateButton');
     const fluxImageContainer = document.getElementById('fluxImageContainer');
     const aiModelSelector = document.getElementById('aiModelSelector');
     
-    // Debug: Check if elements are found
-    console.log('Button found:', fluxGenerateButton);
-    console.log('Input found:', fluxPromptInput);
-    
-    // Handle image generation
     fluxGenerateButton.addEventListener('click', async function() {
-        console.log('Button clicked!');
-        
         const prompt = fluxPromptInput.value.trim();
-		console.log('Prompt:', prompt);
         
         if (!prompt) {
             alert('Please enter a prompt');
             return;
         }
         
-        // Show generating status
         const originalButtonText = fluxGenerateButton.textContent;
         fluxGenerateButton.textContent = 'Generating...';
         fluxGenerateButton.disabled = true;
         
         const selectedModel = aiModelSelector.value;
-        console.log('Selected model:', selectedModel);
         
         try {
-            // Build Pollinations image URL
-            const imageUrl =`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${selectedModel}&width=1024&height=1024&seed=${Math.floor(Math.random() * 1000000)}&nologo=true`;
-            console.log('Image URL:',imageUrl);
+            // Build Pollinations image URL - FIXED SPACING
+            const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${selectedModel}&width=1024&height=1024&seed=${Math.floor(Math.random() * 1000000)}&nologo=true`;
             
-            // Create image element
+            // CORRECT console.log spacing
+            console.log('Image URL:', imageUrl);
+            console.log('Model:', selectedModel);
+            console.log('Prompt:', prompt);
+            
             const img = document.createElement('img');
             img.src = imageUrl;
             img.alt = prompt;
             img.style.maxWidth = '100%';
-            img.style.maxHeight = '500px';
+            img.style.height = 'auto';
             img.style.margin = '10px 0';
-            img.style.border = '1px solid #ccc';
-            img.style.borderRadius = '4px';
-            img.style.display = 'block';
             
-            // Create wrapper div for the image
             const wrapper = document.createElement('div');
             wrapper.style.margin = '15px 0';
-            wrapper.style.padding = '15px';
-            wrapper.style.backgroundColor = '#f5f5f5';
+            wrapper.style.padding = '10px';
+            wrapper.style.backgroundColor = '#f9f9f9';
             wrapper.style.borderRadius = '8px';
-            wrapper.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
             
-            // Add prompt text above image
             const promptText = document.createElement('p');
             promptText.textContent = `Prompt: "${prompt}"`;
             promptText.style.margin = '0 0 10px 0';
             promptText.style.fontSize = '14px';
             promptText.style.color = '#666';
-            promptText.style.fontStyle = 'italic';
             
             wrapper.appendChild(promptText);
             wrapper.appendChild(img);
-            
-            // Add to the image container (below the button)
             fluxImageContainer.prepend(wrapper);
             
-            // Wait for image to load
             await new Promise((resolve, reject) => {
-                img.onload = function() {
-                    console.log('Image loaded successfully');
-                    resolve();
-                };
-                img.onerror = function(err) {
-                    console.error('Image failed to load:', err);
-                    reject(new Error('Image failed to load'));
-                };
-                setTimeout(() => reject(new Error('Image generation timeout')), 30000);
+                img.onload = resolve;
+                img.onerror = reject;
+                setTimeout(() => reject(new Error('Timeout')), 30000);
             });
             
-            console.log('Generation complete!');
+            console.log('Success!');
             
         } catch (err) {
-            console.error('Image generation error:', err);
-            alert(`Generation failed: ${err.message || 'Unknown error'}`);
+            console.error('Error:', err);
+            alert(`Failed: ${err.message}`);
         } finally {
-            // Reset button
             fluxGenerateButton.textContent = originalButtonText;
             fluxGenerateButton.disabled = false;
         }
     });
     
-    // Add Enter key support for the prompt input
+    // Enter key support - FIXED SPACING
     fluxPromptInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
-            console.log('Enter key pressed');
             fluxGenerateButton.click();
         }
     });
-});	
+});
 </script>
-<div style="padding: 20px; max-width: 800px; margin: 0 auto;">
+
+<div style="padding: 20px;">
     <i>brigid storyboard maker</i><br>
-    <i>contact inky@wordstar.nexus</i><br>
+    <i>contact inky@wordstar.nexus for access</i><br>
     <br>
     
-    <!-- Prompt Container -->
-    <div id="fluxPromptContainer" style="display: block; margin-bottom: 20px;">
-        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-            <input type="text" id="fluxPromptInput" placeholder="Enter your image prompt here" 
-                   style="flex: 1; padding: 10px; min-width: 200px;">
-            
-            <select id="aiModelSelector" style="padding: 10px;">
-                <option value="flux" selected>FLUX.1 (Fast & Quality)</option>
-                <option value="flux-realism">FLUX Realism</option>
-                <option value="flux-anime">FLUX Anime</option>
-                <option value="flux-3d">FLUX 3D</option>
-                <option value="turbo">SD Turbo (Fast)</option>
-                <option value="dreamshaper">DreamShaper</option>
-                <option value="deliberate">Deliberate</option>
-                <option value="realistic">Realistic Vision</option>
-                <option value="anime">Anime</option>
-            </select>
-            
-            <button id="fluxGenerateButton" 
-                    style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                Gen Image
-            </button>
-        </div>
+    <div style="margin-bottom: 20px;">
+        <input type="text" id="fluxPromptInput" placeholder="Enter prompt" 
+               style="padding: 10px; width: 300px; margin-right: 10px;">
+        
+        <select id="aiModelSelector" style="padding: 10px; margin-right: 10px;">
+            <option value="flux" selected>FLUX.1</option>
+            <option value="flux-realism">FLUX Realism</option>
+            <option value="flux-anime">FLUX Anime</option>
+        </select>
+        
+        <button id="fluxGenerateButton" 
+                style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
+            Generate
+        </button>
     </div>
-
-    <!-- Container for generated images -->
-    <div id="fluxImageContainer" style="margin-top: 20px;"></div>
+    
+    <div id="fluxImageContainer"></div>
 </div>
   <script>
 const quotes = [
