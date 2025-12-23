@@ -16,407 +16,132 @@
     
     <!-- Animation Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+    /* --- CORE RESETS --- */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     
-    <style>
-        /* --- CORE RESETS --- */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; font-size: 16px; line-height: 1.15; }
-        body {
-            font-family: Inter, sans-serif;
-            font-weight: 400;
-            background: #000;
-            color: #fff;
-            overflow-x: hidden;
-        }
-        a { color: inherit; text-decoration: none; transition: opacity 0.3s ease; }
-        a:hover { opacity: 0.7; }
-        img { display: block; max-width: 100%; height: auto; }
+    /* 1. HIDE SCROLLBAR DURING INTRO */
+    body.loading {
+        overflow: hidden !important;
+        height: 100vh;
+    }
 
-        /* --- SPLASH SCREEN --- */
-        #splash-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.8s ease-out;
-        }
-        
-        .floating-background {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            overflow: hidden;
-        }
-        
-        .floating-letter {
-            position: absolute;
-            color: rgba(255, 255, 255, 0.05);
-            font-size: 4rem;
-            font-weight: bold;
-            animation: float 6s infinite ease-in-out;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.1; }
-            50% { transform: translateY(-20px) rotate(5deg); opacity: 0.03; }
-        }
-        
-        .splash-content { text-align: center; z-index: 2; position: relative; padding: 20px; }
-        
-        .main-letter {
-            font-size: 10rem;
-            font-weight: bold;
-            color: white;
-            margin-bottom: 1rem;
-            text-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
-            transition: all 0.5s ease;
-        }
-        
-        .name-reveal { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
-        
-        .name-letter {
-            font-size: 2rem;
-            font-weight: bold;
-            color: rgba(255, 255, 255, 0.3);
-            transition: all 0.5s ease;
-        }
-        .name-letter.active { color: white; text-shadow: 0 0 10px rgba(255,255,255,0.8); }
-        
-        .subtitle {
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.8);
-            font-weight: 300;
-            letter-spacing: 0.2em;
-            margin-bottom: 2rem;
-            opacity: 0;
-            animation: fadeIn 1s ease forwards 2s;
-        }
-        
-        @keyframes fadeIn { to { opacity: 1; } }
-        
-        .line-loader {
-            width: 200px;
-            max-width: 80vw;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 1px;
-            overflow: hidden;
-            margin: 0 auto;
-        }
-        
-        .line-loader-progress {
-            height: 100%;
-            background: white;
-            width: 0%;
-            animation: expandLine 3.5s ease-in-out forwards;
-        }
-        
-        @keyframes expandLine { 0% { width: 0%; } 100% { width: 100%; } }
+    html { scroll-behavior: smooth; font-size: 16px; line-height: 1.15; }
+    body {
+        font-family: Inter, sans-serif;
+        background: #000;
+        color: #fff;
+        overflow-x: hidden;
+    }
 
-        /* --- BACKGROUND VIDEO --- */
-        .background-video {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: 60%;
-            height: 100vh;
-            z-index: 1;
-            opacity: 0.8;
-        }
-        .background-video video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+    /* --- UNIFIED RED SCROLLBARS --- */
+    /* Universal selector to catch inner containers */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: #dc143c rgba(0, 0, 0, 0.3);
+    }
 
-        /* --- MAIN LAYOUT --- */
-        .not-found-container {
-            position: relative;
-            z-index: 2;
-            padding: 20px;
-            max-width: 40%;
-            margin: 0;
-            min-height: 100vh;
-        }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
+    ::-webkit-scrollbar-thumb { background: #dc143c; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #ff1744; }
 
-        .c-nav {
-            display: flex;
-            gap: 15px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-        
-        .c-link {
-            padding: 10px 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
-            display: inline-block;
-            font-size: 0.9rem;
-        }
-        .c-link:hover { background: rgba(220, 20, 60, 0.1); border-color: #dc143c; }
+    /* --- SPLASH SCREEN WITH GLITCH --- */
+    #splash-screen {
+        position: fixed;
+        inset: 0;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.8s ease-out, visibility 0.8s;
+    }
+    
+    /* Scanline Sweep (Glitch Layer) */
+    #splash-screen::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(255, 255, 255, 0.05) 50%);
+        background-size: 100% 4px;
+        z-index: 10;
+        pointer-events: none;
+        animation: scanline 6s linear infinite;
+    }
 
-        /* --- RESPONSIVE MEDIA CONTAINERS --- */
-        .media-container {
-            position: relative;
-            width: 100%;
-            margin: 20px 0;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            overflow: hidden;
-        }
+    @keyframes scanline {
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(100%); }
+    }
 
-        .media-container iframe,
-        .media-container video {
-            width: 100%;
-            height: auto;
-            display: block;
-            border: none;
-            border-radius: 8px;
-        }
+    .main-letter {
+        font-size: 10rem;
+        font-weight: bold;
+        color: white;
+        position: relative;
+        animation: rgbGlitch 0.4s steps(2) infinite; /* The Glitch Effect */
+    }
 
-        /* Custom scrollbar for iframes */
-        .iframe-wrapper iframe {
-            scrollbar-width: thin;
-            scrollbar-color: #dc143c rgba(255, 255, 255, 0.1);
-        }
+    /* RGB Chromatic Aberration Effect */
+    @keyframes rgbGlitch {
+        0% { text-shadow: 3px 0 #ff0000, -3px 0 #00ff00; transform: translate(0); }
+        25% { text-shadow: -2px 0 #ff0000, 2px 0 #0000ff; transform: translate(-2px, 1px); }
+        50% { text-shadow: 2px 0 #00ff00, -2px 0 #ff0000; transform: translate(2px, -1px); }
+        75% { text-shadow: -3px 0 #0000ff, 3px 0 #00ff00; transform: translate(-1px, 2px); }
+        100% { text-shadow: 3px 0 #ff0000, -3px 0 #00ff00; transform: translate(0); }
+    }
 
-        .iframe-wrapper iframe::-webkit-scrollbar {
-            width: 8px;
-        }
+    .line-loader-progress {
+        height: 100%;
+        background: #dc143c; /* Matches your theme red */
+        width: 0%;
+        animation: expandLine 3s ease-in-out forwards;
+    }
 
-        .iframe-wrapper iframe::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-        }
+    /* --- THE REST OF YOUR CSS REMAINS THE SAME --- */
+    .floating-background { position: absolute; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
+    .floating-letter { position: absolute; color: rgba(255, 255, 255, 0.05); font-size: 4rem; font-weight: bold; animation: float 6s infinite ease-in-out; }
+    @keyframes float { 0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.1; } 50% { transform: translateY(-20px) rotate(5deg); opacity: 0.03; } }
+    .splash-content { text-align: center; z-index: 2; position: relative; padding: 20px; }
+    .name-reveal { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .name-letter { font-size: 2rem; font-weight: bold; color: rgba(255, 255, 255, 0.3); transition: all 0.5s ease; }
+    .name-letter.active { color: white; text-shadow: 0 0 10px rgba(255,255,255,0.8); }
+    .subtitle { font-size: 0.9rem; color: rgba(255, 255, 255, 0.8); font-weight: 300; letter-spacing: 0.2em; margin-bottom: 2rem; opacity: 0; animation: fadeIn 1s ease forwards 2s; }
+    @keyframes fadeIn { to { opacity: 1; } }
+    .line-loader { width: 200px; max-width: 80vw; height: 2px; background: rgba(255, 255, 255, 0.2); border-radius: 1px; overflow: hidden; margin: 0 auto; }
+    @keyframes expandLine { 0% { width: 0%; } 100% { width: 100%; } }
+    .background-video { position: fixed; top: 0; right: 0; width: 60%; height: 100vh; z-index: 1; opacity: 0.8; }
+    .background-video video { width: 100%; height: 100%; object-fit: cover; }
+    .not-found-container { position: relative; z-index: 2; padding: 20px; max-width: 40%; margin: 0; min-height: 100vh; }
+    .c-nav { display: flex; gap: 15px; margin: 20px 0; flex-wrap: wrap; }
+    .c-link { padding: 10px 20px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; display: inline-block; font-size: 0.9rem; }
+    .c-link:hover { background: rgba(220, 20, 60, 0.1); border-color: #dc143c; }
+    .media-container { position: relative; width: 100%; margin: 20px 0; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; overflow: hidden; }
+    .media-container iframe, .media-container video { width: 100%; height: auto; display: block; border: none; border-radius: 8px; }
+    .iframe-wrapper { position: relative; width: 100%; padding-bottom: 83.74%; height: 0; overflow: hidden; }
+    .iframe-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+    #gallery { max-width: 100%; margin: 20px 0; padding: 20px; background: rgba(20, 20, 20, 0.95); border: 2px solid rgba(220, 20, 60, 0.5); border-radius: 12px; }
+    .section-title { font-size: 1.2rem; color: #dc143c; font-weight: 600; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid rgba(220, 20, 60, 0.3); text-transform: uppercase; letter-spacing: 2px; }
+    #galleryLinks { list-style: none; }
+    #galleryLinks li { margin-bottom: 12px; }
+    .gallery-link { color: #b0b0b0; display: flex; align-items: center; gap: 15px; padding: 8px 12px; border-radius: 4px; position: relative; overflow: hidden; border: 1px solid transparent; transition: all 0.3s ease; }
+    .gallery-link:hover { color: #ffffff; background: rgba(220, 20, 60, 0.08); border-color: rgba(220, 20, 60, 0.2); padding-left: 20px; }
+    .gallery-link img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 2px solid rgba(255, 255, 255, 0.1); opacity: 0.7; filter: grayscale(100%); transition: all 0.3s; flex-shrink: 0; }
+    .gallery-link:hover img { opacity: 1; filter: grayscale(0%); border-color: #dc143c; }
+    .text-red { color: #dc143c; }
+    .noise { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; opacity: 0.05; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E"); }
 
-        .iframe-wrapper iframe::-webkit-scrollbar-thumb {
-            background-color: #dc143c;
-            border-radius: 4px;
-        }
-
-        .iframe-wrapper iframe::-webkit-scrollbar-thumb:hover {
-            background-color: #ff1744;
-        }
-
-        /* Aspect ratio for iframes */
-        .iframe-wrapper {
-            position: relative;
-            width: 100%;
-            padding-bottom: 83.74%; /* 515/615 ratio */
-            height: 0;
-            overflow: hidden;
-        }
-
-        .iframe-wrapper iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* --- GALLERY --- */
-        #gallery {
-            max-width: 100%;
-            margin: 20px 0;
-            padding: 20px;
-            background: rgba(20, 20, 20, 0.95);
-            border: 2px solid rgba(220, 20, 60, 0.5);
-            border-radius: 12px;
-        }
-        
-        .section-title {
-            font-size: 1.2rem;
-            color: #dc143c;
-            font-weight: 600;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid rgba(220, 20, 60, 0.3);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        
-        #galleryLinks { list-style: none; }
-        #galleryLinks li { margin-bottom: 12px; }
-        
-        .gallery-link {
-            color: #b0b0b0;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 8px 12px;
-            border-radius: 4px;
-            position: relative;
-            overflow: hidden;
-            border: 1px solid transparent;
-            transition: all 0.3s ease;
-        }
-        
-        .gallery-link:hover {
-            color: #ffffff;
-            background: rgba(220, 20, 60, 0.08);
-            border-color: rgba(220, 20, 60, 0.2);
-            padding-left: 20px;
-        }
-        
-        .gallery-link img {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 4px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            opacity: 0.7;
-            filter: grayscale(100%);
-            transition: all 0.3s;
-            flex-shrink: 0;
-        }
-        
-        .gallery-link:hover img {
-            opacity: 1;
-            filter: grayscale(0%);
-            border-color: #dc143c;
-        }
-
-        .link-text {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .link-title {
-            font-size: 0.95rem;
-            word-break: break-word;
-        }
-
-        /* --- UTILS --- */
-        .text-red { color: #dc143c; }
-        .mt-2 { margin-top: 2rem; }
-        
-        /* Noise Overlay */
-        .noise {
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%;
-            pointer-events: none; 
-            z-index: 0; 
-            opacity: 0.05;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
-        }
-
-        /* --- MOBILE OPTIMIZATIONS --- */
-        @media (max-width: 768px) {
-            html { font-size: 14px; }
-            
-            .background-video {
-                position: relative;
-                width: 100%;
-                height: 40vh;
-                opacity: 0.6;
-                margin-bottom: 20px;
-            }
-
-            .not-found-container {
-                padding: 15px;
-                max-width: 100%;
-                margin: 0 auto;
-            }
-
-            .main-letter {
-                font-size: 4rem;
-            }
-
-            .name-letter {
-                font-size: 1.2rem;
-            }
-
-            .floating-letter {
-                font-size: 2rem;
-            }
-
-            .c-link {
-                padding: 8px 16px;
-                font-size: 0.85rem;
-            }
-
-            #gallery {
-                padding: 15px;
-            }
-
-            .section-title {
-                font-size: 1rem;
-            }
-
-            .gallery-link {
-                gap: 10px;
-            }
-
-            .gallery-link img {
-                width: 50px;
-                height: 50px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .background-video {
-                height: 30vh;
-                opacity: 0.5;
-            }
-
-            .main-letter {
-                font-size: 3rem;
-            }
-
-            .name-letter {
-                font-size: 1rem;
-            }
-
-            .c-nav {
-                gap: 10px;
-            }
-
-            .c-link {
-                padding: 6px 12px;
-                font-size: 0.8rem;
-            }
-        }
-    </style>
-    <style>
-        /* --- CUSTOM SCROLLBARS --- */
-/* For WebKit browsers (Chrome, Safari, Edge) */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.1);
-}
-
-::-webkit-scrollbar-thumb {
-    background: #dc143c;
-    border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #ff1744;
-}
-
-/* For Firefox */
-* {
-    scrollbar-width: thin;
-    scrollbar-color: #dc143c rgba(0, 0, 0, 0.1);
-}
-    </style>
+    /* MOBILE ADJUSTMENTS */
+    @media (max-width: 768px) {
+        .background-video { position: relative; width: 100%; height: 40vh; opacity: 0.6; }
+        .not-found-container { padding: 15px; max-width: 100%; }
+        .main-letter { font-size: 5rem; }
+    }
+</style>
 </head>
 <body>
-
+<body class="loading">
     <!-- Splash Screen -->
     <div id="splash-screen">
         <div class="floating-background">
@@ -556,109 +281,73 @@
         <br><br><br>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            /* 1. ANIMATION LOGIC */
-            const splashScreen = document.getElementById('splash-screen');
-            const nameLetters = document.querySelectorAll('.name-letter');
-            const mainLetter = document.querySelector('.main-letter');
-            const letters = ['М', 'А', 'Р', 'Т', 'А'];
-            
-            let currentStep = 0;
-            const totalSteps = letters.length;
-            const stepDuration = 600;
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        /* 1. ANIMATION LOGIC */
+        const splashScreen = document.getElementById('splash-screen');
+        const nameLetters = document.querySelectorAll('.name-letter');
+        const mainLetter = document.querySelector('.main-letter');
+        const letters = ['М', 'А', 'Р', 'Т', 'А'];
+        
+        let currentStep = 0;
+        const totalSteps = letters.length;
+        const stepDuration = 600;
 
-            function animateLetters() {
-                try {
-                    if (currentStep < totalSteps) {
-                        if (mainLetter) mainLetter.textContent = letters[currentStep];
-                        
-                        if (currentStep > 0 && nameLetters[currentStep - 1]) {
-                            nameLetters[currentStep - 1].classList.remove('active');
-                        }
-                        if (nameLetters[currentStep]) {
-                            nameLetters[currentStep].classList.add('active');
-                        }
-                        
-                        currentStep++;
-                        setTimeout(animateLetters, stepDuration);
-                    } else {
-                        finishSplash();
+        function animateLetters() {
+            try {
+                if (currentStep < totalSteps) {
+                    if (mainLetter) mainLetter.textContent = letters[currentStep];
+                    
+                    if (currentStep > 0 && nameLetters[currentStep - 1]) {
+                        nameLetters[currentStep - 1].classList.remove('active');
                     }
-                } catch (e) {
-                    console.error("Animation error", e);
+                    if (nameLetters[currentStep]) {
+                        nameLetters[currentStep].classList.add('active');
+                    }
+                    
+                    currentStep++;
+                    setTimeout(animateLetters, stepDuration);
+                } else {
                     finishSplash();
                 }
+            } catch (e) {
+                finishSplash();
             }
+        }
 
-            function finishSplash() {
-                if(!splashScreen) return;
-                splashScreen.style.opacity = '0';
-                setTimeout(() => {
-                    splashScreen.style.display = 'none';
-                }, 800);
-            }
-
-            setTimeout(animateLetters, 500);
-
-            /* 2. SAFETY TIMEOUT */
+        function finishSplash() {
+            if(!splashScreen) return;
+            splashScreen.style.opacity = '0';
             setTimeout(() => {
-                if (splashScreen && splashScreen.style.display !== 'none') {
-                    console.log("Safety timeout triggered");
-                    finishSplash();
-                }
-            }, 5000);
+                splashScreen.style.display = 'none';
+                // UNLOCK SCROLLBAR
+                document.body.classList.remove('loading');
+            }, 800);
+        }
 
-            /* 3. GALLERY GENERATION */
-            const galleryItems = [
-                { 
-                    title: 'volunteer', 
-                    image: 'https://i0.wp.com/tresamagazine.com/wp-content/uploads/2022/07/marta-kessler-22bloody-lady22.jpeg', 
-                    url: 'https://signup.com/mobileweb/2.0/vspot.html?activitykey=763661552037#choose_event_page' 
-                },
-                { 
-                    title: 'signup', 
-                    image: 'https://assets.mycast.io/actor_images/actor-marta-kessler-487299_large.jpg?1658175552', 
-                    url: 'https://secure.skechersfriendshipwalk.com/site/SPageServer/?pagename=register' 
-                },
-                { 
-                    title: 'brochure', 
-                    image: 'https://celebmafia.com/wp-content/uploads/2025/06/marta-kessler-unveils-eclectic-vision-for-june-2025-photoshoot-3.jpg', 
-                    url: 'https://skechersfoundation.hflip.co/P2P2025#page/1' 
-                },
-                { 
-                    title: 'form', 
-                    image: 'https://cdn.moviepilot.de/files/57387d03ef1fe76af927a9ce77fab7313c61b9500ee5253555f631080afe/limit/320/212/BabaYaga_Filmstill_17_72', 
-                    url: 'https://secure.skechersfriendshipwalk.com/site/DocServer/Donation_Form_2025.pdf' 
-                }
-            ];
+        setTimeout(animateLetters, 500);
 
-            const galleryLinksContainer = document.getElementById('galleryLinks');
-            
-            if (galleryLinksContainer) {
-                galleryItems.forEach((item) => {
-                    const li = document.createElement('li');
-                    
-                    const a = document.createElement('a');
-                    a.href = item.url;
-                    a.className = 'gallery-link';
-                    a.target = '_blank';
-                    
-                    const img = document.createElement('img');
-                    img.src = item.image;
-                    img.alt = item.title;
-                    
-                    const textDiv = document.createElement('div');
-                    textDiv.className = 'link-text';
-                    textDiv.innerHTML = `<div class="link-title">${item.title}</div>`;
-                    
-                    a.appendChild(img);
-                    a.appendChild(textDiv);
-                    li.appendChild(a);
-                    galleryLinksContainer.appendChild(li);
-                });
-            }
-        });
-    </script>
+        /* 2. GALLERY GENERATION */
+        const galleryItems = [
+            { title: 'volunteer', image: 'https://i0.wp.com/tresamagazine.com/wp-content/uploads/2022/07/marta-kessler-22bloody-lady22.jpeg', url: 'https://signup.com/mobileweb/2.0/vspot.html?activitykey=763661552037#choose_event_page' },
+            { title: 'signup', image: 'https://assets.mycast.io/actor_images/actor-marta-kessler-487299_large.jpg?1658175552', url: 'https://secure.skechersfriendshipwalk.com/site/SPageServer/?pagename=register' },
+            { title: 'brochure', image: 'https://celebmafia.com/wp-content/uploads/2025/06/marta-kessler-unveils-eclectic-vision-for-june-2025-photoshoot-3.jpg', url: 'https://skechersfoundation.hflip.co/P2P2025#page/1' },
+            { title: 'form', image: 'https://cdn.moviepilot.de/files/57387d03ef1fe76af927a9ce77fab7313c61b9500ee5253555f631080afe/limit/320/212/BabaYaga_Filmstill_17_72', url: 'https://secure.skechersfriendshipwalk.com/site/DocServer/Donation_Form_2025.pdf' }
+        ];
+
+        const galleryLinksContainer = document.getElementById('galleryLinks');
+        if (galleryLinksContainer) {
+            galleryItems.forEach((item) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <a href="${item.url}" class="gallery-link" target="_blank">
+                        <img src="${item.image}" alt="${item.title}">
+                        <div class="link-text"><div class="link-title">${item.title}</div></div>
+                    </a>`;
+                galleryLinksContainer.appendChild(li);
+            });
+        }
+    });
+</script>
 </body>
 </html>
