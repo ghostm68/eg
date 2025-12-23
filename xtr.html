@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>INK REALM SPLASH</title>
-    <link rel="stylesheet" href="style.css">
+ 
 </head>
 <style>
 .css-marquee-container {
@@ -63,6 +63,194 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <!-- Optional: Controls for debugging -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+<script>
+    <script>
+// Clean configuration - NO HOVER EFFECTS
+const CONFIG = {
+    colors: {
+        red: 0xff003c,
+        white: 0xffffff,
+        black: 0x000000
+    },
+    wordList: [
+        "dreamweaver", "wip", "dejavuglitches", "displaywriter", 
+        "bakedalaska", "38", "custompad", "typecast", "typespace", 
+        "citadelle", "typewriter", "birch", "cut&rune", "conceptweave",
+        "daslexikondaslexikon", "ai", "netherlands", "90263", "everex"
+    ],
+    // Marquee settings
+    fontSize: 0.7,
+    speed: 25, // Pixels per second
+    direction: -1, // -1 = left (backwards scroll)
+    verticalCenter: 0, // Center of screen
+    spacing: 3.0
+};
 
+// TYPEWRITER EFFECT FOR LARGE LETTERS
+function initTypewriterEffect() {
+    const wordstar = document.querySelector('.top .glitch');
+    const nexus = document.querySelector('.bottom .glitch');
+    
+    // Type out WORDSTAR
+    typeText(wordstar, "WORDSTAR", 80);
+    // Type out NEXUS slightly delayed
+    setTimeout(() => typeText(nexus, "NEXUS", 100), 400);
+    
+    // After typing completes, start continuous glitch
+    setTimeout(() => {
+        wordstar.style.animation = "glitch-skew 3s infinite";
+        nexus.style.animation = "glitch-skew 3s infinite";
+    }, 2000);
+}
+
+function typeText(element, text, speed) {
+    element.textContent = "";
+    element.setAttribute('data-text', text);
+    
+    let i = 0;
+    const typeInterval = setInterval(() => {
+        if (i < text.length) {
+            element.textContent += text.charAt(i);
+            i++;
+        } else {
+            clearInterval(typeInterval);
+        }
+    }, speed);
+}
+
+// THREE.JS FOR MARQUEE (Backwards scroll, no hover)
+let scene, camera, renderer, wordObjects = [];
+
+function initThreeJS() {
+    // Scene setup
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(CONFIG.colors.black);
+    
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 50;
+    
+    renderer = new THREE.WebGLRenderer({ 
+        canvas: document.getElementById('three-canvas'),
+        antialias: true,
+        alpha: true
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(1); // Crisp text
+    
+    // Load font and create marquee
+    const fontLoader = new THREE.FontLoader();
+    fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', createMarquee);
+}
+
+function createMarquee(font) {
+    // Clear scene
+    while(scene.children.length > 0) { 
+        scene.remove(scene.children[0]); 
+    }
+    
+    // Calculate layout
+    let currentX = 0;
+    const words = [];
+    const verticalPos = 0; // Center vertically
+    
+    // Create each word once
+    CONFIG.wordList.forEach((word, index) => {
+        const geometry = new THREE.TextGeometry(word, {
+            font: font,
+            size: CONFIG.fontSize,
+            height: 0.05,
+            curveSegments: 4,
+            bevelEnabled: false
+        });
+        
+        // Center geometry
+        geometry.computeBoundingBox();
+        const width = geometry.boundingBox.max.x - geometry.boundingBox.min.x;
+        
+        // Choose color: alternating red/white
+        const color = index % 2 === 0 ? CONFIG.colors.red : CONFIG.colors.white;
+        const material = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.9
+        });
+        
+        const mesh = new THREE.Mesh(geometry, material);
+        
+        // Position in a horizontal line
+        mesh.position.set(currentX, verticalPos, 0);
+        mesh.userData = {
+            originalX: currentX,
+            width: width,
+            speed: CONFIG.speed,
+            color: color
+        };
+        
+        scene.add(mesh);
+        words.push(mesh);
+        wordObjects.push(mesh);
+        
+        currentX += width + CONFIG.spacing;
+    });
+    
+    // Center the entire line
+    const totalWidth = currentX;
+    const centerOffset = totalWidth / 2;
+    words.forEach(mesh => {
+        mesh.position.x -= centerOffset;
+        mesh.userData.originalX -= centerOffset;
+        mesh.userData.totalWidth = totalWidth;
+    });
+    
+    // Add ambient light
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    scene.add(ambientLight);
+    
+    // Start animation
+    animate();
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    
+    // Move words left (backwards marquee)
+    wordObjects.forEach(mesh => {
+        mesh.position.x += CONFIG.direction * CONFIG.speed * 0.016;
+        
+        // Wrap around when off screen left
+        if (mesh.position.x < -mesh.userData.totalWidth / 2 - 50) {
+            mesh.position.x = mesh.userData.totalWidth / 2 + 50;
+        }
+        
+        // Subtle vertical float
+        mesh.position.y = Math.sin(Date.now() * 0.001 + mesh.userData.originalX * 0.01) * 2;
+        
+        // Fade effect at edges
+        const screenEdge = window.innerWidth / 100; // Convert to Three.js units
+        const distanceFromCenter = Math.abs(mesh.position.x);
+        if (distanceFromCenter > screenEdge * 0.7) {
+            mesh.material.opacity = 0.3;
+        } else {
+            mesh.material.opacity = 0.9;
+        }
+    });
+    
+    renderer.render(scene, camera);
+}
+
+// Handle window resize
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Initialize everything when page loads
+window.addEventListener('DOMContentLoaded', () => {
+    initTypewriterEffect();
+    initThreeJS();
+});
+</script>
+</script>
 </body>
 </html>
