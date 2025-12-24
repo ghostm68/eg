@@ -637,6 +637,20 @@
     <div class="section-label">Navigation_Portal</div>
     <div class="link-item" onclick="window.open('https://www.inkrealm.info', '_blank')">DOMAIN</div>
     <div class="link-item" onclick="window.open('https://partyrock.aws/u/Inkrealm/Hm8CrqFrG/Nexus-Universe-Explorer', '_blank')">NEXUS_APP</div>
+	  <!-- LOCAL CORE INTERCEPT -->
+<div class="section-label mt-6">Local_Neural_Core</div>
+<div id="core-module" class="mb-4">
+  <button id="activate-core" class="text-[9px] border border-zinc-800 w-full py-2 hover:border-red-600 text-white uppercase tracking-widest transition-all">
+    Activate_Core_(700MB)
+  </button>
+  <div id="core-progress-ui" style="display:none;" class="mt-2">
+    <div class="text-[8px] text-zinc-500 mb-1">SYNCING_WEIGHTS: <span id="p-val">0</span>%</div>
+    <div class="w-full h-[2px] bg-zinc-900">
+      <div id="p-bar" class="h-full bg-red-600" style="width: 0%;"></div>
+    </div>
+    <div id="core-meta" class="text-[7px] text-zinc-700 mt-1 italic">*Requires WebGPU / 4GB+ RAM</div>
+  </div>
+</div>
     
     <div class="section-label mt-6">Quick_Links</div>
     <div class="link-item" onclick="window.open('https://inkrealm.instatus.com/', '_blank')">STATUS</div>
@@ -822,6 +836,90 @@
       }
     }, 5000);
   };
+</script>
+	<!-- INK REALM: LOCAL CORE UPGRADE -->
+<script type="module">
+import * as webllm from "https://esm.run/@mlc-ai/web-llm";
+
+const modelId = "Llama-3.2-1B-Instruct-q4f16_1-MLC"; 
+let engine = null;
+
+const activateBtn = document.getElementById('activate-core');
+const progressUI = document.getElementById('core-progress-ui');
+const pBar = document.getElementById('p-bar');
+const pVal = document.getElementById('p-val');
+const chatContainer = document.getElementById('chat-container');
+
+// PERSISTENCE FOR THE GHOST
+const localPersona = `STRICT PROTOCOL: YOU ARE THE INK REALM NEURAL INTERFACE. TONE: BURROUGHSIAN/CLINICAL. NO HELP. JUST IMAGES.`;
+
+activateBtn.onclick = async () => {
+    try {
+        if (!navigator.gpu) throw new Error("WebGPU Blocked.");
+        
+        activateBtn.textContent = "PROBING...";
+        activateBtn.disabled = true;
+        progressUI.style.display = 'block';
+
+        engine = await webllm.CreateMLCEngine(modelId, {
+            initProgressCallback: (report) => {
+                const p = Math.round(report.progress * 100);
+                pBar.style.width = p + '%';
+                pVal.textContent = p;
+                if (p === 100) {
+                    activateBtn.textContent = "CORE_ONLINE";
+                    activateBtn.style.borderColor = "#ff0000";
+                    activateBtn.style.color = "#ff0000";
+                }
+            }
+        });
+
+        // HIJACK THE SENDMESSAGE FUNCTION
+        window.sendMessage = async function() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // UI: Add User Message
+            const userBubble = document.createElement('div');
+            userBubble.className = 'chat-bubble user-message';
+            userBubble.textContent = message;
+            chatContainer.appendChild(userBubble);
+            input.value = '';
+
+            // UI: Prepare Bot Message
+            const botBubble = document.createElement('div');
+            botBubble.className = 'chat-bubble bot-message';
+            botBubble.textContent = '⟁ ';
+            chatContainer.appendChild(botBubble);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            try {
+                const messages = [
+                    { role: "system", content: localPersona },
+                    { role: "user", content: message }
+                ];
+                
+                const chunks = await engine.chat.completions.create({ messages, stream: true });
+                for await (const chunk of chunks) {
+                    const content = chunk.choices[0]?.delta?.content || "";
+                    botBubble.textContent += content;
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+            } catch (err) {
+                botBubble.textContent = "[SIGNAL LOST]: " + err.message;
+            }
+        };
+
+    } catch (err) {
+        activateBtn.textContent = "CORE_FAILED";
+        activateBtn.disabled = false;
+        const errBubble = document.createElement('div');
+        errBubble.className = 'chat-bubble bot-message';
+        errBubble.textContent = "[FAILSAFE]: " + err.message + " Reverting to Cloud Frequency.";
+        chatContainer.appendChild(errBubble);
+    }
+};
 </script>
 </body>
 </html>
