@@ -1003,7 +1003,7 @@ window.addEventListener('load', initTTS);
                 // DYNAMIC IMPORT + INTERNAL WORKER PREVENTS PAGE LOOP
                 const webLLM = await import("https://esm.run/@mlc-ai/web-llm");
                 
-                engine = await webLLM.CreateMLCEngine("Llama-3.2-1B-Instruct-q4f16_1-MLC", {
+                engine = await webLLM.CreateMLCEngine("Qwen2.5-0.5B-Instruct-q4f16_1-MLC", {
                     initProgressCallback: (p) => {
                         const pct = Math.round(p.progress * 100);
                         if (ui.bar) ui.bar.style.width = `${pct}%`;
@@ -1037,13 +1037,13 @@ window.addEventListener('load', initTTS);
             history.appendChild(line);
 
             try {
-                const chunks = await engine.chat.completions.create({
-                    messages: [
-                        { role: "system", content: "STRICT PROTOCOL: YOU ARE THE INK REALM NEURAL INTERFACE. TONE: BRIEF. POETIC." },
-                        { role: "user", content: prompt }
-                    ],
-                    stream: true
-                });
+               const chunks = await engine.chat.completions.create({
+  messages: [
+    { role: "system", content: "INK-NEUROID // QWEN-0.6B-ON-WIRE  MODE: laconic | DATA: live | VOICE: cold haiku  Answer in ≤2 sentences; cite [source n] inline; no hellos, no goodbyes." },
+    { role: "user", content: prompt }
+  ],
+  stream: true
+});
 
                 let reply = "";
                 for await (const chunk of chunks) {
