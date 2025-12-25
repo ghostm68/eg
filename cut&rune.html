@@ -592,15 +592,37 @@
 } 
 	/* ----- WebLLM Qwen-0.5B  ----- */
 /* ----- Stealth Orb (idle) ----- */
-.orb-container svg {
-  stroke: #888;                 /* neutral grey */
+/*  ORIGINAL ORB STYLES (already in your file)  */
+.orb-container {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 15px;
+  width: 50px;
+  height: 50px;
+  position: relative;
+}
+
+.glitch-orb {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke-width: 3;
+  overflow: visible;
+}
+.orb-circle   { stroke: #ff0033; }   /* ← old red default */
+.orb-triangle { stroke: #ffffff; }
+
+/*  NEW STEALTH RULES  –– paste below this line  */
+#ai-orb svg,                                 /* id you actually use */
+.orb-container svg {                        /* fallback if you keep class */
+  stroke: #888;                              /* neutral grey while idle */
   filter: drop-shadow(0 0 4px rgba(255,255,255,.15));
   animation: slow-spin 10s linear infinite;
 }
-.orb-triangle { stroke: #ccc; }
+.orb-triangle { stroke: #ccc; }              /* grey triangle while idle */
 
-/* ----- Live Orb (after core OK) ----- */
-.orb-live .orb-circle  { stroke: #ff0033; }
+/*  LIVE STATE (user clicked “activate”)  */
+.orb-live .orb-circle  { stroke: #ff0033; } /* back to red */
 .orb-live .orb-triangle{ stroke: #fff; }
 .orb-live svg{
   animation: slow-spin 10s linear infinite, pulse-glow 2s ease-in-out infinite;
@@ -609,8 +631,10 @@
 @keyframes pulse-glow{
   0%,100%{ transform: scale(1); }
   50%{ transform: scale(1.08); }
-}	
-.orb-container::after{            /* tiny grey dot underneath */
+}
+
+/*  tiny status dot underneath  */
+.orb-container::after{
   content:"";
   position:absolute;
   bottom:-8px; left:50%;
@@ -619,7 +643,7 @@
   background:#666;
   border-radius:50%;
 }
-.orb-live::after{ display:none; }
+.orb-live::after{ display:none; }   /* hide dot when core is live */
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
@@ -629,14 +653,20 @@
     
     <div id="crt-overlay"><div class="scanline"></div></div>
     <h1>
-  <div class="orb-container" id="orbHost" title="Click to activate local core">
+  <div class="orb-container" id="orbHost" title="Local core dormant">
     <svg class="glitch-orb" viewBox="0 0 100 100">
       <circle class="orb-circle" cx="50" cy="50" r="45"/>
       <polygon class="orb-triangle" points="50,25 78,75 22,75"/>
     </svg>
   </div>
   THE THIRD MIND DESK
-</h1> <img id="ton-qr" 
+</h1>
+
+<!-- visible only if WebGPU is available -->
+<div id="localOffer" style="display:none; text-align:center; margin:8px 0 20px 0; font-size:0.75rem;">
+  <button id="wakeCore" style="background:#222; border:1px solid #666; color:#aaa; padding:4px 10px; cursor:pointer;">ACTIVATE LOCAL CORE</button>
+  <span style="color:#555; margin-left:8px;">(420 MB, private, offline after sync)</span>
+</div> <img id="ton-qr" 
          src="https://raw.githubusercontent.com/ghostm68/pantheon/main/inkrealm.ton03.jpeg" 
          alt="TON WALLET"
          onclick="this.classList.toggle('expanded')"
@@ -1170,29 +1200,52 @@
             "background: #000; color: #ff0033; border: 1px solid #ff0033; padding: 3px;"
         );
     </script>
-	<script type="module">
-/*  THIRD-MIND DESK – stealth orb, local Qwen-0.5B  */
+<script type="module">
 import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.46";
 
-const orb   = document.getElementById('orbHost');   // must match HTML id
-const model = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
-let   engine = null;
+const orb      = document.getElementById('orbHost');
+const offerBox = document.getElementById('localOffer');
+const wakeBtn  = document.getElementById('wakeCore');
+const modelId  = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
+let engine = null;
 
-async function initAI(){
-  orb.title = "loading…";
-  engine = new webllm.Engine();
-  await engine.reload(model);
+/* 1. probe hardware – no download yet */
+(async ()=>{
+  if (!navigator.gpu) return;                       // no WebGPU, stay hidden
+  const adapter = await navigator.gpu.requestAdapter();
+  if (!adapter) return;                             // adapter refused, stay hidden
+  offerBox.style.display = 'block';                 // reveal opt-in button
+})();
 
-  // -----  visual switch  -----
-  orb.classList.add('orb-live');
-  orb.title = "Local core active – click to query";
-}
+/* 2. user must click to start sync */
+wakeBtn.addEventListener('click', async ()=>{
+  wakeBtn.disabled = true;
+  wakeBtn.textContent = 'SYNCING...';
+  orb.title = 'downloading weights...';
 
-initAI();               // auto-load in background
+  try {
+    engine = new webllm.Engine();
+    await engine.reload(modelId, {
+      initProgressCallback: ({progress, text}) => {
+        const p = Math.round(progress * 100);
+        wakeBtn.textContent = `SYNCING ${p}%`;
+        if (p === 100) {
+          orb.classList.add('orb-live');
+          orb.title = 'Local core active – click to query';
+          wakeBtn.style.display = 'none';
+        }
+      }
+    });
+  } catch (e) {
+    wakeBtn.textContent = 'CORE FAILED';
+    orb.title = 'Local core unavailable';
+    console.error(e);
+  }
+});
 
+/* 3. orb chat once alive */
 orb.addEventListener('click', async () => {
-  if (!engine){ alert('Model still loading…'); return; }
-
+  if (!engine) return;                       // still grey – do nothing
   const msg = prompt(
     'INK-NEUROID // QWEN-0.5B-ON-WIRE\n' +
     'MODE: laconic  |  DATA: live  |  VOICE: cold haiku\n' +
@@ -1206,16 +1259,11 @@ orb.addEventListener('click', async () => {
     messages: [
       {role:'system', content:'INK-NEUROID // QWEN-0.5B-ON-WIRE  MODE: laconic | DATA: live | VOICE: cold haiku  Answer in ≤2 sentences; cite [source n] inline; no hellos, no goodbyes.'},
       {role:'user',   content:msg}
-    ],
-    stream: true
+    ], stream: true
   });
-
-  for await (const chunk of stream){
-    reply += chunk.choices[0]?.delta?.content || '';
-  }
-
+  for await (const chunk of stream) reply += chunk.choices[0]?.delta?.content || '';
   orb.classList.remove('active');
-  alert(reply);   // or inject into any textarea you prefer
+  alert(reply);
 });
 </script>
 </body>
