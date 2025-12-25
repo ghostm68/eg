@@ -137,6 +137,20 @@
            title="***********">
       <div class="text-[8px] text-zinc-700 mt-1"></div>
     </div>
+	<div class="section-label mt-6">Local_Neural_Core</div>
+<div id="core-module" class="mb-4">
+  <button id="activate-core" class="text-[9px] border border-zinc-800 w-full py-2 hover:border-red-600 text-white uppercase tracking-widest transition-all">
+    Activate_Core_(700MB)
+  </button>
+  <div id="core-progress-ui" style="display:none;" class="mt-2">
+    <div class="text-[8px] text-zinc-500 mb-1">SYNCING_WEIGHTS: <span id="p-val">0</span>%</div>
+    <div class="w-full h-[2px] bg-zinc-900">
+      <div id="p-bar" class="h-full bg-red-600" style="width: 0%;"></div>
+    </div>
+    <div id="core-meta" class="text-[7px] text-zinc-700 mt-1 italic"></div>
+  </div>
+</div>
+    <div class="section-label mt-6">Req=WebGPU.private/Offline after sync</div>
   </aside>
 
 <main id="viewport">
@@ -2423,23 +2437,10 @@ The Geiger: The heartbeat of the poisoned land.
 The Synthesis: In the final scene at the Chalet, when the baby kicks, the sound design should resolve into a clean, organic heartbeat_”the land healing itself .
 </pre>   </div>
 
-   <div class="log-panel" id="log-stream">
-    <!-- Static Header -->
-    <div style="color: var(--red); border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 5px;">
-        // SYSTEM_LOG
+<div class="log-panel" id="log-stream">
+      <div style="color: var(--red); border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 15px;">// SYSTEM_LOG</div>
+      <div id="log-content"></div>
     </div>
-
-    <!-- The Gemma Hardware Module (Stays at the top) -->
-    <div id="gemma-stub-status" style="display: none; color: #ff0000; border: 1px solid #333; padding: 5px; margin-bottom: 10px; font-size: 8px; background: #0a0000; font-family: 'Nova Mono', monospace;">
-        [STATUS]: GEMMA_3_270M // STUB_ACTIVE <br>
-        [VRAM_REQ]: ~290MB // SHADER_F16_LOADED
-    </div>
-
-    <!-- The Scrolling Ticker Area -->
-    <div id="log-content" style="flex: 1; overflow-y: auto; font-size: 9px; color: #444;">
-        <!-- Ticker messages will scroll here -->
-    </div>
-</div>
   </main>
 
   <div class="bottom-container">
@@ -2622,125 +2623,129 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm";
 
 /**
  * PROJECT: INK REALM // WORDSTAR NEXUS
- * CORE: Gemma-3-270M-it-MLC (The 300MB "Stub")
+ * CORE: Llama-3.2-1B-Instruct (Approx 700MB VRAM)
+ * MODULE: Sidebar Local_Neural_Core
  */
 
-const modelId = "gemma-3-270m-it-MLC"; 
-
-const appConfig = {
-    model_list: [
-        {
-            model_id: modelId,
-            model: "https://huggingface.co/llinguini/gemma-3-270m-it-q4f16_1-MLC",
-            model_lib: "https://huggingface.co/llinguini/gemma-3-270m-it-q4f16_1-MLC/resolve/main/libs/gemma-3-270m-it-webgpu.wasm",
-            required_features: ["shader-f16"],
-        }
-    ]
-};
-
+const modelId = "Llama-3.2-1B-Instruct-q4f16_1-MLC"; 
 let engine = null;
-const persona = "STRICT PROTOCOL: YOU ARE THE INK REALM NEURAL INTERFACE. TONE: BURROUGHSIAN/CLINICAL. NO HELP. JUST CRYPTIC DATA. SHORT OUTPUTS ONLY.";
 
-// UI Selectors
+// SIDEBAR MODULE SELECTORS
 const activateBtn = document.getElementById('activate-core');
 const progressUI = document.getElementById('core-progress-ui');
 const pBar = document.getElementById('p-bar');
 const pVal = document.getElementById('p-val');
+const coreMeta = document.getElementById('core-meta');
+
+// CHAT SECTION SELECTORS
 const chatContainer = document.getElementById('chat-container');
-const logContent = document.getElementById('log-content');
-const gemmaStub = document.getElementById('gemma-stub-status');
+const chatInput = document.getElementById('chat-input');
 
-function addTicker(msg) {
-    if (!logContent) return;
-    const div = document.createElement('div');
-    div.style.padding = "2px 0";
-    div.style.borderBottom = "1px solid #111";
-    div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-    logContent.appendChild(div);
-    logContent.scrollTop = logContent.scrollHeight;
-}
+const persona = "STRICT PROTOCOL: YOU ARE THE INK REALM NEURAL INTERFACE. TONE: BURROUGHSIAN/CLINICAL. NO HELP. SHORT CRYPTIC DATA ONLY. MAX 25 WORDS.";
 
-// 1. OFFLINE HANDLER
-window.sendMessage = function() {
-    const input = document.getElementById('chat-input');
-    if (!input.value.trim()) return;
-    
-    chatContainer.innerHTML += `<div style="color: #444;">> ${input.value}</div>`;
-    input.value = '';
-    
-    const bB = document.createElement('div');
-    bB.style.color = "#222";
-    bB.textContent = "[SYSTEM]: Neural core disconnected. Sync required.";
-    chatContainer.appendChild(bB);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-};
-
-// 2. ACTIVATION (The Hijack)
+/**
+ * 1. THE INITIALIZER (SIDEBAR ONLY)
+ * Handles the "Mechanical" work of downloading and probing.
+ */
 activateBtn.onclick = async () => {
     try {
-        if (!navigator.gpu) throw new Error("WebGPU_BLOCKED");
-        
-        activateBtn.textContent = "SYNCING_GEMMA_STUB...";
-        activateBtn.disabled = true;
-        progressUI.style.display = 'block';
+        if (!navigator.gpu) throw new Error("WebGPU_NOT_SUPPORTED");
 
+        // UI state change
+        activateBtn.disabled = true;
+        activateBtn.textContent = "INITIALIZING...";
+        progressUI.style.display = 'block';
+        coreMeta.textContent = "HANDSHAKING_GPU...";
+
+        // Load the Engine
+        // No appConfig needed for Llama-3.2 as it's pre-registered in WebLLM
         engine = await webllm.CreateMLCEngine(modelId, {
-            appConfig,
             initProgressCallback: (report) => {
                 const p = Math.round(report.progress * 100);
+                
+                // DATA GOES TO SIDEBAR ONLY
                 pBar.style.width = p + '%';
                 pVal.textContent = p;
                 
+                // Clean up report text for the tiny meta-area
+                coreMeta.textContent = report.text.split(':')[0].toUpperCase() || "SYNCING...";
+
                 if (p === 100) {
-                    activateBtn.textContent = "GEMMA_CORE_ONLINE";
-                    activateBtn.style.color = "#ff0000";
-                    if (gemmaStub) gemmaStub.style.display = 'block';
-                    addTicker("STUB_STABILIZED: GEMMA_3_270M");
+                    activateBtn.textContent = "CORE_ONLINE";
+                    activateBtn.style.color = "#dc2626"; // Tailwind red-600
+                    activateBtn.style.borderColor = "#dc2626";
+                    coreMeta.textContent = "STABLE // 700MB_VRAM_ALLOCATED";
+                    
+                    // Visual confirmation in chat
+                    chatContainer.innerHTML += `<div style="color: #444; font-size: 9px; margin-top: 10px;">[SYSTEM]: LOCAL_CORE_STABILIZED</div>`;
                 }
             }
         });
 
-        // RE-DEFINE SENDMESSAGE
+        /**
+         * 2. THE HIJACK (CHAT CONTAINER ONLY)
+         * Overwrites the global sendMessage once the AI is alive.
+         */
         window.sendMessage = async function() {
-            const input = document.getElementById('chat-input');
-            const message = input.value.trim();
+            const message = chatInput.value.trim();
             if (!message || !engine) return;
 
-            chatContainer.innerHTML += `<div style="color: #666; margin-bottom: 5px;">> ${message}</div>`;
-            input.value = '';
+            // Render User Bubble
+            chatContainer.innerHTML += `<div style="color:#666; margin-bottom:10px;">> ${message}</div>`;
+            chatInput.value = '';
 
+            // Render AI Response Stream
             const botMsg = document.createElement('div');
-            botMsg.style.color = "#ff0000";
-            botMsg.style.marginBottom = "15px";
-            botMsg.textContent = "◈ "; 
+            botMsg.style.color = "#dc2626"; // Match red-600
+            botMsg.style.marginBottom = "20px";
+            botMsg.textContent = "◈ ";
             chatContainer.appendChild(botMsg);
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
             try {
-                const chunks = await engine.chat.completions.create({ 
-                    messages: [{ role: "system", content: persona }, { role: "user", content: message }], 
-                    stream: true, 
-                    temperature: 0.3 
+                const chunks = await engine.chat.completions.create({
+                    messages: [
+                        { role: "system", content: persona },
+                        { role: "user", content: message }
+                    ],
+                    stream: true,
+                    temperature: 0.3,
+                    max_tokens: 64
                 });
-                
+
                 for await (const chunk of chunks) {
-                    botMsg.textContent += chunk.choices[0]?.delta?.content || "";
+                    const content = chunk.choices[0]?.delta?.content || "";
+                    botMsg.textContent += content;
                     chatContainer.scrollTop = chatContainer.scrollHeight;
                 }
             } catch (err) {
                 botMsg.textContent += "[SIGNAL_LOSS]";
-                addTicker("FATAL_STREAM_ERROR");
+                coreMeta.textContent = "ERROR: STREAM_INTERRUPT";
             }
         };
 
     } catch (err) {
-        addTicker(`FATAL_ERROR: ${err.message}`);
         activateBtn.textContent = "CORE_FAILED";
-        console.error(err);
+        coreMeta.textContent = `FATAL: ${err.message.toUpperCase()}`;
+        activateBtn.disabled = false;
     }
 };
 
-window.clearChat = () => { chatContainer.innerHTML = ''; };
+/**
+ * 3. OFFLINE FALLBACK
+ * Handled if the user tries to chat before clicking the button.
+ */
+window.sendMessage = function() {
+    const msg = chatInput.value.trim();
+    if (!msg) return;
+    chatContainer.innerHTML += `<div style="color:#444;">> ${msg}</div>`;
+    chatInput.value = '';
+    const bB = document.createElement('div');
+    bB.style.color = "#222";
+    bB.textContent = "[SYSTEM]: Initialize Local_Core for deep-query.";
+    chatContainer.appendChild(bB);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+};
 	</script>
 </body>
 </html>
