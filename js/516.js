@@ -1039,7 +1039,7 @@ window.addEventListener('load', initTTS);
             try {
                 const chunks = await engine.chat.completions.create({
                     messages: [
-                        { role: "system", content: "STRICT PROTOCOL: YOU ARE THE INK REALM NEURAL INTERFACE. TONE: BURROUGHSIAN/CLINICAL. MAX 25 WORDS." },
+                        { role: "system", content: "STRICT PROTOCOL: YOU ARE THE INK REALM NEURAL INTERFACE. TONE: BRIEF. POETIC." },
                         { role: "user", content: prompt }
                     ],
                     stream: true
