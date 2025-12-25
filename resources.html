@@ -137,21 +137,22 @@
            title="***********">
       <div class="text-[8px] text-zinc-700 mt-1"></div>
     </div>
-<div class="section-label mt-6 text-zinc-500 text-[10px] uppercase tracking-tighter">// Neural_Interface</div>
+	  <!-- LOCAL CORE INTERCEPT -->
+<div class="section-label mt-6">Local_Neural_Core</div>
 <div id="core-module" class="mb-4">
-  <!-- The ID below is the most critical part -->
-  <button id="activate-core" class="text-[9px] border border-zinc-800 w-full py-2 hover:border-red-600 text-white uppercase tracking-widest transition-all cursor-pointer">
+  <button id="activate-core" class="text-[9px] border border-zinc-800 w-full py-2 hover:border-red-600 text-white uppercase tracking-widest transition-all">
     Activate_Core_(700MB)
   </button>
-  
   <div id="core-progress-ui" style="display:none;" class="mt-2">
     <div class="text-[8px] text-zinc-500 mb-1">SYNCING_WEIGHTS: <span id="p-val">0</span>%</div>
-    <div class="w-full h-[1px] bg-zinc-900">
+    <div class="w-full h-[2px] bg-zinc-900">
       <div id="p-bar" class="h-full bg-red-600" style="width: 0%;"></div>
     </div>
-    <div id="core-meta" class="text-[7px] text-zinc-700 mt-1 italic tracking-widest">Req=WebGPU.private/Offline after sync...</div>
+    <div id="core-meta" class="text-[7px] text-zinc-700 mt-1 italic"></div>
   </div>
 </div>
+  
+    <div class="section-label mt-6">Req=WebGPU.private/Offline after sync</div>
   </aside>
 
 <main id="viewport">
@@ -2602,134 +2603,119 @@ The Synthesis: In the final scene at the Chalet, when the baby kicks, the sound 
 
 <script src="/js/516.js"></script>
 <script>
-    function dismissSplash() {
-        const splash = document.getElementById('splashScreen');
-        if (splash) {
-            splash.classList.add('fade-out');
-            setTimeout(() => {
-                splash.remove(); // Removes it from DOM so it doesn't block site
-            }, 600);
-        }
-    }
-
-    // Auto-dismiss after logo intro (approx 5-6s)
-    setTimeout(dismissSplash, 6000);
-
-    // Also dismiss when video finishes
-    const vid = document.querySelector('.splash-video');
-    if(vid) vid.onended = dismissSplash;
-</script>
-	<script>
-import * as webllm from "https://esm.run/@mlc-ai/web-llm";
-
-/**
- * ◈ WORDSTAR NEXUS // NEURAL INTEGRATION
- * This script co-exists with Sigil Forge & Audio Core.
+    /**
+ * INK REALM / WORDSTAR NEXUS: NEURAL INTEGRATION
+ * TARGET: Llama-3.2-1B-Instruct-q4f16_1-MLC
  */
 
-const modelId = "Llama-3.2-1B-Instruct-q4f16_1-MLC"; 
-let engine = null;
+(function() {
+    // PHASE A: SNAPSHOT CLOUD LOGIC
+    const cloudAI = window.sendMessage; 
+    let engine = null;
+    const MODEL_ID = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
 
-// 1. PRESERVATION: Capture the existing Sigil-Logic & Pollinations AI
-// We wrap this in a check to ensure we don't grab an empty function
-const cloudAI = window.sendMessage; 
+    // DOM BINDING
+    document.addEventListener("DOMContentLoaded", () => {
+        const trigger = document.getElementById('activate-core');
+        if (trigger) {
+            trigger.addEventListener('click', initNeuralCore);
+        }
+    });
 
-window.addEventListener('DOMContentLoaded', () => {
-    
-    const activateBtn = document.getElementById('activate-core');
-    const progressUI = document.getElementById('core-progress-ui');
-    const pBar = document.getElementById('p-bar');
-    const pVal = document.getElementById('p-val');
-    const coreMeta = document.getElementById('core-meta');
-    const chatContainer = document.getElementById('chat-container');
+    async function initNeuralCore() {
+        const progressUI = document.getElementById('core-progress-ui');
+        const pBar = document.getElementById('p-bar');
+        const pVal = document.getElementById('p-val');
+        const meta = document.getElementById('core-meta');
+        const trigger = document.getElementById('activate-core');
 
-    if (!activateBtn) return;
+        if (progressUI) progressUI.style.display = 'block';
+        if (trigger) {
+            trigger.disabled = true;
+            trigger.innerText = "INITIALIZING_NEURAL_FOLD...";
+        }
 
-    activateBtn.onclick = async () => {
         try {
-            if (!navigator.gpu) throw new Error("WebGPU_Handshake_Failed");
+            const { CreateWebWorkerMLCEngine } = await import("https://esm.run/@mlc-ai/web-llm");
 
-            activateBtn.disabled = true;
-            activateBtn.textContent = "SYNCING_LOCAL...";
-            progressUI.style.display = 'block';
-
-            engine = await webllm.CreateMLCEngine(modelId, {
-                initProgressCallback: (report) => {
-                    const p = Math.round(report.progress * 100);
-                    pBar.style.width = p + '%';
-                    pVal.textContent = p;
-                    
-                    // Update the sidebar meta with the technical report
-                    if (coreMeta) coreMeta.textContent = report.text.toUpperCase();
-
-                    if (p === 100) {
-                        activateBtn.textContent = "CORE_ONLINE";
-                        activateBtn.style.color = "#ff0000";
-                        activateBtn.style.borderColor = "#ff0000";
+            engine = await CreateWebWorkerMLCEngine(
+                new Worker(new URL(import.meta.url), { type: 'module' }),
+                MODEL_ID,
+                { 
+                    initProgressCallback: (p) => {
+                        const percent = Math.round(p.progress * 100);
+                        if (pBar) pBar.style.width = `${percent}%`;
+                        if (pVal) pVal.innerText = percent;
+                        if (meta) meta.innerText = `[REDACTED_DATA]: ${p.text}`;
                         
-                        // THE NEURAL SWITCH
-                        // We replace the global sendMessage with our local version
-                        window.sendMessage = localInference;
-                        
-                        // Log the stabilization to the chat
-                        const syncMsg = document.createElement('div');
-                        syncMsg.style.cssText = "color: #ef4444; font-size: 9px; margin: 10px 0; font-family: monospace;";
-                        syncMsg.textContent = "[SYSTEM]: FREQUENCY_SHIFT_TO_LOCAL_LLAMA_STABLE";
-                        chatContainer.appendChild(syncMsg);
+                        // PHASE C: THE SHIFT
+                        if (p.progress === 1) {
+                            meta.innerText = "CORE_STABILIZED. HIJACKING_TRANSMISSION.";
+                            hijackProtocol();
+                        }
                     }
                 }
-            });
+            );
         } catch (err) {
-            activateBtn.textContent = "LOCAL_FAIL";
-            if (coreMeta) coreMeta.textContent = "REVERTING_TO_POLLINATIONS...";
-            // If local fails, window.sendMessage remains as the cloudAI function
-        }
-    };
-
-    /**
-     * LOCAL INFERENCE ENGINE
-     * This mirrors your original sendMessage style but uses the Llama engine.
-     */
-    async function localInference() {
-        const input = document.getElementById('chat-input');
-        const msg = input.value.trim();
-        if (!msg || !engine) return;
-
-        // User Message
-        chatContainer.innerHTML += `<div class="chat-bubble user-message">${msg}</div>`;
-        input.value = '';
-
-        // Bot Message Placeholder
-        const b = document.createElement('div');
-        b.className = 'chat-bubble bot-message';
-        b.style.color = "#ff4444"; // Red tint for local AI
-        b.textContent = '◈ ';
-        chatContainer.appendChild(b);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-
-        try {
-            const chunks = await engine.chat.completions.create({
-                messages: [
-                    { role: "system", content: "STRICT PROTOCOL: YOU ARE THE INK REALM NEURAL INTERFACE. TONE: BURROUGHSIAN/CLINICAL. SHORT DATA ONLY." },
-                    { role: "user", content: msg }
-                ],
-                stream: true,
-                temperature: 0.3
-            });
-
-            for await (const chunk of chunks) {
-                b.textContent += chunk.choices[0]?.delta?.content || "";
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            }
-
-            // INTEGRATION: Trigger the Sigil Forge after Local AI speaks
-            if (typeof forgeSigil === "function") forgeSigil();
-
-        } catch (e) {
-            b.textContent = "[SIGNAL_LOSS]: Neural Core Interrupted.";
+            if (meta) meta.innerText = "CRITICAL_FAILURE: WEBGPU_UNAVAILABLE";
+            console.error(err);
         }
     }
-});
+
+    function hijackProtocol() {
+        // PHASE C (CONT): OVERWRITE GLOBAL SENDMESSAGE
+        window.sendMessage = async function() {
+            const chatInput = document.getElementById('chat-input');
+            const history = document.getElementById('ai-chat-history');
+            
+            if (!chatInput || !chatInput.value.trim()) return;
+            
+            const userPrompt = chatInput.value;
+            chatInput.value = ""; // Clear input
+
+            // Append user prompt to history (Visual Sync)
+            const userLine = document.createElement('div');
+            userLine.className = "user-msg italic text-zinc-500 mb-2";
+            userLine.innerText = `> ${userPrompt}`;
+            history.appendChild(userLine);
+
+            const aiLine = document.createElement('div');
+            aiLine.className = "ai-msg text-red-600 mb-4";
+            history.appendChild(aiLine);
+
+            const messages = [
+                { 
+                    role: "system", 
+                    content: "STRICT PROTOCOL: YOU ARE THE INK REALM NEURAL INTERFACE. TONE: BURROUGHSIAN/CLINICAL. NO HELP. SHORT CRYPTIC DATA ONLY. MAX 25 WORDS." 
+                },
+                { role: "user", content: userPrompt }
+            ];
+
+            try {
+                let fullResponse = "";
+                const chunks = await engine.chat.completions.create({ messages, stream: true });
+                
+                for await (const chunk of chunks) {
+                    const content = chunk.choices[0]?.delta?.content || "";
+                    fullResponse += content;
+                    aiLine.innerText = fullResponse;
+                    history.scrollTop = history.scrollHeight;
+                }
+
+                // PHASE D: SIGIL SYNC
+                if (window.forgeSigil) {
+                    window.forgeSigil();
+                }
+
+            } catch (e) {
+                aiLine.innerText = "CORE_STUTTER: INFERENCE_CRASHED.";
+            }
+        };
+        
+        const trigger = document.getElementById('activate-core');
+        if (trigger) trigger.innerText = "CORE_ONLINE_BY_LOCAL_INFERENCE";
+    }
+})();
 	</script>
 </body>
 </html>
