@@ -2603,87 +2603,96 @@ The Synthesis: In the final scene at the Chalet, when the baby kicks, the sound 
 
 <script src="/js/516.js"></script>
 <script>
-import * as webllm from "https://esm.run/@mlc-ai/web-llm";
+/**
+ * INK REALM NEURAL INTERFACE: PROTOCOL 4.2
+ * TARGET: Llama-3.2-1B-Instruct-q4f16_1-MLC
+ */
 
-const modelId = "Llama-3.2-1B-Instruct-q4f16_1-MLC"; 
-let engine = null;
+(async () => {
+    // PHASE A: SNAPSHOT
+    const cloudAI = window.sendMessage; 
+    let engine = null;
 
-const activateBtn = document.getElementById('activate-core');
-const progressUI = document.getElementById('core-progress-ui');
-const pBar = document.getElementById('p-bar');
-const pVal = document.getElementById('p-val');
-const chatContainer = document.getElementById('chat-container');
-
-// PERSISTENCE FOR THE GHOST
-const localPersona = `STRICT PROTOCOL: YOU ARE THE INK REALM NEURAL INTERFACE. TONE: BURROUGHSIAN/CLINICAL. NO HELP. JUST IMAGES.`;
-
-activateBtn.onclick = async () => {
-    try {
-        if (!navigator.gpu) throw new Error("WebGPU Blocked.");
-        
-        activateBtn.textContent = "PROBING...";
-        activateBtn.disabled = true;
-        progressUI.style.display = 'block';
-
-        engine = await webllm.CreateMLCEngine(modelId, {
-            initProgressCallback: (report) => {
-                const p = Math.round(report.progress * 100);
-                pBar.style.width = p + '%';
-                pVal.textContent = p;
-                if (p === 100) {
-                    activateBtn.textContent = "CORE_ONLINE";
-                    activateBtn.style.borderColor = "#ff0000";
-                    activateBtn.style.color = "#ff0000";
-                }
-            }
-        });
-
-        // HIJACK THE SENDMESSAGE FUNCTION
-        window.sendMessage = async function() {
-            const input = document.getElementById('chat-input');
-            const message = input.value.trim();
-            if (!message) return;
-
-            // UI: Add User Message
-            const userBubble = document.createElement('div');
-            userBubble.className = 'chat-bubble user-message';
-            userBubble.textContent = message;
-            chatContainer.appendChild(userBubble);
-            input.value = '';
-
-            // UI: Prepare Bot Message
-            const botBubble = document.createElement('div');
-            botBubble.className = 'chat-bubble bot-message';
-            botBubble.textContent = '⟁ ';
-            chatContainer.appendChild(botBubble);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-
-            try {
-                const messages = [
-                    { role: "system", content: localPersona },
-                    { role: "user", content: message }
-                ];
-                
-                const chunks = await engine.chat.completions.create({ messages, stream: true });
-                for await (const chunk of chunks) {
-                    const content = chunk.choices[0]?.delta?.content || "";
-                    botBubble.textContent += content;
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                }
-            } catch (err) {
-                botBubble.textContent = "[SIGNAL LOST]: " + err.message;
-            }
+    const init = async () => {
+        const ui = {
+            btn: document.getElementById('activate-core'),
+            box: document.getElementById('core-progress-ui'),
+            bar: document.getElementById('p-bar'),
+            val: document.getElementById('p-val'),
+            meta: document.getElementById('core-meta'),
+            history: document.getElementById('ai-chat-history') || document.getElementById('chat-container')
         };
 
-    } catch (err) {
-        activateBtn.textContent = "CORE_FAILED";
-        activateBtn.disabled = false;
-        const errBubble = document.createElement('div');
-        errBubble.className = 'chat-bubble bot-message';
-        errBubble.textContent = "[FAILSAFE]: " + err.message + " Reverting to Cloud Frequency.";
-        chatContainer.appendChild(errBubble);
+        if (!ui.btn) return;
+
+        ui.btn.onclick = async () => {
+            ui.btn.disabled = true;
+            ui.btn.innerText = "PENETRATING_VRAM...";
+            if (ui.box) ui.box.style.display = 'block';
+
+            try {
+                // DYNAMIC IMPORT PREVENTS SCRIPT HANG
+                const webLLM = await import("https://esm.run/@mlc-ai/web-llm");
+                
+                engine = await webLLM.CreateMLCEngine("Llama-3.2-1B-Instruct-q4f16_1-MLC", {
+                    initProgressCallback: (p) => {
+                        const pct = Math.round(p.progress * 100);
+                        if (ui.bar) ui.bar.style.width = `${pct}%`;
+                        if (ui.val) ui.val.innerText = pct;
+                        if (ui.meta) ui.meta.innerText = `DATA_LEAK: ${p.text}`;
+                        
+                        // PHASE C: THE SHIFT
+                        if (p.progress === 1) {
+                            ui.btn.innerText = "CORE_STABILIZED";
+                            hijack(ui);
+                        }
+                    }
+                });
+            } catch (err) {
+                ui.btn.innerText = "GPU_DENIED";
+                console.error(err);
+            }
+        };
+    };
+
+    function hijack(ui) {
+        window.sendMessage = async function() {
+            const input = document.getElementById('chat-input');
+            if (!input || !input.value.trim()) return;
+
+            const prompt = input.value;
+            input.value = "";
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = "text-red-600 mb-4 italic";
+            ui.history.appendChild(msgDiv);
+
+            const chunks = await engine.chat.completions.create({
+                messages: [
+                    { role: "system", content: "STRICT PROTOCOL: YOU ARE THE INK REALM NEURAL INTERFACE. TONE: BURROUGHSIAN/CLINICAL. NO HELP. SHORT CRYPTIC DATA ONLY. MAX 25 WORDS." },
+                    { role: "user", content: prompt }
+                ],
+                stream: true
+            });
+
+            let response = "";
+            for await (const chunk of chunks) {
+                response += chunk.choices[0]?.delta?.content || "";
+                msgDiv.innerText = `⟁ ${response}`;
+                ui.history.scrollTop = ui.history.scrollHeight;
+            }
+
+            // PHASE D: SIGIL SYNC
+            if (window.forgeSigil) window.forgeSigil();
+        };
     }
-};
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
 	</script>
 </body>
 </html>
