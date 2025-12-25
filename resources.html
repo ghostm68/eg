@@ -2625,27 +2625,26 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm";
 const modelId = "Llama-3.2-1B-Instruct-q4f16_1-MLC"; 
 let engine = null;
 
-// The logic is wrapped to prevent "Unresponsive Button" errors
 window.addEventListener('DOMContentLoaded', () => {
     
+    // ◈ SNAPSHOT: Capture the current cloud AI function
+    const cloudAI = window.sendMessage;
+
     const activateBtn = document.getElementById('activate-core');
     const progressUI = document.getElementById('core-progress-ui');
     const pBar = document.getElementById('p-bar');
     const pVal = document.getElementById('p-val');
     const coreMeta = document.getElementById('core-meta');
-    const chatHistory = document.getElementById('ai-chat-history'); // Ensure this ID is correct in your chat div
+    const chatHistory = document.getElementById('ai-chat-history');
 
-    if (!activateBtn) {
-        console.error("CRITICAL: #activate-core button not found in the DOM.");
-        return;
-    }
+    if (!activateBtn) return;
 
     activateBtn.onclick = async () => {
         try {
             if (!navigator.gpu) throw new Error("WebGPU_NOT_SUPPORTED");
 
             activateBtn.disabled = true;
-            activateBtn.textContent = "INITIALIZING...";
+            activateBtn.textContent = "SYNCING_LOCAL...";
             progressUI.style.display = 'block';
 
             engine = await webllm.CreateMLCEngine(modelId, {
@@ -2656,20 +2655,27 @@ window.addEventListener('DOMContentLoaded', () => {
                     coreMeta.textContent = report.text.toUpperCase();
 
                     if (p === 100) {
-                        activateBtn.textContent = "CORE_ONLINE";
-                        activateBtn.style.color = "#dc2626"; // Tailwind red-600
+                        activateBtn.textContent = "LOCAL_CORE_ONLINE";
+                        activateBtn.style.color = "#ef4444";
                         coreMeta.textContent = "STABLE // HANDSHAKE_OK";
                         
-                        // HIJACK: Swap the global sendMessage to the Local AI
+                        // ◈ THE HIJACK: Only happens here. 
+                        // Before this line, window.sendMessage is still the cloud AI.
                         window.sendMessage = localInference;
+                        
+                        chatHistory.innerHTML += `<div style="color: #ef4444; font-size: 9px; margin: 10px 0;">[SYSTEM]: FREQUENCY_SHIFT_LOCAL_LLAMA</div>`;
                     }
                 }
             });
 
         } catch (err) {
-            activateBtn.textContent = "CORE_FAILED";
-            coreMeta.textContent = err.message.toUpperCase();
+            // ◈ FAILSAFE: If the local core fails, we revert the button 
+            // and ensure window.sendMessage stays tuned to the Cloud AI.
+            activateBtn.textContent = "CORE_UNAVAILABLE";
             activateBtn.disabled = false;
+            coreMeta.textContent = "REVERTING_TO_CLOUD_AI...";
+            window.sendMessage = cloudAI; 
+            console.error("Local sync failed, staying on cloud:", err);
         }
     };
 
