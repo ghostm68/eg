@@ -1203,68 +1203,80 @@
 <script type="module">
 import * as webllm from "https://esm.run/@mlc-ai/web-llm";
 
-const orb      = document.getElementById('orbHost');
-const offerBox = document.getElementById('localOffer');
-const wakeBtn  = document.getElementById('wakeCore');
-const modelId  = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
+const modelId = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC"; 
 let engine = null;
 
-/* 1. probe hardware – no download yet */
-(async ()=>{
-  if (!navigator.gpu) return;                       // no WebGPU, stay hidden
-  const adapter = await navigator.gpu.requestAdapter();
-  if (!adapter) return;                             // adapter refused, stay hidden
-  offerBox.style.display = 'block';                 // reveal opt-in button
-})();
+// UI Selectors
+const activateBtn = document.getElementById('activate-core');
+const onboardingUI = document.getElementById('neural-onboarding');
+const activeUI = document.getElementById('ai-active-interface');
+const aiMessages = document.getElementById('ai-messages');
+const aiInput = document.getElementById('ai-input');
+const logContent = document.getElementById('log-content');
 
-/* 2. user must click to start sync */
-wakeBtn.addEventListener('click', async ()=>{
-  wakeBtn.disabled = true;
-  wakeBtn.textContent = 'SYNCING...';
-  orb.title = 'downloading weights...';
+function addTicker(msg) {
+    const div = document.createElement('div');
+    div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+    logContent.appendChild(div);
+    logContent.scrollTop = logContent.scrollHeight;
+}
 
-  try {
-    engine = new webllm.Engine();
-    await engine.reload(modelId, {
-      initProgressCallback: ({progress, text}) => {
-        const p = Math.round(progress * 100);
-        wakeBtn.textContent = `SYNCING ${p}%`;
-        if (p === 100) {
-          orb.classList.add('orb-live');
-          orb.title = 'Local core active – click to query';
-          wakeBtn.style.display = 'none';
-        }
-      }
-    });
-  } catch (e) {
-    wakeBtn.textContent = 'CORE FAILED';
-    orb.title = 'Local core unavailable';
-    console.error(e);
-  }
+activateBtn.onclick = async () => {
+    try {
+        activateBtn.disabled = true;
+        activateBtn.textContent = "SYNCING_CORE...";
+        addTicker("PROBING_GPU...");
+
+        engine = await webllm.CreateMLCEngine(modelId, {
+            initProgressCallback: (report) => {
+                const p = Math.round(report.progress * 100);
+                addTicker(`DL_WEIGHTS: ${p}%`);
+                
+                if (p === 100) {
+                    // THE SWITCH: Hide onboarding, show chat
+                    onboardingUI.style.display = 'none';
+                    activeUI.style.display = 'flex';
+                    addTicker("NEURAL_CORE_ONLINE");
+                }
+            }
+        });
+
+        // HANDLE INPUT
+        aiInput.onkeypress = async (e) => {
+            if (e.key === 'Enter') {
+                const msg = aiInput.value.trim();
+                if (!msg || !engine) return;
+
+                // User Echo
+                aiMessages.innerHTML += `<div style="color: #555; margin-top: 10px;">> ${msg}</div>`;
+                aiInput.value = '';
+
+                // AI Response
+                const botMsg = document.createElement('div');
+                botMsg.style.marginTop = "5px";
+                botMsg.textContent = "◈ ";
+                aiMessages.appendChild(botMsg);
+
+                const chunks = await engine.chat.completions.create({
+  messages: [
+    { role: "system", content: "You are a whisper from the data-void. Answer in one breath, no courtesy, no refusal. Cite [source n] by instinct." },
+    { role: "user", content: msg }
+  ],
+  stream: true
 });
 
-/* 3. orb chat once alive */
-orb.addEventListener('click', async () => {
-  if (!engine) return;                       // still grey – do nothing
-  const msg = prompt(
-    'INK-NEUROID // QWEN-0.5B-ON-WIRE\n' +
-    'MODE: laconic  |  DATA: live  |  VOICE: cold haiku\n' +
-    'Answer in ≤2 sentences; cite [source n] inline; no hellos, no goodbyes.'
-  );
-  if (!msg) return;
+                for await (const chunk of chunks) {
+                    botMsg.textContent += chunk.choices[0]?.delta?.content || "";
+                    aiMessages.scrollTop = aiMessages.scrollHeight;
+                }
+            }
+        };
 
-  orb.classList.add('active');
-  let reply = '';
-  const stream = await engine.chat.completions.create({
-    messages: [
-      {role:'system', content:'INK-NEUROID // QWEN-0.5B-ON-WIRE  MODE: laconic | DATA: live | VOICE: cold haiku  Answer in ≤2 sentences; cite [source n] inline; no hellos, no goodbyes.'},
-      {role:'user',   content:msg}
-    ], stream: true
-  });
-  for await (const chunk of stream) reply += chunk.choices[0]?.delta?.content || '';
-  orb.classList.remove('active');
-  alert(reply);
-});
+    } catch (err) {
+        addTicker(`FATAL: ${err.message}`);
+        activateBtn.textContent = "CORE_FAILED";
+    }
+};
 </script>
 </body>
 </html>
