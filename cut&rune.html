@@ -581,7 +581,7 @@
     box-shadow: 0 0 20px rgba(255, 0, 51, 0.6);
     border-color: #fff;
 }
-
+	
 /* THE EXPANDED STATE (Toggled by JS) */
 #ton-qr.expanded {
     transform: scale(3.5); /* 3.5x Size */
@@ -591,23 +591,35 @@
     cursor: zoom-out;
 } 
 	/* ----- WebLLM Qwen-0.5B  ----- */
-#ai-orb{
-  display:inline-block;          /* sit on the same line */
-  margin-left:0.6rem;            /* breathing room */
-  width:28px;height:28px;        /* same size as your existing orb */
+/* ----- Stealth Orb (idle) ----- */
+.orb-container svg {
+  stroke: #888;                 /* neutral grey */
+  filter: drop-shadow(0 0 4px rgba(255,255,255,.15));
+  animation: slow-spin 10s linear infinite;
+}
+.orb-triangle { stroke: #ccc; }
+
+/* ----- Live Orb (after core OK) ----- */
+.orb-live .orb-circle  { stroke: #ff0033; }
+.orb-live .orb-triangle{ stroke: #fff; }
+.orb-live svg{
+  animation: slow-spin 10s linear infinite, pulse-glow 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 12px rgba(255,0,51,.9));
+}
+@keyframes pulse-glow{
+  0%,100%{ transform: scale(1); }
+  50%{ transform: scale(1.08); }
+}	
+.orb-container::after{            /* tiny grey dot underneath */
+  content:"";
+  position:absolute;
+  bottom:-8px; left:50%;
+  transform:translateX(-50%);
+  width:6px; height:6px;
+  background:#666;
   border-radius:50%;
-  background:#ff0033;
-  box-shadow:0 0 6px #ff0033;
-  cursor:pointer;
-  transition:all .2s ease;
-  vertical-align:middle;
 }
-#ai-orb:hover{transform:scale(1.15);}
-#ai-orb.active{animation:pulse .8s infinite;}
-@keyframes pulse{
-  0%,100%{box-shadow:0 0 6px #ff0033;}
-  50%{box-shadow:0 0 12px #ff0033;}
-}
+.orb-live::after{ display:none; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
@@ -616,7 +628,15 @@
 <body>
     
     <div id="crt-overlay"><div class="scanline"></div></div>
-    <h1>THE THIRD MIND DESK<span id="ai-orb"></span></h1> <img id="ton-qr" 
+    <h1>
+  <div class="orb-container" id="orbHost" title="Click to activate local core">
+    <svg class="glitch-orb" viewBox="0 0 100 100">
+      <circle class="orb-circle" cx="50" cy="50" r="45"/>
+      <polygon class="orb-triangle" points="50,25 78,75 22,75"/>
+    </svg>
+  </div>
+  THE THIRD MIND DESK
+</h1> <img id="ton-qr" 
          src="https://raw.githubusercontent.com/ghostm68/pantheon/main/inkrealm.ton03.jpeg" 
          alt="TON WALLET"
          onclick="this.classList.toggle('expanded')"
@@ -1153,36 +1173,44 @@
 		/* ----------  WebLLM Qwen-0.5B  ---------- */
 import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.46";
 
-const orb   = document.getElementById('ai-orb');
+const orb   = document.getElementById('orbHost');   // ← same ID as in HTML
 const model = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
 let   engine = null;
 
 async function initAI(){
-  orb.title="loading…";
+  orb.title = "loading…";
   engine = new webllm.Engine();
   await engine.reload(model);
-  orb.title="Qwen-0.5B ready – click to speak";
-  orb.classList.add('active');
+
+  // ----- visual switch -----
+  orb.classList.add('orb-live');
+  orb.title = "Local core active – click to query";
 }
+
 initAI();               // auto-load in background
 
-orb.addEventListener('click', async ()=>{
-  if(!engine){alert('Model still loading…');return;}
+orb.addEventListener('click', async () => {
+  if (!engine){ alert('Model still loading…'); return; }
+
   const msg = prompt('INK-NEUROID // QWEN-0.5B-ON-WIRE  MODE: laconic | DATA: live | VOICE: cold haiku  Answer in ≤2 sentences; cite [source n] inline; no hellos, no goodbyes.');
-  if(!msg)return;
+  if (!msg) return;
+
   orb.classList.add('active');
-  let reply='';
+  let reply = '';
   const stream = await engine.chat.completions.create({
-    messages:[
-      {role:'system',content:'INK-NEUROID // QWEN-0.5B-ON-WIRE  MODE: laconic | DATA: live | VOICE: cold haiku  Answer in ≤2 sentences; cite [source n] inline; no hellos, no goodbyes.'},
-      {role:'user',content:msg}
-    ],stream:true});
-  for await(const chunk of stream){
-    const token = chunk.choices[0]?.delta?.content ||'';
-    reply+=token;
+    messages: [
+      {role:'system', content:'INK-NEUROID // QWEN-0.5B-ON-WIRE  MODE: laconic | DATA: live | VOICE: cold haiku  Answer in ≤2 sentences; cite [source n] inline; no hellos, no goodbyes.'},
+      {role:'user', content:msg}
+    ],
+    stream: true
+  });
+
+  for await (const chunk of stream){
+    reply += chunk.choices[0]?.delta?.content || '';
   }
+
   orb.classList.remove('active');
-  alert(reply);           // or inject into any textarea you like
+  alert(reply);
 });
     </script>
 </body>
