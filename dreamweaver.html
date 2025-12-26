@@ -132,6 +132,22 @@ Private personal information, ព័ត៌មានផ្ទាល់ខ្ល�
       #custom-cursor { display: none; }
       * { cursor: auto !important; }
     }
+	    #cursor-trail {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+    }
+    .cursor-particle {
+      position: absolute;
+      width: 8px; height: 8px;
+      border: 2px solid #ff0000;
+      background-color: #ffffff;
+      border-radius: 1px;
+      pointer-events: none;
+    }
+
+    /* Hide default cursor */
+    html, * { cursor: none !important; }
 
     /* ---------- SUBTLE STATIC/SCANLINE OVERLAY ---------- */
     .static-overlay {
@@ -536,12 +552,13 @@ Private personal information, ព័ត៌មានផ្ទាល់ខ្ល�
 
   </style>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 </head>
 <body>
 
   <!-- CUSTOM CURSOR ELEMENT -->
   <div id="custom-cursor"></div>
-
+<div id="cursor-trail"></div>
   <!-- Background Layer for Floating Images -->
   <div id="floating-container"></div>
 
@@ -973,5 +990,49 @@ gloss aⓘry=blievend→lasting | bleives→believes | brumal→wintry
     });
 
   </script>
+	<script>
+		// How many boxes in the trail
+const PARTICLE_COUNT = 10;
+const trailContainer = document.getElementById('cursor-trail');
+const particles = [];
+let mouseX = 0;
+let mouseY = 0;
+
+// 1. Create the trail particles
+for (let i = 0; i < PARTICLE_COUNT; i++) {
+  const particle = document.createElement('div');
+  particle.classList.add('cursor-particle');
+  trailContainer.appendChild(particle);
+  particles.push({
+    element: particle,
+    // Each particle gets a slightly longer delay for a trail effect
+    x: mouseX,
+    y: mouseY,
+    tween: gsap.quickTo(particle, { x: 'px', y: 'px', duration: 0.5, ease: 'power2.out' })
+  });
+}
+
+// 2. Update mouse position
+window.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+});
+
+// 3. Animate particles with a staggered delay
+function updateTrail() {
+  particles.forEach((p, index) => {
+    // Use GSAP's quickTo for high-performance updates[citation:5][citation:8]
+    p.tween(mouseX, mouseY);
+  });
+  requestAnimationFrame(updateTrail);
+}
+updateTrail();
+
+// 4. (Optional) Hide trail on mobile
+if ('matchMedia' in window && window.matchMedia('(hover: none) and (pointer: coarse)').matches) {
+  trailContainer.style.display = 'none';
+  document.documentElement.style.cursor = 'auto';
+}
+	</script>
 </body>
 </html>
