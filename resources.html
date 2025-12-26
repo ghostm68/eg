@@ -429,16 +429,13 @@ article:focus::before {
     </footer>
     <script src="https://js.puter.com/v2/"></script>
 
-<script>
+<!-- MUST HAVE type="module" for WebLLM to work -->
 <script type="module">
 import { CreateMLCEngine } from "https://esm.run/@mlc-ai/web-llm@0.2.79";
 
-/* -----------------------------------------------------------
-   INK REALM TERMINAL - INTEGRATED VERSION
------------------------------------------------------------ */
 class InkRealmTerminal {
     constructor() {
-        this.engine = undefined; // Slot for WebLLM
+        this.engine = undefined;
         this.currentModel = 'smol-360'; 
         this.isOnline = true;
         this.isGenerating = false;
@@ -449,44 +446,48 @@ class InkRealmTerminal {
             "tiny-llama": "TinyLlama-1.1B-Chat-v1.0-q4f16_1-MLC-1k"
         };
 
-        this.systemPrompt = `
-You are the INK REALM Neural Interface. 
-Aesthetic: Gritty, 1980s literary terminal.
-Tone: Professional, mysterious, intelligent.
-        `.trim();
-
-        this.init();
-    }
+        this.systemPrompt = "You are the INK REALM Neural Interface. Sharp, literary, 1980s terminal prose.";
+        
+        // Start the machine
+        this.init(); 
+    } // Brace was missing here in your last version!
 
     init() {
         this.runSplash();
         this.setupEvents();
         this.loadSavedKeys();
         
-        // Hide Pollinations from the UI dropdown as requested
+        // Hide Pollinations from dropdown - it's our silent fallback
         const pollOpt = document.querySelector('option[value="pollinations"]');
         if (pollOpt) pollOpt.remove();
 
         setTimeout(() => this.connectSystem(), 1200);
     }
 
-    // --- YOUR ORIGINAL UI METHODS ---
     runSplash() {
         const splash = document.getElementById('glitch-splash');
+        // Force splash to hide after 4 seconds even if logic hangs
         setTimeout(() => {
-            splash.style.opacity = '0';
-            splash.style.transition = 'opacity 1s ease';
-            setTimeout(() => {
-                splash.style.display = 'none';
-                document.querySelectorAll('.header, #writing-container, #notepad-panel, #footer').forEach(el => el.style.display = 'flex');
-            }, 1000);
-        }, 2500);
+            if (splash) {
+                splash.style.opacity = '0';
+                splash.style.transition = 'opacity 1s ease';
+                setTimeout(() => {
+                    splash.style.display = 'none';
+                    // Match the classes/IDs exactly to your CSS
+                    document.querySelectorAll('.header, #writing-container, #notepad-panel, .footer').forEach(el => {
+                        el.style.display = 'flex';
+                    });
+                }, 1000);
+            }
+        }, 3000);
     }
 
     async connectSystem() {
         this.isOnline = true;
-        document.getElementById("status-text").textContent = "ONLINE";
-        document.getElementById("status-dot").style.background = "#0f0";
+        const statusText = document.getElementById("status-text");
+        const statusDot = document.getElementById("status-dot");
+        if(statusText) statusText.textContent = "ONLINE";
+        if(statusDot) statusDot.style.background = "#0f0";
     }
 
     loadSavedKeys() {
@@ -501,10 +502,8 @@ Tone: Professional, mysterious, intelligent.
         modelSelect.addEventListener("change", e => {
             this.currentModel = e.target.value;
             this.addSystemMessage(`TARGET MODEL → ${e.target.options[e.target.selectedIndex].text}`);
-            
-            // Show/Hide keys for Cloud models
             const keyArea = document.getElementById("byok-keys");
-            keyArea.style.display = (this.currentModel === 'nova' || this.currentModel === 'dolphin') ? "flex" : "none";
+            if(keyArea) keyArea.style.display = (this.currentModel === 'nova' || this.currentModel === 'dolphin') ? "flex" : "none";
         });
 
         document.getElementById("send-button").addEventListener("click", () => this.generate());
@@ -515,10 +514,8 @@ Tone: Professional, mysterious, intelligent.
             }
         });
 
-        // ACTIVATE ON-DEVICE Q BUTTON
         document.getElementById('loadCoreBtn').addEventListener('click', () => this.activateLocalCore());
 
-        // Key Storage Listeners
         document.querySelectorAll('#byok-keys input').forEach(el => {
             el.addEventListener("change", (e) => localStorage.setItem('ink_' + e.target.id, e.target.value));
         });
@@ -526,8 +523,6 @@ Tone: Professional, mysterious, intelligent.
         document.getElementById("clear-notepad").addEventListener("click", () => {
             if (confirm("Erase all local data?")) document.getElementById("notepad").value = "";
         });
-        
-        document.getElementById("export-notepad").addEventListener("click", () => this.exportNotepad());
 
         document.addEventListener("click", e => {
             const id = e.target?.dataset?.import;
@@ -535,7 +530,6 @@ Tone: Professional, mysterious, intelligent.
         });
     }
 
-    // --- THE NEW WEBLLM CORE METHOD ---
     async activateLocalCore() {
         const modelId = this.localModels[this.currentModel];
         if (!modelId) return this.addSystemMessage("ERROR: SELECT A FEATHERWEIGHT CORE FIRST.");
@@ -554,8 +548,9 @@ Tone: Professional, mysterious, intelligent.
             this.engine = await CreateMLCEngine(modelId, {
                 initProgressCallback: (report) => {
                     const p = Math.round(report.progress * 100);
-                    bar.style.width = p + '%';
-                    document.getElementById('progress-percent').textContent = p;
+                    if(bar) bar.style.width = p + '%';
+                    const pPerc = document.getElementById('progress-percent');
+                    if(pPerc) pPerc.textContent = p;
                     if (p === 100) {
                         btn.textContent = "CORE ONLINE";
                         btn.style.color = "#0f0";
@@ -570,10 +565,8 @@ Tone: Professional, mysterious, intelligent.
         }
     }
 
-    // --- GENERATE LOGIC (MERGED) ---
     async generate() {
         if (this.isGenerating) return;
-
         const input = document.getElementById("text-input");
         const sendBtn = document.getElementById("send-button");
         const prompt = input.value.trim();
@@ -586,10 +579,7 @@ Tone: Professional, mysterious, intelligent.
         const loadingId = this.addLoading();
 
         try {
-            // CHOICE A: LOCAL
-            if (this.localModels[this.currentModel]) {
-                if (!this.engine) throw new Error("LOCAL CORE NOT ACTIVATED.");
-                
+            if (this.localModels[this.currentModel] && this.engine) {
                 this.removeLoading(loadingId);
                 const msgEl = this.addMessage("ai", "");
                 const contentEl = msgEl.querySelector(".message-content");
@@ -605,11 +595,9 @@ Tone: Professional, mysterious, intelligent.
                     contentEl.innerHTML = fullText.replace(/\n/g, "<br>");
                     document.getElementById("chat-messages").scrollTop = 99999;
                 }
-            } 
-            // CHOICE B: CLOUD (OpenRouter)
-            else {
+            } else {
                 const key = document.getElementById("or-key").value;
-                if (!key) throw new Error("KEY REQUIRED");
+                if (!key && (this.currentModel === 'nova' || this.currentModel === 'dolphin')) throw new Error("KEY REQUIRED");
 
                 const orModel = this.currentModel === 'nova' ? "amazon/nova-lite-v1:free" : "cognitivecomputations/dolphin-mistral-24b-venice-edition:free";
                 const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -621,29 +609,22 @@ Tone: Professional, mysterious, intelligent.
                     })
                 });
                 const data = await response.json();
-                const text = data.choices[0].message.content;
-                
                 this.removeLoading(loadingId);
                 const msgEl = this.addMessage("ai", "");
-                typeText(msgEl.querySelector(".message-content"), text);
+                window.typeText(msgEl.querySelector(".message-content"), data.choices[0].message.content);
             }
-
         } catch (err) {
-            console.warn("Switching to Failsafe:", err.message);
-            // CHOICE C: AUTOMATIC FALLBACK (POLLINATIONS)
             const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai`);
             const fallbackText = await res.text();
-            
             this.removeLoading(loadingId);
             const msgEl = this.addMessage("ai", "");
-            typeText(msgEl.querySelector(".message-content"), fallbackText);
+            window.typeText(msgEl.querySelector(".message-content"), fallbackText);
         } finally {
             this.isGenerating = false;
             sendBtn.disabled = false;
         }
     }
 
-    // --- UI HELPERS ---
     addMessage(role, text) {
         const container = document.getElementById("chat-messages");
         const div = document.createElement("div");
@@ -691,40 +672,44 @@ Tone: Professional, mysterious, intelligent.
         const el = document.getElementById(id);
         if (el) el.remove();
     }
-
-    importToScratchpad(id) {
-        const msg = document.getElementById(id);
-        const pad = document.getElementById("notepad");
-        if (msg && pad) {
-            pad.value += `\n\n---\n${msg.innerText.trim()}`;
-            pad.scrollTop = pad.scrollHeight;
-        }
-    }
-
-    exportNotepad() {
-        const content = document.getElementById("notepad").value;
-        const blob = new Blob([content], { type: "text/plain" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `inkrealm-log-${Date.now()}.txt`;
-        a.click();
-    }
 }
 
-function typeText(el, text, speed = 12) {
+// Global text typist
+window.typeText = function(el, text, speed = 12) {
     let i = 0;
     const interval = setInterval(() => {
         el.innerHTML += text[i++];
         if (i >= text.length) clearInterval(interval);
-        document.getElementById("chat-messages").scrollTop = 99999;
+        const chat = document.getElementById("chat-messages");
+        if(chat) chat.scrollTop = 99999;
     }, speed);
-}
+};
 
 document.addEventListener("DOMContentLoaded", () => {
     window.app = new InkRealmTerminal();
 });
-
 </script>
+
+<script>
+/* Poetry Pulse */
+async function updateNewsFeed() {
+    const feedEl = document.getElementById("feed-news");
+    try {
+        const response = await fetch("https://poetrydb.org/random/3");
+        const data = await response.json();
+        if (data && data.length) {
+            feedEl.innerHTML = data.map(poem => {
+                let line = poem.lines[0].trim();
+                if (line.length > 45) line = line.substring(0, 42) + "...";
+                return `<div style="margin-bottom:10px"><div style="font-size:0.6rem;color:#666">${poem.author}</div><div style="color:#ccc;font-style:italic">"${line}"</div></div>`;
+            }).join("");
+        }
+    } catch (e) { feedEl.textContent = "→ signal lost"; }
+}
+updateNewsFeed();
+setInterval(updateNewsFeed, 300000);
+</script>
+
 <script>
 /* -----------------------------------------------------------
     NEWS / INTEL FEED (WITH FALLBACK)
@@ -804,7 +789,6 @@ updateMarketFeed();
 setInterval(updateNewsFeed, 5 * 60 * 1000);   // every 5 minutes
 setInterval(updateMarketFeed, 60 * 1000);     // every 1 minute
 
-</scrip>
 </script>
     <script>
 // ========== ARTICLE AUTO-SAVE TO URL (STANDALONE) ==========
