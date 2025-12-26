@@ -403,10 +403,9 @@ article:focus::before {
 </div>
 
 <div class="live-feed">
-
-   <div class="notepad-header" style="border-top:1px solid var(--gray-3)">
-    <span>POETRY PULSE</span>
-</div>
+        <div class="feed-title">POETRY PULSE</div>
+        <div id="feed-news" class="feed-item">scanning…</div>
+    </div>
 
     <div class="feed-section">
         <div class="feed-title">MRKT · TON</div>
@@ -436,44 +435,45 @@ import { CreateMLCEngine } from "https://esm.run/@mlc-ai/web-llm@0.2.79";
 class InkRealmTerminal {
     constructor() {
         this.engine = undefined;
-        this.currentModel = 'smol-360'; 
-        this.isOnline = true;
         this.isGenerating = false;
+        this.currentModel = 'smol-360';
         
         this.localModels = {
-            "smol-360": "SmolLM2-360M-Instruct-q4f32_1-MLC",
+            "smol-360": "SmolLM2-360M-Instruct-q4f16_1-MLC",
             "qwen-tiny": "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
             "tiny-llama": "TinyLlama-1.1B-Chat-v1.0-q4f16_1-MLC-1k"
         };
 
-        this.systemPrompt = "You are the INK REALM Neural Interface. Sharp, literary, 1980s terminal prose.";
-        
-        // Start the machine
-        this.init(); 
-    } // Brace was missing here in your last version!
+        this.systemPrompt = "You are the INK REALM Neural Interface. Gritty, 1980s literary terminal aesthetic. Sharp prose.";
+        this.init();
+    }
 
     init() {
         this.runSplash();
         this.setupEvents();
         this.loadSavedKeys();
-        
-        // Hide Pollinations from dropdown - it's our silent fallback
+        // Hide Pollinations from list (used as silent fallback)
         const pollOpt = document.querySelector('option[value="pollinations"]');
         if (pollOpt) pollOpt.remove();
 
         setTimeout(() => this.connectSystem(), 1200);
+        
+        // Start feeds
+        updatePoetryPulse();
+        updateMarketFeed();
+        setInterval(updatePoetryPulse, 300000);
+        setInterval(updateMarketFeed, 60000);
     }
 
     runSplash() {
         const splash = document.getElementById('glitch-splash');
-        // Force splash to hide after 4 seconds even if logic hangs
         setTimeout(() => {
             if (splash) {
                 splash.style.opacity = '0';
                 splash.style.transition = 'opacity 1s ease';
                 setTimeout(() => {
                     splash.style.display = 'none';
-                    // Match the classes/IDs exactly to your CSS
+                    // Reveal all hidden terminal components
                     document.querySelectorAll('.header, #writing-container, #notepad-panel, .footer').forEach(el => {
                         el.style.display = 'flex';
                     });
@@ -483,7 +483,6 @@ class InkRealmTerminal {
     }
 
     async connectSystem() {
-        this.isOnline = true;
         const statusText = document.getElementById("status-text");
         const statusDot = document.getElementById("status-dot");
         if(statusText) statusText.textContent = "ONLINE";
@@ -491,10 +490,11 @@ class InkRealmTerminal {
     }
 
     loadSavedKeys() {
-        ['or-key', 'v-key', 'groq-key', 'hf-key'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.value = localStorage.getItem('ink_' + id) || "";
-        });
+        const orKey = document.getElementById("or-key");
+        if(orKey) {
+            orKey.value = localStorage.getItem('ink_or_key') || "";
+            orKey.addEventListener("change", (e) => localStorage.setItem('ink_or_key', e.target.value));
+        }
     }
 
     setupEvents() {
@@ -508,21 +508,16 @@ class InkRealmTerminal {
 
         document.getElementById("send-button").addEventListener("click", () => this.generate());
         document.getElementById("text-input").addEventListener("keydown", e => {
-            if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                this.generate();
-            }
+            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); this.generate(); }
         });
 
         document.getElementById('loadCoreBtn').addEventListener('click', () => this.activateLocalCore());
 
-        document.querySelectorAll('#byok-keys input').forEach(el => {
-            el.addEventListener("change", (e) => localStorage.setItem('ink_' + e.target.id, e.target.value));
-        });
-
         document.getElementById("clear-notepad").addEventListener("click", () => {
             if (confirm("Erase all local data?")) document.getElementById("notepad").value = "";
         });
+
+        document.getElementById("export-notepad").addEventListener("click", () => this.exportNotepad());
 
         document.addEventListener("click", e => {
             const id = e.target?.dataset?.import;
@@ -533,23 +528,22 @@ class InkRealmTerminal {
     async activateLocalCore() {
         const modelId = this.localModels[this.currentModel];
         if (!modelId) return this.addSystemMessage("ERROR: SELECT A FEATHERWEIGHT CORE FIRST.");
-
+        
         const btn = document.getElementById('loadCoreBtn');
         const status = document.getElementById('download-status');
         const bar = document.getElementById('progress-bar');
+        const pPerc = document.getElementById('progress-percent');
 
         try {
             btn.disabled = true;
             btn.textContent = "SYNCING...";
             status.style.display = 'block';
-
             if (this.engine) await this.engine.unload();
 
             this.engine = await CreateMLCEngine(modelId, {
                 initProgressCallback: (report) => {
                     const p = Math.round(report.progress * 100);
                     if(bar) bar.style.width = p + '%';
-                    const pPerc = document.getElementById('progress-percent');
                     if(pPerc) pPerc.textContent = p;
                     if (p === 100) {
                         btn.textContent = "CORE ONLINE";
@@ -579,41 +573,39 @@ class InkRealmTerminal {
         const loadingId = this.addLoading();
 
         try {
+            // PATH 1: LOCAL
             if (this.localModels[this.currentModel] && this.engine) {
                 this.removeLoading(loadingId);
                 const msgEl = this.addMessage("ai", "");
                 const contentEl = msgEl.querySelector(".message-content");
-                
                 const chunks = await this.engine.chat.completions.create({
                     messages: [{ role: "system", content: this.systemPrompt }, { role: "user", content: prompt }],
                     stream: true,
                 });
-
                 let fullText = "";
                 for await (const chunk of chunks) {
                     fullText += chunk.choices[0]?.delta?.content || "";
                     contentEl.innerHTML = fullText.replace(/\n/g, "<br>");
                     document.getElementById("chat-messages").scrollTop = 99999;
                 }
-            } else {
+            } 
+            // PATH 2: CLOUD (OpenRouter)
+            else if (this.currentModel === 'nova' || this.currentModel === 'dolphin') {
                 const key = document.getElementById("or-key").value;
-                if (!key && (this.currentModel === 'nova' || this.currentModel === 'dolphin')) throw new Error("KEY REQUIRED");
-
-                const orModel = this.currentModel === 'nova' ? "amazon/nova-lite-v1:free" : "cognitivecomputations/dolphin-mistral-24b-venice-edition:free";
+                if (!key) throw new Error("KEY REQUIRED");
+                const mId = this.currentModel === 'nova' ? "amazon/nova-lite-v1:free" : "cognitivecomputations/dolphin-mistral-24b-venice-edition:free";
                 const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                     method: "POST",
                     headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        model: orModel,
-                        messages: [{role: "system", content: this.systemPrompt}, {role: "user", content: prompt}]
-                    })
+                    body: JSON.stringify({ model: mId, messages: [{role: "system", content: this.systemPrompt}, {role: "user", content: prompt}] })
                 });
                 const data = await response.json();
                 this.removeLoading(loadingId);
                 const msgEl = this.addMessage("ai", "");
                 window.typeText(msgEl.querySelector(".message-content"), data.choices[0].message.content);
-            }
+            } else { throw new Error("FALLBACK"); }
         } catch (err) {
+            // PATH 3: POLLINATIONS FALLBACK
             const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai`);
             const fallbackText = await res.text();
             this.removeLoading(loadingId);
@@ -629,19 +621,12 @@ class InkRealmTerminal {
         const container = document.getElementById("chat-messages");
         const div = document.createElement("div");
         div.className = `message ${role}`;
-        const meta = role === "user" ? "USER" : "TERMINAL";
-
+        const header = role === "user" ? "USER" : "TERMINAL";
         if (role === "ai") {
             const id = "msg-" + Math.random().toString(36).slice(2);
-            div.innerHTML = `
-                <div class="message-header">${meta}<span class="notepad-btn" data-import="${id}">→ PAD</span></div>
-                <div class="message-content" id="${id}">${text}</div>
-            `;
+            div.innerHTML = `<div class="message-header">${header}<span class="notepad-btn" data-import="${id}">→ PAD</span></div><div class="message-content" id="${id}">${text}</div>`;
         } else {
-            div.innerHTML = `
-                <div class="message-header">${meta}</div>
-                <div class="message-content">${text.replace(/\n/g, "<br>")}</div>
-            `;
+            div.innerHTML = `<div class="message-header">${header}</div><div class="message-content">${text.replace(/\n/g, "<br>")}</div>`;
         }
         container.appendChild(div);
         container.scrollTop = container.scrollHeight;
@@ -668,13 +653,27 @@ class InkRealmTerminal {
         return id;
     }
 
-    removeLoading(id) {
-        const el = document.getElementById(id);
-        if (el) el.remove();
+    removeLoading(id) { const el = document.getElementById(id); if (el) el.remove(); }
+    
+    importToScratchpad(id) {
+        const msg = document.getElementById(id);
+        const pad = document.getElementById("notepad");
+        if (msg && pad) {
+            pad.value += `\n\n---\n${msg.innerText.trim()}`;
+            pad.scrollTop = pad.scrollHeight;
+        }
+    }
+
+    exportNotepad() {
+        const blob = new Blob([document.getElementById("notepad").value], { type: "text/plain" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `inkrealm-log-${Date.now()}.txt`;
+        a.click();
     }
 }
 
-// Global text typist
+// Global Text Typist
 window.typeText = function(el, text, speed = 12) {
     let i = 0;
     const interval = setInterval(() => {
@@ -684,6 +683,27 @@ window.typeText = function(el, text, speed = 12) {
         if(chat) chat.scrollTop = 99999;
     }, speed);
 };
+
+// Global Feed Handlers
+async function updatePoetryPulse() {
+    const feedEl = document.getElementById("feed-news");
+    if (!feedEl) return;
+    try {
+        const res = await fetch("https://poetrydb.org/random/3");
+        const data = await res.json();
+        // Uses simple text strings to preserve the .feed-item styling
+        feedEl.innerHTML = data.map(p => `→ "${p.lines[0].trim().substring(0,35)}"<br><span style="color:#666;font-size:0.6rem">— ${p.author}</span>`).join("<br><br>");
+    } catch { feedEl.textContent = "→ signal lost"; }
+}
+
+async function updateMarketFeed() {
+    try {
+        const res = await fetch("https://api.coingecko.com/price/the-open-network?vs_currencies=usd"); // Revised endpoint
+        const data = await res.json();
+        const price = data["the-open-network"]?.usd || "0.00";
+        document.getElementById("feed-market").textContent = `TON $${price}`;
+    } catch { document.getElementById("feed-market").textContent = "TON — no signal"; }
+}
 
 document.addEventListener("DOMContentLoaded", () => {
     window.app = new InkRealmTerminal();
@@ -710,86 +730,7 @@ updateNewsFeed();
 setInterval(updateNewsFeed, 300000);
 </script>
 
-<script>
-/* -----------------------------------------------------------
-    NEWS / INTEL FEED (WITH FALLBACK)
------------------------------------------------------------ */
 
-/* -----------------------------------------------------------
-    POETRY PULSE — Dynamic Literary Feed (via PoetryDB)
------------------------------------------------------------ */
-async function updateNewsFeed() {
-    const feedEl = document.getElementById("feed-news");
-    if (!feedEl) return;
-
-    try {
-        // Fetches 3 random poem objects
-        const response = await fetch("https://poetrydb.org/random/3");
-        
-        if (!response.ok) throw new Error("PoetryDB Offline");
-        const data = await response.json();
-
-        if (data && data.length) {
-            feedEl.innerHTML = data.map(poem => {
-                // Get the title and the first line of the poem
-                const title = poem.title.toUpperCase();
-                const author = poem.author;
-                let firstLine = poem.lines[0].trim();
-
-                // Truncate if the line is excessively long for the sidebar
-                if (firstLine.length > 50) firstLine = firstLine.substring(0, 47) + "...";
-
-                return `
-                    <div style="margin-bottom: 12px; border-left: 1px solid #333; padding-left: 10px;">
-                        <div style="font-size: 0.65rem; color: #666; letter-spacing: 1px;">${author}</div>
-                        <div style="color: #ccc; font-style: italic; margin: 2px 0;">"${firstLine}"</div>
-                        <div style="font-size: 0.55rem; color: #444;">— ${title}</div>
-                    </div>
-                `;
-            }).join("");
-        }
-    } catch (e) {
-        console.warn("Poetry Pulse Error:", e);
-        feedEl.innerHTML = "→ <span style='color:#555'>SIGNAL LOST IN THE VOID</span>";
-    }
-}
-
-// Initial load and set interval (Refreshes every 5 minutes)
-updateNewsFeed();
-setInterval(updateNewsFeed, 300000);
-
-/* -----------------------------------------------------------
-    MARKET FEED — TON COIN
------------------------------------------------------------ */
-
-async function updateMarketFeed() {
-  try {
-    const res = await fetch(
-      "https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd&include_24hr_change=true"
-    );
-    const data = await res.json();
-
-    const ton = data["the-open-network"];
-    if (!ton) throw new Error();
-
-    const price = ton.usd;
-    const change = ton.usd_24h_change;
-    const arrow = change >= 0 ? "▲" : "▼";
-
-    document.getElementById("feed-market").textContent =
-      `TON $${price.toLocaleString()} ${arrow}`;
-
-  } catch {
-    document.getElementById("feed-market").textContent = "TON — no signal";
-  }
-}
-updateNewsFeed();
-updateMarketFeed();
-
-setInterval(updateNewsFeed, 5 * 60 * 1000);   // every 5 minutes
-setInterval(updateMarketFeed, 60 * 1000);     // every 1 minute
-
-</script>
     <script>
 // ========== ARTICLE AUTO-SAVE TO URL (STANDALONE) ==========
 (function() {
