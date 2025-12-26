@@ -489,26 +489,60 @@ class InkRealmTerminal {
         }
     }
 
-    modelSelect.addEventListener("change", e => {
+   setupEvents() {
+    // 1. You MUST keep this line
+    const modelSelect = document.getElementById("model-select");
 
-        document.getElementById("send-button").addEventListener("click", () => this.generate());
-        document.getElementById("text-input").addEventListener("keydown", e => {
-            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); this.generate(); }
-        });
+    // 2. SAFETY CHECK: If modelSelect doesn't exist, don't crash
+    if (modelSelect) {
+        modelSelect.addEventListener("change", e => {
+            this.currentModel = e.target.value;
+            this.addSystemMessage(`TARGET MODEL → ${e.target.options[e.target.selectedIndex].text}`);
+            
+            const keyArea = document.getElementById("byok-keys");
+            const orKeyInput = document.getElementById("or-key");
+            const vKeyInput = document.getElementById("v-key");
+            const groqKeyInput = document.getElementById("groq-key");
+            const hfKeyInput = document.getElementById("hf-key");
 
-        document.getElementById('loadCoreBtn').addEventListener('click', () => this.activateLocalCore());
-
-        document.getElementById("clear-notepad").addEventListener("click", () => {
-            if (confirm("Erase all local data?")) document.getElementById("notepad").value = "";
-        });
-
-        document.getElementById("export-notepad").addEventListener("click", () => this.exportNotepad());
-
-        document.addEventListener("click", e => {
-            const id = e.target?.dataset?.import;
-            if (id) this.importToScratchpad(id);
+            if (this.currentModel === 'nova' || this.currentModel === 'dolphin') {
+                if (keyArea) keyArea.style.display = "flex";
+                if (orKeyInput) orKeyInput.style.display = "block";
+                // Hide specific non-OR keys
+                if (vKeyInput) vKeyInput.style.display = "none";
+                if (groqKeyInput) groqKeyInput.style.display = "none";
+                if (hfKeyInput) hfKeyInput.style.display = "none";
+            } else {
+                if (keyArea) keyArea.style.display = "none";
+            }
         });
     }
+
+    // 3. Setup other buttons with existence checks
+    const sendBtn = document.getElementById("send-button");
+    if (sendBtn) sendBtn.addEventListener("click", () => this.generate());
+
+    const inputArea = document.getElementById("text-input");
+    if (inputArea) {
+        inputArea.addEventListener("keydown", e => {
+            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); this.generate(); }
+        });
+    }
+
+    const loadBtn = document.getElementById('loadCoreBtn');
+    if (loadBtn) loadBtn.addEventListener('click', () => this.activateLocalCore());
+
+    // Auto-save OpenRouter key
+    const orKeyInput = document.getElementById("or-key");
+    if (orKeyInput) {
+        orKeyInput.addEventListener("change", (e) => localStorage.setItem('ink_or_key', e.target.value));
+    }
+
+    document.addEventListener("click", e => {
+        const id = e.target?.dataset?.import;
+        if (id) this.importToScratchpad(id);
+    });
+}
 
     async activateLocalCore() {
         const modelId = this.localModels[this.currentModel];
