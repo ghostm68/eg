@@ -379,78 +379,124 @@ Enter your  API key and start...
 
 
 <script>
-// Remove duplicate $ declaration and consolidate endpoints
+// ===== Ink-Realm auto-save-to-URL (standalone) =====
+(function(){
+  const article = document.getElementById('sessionArticle');
+  if (!article) return;
+
+  article.addEventListener('input', debounce(500, saveSession));
+  window.addEventListener('DOMContentLoaded', loadSession);
+  window.addEventListener('hashchange', loadSession);
+
+  async function loadSession(){
+    try{
+      if (location.hash) await setSession(location.hash);
+      else{
+        const saved = localStorage.getItem('session-hash');
+        if (saved) await setSession(saved);
+      }
+      updateTitle();
+    }catch{}
+  }
+  async function saveSession(){
+    const hash = await getSessionHash();
+    if (location.hash !== hash) history.replaceState({}, '', hash);
+    try{ localStorage.setItem('session-hash', hash); }catch{}
+    updateTitle();
+  }
+  async function setSession(hash){
+    const content = await decompress(hash.slice(1));
+    article.textContent = content;
+  }
+  async function getSessionHash(){
+    return '#' + await compress(article.textContent);
+  }
+  function updateTitle(){
+    const m = article.textContent.match(/^#(.+)\n/);
+    document.title = (m ? m[1]+' – ' : '') + 'Triad Chat';
+  }
+  async function compress(str){
+    const bytes = new TextEncoder().encode(str);
+    const stream = new CompressionStream('deflate-raw');
+    const w = stream.writable.getWriter(); w.write(bytes); w.close();
+    const buf = await new Response(stream.readable).arrayBuffer();
+    return btoa(String.fromCharCode(...new Uint8Array(buf)))
+           .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  }
+  async function decompress(b64){
+    const bytes = Uint8Array.from(atob(b64.replace(/-/g,'+').replace(/_/g,'/')), c=>c.charCodeAt(0));
+    const stream = new DecompressionStream('deflate-raw');
+    const w = stream.writable.getWriter(); w.write(bytes); w.close();
+    const buf = await new Response(stream.readable).arrayBuffer();
+    return new TextDecoder().decode(buf);
+  }
+  function debounce(ms, fn){
+    let t; return (...a)=>{clearTimeout(t); t=setTimeout(()=>fn(...a),ms);}
+  }
+
+  // helpers wired to the little buttons
+  window.clearChat = ()=> { $('#chatDisplay').innerHTML=''; };
+  window.copyUrl   = ()=> { navigator.clipboard.writeText(location.href); };
+})();
+
+// ===== Chat functionality =====
 const endpoints = {
-  deepseek: { url:'https://api.deepseek.com/chat/completions', defModel:'deepseek-chat' },
-  mistral: { url:'https://api.mistral.ai/v1/chat/completions', defModel:'mistral-small' },
-  dolphin: { url:'https://openrouter.ai/api/v1/chat/completions', defModel:'cognitivecomputations/dolphin-mistral-24b-venice-edition:free' },
-  kimi: { url:'https://api.routeway.ai/v1/chat/completions', defModel:'kimi-k2-0905:free' },
-  aionrp: { url:'https://api.routeway.ai/v1/chat/completions', defModel:'aionlabs/aion-rp-1.0-8b:free' }
+  deepseek: { url:'https://api.deepseek.com/chat/completions',  defModel:'deepseek-chat' },
+  mistral:  { url:'https://api.mistral.ai/v1/chat/completions', defModel:'mistral-small' },
+  dolphin:  { url:'https://openrouter.ai/api/v1/chat/completions', defModel:'cognitivecomputations/dolphin-mistral-24b-venice-edition:free' },
+  kimi:     { url:'https://api.routeway.ai/v1/chat/completions', defModel:'kimi-k2-0905:free' },
+  aionrp:   { url:'https://api.routeway.ai/v1/chat/completions', defModel:'aionlabs/aion-rp-1.0-8b:free' }
 };
 
-// Single $ function declaration
 const $ = s => document.querySelector(s);
 
-// DOM elements
-const chatDisplay = $('#chatDisplay');
-const statusDisplay = $('#statusDisplay');
-const apiStatus = $('#apiStatus');
-const sendButton = $('#sendButton');
-
-function appendChat(role, text) {
+function appendChat(role, text){
   const box = document.createElement('div');
   box.className = 'message ' + (role === 'user' ? 'user-message' : 'assistant-message');
-  box.innerHTML = `<div class="message-role">${role}</div><div class="message-content">${text}</div>`;
-  chatDisplay.appendChild(box);
-  chatDisplay.scrollTop = chatDisplay.scrollHeight;
+  box.innerHTML = `<div class="message-role">${role}</div>${text}`;
+  $('#chatDisplay').appendChild(box);
+  $('#chatDisplay').scrollTop = $('#chatDisplay').scrollHeight;
 }
 
-function logStatus(msg, ok = true) {
-  statusDisplay.textContent += msg + '\n';
-  statusDisplay.scrollTop = statusDisplay.scrollHeight;
-  apiStatus.textContent = msg.split('\n')[0];
-  apiStatus.className = ok ? 'api-status status-ok' : 'api-status status-error';
+function logStatus(msg, ok = true){
+  $('#statusDisplay').textContent += msg + '\n';
+  $('#statusDisplay').scrollTop = $('#statusDisplay').scrollHeight;
+  $('#apiStatus').textContent = msg.split('\n')[0];
+  $('#apiStatus').className = ok ? 'api-status status-ok' : 'api-status status-error';
 }
 
-// Event listener for send button
-sendButton.addEventListener('click', async () => {
+// Send button event listener - FIXED VERSION
+$('#sendButton').addEventListener('click', async () => {
   const key = $('#apiKey').value.trim();
   const prov = document.querySelector('input[name="prov"]:checked').value;
-  
-  if (!key) { 
-    logStatus('API key required', false); 
-    alert('Please enter an API key');
+  if(!key){ 
+    logStatus('Key required', false); 
     return; 
   }
 
   const userText = $('#userInput').value.trim();
-  if (!userText) { 
-    logStatus('Message cannot be empty', false); 
-    alert('Please enter a message');
+  if(!userText){ 
+    logStatus('Empty message', false); 
     return; 
   }
 
   appendChat('user', userText);
-  sendButton.disabled = true;
-  sendButton.textContent = 'Sending...';
+  $('#sendButton').disabled = true;
+  $('#sendButton').textContent = 'Sending...';
 
   const ep = endpoints[prov];
-  const systemPrompt = $('#sysPrompt').value.trim();
   
-  const messages = [];
-  if (systemPrompt) {
-    messages.push({ role: 'system', content: systemPrompt });
-  }
-  messages.push({ role: 'user', content: userText });
-
+  // FIXED: Use a default system prompt instead of trying to read non-existent element
   const body = {
     model: ep.defModel,
-    messages: messages,
+    messages: [
+      { role: 'system', content: "You are a helpful AI assistant." },
+      { role: 'user', content: userText }
+    ],
     stream: false
   };
 
-  logStatus(`→ Sending to ${prov} (${ep.defModel})...`);
-  
+  logStatus(`→ ${prov} …`);
   try {
     const res = await fetch(ep.url, {
       method: 'POST',
@@ -460,59 +506,43 @@ sendButton.addEventListener('click', async () => {
       },
       body: JSON.stringify(body)
     });
-
+    
     if (!res.ok) {
       const errorText = await res.text();
       throw new Error(`HTTP ${res.status}: ${errorText}`);
     }
-
+    
     const data = await res.json();
     
     if (data.error) {
       throw new Error(data.error.message || JSON.stringify(data.error));
     }
-
+    
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
       throw new Error('Invalid response format from API');
     }
-
+    
     const reply = data.choices[0].message.content;
     appendChat('assistant', reply);
-    logStatus(`← Received reply from ${prov} ✓`);
+    logStatus(`← ${prov} OK`);
     
-    // Clear user input after successful send
-    $('#userInput').value = '';
-    
-  } catch (e) {
+  } catch(e) {
     console.error('API Error:', e);
     logStatus(`✗ Error: ${e.message}`, false);
     appendChat('assistant', `<span style="color:#ff6b6b">Error: ${e.message}</span>`);
   } finally {
-    sendButton.disabled = false;
-    sendButton.textContent = 'Send';
+    $('#sendButton').disabled = false;
+    $('#sendButton').textContent = 'Send';
   }
 });
 
-// Also allow sending with Ctrl+Enter in the textarea
+// Ctrl+Enter shortcut for sending
 $('#userInput').addEventListener('keydown', (e) => {
-  if (e.ctrlKey && e.key === 'Enter') {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
     e.preventDefault();
-    sendButton.click();
+    $('#sendButton').click();
   }
 });
-
-// Helper functions for chat controls
-window.clearChat = () => { 
-  chatDisplay.innerHTML = ''; 
-  logStatus('Chat cleared ✓');
-};
-
-window.copyUrl = () => { 
-  navigator.clipboard.writeText(location.href)
-    .then(() => logStatus('URL copied to clipboard ✓'))
-    .catch(err => logStatus('Failed to copy URL: ' + err.message, false));
-};
 </script>
- 
 </body>
 </html>
