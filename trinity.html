@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>trinity plus two </title>
+    <title>trinity </title>
     <style>
         body {
             background: #0a0a0a;
@@ -267,13 +267,11 @@
   <div class="api-key-section">
     <h3>Provider & Key</h3>
     <label style="font-size:.75rem;color:#aaa">Model:</label>
-    <div style="display:flex;gap:.4rem;margin-bottom:.4rem">
-      <label><input type="radio" name="prov" value="deepseek" checked> DeepSeek</label>
-      <label><input type="radio" name="prov" value="mistral"> Mistral</label>
-      <label><input type="radio" name="prov" value="dolphin"> Dolphin</label>
-      <label><input type="radio" name="prov" value="kimi"> Kimi</label>
-      <label><input type="radio" name="prov" value="aionrp"> Aion-RP</label>
-    </div>
+   <div style="display:flex;gap:.4rem;margin-bottom:.4rem">
+  <label><input type="radio" name="prov" value="mistral" checked> Mistral</label>
+  <label><input type="radio" name="prov" value="dolphin"> Dolphin</label>
+  <label><input type="radio" name="prov" value="kimi"> Kimi</label>
+</div>
 
     <div class="key-input-group">
       <input id="apiKey" type="password" placeholder="API key (sk-…)">
@@ -379,112 +377,109 @@ Enter your  API key and start...
     </script>
 
     <!-- Second script - Chat functionality (add this) -->
-    <script>
-    // ===== Chat functionality =====
-    const endpoints = {
-      deepseek: { url:'https://api.deepseek.com/chat/completions',  defModel:'deepseek-chat' },
-      mistral:  { url:'https://api.mistral.ai/v1/chat/completions', defModel:'mistral-small' },
-      dolphin:  { url:'https://openrouter.ai/api/v1/chat/completions', defModel:'cognitivecomputations/dolphin-mistral-24b-venice-edition:free' },
-      kimi:     { url:'https://api.routeway.ai/v1/chat/completions', defModel:'kimi-k2-0905:free' },
-      aionrp:   { url:'https://api.routeway.ai/v1/chat/completions', defModel:'aionlabs/aion-rp-1.0-8b:free' }
-    };
+<script>
+// ===== Chat functionality =====
+const endpoints = {
+  mistral:  { url:'https://api.mistral.ai/v1/chat/completions', defModel:'mistral-small' },
+  dolphin:  { url:'https://openrouter.ai/api/v1/chat/completions', defModel:'cognitivecomputations/dolphin-mistral-24b-venice-edition:free' },
+  kimi:     { url:'https://api.routeway.ai/v1/chat/completions', defModel:'moonshot-v1-8k' } // Fixed model
+};
 
-    const $ = s => document.querySelector(s);
+const $ = s => document.querySelector(s);
 
-    function appendChat(role, text){
-      const box = document.createElement('div');
-      box.className = 'message ' + (role === 'user' ? 'user-message' : 'assistant-message');
-      box.innerHTML = `<div class="message-role">${role}</div>${text}`;
-      $('#chatDisplay').appendChild(box);
-      $('#chatDisplay').scrollTop = $('#chatDisplay').scrollHeight;
-    }
+function appendChat(role, text){
+  const box = document.createElement('div');
+  box.className = 'message ' + (role === 'user' ? 'user-message' : 'assistant-message');
+  box.innerHTML = `<div class="message-role">${role}</div>${text}`;
+  $('#chatDisplay').appendChild(box);
+  $('#chatDisplay').scrollTop = $('#chatDisplay').scrollHeight;
+}
 
-    function logStatus(msg, ok = true){
-      $('#statusDisplay').textContent += msg + '\n';
-      $('#statusDisplay').scrollTop = $('#statusDisplay').scrollHeight;
-      $('#apiStatus').textContent = msg.split('\n')[0];
-      $('#apiStatus').className = ok ? 'api-status status-ok' : 'api-status status-error';
-    }
+function logStatus(msg, ok = true){
+  $('#statusDisplay').textContent += msg + '\n';
+  $('#statusDisplay').scrollTop = $('#statusDisplay').scrollHeight;
+  $('#apiStatus').textContent = msg.split('\n')[0];
+  $('#apiStatus').className = ok ? 'api-status status-ok' : 'api-status status-error';
+}
 
-    // Send button event listener - FIXED VERSION
-    $('#sendButton').addEventListener('click', async () => {
-      const key = $('#apiKey').value.trim();
-      const prov = document.querySelector('input[name="prov"]:checked').value;
-      if(!key){ 
-        logStatus('Key required', false); 
-        return; 
-      }
+// Send button event listener
+$('#sendButton').addEventListener('click', async () => {
+  const key = $('#apiKey').value.trim();
+  const prov = document.querySelector('input[name="prov"]:checked').value;
+  if(!key){ 
+    logStatus('Key required', false); 
+    return; 
+  }
 
-      const userText = $('#userInput').value.trim();
-      if(!userText){ 
-        logStatus('Empty message', false); 
-        return; 
-      }
+  const userText = $('#userInput').value.trim();
+  if(!userText){ 
+    logStatus('Empty message', false); 
+    return; 
+  }
 
-      appendChat('user', userText);
-      $('#sendButton').disabled = true;
-      $('#sendButton').textContent = 'Sending...';
+  appendChat('user', userText);
+  $('#sendButton').disabled = true;
+  $('#sendButton').textContent = 'Sending...';
 
-      const ep = endpoints[prov];
-      
-      // FIXED: Use a default system prompt instead of trying to read non-existent element
-      const body = {
-        model: ep.defModel,
-        messages: [
-          { role: 'system', content: "You are a helpful AI assistant." },
-          { role: 'user', content: userText }
-        ],
-        stream: false
-      };
+  const ep = endpoints[prov];
+  
+  const body = {
+    model: ep.defModel,
+    messages: [
+      { role: 'system', content: "You are a helpful AI assistant." },
+      { role: 'user', content: userText }
+    ],
+    stream: false
+  };
 
-      logStatus(`→ ${prov} …`);
-      try {
-        const res = await fetch(ep.url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${key}`
-          },
-          body: JSON.stringify(body)
-        });
-        
-        if (!res.ok) {
-          const errorText = await res.text();
-          throw new Error(`HTTP ${res.status}: ${errorText}`);
-        }
-        
-        const data = await res.json();
-        
-        if (data.error) {
-          throw new Error(data.error.message || JSON.stringify(data.error));
-        }
-        
-        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-          throw new Error('Invalid response format from API');
-        }
-        
-        const reply = data.choices[0].message.content;
-        appendChat('assistant', reply);
-        logStatus(`← ${prov} OK`);
-        
-      } catch(e) {
-        console.error('API Error:', e);
-        logStatus(`✗ Error: ${e.message}`, false);
-        appendChat('assistant', `<span style="color:#ff6b6b">Error: ${e.message}</span>`);
-      } finally {
-        $('#sendButton').disabled = false;
-        $('#sendButton').textContent = 'Send';
-      }
+  logStatus(`→ ${prov} …`);
+  try {
+    const res = await fetch(ep.url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`
+      },
+      body: JSON.stringify(body)
     });
+    
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`HTTP ${res.status}: ${errorText}`);
+    }
+    
+    const data = await res.json();
+    
+    if (data.error) {
+      throw new Error(data.error.message || JSON.stringify(data.error));
+    }
+    
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      throw new Error('Invalid response format from API');
+    }
+    
+    const reply = data.choices[0].message.content;
+    appendChat('assistant', reply);
+    logStatus(`← ${prov} OK`);
+    
+  } catch(e) {
+    console.error('API Error:', e);
+    logStatus(`✗ Error: ${e.message}`, false);
+    appendChat('assistant', `<span style="color:#ff6b6b">Error: ${e.message}</span>`);
+  } finally {
+    $('#sendButton').disabled = false;
+    $('#sendButton').textContent = 'Send';
+  }
+});
 
-    // Ctrl+Enter shortcut for sending
-    $('#userInput').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-        e.preventDefault();
-        $('#sendButton').click();
-      }
-    });
-    </script>
+// Ctrl+Enter shortcut for sending
+$('#userInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    $('#sendButton').click();
+  }
+});
+</script>
 </body>
 </html>
 </body>
