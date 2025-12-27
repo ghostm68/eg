@@ -1030,6 +1030,39 @@ async function updateNewsFeed() {
 }
 updateNewsFeed();
 setInterval(updateNewsFeed, 300000);
+
+
+/* -----------------------------------------------------------
+    MARKET FEED — TON COIN
+----------------------------------------------------------- */
+
+async function updateMarketFeed() {
+  try {
+    const res = await fetch(
+      "https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd&include_24hr_change=true"
+    );
+    const data = await res.json();
+
+    const ton = data["the-open-network"];
+    if (!ton) throw new Error();
+
+    const price = ton.usd;
+    const change = ton.usd_24h_change;
+    const arrow = change >= 0 ? "▲" : "▼";
+
+    document.getElementById("feed-market").textContent =
+      `TON $${price.toLocaleString()} ${arrow}`;
+
+  } catch {
+    document.getElementById("feed-market").textContent = "TON — no signal";
+  }
+}
+updateNewsFeed();
+updateMarketFeed();
+
+setInterval(updateNewsFeed, 5 * 60 * 1000);   // every 5 minutes
+setInterval(updateMarketFeed, 60 * 1000);     // every 1 minute
+	
 </script>
 
 
