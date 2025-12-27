@@ -437,7 +437,7 @@ article:focus::before {
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 666 88" class="wordstar-logo">
   <defs>
     <style>
-      .logo-text { fill: #ffd700; }
+      .logo-text { fill: #b31419; }
       .logo-x { 
         fill: #f7f8fa;
         transition: all 0.3s ease;
@@ -501,7 +501,7 @@ article:focus::before {
   </g>
 </svg>
             <div class="glitch-text">
-                word <img src="https://github.com/ghostm68/pantheon/raw/main/mw.inkrealm.info.webp" class="splash-icon" alt="INK">STAR    
+                word <img src="https://raw.githubusercontent.com/ghostm68/pantheon/main/Media_230212_132842.gif" class="splash-icon" alt="TINK">STAR    
             </div><div class="orb-container">
             <svg class="glitch-orb" viewBox="0 0 100 100">
                 <circle class="orb-circle" cx="50" cy="50" r="45" />
@@ -528,7 +528,7 @@ article:focus::before {
       }
       .logo-x:hover { 
         fill: #5f6061;
-        filter: drop-shadow(0 0 8px #4169E1);
+        filter: drop-shadow(0 0 8px #a60813);
         transform: scale(1.15) rotate(5deg);
       }
     </style>
@@ -583,13 +583,8 @@ article:focus::before {
     <path d="M 559 25 Q 574 25 574 35 L 567 35 Q 567 30 559 30 Q 554 30 554 33.5 Q 554 37 559 38 L 567 40 Q 576 42 576 51 Q 576 68 562 68 Q 547 68 547 57 L 554 57 Q 554 63 562 63 Q 568 63 568 59 Q 568 56 563 54.5 L 555 52.5 Q 547 50.5 547 42 Q 547 25 559 25 Z"/>
   </g>
 </svg>
-            <img src="https://github.com/ghostm68/pantheon/raw/main/mw.inkrealm.info.webp" class="logo-icon" alt="logo">
-            <div class="logo-text">word STAR</div><div class="orb-container">
-            <svg class="glitch-orb" viewBox="0 0 100 100">
-                <circle class="orb-circle" cx="50" cy="50" r="45" />
-                <polygon class="orb-triangle" points="50,25 78,75 22,75" />
-            </svg>
-        </div>    <!-- THE QR CODE (Clickable) -->
+            <img src="https://raw.githubusercontent.com/ghostm68/pantheon/main/Media_230212_132842.gif" class="logo-icon" alt="logo">
+            <div class="logo-text">Q</div>    <!-- THE QR CODE (Clickable) -->
     <img id="ton-qr" 
          src="https://raw.githubusercontent.com/ghostm68/pantheon/main/inkrealm.ton03.jpeg" 
          alt="TON WALLET"
@@ -699,7 +694,7 @@ article:focus::before {
 
     <!-- Footer -->
     <footer class="footer" id="footer">
-        <div>INK REALM APP v2.9 | POWERED BY @lil.hustla | <font color="white">ton</font> @ <font color="red"> UQAc99MvKIcewbQFmOF_RvqpkAXZno0wiz3_BMsP87pJjSnB</font></div>
+        <div>INK REALM APP v3.6  | <font color="white">ton</font> @ <font color="red"> UQAc99MvKIcewbQFmOF_RvqpkAXZno0wiz3_BMsP87pJjSnB</font></div>
         <div>
             <a href="https://inkrealm.info" target="_blank">INKREALM.INFO</a>
             <span style="margin:0 8px">|</span>
@@ -1003,17 +998,36 @@ async function updatePoetryPulse() {
     } catch { feedEl.textContent = "→ signal lost"; }
 }
 
-async function updateMarketFeed() {
-    try {
-        const res = await fetch("https://api.coingecko.com/price/the-open-network?vs_currencies=usd"); // Revised endpoint
-        const data = await res.json();
-        const price = data["the-open-network"]?.usd || "0.00";
-        document.getElementById("feed-market").textContent = `TON $${price}`;
-    } catch { document.getElementById("feed-market").textContent = "TON — no signal"; }
-}
+/* -----------------------------------------------------------
+    MARKET FEED — TON COIN
+----------------------------------------------------------- */
 
-document.addEventListener("DOMContentLoaded", () => {
-    window.app = new InkRealmTerminal();
+async function updateMarketFeed() {
+  try {
+    const res = await fetch(
+      "https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd&include_24hr_change=true"
+    );
+    const data = await res.json();
+
+    const ton = data["the-open-network"];
+    if (!ton) throw new Error();
+
+    const price = ton.usd;
+    const change = ton.usd_24h_change;
+    const arrow = change >= 0 ? "▲" : "▼";
+
+    document.getElementById("feed-market").textContent =
+      `TON $${price.toLocaleString()} ${arrow}`;
+
+  } catch {
+    document.getElementById("feed-market").textContent = "TON — no signal";
+  }
+}
+updateNewsFeed();
+updateMarketFeed();
+
+setInterval(updateNewsFeed, 5 * 60 * 1000);   // every 5 minutes
+setInterval(updateMarketFeed, 60 * 1000);     // every 1 minute
 });
 </script>
 
