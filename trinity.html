@@ -259,21 +259,21 @@
   </div>
 </div>
 
-        <!-- Column 2: AI Controls -->
-       <div id="ai-controls" class="panel">
+<!-- Column 2: AI Controls - SIMPLIFIED VERSION -->
+<div id="ai-controls" class="panel">
   <h2>AI Controls</h2>
 
   <!-- provider pick -->
   <div class="api-key-section">
- <h3>Provider & Key</h3>
+    <h3>Provider & Key</h3>
     <label style="font-size:.75rem;color:#aaa">Model:</label>
     <div style="display:flex;gap:.4rem;margin-bottom:.4rem">
-  <label><input type="radio" name="prov" value="deepseek" checked> DeepSeek</label>
-  <label><input type="radio" name="prov" value="mistral"> Mistral</label>
-  <label><input type="radio" name="prov" value="dolphin"> Dolphin</label>
-  <label><input type="radio" name="prov" value="kimi"> Kimi</label>
-  <label><input type="radio" name="prov" value="aionrp"> Aion-RP</label>
-</div>
+      <label><input type="radio" name="prov" value="deepseek" checked> DeepSeek</label>
+      <label><input type="radio" name="prov" value="mistral"> Mistral</label>
+      <label><input type="radio" name="prov" value="dolphin"> Dolphin</label>
+      <label><input type="radio" name="prov" value="kimi"> Kimi</label>
+      <label><input type="radio" name="prov" value="aionrp"> Aion-RP</label>
+    </div>
 
     <div class="key-input-group">
       <input id="apiKey" type="password" placeholder="API key (sk-…)">
@@ -282,16 +282,10 @@
     <div class="api-help">Key stays in browser only.</div>
   </div>
 
-  <!-- system prompt -->
-  <div class="prompt-section">
-    <label for="sysPrompt">System prompt</label>
-    <textarea id="sysPrompt" placeholder="You are a helpful assistant."></textarea>
-  </div>
-
-  <!-- user message -->
-  <div class="prompt-section">
+  <!-- Just ONE message input (removed system prompt section) -->
+  <div class="prompt-section" style="flex: 1; display: flex; flex-direction: column;">
     <label for="userInput">Your message</label>
-    <textarea id="userInput" placeholder="Type here…"></textarea>
+    <textarea id="userInput" placeholder="Type here…" style="flex: 1; min-height: 200px;"></textarea>
   </div>
 
   <!-- send -->
@@ -383,78 +377,142 @@ Enter your  API key and start...
 })();
 </script>
 
+
 <script>
-const $ = s => document.querySelector(s);
- const endpoints = {
-  deepseek: { url:'https://api.deepseek.com/chat/completions',  defModel:'deepseek-chat' },
-  mistral:  { url:'https://api.mistral.ai/v1/chat/completions', defModel:'mistral-small' },
-  dolphin:  { url:'https://openrouter.ai/api/v1/chat/completions', defModel:'cognitivecomputations/dolphin-mistral-24b-venice-edition:free' },
-  kimi:     { url:'https://api.routeway.ai/v1/chat/completions', defModel:'kimi-k2-0905:free' },
-  aionrp:   { url:'https://api.routeway.ai/v1/chat/completions', defModel:'aionlabs/aion-rp-1.0-8b:free' }
-};;
+// Remove duplicate $ declaration and consolidate endpoints
+const endpoints = {
+  deepseek: { url:'https://api.deepseek.com/chat/completions', defModel:'deepseek-chat' },
+  mistral: { url:'https://api.mistral.ai/v1/chat/completions', defModel:'mistral-small' },
+  dolphin: { url:'https://openrouter.ai/api/v1/chat/completions', defModel:'cognitivecomputations/dolphin-mistral-24b-venice-edition:free' },
+  kimi: { url:'https://api.routeway.ai/v1/chat/completions', defModel:'kimi-k2-0905:free' },
+  aionrp: { url:'https://api.routeway.ai/v1/chat/completions', defModel:'aionlabs/aion-rp-1.0-8b:free' }
+};
 
+// Single $ function declaration
 const $ = s => document.querySelector(s);
-const chatDisplay   = $('.chat-display');
+
+// DOM elements
+const chatDisplay = $('#chatDisplay');
 const statusDisplay = $('#statusDisplay');
-const apiStatus     = $('#apiStatus');
+const apiStatus = $('#apiStatus');
+const sendButton = $('#sendButton');
 
-function appendChat(role,text){
+function appendChat(role, text) {
   const box = document.createElement('div');
-  box.className = 'message '+(role==='user'?'user-message':'assistant-message');
-  box.innerHTML = `<div class="message-role">${role}</div>${text}`;
-  $('#chatDisplay').appendChild(box);
-  $('#chatDisplay').scrollTop = $('#chatDisplay').scrollHeight;
+  box.className = 'message ' + (role === 'user' ? 'user-message' : 'assistant-message');
+  box.innerHTML = `<div class="message-role">${role}</div><div class="message-content">${text}</div>`;
+  chatDisplay.appendChild(box);
+  chatDisplay.scrollTop = chatDisplay.scrollHeight;
 }
 
-function logStatus(msg, ok=true){
+function logStatus(msg, ok = true) {
   statusDisplay.textContent += msg + '\n';
   statusDisplay.scrollTop = statusDisplay.scrollHeight;
   apiStatus.textContent = msg.split('\n')[0];
-  apiStatus.className   = ok ? 'api-status status-ok' : 'api-status status-error';
+  apiStatus.className = ok ? 'api-status status-ok' : 'api-status status-error';
 }
 
-$('#sendButton').addEventListener('click', async ()=>{
-  const key  = $('#apiKey').value.trim();
+// Event listener for send button
+sendButton.addEventListener('click', async () => {
+  const key = $('#apiKey').value.trim();
   const prov = document.querySelector('input[name="prov"]:checked').value;
-  if(!key){ logStatus('Key required',false); return; }
+  
+  if (!key) { 
+    logStatus('API key required', false); 
+    alert('Please enter an API key');
+    return; 
+  }
 
   const userText = $('#userInput').value.trim();
-  if(!userText){ logStatus('Empty message',false); return; }
+  if (!userText) { 
+    logStatus('Message cannot be empty', false); 
+    alert('Please enter a message');
+    return; 
+  }
 
   appendChat('user', userText);
-  $('#sendButton').disabled = true;
+  sendButton.disabled = true;
+  sendButton.textContent = 'Sending...';
 
-  const ep   = endpoints[prov];
+  const ep = endpoints[prov];
+  const systemPrompt = $('#sysPrompt').value.trim();
+  
+  const messages = [];
+  if (systemPrompt) {
+    messages.push({ role: 'system', content: systemPrompt });
+  }
+  messages.push({ role: 'user', content: userText });
+
   const body = {
     model: ep.defModel,
-    messages:[
-      {role:'system', content:$('#sysPrompt').value.trim()},
-      {role:'user',   content:userText}
-    ],
-    stream:false
+    messages: messages,
+    stream: false
   };
 
-  logStatus(`→ ${prov} …`);
-  try{
-    const res = await fetch(ep.url,{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        Authorization:`Bearer ${key}`
+  logStatus(`→ Sending to ${prov} (${ep.defModel})...`);
+  
+  try {
+    const res = await fetch(ep.url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`
       },
-      body:JSON.stringify(body)
+      body: JSON.stringify(body)
     });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`HTTP ${res.status}: ${errorText}`);
+    }
+
     const data = await res.json();
-    if(!res.ok) throw new Error(JSON.stringify(data));
+    
+    if (data.error) {
+      throw new Error(data.error.message || JSON.stringify(data.error));
+    }
+
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      throw new Error('Invalid response format from API');
+    }
+
     const reply = data.choices[0].message.content;
     appendChat('assistant', reply);
-    logStatus(`← ${prov} OK`);
-  }catch(e){
-    logStatus(`✗ ${e.message}`, false);
-  }finally{
-    $('#sendButton').disabled = false;
+    logStatus(`← Received reply from ${prov} ✓`);
+    
+    // Clear user input after successful send
+    $('#userInput').value = '';
+    
+  } catch (e) {
+    console.error('API Error:', e);
+    logStatus(`✗ Error: ${e.message}`, false);
+    appendChat('assistant', `<span style="color:#ff6b6b">Error: ${e.message}</span>`);
+  } finally {
+    sendButton.disabled = false;
+    sendButton.textContent = 'Send';
   }
 });
-</script> 
+
+// Also allow sending with Ctrl+Enter in the textarea
+$('#userInput').addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.key === 'Enter') {
+    e.preventDefault();
+    sendButton.click();
+  }
+});
+
+// Helper functions for chat controls
+window.clearChat = () => { 
+  chatDisplay.innerHTML = ''; 
+  logStatus('Chat cleared ✓');
+};
+
+window.copyUrl = () => { 
+  navigator.clipboard.writeText(location.href)
+    .then(() => logStatus('URL copied to clipboard ✓'))
+    .catch(err => logStatus('Failed to copy URL: ' + err.message, false));
+};
+</script>
+ 
 </body>
 </html>
