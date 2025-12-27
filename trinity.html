@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grok 4.1 </title>
+    <title>trinity </title>
     <style>
         body {
             background: #0a0a0a;
@@ -225,26 +225,28 @@
     </style>
 </head>
 <body>
-    <h1>🚀 GROK 4.1 FAST</h1>
-    <p class="subtitle">Free testing via OpenRouter  • Bring Your Own Key</p>
+    <h1>🚀 trinity FAST</h1>
+    <p class="subtitle"> • Bring Your Own Key</p>
 
     <div class="container">
         <!-- Column 1: Chat History -->
-        <div id="chat-section" class="panel">
-            <h2>Conversation</h2>
-            
-            <div class="chat-display" id="chatDisplay">
-                <div class="message assistant-message">
-                    <div class="message-role">GROK</div>
-                    Hello! I'm Grok 4.1 Fast. Enter your OpenRouter API key in the middle panel to start chatting.
-                </div>
-            </div>
+       <div id="chat-section" class="panel">
+  <h2>Session (auto-saved to URL)</h2>
 
-            <div class="chat-controls">
-                <button id="clearChat">Clear Chat</button>
-                <button id="exportChat">Export TXT</button>
-            </div>
-        </div>
+  <!-- editable article -->
+  <article id="sessionArticle" contenteditable="true"
+           style="flex:1 1 50%;min-height:220px;background:#0a0a0a;border:1px solid #444;border-radius:4px;padding:.6rem;font-size:.8rem;line-height:1.4;overflow-y:auto;"></article>
+
+  <!-- read-only chat stream -->
+  <div class="chat-display" id="chatDisplay"
+       style="flex:1 1 50%;margin-top:.6rem;"></div>
+
+  <!-- tiny controls -->
+  <div class="chat-controls">
+    <button onclick="clearChat()">Clear chat</button>
+    <button onclick="copyUrl()">Copy URL</button>
+  </div>
+</div>
 
         <!-- Column 2: AI Controls -->
        <div id="ai-controls" class="panel">
@@ -286,9 +288,7 @@
 
   <div class="api-status" id="apiStatus">Ready.</div>
 </div>
-    </script>
-</body>
-</html>
+
 
         <!-- Column 3: Status -->
      <div id="status-section" class="panel">
@@ -308,10 +308,72 @@ Enter your  API key and start...
     <div class="api-status">
         Powered by Deepseek - Mistral  • No credit card required
     </div>
+    <script>
+// ===== Ink-Realm auto-save-to-URL (standalone) =====
+(function(){
+  const article = document.getElementById('sessionArticle');
+  if (!article) return;
+
+  article.addEventListener('input', debounce(500, saveSession));
+  window.addEventListener('DOMContentLoaded', loadSession);
+  window.addEventListener('hashchange', loadSession);
+
+  async function loadSession(){
+    try{
+      if (location.hash) await setSession(location.hash);
+      else{
+        const saved = localStorage.getItem('session-hash');
+        if (saved) await setSession(saved);
+      }
+      updateTitle();
+    }catch{}
+  }
+  async function saveSession(){
+    const hash = await getSessionHash();
+    if (location.hash !== hash) history.replaceState({}, '', hash);
+    try{ localStorage.setItem('session-hash', hash); }catch{}
+    updateTitle();
+  }
+  async function setSession(hash){
+    const content = await decompress(hash.slice(1));
+    article.textContent = content;
+  }
+  async function getSessionHash(){
+    return '#' + await compress(article.textContent);
+  }
+  function updateTitle(){
+    const m = article.textContent.match(/^#(.+)\n/);
+    document.title = (m ? m[1]+' – ' : '') + 'Triad Chat';
+  }
+  async function compress(str){
+    const bytes = new TextEncoder().encode(str);
+    const stream = new CompressionStream('deflate-raw');
+    const w = stream.writable.getWriter(); w.write(bytes); w.close();
+    const buf = await new Response(stream.readable).arrayBuffer();
+    return btoa(String.fromCharCode(...new Uint8Array(buf)))
+           .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  }
+  async function decompress(b64){
+    const bytes = Uint8Array.from(atob(b64.replace(/-/g,'+').replace(/_/g,'/')), c=>c.charCodeAt(0));
+    const stream = new DecompressionStream('deflate-raw');
+    const w = stream.writable.getWriter(); w.write(bytes); w.close();
+    const buf = await new Response(stream.readable).arrayBuffer();
+    return new TextDecoder().decode(buf);
+  }
+  function debounce(ms, fn){
+    let t; return (...a)=>{clearTimeout(t); t=setTimeout(()=>fn(...a),ms);}
+  }
+
+  // helpers wired to the little buttons
+  window.clearChat = ()=> { $('#chatDisplay').innerHTML=''; };
+  window.copyUrl   = ()=> { navigator.clipboard.writeText(location.href); };
+})();
+</script>
 
 <script>
+const $ = s => document.querySelector(s);
 const endpoints = {
-  deepseek: { url:'https://api.deepseek.com/chat/completions',  defModel:'deepseek-chat' },
+  deepseek: { url:'https://api.deepseek.com/chat/completions', defModel:'deepseek-chat' },
   mistral:  { url:'https://api.mistral.ai/v1/chat/completions', defModel:'mistral-small' },
   dolphin:  { url:'https://openrouter.ai/api/v1/chat/completions', defModel:'cognitivecomputations/dolphin-mistral-24b-venice-edition:free' }
 };
@@ -321,12 +383,12 @@ const chatDisplay   = $('.chat-display');
 const statusDisplay = $('#statusDisplay');
 const apiStatus     = $('#apiStatus');
 
-function appendChat(role, text){
-  const box       = document.createElement('div');
-  box.className   = 'message ' + (role==='user'?'user-message':'assistant-message');
-  box.innerHTML   = `<div class="message-role">${role}</div>${text}`;
-  chatDisplay.appendChild(box);
-  chatDisplay.scrollTop = chatDisplay.scrollHeight;
+function appendChat(role,text){
+  const box = document.createElement('div');
+  box.className = 'message '+(role==='user'?'user-message':'assistant-message');
+  box.innerHTML = `<div class="message-role">${role}</div>${text}`;
+  $('#chatDisplay').appendChild(box);
+  $('#chatDisplay').scrollTop = $('#chatDisplay').scrollHeight;
 }
 
 function logStatus(msg, ok=true){
@@ -378,4 +440,4 @@ $('#sendButton').addEventListener('click', async ()=>{
     $('#sendButton').disabled = false;
   }
 });
-</script>
+</script> 
