@@ -253,10 +253,10 @@
        style="flex:1 1 50%;margin-top:.6rem;"></div>
 
   <!-- tiny controls -->
-  <div class="chat-controls">
-    <button onclick="clearChat()">Clear chat</button>
-    <button onclick="copyUrl()">Copy URL</button>
-  </div>
+<div class="chat-controls">
+  <button onclick="clearChat()">Clear chat</button>
+  <button onclick="copyUrl()">Copy URL</button>
+  <button onclick="saveChatToNotes()">Save chat to notes</button>
 </div>
 
 <!-- Column 2: AI Controls - SIMPLIFIED VERSION -->
@@ -379,18 +379,25 @@ Enter your  API key and start...
     <!-- Second script - Chat functionality (add this) -->
 <script>
 // ===== Chat functionality =====
+// ===== Chat functionality =====
 const endpoints = {
   mistral:  { url:'https://api.mistral.ai/v1/chat/completions', defModel:'mistral-small' },
   dolphin:  { url:'https://openrouter.ai/api/v1/chat/completions', defModel:'cognitivecomputations/dolphin-mistral-24b-venice-edition:free' },
-  kimi:     { url:'https://api.routeway.ai/v1/chat/completions', defModel:'moonshot-v1-8k' } // Fixed model
+  kimi:     { url:'https://api.routeway.ai/v1/chat/completions', defModel:'moonshot-v1-8k' }
 };
 
 const $ = s => document.querySelector(s);
 
+// UPDATED appendChat function with data-raw-text attribute
 function appendChat(role, text){
   const box = document.createElement('div');
   box.className = 'message ' + (role === 'user' ? 'user-message' : 'assistant-message');
-  box.innerHTML = `<div class="message-role">${role}</div>${text}`;
+  
+  // Store raw text in data attribute for easy copying
+  const cleanText = text.replace(/<[^>]*>/g, ''); // Remove any HTML tags
+  box.setAttribute('data-raw-text', cleanText);
+  
+  box.innerHTML = `<div class="message-role">${role}</div><div class="message-content">${text}</div>`;
   $('#chatDisplay').appendChild(box);
   $('#chatDisplay').scrollTop = $('#chatDisplay').scrollHeight;
 }
@@ -480,7 +487,102 @@ $('#userInput').addEventListener('keydown', (e) => {
   }
 });
 </script>
+
+    <script>
+// ===== Ink-Realm auto-save-to-URL (standalone) =====
+(function(){
+  const article = document.getElementById('sessionArticle');
+  if (!article) return;
+
+  article.addEventListener('input', debounce(500, saveSession));
+  window.addEventListener('DOMContentLoaded', loadSession);
+  window.addEventListener('hashchange', loadSession);
+
+  async function loadSession(){
+    try{
+      if (location.hash) await setSession(location.hash);
+      else{
+        const saved = localStorage.getItem('session-hash');
+        if (saved) await setSession(saved);
+      }
+      updateTitle();
+    }catch{}
+  }
+  async function saveSession(){
+    const hash = await getSessionHash();
+    if (location.hash !== hash) history.replaceState({}, '', hash);
+    try{ localStorage.setItem('session-hash', hash); }catch{}
+    updateTitle();
+  }
+  async function setSession(hash){
+    const content = await decompress(hash.slice(1));
+    article.textContent = content;
+  }
+  async function getSessionHash(){
+    return '#' + await compress(article.textContent);
+  }
+  function updateTitle(){
+    const m = article.textContent.match(/^#(.+)\n/);
+    document.title = (m ? m[1]+' – ' : '') + 'Triad Chat';
+  }
+  async function compress(str){
+    const bytes = new TextEncoder().encode(str);
+    const stream = new CompressionStream('deflate-raw');
+    const w = stream.writable.getWriter(); w.write(bytes); w.close();
+    const buf = await new Response(stream.readable).arrayBuffer();
+    return btoa(String.fromCharCode(...new Uint8Array(buf)))
+           .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  }
+  async function decompress(b64){
+    const bytes = Uint8Array.from(atob(b64.replace(/-/g,'+').replace(/_/g,'/')), c=>c.charCodeAt(0));
+    const stream = new DecompressionStream('deflate-raw');
+    const w = stream.writable.getWriter(); w.write(bytes); w.close();
+    const buf = await new Response(stream.readable).arrayBuffer();
+    return new TextDecoder().decode(buf);
+  }
+  function debounce(ms, fn){
+    let t; return (...a)=>{clearTimeout(t); t=setTimeout(()=>fn(...a),ms);}
+  }
+
+  // helpers wired to the little buttons
+  window.clearChat = ()=> { 
+    $('#chatDisplay').innerHTML=''; 
+    logStatus('Chat cleared ✓');
+  };
+  
+  window.copyUrl = ()=> { 
+    // Copy entire chat history into article box
+    const chatDisplay = $('#chatDisplay');
+    const messages = chatDisplay.querySelectorAll('.message');
+    
+    if (messages.length === 0) {
+      logStatus('No chat to save', false);
+      return;
+    }
+    
+    let chatText = '\n\n=== CHAT HISTORY ===\n';
+    
+    messages.forEach(msg => {
+      const role = msg.querySelector('.message-role').textContent;
+      const content = msg.textContent.replace(role, '').trim();
+      chatText += `\n${role.toUpperCase()}: ${content}\n`;
+    });
+    
+    // Append to article
+    const article = $('#sessionArticle');
+    const currentText = article.textContent.trim();
+    article.textContent = currentText + chatText;
+    
+    // Auto-save will trigger from the input event
+    logStatus('Chat saved to notes ✓');
+    
+    // Also copy URL to clipboard
+    navigator.clipboard.writeText(location.href)
+      .then(() => logStatus('URL also copied to clipboard'))
+      .catch(err => logStatus('Failed to copy URL: ' + err.message, false));
+  };
+})();
+</script>
 </body>
 </html>
-</body>
-</html>
+
