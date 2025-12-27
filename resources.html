@@ -583,7 +583,6 @@ article:focus::before {
     <path d="M 559 25 Q 574 25 574 35 L 567 35 Q 567 30 559 30 Q 554 30 554 33.5 Q 554 37 559 38 L 567 40 Q 576 42 576 51 Q 576 68 562 68 Q 547 68 547 57 L 554 57 Q 554 63 562 63 Q 568 63 568 59 Q 568 56 563 54.5 L 555 52.5 Q 547 50.5 547 42 Q 547 25 559 25 Z"/>
   </g>
 </svg>
-            <img src="https://raw.githubusercontent.com/ghostm68/pantheon/main/Media_230212_132842.gif" class="logo-icon" alt="logo">
             <div class="logo-text">Q</div>    <!-- THE QR CODE (Clickable) -->
     <img id="ton-qr" 
          src="https://raw.githubusercontent.com/ghostm68/pantheon/main/inkrealm.ton03.jpeg" 
@@ -987,32 +986,6 @@ window.typeText = function(el, text, speed = 12) {
 };
 
 // Global Feed Handlers
-async function updatePoetryPulse() {
-    const feedEl = document.getElementById("feed-news");
-    if (!feedEl) return;
-    try {
-        const res = await fetch("https://poetrydb.org/random/3");
-        const data = await res.json();
-        // Uses simple text strings to preserve the .feed-item styling
-        feedEl.innerHTML = data.map(p => `→ "${p.lines[0].trim().substring(0,35)}"<br><span style="color:#666;font-size:0.6rem">— ${p.author}</span>`).join("<br><br>");
-    } catch { feedEl.textContent = "→ signal lost"; }
-}
-
-async function updateMarketFeed() {
-    try {
-        const res = await fetch("https://api.coingecko.com/price/the-open-network?vs_currencies=usd"); // Revised endpoint
-        const data = await res.json();
-        const price = data["the-open-network"]?.usd || "0.00";
-        document.getElementById("feed-market").textContent = `TON $${price}`;
-    } catch { document.getElementById("feed-market").textContent = "TON — no signal"; }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    window.app = new InkRealmTerminal();
-});
-</script>
-
-<script>
 /* Poetry Pulse */
 async function updateNewsFeed() {
     const feedEl = document.getElementById("feed-news");
@@ -1026,7 +999,10 @@ async function updateNewsFeed() {
                 return `<div style="margin-bottom:10px"><div style="font-size:0.6rem;color:#666">${poem.author}</div><div style="color:#ccc;font-style:italic">"${line}"</div></div>`;
             }).join("");
         }
-    } catch (e) { feedEl.textContent = "→ signal lost"; }
+    } catch (e) { 
+        console.error("Poetry fetch error:", e);
+        feedEl.textContent = "→ signal lost"; 
+    }
 }
 updateNewsFeed();
 setInterval(updateNewsFeed, 300000);
@@ -1042,9 +1018,10 @@ async function updateMarketFeed() {
       "https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd&include_24hr_change=true"
     );
     const data = await res.json();
+    console.log("CoinGecko response:", data); // Debug log
 
     const ton = data["the-open-network"];
-    if (!ton) throw new Error();
+    if (!ton) throw new Error("TON data missing");
 
     const price = ton.usd;
     const change = ton.usd_24h_change;
@@ -1053,18 +1030,23 @@ async function updateMarketFeed() {
     document.getElementById("feed-market").textContent =
       `TON $${price.toLocaleString()} ${arrow}`;
 
-  } catch {
+  } catch (err) {
+    console.error("Market feed error:", err);
     document.getElementById("feed-market").textContent = "TON — no signal";
   }
 }
-updateNewsFeed();
+
+// REMOVE the extra updateNewsFeed() call here:
+// updateNewsFeed();  // <-- DELETE THIS LINE
 updateMarketFeed();
 
 setInterval(updateNewsFeed, 5 * 60 * 1000);   // every 5 minutes
 setInterval(updateMarketFeed, 60 * 1000);     // every 1 minute
-	
-</script>
 
+document.addEventListener("DOMContentLoaded", () => {
+    window.app = new InkRealmTerminal();
+});
+</script>
 
     <script>
 // ========== ARTICLE AUTO-SAVE TO URL (STANDALONE) ==========
