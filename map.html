@@ -195,18 +195,22 @@
             opacity: 0.3;
         }
 
+        /* INTERACTIVE STARS (Actual Pages) */
         .star-point {
             cursor: pointer;
             transition: fill 0.3s;
         }
         
-        .star-point.main {
+        /* NON-INTERACTIVE HUBS (Categories like AI, FICTION) */
+        /* These are now visually distinct and ignore mouse events */
+        .hub-point {
             fill: #000;
             stroke: var(--primary);
             stroke-width: 2px;
+            pointer-events: none; 
         }
-        
-        /* Realm node style */
+
+        /* Realm node style (The Portal) */
         .star-point.realm-node {
             fill: #000;
             stroke: var(--primary);
@@ -410,7 +414,7 @@
         // --- DATA ---
         const sitemapUrls = [
             "https://wordstar.nexus/", "https://wordstar.nexus/home",
-            "https://wordstar.nexus/cut&rune", // Added cut&rune
+            "https://wordstar.nexus/cut&rune", 
             "https://wordstar.nexus/dreamweaver", "https://wordstar.nexus/wip", "https://wordstar.nexus/dejavuglitches",
             "https://wordstar.nexus/displaywriter", "https://wordstar.nexus/bakedalaska", "https://wordstar.nexus/citadelle",
             "https://wordstar.nexus/ten", "https://wordstar.nexus/nine", "https://wordstar.nexus/38",
@@ -432,7 +436,7 @@
             const path = url.replace('https://wordstar.nexus/', '').replace(/\/$/, '');
             if (!path || path === 'home') return 'Home Base';
             const map = {
-                'cut&rune': 'Cut & Rune', // New mapping
+                'cut&rune': 'Cut & Rune', 
                 'dreamweaver': 'Dreamweaver Ink', 'wip': 'W.I.P.', 'nvidiapad': 'Nvidia Nemotron',
                 'ministral14b': '14 Ministral', 'macwritepro': 'Mac-Thing', 'grok4': 'X-Grok',
                 'nc17': 'NC-17', 'ighsau': 'IGHSAU', '90263': 'Martha Kessler', 'displaywriter': 'DisplayWriter',
@@ -458,14 +462,14 @@
             if (p.includes('90263') || p.includes('netherlands') || 
                 p.includes('nc17') || p.includes('ighsau')) return 'resources';
 
-            // 4. AI (Added Citadelle here)
+            // 4. AI 
             if (p.includes('ai') || p.includes('grok') || p.includes('gpt') || 
                 p.includes('nvidia') || p.includes('trinity') || p.includes('q') || 
                 p.includes('ministral') || p.includes('menage') || p.includes('concept') || 
                 p.includes('granite') || p.includes('ataraxia') || p.includes('queer') || 
                 p.includes('citadelle') || p.includes('triad') || p.includes('enigma')) return 'ai';
 
-            // 5. EDITORS (Writing tools)
+            // 5. EDITORS 
             if (p.includes('type') || p.includes('pad') || p.includes('write') || 
                 p.includes('craft') || p.includes('pen') || p.includes('birch') || 
                 p.includes('everex') || p.includes('daslexikon') || p.includes('wordstar') ||
@@ -481,7 +485,7 @@
             
             sitemapUrls.forEach(url => {
                 const c = categorize(url);
-                if (c === 'ignore') return; // Skip Home/Index
+                if (c === 'ignore') return; 
                 const n = getPrettyName(url);
                 
                 if(cats[c]) cats[c].push({ url, name: n });
@@ -496,6 +500,7 @@
                     a.href = item.url;
                     a.textContent = item.name;
                     a.className = 'sidebar-link';
+                    a.target = "_blank"; // Open in new tab
                     container.appendChild(a);
                 });
             };
@@ -548,11 +553,11 @@
                 mainLine.setAttribute("class", "constellation-line");
                 linesGroup.appendChild(mainLine);
 
-                // Category Star
+                // Category Star (Hub) - Changed to hub-point so it's not interactive
                 const catStar = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                 catStar.setAttribute("cx", catX); catStar.setAttribute("cy", catY);
                 catStar.setAttribute("r", 8);
-                catStar.setAttribute("class", "star-point main");
+                catStar.setAttribute("class", "hub-point"); 
                 starsGroup.appendChild(catStar);
 
                 // Create Label
@@ -666,6 +671,7 @@
                 }, 2000); 
             });
 
+            // Only Select .star-point (excludes .hub-point)
             const stars = document.querySelectorAll('.star-point');
             stars.forEach(star => {
                 star.addEventListener('mouseenter', (e) => {
@@ -684,20 +690,20 @@
                 });
 
                 star.addEventListener('mouseleave', () => {
-                    const isMain = star.classList.contains('main');
                     const isRealm = star.classList.contains('realm-node');
                     let r = 4;
                     let f = '#666';
                     
-                    if(isMain) { r = 8; f = '#000'; }
                     if(isRealm) { r = 14; f = '#000'; }
+                    // if(key === 'domain') logic is handled in creation, but we reset here:
+                    if(!isRealm && star.getAttribute('fill') === '#444') f = '#444'; // Preserve domain dimness
 
                     gsap.to(star, { attr: {r: r}, fill: f, duration: 0.3 });
                 });
 
                 star.addEventListener('click', () => {
                     const url = star.getAttribute('data-url');
-                    if(url) window.location.href = url;
+                    if(url) window.open(url, '_blank'); // Open in new tab
                 });
             });
         }
