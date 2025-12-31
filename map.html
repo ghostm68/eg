@@ -6,16 +6,16 @@
     <title>WordStar Nexus - Constellation Map</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <style>
-        /* --- CORE VARIABLES & RESET --- */
+        /* --- CORE VARIABLES --- */
         :root {
             --primary: #DC143C;   /* Crimson */
-            --highlight: #FF4444; /* Bright Red */
             --bg: #050505;        /* Deep Space */
-            --panel: rgba(15, 15, 15, 0.95);
+            --panel: rgba(12, 12, 12, 0.98);
             --border: #333;
             --text: #eee;
             --header-h: 60px;
             --footer-h: 30px;
+            --sidebar-w: 300px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -30,7 +30,7 @@
             overflow: hidden;
         }
 
-        /* --- HEADER (Command Bar) --- */
+        /* --- HEADER --- */
         .sys-header {
             height: var(--header-h);
             background: #000;
@@ -58,25 +58,26 @@
             flex: 1;
             height: calc(100vh - var(--header-h) - var(--footer-h));
             position: relative;
+            overflow: hidden;
         }
 
-        /* --- SIDEBAR (The "Perfect" One) --- */
+        /* --- SIDEBAR (OPEN BY DEFAULT) --- */
         .sidebar {
-            width: 300px;
+            width: var(--sidebar-w);
             height: 100%;
             background: var(--panel);
             border-right: 1px solid var(--border);
             padding: 20px;
             overflow-y: auto;
-            position: absolute;
-            left: 0; top: 0; 
+            flex-shrink: 0; /* Prevent shrinking */
+            transition: margin-left 0.4s cubic-bezier(0.25, 1, 0.5, 1);
             z-index: 200;
-            transform: translateX(-100%);
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 5px 0 20px rgba(0,0,0,0.5);
+            margin-left: 0; /* Open by default */
         }
 
-        .sidebar.active { transform: translateX(0); }
+        .sidebar.collapsed {
+            margin-left: calc(var(--sidebar-w) * -1); /* Hide off-screen */
+        }
 
         .sidebar h2 {
             color: var(--primary);
@@ -133,7 +134,7 @@
         .main-content {
             flex: 1;
             position: relative;
-            background: radial-gradient(circle at center, #151515 0%, #000 100%);
+            background: radial-gradient(circle at center, #111 0%, #000 100%);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -152,20 +153,14 @@
         svg {
             width: 100%;
             height: 100%;
-            /* Fixes some jitter issues */
-            shape-rendering: geometricPrecision; 
-            text-rendering: geometricPrecision;
         }
 
         /* --- CONSTELLATION STYLING --- */
         
-        /* Background Orbits */
-        .orbit-ring {
-            fill: none;
-            stroke: #222;
+        /* Grid */
+        .grid-line {
+            stroke: #1a1a1a;
             stroke-width: 1;
-            stroke-dasharray: 4, 4;
-            opacity: 0.5;
         }
 
         /* Connecting Lines */
@@ -230,7 +225,7 @@
             pointer-events: none;
             opacity: 0;
             z-index: 50;
-            transform: translate(-50%, -100%); /* Center above mouse */
+            transform: translate(-50%, -100%);
             margin-top: -15px;
             white-space: nowrap;
         }
@@ -257,7 +252,7 @@
     <!-- Header -->
     <header class="sys-header">
         <div style="display:flex; align-items:center;">
-            <button id="sidebar-toggle" class="sidebar-toggle">[ DIRECTORY ]</button>
+            <button id="sidebar-toggle" class="sidebar-toggle">[ HIDE MENU ]</button>
             <a href="https://wordstar.nexus/" class="brand">WordStar Nexus</a>
         </div>
         <div style="font-size: 10px; color: #666;">
@@ -266,7 +261,7 @@
     </header>
 
     <div class="workspace">
-        <!-- Sidebar (Restored Perfection) -->
+        <!-- Sidebar -->
         <aside id="sidebar" class="sidebar">
             <h2>NAVIGATION INDEX</h2>
             
@@ -300,9 +295,13 @@
         <main class="main-content" id="scene-container">
             <div id="map-container">
                 <svg id="star-map" viewBox="0 0 1000 800" preserveAspectRatio="xMidYMid meet">
-                    <!-- Static Background Grid -->
-                    <circle cx="500" cy="400" r="150" class="orbit-ring" opacity="0.1"/>
-                    <circle cx="500" cy="400" r="350" class="orbit-ring" opacity="0.1"/>
+                    <!-- BACKGROUND GRID PATTERN -->
+                    <defs>
+                        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#222" stroke-width="1"/>
+                        </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#grid)" opacity="0.4"/>
 
                     <!-- THE ROTATING UNIVERSE GROUP -->
                     <g id="universe" transform-origin="500 400">
@@ -310,7 +309,7 @@
                         <g id="stars"></g>
                     </g>
                     
-                    <!-- Labels are OUTSIDE the rotating group so they stay upright -->
+                    <!-- Labels (Static orientation) -->
                     <g id="labels"></g>
                 </svg>
             </div>
@@ -332,7 +331,7 @@
     <script>
         gsap.registerPlugin();
 
-        // --- DATA & CONFIG ---
+        // --- DATA ---
         const sitemapUrls = [
             "https://wordstar.nexus/", "https://wordstar.nexus/home",
             "https://wordstar.nexus/dreamweaver", "https://wordstar.nexus/wip", "https://wordstar.nexus/dejavuglitches",
@@ -404,68 +403,63 @@
 
         // --- MAP BUILDER ---
         function buildMap() {
-            const cx = 500, cy = 400; // Center of SVG
+            const cx = 500, cy = 400; 
             const universe = document.getElementById('universe');
             const starsGroup = document.getElementById('stars');
             const linesGroup = document.getElementById('connections');
             const labelsGroup = document.getElementById('labels');
 
-            // Organize Nodes
             const nodes = {
-                fiction: { angle: 0, color: '#DC143C', items: [] },
-                tools: { angle: 72, color: '#DC143C', items: [] },
-                ai: { angle: 144, color: '#DC143C', items: [] },
-                resources: { angle: 216, color: '#DC143C', items: [] },
-                other: { angle: 288, color: '#DC143C', items: [] }
+                fiction: { angle: 0, items: [] },
+                tools: { angle: 72, items: [] },
+                ai: { angle: 144, items: [] },
+                resources: { angle: 216, items: [] },
+                other: { angle: 288, items: [] }
             };
 
             sitemapUrls.forEach(url => {
                 const c = categorize(url);
                 const name = getPrettyName(url);
-                if (c === 'main') return; // Skip center in radial logic
+                if (c === 'main') return;
                 if (nodes[c]) nodes[c].items.push({url, name});
                 else nodes.resources.items.push({url, name});
             });
 
-            // Draw Main Categories & Satellites
             let i = 0;
-            const categoryRadius = 220; // Distance from center
-            const itemRadius = 55;      // Distance from category node
+            const categoryRadius = 220; 
+            const itemRadius = 55;      
 
             Object.keys(nodes).forEach(key => {
                 const node = nodes[key];
                 const angleRad = (node.angle * Math.PI) / 180;
                 
-                // Calculate Category Position
                 const catX = cx + Math.cos(angleRad) * categoryRadius;
                 const catY = cy + Math.sin(angleRad) * categoryRadius;
 
-                // 1. Draw Line from Center to Category
+                // Center Line
                 const mainLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
                 mainLine.setAttribute("x1", cx); mainLine.setAttribute("y1", cy);
                 mainLine.setAttribute("x2", catX); mainLine.setAttribute("y2", catY);
                 mainLine.setAttribute("class", "constellation-line");
                 linesGroup.appendChild(mainLine);
 
-                // 2. Draw Category Star
+                // Category Star
                 const catStar = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                 catStar.setAttribute("cx", catX); catStar.setAttribute("cy", catY);
                 catStar.setAttribute("r", 8);
                 catStar.setAttribute("class", "star-point main");
                 starsGroup.appendChild(catStar);
 
-                // 3. Draw Category Label (Independent of rotation group so it stays upright)
-                // We store the data needed to animate it in the loop below
-                createFloatingLabel(key.toUpperCase(), catX, catY, 0, labelsGroup);
+                // Create Label
+                createFloatingLabel(key.toUpperCase(), catX, catY, labelsGroup);
 
-                // 4. Draw Children (Satellites)
+                // Children
                 const count = node.items.length;
                 node.items.forEach((item, idx) => {
                     const itemAngle = (idx / count) * Math.PI * 2;
                     const itemX = catX + Math.cos(itemAngle) * itemRadius;
                     const itemY = catY + Math.sin(itemAngle) * itemRadius;
 
-                    // Connector
                     const subLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
                     subLine.setAttribute("x1", catX); subLine.setAttribute("y1", catY);
                     subLine.setAttribute("x2", itemX); subLine.setAttribute("y2", itemY);
@@ -473,7 +467,6 @@
                     subLine.setAttribute("opacity", "0.2");
                     linesGroup.appendChild(subLine);
 
-                    // Star Point
                     const star = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                     star.setAttribute("cx", itemX); star.setAttribute("cy", itemY);
                     star.setAttribute("r", 4);
@@ -484,7 +477,7 @@
                 });
             });
 
-            // Center Node (Home)
+            // Nexus Zero (Center)
             const centerNode = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             centerNode.setAttribute("cx", cx); centerNode.setAttribute("cy", cy);
             centerNode.setAttribute("r", 12);
@@ -494,21 +487,15 @@
             starsGroup.appendChild(centerNode);
         }
 
-        // Logic to keep labels tracking the rotating stars
-        // We create a label, but we have to manually update its position to match the rotation
-        function createFloatingLabel(text, initialX, initialY, initialAngle, container) {
+        function createFloatingLabel(text, initialX, initialY, container) {
             const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
             label.textContent = text;
             label.setAttribute("class", "category-label");
             label.setAttribute("x", initialX);
-            label.setAttribute("y", initialY + 25); // Offset
-            
-            // Custom data for animation
-            label.dataset.ox = initialX - 500; // Offset from center X
-            label.dataset.oy = initialY - 400; // Offset from center Y
-            
+            label.setAttribute("y", initialY + 25);
+            label.dataset.ox = initialX - 500; // Offset from center
+            label.dataset.oy = initialY - 400;
             container.appendChild(label);
-            return label;
         }
 
         // --- ANIMATION & INTERACTION ---
@@ -516,82 +503,64 @@
             buildSidebar();
             buildMap();
 
-            // Toggle Sidebar
+            // Toggle Logic (Reversed: Adds class to close)
             const toggle = document.getElementById('sidebar-toggle');
             const sidebar = document.getElementById('sidebar');
             toggle.addEventListener('click', () => {
-                sidebar.classList.toggle('active');
-                toggle.textContent = sidebar.classList.contains('active') ? "[ CLOSE ]" : "[ DIRECTORY ]";
+                sidebar.classList.toggle('collapsed');
+                toggle.textContent = sidebar.classList.contains('collapsed') ? "[ SHOW MENU ]" : "[ HIDE MENU ]";
             });
 
-            // ROTATION ANIMATION (The Galaxy Spin)
+            // ROTATION
             const universe = document.getElementById('universe');
-            // We rotate the SVG group
             const rotTween = gsap.to(universe, {
                 rotation: 360,
-                duration: 120, // Slow, majestic rotation
+                duration: 120,
                 repeat: -1,
                 ease: "none",
                 transformOrigin: "500px 400px",
-                onUpdate: updateLabels // Call this to move labels
+                onUpdate: updateLabels
             });
 
-            // Label Updater
-            const labels = document.querySelectorAll('.category-label');
             function updateLabels() {
                 const angle = gsap.getProperty(universe, "rotation") * (Math.PI / 180);
+                const labels = document.querySelectorAll('.category-label');
                 labels.forEach(label => {
                     const ox = parseFloat(label.dataset.ox);
                     const oy = parseFloat(label.dataset.oy);
-                    
-                    // Rotate the coordinate
                     const nx = ox * Math.cos(angle) - oy * Math.sin(angle);
                     const ny = ox * Math.sin(angle) + oy * Math.cos(angle);
-                    
                     label.setAttribute("x", 500 + nx);
-                    label.setAttribute("y", 400 + ny + 25); // +25 offset
+                    label.setAttribute("y", 400 + ny + 25);
                 });
             }
 
-            // --- THE OBSERVER EFFECT (Pause on Hover) ---
+            // OBSERVER EFFECT
             const scene = document.getElementById('scene-container');
             const stars = document.querySelectorAll('.star-point');
             const popup = document.getElementById('popup');
             const pTitle = document.getElementById('popup-title');
 
-            // Global Pause
-            scene.addEventListener('mouseenter', () => {
-                gsap.to(rotTween, { timeScale: 0, duration: 0.5 }); // Smooth stop
-            });
+            scene.addEventListener('mouseenter', () => gsap.to(rotTween, { timeScale: 0, duration: 0.5 }));
             scene.addEventListener('mouseleave', () => {
-                gsap.to(rotTween, { timeScale: 1, duration: 1 }); // Smooth resume
+                gsap.to(rotTween, { timeScale: 1, duration: 1 });
                 gsap.to(popup, { opacity: 0 });
             });
 
-            // Star Interactions
             stars.forEach(star => {
                 star.addEventListener('mouseenter', (e) => {
                     const name = star.getAttribute('data-name');
                     if(!name) return;
-
                     pTitle.textContent = name;
                     gsap.to(popup, { opacity: 1, duration: 0.2 });
-                    
-                    // Pop animation
                     gsap.to(star, { attr: {r: 8}, fill: '#FFF', duration: 0.3 });
                 });
 
                 star.addEventListener('mousemove', (e) => {
-                    // Move popup with mouse
-                    gsap.to(popup, { 
-                        left: e.clientX, 
-                        top: e.clientY, 
-                        duration: 0.1 
-                    });
+                    gsap.to(popup, { left: e.clientX, top: e.clientY, duration: 0.1 });
                 });
 
                 star.addEventListener('mouseleave', () => {
-                    // Reset star
                     const isMain = star.classList.contains('main');
                     gsap.to(star, { attr: {r: isMain?8:4}, fill: isMain?'#000':'#666', duration: 0.3 });
                 });
