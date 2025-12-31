@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Constellation of Stories - WordStar Nexus</title>
+    <title>WordStar Nexus - Constellation Map</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <style>
-        /* Base Styles */
+        /* --- CORE VARIABLES & RESET --- */
         :root {
             --primary: #DC143C;   /* Crimson */
-            --secondary: #FF4444; /* Brighter Red for visibility */
-            --dim: #500000;       /* Dark Red for background lines */
-            --bg: #050505;
-            --panel: rgba(10, 10, 10, 0.95);
+            --highlight: #FF4444; /* Bright Red */
+            --bg: #050505;        /* Deep Space */
+            --panel: rgba(15, 15, 15, 0.95);
             --border: #333;
-            --text: #ffffff;
-            --header-height: 60px;
-            --footer-height: 30px;
+            --text: #eee;
+            --header-h: 60px;
+            --footer-h: 30px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -25,22 +24,22 @@
             font-family: 'Courier New', monospace;
             background: var(--bg);
             color: var(--text);
-            overflow: hidden;
             height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
-        /* Header */
+        /* --- HEADER (Command Bar) --- */
         .sys-header {
-            height: var(--header-height);
+            height: var(--header-h);
             background: #000;
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 20px;
-            z-index: 200;
+            z-index: 300;
         }
 
         .brand {
@@ -50,71 +49,96 @@
             text-decoration: none;
             text-transform: uppercase;
             letter-spacing: 2px;
+            margin-left: 15px;
         }
 
-        .header-nav a {
-            color: #666;
-            text-decoration: none;
-            font-size: 0.8rem;
-            margin-left: 20px;
-            transition: color 0.3s;
-            text-transform: uppercase;
-        }
-        .header-nav a:hover { color: var(--primary); }
-
-        /* Workspace */
+        /* --- LAYOUT CONTAINER --- */
         .workspace {
             display: flex;
             flex: 1;
-            height: calc(100vh - var(--header-height) - var(--footer-height));
+            height: calc(100vh - var(--header-h) - var(--footer-h));
             position: relative;
         }
 
-        /* Sidebar */
+        /* --- SIDEBAR (The "Perfect" One) --- */
         .sidebar {
-            width: 280px;
+            width: 300px;
             height: 100%;
             background: var(--panel);
             border-right: 1px solid var(--border);
             padding: 20px;
             overflow-y: auto;
             position: absolute;
-            left: 0; top: 0; z-index: 100;
-            transform: translateX(-100%); /* Hidden by default */
-            transition: transform 0.3s ease;
+            left: 0; top: 0; 
+            z-index: 200;
+            transform: translateX(-100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 5px 0 20px rgba(0,0,0,0.5);
         }
 
         .sidebar.active { transform: translateX(0); }
 
-        .sidebar-toggle {
-            background: none;
-            border: 1px solid var(--border);
+        .sidebar h2 {
             color: var(--primary);
-            padding: 5px 10px;
-            cursor: pointer;
-            margin-right: 15px;
+            font-size: 16px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
         }
-        .sidebar-toggle:hover { background: #1a1a1a; }
+
+        .sidebar-section { margin-bottom: 25px; }
+        
+        .sidebar-section h3 {
+            color: #888;
+            font-size: 11px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
 
         .sidebar-link {
             display: block;
-            color: #888;
+            color: #ccc;
             text-decoration: none;
-            padding: 5px 0;
-            font-size: 12px;
-            transition: color 0.2s;
-            border-bottom: 1px dotted #222;
+            padding: 6px 10px;
+            margin: 2px 0;
+            font-size: 13px;
+            border-left: 2px solid transparent;
+            transition: all 0.2s;
         }
-        .sidebar-link:hover { color: var(--secondary); padding-left: 5px; }
-        .sidebar h3 { color: var(--primary); font-size: 12px; margin-top: 20px; margin-bottom: 10px; text-transform: uppercase; }
 
-        /* Main Map Area */
+        .sidebar-link:hover {
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            border-left: 2px solid var(--primary);
+            padding-left: 15px;
+        }
+
+        /* Toggle Button */
+        .sidebar-toggle {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--primary);
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+        .sidebar-toggle:hover { background: rgba(220,20,60,0.2); }
+
+        /* --- MAIN MAP AREA --- */
         .main-content {
             flex: 1;
             position: relative;
-            background: radial-gradient(circle at center, #111 0%, #000 100%);
+            background: radial-gradient(circle at center, #151515 0%, #000 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
             overflow: hidden;
-            width: 100%;
+            cursor: crosshair;
         }
 
         #map-container {
@@ -128,66 +152,73 @@
         svg {
             width: 100%;
             height: 100%;
-            max-width: 1200px; /* Prevents it from getting too spread out on huge screens */
+            /* Fixes some jitter issues */
+            shape-rendering: geometricPrecision; 
+            text-rendering: geometricPrecision;
         }
 
-        /* --- STAR & LINE STYLES --- */
+        /* --- CONSTELLATION STYLING --- */
         
-        /* Lines connecting stars */
-        .constellation-line {
-            stroke: var(--dim);
-            stroke-width: 1px;
-            opacity: 0.4;
-            transition: stroke 0.3s, opacity 0.3s;
+        /* Background Orbits */
+        .orbit-ring {
+            fill: none;
+            stroke: #222;
+            stroke-width: 1;
+            stroke-dasharray: 4, 4;
+            opacity: 0.5;
         }
 
-        /* Main Category Stars */
+        /* Connecting Lines */
+        .constellation-line {
+            stroke: var(--primary);
+            stroke-width: 1;
+            opacity: 0.3;
+        }
+
+        /* Stars */
+        .star-point {
+            cursor: pointer;
+            transition: fill 0.3s;
+        }
+        
         .star-point.main {
-            fill: #000; /* Black center */
+            fill: #000;
             stroke: var(--primary);
             stroke-width: 2px;
-            cursor: pointer;
         }
 
-        /* The actual links (Territories) */
         .star-point.territory {
-            fill: var(--secondary);
-            cursor: pointer;
-            transition: r 0.3s;
-        }
-        
-        /* Outer / Other links */
-        .star-point.outer {
-            fill: #800000; /* Darker red, but still red */
-            opacity: 0.7;
-            cursor: pointer;
+            fill: #666;
+            transition: all 0.3s;
         }
 
         /* Hover Effects */
         .star-point:hover {
-            fill: #FFF !important;
-            filter: drop-shadow(0 0 8px var(--primary));
+            fill: #FFF;
+            stroke: #FFF;
+            filter: drop-shadow(0 0 8px #FFF);
         }
 
         /* Labels */
         .territory-label {
-            fill: var(--text);
+            fill: #FFF;
             font-size: 10px;
-            text-anchor: middle;
-            pointer-events: none;
             font-weight: bold;
-            opacity: 0.7;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            text-anchor: middle;
+            opacity: 0.8;
+            pointer-events: none;
+            text-shadow: 2px 2px 2px #000;
         }
 
-        .main-label {
+        .category-label {
             fill: var(--primary);
             font-size: 12px;
             font-weight: bold;
             text-anchor: middle;
+            text-transform: uppercase;
+            letter-spacing: 2px;
             pointer-events: none;
-            text-shadow: 0 2px 4px #000;
+            text-shadow: 0 0 5px #000;
         }
 
         /* Popup */
@@ -199,13 +230,16 @@
             pointer-events: none;
             opacity: 0;
             z-index: 50;
+            transform: translate(-50%, -100%); /* Center above mouse */
+            margin-top: -15px;
+            white-space: nowrap;
         }
-        .gsap-popup h3 { color: var(--primary); font-size: 14px; margin-bottom: 5px; }
-        .gsap-popup p { color: #ccc; font-size: 11px; }
+        .gsap-popup h3 { color: var(--primary); font-size: 14px; margin: 0; }
+        .gsap-popup p { color: #888; font-size: 10px; margin-top: 4px; }
 
         /* Footer */
         .sys-footer {
-            height: var(--footer-height);
+            height: var(--footer-h);
             background: #000;
             border-top: 1px solid var(--border);
             display: flex;
@@ -214,6 +248,7 @@
             padding: 0 20px;
             font-size: 10px;
             color: #444;
+            z-index: 300;
         }
     </style>
 </head>
@@ -222,255 +257,353 @@
     <!-- Header -->
     <header class="sys-header">
         <div style="display:flex; align-items:center;">
-            <button id="sidebar-toggle" class="sidebar-toggle">☰ MENU</button>
+            <button id="sidebar-toggle" class="sidebar-toggle">[ DIRECTORY ]</button>
             <a href="https://wordstar.nexus/" class="brand">WordStar Nexus</a>
         </div>
-        <nav class="header-nav">
-            <a href="https://wordstar.nexus/home">Home</a>
-            <a href="https://wordstar.nexus/about">About</a>
-        </nav>
+        <div style="font-size: 10px; color: #666;">
+            NAV_SYSTEM: ONLINE
+        </div>
     </header>
 
     <div class="workspace">
-        <!-- Sidebar Navigation -->
+        <!-- Sidebar (Restored Perfection) -->
         <aside id="sidebar" class="sidebar">
-            <div id="sidebar-links-container"></div>
+            <h2>NAVIGATION INDEX</h2>
+            
+            <div class="sidebar-section">
+                <h3>Main Territories</h3>
+                <div id="main-links"></div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>Fiction & Stories</h3>
+                <div id="fiction-links"></div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Writing Tools</h3>
+                <div id="tools-links"></div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>AI / Synthetic</h3>
+                <div id="ai-links"></div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>Archives</h3>
+                <div id="resources-links"></div>
+            </div>
         </aside>
 
         <!-- Main Map -->
-        <main class="main-content">
+        <main class="main-content" id="scene-container">
             <div id="map-container">
-                <svg id="star-map" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet">
-                    <!-- Connections Group -->
-                    <g id="lines"></g>
-                    <!-- Stars Group -->
-                    <g id="stars"></g>
-                    <!-- Labels Group -->
+                <svg id="star-map" viewBox="0 0 1000 800" preserveAspectRatio="xMidYMid meet">
+                    <!-- Static Background Grid -->
+                    <circle cx="500" cy="400" r="150" class="orbit-ring" opacity="0.1"/>
+                    <circle cx="500" cy="400" r="350" class="orbit-ring" opacity="0.1"/>
+
+                    <!-- THE ROTATING UNIVERSE GROUP -->
+                    <g id="universe" transform-origin="500 400">
+                        <g id="connections"></g>
+                        <g id="stars"></g>
+                    </g>
+                    
+                    <!-- Labels are OUTSIDE the rotating group so they stay upright -->
                     <g id="labels"></g>
                 </svg>
             </div>
             
-            <!-- Hover Popup -->
+            <!-- Popup -->
             <div id="popup" class="gsap-popup">
-                <h3 id="popup-title">Title</h3>
-                <p id="popup-sub">Click to navigate</p>
+                <h3 id="popup-title"></h3>
+                <p id="popup-desc">ACCESS NODE</p>
             </div>
         </main>
     </div>
 
     <!-- Footer -->
     <footer class="sys-footer">
-        <span>STATUS: STABLE</span>
-        <span>WordStar Nexus &copy; 2025</span>
+        <span>MODE: ORBITAL (HOVER TO PAUSE)</span>
+        <span>&copy; 2025</span>
     </footer>
 
     <script>
         gsap.registerPlugin();
 
-        // Data
+        // --- DATA & CONFIG ---
         const sitemapUrls = [
-            "https://wordstar.nexus/home", "https://wordstar.nexus/dreamweaver", "https://wordstar.nexus/wip",
-            "https://wordstar.nexus/dejavuglitches", "https://wordstar.nexus/displaywriter", "https://wordstar.nexus/bakedalaska",
-            "https://wordstar.nexus/citadelle", "https://wordstar.nexus/ten", "https://wordstar.nexus/nine",
-            "https://wordstar.nexus/38", "https://wordstar.nexus/custompad", "https://wordstar.nexus/typecast",
-            "https://wordstar.nexus/typespace", "https://wordstar.nexus/nvidiapad", "https://wordstar.nexus/z",
-            "https://wordstar.nexus/w", "https://wordstar.nexus/textcraft", "https://wordstar.nexus/typewriter",
-            "https://wordstar.nexus/birch", "https://wordstar.nexus/macwritepro", "https://wordstar.nexus/everex",
-            "https://wordstar.nexus/ministral14b", "https://wordstar.nexus/wortschatz", "https://wordstar.nexus/menageatrois",
-            "https://wordstar.nexus/q", "https://wordstar.nexus/trinity", "https://wordstar.nexus/grok4",
-            "https://wordstar.nexus/queer", "https://wordstar.nexus/triad", "https://wordstar.nexus/pen",
-            "https://wordstar.nexus/iwa", "https://wordstar.nexus/enigma", "https://wordstar.nexus/conceptweave",
-            "https://wordstar.nexus/alt", "https://wordstar.nexus/granite", "https://wordstar.nexus/ataraxia",
-            "https://wordstar.nexus/daslexikon", "https://wordstar.nexus/ai", "https://wordstar.nexus/nc17",
-            "https://wordstar.nexus/netherlands", "https://wordstar.nexus/ighsau", "https://wordstar.nexus/90263"
+            "https://wordstar.nexus/", "https://wordstar.nexus/home",
+            "https://wordstar.nexus/dreamweaver", "https://wordstar.nexus/wip", "https://wordstar.nexus/dejavuglitches",
+            "https://wordstar.nexus/displaywriter", "https://wordstar.nexus/bakedalaska", "https://wordstar.nexus/citadelle",
+            "https://wordstar.nexus/ten", "https://wordstar.nexus/nine", "https://wordstar.nexus/38",
+            "https://wordstar.nexus/custompad", "https://wordstar.nexus/typecast", "https://wordstar.nexus/typespace",
+            "https://wordstar.nexus/nvidiapad", "https://wordstar.nexus/z", "https://wordstar.nexus/w",
+            "https://wordstar.nexus/textcraft", "https://wordstar.nexus/typewriter", "https://wordstar.nexus/birch",
+            "https://wordstar.nexus/macwritepro", "https://wordstar.nexus/everex", "https://wordstar.nexus/ministral14b",
+            "https://wordstar.nexus/wortschatz", "https://wordstar.nexus/menageatrois", "https://wordstar.nexus/q",
+            "https://wordstar.nexus/trinity", "https://wordstar.nexus/grok4", "https://wordstar.nexus/queer",
+            "https://wordstar.nexus/triad", "https://wordstar.nexus/pen", "https://wordstar.nexus/iwa",
+            "https://wordstar.nexus/enigma", "https://wordstar.nexus/conceptweave", "https://wordstar.nexus/alt",
+            "https://wordstar.nexus/granite", "https://wordstar.nexus/ataraxia", "https://wordstar.nexus/daslexikon",
+            "https://wordstar.nexus/ai", "https://wordstar.nexus/nc17", "https://wordstar.nexus/netherlands",
+            "https://wordstar.nexus/ighsau", "https://wordstar.nexus/90263"
         ];
 
-        // --- 1. Processing Data ---
-        
+        // --- HELPERS ---
         function getPrettyName(url) {
-            const path = url.split('/').pop();
-            if(!path || path === 'home') return 'HOME BASE';
-            // Custom renames for specific paths
+            const path = url.replace('https://wordstar.nexus/', '').replace(/\/$/, '');
+            if (!path || path === 'home') return 'Home Base';
             const map = {
-                'dreamweaver': 'DREAMWEAVER', 'wip': 'W.I.P.', 'nvidiapad': 'NVIDIA AI',
-                'ministral14b': 'MINISTRAL 14B', 'macwritepro': 'MAC WRITE', 'grok4': 'X-GROK',
-                'nc17': 'NC-17', 'ighsau': 'IOWA SPORTS', '90263': 'MARTHA K.'
+                'dreamweaver': 'Dreamweaver Ink', 'wip': 'W.I.P.', 'nvidiapad': 'Nvidia Nemotron',
+                'ministral14b': '14 Ministral', 'macwritepro': 'Mac-Thing', 'grok4': 'X-Grok',
+                'nc17': 'NC-17', 'ighsau': 'IGHSAU', '90263': 'Martha Kessler', 'displaywriter': 'DisplayWriter',
+                'daslexikon': 'Das Lexikon', 'menageatrois': 'GVC-3'
             };
-            return map[path] || path.toUpperCase().replace(/-/g, ' ');
+            return map[path] || path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');
         }
 
-        function getCategory(url) {
+        function categorize(url) {
             const p = url.toLowerCase();
-            if (p.includes('home')) return 'main';
-            if (p.includes('dream') || p.includes('novel') || p.includes('story') || p.includes('ten') || p.includes('nine') || p.includes('wip')) return 'fiction';
-            if (p.includes('ai') || p.includes('grok') || p.includes('gpt') || p.includes('nvidia') || p.includes('trinity')) return 'ai';
-            if (p.includes('type') || p.includes('pad') || p.includes('write') || p.includes('tool')) return 'tools';
-            if (p.includes('character') || p.includes('netherlands') || p.includes('kessler')) return 'people';
-            return 'archive';
+            if (p.endsWith('nexus/') || p.includes('home')) return 'main';
+            if (p.includes('dream') || p.includes('wip') || p.includes('story') || p.includes('ten') || p.includes('nine') || p.includes('38') || p.includes('citadelle')) return 'fiction';
+            if (p.includes('ai') || p.includes('grok') || p.includes('gpt') || p.includes('nvidia') || p.includes('trinity') || p.includes('q')) return 'ai';
+            if (p.includes('type') || p.includes('pad') || p.includes('write') || p.includes('craft') || p.includes('pen')) return 'tools';
+            return 'resources';
         }
 
-        // --- 2. Build the Map ---
-
-        function buildMap() {
-            const width = 800;
-            const height = 600;
-            const cx = width / 2;
-            const cy = height / 2;
-
-            const groups = {
-                main: { x: cx, y: cy, label: 'NEXUS', items: [] },
-                fiction: { x: cx - 200, y: cy - 100, label: 'FICTION', items: [] },
-                ai: { x: cx + 200, y: cy - 100, label: 'AI SYNTH', items: [] },
-                tools: { x: cx - 150, y: cy + 180, label: 'TOOLS', items: [] },
-                people: { x: cx + 150, y: cy + 180, label: 'PERSONAE', items: [] },
-                archive: { x: cx, y: cy - 220, label: 'ARCHIVE', items: [] }
-            };
-
-            // Sort URLs into groups
+        // --- SIDEBAR BUILDER ---
+        function buildSidebar() {
+            const cats = { main: [], fiction: [], tools: [], ai: [], resources: [] };
+            
             sitemapUrls.forEach(url => {
-                const cat = getCategory(url);
-                if(groups[cat]) groups[cat].items.push({ url: url, name: getPrettyName(url) });
-                else groups.archive.items.push({ url: url, name: getPrettyName(url) }); // Fallback
+                const c = categorize(url);
+                const n = getPrettyName(url);
+                if(cats[c]) cats[c].push({ url, name: n });
+                else cats.resources.push({ url, name: n });
             });
 
-            const svgLines = document.getElementById('lines');
-            const svgStars = document.getElementById('stars');
-            const svgLabels = document.getElementById('labels');
+            const fill = (id, list) => {
+                const container = document.getElementById(id);
+                list.forEach(item => {
+                    const a = document.createElement('a');
+                    a.href = item.url;
+                    a.textContent = item.name;
+                    a.className = 'sidebar-link';
+                    container.appendChild(a);
+                });
+            };
 
-            // Draw Structure
-            Object.keys(groups).forEach(key => {
-                const group = groups[key];
+            fill('main-links', cats.main);
+            fill('fiction-links', cats.fiction);
+            fill('tools-links', cats.tools);
+            fill('ai-links', cats.ai);
+            fill('resources-links', cats.resources);
+        }
+
+        // --- MAP BUILDER ---
+        function buildMap() {
+            const cx = 500, cy = 400; // Center of SVG
+            const universe = document.getElementById('universe');
+            const starsGroup = document.getElementById('stars');
+            const linesGroup = document.getElementById('connections');
+            const labelsGroup = document.getElementById('labels');
+
+            // Organize Nodes
+            const nodes = {
+                fiction: { angle: 0, color: '#DC143C', items: [] },
+                tools: { angle: 72, color: '#DC143C', items: [] },
+                ai: { angle: 144, color: '#DC143C', items: [] },
+                resources: { angle: 216, color: '#DC143C', items: [] },
+                other: { angle: 288, color: '#DC143C', items: [] }
+            };
+
+            sitemapUrls.forEach(url => {
+                const c = categorize(url);
+                const name = getPrettyName(url);
+                if (c === 'main') return; // Skip center in radial logic
+                if (nodes[c]) nodes[c].items.push({url, name});
+                else nodes.resources.items.push({url, name});
+            });
+
+            // Draw Main Categories & Satellites
+            let i = 0;
+            const categoryRadius = 220; // Distance from center
+            const itemRadius = 55;      // Distance from category node
+
+            Object.keys(nodes).forEach(key => {
+                const node = nodes[key];
+                const angleRad = (node.angle * Math.PI) / 180;
                 
-                // 1. Draw Main Category Nodes (Big Stars)
-                if (key !== 'main') {
-                    // Line from Center to Category
-                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                    line.setAttribute("x1", cx); line.setAttribute("y1", cy);
-                    line.setAttribute("x2", group.x); line.setAttribute("y2", group.y);
-                    line.setAttribute("class", "constellation-line");
-                    svgLines.appendChild(line);
-                }
+                // Calculate Category Position
+                const catX = cx + Math.cos(angleRad) * categoryRadius;
+                const catY = cy + Math.sin(angleRad) * categoryRadius;
 
-                // Category Node
-                const node = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                node.setAttribute("cx", group.x); node.setAttribute("cy", group.y);
-                node.setAttribute("r", key === 'main' ? 12 : 8);
-                node.setAttribute("class", "star-point main");
-                svgStars.appendChild(node);
+                // 1. Draw Line from Center to Category
+                const mainLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                mainLine.setAttribute("x1", cx); mainLine.setAttribute("y1", cy);
+                mainLine.setAttribute("x2", catX); mainLine.setAttribute("y2", catY);
+                mainLine.setAttribute("class", "constellation-line");
+                linesGroup.appendChild(mainLine);
 
-                // Category Label
-                const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                label.setAttribute("x", group.x); label.setAttribute("y", group.y + 25);
-                label.setAttribute("class", "main-label");
-                label.textContent = group.label;
-                svgLabels.appendChild(label);
+                // 2. Draw Category Star
+                const catStar = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                catStar.setAttribute("cx", catX); catStar.setAttribute("cy", catY);
+                catStar.setAttribute("r", 8);
+                catStar.setAttribute("class", "star-point main");
+                starsGroup.appendChild(catStar);
 
-                // 2. Draw Child Nodes (The actual links) around the Category
-                const count = group.items.length;
-                const radius = 45; // Distance from category center
-                
-                group.items.forEach((item, index) => {
-                    const angle = (index / count) * Math.PI * 2;
-                    const sx = group.x + Math.cos(angle) * radius;
-                    const sy = group.y + Math.sin(angle) * radius;
+                // 3. Draw Category Label (Independent of rotation group so it stays upright)
+                // We store the data needed to animate it in the loop below
+                createFloatingLabel(key.toUpperCase(), catX, catY, 0, labelsGroup);
 
-                    // Line from Category to Item
+                // 4. Draw Children (Satellites)
+                const count = node.items.length;
+                node.items.forEach((item, idx) => {
+                    const itemAngle = (idx / count) * Math.PI * 2;
+                    const itemX = catX + Math.cos(itemAngle) * itemRadius;
+                    const itemY = catY + Math.sin(itemAngle) * itemRadius;
+
+                    // Connector
                     const subLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                    subLine.setAttribute("x1", group.x); subLine.setAttribute("y1", group.y);
-                    subLine.setAttribute("x2", sx); subLine.setAttribute("y2", sy);
+                    subLine.setAttribute("x1", catX); subLine.setAttribute("y1", catY);
+                    subLine.setAttribute("x2", itemX); subLine.setAttribute("y2", itemY);
                     subLine.setAttribute("class", "constellation-line");
-                    subLine.setAttribute("style", "opacity: 0.2"); // Fainter lines for items
-                    svgLines.appendChild(subLine);
+                    subLine.setAttribute("opacity", "0.2");
+                    linesGroup.appendChild(subLine);
 
-                    // Item Node
+                    // Star Point
                     const star = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                    star.setAttribute("cx", sx); star.setAttribute("cy", sy);
+                    star.setAttribute("cx", itemX); star.setAttribute("cy", itemY);
                     star.setAttribute("r", 4);
                     star.setAttribute("class", "star-point territory");
                     star.setAttribute("data-name", item.name);
                     star.setAttribute("data-url", item.url);
-                    svgStars.appendChild(star);
-
-                    // Item Label (Only if distinct enough, optional)
-                    // We can skip labels on map to reduce clutter, showing them in popup instead.
+                    starsGroup.appendChild(star);
                 });
             });
+
+            // Center Node (Home)
+            const centerNode = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            centerNode.setAttribute("cx", cx); centerNode.setAttribute("cy", cy);
+            centerNode.setAttribute("r", 12);
+            centerNode.setAttribute("class", "star-point main");
+            centerNode.setAttribute("data-name", "NEXUS ZERO");
+            centerNode.setAttribute("data-url", "https://wordstar.nexus/");
+            starsGroup.appendChild(centerNode);
         }
 
-        // --- 3. Interactions ---
-
-        function setupInteractions() {
-            const popup = document.getElementById('popup');
-            const title = document.getElementById('popup-title');
+        // Logic to keep labels tracking the rotating stars
+        // We create a label, but we have to manually update its position to match the rotation
+        function createFloatingLabel(text, initialX, initialY, initialAngle, container) {
+            const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            label.textContent = text;
+            label.setAttribute("class", "category-label");
+            label.setAttribute("x", initialX);
+            label.setAttribute("y", initialY + 25); // Offset
             
-            // Sidebar Toggle
+            // Custom data for animation
+            label.dataset.ox = initialX - 500; // Offset from center X
+            label.dataset.oy = initialY - 400; // Offset from center Y
+            
+            container.appendChild(label);
+            return label;
+        }
+
+        // --- ANIMATION & INTERACTION ---
+        function init() {
+            buildSidebar();
+            buildMap();
+
+            // Toggle Sidebar
             const toggle = document.getElementById('sidebar-toggle');
             const sidebar = document.getElementById('sidebar');
             toggle.addEventListener('click', () => {
                 sidebar.classList.toggle('active');
+                toggle.textContent = sidebar.classList.contains('active') ? "[ CLOSE ]" : "[ DIRECTORY ]";
             });
 
-            // Populate Sidebar List
-            const sbContainer = document.getElementById('sidebar-links-container');
-            sitemapUrls.forEach(url => {
-                const a = document.createElement('a');
-                a.href = url;
-                a.textContent = getPrettyName(url);
-                a.className = 'sidebar-link';
-                sbContainer.appendChild(a);
+            // ROTATION ANIMATION (The Galaxy Spin)
+            const universe = document.getElementById('universe');
+            // We rotate the SVG group
+            const rotTween = gsap.to(universe, {
+                rotation: 360,
+                duration: 120, // Slow, majestic rotation
+                repeat: -1,
+                ease: "none",
+                transformOrigin: "500px 400px",
+                onUpdate: updateLabels // Call this to move labels
             });
 
-            // Star Hover Logic
-            document.querySelectorAll('.star-point.territory').forEach(star => {
+            // Label Updater
+            const labels = document.querySelectorAll('.category-label');
+            function updateLabels() {
+                const angle = gsap.getProperty(universe, "rotation") * (Math.PI / 180);
+                labels.forEach(label => {
+                    const ox = parseFloat(label.dataset.ox);
+                    const oy = parseFloat(label.dataset.oy);
+                    
+                    // Rotate the coordinate
+                    const nx = ox * Math.cos(angle) - oy * Math.sin(angle);
+                    const ny = ox * Math.sin(angle) + oy * Math.cos(angle);
+                    
+                    label.setAttribute("x", 500 + nx);
+                    label.setAttribute("y", 400 + ny + 25); // +25 offset
+                });
+            }
+
+            // --- THE OBSERVER EFFECT (Pause on Hover) ---
+            const scene = document.getElementById('scene-container');
+            const stars = document.querySelectorAll('.star-point');
+            const popup = document.getElementById('popup');
+            const pTitle = document.getElementById('popup-title');
+
+            // Global Pause
+            scene.addEventListener('mouseenter', () => {
+                gsap.to(rotTween, { timeScale: 0, duration: 0.5 }); // Smooth stop
+            });
+            scene.addEventListener('mouseleave', () => {
+                gsap.to(rotTween, { timeScale: 1, duration: 1 }); // Smooth resume
+                gsap.to(popup, { opacity: 0 });
+            });
+
+            // Star Interactions
+            stars.forEach(star => {
                 star.addEventListener('mouseenter', (e) => {
                     const name = star.getAttribute('data-name');
-                    
-                    // Show Popup
-                    title.textContent = name;
-                    
-                    // Position Popup near mouse
-                    const rect = star.getBoundingClientRect();
-                    const container = document.querySelector('.main-content').getBoundingClientRect();
-                    
-                    gsap.to(popup, {
-                        opacity: 1,
-                        left: (rect.left - container.left) + 20,
-                        top: (rect.top - container.top) - 10,
-                        duration: 0.2
-                    });
+                    if(!name) return;
 
-                    // Highlight Line (optional, finds the previous sibling line)
-                    // In this DOM structure, lines are in a different group, so we skip complex line highlighting for simplicity/performance
+                    pTitle.textContent = name;
+                    gsap.to(popup, { opacity: 1, duration: 0.2 });
+                    
+                    // Pop animation
+                    gsap.to(star, { attr: {r: 8}, fill: '#FFF', duration: 0.3 });
+                });
+
+                star.addEventListener('mousemove', (e) => {
+                    // Move popup with mouse
+                    gsap.to(popup, { 
+                        left: e.clientX, 
+                        top: e.clientY, 
+                        duration: 0.1 
+                    });
                 });
 
                 star.addEventListener('mouseleave', () => {
-                    gsap.to(popup, { opacity: 0, duration: 0.2 });
+                    // Reset star
+                    const isMain = star.classList.contains('main');
+                    gsap.to(star, { attr: {r: isMain?8:4}, fill: isMain?'#000':'#666', duration: 0.3 });
                 });
 
                 star.addEventListener('click', () => {
                     const url = star.getAttribute('data-url');
-                    window.location.href = url;
+                    if(url) window.location.href = url;
                 });
             });
         }
 
-        // --- 4. Init ---
-        buildMap();
-        setupInteractions();
-
-        // Subtle "Alive" Animation (No rotation, just breathing)
-        gsap.to('.star-point', {
-            r: "+=1",
-            duration: 2,
-            yoyo: true,
-            repeat: -1,
-            stagger: {
-                amount: 2,
-                from: "random"
-            },
-            ease: "sine.inOut"
-        });
-
+        init();
     </script>
 </body>
 </html>
