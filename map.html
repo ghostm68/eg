@@ -330,6 +330,30 @@
             .header-logo-container { width: 140px; }
             .sys-footer { font-size: 8px; padding: 0 10px; }
         }
+        .card-thumb-container {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 1px solid #333;
+    transition: all 0.3s;
+    background: linear-gradient(45deg, #151515 25%, #222 25%, #222 50%, #151515 50%, #151515 75%, #222 75%);
+    background-size: 8px 8px;
+}
+
+/* Category Colors */
+.nav-card[data-cat="writing"] .card-thumb { border-color: #500; }
+.nav-card[data-cat="apps"] .card-thumb { border-color: #005555; }
+.nav-card[data-cat="system"] .card-thumb { border-color: #554400; }
+.nav-card[data-cat="sites"] .card-thumb { border-color: #333; }
     </style>
 </head>
 <body>
@@ -470,47 +494,82 @@ const database = [
 ];
         /* --- BUILDER FUNCTIONS --- */
 
-        function buildSidebar() {
-            const container = document.getElementById('sidebar-content');
-            document.getElementById('link-count').textContent = database.length;
-            
-            // Updated category names
-            const sections = {
-                'writing': 'Creative Writing',
-                'apps': 'Technical Apps',
-                'system': 'AI Systems',
-                'sites': 'Portal Sites'
-            };
+      function buildSidebar() {
+    const container = document.getElementById('sidebar-content');
+    document.getElementById('link-count').textContent = database.length;
+    
+    const sections = {
+        'writing': 'Creative Writing',
+        'apps': 'Technical Apps',
+        'system': 'AI Systems',
+        'sites': 'Portal Sites'
+    };
 
-            for (const [key, label] of Object.entries(sections)) {
-                const items = database.filter(i => i.category === key);
+    for (const [key, label] of Object.entries(sections)) {
+        const items = database.filter(i => i.category === key);
+        
+        if (items.length > 0) {
+            const h = document.createElement('div');
+            h.className = 'cat-title';
+            h.textContent = label;
+            container.appendChild(h);
+
+            items.forEach(item => {
+                const a = document.createElement('a');
+                a.href = item.url;
+                a.className = 'nav-card';
+                a.setAttribute('data-cat', item.category); 
                 
-                if (items.length > 0) {
-                    const h = document.createElement('div');
-                    h.className = 'cat-title';
-                    h.textContent = label;
-                    container.appendChild(h);
-
-                    items.forEach(item => {
-                        const a = document.createElement('a');
-                        a.href = item.url;
-                        a.className = 'nav-card';
-                        a.setAttribute('data-cat', item.category); 
-                        
-                        const imgSrc = item.image ? item.image : "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
-                        
-                        a.innerHTML = `
-                            <img src="${imgSrc}" class="card-thumb" alt="" onerror="this.style.opacity=0.5; this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'">
-                            <div class="card-info">
-                                <span class="card-title">${item.title}</span>
-                                <span class="card-meta">${item.url.replace('https://inkrealm.info/', '/')}</span>
-                            </div>
-                        `;
-                        container.appendChild(a);
-                    });
-                }
-            }
+                // Create a more robust image loading solution
+                const img = document.createElement('img');
+                img.className = 'card-thumb';
+                img.alt = item.title;
+                
+                // Set up error handling for images
+                img.onerror = function() {
+                    // First fallback: try without the specific timestamp
+                    const originalSrc = item.image;
+                    if (originalSrc.includes('_2024')) {
+                        // Try a simpler version without timestamp
+                        const simpleName = item.title.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        this.src = `https://raw.githubusercontent.com/ghostm68/pantheon/main/${simpleName}.jpg`;
+                    } else {
+                        // Second fallback: use a placeholder with first letter
+                        this.src = 'data:image/svg+xml,' + encodeURIComponent(
+                            `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+                                <rect width="40" height="40" fill="#151515"/>
+                                <text x="20" y="22" font-family="Courier New, monospace" font-size="14" fill="#666" text-anchor="middle" dominant-baseline="middle">
+                                    ${item.title.charAt(0)}
+                                </text>
+                            </svg>`
+                        );
+                        this.style.border = '1px solid #333';
+                    }
+                    this.style.opacity = '0.7';
+                };
+                
+                // Set initial source
+                img.src = item.image;
+                
+                a.innerHTML = `
+                    <div class="card-thumb-container">
+                        <!-- Image will be inserted here -->
+                    </div>
+                    <div class="card-info">
+                        <span class="card-title">${item.title}</span>
+                        <span class="card-meta">${item.url.replace('https://inkrealm.info/', '/')}</span>
+                    </div>
+                `;
+                
+                // Insert the image into the container
+                const thumbContainer = a.querySelector('.card-thumb-container');
+                thumbContainer.appendChild(img);
+                
+                container.appendChild(a);
+            });
         }
+    }
+}
 
         function buildMap() {
             const cx = 500, cy = 400; 
