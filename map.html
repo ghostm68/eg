@@ -262,6 +262,37 @@
         .sidebar::-webkit-scrollbar-thumb:hover {
             background: #ff4444;
         }
+        /* --- MOBILE OPTIMIZATIONS --- */
+        @media (max-width: 768px) {
+            /* Fix Height for mobile browsers with URL bars */
+            body { height: 100dvh; } 
+            
+            .sidebar {
+                position: absolute; /* Float on top */
+                height: 100%;
+                box-shadow: 10px 0 30px #000;
+            }
+
+            /* Make Sidebar full width on very small phones */
+            @media (max-width: 400px) {
+                .sidebar { width: 100%; }
+            }
+
+            /* Adjust Header for small screens */
+            .sys-header {
+                padding: 0 10px;
+            }
+            .brand {
+                font-size: 1rem;
+                letter-spacing: 1px;
+            }
+
+            /* Move Popup to bottom so your finger doesn't hide it */
+            .gsap-popup {
+                transform: translate(-50%, 20px);
+                margin-top: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -345,7 +376,7 @@
         <span>&copy; 2025</span>
     </footer>
 
-    <script>
+ <script>
         gsap.registerPlugin();
 
         // --- DATA ---
@@ -515,21 +546,19 @@
             container.appendChild(label);
         }
 
-        // --- ANIMATION & INTERACTION ---
+        // --- ANIMATION & INTERACTION (Consolidated) ---
         function init() {
             buildSidebar();
             buildMap();
 
-            // Toggle Logic (Reversed: Adds class to close)
             const toggle = document.getElementById('sidebar-toggle');
             const sidebar = document.getElementById('sidebar');
-            toggle.addEventListener('click', () => {
-                sidebar.classList.toggle('collapsed');
-                toggle.textContent = sidebar.classList.contains('collapsed') ? "[ SHOW MENU ]" : "[ HIDE MENU ]";
-            });
-
-            // ROTATION
             const universe = document.getElementById('universe');
+            const scene = document.getElementById('scene-container');
+            const popup = document.getElementById('popup');
+            const pTitle = document.getElementById('popup-title');
+            
+            // 1. Setup Rotation (Must be defined first so events can reference it)
             const rotTween = gsap.to(universe, {
                 rotation: 360,
                 duration: 120,
@@ -552,18 +581,40 @@
                 });
             }
 
-            // OBSERVER EFFECT
-            const scene = document.getElementById('scene-container');
-            const stars = document.querySelectorAll('.star-point');
-            const popup = document.getElementById('popup');
-            const pTitle = document.getElementById('popup-title');
+            // 2. Mobile Logic: Auto-close if screen is small
+            if (window.innerWidth < 768) {
+                sidebar.classList.add('collapsed');
+                toggle.textContent = "[ SHOW MENU ]";
+            }
 
+            // 3. Sidebar Toggle Listener
+            toggle.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+                toggle.textContent = sidebar.classList.contains('collapsed') ? "[ SHOW MENU ]" : "[ HIDE MENU ]";
+            });
+
+            // 4. Interaction: Mouse (Desktop)
             scene.addEventListener('mouseenter', () => gsap.to(rotTween, { timeScale: 0, duration: 0.5 }));
             scene.addEventListener('mouseleave', () => {
                 gsap.to(rotTween, { timeScale: 1, duration: 1 });
                 gsap.to(popup, { opacity: 0 });
             });
 
+            // 5. Interaction: Touch (Mobile)
+            scene.addEventListener('touchstart', () => {
+                gsap.to(rotTween, { timeScale: 0, duration: 0.5 });
+            }, {passive: true});
+
+            scene.addEventListener('touchend', () => {
+                // Resume rotation after a short delay so they can read
+                setTimeout(() => {
+                    gsap.to(rotTween, { timeScale: 1, duration: 1 });
+                    gsap.to(popup, { opacity: 0 });
+                }, 2000); 
+            });
+
+            // 6. Star Hover/Click Logic
+            const stars = document.querySelectorAll('.star-point');
             stars.forEach(star => {
                 star.addEventListener('mouseenter', (e) => {
                     const name = star.getAttribute('data-name');
@@ -574,6 +625,7 @@
                 });
 
                 star.addEventListener('mousemove', (e) => {
+                    // On mobile, this might not trigger nicely, so we rely on CSS positioning or center it
                     gsap.to(popup, { left: e.clientX, top: e.clientY, duration: 0.1 });
                 });
 
@@ -589,6 +641,7 @@
             });
         }
 
+        // Start it up
         init();
     </script>
 </body>
