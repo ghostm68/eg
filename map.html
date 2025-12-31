@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Constellation of Stories - WordStar Nexus Map</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        /* Full-screen video background */
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            overflow: hidden;
+        }
+
+        .video-background video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translateX(-50%) translateY(-50%);
+            object-fit: cover;
+        }
+
+        /* Dark overlay for better visibility */
+        .video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: -1;
+        }
+
+        /* Main content */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            position: relative;
+        }
+
+        #map-container {
+            position: relative;
+            width: 90vw;
+            height: 90vh;
+            max-width: 1200px;
+            max-height: 800px;
+            z-index: 1;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Star Points */
+        .star-point {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .star-point:hover {
+            filter: brightness(1.3);
+        }
+
+        .star-point.outer {
+            fill: #8B0000;
+            stroke: #FFFFFF;
+            stroke-width: 2;
+        }
+
+        .star-point.inner {
+            fill: #DC143C;
+            stroke: #FFFFFF;
+            stroke-width: 1.5;
+        }
+
+        /* Circle Territory */
+        .territory {
+            fill: none;
+            stroke: #696969;
+            stroke-width: 1;
+            stroke-dasharray: 5,5;
+            opacity: 0.6;
+        }
+
+        /* Outer Space Items */
+        .outer-item {
+            fill: #2F2F2F;
+            stroke: #8B0000;
+            stroke-width: 1.5;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .outer-item:hover {
+            fill: #8B0000;
+            stroke: #FFFFFF;
+        }
+
+        /* Center Hub */
+        .center-hub {
+            fill: #DC143C;
+            stroke: #FFFFFF;
+            stroke-width: 3;
+            cursor: pointer;
+        }
+
+        /* GSAP Popup */
+        .gsap-popup {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #DC143C;
+            color: #FFFFFF;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(10px);
+            max-width: 250px;
+            box-shadow: 0 4px 12px rgba(220, 20, 60, 0.3);
+        }
+
+        .gsap-popup h3 {
+            margin: 0 0 8px 0;
+            color: #DC143C;
+            font-size: 16px;
+        }
+
+        .gsap-popup p {
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .gsap-popup::before {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid #DC143C;
+        }
+
+        /* Labels */
+        .label {
+            fill: #FFFFFF;
+            font-size: 12px;
+            text-anchor: middle;
+            pointer-events: none;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Hover Effects */
+        .hover-fade {
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .dimmed {
+            opacity: 0.3 !important;
+        }
+
+        /* Link styling */
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* Loading screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-text {
+            color: #DC143C;
+            font-size: 24px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading" class="loading-screen">
+        <div class="loading-text">Loading Constellation...</div>
+    </div>
+
+    <!-- Full-screen Video Background -->
+    <div class="video-background">
+        <!-- Using a free creative writing/typing video from Pixabay -->
+        <video autoplay muted loop playsinline>
+            <source src="https://cdn.pixabay.com/vimeo/328940881/creative-typing-23294.mp4?width=1280&hash=8f8e9b9b9b9b9b9b9b9b9b9b9b9b9b9b9" type="video/mp4">
+            <!-- Fallback sources -->
+            <source src="https://cdn.pixabay.com/vimeo/459538769/typing-49942.mp4?width=1280&hash=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
+    <!-- Dark Overlay -->
+    <div class="video-overlay"></div>
+
+    <!-- Main Map Content -->
+    <div id="map-container">
+        <svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+            <!-- Outer Circle Territory -->
+            <circle cx="400" cy="300" r="280" class="territory"/>
+            
+            <!-- Star Points with Links -->
+            <g id="star-constellation">
+                <!-- Point 1: Novels & Screenplays (Top) -->
+                <a xlink:href="https://wordstar.nexus/dreamweaver" target="_self">
+                    <polygon id="point1" class="star-point outer hover-fade" 
+                             points="400,80 410,110 440,110 418,130 428,160 400,140 372,160 382,130 360,110 390,110"/>
+                </a>
+                
+                <!-- Point 2: Writing Software (Top-Right) -->
+                <a xlink:href="https://wordstar.nexus/typecast" target="_self">
+                    <polygon id="point2" class="star-point outer hover-fade" 
+                             points="540,150 550,180 580,180 558,200 568,230 540,210 512,230 522,200 500,180 530,180"/>
+                </a>
+                
+                <!-- Point 3: AI Applications (Bottom-Right) -->
+                <a xlink:href="https://wordstar.nexus/trinity" target="_self">
+                    <polygon id="point3" class="star-point outer hover-fade" 
+                             points="540,450 550,480 580,480 558,500 568,530 540,510 512,530 522,500 500,480 530,480"/>
+                </a>
+                
+                <!-- Point 4: Characters & Stories (Bottom-Left) -->
+                <a xlink:href="https://wordstar.nexus/netherlands" target="_self">
+                    <polygon id="point4" class="star-point outer hover-fade" 
+                             points="260,450 270,480 300,480 278,500 288,530 260,510 232,530 242,500 220,480 250,480"/>
+                </a>
+                
+                <!-- Point 5: Resources & Downloads (Top-Left) -->
+                <a xlink:href="https://wordstar.nexus/daslexikon" target="_self">
+                    <polygon id="point5" class="star-point outer hover-fade" 
+                             points="260,150 270,180 300,180 278,200 288,230 260,210 232,230 242,200 220,180 250,180"/>
+                </a>
+                
+                <!-- Inner Star Connections -->
+                <polygon id="inner-star" class="star-point inner hover-fade" 
+                         points="400,150 470,230 400,310 330,230"/>
+            </g>
+            
+            <!-- Center Hub -->
+            <a xlink:href="https://wordstar.nexus/" target="_self">
+                <circle id="center" cx="400" cy="300" r="25" class="center-hub hover-fade"/>
+            </a>
+            
+            <!-- Outer Space Items with Links -->
+            <g id="outer-territories">
+                <a xlink:href="https://wordstar.nexus/wip" target="_self">
+                    <circle cx="150" cy="100" r="12" class="outer-item hover-fade" id="outer1"/>
+                </a>
+                <a xlink:href="https://wordstar.nexus/dejavuglitches" target="_self">
+                    <circle cx="650" cy="120" r="12" class="outer-item hover-fade" id="outer2"/>
+                </a>
+                <a xlink:href="https://wordstar.nexus/ten" target="_self">
+                    <circle cx="680" cy="400" r="12" class="outer-item hover-fade" id="outer3"/>
+                </a>
+                <a xlink:href="https://wordstar.nexus/nine" target="_self">
+                    <circle cx="120" cy="480" r="12" class="outer-item hover-fade" id="outer4"/>
+                </a>
+                <a xlink:href="https://wordstar.nexus/38" target="_self">
+                    <circle cx="400" cy="50" r="12" class="outer-item hover-fade" id="outer5"/>
+                </a>
+            </g>
+            
+            <!-- Labels -->
+            <text x="400" y="75" class="label">NOVELS</text>
+            <text x="540" y="145" class="label">SOFTWARE</text>
+            <text x="540" y="445" class="label">AI TOOLS</text>
+            <text x="260" y="445" class="label">CHARACTERS</text>
+            <text x="260" y="145" class="label">RESOURCES</text>
+            <text x="400" y="305" class="label">HOME</text>
+        </svg>
+        
+        <!-- GSAP Popup -->
+        <div id="popup" class="gsap-popup">
+            <h3 id="popup-title"></h3>
+            <p id="popup-content"></p>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced map data with actual links
+        const mapData = {
+            point1: {
+                title: "Novels & Screenplays",
+                content: "Creative writing territory: dreamweaverInk, DisplayWriter, Deja Vu Glitches - where stories come to life",
+                link: "https://wordstar.nexus/dreamweaver"
+            },
+            point2: {
+                title: "Writing Software",
+                content: "Tools of the trade: typecast, typespace, text craft, and all your text editing applications",
+                link: "https://wordstar.nexus/typecast"
+            },
+            point3: {
+                title: "AI Applications",
+                content: "Intelligent assistants: nvidia nemotron, kimi, q-ai - your AI writing companions",
+                link: "https://wordstar.nexus/trinity"
+            },
+            point4: {
+                title: "Characters & Stories",
+                content: "Character territory: Lucy Hale, Martha Kessler pages - where characters live and breathe",
+                link: "https://wordstar.nexus/netherlands"
+            },
+            point5: {
+                title: "Resources & Downloads",
+                content: "Resource library: Dictionary, APK downloads, PDFs - your writing reference materials",
+                link: "https://wordstar.nexus/daslexikon"
+            },
+            center: {
+                title: "Capital City",
+                content: "The hub of your writing empire: Main, Home, citadelle - where all journeys begin",
+                link: "https://wordstar.nexus/"
+            },
+            outer1: {
+                title: "Work in Progress",
+                content: "Current writing projects and drafts",
+                link: "https://wordstar.nexus/wip"
+            },
+            outer2: {
+                title: "Deja Vu Glitches", 
+                content: "Story fragments and narrative experiments",
+                link: "https://wordstar.nexus/dejavuglitches"
+            },
+            outer3: {
+                title: "Special Projects",
+                content: "Unique writing applications and tools",
+                link: "https://wordstar.nexus/ten"
+            },
+            outer4: {
+                title: "Number Nine",
+                content: "Sequential writing experiments",
+                link: "https://wordstar.nexus/nine"
+            },
+            outer5: {
+                title: "1938 Archive",
+                content: "Historical writing references",
+                link: "https://wordstar.nexus/38"
+            }
+        };
+
+        // Initialize GSAP
+        gsap.registerPlugin();
+
+        // Get elements
+        const popup = document.getElementById('popup');
+        const popupTitle = document.getElementById('popup-title');
+        const popupContent = document.getElementById('popup-content');
+        const loading = document.getElementById('loading');
+
+        // Create hover timeline for popup
+        let popupTl = gsap.timeline({ paused: true });
+
+        // Hide loading screen after video loads
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                gsap.to(loading, {
+                    opacity: 0,
+                    duration: 1,
+                    onComplete: () => loading.style.display = 'none'
+                });
+            }, 1000);
+        });
+
+        // Add interactive elements
+        const interactiveElements = document.querySelectorAll('.star-point, .center-hub, .outer-item');
+
+        interactiveElements.forEach(element => {
+            // Find the parent anchor tag
+            const linkElement = element.closest('a');
+            const elementId = element.id;
+
+            // Hover effects
+            element.addEventListener('mouseenter', function(e) {
+                const data = mapData[elementId];
+                
+                if (data) {
+                    // Dim other elements
+                    interactiveElements.forEach(el => {
+                        if (el !== this) {
+                            el.classList.add('dimmed');
+                        }
+                    });
+                    
+                    // Update popup content
+                    popupTitle.textContent = data.title;
+                    popupContent.textContent = data.content;
+                    
+                    // Position popup
+                    const rect = this.getBoundingClientRect();
+                    const containerRect = document.getElementById('map-container').getBoundingClientRect();
+                    
+                    popup.style.left = (rect.left - containerRect.left + rect.width / 2 - popup.offsetWidth / 2) + 'px';
+                    popup.style.top = (rect.top - containerRect.top - popup.offsetHeight - 15) + 'px';
+                    
+                    // Animate popup in
+                    popupTl.clear()
+                        .to(popup, {
+                            opacity: 1,
+                            y: 0,
+                            duration: 0.3,
+                            ease: "power2.out"
+                        });
+                    popupTl.play();
+                    
+                    // Scale and glow the element
+                    gsap.to(this, {
+                        scale: 1.1,
+                        filter: "drop-shadow(0 0 15px #DC143C)",
+                        duration: 0.3,
+                        ease: "power2.out"
+                    });
+                }
+            });
+
+            element.addEventListener('mouseleave', function() {
+                // Remove dimming
+                interactiveElements.forEach(el => {
+                    el.classList.remove('dimmed');
+                });
+                
+                // Animate popup out
+                popupTl.reverse();
+                
+                // Reset element
+                gsap.to(this, {
+                    scale: 1,
+                    filter: "none",
+                    duration: 0.3,
+                    ease: "power2.out"
+                });
+            });
+
+            // Enhanced click action with navigation
+            element.addEventListener('click', function(e) {
+                e.preventDefault(); // Prevent default link behavior temporarily
+                
+                const data = mapData[elementId];
+                if (data && data.link) {
+                    // Pulse effect on click
+                    gsap.to(this, {
+                        scale: 1.3,
+                        duration: 0.1,
+                        yoyo: true,
+                        repeat: 1,
+                        ease: "power2.inOut",
+                        onComplete: () => {
+                            // Navigate to the link
+                            window.location.href = data.link;
+                        }
+                    });
+                }
+            });
+        });
+
+        // Initial animation - star formation
+        gsap.timeline()
+            .from('#star-constellation', {
+                scale: 0,
+                rotation: -180,
+                duration: 2,
+                ease: "power2.out"
+            })
+            .from('.outer-item', {
+                scale: 0,
+                stagger: 0.15,
+                duration: 0.8,
+                ease: "back.out(1.7)"
+            }, "-=0.8")
+            .from('.label', {
+                opacity: 0,
+                y: 10,
+                stagger: 0.08,
+                duration: 0.4
+            }, "-=0.4");
+
+        // Subtle breathing animation for the star
+        gsap.to('.star-point', {
+            scale: 1.02,
+            duration: 4,
+            yoyo: true,
+            repeat: -1,
+            ease: "sine.inOut",
+            stagger: 0.3
+        });
+
+        // Video error handling
+        const video = document.querySelector('.video-background video');
+        video.addEventListener('error', function() {
+            console.log('Video failed to load, using fallback background');
+            document.querySelector('.video-overlay').style.background = 'rgba(0, 0, 0, 0.9)';
+        });
+    </script>
+</body>
+</html>
