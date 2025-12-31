@@ -3,61 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Constellation of Stories - Micro Territories</title>
+    <title>The Constellation of Stories - WordStar Nexus</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <style>
-        /* Previous styles plus new micro-territory styles */
-        .video-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -2;
-            overflow: hidden;
-        }
-
-        .video-background video {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            min-width: 100%;
-            min-height: 100%;
-            width: auto;
-            height: auto;
-            transform: translateX(-50%) translateY(-50%);
-            object-fit: cover;
-        }
-
-        .video-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: -1;
+        /* Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            margin: 0;
-            padding: 0;
             font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #ffffff;
             overflow: hidden;
+            height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 300px;
+            height: 100vh;
+            background: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid #333;
+            padding: 20px;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 100;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-toggle {
+            position: fixed;
+            left: 20px;
+            top: 20px;
+            background: #DC143C;
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            z-index: 101;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle.collapsed {
+            left: 20px;
+        }
+
+        .sidebar h2 {
+            color: #DC143C;
+            margin-bottom: 20px;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .sidebar-section {
+            margin-bottom: 25px;
+        }
+
+        .sidebar-section h3 {
+            color: #8B0000;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sidebar-link {
+            display: block;
+            color: #ccc;
+            text-decoration: none;
+            padding: 8px 12px;
+            margin: 2px 0;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+            font-size: 13px;
+        }
+
+        .sidebar-link:hover {
+            background: rgba(220, 20, 60, 0.2);
+            color: #ffffff;
+            transform: translateX(5px);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            position: relative;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            position: relative;
         }
 
         #map-container {
             position: relative;
-            width: 90vw;
-            height: 90vh;
-            max-width: 1200px;
-            max-height: 800px;
-            z-index: 1;
+            width: 90%;
+            height: 90%;
+            max-width: 1000px;
+            max-height: 700px;
         }
 
         svg {
@@ -65,73 +115,44 @@
             height: 100%;
         }
 
-        /* Micro Territory Styles */
-        .micro-territory {
-            cursor: pointer;
-            transition: all 0.3s ease;
-            opacity: 0;
-        }
-
-        .micro-territory.visible {
-            opacity: 1;
-        }
-
-        .micro-territory:hover {
-            opacity: 1 !important;
-            transform: scale(1.5);
-        }
-
-        .micro-territory.core {
-            fill: #DC143C;
-            stroke: #FFFFFF;
-            stroke-width: 1;
-        }
-
-        .micro-territory.software {
-            fill: #8B0000;
-            stroke: #FFFFFF;
-            stroke-width: 1;
-        }
-
-        .micro-territory.ai {
-            fill: #696969;
-            stroke: #FFFFFF;
-            stroke-width: 1;
-        }
-
-        .micro-territory.character {
-            fill: #2F2F2F;
-            stroke: #DC143C;
-            stroke-width: 1;
-        }
-
-        .micro-territory.resource {
-            fill: #A9A9A9;
-            stroke: #8B0000;
-            stroke-width: 1;
-        }
-
-        /* Existing star point styles */
+        /* Star Styles */
         .star-point {
             cursor: pointer;
             transition: all 0.3s ease;
         }
 
         .star-point:hover {
-            filter: brightness(1.3);
+            filter: brightness(1.3) drop-shadow(0 0 10px currentColor);
         }
 
-        .star-point.outer {
-            fill: #8B0000;
+        .star-point.main {
+            fill: #DC143C;
             stroke: #FFFFFF;
             stroke-width: 2;
         }
 
-        .center-hub {
-            fill: #DC143C;
+        .star-point.territory {
+            fill: #8B0000;
             stroke: #FFFFFF;
-            stroke-width: 3;
-            cursor: pointer;
+            stroke-width: 1.5;
+            opacity: 0.8;
+        }
+
+        .star-point.outer {
+            fill: #2F2F2F;
+            stroke: #696969;
+            stroke-width: 1;
+            opacity: 0.6;
+        }
+
+        /* Territory Labels */
+        .territory-label {
+            fill: #FFFFFF;
+            font-size: 14px;
+            text-anchor: middle;
+            pointer-events: none;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
         }
 
         /* GSAP Popup */
@@ -161,7 +182,7 @@
             line-height: 1.4;
         }
 
-        /* Loading screen */
+        /* Loading */
         .loading-screen {
             position: fixed;
             top: 0;
@@ -180,127 +201,464 @@
             font-size: 24px;
             font-weight: bold;
         }
+
+        /* Scrollbar */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #DC143C;
+            border-radius: 3px;
+        }
     </style>
-<base target="_blank">
 </head>
 <body>
     <!-- Loading Screen -->
     <div id="loading" class="loading-screen">
-        <div class="loading-text">Loading Micro Territories...</div>
+        <div class="loading-text">Loading Constellation...</div>
     </div>
 
-    <!-- Video Background -->
-    <div class="video-background">
-        <video autoplay muted loop playsinline>
-            <source src="https://cdn.pixabay.com/vimeo/328940881/creative-typing-23294.mp4?width=1280&hash=8f8e9b9b9b9b9b9b9b9b9b9b9b9b9b9b" type="video/mp4">
-        </video>
-    </div>
-    <div class="video-overlay"></div>
+    <!-- Sidebar Toggle -->
+    <button id="sidebar-toggle" class="sidebar-toggle">
+        ☰ Navigation
+    </button>
 
-    <!-- Main Map Content -->
-    <div id="map-container">
-        <svg id="main-svg" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
-            <!-- Outer Circle Territory -->
-            <circle cx="400" cy="300" r="280" fill="none" stroke="#696969" stroke-width="1" stroke-dasharray="5,5" opacity="0.6"/>
-            
-            <!-- Star Points -->
-            <g id="star-constellation">
-                <!-- Point 1: Novels & Screenplays (Top) -->
-                <polygon id="point1" class="star-point outer" 
-                         points="400,80 410,110 440,110 418,130 428,160 400,140 372,160 382,130 360,110 390,110"/>
-                
-                <!-- Point 2: Writing Software (Top-Right) -->
-                <polygon id="point2" class="star-point outer" 
-                         points="540,150 550,180 580,180 558,200 568,230 540,210 512,230 522,200 500,180 530,180"/>
-                
-                <!-- Point 3: AI Applications (Bottom-Right) -->
-                <polygon id="point3" class="star-point outer" 
-                         points="540,450 550,480 580,480 558,500 568,530 540,510 512,530 522,500 500,480 530,480"/>
-                
-                <!-- Point 4: Characters & Stories (Bottom-Left) -->
-                <polygon id="point4" class="star-point outer" 
-                         points="260,450 270,480 300,480 278,500 288,530 260,510 232,530 242,500 220,480 250,480"/>
-                
-                <!-- Point 5: Resources & Downloads (Top-Left) -->
-                <polygon id="point5" class="star-point outer" 
-                         points="260,150 270,180 300,180 278,200 288,230 260,210 232,230 242,200 220,180 250,180"/>
-            </g>
-            
-            <!-- Center Hub -->
-            <circle id="center" cx="400" cy="300" r="25" class="center-hub"/>
-            
-            <!-- Micro Territories Group -->
-            <g id="micro-territories"></g>
-        </svg>
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar">
+        <h2>WordStar Nexus</h2>
         
-        <!-- GSAP Popup -->
-        <div id="popup" class="gsap-popup">
-            <h3 id="popup-title"></h3>
-            <p id="popup-content"></p>
+        <div class="sidebar-section">
+            <h3>Main Territories</h3>
+            <div id="main-links"></div>
         </div>
-    </div>
+        
+        <div class="sidebar-section">
+            <h3>Writing Tools</h3>
+            <div id="tools-links"></div>
+        </div>
+        
+        <div class="sidebar-section">
+            <h3>AI Applications</h3>
+            <div id="ai-links"></div>
+        </div>
+        
+        <div class="sidebar-section">
+            <h3>Resources</h3>
+            <div id="resources-links"></div>
+        </div>
+        
+        <div class="sidebar-section">
+            <h3>All Pages</h3>
+            <div id="all-links"></div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div id="map-container">
+            <svg id="star-map" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+                <!-- Outer circle -->
+                <circle cx="400" cy="300" r="280" fill="none" stroke="#333" stroke-width="1" stroke-dasharray="5,5" opacity="0.3"/>
+                
+                <!-- Star constellation -->
+                <g id="constellation"></g>
+                
+                <!-- Territory labels -->
+                <g id="labels"></g>
+            </svg>
+            
+            <!-- GSAP Popup -->
+            <div id="popup" class="gsap-popup">
+                <h3 id="popup-title"></h3>
+                <p id="popup-content"></p>
+            </div>
+        </div>
+    </main>
 
     <script>
         // Initialize GSAP
         gsap.registerPlugin();
 
         // Get elements
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const loading = document.getElementById('loading');
         const popup = document.getElementById('popup');
         const popupTitle = document.getElementById('popup-title');
         const popupContent = document.getElementById('popup-content');
-        const loading = document.getElementById('loading');
-        const svg = document.getElementById('main-svg');
+        const svg = document.getElementById('star-map');
 
-        // Micro territory data - organized by star point regions
-        const microTerritories = {
-            // Point 1: Novels & Screenplays (Top region)
-            point1: [
-                { x: 395, y: 85, link: "https://wordstar.nexus/custompad", title: "Art Notes", type: "core" },
-                { x: 405, y: 95, link: "https://wordstar.nexus/displaywriter", title: "DisplayWriter", type: "core" },
-                { x: 385, y: 105, link: "https://wordstar.nexus/dejavuglitches", title: "Deja Vu Glitches", type: "core" },
-                { x: 415, y: 115, link: "https://wordstar.nexus/wip", title: "Work in Progress", type: "core" }
-            ],
-            // Point 2: Writing Software (Top-Right region)
-            point2: [
-                { x: 535, y: 155, link: "https://wordstar.nexus/typecast", title: "Typecast", type: "software" },
-                { x: 545, y: 165, link: "https://wordstar.nexus/typespace", title: "Typespace", type: "software" },
-                { x: 525, y: 175, link: "https://wordstar.nexus/textcraft", title: "Text Craft", type: "software" },
-                { x: 555, y: 185, link: "https://wordstar.nexus/typewriter", title: "Software Typewriter", type: "software" }
-            ],
-            // Point 3: AI Applications (Bottom-Right region)
-            point3: [
-                { x: 535, y: 455, link: "https://wordstar.nexus/nvidiapad", title: "Nvidia Nemotron", type: "ai" },
-                { x: 545, y: 465, link: "https://wordstar.nexus/trinity", title: "Kimi Assistant", type: "ai" },
-                { x: 525, y: 475, link: "https://wordstar.nexus/q", title: "Q-AI", type: "ai" },
-                { x: 555, y: 485, link: "https://wordstar.nexus/grok4", title: "X-Grok", type: "ai" }
-            ],
-            // Point 4: Characters & Stories (Bottom-Left region)
-            point4: [
-                { x: 255, y: 455, link: "https://wordstar.nexus/netherlands", title: "L.Hale Netherlands", type: "character" },
-                { x: 265, y: 465, link: "https://wordstar.nexus/90263", title: "Martha Kessler", type: "character" },
-                { x: 245, y: 475, link: "https://wordstar.nexus/ighsau", title: "Iowa IGHSAU", type: "character" },
-                { x: 275, y: 485, link: "https://wordstar.nexus/nc17", title: "NC-17 Stories", type: "character" }
-            ],
-            // Point 5: Resources & Downloads (Top-Left region)
-            point5: [
-                { x: 255, y: 155, link: "https://wordstar.nexus/daslexikon", title: "Dictionary", type: "resource" },
-                { x: 265, y: 165, link: "https://wordstar.nexus/ai", title: "AI Resources", type: "resource" },
-                { x: 245, y: 175, link: "https://wordstar.nexus/custompad", title: "Custom Pad", type: "resource" },
-                { x: 275, y: 185, link: "https://wordstar.nexus/wortschatz", title: "Wortschatz", type: "resource" }
-            ],
-            // Center region
-            center: [
-                { x: 390, y: 290, link: "https://wordstar.nexus/", title: "Home Base", type: "core" },
-                { x: 410, y: 290, link: "https://wordstar.nexus/home", title: "Dashboard", type: "core" },
-                { x: 400, y: 275, link: "https://wordstar.nexus/citadelle", title: "Citadelle", type: "core" }
-            ]
-        };
+        // Sitemap URLs (from your actual sitemap)
+        const sitemapUrls = [
+            "https://wordstar.nexus/",
+            "https://wordstar.nexus/home",
+            "https://wordstar.nexus/dreamweaver",
+            "https://wordstar.nexus/wip",
+            "https://wordstar.nexus/dejavuglitches",
+            "https://wordstar.nexus/displaywriter",
+            "https://wordstar.nexus/bakedalaska",
+            "https://wordstar.nexus/citadelle",
+            "https://wordstar.nexus/ten",
+            "https://wordstar.nexus/nine",
+            "https://wordstar.nexus/38",
+            "https://wordstar.nexus/custompad",
+            "https://wordstar.nexus/typecast",
+            "https://wordstar.nexus/typespace",
+            "https://wordstar.nexus/nvidiapad",
+            "https://wordstar.nexus/z",
+            "https://wordstar.nexus/w",
+            "https://wordstar.nexus/textcraft",
+            "https://wordstar.nexus/typewriter",
+            "https://wordstar.nexus/birch",
+            "https://wordstar.nexus/macwritepro",
+            "https://wordstar.nexus/everex",
+            "https://wordstar.nexus/ministral14b",
+            "https://wordstar.nexus/wortschatz",
+            "https://wordstar.nexus/menageatrois",
+            "https://wordstar.nexus/q",
+            "https://wordstar.nexus/trinity",
+            "https://wordstar.nexus/grok4",
+            "https://wordstar.nexus/queer",
+            "https://wordstar.nexus/triad",
+            "https://wordstar.nexus/pen",
+            "https://wordstar.nexus/iwa",
+            "https://wordstar.nexus/enigma",
+            "https://wordstar.nexus/conceptweave",
+            "https://wordstar.nexus/alt",
+            "https://wordstar.nexus/granite",
+            "https://wordstar.nexus/ataraxia",
+            "https://wordstar.nexus/daslexikon",
+            "https://wordstar.nexus/ai",
+            "https://wordstar.nexus/nc17",
+            "https://wordstar.nexus/netherlands",
+            "https://wordstar.nexus/ighsau",
+            "https://wordstar.nexus/90263"
+        ];
 
-        // Create hover timeline for popup
-        let popupTl = gsap.timeline({ paused: true });
+        // Categorize URLs
+        function categorizeUrl(url) {
+            const path = url.replace('https://wordstar.nexus/', '');
+            if (!path || path === '') return 'main';
+            if (path.includes('dreamweaver') || path.includes('displaywriter') || path.includes('dejavuglitches') || path.includes('wip')) return 'novels';
+            if (path.includes('type') || path.includes('text') || path.includes('write') || path.includes('pad') || path.includes('pen')) return 'tools';
+            if (path.includes('ai') || path.includes('nvidia') || path.includes('grok') || path.includes('trinity') || path.includes('q')) return 'ai';
+            if (path.includes('netherlands') || path.includes('kessler') || path.includes('ighsau') || path.includes('nc17')) return 'characters';
+            if (path.includes('lexikon') || path.includes('wortschatz') || path.includes('dict')) return 'resources';
+            return 'other';
+        }
 
-        // Hide loading screen
-        window.addEventListener('load', function() {
+        // Get display name from URL
+        function getDisplayName(url) {
+            const path = url.replace('https://wordstar.nexus/', '');
+            if (!path || path === '') return 'Home';
+            
+            // Special naming
+            const specialNames = {
+                'dreamweaver': 'Dreamweaver Ink',
+                'dejavuglitches': 'Deja Vu Glitches',
+                'displaywriter': 'DisplayWriter',
+                'citadelle': 'Citadelle',
+                'custompad': 'Art Notes',
+                'typecast': 'Typecast',
+                'typespace': 'Typespace',
+                'nvidiapad': 'Nvidia Nemotron',
+                'textcraft': 'Text Craft',
+                'typewriter': 'Software Typewriter',
+                'birch': 'Birch Screenplay',
+                'macwritepro': 'Mac-Thing Editor',
+                'everex': 'Logopad',
+                'ministral14b': '14 Ministral',
+                'wortschatz': 'Dictionary',
+                'menageatrois': 'GVC-3',
+                'trinity': 'Kimi Assistant',
+                'grok4': 'X-Grok',
+                'queer': 'Q-Queer',
+                'triad': '<3 Triad',
+                'enigma': 'Cover Enigma',
+                'conceptweave': 'Concept Wave',
+                'granite': 'Granite',
+                'ataraxia': 'Ataraxia',
+                'daslexikon': 'Das Lexikon',
+                'netherlands': 'L.Hale Netherlands',
+                'ighsau': 'Iowa IGHSAU',
+                '90263': 'Martha Kessler'
+            };
+            
+            return specialNames[path] || path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');
+        }
+
+        // Create radial layout for territories
+        function createRadialLayout(centerX, centerY, radius, count, startAngle = 0) {
+            const positions = [];
+            const angleStep = (2 * Math.PI) / count;
+            
+            for (let i = 0; i < count; i++) {
+                const angle = startAngle + (i * angleStep);
+                const x = centerX + (radius * Math.cos(angle));
+                const y = centerY + (radius * Math.sin(angle));
+                positions.push({ x, y, angle });
+            }
+            
+            return positions;
+        }
+
+        // Populate sidebar
+        function populateSidebar() {
+            const categories = {
+                main: [],
+                novels: [],
+                tools: [],
+                ai: [],
+                characters: [],
+                resources: [],
+                other: []
+            };
+
+            sitemapUrls.forEach(url => {
+                const category = categorizeUrl(url);
+                const name = getDisplayName(url);
+                categories[category].push({ url, name });
+            });
+
+            // Main territories (star points)
+            const mainLinks = document.getElementById('main-links');
+            ['main', 'novels', 'tools', 'ai', 'characters', 'resources'].forEach(category => {
+                if (categories[category].length > 0) {
+                    categories[category].forEach(item => {
+                        const link = document.createElement('a');
+                        link.href = item.url;
+                        link.className = 'sidebar-link';
+                        link.textContent = item.name;
+                        link.target = '_self';
+                        mainLinks.appendChild(link);
+                    });
+                }
+            });
+
+            // Tools
+            const toolsLinks = document.getElementById('tools-links');
+            categories.tools.forEach(item => {
+                const link = document.createElement('a');
+                link.href = item.url;
+                link.className = 'sidebar-link';
+                link.textContent = item.name;
+                link.target = '_self';
+                toolsLinks.appendChild(link);
+            });
+
+            // AI
+            const aiLinks = document.getElementById('ai-links');
+            categories.ai.forEach(item => {
+                const link = document.createElement('a');
+                link.href = item.url;
+                link.className = 'sidebar-link';
+                link.textContent = item.name;
+                link.target = '_self';
+                aiLinks.appendChild(link);
+            });
+
+            // Resources
+            const resourcesLinks = document.getElementById('resources-links');
+            categories.resources.forEach(item => {
+                const link = document.createElement('a');
+                link.href = item.url;
+                link.className = 'sidebar-link';
+                link.textContent = item.name;
+                link.target = '_self';
+                resourcesLinks.appendChild(link);
+            });
+
+            // All links
+            const allLinks = document.getElementById('all-links');
+            sitemapUrls.forEach(url => {
+                const link = document.createElement('a');
+                link.href = url;
+                link.className = 'sidebar-link';
+                link.textContent = getDisplayName(url);
+                link.target = '_self';
+                allLinks.appendChild(link);
+            });
+        }
+
+        // Create star constellation
+        function createConstellation() {
+            const constellation = document.getElementById('constellation');
+            const labels = document.getElementById('labels');
+            
+            // Main star points (5 points of the star)
+            const mainPositions = [
+                { x: 400, y: 120, id: 'point1', category: 'novels', name: 'Novels & Stories' },
+                { x: 540, y: 230, id: 'point2', category: 'tools', name: 'Writing Tools' },
+                { x: 480, y: 400, id: 'point3', category: 'ai', name: 'AI Applications' },
+                { x: 320, y: 400, id: 'point4', category: 'characters', name: 'Characters' },
+                { x: 260, y: 230, id: 'point5', category: 'resources', name: 'Resources' },
+                { x: 400, y: 300, id: 'center', category: 'main', name: 'Home Base' }
+            ];
+
+            // Create territories around each main point
+            mainPositions.forEach((mainPos, index) => {
+                // Main star point
+                const star = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+                star.setAttribute("id", mainPos.id);
+                star.setAttribute("class", "star-point main");
+                star.setAttribute("data-category", mainPos.category);
+                star.setAttribute("data-name", mainPos.name);
+                star.setAttribute("data-url", mainPos.id === 'center' ? 'https://wordstar.nexus/' : `https://wordstar.nexus/${mainPos.category}`);
+                
+                // Create star shape
+                const size = mainPos.id === 'center' ? 15 : 20;
+                const points = createStarPoints(mainPos.x, mainPos.y, size);
+                star.setAttribute("points", points);
+                
+                constellation.appendChild(star);
+
+                // Label
+                const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                label.setAttribute("x", mainPos.x);
+                label.setAttribute("y", mainPos.y - 25);
+                label.setAttribute("class", "territory-label");
+                label.textContent = mainPos.name;
+                labels.appendChild(label);
+
+                // Create territories around main point
+                const categoryUrls = sitemapUrls.filter(url => categorizeUrl(url) === mainPos.category);
+                const territoryPositions = createRadialLayout(mainPos.x, mainPos.y, 40, Math.min(categoryUrls.length, 8));
+                
+                territoryPositions.forEach((pos, i) => {
+                    if (i < categoryUrls.length) {
+                        const territory = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                        territory.setAttribute("cx", pos.x);
+                        territory.setAttribute("cy", pos.y);
+                        territory.setAttribute("r", "4");
+                        territory.setAttribute("class", "star-point territory");
+                        territory.setAttribute("data-url", categoryUrls[i]);
+                        territory.setAttribute("data-name", getDisplayName(categoryUrls[i]));
+                        territory.setAttribute("data-category", mainPos.category);
+                        constellation.appendChild(territory);
+                    }
+                });
+            });
+
+            // Add outer territories for remaining URLs
+            const remainingUrls = sitemapUrls.filter(url => {
+                const category = categorizeUrl(url);
+                return !['main', 'novels', 'tools', 'ai', 'characters', 'resources'].includes(category);
+            });
+
+            const outerPositions = createRadialLayout(400, 300, 200, remainingUrls.length, Math.PI / 6);
+            outerPositions.forEach((pos, i) => {
+                if (i < remainingUrls.length) {
+                    const territory = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    territory.setAttribute("cx", pos.x);
+                    territory.setAttribute("cy", pos.y);
+                    territory.setAttribute("r", "3");
+                    territory.setAttribute("class", "star-point outer");
+                    territory.setAttribute("data-url", remainingUrls[i]);
+                    territory.setAttribute("data-name", getDisplayName(remainingUrls[i]));
+                    territory.setAttribute("data-category", 'other');
+                    constellation.appendChild(territory);
+                }
+            });
+        }
+
+        // Create star polygon points
+        function createStarPoints(cx, cy, size) {
+            const points = [];
+            for (let i = 0; i < 10; i++) {
+                const angle = (i * Math.PI) / 5 - Math.PI / 2;
+                const radius = i % 2 === 0 ? size : size * 0.4;
+                const x = cx + radius * Math.cos(angle);
+                const y = cy + radius * Math.sin(angle);
+                points.push(`${x},${y}`);
+            }
+            return points.join(' ');
+        }
+
+        // Add interactivity
+        function addInteractivity() {
+            const elements = document.querySelectorAll('.star-point');
+            const popupTl = gsap.timeline({ paused: true });
+
+            elements.forEach(element => {
+                element.addEventListener('mouseenter', function() {
+                    const name = this.getAttribute('data-name');
+                    const url = this.getAttribute('data-url');
+                    const category = this.getAttribute('data-category');
+
+                    // Show popup
+                    popupTitle.textContent = name;
+                    popupContent.textContent = `Navigate to ${name} - ${category} territory`;
+                    
+                    const rect = this.getBoundingClientRect();
+                    const containerRect = document.getElementById('map-container').getBoundingClientRect();
+                    
+                    popup.style.left = (rect.left - containerRect.left + rect.width / 2 - popup.offsetWidth / 2) + 'px';
+                    popup.style.top = (rect.top - containerRect.top - popup.offsetHeight - 15) + 'px';
+                    
+                    popupTl.clear()
+                        .to(popup, {
+                            opacity: 1,
+                            y: 0,
+                            duration: 0.3,
+                            ease: "power2.out"
+                        });
+                    popupTl.play();
+
+                    // Highlight effect
+                    gsap.to(this, {
+                        scale: 1.2,
+                        duration: 0.3,
+                        ease: "power2.out"
+                    });
+                });
+
+                element.addEventListener('mouseleave', function() {
+                    popupTl.reverse();
+                    
+                    gsap.to(this, {
+                        scale: 1,
+                        duration: 0.3,
+                        ease: "power2.out"
+                    });
+                });
+
+                element.addEventListener('click', function() {
+                    const url = this.getAttribute('data-url');
+                    if (url) {
+                        // Pulse effect then navigate
+                        gsap.to(this, {
+                            scale: 1.5,
+                            duration: 0.1,
+                            yoyo: true,
+                            repeat: 1,
+                            ease: "power2.inOut",
+                            onComplete: () => {
+                                window.location.href = url;
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+        // Sidebar toggle
+        sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('collapsed');
+            this.classList.toggle('collapsed');
+        });
+
+        // Initialize
+        function initialize() {
+            populateSidebar();
+            createConstellation();
+            addInteractivity();
+
+            // Hide loading screen
             setTimeout(() => {
                 gsap.to(loading, {
                     opacity: 0,
@@ -308,187 +666,50 @@
                     onComplete: () => loading.style.display = 'none'
                 });
             }, 1000);
-        });
 
-        // Enhanced micro territory creation function
-        function addMicroTerritory(x, y, link, title, type, parentId) {
-            // Create link element
-            const territory = document.createElementNS("http://www.w3.org/2000/svg", "a");
-            territory.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", link);
-            territory.setAttribute("target", "_self");
-            territory.setAttribute("data-parent", parentId);
-            territory.setAttribute("data-title", title);
-            territory.setAttribute("data-type", type);
-
-            // Create circle element
-            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            circle.setAttribute("cx", x);
-            circle.setAttribute("cy", y);
-            circle.setAttribute("r", "3");
-            circle.setAttribute("class", `micro-territory ${type}`);
-            circle.setAttribute("opacity", "0");
-
-            territory.appendChild(circle);
-            
-            // Add to micro territories group
-            const microGroup = document.getElementById('micro-territories');
-            microGroup.appendChild(territory);
-
-            // Add interactivity
-            addMicroTerritoryInteractivity(territory, circle, title, type, link);
-            
-            return territory;
-        }
-
-        // Add interactivity to micro territories
-        function addMicroTerritoryInteractivity(territory, circle, title, type, link) {
-            // Mouse events
-            territory.addEventListener('mouseenter', function(e) {
-                // Show popup
-                popupTitle.textContent = title;
-                popupContent.textContent = `Micro territory: ${type} tool`;
-                
-                const rect = circle.getBoundingClientRect();
-                const containerRect = document.getElementById('map-container').getBoundingClientRect();
-                
-                popup.style.left = (rect.left - containerRect.left + rect.width / 2 - popup.offsetWidth / 2) + 'px';
-                popup.style.top = (rect.top - containerRect.top - popup.offsetHeight - 10) + 'px';
-                
-                popupTl.clear()
-                    .to(popup, {
-                        opacity: 1,
-                        y: 0,
-                        duration: 0.2,
-                        ease: "power2.out"
-                    });
-                popupTl.play();
-
-                // Highlight effect
-                gsap.to(circle, {
-                    scale: 2,
-                    opacity: 1,
-                    duration: 0.2,
-                    ease: "power2.out"
-                });
-            });
-
-            territory.addEventListener('mouseleave', function() {
-                popupTl.reverse();
-                
-                gsap.to(circle, {
-                    scale: 1,
-                    opacity: 0.7,
-                    duration: 0.2,
-                    ease: "power2.out"
-                });
-            });
-
-            // Click animation
-            territory.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Pulse effect
-                gsap.to(circle, {
-                    scale: 3,
-                    duration: 0.1,
-                    yoyo: true,
-                    repeat: 1,
-                    ease: "power2.inOut",
-                    onComplete: () => {
-                        window.location.href = link;
-                    }
-                });
-            });
-        }
-
-        // Populate micro territories
-        function populateMicroTerritories() {
-            Object.keys(microTerritories).forEach(parentId => {
-                const territories = microTerritories[parentId];
-                territories.forEach(territory => {
-                    addMicroTerritory(
-                        territory.x, 
-                        territory.y, 
-                        territory.link, 
-                        territory.title, 
-                        territory.type,
-                        parentId
-                    );
-                });
-            });
-        }
-
-        // Add main territory interactivity
-        function addMainTerritoryInteractivity() {
-            const mainElements = document.querySelectorAll('.star-point, .center-hub');
-            
-            mainElements.forEach(element => {
-                element.addEventListener('mouseenter', function() {
-                    // Show related micro territories
-                    const parentId = this.id;
-                    const relatedMicros = document.querySelectorAll(`[data-parent="${parentId}"] circle`);
-                    
-                    gsap.to(relatedMicros, {
-                        opacity: 0.8,
-                        scale: 1.2,
-                        duration: 0.3,
-                        stagger: 0.05,
-                        ease: "power2.out"
-                    });
-                });
-
-                element.addEventListener('mouseleave', function() {
-                    // Hide micro territories
-                    const micros = document.querySelectorAll('.micro-territory');
-                    gsap.to(micros, {
-                        opacity: 0,
-                        scale: 1,
-                        duration: 0.3,
-                        ease: "power2.out"
-                    });
-                });
-            });
-        }
-
-        // Initialize everything
-        function initializeMap() {
-            populateMicroTerritories();
-            addMainTerritoryInteractivity();
-
-            // Initial animation sequence
+            // Entrance animation
             gsap.timeline()
-                .from('#star-constellation', {
+                .from('.star-point.main', {
                     scale: 0,
                     rotation: -180,
-                    duration: 2,
+                    duration: 1.5,
+                    stagger: 0.2,
                     ease: "power2.out"
                 })
-                .from('.micro-territory', {
+                .from('.star-point.territory', {
                     scale: 0,
                     opacity: 0,
-                    stagger: 0.02,
-                    duration: 0.5,
+                    duration: 0.8,
+                    stagger: 0.05,
                     ease: "back.out(1.7)"
-                }, "-=1")
-                .to('.micro-territory', {
+                }, "-=0.5")
+                .from('.star-point.outer', {
+                    scale: 0,
                     opacity: 0,
+                    duration: 0.6,
+                    stagger: 0.03,
+                    ease: "back.out(1.7)"
+                }, "-=0.3")
+                .from('.territory-label', {
+                    opacity: 0,
+                    y: 20,
                     duration: 0.5,
-                    ease: "power2.out"
+                    stagger: 0.1
                 }, "-=0.5");
 
-            // Subtle breathing animation for main territories
-            gsap.to('.star-point', {
-                scale: 1.02,
-                duration: 4,
+            // Subtle breathing animation
+            gsap.to('.star-point.main', {
+                scale: 1.05,
+                duration: 3,
                 yoyo: true,
                 repeat: -1,
                 ease: "sine.inOut",
-                stagger: 0.3
+                stagger: 0.4
             });
         }
 
-        // Start the map
-        initializeMap();
+        // Start everything
+        initialize();
     </script>
 </body>
 </html>
