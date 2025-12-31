@@ -3,26 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inktwo - Visual Directory</title>
+    <title>INKREALM.INFO - SYSTEM MAP</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <style>
-        /* --- CORE VARIABLES (Inktwo Theme) --- */
+        /* --- CORE VARIABLES (Inkrealm Theme) --- */
         :root {
-            --primary: #00BFFF;   /* Deep Sky Blue (The "Ink" Light) */
-            --secondary: #FFFFFF; /* High Contrast White */
-            --bg: #020202;        /* Pure Void */
-            --panel: rgba(10, 10, 12, 0.98); /* Slightly blue-tinted dark */
-            --border: #222;
+            --primary: #ffffff;   /* Pure White */
+            --accent: #00ffff;    /* Cyan Glitch Accent */
+            --bg: #000000;        /* Pure Void */
+            --panel: rgba(10, 10, 10, 0.95);
+            --border: #333;
             --text: #eee;
-            --header-h: 60px;
+            --header-h: 80px;     /* Taller for the Logo */
             --footer-h: 30px;
-            --sidebar-w: 320px;   /* Slightly wider for images */
+            --sidebar-w: 320px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Helvetica Neue', 'Arial', sans-serif; /* Cleaner font for Apps */
+            font-family: 'Courier New', monospace; /* Typewriter feel */
             background: var(--bg);
             color: var(--text);
             height: 100vh;
@@ -31,32 +31,75 @@
             overflow: hidden;
         }
 
-        /* --- HEADER --- */
+        /* --- HEADER WITH ANIMATED LOGO --- */
         .sys-header {
             height: var(--header-h);
             background: #000;
-            border-bottom: 1px solid #1a1a1a;
+            border-bottom: 1px solid #222;
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 20px;
             z-index: 300;
+            overflow: hidden;
         }
 
-        .brand {
-            font-weight: 800;
-            font-size: 1.2rem;
-            color: var(--secondary);
-            text-decoration: none;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+        /* LOGO CONTAINER */
+        .header-logo-container {
+            width: 200px; /* Adjust based on desired size */
+            height: 100%;
+            display: flex;
+            align-items: center;
         }
-        .brand span { color: var(--primary); }
+
+        .splash-logo {
+            width: 100%;
+            height: auto;
+            max-height: 60px;
+            opacity: 0; /* Starts hidden for animation */
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.8));
+            /* Your provided animations */
+            animation: logoEntrance 2s ease-out 0.1s forwards, 
+                       neonPulse 3s ease-in-out 2.1s infinite, 
+                       rgbGlitch 3s ease-in-out 1.5s infinite; /* Slowed glitch down slightly for header readability */
+        }
+
+        .logo-text { 
+            fill: #ffffff;
+            opacity: 0;
+            animation: typewriterReveal 1.5s steps(12) 0.5s forwards;
+        }
+
+        /* --- YOUR ANIMATIONS --- */
+        @keyframes logoEntrance {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes neonPulse {
+            0%, 100% { filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5)); }
+            50% { filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 25px rgba(200, 200, 255, 0.4)); }
+        }
+
+        @keyframes rgbGlitch {
+            0%, 100% { transform: translate(0, 0); }
+            92% { transform: translate(0, 0); filter: drop-shadow(0 0 5px rgba(255,255,255,0.8)); }
+            94% { transform: translate(-2px, 0); filter: drop-shadow(-2px 0 2px rgba(255,0,0,0.8)) drop-shadow(2px 0 2px rgba(0,255,255,0.8)); }
+            96% { transform: translate(2px, 0); filter: drop-shadow(2px 0 2px rgba(0,255,0,0.8)) drop-shadow(-2px 0 2px rgba(255,0,255,0.8)); }
+            98% { transform: translate(-1px, 0); }
+        }
+
+        @keyframes typewriterReveal {
+            0% { opacity: 0; clip-path: inset(0 100% 0 0); }
+            1% { opacity: 1; }
+            100% { opacity: 1; clip-path: inset(0 0 0 0); }
+        }
 
         /* --- LAYOUT CONTAINER --- */
         .workspace {
             display: flex;
             flex: 1;
+            /* CRITICAL FIX FOR SCROLLING: Calculate exact remaining height */
             height: calc(100vh - var(--header-h) - var(--footer-h));
             position: relative;
             overflow: hidden;
@@ -65,29 +108,24 @@
         /* --- VISUAL SIDEBAR --- */
         .sidebar {
             width: var(--sidebar-w);
-            height: 100%;
+            height: 100%; /* Fills the workspace height */
             background: var(--panel);
             border-right: 1px solid var(--border);
-            padding: 0; /* Removing padding for flush images */
-            overflow-y: auto;
+            display: flex;
+            flex-direction: column; /* Ensures header stays top, content scrolls */
             flex-shrink: 0;
             transition: margin-left 0.4s cubic-bezier(0.25, 1, 0.5, 1);
             z-index: 200;
             margin-left: 0; 
         }
 
-        .sidebar.collapsed {
-            margin-left: calc(var(--sidebar-w) * -1);
-        }
+        .sidebar.collapsed { margin-left: calc(var(--sidebar-w) * -1); }
 
         .sidebar-header {
-            padding: 20px;
+            padding: 15px 20px;
             border-bottom: 1px solid #222;
-            background: rgba(0,0,0,0.5);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            backdrop-filter: blur(5px);
+            background: #000;
+            flex-shrink: 0; /* Header never shrinks */
         }
 
         .sidebar-header h2 {
@@ -95,73 +133,72 @@
             font-size: 14px;
             text-transform: uppercase;
             letter-spacing: 2px;
+            border-left: 3px solid var(--primary);
+            padding-left: 10px;
+        }
+
+        /* SCROLLABLE CONTENT AREA */
+        #sidebar-content {
+            flex: 1; /* Takes remaining space */
+            overflow-y: auto; /* SCROLLS HERE */
+            padding-bottom: 20px;
         }
 
         /* Category Headers */
         .cat-title {
-            padding: 15px 20px 5px 20px;
-            color: #666;
-            font-size: 11px;
+            padding: 20px 20px 5px 20px;
+            color: #888;
+            font-size: 10px;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 10px;
+            letter-spacing: 2px;
+            border-bottom: 1px dotted #333;
+            margin: 0 10px;
         }
 
-        /* IMAGE LINK CARD STYLES */
+        /* CARD STYLES */
         .nav-card {
             display: flex;
             align-items: center;
-            padding: 12px 20px;
+            padding: 10px 20px;
             text-decoration: none;
             color: #aaa;
-            border-bottom: 1px solid #151515;
+            border-bottom: 1px solid #111;
             transition: all 0.2s;
             gap: 15px;
         }
 
         .nav-card:hover {
-            background: rgba(0, 191, 255, 0.05); /* Blue tint hover */
+            background: #111;
             color: #fff;
             padding-left: 25px;
+            border-left: 2px solid var(--primary);
         }
 
         .card-thumb {
-            width: 40px;
-            height: 40px;
-            background: #222;
-            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            background: #111;
             object-fit: cover;
             border: 1px solid #333;
-            transition: border-color 0.2s;
+            filter: grayscale(100%);
+            transition: all 0.2s;
         }
 
         .nav-card:hover .card-thumb {
+            filter: grayscale(0%);
             border-color: var(--primary);
         }
 
-        .card-info {
-            display: flex;
-            flex-direction: column;
-        }
+        .card-info { display: flex; flex-direction: column; }
+        .card-title { font-size: 12px; font-weight: bold; color: #eee; }
+        .card-meta { font-size: 9px; color: #555; margin-top: 2px; font-family: sans-serif; }
 
-        .card-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: #ddd;
-        }
-        
-        .card-meta {
-            font-size: 10px;
-            color: #555;
-            margin-top: 2px;
-        }
-
-        /* Scrollbar (Blue) */
-        .sidebar::-webkit-scrollbar { width: 5px; }
-        .sidebar::-webkit-scrollbar-track { background: #0a0a0a; }
-        .sidebar::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
-        .sidebar::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+        /* Scrollbar (White/Grey) */
+        #sidebar-content::-webkit-scrollbar { width: 4px; }
+        #sidebar-content::-webkit-scrollbar-track { background: #000; }
+        #sidebar-content::-webkit-scrollbar-thumb { background: #444; }
+        #sidebar-content::-webkit-scrollbar-thumb:hover { background: #fff; }
 
         /* Toggle Button */
         .sidebar-toggle {
@@ -171,14 +208,14 @@
             padding: 8px 12px;
             cursor: pointer;
             transition: all 0.2s;
-            font-family: monospace;
+            font-family: inherit;
             text-transform: uppercase;
-            font-size: 11px;
-            border-radius: 4px;
+            font-size: 10px;
+            letter-spacing: 1px;
         }
-        .sidebar-toggle:hover { border-color: var(--primary); background: rgba(0, 191, 255, 0.1); }
+        .sidebar-toggle:hover { background: #fff; color: #000; }
 
-        /* --- MAIN MAP AREA --- */
+        /* --- MAP AREA --- */
         .main-content {
             flex: 1;
             position: relative;
@@ -190,70 +227,65 @@
             cursor: crosshair;
         }
 
-        #map-container {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
+        #map-container { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
         svg { width: 100%; height: 100%; }
 
-        /* --- CONSTELLATION STYLING --- */
-        .constellation-line { stroke: var(--primary); stroke-width: 1; opacity: 0.2; }
-        
+        /* Constellation */
+        .constellation-line { stroke: #444; stroke-width: 1; opacity: 0.3; }
         .star-point { cursor: pointer; transition: all 0.3s; }
         .star-point.main { fill: #000; stroke: var(--primary); stroke-width: 2px; }
-        .star-point.territory { fill: #444; }
+        .star-point.territory { fill: #333; }
+        
+        /* Star Hover */
+        .star-point:hover { 
+            fill: #FFF; 
+            filter: drop-shadow(0 0 8px rgba(255,255,255,0.8)); 
+        }
 
-        /* Hover Effects */
-        .star-point:hover { fill: #FFF; stroke: #FFF; filter: drop-shadow(0 0 10px var(--primary)); }
-
-        /* Labels */
         .category-label {
-            fill: var(--primary);
-            font-size: 11px;
+            fill: #fff;
+            font-size: 10px;
             font-family: monospace;
-            font-weight: bold;
             text-anchor: middle;
             text-transform: uppercase;
+            letter-spacing: 2px;
             pointer-events: none;
-            text-shadow: 0 0 5px #000;
+            opacity: 0.7;
         }
 
         /* Popup */
         .gsap-popup {
             position: absolute;
-            background: rgba(0, 0, 0, 0.95);
-            border: 1px solid var(--primary);
-            padding: 6px; /* Reduced padding for image fit */
+            background: #000;
+            border: 1px solid #fff;
+            padding: 5px;
             pointer-events: none;
             opacity: 0;
             z-index: 50;
             transform: translate(-50%, -110%);
-            width: 160px; /* Fixed width for visual popup */
+            width: 180px;
+            box-shadow: 5px 5px 0px rgba(20,20,20,1);
         }
         
-        /* New Visual Popup Content */
         .popup-img {
             width: 100%;
-            height: 80px;
+            height: 90px;
             object-fit: cover;
-            border-bottom: 1px solid var(--primary);
+            border-bottom: 1px solid #333;
             display: block;
             margin-bottom: 6px;
             background: #111;
+            filter: grayscale(100%);
         }
         
-        .gsap-popup h3 { color: #fff; font-size: 12px; margin: 0 4px; text-transform: uppercase; }
-        .gsap-popup p { color: var(--primary); font-size: 10px; margin: 2px 4px 4px 4px; }
+        .gsap-popup h3 { color: #fff; font-size: 11px; margin: 4px; text-transform: uppercase; border-left: 2px solid #fff; padding-left: 5px; }
+        .gsap-popup p { color: #888; font-size: 9px; margin: 0 4px 4px 4px; padding-left: 7px; }
 
         /* Footer */
         .sys-footer {
             height: var(--footer-h);
             background: #000;
-            border-top: 1px solid #1a1a1a;
+            border-top: 1px solid #222;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -262,63 +294,68 @@
             color: #444;
             z-index: 300;
         }
-        
-        /* --- MOBILE OPTIMIZATIONS --- */
+
         @media (max-width: 768px) {
             body { height: 100dvh; } 
-            .sidebar { position: absolute; height: 100%; box-shadow: 10px 0 30px #000; width: 85%; }
-            .sidebar-toggle { padding: 6px 8px; }
+            .sidebar { position: absolute; height: 100%; width: 85%; box-shadow: 10px 0 50px #000; }
+            .header-logo-container { width: 140px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
+    <!-- Header with SVG Logo -->
     <header class="sys-header">
-        <div style="display:flex; align-items:center; gap: 15px;">
-            <button id="sidebar-toggle" class="sidebar-toggle">[ HIDE DIRECTORY ]</button>
-            <a href="https://inktwo.com/" class="brand">INK<span>TWO</span></a>
+        <div class="header-logo-container">
+            <svg class="splash-logo" viewBox="0 0 700 140" xmlns="http://www.w3.org/2000/svg">
+                <g class="logo-text">
+                    <path d="M 40 40 L 60 40 L 60 45 L 52 45 L 52 95 L 60 95 L 60 100 L 40 100 L 40 95 L 48 95 L 48 45 L 40 45 Z"/>
+                    <path d="M 75 40 L 82 40 L 82 87 L 110 40 L 118 40 L 118 100 L 111 100 L 111 53 L 83 100 L 75 100 Z"/>
+                    <path d="M 135 40 L 142 40 L 142 66 L 165 40 L 175 40 L 153 65 L 177 100 L 167 100 L 147 70 L 142 75 L 142 100 L 135 100 Z"/>
+                    <path d="M 195 40 L 220 40 Q 232 40 232 52 Q 232 62 224 64 L 235 100 L 227 100 L 217 66 L 202 66 L 202 100 L 195 100 Z M 202 45 L 202 61 L 218 61 Q 225 61 225 53 Q 225 45 218 45 Z"/>
+                    <path d="M 252 40 L 285 40 L 285 45 L 259 45 L 259 67 L 283 67 L 283 72 L 259 72 L 259 95 L 286 95 L 286 100 L 252 100 Z"/>
+                    <path d="M 305 100 L 297 100 L 315 40 L 323 40 L 341 100 L 333 100 L 328 85 L 310 85 L 305 100 Z M 312 80 L 326 80 L 319 55 Z"/>
+                    <path d="M 358 40 L 365 40 L 365 95 L 390 95 L 390 100 L 358 100 Z"/>
+                    <path d="M 408 40 L 417 40 L 432 85 L 447 40 L 456 40 L 456 100 L 449 100 L 449 52 L 434 100 L 430 100 L 415 52 L 415 100 L 408 100 Z"/>
+                    <circle cx="475" cy="95" r="3.5"/>
+                    <path d="M 495 40 L 515 40 L 515 45 L 507 45 L 507 95 L 515 95 L 515 100 L 495 100 L 495 95 L 503 95 L 503 45 L 495 45 Z"/>
+                    <path d="M 530 40 L 537 40 L 537 87 L 565 40 L 573 40 L 573 100 L 566 100 L 566 53 L 538 100 L 530 100 Z"/>
+                    <path d="M 590 40 L 623 40 L 623 45 L 597 45 L 597 67 L 620 67 L 620 72 L 597 72 L 597 100 L 590 100 Z"/>
+                    <path d="M 640 38 Q 658 38 658 70 Q 658 102 640 102 Q 622 102 622 70 Q 622 38 640 38 Z M 640 43 Q 629 43 629 70 Q 629 97 640 97 Q 651 97 651 70 Q 651 43 640 43 Z"/>
+                </g>
+            </svg>
         </div>
-        <div style="font-size: 10px; color: #444; font-family: monospace;">
-            V.3.1 // CONNECTED
-        </div>
+        <button id="sidebar-toggle" class="sidebar-toggle">[ HIDE ]</button>
     </header>
 
     <div class="workspace">
-        <!-- Visual Sidebar -->
         <aside id="sidebar" class="sidebar">
             <div class="sidebar-header">
                 <h2>System Directory</h2>
             </div>
-            
-            <!-- Dynamic Content Injected Here -->
+            <!-- Dynamic Content -->
             <div id="sidebar-content"></div>
         </aside>
 
-        <!-- Main Map -->
         <main class="main-content" id="scene-container">
             <div id="map-container">
                 <svg id="star-map" viewBox="0 0 1000 800" preserveAspectRatio="xMidYMid meet">
                     <!-- BACKGROUND GRID -->
                     <defs>
-                        <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
-                            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#111" stroke-width="1"/>
+                        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#151515" stroke-width="1"/>
                         </pattern>
                     </defs>
                     <rect width="100%" height="100%" fill="url(#grid)"/>
 
-                    <!-- THE ROTATING UNIVERSE -->
                     <g id="universe" transform-origin="500 400">
                         <g id="connections"></g>
                         <g id="stars"></g>
                     </g>
-                    
-                    <!-- Labels (Static) -->
                     <g id="labels"></g>
                 </svg>
             </div>
             
-            <!-- Visual Popup -->
             <div id="popup" class="gsap-popup">
                 <img id="popup-img" class="popup-img" src="" alt="">
                 <h3 id="popup-title"></h3>
@@ -327,80 +364,69 @@
         </main>
     </div>
 
-    <!-- Footer -->
     <footer class="sys-footer">
-        <span>INTERACTIVE MAP</span>
-        <span>&copy; 2025 INKTWO</span>
+        <span>INKREALM.INFO</span>
+        <span>&copy; 2025</span>
     </footer>
 
     <script>
         gsap.registerPlugin();
 
-        /* --- THE DATABASE --- 
-           This is where you control the content.
-           Categories: 'writing', '1991', 'tvc15', 'dedicated'
-        */
+        // --- EXPANDED DATABASE ---
+        // Populated based on your description and likely content for "Apps", "AI", "Writing"
         const database = [
             // WRITING
-            { url: "https://inktwo.com/about", title: "About Inktwo", category: "writing", image: "images/about.jpg" },
-            { url: "https://inktwo.com/aldstadt", title: "Aldstadt", category: "writing", image: "images/aldstadt.jpg" },
-            { url: "https://inktwo.com/twoskinnygirls", title: "Two Skinny Girls", category: "writing", image: "images/twoskinnygirls.jpg" },
+            { url: "https://inkrealm.info/about", title: "About", category: "writing", image: "images/about.jpg" },
+            { url: "https://inkrealm.info/aldstadt", title: "Aldstadt", category: "writing", image: "images/aldstadt.jpg" },
+            { url: "https://inkrealm.info/twoskinnygirls", title: "Two Skinny Girls", category: "writing", image: "images/twoskinnygirls.jpg" },
+            { url: "https://inkrealm.info/dreamweaver", title: "Dreamweaver", category: "writing", image: "images/dreamweaver.jpg" },
+            
+            // SITES (Subdomains/Dedicated)
+            { url: "https://inkrealm.info/apartment7a", title: "Apartment 7A", category: "sites", image: "images/apt7a.jpg" },
+            { url: "https://inkrealm.info/ie", title: "I.E.", category: "sites", image: "images/ie.jpg" },
+            { url: "https://inkrealm.info/sitemap", title: "Full Sitemap", category: "sites", image: "images/map.jpg" },
 
-            // APPS: 1991 (Context 1)
-            { url: "https://inktwo.com/1991", title: "1991 Collection", category: "1991", image: "images/1991.jpg" },
-            // Add more 1991 apps here manually, e.g.:
-            // { url: "https://inktwo.com/1991/app1", title: "HyperCard", category: "1991", image: "images/hypercard.jpg" },
+            // APPS (1991 / Tools)
+            { url: "https://inkrealm.info/1991", title: "1991 Collection", category: "apps", image: "images/1991.jpg" },
+            { url: "https://inkrealm.info/typewriter", title: "Typewriter", category: "apps", image: "images/typewriter.jpg" },
+            { url: "https://inkrealm.info/macwrite", title: "MacWrite", category: "apps", image: "images/macwrite.jpg" },
+            { url: "https://inkrealm.info/hypercard", title: "HyperCard", category: "apps", image: "images/hypercard.jpg" },
 
-            // APPS: TVC15 (Context 2)
-            { url: "https://inktwo.com/tvc15", title: "TVC15 Console", category: "tvc15", image: "images/tvc15.jpg" },
-            // Add more TVC15 apps here manually
-
-            // DEDICATED SITES
-            { url: "https://inktwo.com/apartment7a", title: "Apartment 7A", category: "dedicated", image: "images/apartment7a.jpg" },
-            { url: "https://inktwo.com/ie", title: "I.E.", category: "dedicated", image: "images/ie.jpg" }
+            // AI / TVC15
+            { url: "https://inkrealm.info/tvc15", title: "TVC15 Console", category: "ai", image: "images/tvc15.jpg" },
+            { url: "https://inkrealm.info/grok", title: "Grok Interface", category: "ai", image: "images/grok.jpg" },
+            { url: "https://inkrealm.info/gpt", title: "GPT Synth", category: "ai", image: "images/gpt.jpg" },
+            { url: "https://inkrealm.info/midjourney", title: "MJ Gallery", category: "ai", image: "images/mj.jpg" },
+            { url: "https://inkrealm.info/claude", title: "Claude", category: "ai", image: "images/claude.jpg" }
         ];
-
-        /* --- HELPER: FALLBACK IMAGE --- */
-        // If an image doesn't exist, this returns a colored placeholder
-        function getThumb(item) {
-            // Note: In a real environment, use onerror to swap to placeholder.
-            // For now, assuming you will add images to an /images/ folder.
-            // If you don't have images yet, this will show broken icons unless we force a placeholder service:
-            return item.image ? item.image : `https://placehold.co/100x100/111/00BFFF?text=${item.title.charAt(0)}`;
-        }
 
         /* --- BUILDER FUNCTIONS --- */
 
         function buildSidebar() {
             const container = document.getElementById('sidebar-content');
             
-            // Define Order
             const sections = {
-                'writing': 'Writing & Notes',
-                '1991': '1991 Systems',
-                'tvc15': 'TVC15 Applications',
-                'dedicated': 'Dedicated Sites'
+                'writing': 'Writing & Logs',
+                'apps': 'Applications',
+                'ai': 'AI / TVC15',
+                'sites': 'Dedicated Sites'
             };
 
             for (const [key, label] of Object.entries(sections)) {
                 const items = database.filter(i => i.category === key);
                 
                 if (items.length > 0) {
-                    // Create Header
                     const h = document.createElement('div');
                     h.className = 'cat-title';
                     h.textContent = label;
                     container.appendChild(h);
 
-                    // Create Cards
                     items.forEach(item => {
                         const a = document.createElement('a');
                         a.href = item.url;
                         a.className = 'nav-card';
-                        
-                        // Use placeholder service if local image fails (simulated here)
-                        // In your code, just use item.image
-                        const imgSrc = item.image.startsWith('http') ? item.image : `https://placehold.co/100x100/111/00BFFF?text=${item.title.charAt(0)}`;
+                        // Fallback image generator
+                        const imgSrc = item.image.startsWith('http') ? item.image : `https://placehold.co/100x100/000000/FFFFFF?text=${item.title.charAt(0)}`;
 
                         a.innerHTML = `
                             <img src="${imgSrc}" class="card-thumb" alt="thumb">
@@ -422,15 +448,14 @@
             const linesGroup = document.getElementById('connections');
             const labelsGroup = document.getElementById('labels');
 
-            // Define Nodes Layout (Radial)
             const nodes = {
-                'writing':   { angle: 225, color: '#FFFFFF' }, // Bottom Left
-                '1991':      { angle: 315, color: '#00BFFF' }, // Bottom Right
-                'tvc15':     { angle: 45,  color: '#00BFFF' }, // Top Right
-                'dedicated': { angle: 135, color: '#00BFFF' }  // Top Left
+                'writing':   { angle: 225 }, 
+                'apps':      { angle: 315 },
+                'ai':        { angle: 45 },
+                'sites':     { angle: 135 }
             };
 
-            const catRadius = 250;
+            const catRadius = 240;
             const itemRadius = 60;
 
             Object.keys(nodes).forEach(key => {
@@ -441,46 +466,35 @@
                 const catX = cx + Math.cos(angleRad) * catRadius;
                 const catY = cy + Math.sin(angleRad) * catRadius;
 
-                // 1. Line Center -> Category
+                // Line
                 const mainLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
                 mainLine.setAttribute("x1", cx); mainLine.setAttribute("y1", cy);
                 mainLine.setAttribute("x2", catX); mainLine.setAttribute("y2", catY);
                 mainLine.setAttribute("class", "constellation-line");
                 linesGroup.appendChild(mainLine);
 
-                // 2. Category Star
+                // Cat Star
                 const catStar = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                 catStar.setAttribute("cx", catX); catStar.setAttribute("cy", catY);
                 catStar.setAttribute("r", 10);
                 catStar.setAttribute("class", "star-point main");
                 starsGroup.appendChild(catStar);
 
-                // 3. Category Label
+                // Label
                 createFloatingLabel(key.toUpperCase(), catX, catY, labelsGroup);
 
-                // 4. Children (Items)
+                // Items
                 items.forEach((item, idx) => {
-                    // Spread items in a small arc around the category node
-                    const spread = (items.length > 1) ? Math.PI : 0; 
-                    const startAngle = angleRad - (spread/4);
-                    const step = (items.length > 1) ? (spread / (items.length - 1)) : 0;
-                    
-                    // Simple radial fan out
-                    const itemAngle = (items.length === 1) ? angleRad : (angleRad - 0.5 + (idx * (1.0 / (items.length||1)))); 
-                    // Actually, let's just do a circle around the node
                     const circleAngle = (idx / items.length) * Math.PI * 2;
-
                     const itemX = catX + Math.cos(circleAngle) * itemRadius;
                     const itemY = catY + Math.sin(circleAngle) * itemRadius;
 
-                    // Line Cat -> Item
                     const subLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
                     subLine.setAttribute("x1", catX); subLine.setAttribute("y1", catY);
                     subLine.setAttribute("x2", itemX); subLine.setAttribute("y2", itemY);
                     subLine.setAttribute("class", "constellation-line");
                     linesGroup.appendChild(subLine);
 
-                    // Item Star
                     const star = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                     star.setAttribute("cx", itemX); star.setAttribute("cy", itemY);
                     star.setAttribute("r", 5);
@@ -488,8 +502,7 @@
                     star.setAttribute("data-title", item.title);
                     star.setAttribute("data-cat", item.category);
                     star.setAttribute("data-url", item.url);
-                    // Use placeholder for popup logic
-                    const imgSrc = item.image.startsWith('http') ? item.image : `https://placehold.co/150x80/111/00BFFF?text=${item.title.charAt(0)}`;
+                    const imgSrc = item.image.startsWith('http') ? item.image : `https://placehold.co/200x100/000/FFF?text=${item.title}`;
                     star.setAttribute("data-img", imgSrc);
                     
                     starsGroup.appendChild(star);
@@ -501,10 +514,10 @@
             center.setAttribute("cx", cx); center.setAttribute("cy", cy);
             center.setAttribute("r", 15);
             center.setAttribute("class", "star-point main");
-            center.setAttribute("data-title", "INKTWO HOME");
+            center.setAttribute("data-title", "INKREALM HOME");
             center.setAttribute("data-cat", "ROOT");
-            center.setAttribute("data-url", "https://inktwo.com/");
-            center.setAttribute("data-img", "https://placehold.co/150x80/000/FFF?text=INKTWO");
+            center.setAttribute("data-url", "https://inkrealm.info/");
+            center.setAttribute("data-img", "https://placehold.co/200x100/000/FFF?text=INKREALM");
             starsGroup.appendChild(center);
         }
 
@@ -519,7 +532,6 @@
             container.appendChild(label);
         }
 
-        /* --- INIT LOGIC --- */
         function init() {
             buildSidebar();
             buildMap();
@@ -533,18 +545,7 @@
             const pCat = document.getElementById('popup-cat');
             const pImg = document.getElementById('popup-img');
 
-            // Mobile Check
-            if (window.innerWidth < 768) {
-                sidebar.classList.add('collapsed');
-                toggle.textContent = "[ DIRECTORY ]";
-            }
-
-            toggle.addEventListener('click', () => {
-                sidebar.classList.toggle('collapsed');
-                toggle.textContent = sidebar.classList.contains('collapsed') ? "[ DIRECTORY ]" : "[ HIDE ]";
-            });
-
-            // Rotation
+            // 1. Setup Rotation 
             const rotTween = gsap.to(universe, {
                 rotation: 360,
                 duration: 150,
@@ -564,7 +565,19 @@
                 }
             });
 
-            // Pause Interactions
+            // 2. Mobile Check
+            if (window.innerWidth < 768) {
+                sidebar.classList.add('collapsed');
+                toggle.textContent = "[ DIRECTORY ]";
+            }
+
+            // 3. Toggle
+            toggle.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+                toggle.textContent = sidebar.classList.contains('collapsed') ? "[ DIRECTORY ]" : "[ HIDE ]";
+            });
+
+            // 4. Pausing & Touch
             scene.addEventListener('mouseenter', () => gsap.to(rotTween, { timeScale: 0, duration: 0.5 }));
             scene.addEventListener('mouseleave', () => {
                 gsap.to(rotTween, { timeScale: 1, duration: 1 });
@@ -576,7 +589,7 @@
                 gsap.to(popup, { opacity: 0 });
             }, 2000));
 
-            // Star Interactions (Visual Popup)
+            // 5. Star Logic
             document.querySelectorAll('.star-point').forEach(star => {
                 star.addEventListener('mouseenter', (e) => {
                     const title = star.getAttribute('data-title');
@@ -596,7 +609,7 @@
 
                 star.addEventListener('mouseleave', () => {
                     const isMain = star.classList.contains('main');
-                    gsap.to(star, { attr: {r: isMain?10:5}, fill: isMain?'#000':'#444', duration: 0.3 });
+                    gsap.to(star, { attr: {r: isMain?10:5}, fill: isMain?'#000':'#333', duration: 0.3 });
                 });
 
                 star.addEventListener('click', () => {
