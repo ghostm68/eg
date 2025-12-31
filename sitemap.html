@@ -421,7 +421,9 @@
 <script>
     gsap.registerPlugin();
 
-    // --- DATA WITH IMAGES ---
+    // --- DATA ---
+    // Note: If these GitHub URLs are invalid, the code below will now 
+    // automatically generate a placeholder SVG Icon for them.
     const sitemapData = [
         // Main / New
         { url: "https://wordstar.nexus/bakedalaska", name: "Baked Alaska", category: "main", image: "https://raw.githubusercontent.com/ghostm68/eg/main/bakedalaska.jpg" },
@@ -476,11 +478,15 @@
         { url: "https://wordstar.nexus/90263", name: "Martha Kessler", category: "resources", image: "https://raw.githubusercontent.com/ghostm68/eg/main/90263.jpg" }
     ];
 
-    // --- SIDEBAR BUILDER WITH IMAGES ---
+    // Helper: Generate a Data URI SVG placeholder
+    function getFallbackImage(letter) {
+        return `data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23222'/%3E%3Ctext x='50' y='50' font-family='monospace' font-size='50' fill='%23555' text-anchor='middle' dominant-baseline='middle'%3E${letter}%3C/text%3E%3C/svg%3E`;
+    }
+
+    // --- SIDEBAR BUILDER ---
     function buildSidebar() {
         const cats = { main: [], fiction: [], editors: [], ai: [], resources: [], domain: [] };
         
-        // Group by category
         sitemapData.forEach(item => {
             if(cats[item.category]) cats[item.category].push(item);
             else cats.domain.push(item);
@@ -491,8 +497,8 @@
             if(!container) return;
             
             list.forEach(item => {
-                const linkDiv = document.createElement('div');
-                linkDiv.className = 'sidebar-link-with-image';
+                const linkDiv = document.createElement('a');
+                linkDiv.className = 'sidebar-link';
                 linkDiv.style.display = 'flex';
                 linkDiv.style.alignItems = 'center';
                 linkDiv.style.gap = '10px';
@@ -500,25 +506,36 @@
                 linkDiv.style.margin = '4px 0';
                 linkDiv.style.textDecoration = 'none';
                 linkDiv.style.color = '#ccc';
-                linkDiv.style.transition = 'all 0.2s';
+                linkDiv.style.cursor = 'pointer';
                 linkDiv.style.borderLeft = '2px solid transparent';
+                linkDiv.style.transition = 'all 0.2s';
+                linkDiv.href = item.url;
+                linkDiv.target = "_blank";
+
+                // Create Image Element Safely
+                const img = document.createElement('img');
+                img.style.width = '24px';
+                img.style.height = '24px';
+                img.style.objectFit = 'cover';
+                img.style.border = '1px solid #333';
+                img.style.display = 'block'; // Prevents layout shifts
                 
-                // Fixed onerror handler - using proper escaping
-                const fallbackSVG = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" fill="%23111"/><text x="12" y="12" font-family="monospace" font-size="8" fill="%23666" text-anchor="middle" dominant-baseline="middle">${item.name.charAt(0)}</text></svg>`;
+                // Fallback Logic
+                img.onload = function() { /* Image loaded successfully */ };
+                img.onerror = function() { 
+                    this.onerror = null; // Prevent infinite loop
+                    this.src = getFallbackImage(item.name.charAt(0));
+                };
+                img.src = item.image; // Trigger load
+
+                const span = document.createElement('span');
+                span.innerText = item.name;
+                span.style.fontSize = '13px';
+
+                linkDiv.appendChild(img);
+                linkDiv.appendChild(span);
                 
-                linkDiv.innerHTML = `
-                    <img src="${item.image}" 
-                         alt="${item.name}" 
-                         style="width: 24px; height: 24px; object-fit: cover; border: 1px solid #333;"
-                         onerror="this.src='${fallbackSVG}'">
-                    <span style="font-size: 13px;">${item.name}</span>
-                `;
-                
-                linkDiv.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    window.open(item.url, '_blank');
-                });
-                
+                // Hover Effects
                 linkDiv.addEventListener('mouseenter', () => {
                     linkDiv.style.background = 'rgba(255,255,255,0.05)';
                     linkDiv.style.color = '#fff';
@@ -544,7 +561,7 @@
         fill('resources-links', cats.resources);
     }
 
-    // --- MAP BUILDER WITH IMAGES ---
+    // --- MAP BUILDER ---
     function buildMap() {
         const cx = 500, cy = 400; 
         const universe = document.getElementById('universe');
@@ -560,7 +577,6 @@
             domain: { angle: 288, items: [] }
         };
 
-        // Group items by category
         sitemapData.forEach(item => {
             if (item.category !== 'main' && nodes[item.category]) {
                 nodes[item.category].items.push(item);
@@ -577,24 +593,23 @@
             const catX = cx + Math.cos(angleRad) * categoryRadius;
             const catY = cy + Math.sin(angleRad) * categoryRadius;
 
-            // Center Line
+            // Line to center
             const mainLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
             mainLine.setAttribute("x1", cx); mainLine.setAttribute("y1", cy);
             mainLine.setAttribute("x2", catX); mainLine.setAttribute("y2", catY);
             mainLine.setAttribute("class", "constellation-line");
             linesGroup.appendChild(mainLine);
 
-            // Category Star (Hub) - Not interactive
+            // Hub Point
             const catStar = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             catStar.setAttribute("cx", catX); catStar.setAttribute("cy", catY);
             catStar.setAttribute("r", 8);
             catStar.setAttribute("class", "hub-point"); 
             starsGroup.appendChild(catStar);
 
-            // Create Label
             createFloatingLabel(key.toUpperCase(), catX, catY, labelsGroup);
 
-            // Children
+            // Children Stars
             const count = node.items.length;
             node.items.forEach((item, idx) => {
                 const itemAngle = (idx / count) * Math.PI * 2;
@@ -616,12 +631,12 @@
                 if(key === 'domain') star.setAttribute("fill", "#444");
                 star.setAttribute("data-name", item.name);
                 star.setAttribute("data-url", item.url);
-                star.setAttribute("data-img", item.image); // Add image data for popup
+                star.setAttribute("data-img", item.image); 
                 starsGroup.appendChild(star);
             });
         });
 
-        // REALM (Center Node)
+        // Center Realm Node
         const centerNode = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         centerNode.setAttribute("cx", cx); centerNode.setAttribute("cy", cy);
         centerNode.setAttribute("r", 14);
@@ -653,9 +668,8 @@
         const universe = document.getElementById('universe');
         const scene = document.getElementById('scene-container');
         const popup = document.getElementById('popup');
-        const pTitle = document.getElementById('popup-title');
-        const pDesc = document.getElementById('popup-desc');
         
+        // Orbital Rotation
         const rotTween = gsap.to(universe, {
             rotation: 360,
             duration: 120,
@@ -671,6 +685,7 @@
             labels.forEach(label => {
                 const ox = parseFloat(label.dataset.ox);
                 const oy = parseFloat(label.dataset.oy);
+                // Counter-rotate the coordinates
                 const nx = ox * Math.cos(angle) - oy * Math.sin(angle);
                 const ny = ox * Math.sin(angle) + oy * Math.cos(angle);
                 label.setAttribute("x", 500 + nx);
@@ -678,26 +693,27 @@
             });
         }
 
+        // Sidebar Toggle
         if (window.innerWidth < 768) {
             sidebar.classList.add('collapsed');
             toggle.innerHTML = "&gt;&gt;";
         }
-
         toggle.addEventListener('click', () => {
             sidebar.classList.toggle('collapsed');
             toggle.innerHTML = sidebar.classList.contains('collapsed') ? "&gt;&gt;" : "&lt;&lt;";
         });
 
+        // Scene Hover Logic (Pause)
         scene.addEventListener('mouseenter', () => gsap.to(rotTween, { timeScale: 0, duration: 0.5 }));
         scene.addEventListener('mouseleave', () => {
             gsap.to(rotTween, { timeScale: 1, duration: 1 });
             gsap.to(popup, { opacity: 0 });
         });
-
+        
+        // Mobile Touch Logic
         scene.addEventListener('touchstart', () => {
             gsap.to(rotTween, { timeScale: 0, duration: 0.5 });
         }, {passive: true});
-
         scene.addEventListener('touchend', () => {
             setTimeout(() => {
                 gsap.to(rotTween, { timeScale: 1, duration: 1 });
@@ -705,42 +721,42 @@
             }, 2000); 
         });
 
-        // Only Select .star-point (excludes .hub-point)
+        // Star Interactions (Popup)
         const stars = document.querySelectorAll('.star-point');
         stars.forEach(star => {
             star.addEventListener('mouseenter', (e) => {
                 const name = star.getAttribute('data-name');
-                const img = star.getAttribute('data-img');
+                const imgUrl = star.getAttribute('data-img');
                 if(!name) return;
                 
-                // Clear previous content
                 popup.innerHTML = '';
                 
-                // Add image if available
-                if(img) {
+                // 1. Create Image with Fallback
+                if(imgUrl) {
                     const imgElement = document.createElement('img');
-                    imgElement.src = img;
                     imgElement.alt = name;
+                    
+                    // Fallback for popup
                     imgElement.onerror = function() {
-                        this.style.display = 'none';
+                         this.src = getFallbackImage(name.charAt(0));
+                         this.onerror = null; 
                     };
+                    imgElement.src = imgUrl;
                     popup.appendChild(imgElement);
                 }
                 
-                // Add title
+                // 2. Title & Desc
                 const title = document.createElement('h3');
                 title.textContent = name;
-                title.id = 'popup-title';
                 popup.appendChild(title);
                 
-                // Add description
                 const desc = document.createElement('p');
                 desc.textContent = 'ACCESS NODE';
-                desc.id = 'popup-desc';
                 popup.appendChild(desc);
                 
                 gsap.to(popup, { opacity: 1, duration: 0.2 });
                 
+                // Highlight Star
                 const isRealm = star.classList.contains('realm-node');
                 const rSize = isRealm ? 16 : 8;
                 gsap.to(star, { attr: {r: rSize}, fill: '#FFF', duration: 0.3 });
@@ -754,7 +770,6 @@
                 const isRealm = star.classList.contains('realm-node');
                 let r = 4;
                 let f = '#666';
-                
                 if(isRealm) { r = 14; f = '#000'; }
                 if(!isRealm && star.getAttribute('fill') === '#444') f = '#444';
 
