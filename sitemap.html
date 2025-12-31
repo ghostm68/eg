@@ -422,13 +422,8 @@
     gsap.registerPlugin();
 
     // --- DATA ---
-    // Note: If these GitHub URLs are invalid, the code below will now 
-    // automatically generate a placeholder SVG Icon for them.
-   // --- CORRECTED DATA (Points to 'pantheon' repo) ---
-   // --- DATA ---
-    // UPDATED: Using 'pantheon' repo and 'github.com/.../raw/main/' format.
-    // IMPORTANT: Check the file extensions (jpg, gif, png). 
-    // I have updated 'AI' to use the gif you mentioned.
+    // URLs point to the 'pantheon' repo using the raw/main format.
+    // Fallback logic has been removed; if an image fails, it will show the browser's broken icon.
     const sitemapData = [
         // Main / New
         { url: "https://wordstar.nexus/bakedalaska", name: "Baked Alaska", category: "main", image: "https://github.com/ghostm68/pantheon/raw/main/bakedalaska.jpg" },
@@ -474,8 +469,7 @@
         { url: "https://wordstar.nexus/conceptweave", name: "Conceptweave", category: "ai", image: "https://github.com/ghostm68/pantheon/raw/main/conceptweave.jpg" },
         { url: "https://wordstar.nexus/granite", name: "Granite", category: "ai", image: "https://github.com/ghostm68/pantheon/raw/main/granite.jpg" },
         { url: "https://wordstar.nexus/ataraxia", name: "Ataraxia", category: "ai", image: "https://github.com/ghostm68/pantheon/raw/main/ataraxia.jpg" },
-        
-        // CORRECTION: 'AI' uses the GIF you mentioned
+        // GIF for AI
         { url: "https://wordstar.nexus/ai", name: "AI", category: "ai", image: "https://github.com/ghostm68/pantheon/raw/main/inkrealm2012lg.gif" },
 
         // Fantasia / Archives
@@ -484,12 +478,8 @@
         { url: "https://wordstar.nexus/ighsau", name: "IGHSAU", category: "resources", image: "https://github.com/ghostm68/pantheon/raw/main/ighsau.jpg" },
         { url: "https://wordstar.nexus/90263", name: "Martha Kessler", category: "resources", image: "https://github.com/ghostm68/pantheon/raw/main/90263.jpg" }
     ];
-    // Helper: Generate a Data URI SVG placeholder
-    function getFallbackImage(letter) {
-        return `data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23222'/%3E%3Ctext x='50' y='50' font-family='monospace' font-size='50' fill='%23555' text-anchor='middle' dominant-baseline='middle'%3E${letter}%3C/text%3E%3C/svg%3E`;
-    }
 
-    // --- SIDEBAR BUILDER ---
+    // --- SIDEBAR BUILDER (No Fallback) ---
     function buildSidebar() {
         const cats = { main: [], fiction: [], editors: [], ai: [], resources: [], domain: [] };
         
@@ -518,21 +508,14 @@
                 linkDiv.href = item.url;
                 linkDiv.target = "_blank";
 
-                // Create Image Element Safely
+                // Image creation - NO ERROR HANDLING
                 const img = document.createElement('img');
                 img.style.width = '24px';
                 img.style.height = '24px';
                 img.style.objectFit = 'cover';
                 img.style.border = '1px solid #333';
-                img.style.display = 'block'; // Prevents layout shifts
-                
-                // Fallback Logic
-                img.onload = function() { /* Image loaded successfully */ };
-                img.onerror = function() { 
-                    this.onerror = null; // Prevent infinite loop
-                    this.src = getFallbackImage(item.name.charAt(0));
-                };
-                img.src = item.image; // Trigger load
+                img.style.display = 'block'; 
+                img.src = item.image; // Direct assignment
 
                 const span = document.createElement('span');
                 span.innerText = item.name;
@@ -541,7 +524,6 @@
                 linkDiv.appendChild(img);
                 linkDiv.appendChild(span);
                 
-                // Hover Effects
                 linkDiv.addEventListener('mouseenter', () => {
                     linkDiv.style.background = 'rgba(255,255,255,0.05)';
                     linkDiv.style.color = '#fff';
@@ -567,7 +549,7 @@
         fill('resources-links', cats.resources);
     }
 
-    // --- MAP BUILDER ---
+    // --- MAP BUILDER (Standard) ---
     function buildMap() {
         const cx = 500, cy = 400; 
         const universe = document.getElementById('universe');
@@ -599,14 +581,14 @@
             const catX = cx + Math.cos(angleRad) * categoryRadius;
             const catY = cy + Math.sin(angleRad) * categoryRadius;
 
-            // Line to center
+            // Lines
             const mainLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
             mainLine.setAttribute("x1", cx); mainLine.setAttribute("y1", cy);
             mainLine.setAttribute("x2", catX); mainLine.setAttribute("y2", catY);
             mainLine.setAttribute("class", "constellation-line");
             linesGroup.appendChild(mainLine);
 
-            // Hub Point
+            // Hub
             const catStar = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             catStar.setAttribute("cx", catX); catStar.setAttribute("cy", catY);
             catStar.setAttribute("r", 8);
@@ -615,7 +597,7 @@
 
             createFloatingLabel(key.toUpperCase(), catX, catY, labelsGroup);
 
-            // Children Stars
+            // Children
             const count = node.items.length;
             node.items.forEach((item, idx) => {
                 const itemAngle = (idx / count) * Math.PI * 2;
@@ -642,14 +624,14 @@
             });
         });
 
-        // Center Realm Node
+        // Center Realm
         const centerNode = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         centerNode.setAttribute("cx", cx); centerNode.setAttribute("cy", cy);
         centerNode.setAttribute("r", 14);
         centerNode.setAttribute("class", "star-point realm-node");
         centerNode.setAttribute("data-name", "REALM");
         centerNode.setAttribute("data-url", "https://www.inkrealm.info");
-        centerNode.setAttribute("data-img", "https://raw.githubusercontent.com/ghostm68/eg/main/realm.jpg");
+        centerNode.setAttribute("data-img", "https://github.com/ghostm68/pantheon/raw/main/realm.jpg");
         starsGroup.appendChild(centerNode);
     }
 
@@ -664,7 +646,7 @@
         container.appendChild(label);
     }
 
-    // --- ANIMATION & INTERACTION ---
+    // --- INIT ---
     function init() {
         buildSidebar();
         buildMap();
@@ -675,7 +657,6 @@
         const scene = document.getElementById('scene-container');
         const popup = document.getElementById('popup');
         
-        // Orbital Rotation
         const rotTween = gsap.to(universe, {
             rotation: 360,
             duration: 120,
@@ -691,7 +672,6 @@
             labels.forEach(label => {
                 const ox = parseFloat(label.dataset.ox);
                 const oy = parseFloat(label.dataset.oy);
-                // Counter-rotate the coordinates
                 const nx = ox * Math.cos(angle) - oy * Math.sin(angle);
                 const ny = ox * Math.sin(angle) + oy * Math.cos(angle);
                 label.setAttribute("x", 500 + nx);
@@ -699,7 +679,6 @@
             });
         }
 
-        // Sidebar Toggle
         if (window.innerWidth < 768) {
             sidebar.classList.add('collapsed');
             toggle.innerHTML = "&gt;&gt;";
@@ -709,14 +688,12 @@
             toggle.innerHTML = sidebar.classList.contains('collapsed') ? "&gt;&gt;" : "&lt;&lt;";
         });
 
-        // Scene Hover Logic (Pause)
         scene.addEventListener('mouseenter', () => gsap.to(rotTween, { timeScale: 0, duration: 0.5 }));
         scene.addEventListener('mouseleave', () => {
             gsap.to(rotTween, { timeScale: 1, duration: 1 });
             gsap.to(popup, { opacity: 0 });
         });
         
-        // Mobile Touch Logic
         scene.addEventListener('touchstart', () => {
             gsap.to(rotTween, { timeScale: 0, duration: 0.5 });
         }, {passive: true});
@@ -727,7 +704,7 @@
             }, 2000); 
         });
 
-        // Star Interactions (Popup)
+        // Popup Logic (No Fallback)
         const stars = document.querySelectorAll('.star-point');
         stars.forEach(star => {
             star.addEventListener('mouseenter', (e) => {
@@ -737,21 +714,13 @@
                 
                 popup.innerHTML = '';
                 
-                // 1. Create Image with Fallback
                 if(imgUrl) {
                     const imgElement = document.createElement('img');
                     imgElement.alt = name;
-                    
-                    // Fallback for popup
-                    imgElement.onerror = function() {
-                         this.src = getFallbackImage(name.charAt(0));
-                         this.onerror = null; 
-                    };
-                    imgElement.src = imgUrl;
+                    imgElement.src = imgUrl; // Direct load, no onerror
                     popup.appendChild(imgElement);
                 }
                 
-                // 2. Title & Desc
                 const title = document.createElement('h3');
                 title.textContent = name;
                 popup.appendChild(title);
@@ -762,7 +731,6 @@
                 
                 gsap.to(popup, { opacity: 1, duration: 0.2 });
                 
-                // Highlight Star
                 const isRealm = star.classList.contains('realm-node');
                 const rSize = isRealm ? 16 : 8;
                 gsap.to(star, { attr: {r: rSize}, fill: '#FFF', duration: 0.3 });
