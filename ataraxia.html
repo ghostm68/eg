@@ -2,9 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-<meta name="viewport" content="width=1024, initial-scale=1.0">
-  <title>Ataraxia </title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <meta name="viewport" content="width=1024, initial-scale=1.0">
+  <title>Ataraxia</title>
+  
+  <!-- MapLibre GL CSS -->
+  <link href='https://unpkg.com/maplibre-gl@5.0.1/dist/maplibre-gl.css' rel='stylesheet' />
+  
   <style>
     * {
       margin: 0;
@@ -298,9 +301,14 @@
       border: 2px solid #00aaff; /* Neon blue */
     }
 
-    /* Remove Leaflet attribution */
-    .leaflet-control-attribution {
-      display: none !important;
+    /* MapLibre attribution styling */
+    .maplibregl-ctrl-attrib {
+      background: rgba(42, 42, 42, 0.8) !important;
+      color: #e0e0e0 !important;
+    }
+
+    .maplibregl-ctrl-attrib a {
+      color: #00aaff !important;
     }
   </style>
 </head>
@@ -356,20 +364,20 @@
           <option value="dark" selected>Dark</option>
           <option value="light">Light</option>
           <option value="satellite">Satellite</option>
-          <!-- Removed terrain and watercolor -->
+          <option value="terrain">Terrain</option>
         </select>
       </div>
       
-<div class="settings-group">
-  <label for="font-family">olivetti:</label>
-  <select id="font-family">
-    <option value="olivetti-typewriter-regular.otf" selected>Olivetti Typewriter</option>
-    <option value="olivetti-typewriter-bold.otf">Olivetti Typewriter Bold</option>
-    <option value="olivetti-typewriter-italic.otf">Olivetti Typewriter Italic</option>
-    <option value="olivetti-underwood-regular.otf">Olivetti Underwood</option>
-    <option value="olivetti-underwood-bold.otf">Olivetti Underwood Bold</option>
-  </select>
-</div>
+    <div class="settings-group">
+      <label for="font-family">olivetti:</label>
+      <select id="font-family">
+        <option value="olivetti-typewriter-regular.otf" selected>Olivetti Typewriter</option>
+        <option value="olivetti-typewriter-bold.otf">Olivetti Typewriter Bold</option>
+        <option value="olivetti-typewriter-italic.otf">Olivetti Typewriter Italic</option>
+        <option value="olivetti-underwood-regular.otf">Olivetti Underwood</option>
+        <option value="olivetti-underwood-bold.otf">Olivetti Underwood Bold</option>
+      </select>
+    </div>
       <div class="settings-group">
         <label for="font-size">Font Size: <span id="font-size-value" style="color: #00aaff;">14px</span></label>
         <input type="range" id="font-size" min="12" max="24" value="14">
@@ -388,23 +396,29 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- MapLibre GL JS -->
+  <script src='https://unpkg.com/maplibre-gl@5.0.1/dist/maplibre-gl.js'></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      // Initialize Map with no attribution
-      const map = L.map('map', {
-        attributionControl: false
-      }).setView([37.8, -96], 4);
+      // Initialize MapLibre GL Map
+      const map = new maplibregl.Map({
+        container: 'map',
+        style: 'https://demotiles.maplibre.org/style.json', // Default style
+        center: [-96, 37.8],
+        zoom: 4,
+        attributionControl: true
+      });
 
-      // Only 3 working themes - Dark as default
-      const tileLayers = {
-        dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'),
-        light: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
-        satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}')
+      // Add navigation controls
+      map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+      // Map styles for different themes
+      const mapStyles = {
+        dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+        light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+        satellite: 'https://api.maptiler.com/maps/satellite/style.json?key=get_your_own_OpIi9ZULNHzrESv6TWL',
+        terrain: 'https://api.maptiler.com/maps/topo/style.json?key=get_your_own_OpIi9ZULNHzrESv6TWL'
       };
-
-      let currentTileLayer = tileLayers.dark; // Dark as default
-      currentTileLayer.addTo(map);
 
       // UI Elements
       const writingArea = document.getElementById('writing-area');
@@ -456,16 +470,23 @@
       document.getElementById('save-location').addEventListener('click', () => {
         const center = map.getCenter();
         if (writingArea.value.trim()) {
-          const pin = L.marker(center, {
-            icon: L.divIcon({
-              className: 'location-pin',
-              html: '📌',
-              iconSize: [30, 30],
-              iconAnchor: [15, 30]
-            })
-          }).addTo(map);
+          // Create a custom marker element
+          const el = document.createElement('div');
+          el.className = 'location-pin';
+          el.innerHTML = '📌';
+          el.style.width = '30px';
+          el.style.height = '30px';
+          el.style.display = 'flex';
+          el.style.alignItems = 'center';
+          el.style.justifyContent = 'center';
+          el.style.fontSize = '20px';
+
+          const marker = new maplibregl.Marker(el)
+            .setLngLat([center.lng, center.lat])
+            .setPopup(new maplibregl.Popup({ offset: 25 })
+              .setHTML(`<strong>Saved Note:</strong><br>${writingArea.value.substring(0, 100)}...`))
+            .addTo(map);
           
-          pin.bindPopup(`<strong>Saved Note:</strong><br>${writingArea.value.substring(0, 100)}...`);
           alert('Note pinned to map!');
         } else {
           alert('Please write something first!');
@@ -498,9 +519,9 @@
         const fontSize = fontSizeSlider.value;
         
         // Apply map theme
-        map.removeLayer(currentTileLayer);
-        currentTileLayer = tileLayers[theme];
-        currentTileLayer.addTo(map);
+        if (mapStyles[theme]) {
+          map.setStyle(mapStyles[theme]);
+        }
         
         // Apply font size
         writingArea.style.fontSize = fontSize + 'px';
@@ -510,35 +531,34 @@
       fontSizeSlider.addEventListener('input', () => {
         fontSizeValue.textContent = fontSizeSlider.value + 'px';
       });
-// Font selection
-const fontSelector = document.getElementById('font-family');
 
-fontSelector.addEventListener('change', (e) => {
-  applyFont(e.target.value);
-});
+      // Font selection
+      const fontSelector = document.getElementById('font-family');
+      fontSelector.addEventListener('change', (e) => {
+        applyFont(e.target.value);
+      });
 
-function applyFont(fontFile) {
-  const fontFace = `
-    @font-face {
-      font-family: 'SelectedFont';
-      src: url('https://cdn.jsdelivr.net/gh/ghostm68/inktwo/fonts/olivetti/${fontFile}') format('opentype');
-    }
-  `;
-  
-  let styleElement = document.getElementById('dynamic-font');
-  if (!styleElement) {
-    styleElement = document.createElement('style');
-    styleElement.id = 'dynamic-font';
-    document.head.appendChild(styleElement);
-  }
-  styleElement.textContent = fontFace;
-  
-  writingArea.style.fontFamily = 'SelectedFont, "Courier New", monospace';
-}
+      function applyFont(fontFile) {
+        const fontFace = `
+          @font-face {
+            font-family: 'SelectedFont';
+            src: url('https://cdn.jsdelivr.net/gh/ghostm68/inktwo/fonts/olivetti/${fontFile}') format('opentype');
+          }
+        `;
+        
+        let styleElement = document.getElementById('dynamic-font');
+        if (!styleElement) {
+          styleElement = document.createElement('style');
+          styleElement.id = 'dynamic-font';
+          document.head.appendChild(styleElement);
+        }
+        styleElement.textContent = fontFace;
+        
+        writingArea.style.fontFamily = 'SelectedFont, "Courier New", monospace';
+      }
 
-// Apply default font on load
-applyFont('olivetti-typewriter-regular.otf');
-      
+      // Apply default font on load
+      applyFont('olivetti-typewriter-regular.otf');
 
       // Location Inspiration
       function getRandomLocationInspiration() {
