@@ -85,6 +85,15 @@
     #map {
       width: 100%;
       height: 100%;
+      background: #1a1a1a; /* Dark background while loading */
+    }
+
+    /* HIDE MAP BRANDING / ATTRIBUTION */
+    .maplibregl-ctrl-attrib {
+      display: none !important;
+    }
+    .maplibregl-ctrl-logo {
+      display: none !important;
     }
 
     .map-controls {
@@ -300,30 +309,6 @@
       font-size: 12px;
       border: 2px solid #00aaff; /* Neon blue */
     }
-
-    /* Hide MapLibre attribution completely */
-    .maplibregl-ctrl-attrib {
-      display: none !important;
-    }
-    
-    /* Hide MapLibre logo */
-    .maplibregl-ctrl-logo {
-      display: none !important;
-    }
-    
-    /* Custom attribution styling if you want to add your own */
-    .custom-attrib {
-      position: absolute;
-      bottom: 5px;
-      right: 5px;
-      background: rgba(26, 26, 26, 0.8);
-      color: #666;
-      padding: 2px 5px;
-      font-size: 10px;
-      font-family: 'Olivetti', 'Courier New', monospace;
-      border-radius: 3px;
-      z-index: 1000;
-    }
   </style>
 </head>
 <body>
@@ -378,11 +363,12 @@
           <option value="dark" selected>Dark</option>
           <option value="light">Light</option>
           <option value="satellite">Satellite</option>
+          <option value="terrain">Terrain</option>
         </select>
       </div>
       
     <div class="settings-group">
-      <label for="font-family">olivetti:</label>
+      <label for="font-family">Font:</label>
       <select id="font-family">
         <option value="olivetti-typewriter-regular.otf" selected>Olivetti Typewriter</option>
         <option value="olivetti-typewriter-bold.otf">Olivetti Typewriter Bold</option>
@@ -413,30 +399,27 @@
   <script src='https://unpkg.com/maplibre-gl@5.0.1/dist/maplibre-gl.js'></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      // Initialize MapLibre GL Map with DARK theme as default
+      // Map styles for different themes
+      const freeMapStyles = {
+        // Using CartoDB Dark Matter for deep dark mode
+        dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+        light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+        satellite: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
+        terrain: 'https://tiles.openfreemap.org/styles/liberty'
+      };
+
+      // Initialize MapLibre GL Map
       const map = new maplibregl.Map({
         container: 'map',
-        style: 'https://openmaptiles.github.io/dark-matter-gl-style/style-cdn.json', // DARK theme by default
+        // Initialize directly with the DARK style
+        style: freeMapStyles.dark, 
         center: [-96, 37.8], // Center on United States
         zoom: 4,
-        attributionControl: false // Remove attribution control
+        attributionControl: false // Disable the default attribution control logic
       });
 
-      // Add navigation controls (without attribution)
-      map.addControl(new maplibregl.NavigationControl({showCompass: false}), 'top-right');
-
-      // Dark theme map styles that fit your aesthetic
-      const darkMapStyles = {
-        dark: 'https://openmaptiles.github.io/dark-matter-gl-style/style-cdn.json',
-        darker: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-        midnight: 'https://raw.githubusercontent.com/SpatialServer/MapBox/master/styles/midnight-commander.json'
-      };
-
-      // Light alternatives for contrast
-      const lightMapStyles = {
-        light: 'https://openmaptiles.github.io/positron-gl-style/style-cdn.json',
-        satellite: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json'
-      };
+      // Add navigation controls
+      map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
       // UI Elements
       const writingArea = document.getElementById('writing-area');
@@ -536,13 +519,9 @@
         const theme = document.getElementById('map-theme').value;
         const fontSize = fontSizeSlider.value;
         
-        // Apply map theme - prioritize dark themes
-        if (theme === 'dark' && darkMapStyles.dark) {
-          map.setStyle(darkMapStyles.dark);
-        } else if (theme === 'light' && lightMapStyles.light) {
-          map.setStyle(lightMapStyles.light);
-        } else if (theme === 'satellite' && lightMapStyles.satellite) {
-          map.setStyle(lightMapStyles.satellite);
+        // Apply map theme using free styles
+        if (freeMapStyles[theme]) {
+          map.setStyle(freeMapStyles[theme]);
         }
         
         // Apply font size
