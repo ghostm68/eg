@@ -301,14 +301,28 @@
       border: 2px solid #00aaff; /* Neon blue */
     }
 
-    /* MapLibre attribution styling */
+    /* Hide MapLibre attribution completely */
     .maplibregl-ctrl-attrib {
-      background: rgba(42, 42, 42, 0.8) !important;
-      color: #e0e0e0 !important;
+      display: none !important;
     }
-
-    .maplibregl-ctrl-attrib a {
-      color: #00aaff !important;
+    
+    /* Hide MapLibre logo */
+    .maplibregl-ctrl-logo {
+      display: none !important;
+    }
+    
+    /* Custom attribution styling if you want to add your own */
+    .custom-attrib {
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      background: rgba(26, 26, 26, 0.8);
+      color: #666;
+      padding: 2px 5px;
+      font-size: 10px;
+      font-family: 'Olivetti', 'Courier New', monospace;
+      border-radius: 3px;
+      z-index: 1000;
     }
   </style>
 </head>
@@ -364,7 +378,6 @@
           <option value="dark" selected>Dark</option>
           <option value="light">Light</option>
           <option value="satellite">Satellite</option>
-          <option value="terrain">Terrain</option>
         </select>
       </div>
       
@@ -400,32 +413,29 @@
   <script src='https://unpkg.com/maplibre-gl@5.0.1/dist/maplibre-gl.js'></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      // Initialize MapLibre GL Map with proper street-level styles
+      // Initialize MapLibre GL Map with DARK theme as default
       const map = new maplibregl.Map({
         container: 'map',
-        style: 'https://tiles.openfreemap.org/styles/liberty', // Detailed street map style
+        style: 'https://openmaptiles.github.io/dark-matter-gl-style/style-cdn.json', // DARK theme by default
         center: [-96, 37.8], // Center on United States
         zoom: 4,
-        attributionControl: true
+        attributionControl: false // Remove attribution control
       });
 
-      // Add navigation controls
-      map.addControl(new maplibregl.NavigationControl(), 'top-right');
+      // Add navigation controls (without attribution)
+      map.addControl(new maplibregl.NavigationControl({showCompass: false}), 'top-right');
 
-      // Map styles for different themes - using proper OpenStreetMap-based styles
-      const mapStyles = {
+      // Dark theme map styles that fit your aesthetic
+      const darkMapStyles = {
         dark: 'https://openmaptiles.github.io/dark-matter-gl-style/style-cdn.json',
-        light: 'https://openmaptiles.github.io/positron-gl-style/style-cdn.json',
-        satellite: 'https://api.maptiler.com/maps/satellite/style.json?key=get_your_own_OpIi9ZULNHzrESv6TWL',
-        terrain: 'https://api.maptiler.com/maps/topo/style.json?key=get_your_own_OpIi9ZULNHzrESv6TWL'
+        darker: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+        midnight: 'https://raw.githubusercontent.com/SpatialServer/MapBox/master/styles/midnight-commander.json'
       };
 
-      // Alternative free styles that work without API keys
-      const freeMapStyles = {
-        dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-        light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-        satellite: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
-        terrain: 'https://tiles.openfreemap.org/styles/liberty' // Default liberty style
+      // Light alternatives for contrast
+      const lightMapStyles = {
+        light: 'https://openmaptiles.github.io/positron-gl-style/style-cdn.json',
+        satellite: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json'
       };
 
       // UI Elements
@@ -526,9 +536,13 @@
         const theme = document.getElementById('map-theme').value;
         const fontSize = fontSizeSlider.value;
         
-        // Apply map theme using free styles
-        if (freeMapStyles[theme]) {
-          map.setStyle(freeMapStyles[theme]);
+        // Apply map theme - prioritize dark themes
+        if (theme === 'dark' && darkMapStyles.dark) {
+          map.setStyle(darkMapStyles.dark);
+        } else if (theme === 'light' && lightMapStyles.light) {
+          map.setStyle(lightMapStyles.light);
+        } else if (theme === 'satellite' && lightMapStyles.satellite) {
+          map.setStyle(lightMapStyles.satellite);
         }
         
         // Apply font size
