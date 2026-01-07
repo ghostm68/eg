@@ -3,16 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WORDSTAR.NEXUS | CITADELLE</title>
+    <title>WORDSTAR.NEXUS | DUAL MODE</title>
     <style>
-        /* --- CSS VARIABLES --- */
+        /* --- 1. DEFAULT THEME (RED/BLACK - CITADELLE) --- */
         :root {
             --bg-color: #000000;
             --text-main: #E0E0E0;
             --text-dim: #666666;
-            --accent-red: #FF0000;
-            --accent-dark-red: #550000;
+            --accent-primary: #FF0000; /* Red */
+            --accent-secondary: #550000; /* Dark Red */
             --font-main: 'Courier New', Courier, monospace;
+        }
+
+        /* --- 2. CLASSIC THEME (BLUE/CYAN - WORDSTAR) --- */
+        /* This class is toggled by Javascript */
+        body.classic-mode {
+            --bg-color: #0000AA;         /* WordStar Blue */
+            --text-main: #FFFFFF;        /* Bright White */
+            --text-dim: #00FFFF;         /* Cyan */
+            --accent-primary: #FFFF00;   /* Yellow */
+            --accent-secondary: #AA5500; /* Amber */
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -26,6 +36,7 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            transition: background-color 0.5s ease; /* Smooth fade between themes */
         }
 
         /* --- THREE.JS BACKGROUND --- */
@@ -34,6 +45,7 @@
             top: 0; left: 0; width: 100%; height: 100%;
             z-index: 0;
             opacity: 0.6;
+            transition: opacity 0.5s;
         }
 
         /* --- UI LAYER --- */
@@ -64,25 +76,25 @@
             left: 20px;
             width: 40px; height: 40px;
             background: black;
-            border: 1px solid var(--accent-red);
-            color: var(--accent-red);
+            border: 1px solid var(--accent-primary);
+            color: var(--accent-primary);
             display: flex; align-items: center; justify-content: center;
             cursor: pointer;
             z-index: 50;
             transition: all 0.3s;
         }
         .menu-toggle:hover {
-            background: var(--accent-red);
+            background: var(--accent-primary);
             color: black;
-            box-shadow: 0 0 10px var(--accent-red);
+            box-shadow: 0 0 10px var(--accent-primary);
         }
 
-        /* Header Typing Area (For Links) */
+        /* Header Typing Area */
         .header-typing-wrapper {
             margin-left: 60px;
             font-size: 1.1rem;
             font-weight: bold;
-            color: var(--accent-red);
+            color: var(--accent-primary);
             text-transform: uppercase;
             letter-spacing: 2px;
             display: flex;
@@ -98,11 +110,11 @@
             transition: color 0.3s;
         }
         .header-typing-wrapper a:hover {
-            color: #FFF;
-            text-shadow: 0 0 5px white;
+            color: var(--text-main);
+            text-shadow: 0 0 5px var(--text-main);
         }
-        .header-typing-wrapper a::before { content: '['; margin-right: 5px; color: var(--accent-dark-red); opacity: 0; }
-        .header-typing-wrapper a::after { content: ']'; margin-left: 5px; color: var(--accent-dark-red); opacity: 0; }
+        .header-typing-wrapper a::before { content: '['; margin-right: 5px; color: var(--accent-secondary); opacity: 0; }
+        .header-typing-wrapper a::after { content: ']'; margin-left: 5px; color: var(--accent-secondary); opacity: 0; }
         .header-typing-wrapper a:hover::before, .header-typing-wrapper a:hover::after { opacity: 1; }
 
         /* Logo */
@@ -110,9 +122,9 @@
             height: 55px; width: auto;
             filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
         }
-        .logo-text path { fill: var(--text-main); }
-        .logo-x path { fill: var(--accent-red); cursor: pointer; transition: 0.3s; }
-        .logo-x:hover path { fill: #FFF; filter: drop-shadow(0 0 8px var(--accent-red)); }
+        .logo-text path { fill: var(--text-main); transition: fill 0.5s; }
+        .logo-x path { fill: var(--accent-primary); cursor: pointer; transition: 0.3s; }
+        .logo-x:hover path { fill: #FFF; filter: drop-shadow(0 0 8px var(--accent-primary)); }
 
         /* --- CONTENT AREA --- */
         .content-area {
@@ -141,18 +153,18 @@
             transition: all 0.3s ease;
         }
         .nav-header { padding: 15px; font-weight: bold; display: flex; justify-content: space-between; }
-        .nav-header::after { content: '+'; color: var(--accent-red); }
+        .nav-header::after { content: '+'; color: var(--accent-primary); }
         .nav-content {
             max-height: 0; overflow: hidden;
-            background: rgba(255, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.05); /* Slight white tint works for both */
             transition: max-height 0.4s ease, padding 0.4s ease;
-            font-size: 0.9rem; color: #bbb;
+            font-size: 0.9rem; color: var(--text-dim);
         }
         /* Active Box */
-        .nav-box.active { border-color: var(--accent-red); border-left: 6px solid var(--accent-red); }
-        .nav-box.active .nav-header { color: var(--accent-red); }
+        .nav-box.active { border-color: var(--accent-primary); border-left: 6px solid var(--accent-primary); }
+        .nav-box.active .nav-header { color: var(--accent-primary); }
         .nav-box.active .nav-header::after { content: '-'; }
-        .nav-box.active .nav-content { max-height: 200px; padding: 15px; border-top: 1px solid var(--accent-dark-red); }
+        .nav-box.active .nav-content { max-height: 200px; padding: 15px; border-top: 1px solid var(--accent-secondary); }
 
         /* RIGHT: Video Column */
         .right-column {
@@ -175,9 +187,10 @@
         }
         .triangle-border {
             position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
-            background: var(--accent-red);
+            background: var(--accent-primary);
             clip-path: polygon(0 0, 100% 0, 50% 100%);
             z-index: 1; opacity: 0.7;
+            transition: background 0.5s;
         }
         .triangle-shape video {
             width: 100%; height: 100%;
@@ -186,18 +199,18 @@
             transform: scale(1.1);
         }
 
-        /* --- CAPTION UNDER VIDEO (NEW) --- */
+        /* CAPTION UNDER VIDEO */
         .video-caption {
             margin-top: 20px;
             font-size: 1rem;
-            color: #888; /* Grey Text */
+            color: var(--text-dim);
             letter-spacing: 1px;
             text-align: center;
-            min-height: 1.5rem; /* Prevent layout shift */
+            min-height: 1.5rem;
         }
         .cursor-blink {
             display: inline-block; width: 8px; height: 1rem;
-            background-color: #888;
+            background-color: var(--text-dim);
             animation: blink 1s step-end infinite;
             vertical-align: sub;
         }
@@ -230,7 +243,6 @@
     <div id="ui-layer">
         
         <header>
-            <!-- Menu Button -->
             <div class="menu-toggle" id="menuBtn">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                     <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -239,7 +251,7 @@
                 </svg>
             </div>
 
-            <!-- HEADER TYPING AREA (LINKS) -->
+            <!-- HEADER TYPING AREA -->
             <div class="header-typing-wrapper" id="header-type-target"></div>
             
             <!-- SVG LOGO -->
@@ -279,12 +291,12 @@
                     </div>
                 </div>
 
+                <!-- THIS BOX IS THE TOGGLE SWITCH -->
                 <div class="nav-box" onclick="toggleBox(this)">
-                    <div class="nav-header">SYSTEM_STATUS</div>
+                    <div class="nav-header">SYSTEM_STATUS [SWITCH]</div>
                     <div class="nav-content">
-                        <span style="color:var(--accent-red)">CORE: UNSTABLE</span><br>
-                        MEMORY: 640KB<br>
-                        THREAT LEVEL: MIDNIGHT
+                        CLICK TO TOGGLE VISUAL THEME.<br>
+                        CURRENT: <span id="theme-name">CITADELLE_RED</span>
                     </div>
                 </div>
 
@@ -306,7 +318,6 @@
                         </video>
                     </div>
                 </div>
-                <!-- TEXT UNDER VIDEO -->
                 <div class="video-caption">
                     <span id="caption-target"></span><span class="cursor-blink"></span>
                 </div>
@@ -330,7 +341,9 @@
 
         // --- 1. THREE.JS SETUP ---
         const scene = new THREE.Scene();
+        // Initial Fog (Red/Black)
         scene.fog = new THREE.FogExp2(0x000000, 0.04); 
+        
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.z = 25;
         const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
@@ -339,11 +352,15 @@
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
         const group = new THREE.Group();
+        
+        // Outer Cube (Grid)
         const geometry = new THREE.BoxGeometry(16, 16, 16);
         const edges = new THREE.EdgesGeometry(geometry);
         const material = new THREE.LineBasicMaterial({ color: 0x666666, transparent: true, opacity: 0.2 });
         const cube = new THREE.LineSegments(edges, material);
         group.add(cube);
+        
+        // Inner Cube (Core)
         const innerGeo = new THREE.BoxGeometry(7, 7, 7);
         const innerEdges = new THREE.EdgesGeometry(innerGeo);
         const innerMat = new THREE.LineBasicMaterial({ color: 0xFF0000, transparent: true, opacity: 0.5 });
@@ -367,8 +384,19 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // --- 2. ACCORDION LOGIC ---
+        // --- 2. THEME SWITCHER LOGIC ---
         window.toggleBox = function(element) {
+            const headerText = element.querySelector('.nav-header').innerText;
+
+            // If user clicked the Status Box -> Toggle Theme
+            if(headerText.includes('SYSTEM_STATUS')) {
+                toggleTheme();
+                // Optionally toggle accordion open/close too, or just keep it closed:
+                // element.classList.toggle('active'); 
+                return;
+            }
+
+            // Normal Accordion Logic for other boxes
             const allBoxes = document.querySelectorAll('.nav-box');
             allBoxes.forEach(box => {
                 if (box !== element) box.classList.remove('active');
@@ -376,7 +404,29 @@
             element.classList.toggle('active');
         }
 
-        // --- 3. HEADER MENU TYPING LOGIC (Valentin Effect) ---
+        function toggleTheme() {
+            document.body.classList.toggle('classic-mode');
+            const isBlue = document.body.classList.contains('classic-mode');
+            const themeLabel = document.getElementById('theme-name');
+            
+            if(isBlue) {
+                // Switch to Blue/Yellow/Cyan
+                scene.fog.color.setHex(0x0000AA); // Blue Fog
+                innerCube.material.color.setHex(0xFFFF00); // Yellow Core
+                cube.material.color.setHex(0x00FFFF);      // Cyan Grid
+                document.getElementById('canvas-container').style.opacity = "0.4";
+                if(themeLabel) themeLabel.innerText = "WORDSTAR_BLUE";
+            } else {
+                // Switch back to Red/Grey/Black
+                scene.fog.color.setHex(0x000000); // Black Fog
+                innerCube.material.color.setHex(0xFF0000); // Red Core
+                cube.material.color.setHex(0x666666);      // Grey Grid
+                document.getElementById('canvas-container').style.opacity = "0.6";
+                if(themeLabel) themeLabel.innerText = "CITADELLE_RED";
+            }
+        }
+
+        // --- 3. HEADER MENU TYPING LOGIC ---
         const menuBtn = document.getElementById('menuBtn');
         const headerTarget = document.getElementById('header-type-target');
         const menuLinks = [
@@ -393,7 +443,6 @@
             isTyping = true;
             let linkIndex = 0;
             let charIndex = 0;
-            
             let currentLink = document.createElement('a');
             currentLink.href = menuLinks[0].href;
             headerTarget.appendChild(currentLink);
@@ -401,7 +450,6 @@
             function step() {
                 if (linkIndex >= menuLinks.length) { isTyping = false; return; }
                 const linkData = menuLinks[linkIndex];
-                
                 if (charIndex < linkData.text.length) {
                     currentLink.textContent += linkData.text.charAt(charIndex);
                     charIndex++;
@@ -426,26 +474,24 @@
                 typeHeaderLinks();
                 isMenuOpen = true;
             } else {
-                headerTarget.innerHTML = ""; // Clear or type status if desired
+                headerTarget.innerHTML = ""; 
                 isMenuOpen = false;
             }
         });
 
-        // --- 4. SIMPLE TYPING EFFECT UNDER VIDEO (Your Request) ---
+        // --- 4. SIMPLE TYPING EFFECT UNDER VIDEO ---
         const textToType = "CITADELLE_INIT... STATUS: ONLINE"; 
         const typeSpeed = 100;
-        let charIndex = 0;
+        let charIndex2 = 0;
         const captionTarget = document.getElementById('caption-target');
 
         function typeWriter() {
-            if (charIndex < textToType.length) {
-                captionTarget.innerHTML += textToType.charAt(charIndex);
-                charIndex++;
+            if (charIndex2 < textToType.length) {
+                captionTarget.innerHTML += textToType.charAt(charIndex2);
+                charIndex2++;
                 setTimeout(typeWriter, typeSpeed);
             }
         }
-
-        // Start typing caption after 0.5 seconds
         setTimeout(typeWriter, 500);
 
     </script>
