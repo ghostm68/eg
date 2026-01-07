@@ -3,25 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WORDSTAR.NEXUS | CITADELLE LAYOUT</title>
+    <title>WORDSTAR.NEXUS | RED_SHIFT</title>
     <style>
-        /* --- CSS VARIABLES & RESET --- */
+        /* --- CSS VARIABLES: RED/BLACK/GREY/WHITE ONLY --- */
         :root {
-            --ws-blue: #0000AA;
-            --ws-dark: #050510;
-            --ws-text: #E0E0E0;
-            --ws-accent: #FFFF00; 
-            --nexus-cyan: #00FFFF;
-            --nexus-magenta: #FF0055;
+            --bg-color: #000000;
+            --text-main: #E0E0E0; /* Off-white */
+            --text-dim: #666666;
+            --accent-red: #FF0000; /* Pure Red */
+            --accent-dark-red: #550000;
+            --border-grey: #333333;
             --font-main: 'Courier New', Courier, monospace;
-            --menu-width: 300px;
+            --menu-width: 320px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            background-color: var(--ws-dark);
-            color: var(--ws-text);
+            background-color: var(--bg-color);
+            color: var(--text-main);
             font-family: var(--font-main);
             height: 100vh;
             width: 100vw;
@@ -38,6 +38,7 @@
             width: 100%;
             height: 100%;
             z-index: 0;
+            opacity: 0.6; /* Slight dim to let red pop */
         }
 
         /* --- SCANLINE OVERLAY --- */
@@ -47,13 +48,19 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2));
-            background-size: 100% 4px;
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0,0,0,0.3) 50%,
+                rgba(0,0,0,0.3)
+            );
+            background-size: 100% 3px;
             z-index: 1;
             pointer-events: none;
         }
 
-        /* --- MAIN UI LAYER --- */
+        /* --- UI LAYER --- */
         #ui-layer {
             position: relative;
             z-index: 10;
@@ -64,148 +71,214 @@
             padding: 20px;
         }
 
-        /* --- HEADER / LOGO --- */
+        /* --- HEADER --- */
         header {
             width: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             position: relative;
         }
 
-        /* Hamburger Toggle */
+        /* Hamburger Icon (No Text) */
         .menu-toggle {
             position: absolute;
-            left: 10px;
+            left: 0;
             top: 50%;
             transform: translateY(-50%);
-            background: transparent;
-            border: 1px solid var(--nexus-cyan);
-            color: var(--nexus-cyan);
+            background: black;
+            border: 1px solid var(--accent-red);
+            color: var(--accent-red);
             font-family: var(--font-main);
             font-size: 1.5rem;
-            padding: 5px 10px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
             z-index: 50;
             transition: all 0.3s;
+            box-shadow: 0 0 5px var(--accent-dark-red);
         }
         .menu-toggle:hover {
-            background: var(--nexus-cyan);
-            color: var(--ws-dark);
-            box-shadow: 0 0 10px var(--nexus-cyan);
+            background: var(--accent-red);
+            color: black;
+            box-shadow: 0 0 15px var(--accent-red);
         }
 
-        /* SVG Logo Styling */
+        /* Logo Styling - Red/White Theme */
         .ws-logo {
-            height: 60px; /* Compact for header */
+            height: 55px;
             width: auto;
-            filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.4));
+            /* White glow */
+            filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
         }
-        .logo-text path { fill: var(--ws-text); }
-        .logo-x path { fill: var(--nexus-magenta); cursor: pointer; }
-        .logo-x:hover path { fill: var(--nexus-cyan); }
+        .logo-text path { fill: var(--text-main); }
+        .logo-x path { 
+            fill: var(--accent-red); 
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .logo-x:hover path { 
+            fill: #FFF;
+            filter: drop-shadow(0 0 8px var(--accent-red)); 
+        }
 
-        /* --- MAIN CONTENT GRID --- */
+        /* --- MAIN LAYOUT GRID --- */
         .content-area {
             flex-grow: 1;
             display: flex;
             flex-direction: row;
-            align-items: center;
+            align-items: flex-start; /* Align top so list flows down */
             justify-content: center;
-            gap: 50px;
+            gap: 60px;
             width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
+            max-width: 1300px;
+            margin: 20px auto 0 auto;
+            overflow-y: auto; /* Allow scroll if list gets long */
+            padding-right: 10px; /* Space for scrollbar */
         }
 
-        /* --- VERTICAL BOXES (LINKS) --- */
+        /* Scrollbar styling */
+        .content-area::-webkit-scrollbar { width: 5px; }
+        .content-area::-webkit-scrollbar-thumb { background: var(--accent-red); }
+        .content-area::-webkit-scrollbar-track { background: var(--bg-color); }
+
+        /* --- LEFT: VERTICAL ACCORDION STACK --- */
         .vertical-nav {
             display: flex;
             flex-direction: column;
             gap: 15px;
-            width: 200px;
+            width: 280px;
+            flex-shrink: 0;
         }
 
         .nav-box {
-            display: block;
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid var(--nexus-cyan);
-            color: var(--nexus-cyan);
+            background: rgba(10, 10, 10, 0.8);
+            border: 1px solid var(--text-dim);
+            border-left: 3px solid var(--text-dim);
+            color: var(--text-main);
+            width: 100%;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        /* Header part of the box */
+        .nav-header {
             padding: 15px;
-            text-align: center;
-            text-decoration: none;
             font-size: 1.1rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-header::after {
+            content: '+';
+            color: var(--accent-red);
+            font-weight: bold;
+        }
+
+        /* Hidden Content part */
+        .nav-content {
+            max-height: 0;
+            overflow: hidden;
+            background: rgba(255, 0, 0, 0.05);
+            transition: max-height 0.4s ease, padding 0.4s ease;
+            font-size: 0.9rem;
+            color: #bbb;
+            border-top: 1px solid transparent;
+        }
+
+        /* ACTIVE STATE (Clicked) */
+        .nav-box.active {
+            border-color: var(--accent-red);
+            border-left: 6px solid var(--accent-red);
+            box-shadow: -5px 0 15px rgba(255, 0, 0, 0.2);
+        }
+        .nav-box.active .nav-header {
+            color: var(--accent-red);
+        }
+        .nav-box.active .nav-header::after {
+            content: '-';
+        }
+        .nav-box.active .nav-content {
+            max-height: 200px; /* Adjust based on content */
+            padding: 15px;
+            border-top: 1px solid var(--accent-dark-red);
+        }
+
+        /* --- RIGHT: TRIANGLE VIDEO CONTAINER --- */
+        .triangle-wrapper {
             position: relative;
-            transition: 0.3s;
-            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
-        }
-
-        .nav-box:hover {
-            background: var(--nexus-cyan);
-            color: var(--ws-dark);
-            transform: translateX(10px);
-            box-shadow: 0 0 15px var(--nexus-cyan);
-        }
-
-        /* --- TRIANGLE VIDEO CONTAINER --- */
-        .triangle-container {
-            width: 400px;
+            width: 450px;
             height: 400px;
-            position: relative;
-            filter: drop-shadow(0 0 10px var(--nexus-magenta));
-            transition: transform 0.3s ease;
-        }
-        
-        .triangle-container:hover {
-            transform: scale(1.05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Center vertically in the space */
+            margin-top: 20px; 
         }
 
-        .triangle-mask {
+        .triangle-shape {
             width: 100%;
             height: 100%;
-            /* The Triangle Shape */
-            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            /* Inverted Triangle */
+            clip-path: polygon(0 0, 100% 0, 50% 100%); 
             background: #000;
             position: relative;
-            overflow: hidden;
-            border-bottom: 2px solid var(--nexus-magenta); /* Accent hint */
+            z-index: 2;
         }
 
-        .triangle-mask video {
+        /* Red Border Effect around Triangle (Tricky with clip-path) 
+           Solution: A slightly larger red triangle behind it */
+        .triangle-border {
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background: var(--accent-red);
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+            z-index: 1;
+            filter: drop-shadow(0 0 10px var(--accent-red));
+            opacity: 0.7;
+        }
+
+        .triangle-shape video {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            opacity: 0.8;
-            transform: scale(1.2); /* Zoom slightly to fill corners */
+            opacity: 0.6; /* Darken video */
+            filter: grayscale(100%) contrast(1.2); /* Black and white video */
+            transform: scale(1.1);
         }
 
-        /* Overlay text on video */
         .vid-overlay {
             position: absolute;
-            bottom: 20px;
-            left: 0;
+            top: 20px;
             width: 100%;
             text-align: center;
-            color: white;
-            z-index: 2;
-            text-shadow: 0 0 5px black;
+            color: var(--accent-red);
             font-weight: bold;
+            letter-spacing: 2px;
+            background: rgba(0,0,0,0.7);
+            padding: 5px 0;
+            z-index: 3;
         }
 
         /* --- SLIDE OUT SIDE MENU --- */
         .slide-menu {
             position: fixed;
             top: 0;
-            left: -320px; /* Hidden */
+            left: calc(var(--menu-width) * -1); /* Hidden */
             width: var(--menu-width);
             height: 100%;
-            background: rgba(5, 5, 16, 0.95);
-            border-right: 2px solid var(--nexus-cyan);
+            background: #080808;
+            border-right: 1px solid var(--accent-red);
             z-index: 100;
-            padding: 80px 20px 20px 20px;
-            transition: left 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
-            box-shadow: 10px 0 30px rgba(0,0,0,0.8);
+            padding: 80px 30px;
+            transition: left 0.4s cubic-bezier(0.77, 0, 0.175, 1);
             display: flex;
             flex-direction: column;
             gap: 20px;
@@ -213,52 +286,54 @@
 
         .slide-menu.active {
             left: 0;
+            box-shadow: 10px 0 50px rgba(255, 0, 0, 0.2);
         }
 
         .menu-item {
-            color: var(--ws-text);
+            color: var(--text-dim);
             text-decoration: none;
-            padding: 10px;
-            border-bottom: 1px dashed var(--ws-blue);
+            padding: 10px 0;
+            border-bottom: 1px solid #222;
             transition: 0.2s;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+        }
+        .menu-item::before {
+            content: '>';
+            margin-right: 10px;
+            opacity: 0;
+            color: var(--accent-red);
+            transition: opacity 0.2s;
         }
         .menu-item:hover {
-            color: var(--nexus-accent);
-            padding-left: 20px;
-            background: rgba(0, 255, 255, 0.1);
+            color: #FFF;
+            padding-left: 10px;
         }
-        
-        .menu-header {
-            font-size: 1.5rem;
-            color: var(--nexus-magenta);
-            border-bottom: 2px solid var(--nexus-magenta);
-            margin-bottom: 10px;
-            padding-bottom: 5px;
+        .menu-item:hover::before {
+            opacity: 1;
         }
 
-        /* --- FOOTER STATUS --- */
+        /* --- FOOTER --- */
         .status-footer {
             margin-top: auto;
-            background: var(--ws-blue);
-            color: white;
-            padding: 5px 10px;
-            font-size: 0.8rem;
+            border-top: 1px solid var(--border-grey);
+            background: #000;
+            color: var(--text-dim);
+            padding: 8px 20px;
+            font-size: 0.75rem;
             display: flex;
             justify-content: space-between;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
+        .footer-highlight { color: var(--accent-red); }
 
         /* Responsive */
-        @media (max-width: 800px) {
-            .content-area {
-                flex-direction: column-reverse;
-            }
-            .triangle-container {
-                width: 300px;
-                height: 300px;
-            }
-            .ws-logo {
-                height: 40px;
-            }
+        @media (max-width: 900px) {
+            .content-area { flex-direction: column-reverse; align-items: center; }
+            .triangle-wrapper { width: 300px; height: 260px; margin-bottom: 30px; }
+            .vertical-nav { width: 90%; }
         }
     </style>
 </head>
@@ -270,23 +345,26 @@
 
     <!-- Slide Out Menu -->
     <nav class="slide-menu" id="sideMenu">
-        <div class="menu-header">DIRECTORY</div>
-        <a href="#" class="menu-item">01. ROOT_ACCESS</a>
-        <a href="#" class="menu-item">02. PROTOCOLS</a>
-        <a href="#" class="menu-item">03. MANIFESTO</a>
-        <a href="#" class="menu-item">04. TERMINAL</a>
-        <a href="#" class="menu-item">05. EXIT_SYSTEM</a>
-        <div style="margin-top:auto; font-size:0.7rem; color:#666;">
-            WORDSTAR.NEXUS v3.0<br>
-            MEMORY FREE: 64K
-        </div>
+        <div style="color: var(--accent-red); font-size: 2rem; margin-bottom: 20px;">/// INDEX</div>
+        <a href="#" class="menu-item">SYSTEM_ROOT</a>
+        <a href="#" class="menu-item">ENCRYPTION</a>
+        <a href="#" class="menu-item">VISUAL_LOGS</a>
+        <a href="#" class="menu-item">USER_AUTH</a>
+        <a href="#" class="menu-item">TERMINATE</a>
     </nav>
 
-    <!-- Main UI -->
+    <!-- UI Layer -->
     <div id="ui-layer">
         
         <header>
-            <button class="menu-toggle" id="menuBtn">≡ MENU</button>
+            <!-- Menu Button (Icon only) -->
+            <div class="menu-toggle" id="menuBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </div>
             
             <!-- SVG LOGO -->
             <svg class="ws-logo" viewBox="0 0 600 90" xmlns="http://www.w3.org/2000/svg">
@@ -315,32 +393,64 @@
 
         <div class="content-area">
             
-            <!-- LEFT: Vertical Row of Boxes -->
+            <!-- LEFT: Accordion Stack -->
             <div class="vertical-nav">
-                <a href="#" class="nav-box">SYSTEM_LOGS</a>
-                <a href="#" class="nav-box">ARCHIVES</a>
-                <a href="#" class="nav-box">NETWORK_MAP</a>
-                <a href="#" class="nav-box">COMMS_LINK</a>
+                
+                <div class="nav-box" onclick="toggleBox(this)">
+                    <div class="nav-header">NEXUS_MANIFESTO</div>
+                    <div class="nav-content">
+                        The WordStar Nexus is an infinite archive of digital constructs. We preserve the command line aesthetic in a chaotic 3D reality.
+                    </div>
+                </div>
+
+                <div class="nav-box" onclick="toggleBox(this)">
+                    <div class="nav-header">SYSTEM_STATUS</div>
+                    <div class="nav-content">
+                        <span style="color:var(--accent-red)">CORE: UNSTABLE</span><br>
+                        MEMORY: 640KB<br>
+                        UPTIME: 99.9%<br>
+                        THREAT LEVEL: MIDNIGHT
+                    </div>
+                </div>
+
+                <div class="nav-box" onclick="toggleBox(this)">
+                    <div class="nav-header">ENCRYPTED_FILES</div>
+                    <div class="nav-content">
+                        ACCESS DENIED.<br>
+                        PLEASE INSERT DISK 2.<br>
+                        [ RETRY ] [ ABORT ]
+                    </div>
+                </div>
+
+                <div class="nav-box" onclick="toggleBox(this)">
+                    <div class="nav-header">COMMUNICATION</div>
+                    <div class="nav-content">
+                        Signal lost...<br>
+                        Reconnecting...<br>
+                        Establishing link to Node 42.
+                    </div>
+                </div>
+
             </div>
 
             <!-- RIGHT: Triangle Video -->
-            <div class="triangle-container">
-                <div class="triangle-mask">
-                    <!-- Placeholder video: Abstract tech background -->
+            <div class="triangle-wrapper">
+                <div class="triangle-border"></div>
+                <div class="triangle-shape">
+                    <!-- Tech Video -->
                     <video autoplay muted loop playsinline>
-                        <source src="https://assets.mixkit.co/videos/preview/mixkit-abstract-technology-white-circuit-board-loop-20412-large.mp4" type="video/mp4">
+                        <source src="https://assets.mixkit.co/videos/preview/mixkit-circuit-board-technology-20409-large.mp4" type="video/mp4">
                     </video>
-                    <div class="vid-overlay">DATA.STREAM.01</div>
+                    <div class="vid-overlay">SECTOR_7G</div>
                 </div>
             </div>
 
         </div>
 
         <div class="status-footer">
-            <span>MODE: EDIT</span>
-            <span>FILE: NEXUS.DOC</span>
-            <span>LINE: 235</span>
-            <span>COL: 12</span>
+            <span>DRIVE <span class="footer-highlight">A:</span> READY</span>
+            <span><span class="footer-highlight">R</span> 000 <span class="footer-highlight">C</span> 000</span>
+            <span>MODE: <span class="footer-highlight">OVERTYPE</span></span>
         </div>
     </div>
 
@@ -352,9 +462,9 @@
     <script type="module">
         import * as THREE from 'three';
 
-        // --- 1. SETUP ---
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x050510, 0.035); // Heavy fog to fade background
+        // Background fog black/grey
+        scene.fog = new THREE.FogExp2(0x000000, 0.04); 
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.z = 25;
@@ -364,91 +474,92 @@
         renderer.setPixelRatio(window.devicePixelRatio);
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // --- 2. OBJECTS (The Nexus Cube) ---
+        // --- OBJECTS ---
         const group = new THREE.Group();
 
-        // Outer Box
+        // Outer Wireframe (White/Grey)
         const geometry = new THREE.BoxGeometry(16, 16, 16);
         const edges = new THREE.EdgesGeometry(geometry);
-        const material = new THREE.LineBasicMaterial({ color: 0x00FFFF, transparent: true, opacity: 0.15 });
+        const material = new THREE.LineBasicMaterial({ color: 0x666666, transparent: true, opacity: 0.2 });
         const cube = new THREE.LineSegments(edges, material);
         group.add(cube);
 
-        // Inner Box (Tesseract feel)
-        const innerGeo = new THREE.BoxGeometry(8, 8, 8);
+        // Inner Cube (Red)
+        const innerGeo = new THREE.BoxGeometry(7, 7, 7);
         const innerEdges = new THREE.EdgesGeometry(innerGeo);
-        const innerMat = new THREE.LineBasicMaterial({ color: 0xFF0055, transparent: true, opacity: 0.3 });
+        // Pure Red for the core
+        const innerMat = new THREE.LineBasicMaterial({ color: 0xFF0000, transparent: true, opacity: 0.5 });
         const innerCube = new THREE.LineSegments(innerEdges, innerMat);
         group.add(innerCube);
 
-        // Connecting lines (Vertices to Vertices)
-        // Simplistic approach for visual flair
-        const points = [];
-        const corners = [
-            [-8,-8,-8], [8,-8,-8], [8,8,-8], [-8,8,-8],
-            [-8,-8,8], [8,-8,8], [8,8,8], [-8,8,8]
-        ];
-        corners.forEach(p => {
-            points.push(new THREE.Vector3(...p));
-            points.push(new THREE.Vector3(p[0]*0.5, p[1]*0.5, p[2]*0.5));
-        });
-        const connectGeo = new THREE.BufferGeometry().setFromPoints(points);
-        const connectLine = new THREE.LineSegments(connectGeo, new THREE.LineBasicMaterial({ color: 0x5500AA, transparent:true, opacity:0.2 }));
-        group.add(connectLine);
-
         scene.add(group);
 
-        // --- 3. ANIMATION ---
+        // --- ANIMATION ---
         const clock = new THREE.Clock();
-        
+        let glitchIntensity = 0;
+
         function animate() {
             requestAnimationFrame(animate);
             const delta = clock.getDelta();
             
-            group.rotation.x += delta * 0.2;
-            group.rotation.y += delta * 0.3;
+            // Standard Rotation
+            group.rotation.x += delta * 0.15;
+            group.rotation.y += delta * 0.25;
             
-            // Pulse effect
-            const scale = 1 + Math.sin(clock.elapsedTime) * 0.05;
-            innerCube.scale.set(scale, scale, scale);
+            // Glitch Effect logic
+            if(glitchIntensity > 0) {
+                group.position.x = (Math.random() - 0.5) * glitchIntensity;
+                innerCube.material.opacity = Math.random();
+                glitchIntensity -= 0.05; // Fade out glitch
+            } else {
+                group.position.x = 0;
+                innerCube.material.opacity = 0.5 + Math.sin(clock.elapsedTime * 2) * 0.2; // Pulse
+            }
 
             renderer.render(scene, camera);
         }
         animate();
+
+        // --- UI LOGIC ---
+        
+        // 1. Accordion Logic
+        window.toggleBox = function(element) {
+            // Close others (optional - remove this block if you want multiple open)
+            const allBoxes = document.querySelectorAll('.nav-box');
+            allBoxes.forEach(box => {
+                if (box !== element) box.classList.remove('active');
+            });
+
+            // Toggle current
+            element.classList.toggle('active');
+        }
+
+        // 2. Menu Logic
+        const menuBtn = document.getElementById('menuBtn');
+        const sideMenu = document.getElementById('sideMenu');
+        
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sideMenu.classList.toggle('active');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!sideMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+                sideMenu.classList.remove('active');
+            }
+        });
+
+        // 3. Logo Glitch Trigger
+        const logoX = document.querySelector('.logo-x');
+        logoX.addEventListener('click', () => {
+            glitchIntensity = 2; // Trigger 3D glitch
+        });
 
         // Resize
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // --- 4. UI INTERACTION ---
-        const menuBtn = document.getElementById('menuBtn');
-        const sideMenu = document.getElementById('sideMenu');
-        const logoX = document.querySelector('.logo-x');
-
-        // Toggle Menu
-        menuBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            sideMenu.classList.toggle('active');
-        });
-
-        // Close menu when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!sideMenu.contains(e.target) && e.target !== menuBtn) {
-                sideMenu.classList.remove('active');
-            }
-        });
-
-        // Logo Glitch Interaction
-        logoX.addEventListener('click', () => {
-            // Random glitch rotation on the 3D cube
-            group.rotation.z += Math.PI / 4;
-            innerCube.material.color.setHex(Math.random() * 0xffffff);
-            setTimeout(() => {
-                innerCube.material.color.setHex(0xFF0055);
-            }, 500);
         });
 
     </script>
