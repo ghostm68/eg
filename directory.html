@@ -3,18 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WORDSTAR.NEXUS | RED_SHIFT</title>
+    <title>WORDSTAR.NEXUS | CITADELLE</title>
     <style>
-        /* --- CSS VARIABLES: RED/BLACK/GREY/WHITE ONLY --- */
+        /* --- CSS VARIABLES --- */
         :root {
             --bg-color: #000000;
-            --text-main: #E0E0E0; /* Off-white */
+            --text-main: #E0E0E0;
             --text-dim: #666666;
-            --accent-red: #FF0000; /* Pure Red */
+            --accent-red: #FF0000;
             --accent-dark-red: #550000;
-            --border-grey: #333333;
             --font-main: 'Courier New', Courier, monospace;
-            --menu-width: 320px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -33,31 +31,9 @@
         /* --- THREE.JS BACKGROUND --- */
         #canvas-container {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             z-index: 0;
-            opacity: 0.6; /* Slight dim to let red pop */
-        }
-
-        /* --- SCANLINE OVERLAY --- */
-        .scanlines {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(
-                to bottom,
-                rgba(255,255,255,0),
-                rgba(255,255,255,0) 50%,
-                rgba(0,0,0,0.3) 50%,
-                rgba(0,0,0,0.3)
-            );
-            background-size: 100% 3px;
-            z-index: 1;
-            pointer-events: none;
+            opacity: 0.6;
         }
 
         /* --- UI LAYER --- */
@@ -72,272 +48,176 @@
         }
 
         /* --- HEADER --- */
-      /* --- UPDATED HEADER STYLES --- */
-header {
-    width: 100%;
-    display: flex;
-    justify-content: space-between; /* Pushes Text to Left, Logo to Right */
-    align-items: center;
-    margin-bottom: 20px;
-    position: relative;
-    padding: 0 20px; /* Safety padding */
-}
+        header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 10px;
+            height: 60px;
+        }
 
-/* New Typing Text Styles */
-.typing-wrapper {
-    margin-left: 60px; /* Space for the Hamburger button */
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: var(--accent-red);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    text-shadow: 0 0 5px var(--accent-dark-red);
-}
+        /* Menu Button */
+        .menu-toggle {
+            position: absolute;
+            left: 20px;
+            width: 40px; height: 40px;
+            background: black;
+            border: 1px solid var(--accent-red);
+            color: var(--accent-red);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            z-index: 50;
+            transition: all 0.3s;
+        }
+        .menu-toggle:hover {
+            background: var(--accent-red);
+            color: black;
+            box-shadow: 0 0 10px var(--accent-red);
+        }
 
-/* The Blinking Cursor Block */
-.cursor {
-    display: inline-block;
-    width: 12px;
-    height: 1.2rem;
-    background-color: var(--accent-red);
-    margin-left: 5px;
-    vertical-align: sub;
-    animation: blink 1s step-end infinite;
-}
+        /* Header Typing Area (For Links) */
+        .header-typing-wrapper {
+            margin-left: 60px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--accent-red);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
 
-@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        .header-typing-wrapper a {
+            color: var(--text-dim);
+            text-decoration: none;
+            margin-right: 25px;
+            position: relative;
+            transition: color 0.3s;
+        }
+        .header-typing-wrapper a:hover {
+            color: #FFF;
+            text-shadow: 0 0 5px white;
+        }
+        .header-typing-wrapper a::before { content: '['; margin-right: 5px; color: var(--accent-dark-red); opacity: 0; }
+        .header-typing-wrapper a::after { content: ']'; margin-left: 5px; color: var(--accent-dark-red); opacity: 0; }
+        .header-typing-wrapper a:hover::before, .header-typing-wrapper a:hover::after { opacity: 1; }
 
-/* Ensure Menu Toggle stays left */
-.menu-toggle {
-    position: absolute;
-    left: 20px; /* Fixed position */
-}
-        /* Logo Styling - Red/White Theme */
+        /* Logo */
         .ws-logo {
-            height: 55px;
-            width: auto;
-            /* White glow */
+            height: 55px; width: auto;
             filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
         }
         .logo-text path { fill: var(--text-main); }
-        .logo-x path { 
-            fill: var(--accent-red); 
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .logo-x:hover path { 
-            fill: #FFF;
-            filter: drop-shadow(0 0 8px var(--accent-red)); 
-        }
+        .logo-x path { fill: var(--accent-red); cursor: pointer; transition: 0.3s; }
+        .logo-x:hover path { fill: #FFF; filter: drop-shadow(0 0 8px var(--accent-red)); }
 
-        /* --- MAIN LAYOUT GRID --- */
+        /* --- CONTENT AREA --- */
         .content-area {
             flex-grow: 1;
             display: flex;
             flex-direction: row;
-            align-items: flex-start; /* Align top so list flows down */
+            align-items: flex-start;
             justify-content: center;
             gap: 60px;
             width: 100%;
             max-width: 1300px;
             margin: 20px auto 0 auto;
-            overflow-y: auto; /* Allow scroll if list gets long */
-            padding-right: 10px; /* Space for scrollbar */
         }
 
-        /* Scrollbar styling */
-        .content-area::-webkit-scrollbar { width: 5px; }
-        .content-area::-webkit-scrollbar-thumb { background: var(--accent-red); }
-        .content-area::-webkit-scrollbar-track { background: var(--bg-color); }
-
-        /* --- LEFT: VERTICAL ACCORDION STACK --- */
+        /* LEFT: Accordion Stack */
         .vertical-nav {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            width: 280px;
-            flex-shrink: 0;
+            display: flex; flex-direction: column; gap: 15px; width: 280px;
         }
-
         .nav-box {
-            background: rgba(10, 10, 10, 0.8);
+            background: rgba(10, 10, 10, 0.85);
             border: 1px solid var(--text-dim);
             border-left: 3px solid var(--text-dim);
             color: var(--text-main);
             width: 100%;
-            position: relative;
-            transition: all 0.3s ease;
             cursor: pointer;
-            overflow: hidden;
+            transition: all 0.3s ease;
         }
-
-        /* Header part of the box */
-        .nav-header {
-            padding: 15px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .nav-header::after {
-            content: '+';
-            color: var(--accent-red);
-            font-weight: bold;
-        }
-
-        /* Hidden Content part */
+        .nav-header { padding: 15px; font-weight: bold; display: flex; justify-content: space-between; }
+        .nav-header::after { content: '+'; color: var(--accent-red); }
         .nav-content {
-            max-height: 0;
-            overflow: hidden;
+            max-height: 0; overflow: hidden;
             background: rgba(255, 0, 0, 0.05);
             transition: max-height 0.4s ease, padding 0.4s ease;
-            font-size: 0.9rem;
-            color: #bbb;
-            border-top: 1px solid transparent;
+            font-size: 0.9rem; color: #bbb;
+        }
+        /* Active Box */
+        .nav-box.active { border-color: var(--accent-red); border-left: 6px solid var(--accent-red); }
+        .nav-box.active .nav-header { color: var(--accent-red); }
+        .nav-box.active .nav-header::after { content: '-'; }
+        .nav-box.active .nav-content { max-height: 200px; padding: 15px; border-top: 1px solid var(--accent-dark-red); }
+
+        /* RIGHT: Video Column */
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        /* ACTIVE STATE (Clicked) */
-        .nav-box.active {
-            border-color: var(--accent-red);
-            border-left: 6px solid var(--accent-red);
-            box-shadow: -5px 0 15px rgba(255, 0, 0, 0.2);
-        }
-        .nav-box.active .nav-header {
-            color: var(--accent-red);
-        }
-        .nav-box.active .nav-header::after {
-            content: '-';
-        }
-        .nav-box.active .nav-content {
-            max-height: 200px; /* Adjust based on content */
-            padding: 15px;
-            border-top: 1px solid var(--accent-dark-red);
-        }
-
-        /* --- RIGHT: TRIANGLE VIDEO CONTAINER --- */
         .triangle-wrapper {
             position: relative;
-            width: 450px;
-            height: 400px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            /* Center vertically in the space */
-            margin-top: 20px; 
+            width: 450px; height: 400px;
+            display: flex; justify-content: center; align-items: center;
+            margin-top: 20px;
         }
-
         .triangle-shape {
-            width: 100%;
-            height: 100%;
-            /* Inverted Triangle */
-            clip-path: polygon(0 0, 100% 0, 50% 100%); 
+            width: 100%; height: 100%;
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
             background: #000;
-            position: relative;
-            z-index: 2;
+            position: relative; z-index: 2;
         }
-
-        /* Red Border Effect around Triangle (Tricky with clip-path) 
-           Solution: A slightly larger red triangle behind it */
         .triangle-border {
-            position: absolute;
-            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
             background: var(--accent-red);
             clip-path: polygon(0 0, 100% 0, 50% 100%);
-            z-index: 1;
-            filter: drop-shadow(0 0 10px var(--accent-red));
-            opacity: 0.7;
+            z-index: 1; opacity: 0.7;
         }
-
         .triangle-shape video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0.6; /* Darken video */
-            filter: grayscale(100%) contrast(1.2); /* Black and white video */
+            width: 100%; height: 100%;
+            object-fit: cover; opacity: 0.6;
+            filter: grayscale(100%) contrast(1.2);
             transform: scale(1.1);
         }
 
-        .vid-overlay {
-            position: absolute;
-            top: 20px;
-            width: 100%;
+        /* --- CAPTION UNDER VIDEO (NEW) --- */
+        .video-caption {
+            margin-top: 20px;
+            font-size: 1rem;
+            color: #888; /* Grey Text */
+            letter-spacing: 1px;
             text-align: center;
-            color: var(--accent-red);
-            font-weight: bold;
-            letter-spacing: 2px;
-            background: rgba(0,0,0,0.7);
-            padding: 5px 0;
-            z-index: 3;
+            min-height: 1.5rem; /* Prevent layout shift */
         }
+        .cursor-blink {
+            display: inline-block; width: 8px; height: 1rem;
+            background-color: #888;
+            animation: blink 1s step-end infinite;
+            vertical-align: sub;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-        /* --- SLIDE OUT SIDE MENU --- */
-        .slide-menu {
-            position: fixed;
-            top: 0;
-            left: calc(var(--menu-width) * -1); /* Hidden */
-            width: var(--menu-width);
-            height: 100%;
-            background: #080808;
-            border-right: 1px solid var(--accent-red);
-            z-index: 100;
-            padding: 80px 30px;
-            transition: left 0.4s cubic-bezier(0.77, 0, 0.175, 1);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .slide-menu.active {
-            left: 0;
-            box-shadow: 10px 0 50px rgba(255, 0, 0, 0.2);
-        }
-
-        .menu-item {
-            color: var(--text-dim);
-            text-decoration: none;
-            padding: 10px 0;
-            border-bottom: 1px solid #222;
-            transition: 0.2s;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-        }
-        .menu-item::before {
-            content: '>';
-            margin-right: 10px;
-            opacity: 0;
-            color: var(--accent-red);
-            transition: opacity 0.2s;
-        }
-        .menu-item:hover {
-            color: #FFF;
-            padding-left: 10px;
-        }
-        .menu-item:hover::before {
-            opacity: 1;
-        }
-
-        /* --- FOOTER --- */
+        /* Footer */
         .status-footer {
             margin-top: auto;
-            border-top: 1px solid var(--border-grey);
-            background: #000;
-            color: var(--text-dim);
-            padding: 8px 20px;
-            font-size: 0.75rem;
-            display: flex;
-            justify-content: space-between;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            border-top: 1px solid var(--text-dim);
+            background: #000; color: var(--text-dim);
+            padding: 8px 20px; font-size: 0.75rem;
+            display: flex; justify-content: space-between;
         }
-        .footer-highlight { color: var(--accent-red); }
 
         /* Responsive */
         @media (max-width: 900px) {
             .content-area { flex-direction: column-reverse; align-items: center; }
-            .triangle-wrapper { width: 300px; height: 260px; margin-bottom: 30px; }
-            .vertical-nav { width: 90%; }
+            .triangle-wrapper { width: 300px; height: 260px; }
+            .header-typing-wrapper { font-size: 0.9rem; }
+            .header-typing-wrapper a { margin-right: 10px; }
         }
     </style>
 </head>
@@ -345,47 +225,47 @@ header {
 
     <!-- Three.js Canvas -->
     <div id="canvas-container"></div>
-    <div class="scanlines"></div>
 
-  <header>
-    <!-- 1. Menu Button (Stays absolute left) -->
-    <div class="menu-toggle" id="menuBtn">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-        </svg>
-    </div>
+    <!-- UI Layer -->
+    <div id="ui-layer">
+        
+        <header>
+            <!-- Menu Button -->
+            <div class="menu-toggle" id="menuBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </div>
 
-    <!-- 2. The Typing Effect (Left Side) -->
-    <div class="typing-wrapper">
-        <span id="type-target"></span><span class="cursor"></span>
-    </div>
-    
-    <!-- 3. SVG LOGO (Moved to Right Side) -->
-    <svg class="ws-logo" viewBox="0 0 600 90" xmlns="http://www.w3.org/2000/svg">
-        <g class="logo-text">
-            <path d="M 25 25 L 32 25 L 39 60 L 46 25 L 52 25 L 59 60 L 66 25 L 73 25 L 63 68 L 57 68 L 50 35 L 43 68 L 37 68 Z"/>
-            <path d="M 90 23 Q 105 23 105 45.5 Q 105 68 90 68 Q 75 68 75 45.5 Q 75 23 90 23 Z M 90 28 Q 82 28 82 45.5 Q 82 63 90 63 Q 98 63 98 45.5 Q 98 28 90 28 Z"/>
-            <path d="M 120 25 L 127 25 L 127 33 Q 130 25 138 25 L 140 25 L 140 31 L 136 31 Q 127 31 127 40 L 127 68 L 120 68 Z"/>
-            <path d="M 155 25 L 172 25 Q 187 25 187 46.5 Q 187 68 172 68 L 155 68 Z M 162 30 L 162 63 L 171 63 Q 180 63 180 46.5 Q 180 30 171 30 Z"/>
-            <path d="M 202 25 Q 217 25 217 35 L 210 35 Q 210 30 202 30 Q 197 30 197 33.5 Q 197 37 202 38 L 210 40 Q 219 42 219 51 Q 219 68 205 68 Q 190 68 190 57 L 197 57 Q 197 63 205 63 Q 211 63 211 59 Q 211 56 206 54.5 L 198 52.5 Q 190 50.5 190 42 Q 190 25 202 25 Z"/>
-            <path d="M 232 18 L 239 18 L 239 25 L 247 25 L 247 30 L 239 30 L 239 58 Q 239 63 243 63 L 247 63 L 247 68 L 241 68 Q 232 68 232 58 L 232 30 L 226 30 L 226 25 L 232 25 Z"/>
-            <path d="M 265 25 Q 279 25 279 42 L 279 68 L 272 68 L 272 63 Q 268 68 260 68 Q 248 68 248 58 Q 248 48 260 48 L 272 48 L 272 42 Q 272 30 264 30 Q 257 30 256 36 L 249 36 Q 250 25 265 25 Z M 272 53 L 261 53 Q 255 53 255 58 Q 255 63 261 63 Q 272 63 272 53 Z"/>
-            <path d="M 294 25 L 301 25 L 301 33 Q 304 25 312 25 L 314 25 L 314 31 L 310 31 Q 301 31 301 40 L 301 68 L 294 68 Z"/>
-            <circle cx="330" cy="63" r="3"/>
-            <path d="M 350 25 L 357 25 L 357 31 Q 361 25 370 25 Q 382 25 382 37 L 382 68 L 375 68 L 375 38 Q 375 30 368 30 Q 357 30 357 42 L 357 68 L 350 68 Z"/>
-            <path d="M 397 25 Q 412 25 412 42 L 398 42 Q 398 50 398 52 Q 398 63 406 63 Q 411 63 412 58 L 419 58 Q 418 68 406 68 Q 391 68 391 46.5 Q 391 25 406 25 Z M 398 37 L 405 37 Q 405 30 406 30 Q 412 30 412 37 Z"/>
-        </g>
-        <g class="logo-x" style="cursor: pointer;">
-            <path d="M 435 18 L 449 18 L 465 40 L 481 18 L 495 18 L 473 46.5 L 497 75 L 483 75 L 465 51 L 447 75 L 433 75 L 457 46.5 Z"/>
-        </g>
-        <g class="logo-text">
-            <path d="M 512 25 L 519 25 L 519 55 Q 519 63 526 63 Q 537 63 537 51 L 537 25 L 544 25 L 544 68 L 537 68 L 537 62 Q 533 68 524 68 Q 512 68 512 56 Z"/>
-            <path d="M 559 25 Q 574 25 574 35 L 567 35 Q 567 30 559 30 Q 554 30 554 33.5 Q 554 37 559 38 L 567 40 Q 576 42 576 51 Q 576 68 562 68 Q 547 68 547 57 L 554 57 Q 554 63 562 63 Q 568 63 568 59 Q 568 56 563 54.5 L 555 52.5 Q 547 50.5 547 42 Q 547 25 559 25 Z"/>
-        </g>
-    </svg>
-</header>
+            <!-- HEADER TYPING AREA (LINKS) -->
+            <div class="header-typing-wrapper" id="header-type-target"></div>
+            
+            <!-- SVG LOGO -->
+            <svg class="ws-logo" viewBox="0 0 600 90" xmlns="http://www.w3.org/2000/svg">
+                <g class="logo-text">
+                    <path d="M 25 25 L 32 25 L 39 60 L 46 25 L 52 25 L 59 60 L 66 25 L 73 25 L 63 68 L 57 68 L 50 35 L 43 68 L 37 68 Z"/>
+                    <path d="M 90 23 Q 105 23 105 45.5 Q 105 68 90 68 Q 75 68 75 45.5 Q 75 23 90 23 Z M 90 28 Q 82 28 82 45.5 Q 82 63 90 63 Q 98 63 98 45.5 Q 98 28 90 28 Z"/>
+                    <path d="M 120 25 L 127 25 L 127 33 Q 130 25 138 25 L 140 25 L 140 31 L 136 31 Q 127 31 127 40 L 127 68 L 120 68 Z"/>
+                    <path d="M 155 25 L 172 25 Q 187 25 187 46.5 Q 187 68 172 68 L 155 68 Z M 162 30 L 162 63 L 171 63 Q 180 63 180 46.5 Q 180 30 171 30 Z"/>
+                    <path d="M 202 25 Q 217 25 217 35 L 210 35 Q 210 30 202 30 Q 197 30 197 33.5 Q 197 37 202 38 L 210 40 Q 219 42 219 51 Q 219 68 205 68 Q 190 68 190 57 L 197 57 Q 197 63 205 63 Q 211 63 211 59 Q 211 56 206 54.5 L 198 52.5 Q 190 50.5 190 42 Q 190 25 202 25 Z"/>
+                    <path d="M 232 18 L 239 18 L 239 25 L 247 25 L 247 30 L 239 30 L 239 58 Q 239 63 243 63 L 247 63 L 247 68 L 241 68 Q 232 68 232 58 L 232 30 L 226 30 L 226 25 L 232 25 Z"/>
+                    <path d="M 265 25 Q 279 25 279 42 L 279 68 L 272 68 L 272 63 Q 268 68 260 68 Q 248 68 248 58 Q 248 48 260 48 L 272 48 L 272 42 Q 272 30 264 30 Q 257 30 256 36 L 249 36 Q 250 25 265 25 Z M 272 53 L 261 53 Q 255 53 255 58 Q 255 63 261 63 Q 272 63 272 53 Z"/>
+                    <path d="M 294 25 L 301 25 L 301 33 Q 304 25 312 25 L 314 25 L 314 31 L 310 31 Q 301 31 301 40 L 301 68 L 294 68 Z"/>
+                    <circle cx="330" cy="63" r="3"/>
+                    <path d="M 350 25 L 357 25 L 357 31 Q 361 25 370 25 Q 382 25 382 37 L 382 68 L 375 68 L 375 38 Q 375 30 368 30 Q 357 30 357 42 L 357 68 L 350 68 Z"/>
+                    <path d="M 397 25 Q 412 25 412 42 L 398 42 Q 398 50 398 52 Q 398 63 406 63 Q 411 63 412 58 L 419 58 Q 418 68 406 68 Q 391 68 391 46.5 Q 391 25 406 25 Z M 398 37 L 405 37 Q 405 30 406 30 Q 412 30 412 37 Z"/>
+                </g>
+                <g class="logo-x" style="cursor: pointer;">
+                    <path d="M 435 18 L 449 18 L 465 40 L 481 18 L 495 18 L 473 46.5 L 497 75 L 483 75 L 465 51 L 447 75 L 433 75 L 457 46.5 Z"/>
+                </g>
+                <g class="logo-text">
+                    <path d="M 512 25 L 519 25 L 519 55 Q 519 63 526 63 Q 537 63 537 51 L 537 25 L 544 25 L 544 68 L 537 68 L 537 62 Q 533 68 524 68 Q 512 68 512 56 Z"/>
+                    <path d="M 559 25 Q 574 25 574 35 L 567 35 Q 567 30 559 30 Q 554 30 554 33.5 Q 554 37 559 38 L 567 40 Q 576 42 576 51 Q 576 68 562 68 Q 547 68 547 57 L 554 57 Q 554 63 562 63 Q 568 63 568 59 Q 568 56 563 54.5 L 555 52.5 Q 547 50.5 547 42 Q 547 25 559 25 Z"/>
+                </g>
+            </svg>
+        </header>
 
         <div class="content-area">
             
@@ -395,7 +275,7 @@ header {
                 <div class="nav-box" onclick="toggleBox(this)">
                     <div class="nav-header">NEXUS_MANIFESTO</div>
                     <div class="nav-content">
-                        The WordStar Nexus is an infinite archive of digital constructs. We preserve the command line aesthetic in a chaotic 3D reality.
+                        The WordStar Nexus is an infinite archive of digital constructs. We preserve the command line aesthetic.
                     </div>
                 </div>
 
@@ -404,7 +284,6 @@ header {
                     <div class="nav-content">
                         <span style="color:var(--accent-red)">CORE: UNSTABLE</span><br>
                         MEMORY: 640KB<br>
-                        UPTIME: 99.9%<br>
                         THREAT LEVEL: MIDNIGHT
                     </div>
                 </div>
@@ -412,41 +291,32 @@ header {
                 <div class="nav-box" onclick="toggleBox(this)">
                     <div class="nav-header">ENCRYPTED_FILES</div>
                     <div class="nav-content">
-                        ACCESS DENIED.<br>
-                        PLEASE INSERT DISK 2.<br>
-                        [ RETRY ] [ ABORT ]
+                        ACCESS DENIED.<br>PLEASE INSERT DISK 2.
                     </div>
                 </div>
-
-                <div class="nav-box" onclick="toggleBox(this)">
-                    <div class="nav-header">COMMUNICATION</div>
-                    <div class="nav-content">
-                        Signal lost...<br>
-                        Reconnecting...<br>
-                        Establishing link to Node 42.
-                    </div>
-                </div>
-
             </div>
 
-            <!-- RIGHT: Triangle Video -->
-            <div class="triangle-wrapper">
-                <div class="triangle-border"></div>
-                <div class="triangle-shape">
-                    <!-- Tech Video -->
-                    <video autoplay muted loop playsinline>
-                        <source src="https://assets.mixkit.co/videos/preview/mixkit-circuit-board-technology-20409-large.mp4" type="video/mp4">
-                    </video>
-                    <div class="vid-overlay">SECTOR_7G</div>
+            <!-- RIGHT: Video & Caption -->
+            <div class="right-column">
+                <div class="triangle-wrapper">
+                    <div class="triangle-border"></div>
+                    <div class="triangle-shape">
+                        <video autoplay muted loop playsinline>
+                            <source src="https://assets.mixkit.co/videos/preview/mixkit-circuit-board-technology-20409-large.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                </div>
+                <!-- TEXT UNDER VIDEO -->
+                <div class="video-caption">
+                    <span id="caption-target"></span><span class="cursor-blink"></span>
                 </div>
             </div>
 
         </div>
 
         <div class="status-footer">
-            <span>DRIVE <span class="footer-highlight">A:</span> READY</span>
-            <span><span class="footer-highlight">R</span> 000 <span class="footer-highlight">C</span> 000</span>
-            <span>MODE: <span class="footer-highlight">OVERTYPE</span></span>
+            <span>DRIVE A: READY</span>
+            <span>MODE: OVERTYPE</span>
         </div>
     </div>
 
@@ -458,126 +328,126 @@ header {
     <script type="module">
         import * as THREE from 'three';
 
+        // --- 1. THREE.JS SETUP ---
         const scene = new THREE.Scene();
-        // Background fog black/grey
         scene.fog = new THREE.FogExp2(0x000000, 0.04); 
-
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.z = 25;
-
         const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // --- OBJECTS ---
         const group = new THREE.Group();
-
-        // Outer Wireframe (White/Grey)
         const geometry = new THREE.BoxGeometry(16, 16, 16);
         const edges = new THREE.EdgesGeometry(geometry);
         const material = new THREE.LineBasicMaterial({ color: 0x666666, transparent: true, opacity: 0.2 });
         const cube = new THREE.LineSegments(edges, material);
         group.add(cube);
-
-        // Inner Cube (Red)
         const innerGeo = new THREE.BoxGeometry(7, 7, 7);
         const innerEdges = new THREE.EdgesGeometry(innerGeo);
-        // Pure Red for the core
         const innerMat = new THREE.LineBasicMaterial({ color: 0xFF0000, transparent: true, opacity: 0.5 });
         const innerCube = new THREE.LineSegments(innerEdges, innerMat);
         group.add(innerCube);
-
         scene.add(group);
 
-        // --- ANIMATION ---
         const clock = new THREE.Clock();
-        let glitchIntensity = 0;
-
         function animate() {
             requestAnimationFrame(animate);
             const delta = clock.getDelta();
-            
-            // Standard Rotation
             group.rotation.x += delta * 0.15;
             group.rotation.y += delta * 0.25;
-            
-            // Glitch Effect logic
-            if(glitchIntensity > 0) {
-                group.position.x = (Math.random() - 0.5) * glitchIntensity;
-                innerCube.material.opacity = Math.random();
-                glitchIntensity -= 0.05; // Fade out glitch
-            } else {
-                group.position.x = 0;
-                innerCube.material.opacity = 0.5 + Math.sin(clock.elapsedTime * 2) * 0.2; // Pulse
-            }
-
+            innerCube.material.opacity = 0.5 + Math.sin(clock.elapsedTime * 2) * 0.2; 
             renderer.render(scene, camera);
         }
         animate();
-
-        // --- UI LOGIC ---
-        
-        // 1. Accordion Logic
-        window.toggleBox = function(element) {
-            // Close others (optional - remove this block if you want multiple open)
-            const allBoxes = document.querySelectorAll('.nav-box');
-            allBoxes.forEach(box => {
-                if (box !== element) box.classList.remove('active');
-            });
-
-            // Toggle current
-            element.classList.toggle('active');
-        }
-
-        // 2. Menu Logic
-        const menuBtn = document.getElementById('menuBtn');
-        const sideMenu = document.getElementById('sideMenu');
-        
-        menuBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            sideMenu.classList.toggle('active');
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!sideMenu.contains(e.target) && !menuBtn.contains(e.target)) {
-                sideMenu.classList.remove('active');
-            }
-        });
-
-        // 3. Logo Glitch Trigger
-        const logoX = document.querySelector('.logo-x');
-        logoX.addEventListener('click', () => {
-            glitchIntensity = 2; // Trigger 3D glitch
-        });
-
-        // Resize
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-    </script>
-    <script>
-        // --- 4. TYPING EFFECT LOGIC ---
-        // You can change the text inside the quotes below
+        // --- 2. ACCORDION LOGIC ---
+        window.toggleBox = function(element) {
+            const allBoxes = document.querySelectorAll('.nav-box');
+            allBoxes.forEach(box => {
+                if (box !== element) box.classList.remove('active');
+            });
+            element.classList.toggle('active');
+        }
+
+        // --- 3. HEADER MENU TYPING LOGIC (Valentin Effect) ---
+        const menuBtn = document.getElementById('menuBtn');
+        const headerTarget = document.getElementById('header-type-target');
+        const menuLinks = [
+            { text: "ARCHIVES", href: "#" },
+            { text: "SYSTEMS", href: "#" },
+            { text: "ABOUT", href: "#" },
+            { text: "CONTACT", href: "#" }
+        ];
+        let isMenuOpen = false;
+        let isTyping = false;
+
+        function typeHeaderLinks() {
+            headerTarget.innerHTML = "";
+            isTyping = true;
+            let linkIndex = 0;
+            let charIndex = 0;
+            
+            let currentLink = document.createElement('a');
+            currentLink.href = menuLinks[0].href;
+            headerTarget.appendChild(currentLink);
+
+            function step() {
+                if (linkIndex >= menuLinks.length) { isTyping = false; return; }
+                const linkData = menuLinks[linkIndex];
+                
+                if (charIndex < linkData.text.length) {
+                    currentLink.textContent += linkData.text.charAt(charIndex);
+                    charIndex++;
+                    setTimeout(step, 40);
+                } else {
+                    linkIndex++;
+                    charIndex = 0;
+                    if (linkIndex < menuLinks.length) {
+                        currentLink = document.createElement('a');
+                        currentLink.href = menuLinks[linkIndex].href;
+                        headerTarget.appendChild(currentLink);
+                        setTimeout(step, 80);
+                    } else { isTyping = false; }
+                }
+            }
+            step();
+        }
+
+        menuBtn.addEventListener('click', () => {
+            if (isTyping) return; 
+            if (!isMenuOpen) {
+                typeHeaderLinks();
+                isMenuOpen = true;
+            } else {
+                headerTarget.innerHTML = ""; // Clear or type status if desired
+                isMenuOpen = false;
+            }
+        });
+
+        // --- 4. SIMPLE TYPING EFFECT UNDER VIDEO (Your Request) ---
         const textToType = "CITADELLE_INIT... STATUS: ONLINE"; 
-        
-        const typeSpeed = 100; // Speed in milliseconds
+        const typeSpeed = 100;
         let charIndex = 0;
-        const typeTarget = document.getElementById('type-target');
+        const captionTarget = document.getElementById('caption-target');
 
         function typeWriter() {
             if (charIndex < textToType.length) {
-                typeTarget.innerHTML += textToType.charAt(charIndex);
+                captionTarget.innerHTML += textToType.charAt(charIndex);
                 charIndex++;
                 setTimeout(typeWriter, typeSpeed);
             }
         }
 
-        // Start typing after 0.5 seconds
+        // Start typing caption after 0.5 seconds
         setTimeout(typeWriter, 500);
+
     </script>
 </body>
 </html>
