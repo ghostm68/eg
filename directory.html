@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>wordstar.nexus</title>
+
+    <!-- FONTS -->
+    <link href="https://fonts.googleapis.com/css?family=Bree+Serif" rel="stylesheet"> 
+    <link href="https://fonts.googleapis.com/css?family=Pacifico" rel="stylesheet"> 
+    <link href="https://fonts.googleapis.com/css?family=Text+Me+One" rel="stylesheet"> 
+    <link href="https://fonts.googleapis.com/css?family=Quattrocento+Sans" rel="stylesheet">
+    
+    <style>
+        /* =========================================
+           1. LAYOUT & SCALING LOGIC
+           ========================================= */
+        * { box-sizing: border-box; }
+        
+        body {
+            margin: 0; padding: 0;
+            overflow-x: hidden;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a0a15 100%);
+            font-family: 'Quattrocento Sans', sans-serif;
+        }
+
+        .content-container {
+            width: 100%;
+            max-width: 1400px;
+            display: flex;
+            justify-content: center;
+            position: relative;
+            z-index: 10;
+            padding: 20px;
+        }
+
+        .main {
+            width: 100%;
+            transform-origin: top center;
+            transition: transform 0.3s ease;
+        }
+
+        /* MOBILE SCALER */
+        @media (max-width: 768px) {
+            .main {
+                transform: scale(0.85); 
+            }
+            .hexagon-container {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                width: 100%;
+            }
+            .sep-container { display: none !important; }
+        }
+
+        /* =========================================
+           2. VIDEO POSITIONING (Fixed Background)
+           ========================================= */
+        .triangle-video-frame {
+            position: fixed;
+            bottom: 336px; 
+            left: 20px;
+            width: 666px; 
+            height: 385px; 
+            background-color: #ffffff; 
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            z-index: 6; 
+            pointer-events: none;
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3));
+        }
+
+        .triangle-inner-video {
+            width: 100%;
+            height: 100%;
+            transform: scale(0.99); 
+            transform-origin: center bottom;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            background: #000; 
+        }
+
+        .triangle-inner-video video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; 
+            opacity: 0.9; 
+        }
+
+        @media (max-width: 768px) {
+            .triangle-video-frame {
+                width: 300px; 
+                height: 173px; 
+                left: 15px;
+                bottom: 190px; 
+            }
+        }
+
+        /* =========================================
+           3. BAND INFO BOX (Bottom Left)
+           ========================================= */
+        .band-info-box {
+            position: fixed;
+            bottom: 20px; left: 20px;
+            width: 666px;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(8px);
+            border-left: 3px solid #ff0033;
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            z-index: 500; 
+            color: #eee;
+            font-size: 14px;
+            line-height: 1.5;
+            box-shadow: 0 5px 20px rgba(255, 0, 51, 0.2);
+        }
+
+        .band-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            color: #fff;
+            font-family: 'Text Me One', sans-serif;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .band-link {
+            display: block; margin-top: 12px;
+            color: #ff0033; text-decoration: none;
+            font-size: 0.9em; font-style: italic;
+            transition: color 0.3s ease;
+        }
+        .band-link:hover { color: #fff; }
+
+        @media (max-width: 768px) {
+            .band-info-box { 
+                bottom: 15px; left: 15px; 
+                width: calc(100% - 30px); 
+                max-width: 400px;
+                font-size: 12px; 
+                padding: 15px; 
+            }
+        }
+
+        /* =========================================
+           4. GLITCH ORB
+           ========================================= */
+        .orb-container {
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 15px; 
+            width: 40px;
+            height: 40px;
+            position: relative;
+        }
+
+        .glitch-orb {
+            width: 100%; height: 100%;
+            fill: none; stroke-width: 3;
+            overflow: visible;
+        }
+
+        .orb-circle { stroke: #ff0033; } 
+        .orb-triangle { stroke: #ffffff; } 
+
+        .orb-container svg {
+            animation: slow-spin 10s linear infinite;
+            filter: drop-shadow(0 0 5px rgba(255, 0, 51, 0.4));
+            transition: all 0.2s ease;
+        }
+
+        .orb-container:hover svg {
+            animation: glitch-shake 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
+            filter: drop-shadow(2px 2px 0px rgba(255, 255, 255, 0.5)) 
+                    drop-shadow(-2px -2px 0px rgba(255, 0, 51, 0.8));
+        }
+
+        .orb-container:hover .orb-triangle { fill: rgba(255, 255, 255, 0.1); }
+
+        @keyframes slow-spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+        @keyframes glitch-shake {
+            0% { transform: translate(0) rotate(0deg); }
+            20% { transform: translate(-2px, 2px) rotate(-5deg); }
+            40% { transform: translate(-2px, -2px) rotate(5deg); }
+            60% { transform: translate(2px, 2px) rotate(-5deg); }
+            80% { transform: translate(2px, -2px) rotate(5deg); }
+            100% { transform: translate(0) rotate(0deg); }
+        }
+
+        /* =========================================
+           5. TOP NAVIGATION
+           ========================================= */
+        .top-menu {
+            text-align: center;
+            padding: 30px 0;
+            font-family: 'Text Me One', sans-serif;
+            font-size: 18px;
+            color: #888;
+            letter-spacing: 2px;
+        }
+
+        .top-menu a {
+            color: #ff0033;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            cursor: pointer;
+        }
+
+        .top-menu a:hover {
+            color: #fff;
+        }
+
+        .top-menu span {
+            margin: 0 10px;
+            color: #444;
+        }
+
+        /* =========================================
+           6. HEXAGON CONTAINER
+           ========================================= */
+        .hexagon-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 40px 0;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .hexagon {
+            width: 150px;
+            height: 173px;
+            position: relative;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            background: #1a1a1f;
+            cursor: pointer;
+            transition: transform 0.3s ease, filter 0.3s ease;
+        }
+
+        .hexagon:hover {
+            transform: scale(1.1);
+            filter: brightness(1.2);
+        }
+
+        .hex-bg, .hex-curtain, .hex-image {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+        }
+
+        .hex-number {
+            position: absolute;
+            bottom: 10px;
+            font-family: 'Text Me One', sans-serif;
+            font-size: 14px;
+            color: #ff0033;
+            font-weight: bold;
+        }
+
+        .hex-number:first-of-type { left: 10px; }
+        .hex-number:last-of-type { right: 10px; }
+
+        .sep-container {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .sep-circle {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff0033;
+            opacity: 0.5;
+        }
+
+        /* =========================================
+           7. MAIN SECTIONS
+           ========================================= */
+        .main-section-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin: 50px 0;
+            padding: 0 20px;
+        }
+
+        .section1, .section2, .section3, .section4, .section5 {
+            background: rgba(20, 20, 25, 0.6);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 0, 51, 0.2);
+            border-radius: 12px;
+            padding: 30px;
+            color: #ddd;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .section1:hover, .section2:hover, .section3:hover, .section4:hover, .section5:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 0, 51, 0.3);
+        }
+
+        .s1-title {
+            font-family: 'Bree Serif', serif;
+            font-size: 32px;
+            color: #ff0033;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .s1-title2 {
+            font-size: 18px;
+            color: #aaa;
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        .s1-text {
+            display: block;
+            line-height: 1.6;
+            margin: 20px 0;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid rgba(255, 0, 51, 0.3);
+            margin: 15px 0;
+        }
+
+        .s1-line1, .s1-line2 {
+            display: block;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .s1-line1 a, .s1-line2 a {
+            color: #ff0033;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .s1-line1 a:hover, .s1-line2 a:hover {
+            color: #fff;
+        }
+
+        /* SECTION 2 */
+        .s2-header {
+            font-family: 'Bree Serif', serif;
+            font-size: 28px;
+            color: #ff0033;
+            line-height: 1.3;
+            margin-bottom: 20px;
+        }
+
+        .s2-header span {
+            color: #888;
+        }
+
+        .s2-entry {
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 0, 51, 0.1);
+            text-decoration: none !important;
+            color: #ddd !important;
+            transition: all 0.3s ease;
+        }
+
+        .s2-entry:hover {
+            padding-left: 10px;
+            color: #ff0033 !important;
+        }
+
+        .s2-entry span {
+            font-size: 16px;
+        }
+
+        /* SECTION 3 */
+        .s3-pastel-img {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .s3_letters_flex_row {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+        }
+
+        .s3_letters_flex_row p {
+            font-family: 'Text Me One', sans-serif;
+            color: #ff0033;
+            font-size: 18px;
+            margin: 0;
+        }
+
+        .s3_letters_flex_row span {
+            color: #aaa;
+            font-size: 14px;
+            text-align: right;
+        }
+
+        /* SECTION 4 */
+        .s4-pending-title {
+            font-family: 'Text Me One', sans-serif;
+            font-size: 28px;
+            color: #ff0033;
+            letter-spacing: 3px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .s4-paragraphs p {
+            text-align: center;
+            margin: 10px 0;
+            color: #aaa;
+        }
+
+        /* SECTION 5 */
+        .section5 h2 {
+            font-family: 'Pacifico', cursive;
+            color: #ff0033;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        .section5 p {
+            line-height: 1.6;
+            color: #ddd;
+            font-style: italic;
+        }
+
+        .section5 a {
+            color: #ff0033;
+            text-decoration: none;
+            display: block;
+            margin-top: 15px;
+            transition: color 0.3s ease;
+        }
+
+        .section5 a:hover {
+            color: #fff;
+        }
+
+        /* =========================================
+           8. WORDSTAR LOGO
+           ========================================= */
+        .logo-section-wrapper {
+            display: inline-block;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .wordstar-logo {
+            width: 100%;
+            max-width: 500px;
+            height: auto;
+            overflow: visible;
+        }
+
+        .logo-text {
+            fill: #ff0033;
+            transition: all 0.2s ease;
+        }
+
+        .logo-x {
+            fill: #ffffff;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .logo-section-wrapper:hover .logo-text {
+            animation: text-shock 0.15s infinite alternate;
+        }
+
+        .logo-section-wrapper:hover .logo-x {
+            animation: x-pulse 0.5s infinite;
+        }
+
+        @keyframes text-shock {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(-1px, 1px); }
+            50% { transform: translate(1px, -1px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        @keyframes x-pulse {
+            0%, 100% { fill: #ffffff; }
+            50% { fill: #ff0033; }
+        }
+
+        /* =========================================
+           9. AUDIO VISUALIZER
+           ========================================= */
+        #sigil-canvas {
+            background: #000;
+            border: 1px solid #333;
+            margin-bottom: 10px;
+            display: block;
+            width: 100%;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #witch-status {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 10px;
+            font-family: 'Text Me One', sans-serif;
+        }
+
+        .animate-pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* =========================================
+           10. RESPONSIVE ADJUSTMENTS
+           ========================================= */
+        @media (max-width: 768px) {
+            .main-section-container {
+                grid-template-columns: 1fr;
+            }
+
+            .hexagon {
+                width: 120px;
+                height: 138px;
+            }
+
+            .top-menu {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- THE WHITE TRIANGLE VIDEO -->
+    <div class="triangle-video-frame">
+        <div class="triangle-inner-video">
+            <video src="https://github.com/ghostm68/99/raw/main/lyinkrealmthm_20230121_185520920.mp4" 
+                   autoplay muted loop playsinline></video>
+        </div>
+    </div>
+
+    <div class="content-container">
+        <div class="main">
+
+            <nav class="top-menu">
+                <a>writer</a><span>/</span><a>musician</a><span>/</span><a>visual</a><span>/</span><a>artist</a>
+            </nav>
+            
+            <div class="hexagon-container">
+                <!-- HEX 1 -->
+                <div class="hexagon">
+                    <img class="hex-bg" src="https://raw.githubusercontent.com/ghostm68/pantheon/main/runetime.gif" alt="hex background" />
+                    <span class="hex-number">0</span><span class="hex-number">1</span>
+                </div>
+                <div class="sep-container">
+                    <span class="sep-circle"></span><span class="sep-circle"></span><span class="sep-circle"></span>
+                </div>
+                <!-- HEX 2 -->
+                <div class="hexagon">
+                    <img class="hex-bg" src="https://raw.githubusercontent.com/ghostm68/pantheon/main/Media_syracuse.minaro.240103_024757.gif" alt="hex background" />
+                    <span class="hex-number">0</span><span class="hex-number">2</span>
+                </div>
+                <div class="sep-container">
+                    <span class="sep-circle"></span><span class="sep-circle"></span><span class="sep-circle"></span>
+                </div>
+                <!-- HEX 3 -->
+                <div class="hexagon">
+                    <img class="hex-bg" src="https://raw.githubusercontent.com/ghostm68/pantheon/main/hermes46663.gif" alt="hex background" />
+                    <span class="hex-number">0</span><span class="hex-number">3</span>
+                </div>
+                <div class="sep-container">
+                    <span class="sep-circle"></span><span class="sep-circle"></span><span class="sep-circle"></span>
+                </div>
+                <!-- HEX 4 -->
+                <div class="hexagon">
+                    <img class="hex-bg" src="https://raw.githubusercontent.com/ghostm68/pantheon/main/Media_minaro.hilton.240105_143846.gif" alt="hex background" />
+                    <span class="hex-number">0</span><span class="hex-number">4</span>
+                </div>
+                <div class="sep-container">
+                    <span class="sep-circle"></span><span class="sep-circle"></span><span class="sep-circle"></span>
+                </div>
+                <!-- HEX 5 -->
+                <div class="hexagon">
+                    <img class="hex-bg" src="https://raw.githubusercontent.com/ghostm68/pantheon/main/guitartownindia.gif" alt="hex background" />
+                    <span class="hex-number">0</span><span class="hex-number">5</span>
+                </div>
+            </div>
+
+            <div class="main-section-container">
+
+                <div class="section1">
+                    <span class="s1-title">wordstar</span>
+                    <hr>
+                    <span class="s1-title2">at <em>your</em> service</span>
+                    <span class="s1-text">
+                        text editor for writers - no trackers, no ads, just pure writing
+                    </span>
+                    <div class="s1-line1">
+                        <a href="https://tiktok.com/@twoskinnygirls" target="_blank">tiktok.com/@twoskinnygirls</a>
+                    </div>
+                    <div class="s1-line2">
+                        <a href="https://t.me/inkrealm" target="_blank">t.me/inkrealm</a>
+                    </div>
+                </div>
+
+                <div class="section2">
+                    <div class="s2-header">new<br>novels<br>,screenplays<br><span>and stories</span></div>
+                    <hr>
+                    <a href="https://wordstar.nexus/38" class="s2-entry">
+                        <span>38</span>
+                    </a>
+                    <a href="https://wordstar.nexus/bakedalaska" class="s2-entry">
+                        <span>owner</span>
+                    </a>
+                    <a href="https://wordstar.nexus/dejavuglitches" class="s2-entry">
+                        <span>dejavu</span>
+                    </a>
+                    <a href="https://wordstar.nexus/ten" class="s2-entry">
+                        <span>noir</span>
+                    </a>
+                    <a href="https://wordstar.nexus/dreamweaver" class="s2-entry">
+                        <span>dream</span>
+                    </a>
+                    <a href="https://wordstar.nexus/displaywriter" class="s2-entry">
+                        <span>horse</span>
+                    </a>
+                    <a href="https://wordstar.nexus/wip" class="s2-entry">
+                        <span>wip</span>
+                    </a>
+                </div>
+
+                <div class="section3">
+                    <img src="https://github.com/ghostm68/pantheon/raw/main/wordstarnc17.gif" class="s3-pastel-img" alt="wordstar interface" />
+                    <div class="s3_letters_flex_row">
+                        <p>text editors</p><span>features<br>ai</span>
+                    </div>
+                    <div class="s3_letters_flex_row">
+                        <p>...</p><span>and<br>dictionaries</span>
+                    </div>
+                    <hr>
+                    <p style="color: #ff0033; font-family: 'Text Me One', sans-serif;">nous</p>
+                </div>
+
+                <div class="section4">
+                    <hr>
+                    <div class="s4-pending-title">
+                        <span>W</span><span>o</span><span>r</span><span>d</span><span>s</span><span>T</span><span>a</span><span>R</span>
+                    </div>
+                    <div class="s4-paragraphs">
+                        <p>nexus = no trackers or spyware</p>
+                        <p>ad-free zone; wordstar.nexus</p>
+                    </div>
+                </div>
+
+                <div class="section5">
+                    <h2>pound quote...</h2>
+                    <p>Time is not!<br>Time is the evil!</p>
+                    <a href="https://wordstar.nexus/dejavuglitches">Beloved the hours!</a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- FIXED BAND INFO BOX + ORB + AUDIO -->
+    <div class="band-info-box">
+        
+        <div class="band-header">
+            <a href="https://wordstar.nexus" target="_blank" rel="noopener">
+                <div class="orb-container">
+                    <svg class="glitch-orb" viewBox="0 0 100 100">
+                        <circle class="orb-circle" cx="50" cy="50" r="45" />
+                        <polygon class="orb-triangle" points="50,25 78,75 22,75" />
+                    </svg>
+                </div>
+            </a>
+            <span>6jan2026</span>
+        </div>
+
+        <div id="witch-status">Audio Ready - Click Canvas to Play</div>
+        <canvas id="sigil-canvas" width="626" height="60"></canvas>
+        <audio id="viz-audio" loop>
+            <source src="itm406.mp3" type="audio/mpeg">
+        </audio>
+
+        <p style="margin: 15px 0 5px 0; font-size: 13px;">
+            all rights reserved...©inky via "domenicobrz" 𓅔
+        </p>
+        
+        <a href="https://wordstar.nexus" class="logo-section-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 90" class="wordstar-logo">
+                <g class="logo-text">
+                    <path d="M 25 25 L 32 25 L 39 60 L 46 25 L 52 25 L 59 60 L 66 25 L 73 25 L 63 68 L 57 68 L 50 35 L 43 68 L 37 68 Z"/>
+                    <path d="M 90 23 Q 105 23 105 45.5 Q 105 68 90 68 Q 75 68 75 45.5 Q 75 23 90 23 Z M 90 28 Q 82 28 82 45.5 Q 82 63 90 63 Q 98 63 98 45.5 Q 98 28 90 28 Z"/>
+                    <path d="M 120 25 L 127 25 L 127 33 Q 130 25 138 25 L 140 25 L 140 31 L 136 31 Q 127 31 127 40 L 127 68 L 120 68 Z"/>
+                    <path d="M 155 25 L 172 25 Q 187 25 187 46.5 Q 187 68 172 68 L 155 68 Z M 162 30 L 162 63 L 171 63 Q 180 63 180 46.5 Q 180 30 171 30 Z"/>
+                    <path d="M 202 25 Q 217 25 217 35 L 210 35 Q 210 30 202 30 Q 197 30 197 33.5 Q 197 37 202 38 L 210 40 Q 219 42 219 51 Q 219 68 205 68 Q 190 68 190 57 L 197 57 Q 197 63 205 63 Q 211 63 211 59 Q 211 56 206 54.5 L 198 52.5 Q 190 50.5 190 42 Q 190 25 202 25 Z"/>
+                    <path d="M 232 18 L 239 18 L 239 25 L 247 25 L 247 30 L 239 30 L 239 58 Q 239 63 243 63 L 247 63 L 247 68 L 241 68 Q 232 68 232 58 L 232 30 L 226 30 L 226 25 L 232 25 Z"/>
+                    <path d="M 265 25 Q 279 25 279 42 L 279 68 L 272 68 L 272 63 Q 268 68 260 68 Q 248 68 248 58 Q 248 48 260 48 L 272 48 L 272 42 Q 272 30 264 30 Q 257 30 256 36 L 249 36 Q 250 25 265 25 Z M 272 53 L 261 53 Q 255 53 255 58 Q 255 63 261 63 Q 272 63 272 53 Z"/>
+                    <path d="M 294 25 L 301 25 L 301 33 Q 304 25 312 25 L 314 25 L 314 31 L 310 31 Q 301 31 301 40 L 301 68 L 294 68 Z"/>
+                    <circle cx="330" cy="63" r="3"/>
+                </g>
+                <g class="logo-x">
+                    <path d="M 345 18 L 359 18 L 375 40 L 391 18 L 405 18 L 383 46.5 L 407 75 L 393 75 L 375 51 L 357 75 L 343 75 L 367 46.5 Z"/>
+                </g>
+                <g class="logo-text">
+                    <path d="M 422 25 L 429 25 L 429 31 Q 433 25 442 25 Q 454 25 454 37 L 454 68 L 447 68 L 447 38 Q 447 30 440 30 Q 429 30 429 42 L 429 68 L 422 68 Z"/>
+                    <path d="M 469 25 Q 484 25 484 42 L 470 42 Q 470 50 470 52 Q 470 63 478 63 Q 483 63 484 58 L 491 58 Q 490 68 478 68 Q 463 68 463 46.5 Q 463 25 478 25 Z M 470 37 L 477 37 Q 477 30 478 30 Q 484 30 484 37 Z"/>
+                    <path d="M 512 25 L 519 25 L 519 55 Q 519 63 526 63 Q 537 63 537 51 L 537 25 L 544 25 L 544 68 L 537 68 L 537 62 Q 533 68 524 68 Q 512 68 512 56 Z"/>
+                    <path d="M 559 25 Q 574 25 574 35 L 567 35 Q 567 30 559 30 Q 554 30 554 33.5 Q 554 37 559 38 L 567 40 Q 576 42 576 51 Q 576 68 562 68 Q 547 68 547 57 L 554 57 Q 554 63 562 63 Q 568 63 568 59 Q 568 56 563 54.5 L 555 52.5 Q 547 50.5 547 42 Q 547 25 559 25 Z"/>
+                </g>
+            </svg>
+        </a>
+        
+        <a href="https://inkrealm.info/altstadt" class="band-link">Read full bio &rarr;</a>
+    </div>
+
+    <script>
+        // ==== AUDIO VISUALIZER ====
+        const canvas = document.getElementById('sigil-canvas');
+        const ctx = canvas.getContext('2d');
+        const audio = document.getElementById('viz-audio');
+        const statusEl = document.getElementById('witch-status');
+        let audioContext, analyser, source, dataArray;
+        let isInitialized = false;
+
+        // Initialize audio context on first interaction
+        function initAudio() {
+            if (!isInitialized) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                source = audioContext.createMediaElementSource(audio);
+                source.connect(analyser);
+                analyser.connect(audioContext.destination);
+                
+                analyser.fftSize = 256;
+                const bufferLength = analyser.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
+                
+                isInitialized = true;
+                visualize();
+            }
+        }
+
+        // Visualization function
+        function visualize() {
+            if (!analyser) return;
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            requestAnimationFrame(visualize);
+            
+            analyser.getByteFrequencyData(dataArray);
+            
+            // Clear with fade effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.fillRect(0, 0, width, height);
+            
+            const barWidth = (width / dataArray.length) * 2.5;
+            let barHeight;
+            let x = 0;
+            
+            // Draw frequency bars
+            for(let i = 0; i < dataArray.length; i++) {
+                barHeight = (dataArray[i] / 255) * height * 0.8;
+                
+                // Red gradient based on frequency
+                const gradient = ctx.createLinearGradient(0, height - barHeight, 0, height);
+                gradient.addColorStop(0, '#ff0033');
+                gradient.addColorStop(0.7, '#ff4444');
+                gradient.addColorStop(1, '#ff8888');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(x, height - barHeight, barWidth, barHeight);
+                
+                x += barWidth + 1;
+            }
+            
+            // Draw center waveform
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            const sliceWidth = width / dataArray.length;
+            x = 0;
+            
+            for(let i = 0; i < dataArray.length; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = v * height / 2;
+                
+                if(i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+                
+                x += sliceWidth;
+            }
+            
+            ctx.lineTo(width, height / 2);
+            ctx.stroke();
+            
+            // Draw pulsing circle in center
+            const avgFreq = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+            const centerSize = 8 + (avgFreq / 15);
+            ctx.beginPath();
+            ctx.arc(width / 2, height / 2, centerSize, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 0, 0, ${0.3 + avgFreq / 400})`;
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        // Event listeners
+        audio.addEventListener('play', function() {
+            initAudio();
+            statusEl.textContent = "Playing...";
+            statusEl.classList.add('animate-pulse');
+            statusEl.style.color = "#ff0033";
+        });
+
+        audio.addEventListener('pause', function() {
+            statusEl.textContent = "Paused - Click to Resume";
+            statusEl.classList.remove('animate-pulse');
+            statusEl.style.color = "#888";
+        });
+
+        audio.addEventListener('ended', function() {
+            statusEl.textContent = "Audio Ended - Click to Replay";
+            statusEl.classList.remove('animate-pulse');
+            statusEl.style.color = "#888";
+        });
+
+        // Click canvas to play/pause
+        canvas.addEventListener('click', function() {
+            if (audio.paused) {
+                audio.play().catch(err => {
+                    console.log('Playback prevented:', err);
+                    statusEl.textContent = "Click again to play";
+                });
+            } else {
+                audio.pause();
+            }
+        });
+
+        // Hexagon hover effects
+        const hexagons = document.querySelectorAll('.hexagon');
+        hexagons.forEach((hex, index) => {
+            hex.addEventListener('click', () => {
+                hexagons.forEach(h => h.style.opacity = '0.5');
+                hex.style.opacity = '1';
+                hex.style.filter = 'brightness(1.3) drop-shadow(0 0 20px rgba(255, 0, 51, 0.6))';
+                
+                setTimeout(() => {
+                    hexagons.forEach(h => {
+                        h.style.opacity = '1';
+                        h.style.filter = 'none';
+                    });
+                }, 500);
+            });
+        });
+
+        // Glitch effect on logo hover
+        const logoWrapper = document.querySelector('.logo-section-wrapper');
+        if (logoWrapper) {
+            logoWrapper.addEventListener('mouseenter', () => {
+                logoWrapper.style.transform = 'scale(1.05)';
+            });
+            
+            logoWrapper.addEventListener('mouseleave', () => {
+                logoWrapper.style.transform = 'scale(1)';
+            });
+        }
+
+        // Idle animation for canvas when no audio
+        function idleVisualization() {
+            if (!audio.paused) return;
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            const time = Date.now() * 0.001;
+            
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Draw sine waves
+            ctx.strokeStyle = 'rgba(255, 0, 51, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            for(let x = 0; x < width; x++) {
+                const y = height / 2 + Math.sin((x * 0.02) + time) * 20;
+                if(x === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+            
+            // Second wave
+            ctx.strokeStyle = 'rgba(255, 0, 51, 0.2)';
+            ctx.beginPath();
+            for(let x = 0; x < width; x++) {
+                const y = height / 2 + Math.sin((x * 0.03) + time * 1.5) * 15;
+                if(x === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+            
+            requestAnimationFrame(idleVisualization);
+        }
+
+        // Start idle animation
+        idleVisualization();
+
+        // Smooth scroll for internal links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
