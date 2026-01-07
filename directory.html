@@ -1,703 +1,197 @@
 <!DOCTYPE html>
-<html lang='en'>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>wordstar.nexus</title>
-
-    <!-- FONTS -->
-    <link href="https://fonts.googleapis.com/css?family=Bree+Serif" rel="stylesheet"> 
-    <link href="https://fonts.googleapis.com/css?family=Pacifico" rel="stylesheet"> 
-    <link href="https://fonts.googleapis.com/css?family=Text+Me+One" rel="stylesheet"> 
-    <link href="https://fonts.googleapis.com/css?family=Quattrocento+Sans" rel="stylesheet">
-    
+    <title>WordStar Nexus</title>
     <style>
-        /* =========================================
-           1. LAYOUT & SCALING LOGIC
-           ========================================= */
-        * { box-sizing: border-box; }
-        
-        body {
-            margin: 0; padding: 0;
-            overflow-x: hidden;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            background: linear-gradient(135deg, #0a0a0f 0%, #1a0a15 100%);
-            font-family: 'Quattrocento Sans', sans-serif;
+        /* --- CSS VARIABLES & RESET --- */
+        :root {
+            --ws-blue: #0000AA; /* Classic WordStar/DOS Blue */
+            --ws-dark: #050510;
+            --ws-text: #E0E0E0;
+            --ws-accent: #FFFF00; /* Yellow for highlights */
+            --nexus-cyan: #00FFFF;
+            --nexus-magenta: #FF0055;
+            --font-main: 'Courier New', Courier, monospace;
         }
 
-        .content-container {
-            width: 100%;
-            max-width: 1400px;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--ws-dark);
+            color: var(--ws-text);
+            font-family: var(--font-main);
+            height: 100vh;
+            overflow: hidden; /* Prevent scrollbars for the full-screen app feel */
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* --- THREE.JS BACKGROUND --- */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.6; /* Dim the 3D fx slightly so text is readable */
+        }
+
+        /* --- UI LAYER --- */
+        #ui-layer {
             position: relative;
             z-index: 10;
-            padding: 20px;
-        }
-
-        .main {
-            width: 100%;
-            transform-origin: top center;
-            transition: transform 0.3s ease;
-        }
-
-        /* MOBILE SCALER */
-        @media (max-width: 768px) {
-            .main {
-                transform: scale(0.85); 
-            }
-            .hexagon-container {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
-                width: 100%;
-            }
-            .sep-container { display: none !important; }
-        }
-
-        /* =========================================
-           2. VIDEO POSITIONING (Fixed Background)
-           ========================================= */
-        .triangle-video-frame {
-            position: fixed;
-            bottom: 336px; 
-            left: 20px;
-            width: 666px; 
-            height: 385px; 
-            background-color: #ffffff; 
-            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-            z-index: 6; 
-            pointer-events: none;
-            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3));
-        }
-
-        .triangle-inner-video {
-            width: 100%;
-            height: 100%;
-            transform: scale(0.99); 
-            transform-origin: center bottom;
-            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-            background: #000; 
-        }
-
-        .triangle-inner-video video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover; 
-            opacity: 0.9; 
-        }
-
-        @media (max-width: 768px) {
-            .triangle-video-frame {
-                width: 300px; 
-                height: 173px; 
-                left: 15px;
-                bottom: 190px; 
-            }
-        }
-
-        /* =========================================
-           3. BAND INFO BOX (Bottom Left)
-           ========================================= */
-        .band-info-box {
-            position: fixed;
-            bottom: 20px; left: 20px;
-            width: 666px;
-            background: rgba(10, 10, 15, 0.85);
-            backdrop-filter: blur(8px);
-            border-left: 3px solid #ff0033;
-            padding: 20px;
-            border-radius: 0 8px 8px 0;
-            z-index: 500; 
-            color: #eee;
-            font-size: 14px;
-            line-height: 1.5;
-            box-shadow: 0 5px 20px rgba(255, 0, 51, 0.2);
-        }
-
-        .band-header {
             display: flex;
-            align-items: center;
-            margin-bottom: 12px;
-            color: #fff;
-            font-family: 'Text Me One', sans-serif;
-            font-size: 1.1em;
+            flex-direction: column;
+            height: 100%;
+            justify-content: space-between;
+            background: radial-gradient(circle at center, transparent 0%, #000000 120%);
+        }
+
+        /* --- TOP STATUS BAR (WordStar Style) --- */
+        .status-bar {
+            background-color: var(--ws-text);
+            color: var(--ws-blue);
+            padding: 5px 15px;
+            font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
-        }
-
-        .band-link {
-            display: block; margin-top: 12px;
-            color: #ff0033; text-decoration: none;
-            font-size: 0.9em; font-style: italic;
-            transition: color 0.3s ease;
-        }
-        .band-link:hover { color: #fff; }
-
-        @media (max-width: 768px) {
-            .band-info-box { 
-                bottom: 15px; left: 15px; 
-                width: calc(100% - 30px); 
-                max-width: 400px;
-                font-size: 12px; 
-                padding: 15px; 
-            }
-        }
-
-        /* =========================================
-           4. GLITCH ORB
-           ========================================= */
-        .orb-container {
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 15px; 
-            width: 40px;
-            height: 40px;
-            position: relative;
-        }
-
-        .glitch-orb {
-            width: 100%; height: 100%;
-            fill: none; stroke-width: 3;
-            overflow: visible;
-        }
-
-        .orb-circle { stroke: #ff0033; } 
-        .orb-triangle { stroke: #ffffff; } 
-
-        .orb-container svg {
-            animation: slow-spin 10s linear infinite;
-            filter: drop-shadow(0 0 5px rgba(255, 0, 51, 0.4));
-            transition: all 0.2s ease;
-        }
-
-        .orb-container:hover svg {
-            animation: glitch-shake 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
-            filter: drop-shadow(2px 2px 0px rgba(255, 255, 255, 0.5)) 
-                    drop-shadow(-2px -2px 0px rgba(255, 0, 51, 0.8));
-        }
-
-        .orb-container:hover .orb-triangle { fill: rgba(255, 255, 255, 0.1); }
-
-        @keyframes slow-spin { 
-            0% { transform: rotate(0deg); } 
-            100% { transform: rotate(360deg); } 
-        }
-        @keyframes glitch-shake {
-            0% { transform: translate(0) rotate(0deg); }
-            20% { transform: translate(-2px, 2px) rotate(-5deg); }
-            40% { transform: translate(-2px, -2px) rotate(5deg); }
-            60% { transform: translate(2px, 2px) rotate(-5deg); }
-            80% { transform: translate(2px, -2px) rotate(5deg); }
-            100% { transform: translate(0) rotate(0deg); }
-        }
-
-        /* =========================================
-           5. TOP NAVIGATION
-           ========================================= */
-        .top-menu {
-            text-align: center;
-            padding: 30px 0;
-            font-family: 'Text Me One', sans-serif;
-            font-size: 18px;
-            color: #888;
-            letter-spacing: 2px;
-        }
-
-        .top-menu a {
-            color: #ff0033;
-            text-decoration: none;
-            transition: color 0.3s ease;
-            cursor: pointer;
-        }
-
-        .top-menu a:hover {
-            color: #fff;
-        }
-
-        .top-menu span {
-            margin: 0 10px;
-            color: #444;
-        }
-
-        /* =========================================
-           6. HEXAGON CONTAINER
-           ========================================= */
-        .hexagon-container {
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
+        }
+
+        /* --- MAIN CONTENT CENTER --- */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
             align-items: center;
-            margin: 40px 0;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* --- LOGO STYLING --- */
+        .ws-logo {
+            width: 100%;
+            max-width: 700px;
+            height: auto;
+            margin-bottom: 2rem;
+            filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.3));
+        }
+
+        .logo-text path {
+            fill: var(--ws-text);
+            transition: fill 0.3s ease;
+        }
+
+        /* The X - The Nexus Point */
+        .logo-x path {
+            fill: var(--nexus-magenta);
+            animation: pulse-glow 3s infinite alternate;
+            transform-origin: center;
+        }
+
+        .logo-x:hover path {
+            fill: var(--nexus-cyan);
+            filter: drop-shadow(0 0 15px var(--nexus-cyan));
+        }
+
+        /* --- LINKS CONTAINER --- */
+        .links-container {
+            display: flex;
             gap: 20px;
             flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
         }
 
-        .hexagon {
-            width: 150px;
-            height: 173px;
+        .ws-link {
+            text-decoration: none;
+            color: var(--nexus-cyan);
+            border: 1px solid var(--nexus-cyan);
+            padding: 10px 20px;
+            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.5);
+            transition: all 0.2s ease;
             position: relative;
-            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-            background: #1a1a1f;
-            cursor: pointer;
-            transition: transform 0.3s ease, filter 0.3s ease;
         }
 
-        .hexagon:hover {
-            transform: scale(1.1);
-            filter: brightness(1.2);
+        .ws-link::before {
+            content: '[ ';
+            color: var(--ws-text);
+        }
+        .ws-link::after {
+            content: ' ]';
+            color: var(--ws-text);
         }
 
-        .hex-bg, .hex-curtain, .hex-image {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            object-fit: cover;
+        .ws-link:hover {
+            background: var(--nexus-cyan);
+            color: var(--ws-dark);
+            box-shadow: 0 0 15px var(--nexus-cyan);
         }
 
-        .hex-number {
-            position: absolute;
-            bottom: 10px;
-            font-family: 'Text Me One', sans-serif;
-            font-size: 14px;
-            color: #ff0033;
-            font-weight: bold;
+        /* --- BOTTOM MENU BAR --- */
+        .menu-bar {
+            background-color: var(--ws-blue);
+            color: var(--ws-text);
+            padding: 8px 15px;
+            border-top: 2px solid var(--ws-text);
+            font-size: 0.9rem;
         }
-
-        .hex-number:first-of-type { left: 10px; }
-        .hex-number:last-of-type { right: 10px; }
-
-        .sep-container {
-            display: flex;
-            gap: 5px;
-            align-items: center;
-        }
-
-        .sep-circle {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #ff0033;
-            opacity: 0.5;
-        }
-
-        /* =========================================
-           7. MAIN SECTIONS
-           ========================================= */
-        .main-section-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
-            margin: 50px 0;
-            padding: 0 20px;
-        }
-
-        .section1, .section2, .section3, .section4, .section5 {
-            background: rgba(20, 20, 25, 0.6);
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 0, 51, 0.2);
-            border-radius: 12px;
-            padding: 30px;
-            color: #ddd;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .section1:hover, .section2:hover, .section3:hover, .section4:hover, .section5:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(255, 0, 51, 0.3);
-        }
-
-        .s1-title {
-            font-family: 'Bree Serif', serif;
-            font-size: 32px;
-            color: #ff0033;
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        .s1-title2 {
-            font-size: 18px;
-            color: #aaa;
-            display: block;
-            margin-bottom: 20px;
-        }
-
-        .s1-text {
-            display: block;
-            line-height: 1.6;
-            margin: 20px 0;
-        }
-
-        hr {
-            border: none;
-            border-top: 1px solid rgba(255, 0, 51, 0.3);
-            margin: 15px 0;
-        }
-
-        .s1-line1, .s1-line2 {
-            display: block;
-            margin: 10px 0;
-            font-size: 14px;
-        }
-
-        .s1-line1 a, .s1-line2 a {
-            color: #ff0033;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .s1-line1 a:hover, .s1-line2 a:hover {
-            color: #fff;
-        }
-
-        /* SECTION 2 */
-        .s2-header {
-            font-family: 'Bree Serif', serif;
-            font-size: 28px;
-            color: #ff0033;
-            line-height: 1.3;
-            margin-bottom: 20px;
-        }
-
-        .s2-header span {
-            color: #888;
-        }
-
-        .s2-entry {
-            display: flex !important;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 0, 51, 0.1);
-            text-decoration: none !important;
-            color: #ddd !important;
-            transition: all 0.3s ease;
-        }
-
-        .s2-entry:hover {
-            padding-left: 10px;
-            color: #ff0033 !important;
-        }
-
-        .s2-entry span {
-            font-size: 16px;
-        }
-
-        /* SECTION 3 */
-        .s3-pastel-img {
-            width: 100%;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .s3_letters_flex_row {
-            display: flex;
-            justify-content: space-between;
-            margin: 15px 0;
-        }
-
-        .s3_letters_flex_row p {
-            font-family: 'Text Me One', sans-serif;
-            color: #ff0033;
-            font-size: 18px;
-            margin: 0;
-        }
-
-        .s3_letters_flex_row span {
-            color: #aaa;
-            font-size: 14px;
-            text-align: right;
-        }
-
-        /* SECTION 4 */
-        .s4-pending-title {
-            font-family: 'Text Me One', sans-serif;
-            font-size: 28px;
-            color: #ff0033;
-            letter-spacing: 3px;
-            margin: 20px 0;
-            text-align: center;
-        }
-
-        .s4-paragraphs p {
-            text-align: center;
-            margin: 10px 0;
-            color: #aaa;
-        }
-
-        /* SECTION 5 */
-        .section5 h2 {
-            font-family: 'Pacifico', cursive;
-            color: #ff0033;
-            font-size: 24px;
-            margin-bottom: 15px;
-        }
-
-        .section5 p {
-            line-height: 1.6;
-            color: #ddd;
-            font-style: italic;
-        }
-
-        .section5 a {
-            color: #ff0033;
-            text-decoration: none;
-            display: block;
-            margin-top: 15px;
-            transition: color 0.3s ease;
-        }
-
-        .section5 a:hover {
-            color: #fff;
-        }
-
-        /* =========================================
-           8. WORDSTAR LOGO
-           ========================================= */
-        .logo-section-wrapper {
-            display: inline-block;
-            cursor: pointer;
-            transition: transform 0.3s ease;
-        }
-
-        .wordstar-logo {
-            width: 100%;
-            max-width: 500px;
-            height: auto;
-            overflow: visible;
-        }
-
-        .logo-text {
-            fill: #ff0033;
-            transition: all 0.2s ease;
-        }
-
-        .logo-x {
-            fill: #ffffff;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-
-        .logo-section-wrapper:hover .logo-text {
-            animation: text-shock 0.15s infinite alternate;
-        }
-
-        .logo-section-wrapper:hover .logo-x {
-            animation: x-pulse 0.5s infinite;
-        }
-
-        @keyframes text-shock {
-            0% { transform: translate(0, 0); }
-            25% { transform: translate(-1px, 1px); }
-            50% { transform: translate(1px, -1px); }
-            100% { transform: translate(0, 0); }
-        }
-
-        @keyframes x-pulse {
-            0%, 100% { fill: #ffffff; }
-            50% { fill: #ff0033; }
-        }
-
-        /* =========================================
-           9. AUDIO VISUALIZER
-           ========================================= */
-        #sigil-canvas {
-            background: #000;
-            border: 1px solid #333;
-            margin-bottom: 10px;
-            display: block;
-            width: 100%;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        #witch-status {
-            font-size: 12px;
-            color: #888;
-            margin-bottom: 10px;
-            font-family: 'Text Me One', sans-serif;
-        }
-
-        .animate-pulse {
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        /* =========================================
-           10. RESPONSIVE ADJUSTMENTS
-           ========================================= */
-        @media (max-width: 768px) {
-            .main-section-container {
-                grid-template-columns: 1fr;
-            }
-
-            .hexagon {
-                width: 120px;
-                height: 138px;
-            }
-
-            .top-menu {
-                font-size: 14px;
-            }
-        }
-    </style>
-    <style>
-    .trigger-boxes {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin: 40px 0;
-}
-
-.trigger-box {
-    width: 80px;
-    height: 80px;
-    background: rgba(255, 0, 51, 0.1);
-    border: 2px solid #ff0033;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Text Me One', sans-serif;
-    font-size: 24px;
-    color: #ff0033;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.trigger-box:hover {
-    background: rgba(255, 0, 51, 0.3);
-    transform: scale(1.1);
-}
-
-.trigger-box.active {
-    background: #ff0033;
-    color: #000;
-}
-
-.detail-panel {
-    display: none;
-    background: rgba(20, 20, 25, 0.7);
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 0, 51, 0.2);
-    border-radius: 12px;
-    padding: 30px;
-    margin: 30px 0;
-    animation: slideIn 0.3s ease;
-}
-
-.detail-panel.active {
-    display: block;
-}
-
-@keyframes slideIn {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
         
+        .menu-key { color: var(--ws-accent); font-weight: bold; }
+
+        /* --- ANIMATIONS --- */
+        @keyframes pulse-glow {
+            from { filter: drop-shadow(0 0 2px var(--nexus-magenta)); }
+            to { filter: drop-shadow(0 0 10px var(--nexus-magenta)); }
+        }
+
+        /* CRT Scanline Effect Overlay */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0,0,0,0.1) 50%,
+                rgba(0,0,0,0.1)
+            );
+            background-size: 100% 4px;
+            z-index: 99;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
 
-    <!-- THE WHITE TRIANGLE VIDEO -->
-    <div class="triangle-video-frame">
-        <div class="triangle-inner-video">
-            <video src="https://github.com/ghostm68/99/raw/main/lyinkrealmthm_20230121_185520920.mp4" 
-                   autoplay muted loop playsinline></video>
-        </div>
-    </div>
+    <!-- Three.js Background -->
+    <div id="canvas-container"></div>
 
-   <!-- HORIZONTAL TRIGGER BOXES -->
-<div class="trigger-boxes">
-    <div class="trigger-box" data-box="1">01</div>
-    <div class="trigger-box" data-box="2">02</div>
-    <div class="trigger-box" data-box="3">03</div>
-    <div class="trigger-box" data-box="4">04</div>
-    <div class="trigger-box" data-box="5">05</div>
-</div>
+    <!-- CRT Scanline Overlay -->
+    <div class="scanlines"></div>
 
-<!-- DETAIL PANELS (shown when triggered) -->
-<div class="detail-panel" id="panel-1">
-    <span class="box-title">wordstar</span>
-    <hr>
-    <span class="box-subtitle">at <em>your</em> service</span>
-    <p class="box-text">text editor for writers - no trackers, no ads, just pure writing</p>
-    <div class="box-links">
-        <a href="https://tiktok.com/@twoskinnygirls" class="box-link" target="_blank">tiktok.com/@twoskinnygirls</a>
-        <a href="https://t.me/inkrealm" class="box-link" target="_blank">t.me/inkrealm</a>
-    </div>
-</div>
-
-<div class="detail-panel" id="panel-2">
-    <span class="box-title">new novels</span>
-    <span class="box-subtitle">screenplays and stories</span>
-    <hr>
-    <div class="link-list">
-        <a href="https://wordstar.nexus/38" class="box-link"><span>38</span><span>→</span></a>
-        <a href="https://wordstar.nexus/bakedalaska" class="box-link"><span>owner</span><span>→</span></a>
-        <a href="https://wordstar.nexus/dejavuglitches" class="box-link"><span>dejavu</span><span>→</span></a>
-        <a href="https://wordstar.nexus/ten" class="box-link"><span>noir</span><span>→</span></a>
-        <a href="https://wordstar.nexus/dreamweaver" class="box-link"><span>dream</span><span>→</span></a>
-    </div>
-</div>
-
-<div class="detail-panel" id="panel-3">
-    <img src="https://github.com/ghostm68/pantheon/raw/main/wordstarnc17.gif" alt="wordstar interface">
-    <span class="box-title">text editors</span>
-    <span class="box-subtitle">features ai and dictionaries</span>
-    <hr>
-    <p class="box-text">nous · minraud · 2741 · satellite · app · birch</p>
-</div>
-
-<div class="detail-panel" id="panel-4">
-    <hr>
-    <div class="title-letters">
-        <span>W</span><span>o</span><span>r</span><span>d</span><span>s</span><span>T</span><span>a</span><span>R</span>
-    </div>
-    <hr>
-    <p class="box-text" style="text-align: center;">
-        nexus = no trackers or spyware<br>
-        ad-free zone; wordstar.nexus
-    </p>
-</div>
-
-<div class="detail-panel" id="panel-5">
-    <div class="quote">pound quote...</div>
-    <p>Time is not!<br>Time is the evil!<br>
-    <a href="https://wordstar.nexus/dejavuglitches" class="box-link">Beloved the hours!</a></p>
-</div>
-    <!-- FIXED BAND INFO BOX + ORB + AUDIO -->
-    <div class="band-info-box">
+    <!-- UI Layer -->
+    <div id="ui-layer">
         
-        <div class="band-header">
-            <a href="https://wordstar.nexus" target="_blank" rel="noopener">
-                <div class="orb-container">
-                    <svg class="glitch-orb" viewBox="0 0 100 100">
-                        <circle class="orb-circle" cx="50" cy="50" r="45" />
-                        <polygon class="orb-triangle" points="50,25 78,75 22,75" />
-                    </svg>
-                </div>
-            </a>
-            <span>6jan2026</span>
+        <!-- WordStar Style Header -->
+        <div class="status-bar">
+            <span>D:NEXUS.WS PAGE 1 LINE 1 COL 01</span>
+            <span>INSERT ON</span>
         </div>
 
-        <div id="witch-status">Audio Ready - Click Canvas to Play</div>
-        <canvas id="sigil-canvas" width="626" height="60"></canvas>
-        <audio id="viz-audio" loop>
-            <source src="itm406.mp3" type="audio/mpeg">
-        </audio>
-
-        <p style="margin: 15px 0 5px 0; font-size: 13px;">
-            all rights reserved...©inky via "domenicobrz" 𓅔
-        </p>
-        
-        <a href="https://wordstar.nexus" class="logo-section-wrapper">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 90" class="wordstar-logo">
+        <div class="main-content">
+            <!-- SVG LOGO -->
+            <svg class="ws-logo" viewBox="0 0 600 90" xmlns="http://www.w3.org/2000/svg">
                 <g class="logo-text">
                     <path d="M 25 25 L 32 25 L 39 60 L 46 25 L 52 25 L 59 60 L 66 25 L 73 25 L 63 68 L 57 68 L 50 35 L 43 68 L 37 68 Z"/>
                     <path d="M 90 23 Q 105 23 105 45.5 Q 105 68 90 68 Q 75 68 75 45.5 Q 75 23 90 23 Z M 90 28 Q 82 28 82 45.5 Q 82 63 90 63 Q 98 63 98 45.5 Q 98 28 90 28 Z"/>
@@ -708,263 +202,157 @@
                     <path d="M 265 25 Q 279 25 279 42 L 279 68 L 272 68 L 272 63 Q 268 68 260 68 Q 248 68 248 58 Q 248 48 260 48 L 272 48 L 272 42 Q 272 30 264 30 Q 257 30 256 36 L 249 36 Q 250 25 265 25 Z M 272 53 L 261 53 Q 255 53 255 58 Q 255 63 261 63 Q 272 63 272 53 Z"/>
                     <path d="M 294 25 L 301 25 L 301 33 Q 304 25 312 25 L 314 25 L 314 31 L 310 31 Q 301 31 301 40 L 301 68 L 294 68 Z"/>
                     <circle cx="330" cy="63" r="3"/>
+                    <path d="M 350 25 L 357 25 L 357 31 Q 361 25 370 25 Q 382 25 382 37 L 382 68 L 375 68 L 375 38 Q 375 30 368 30 Q 357 30 357 42 L 357 68 L 350 68 Z"/>
+                    <path d="M 397 25 Q 412 25 412 42 L 398 42 Q 398 50 398 52 Q 398 63 406 63 Q 411 63 412 58 L 419 58 Q 418 68 406 68 Q 391 68 391 46.5 Q 391 25 406 25 Z M 398 37 L 405 37 Q 405 30 406 30 Q 412 30 412 37 Z"/>
                 </g>
-                <g class="logo-x">
-                    <path d="M 345 18 L 359 18 L 375 40 L 391 18 L 405 18 L 383 46.5 L 407 75 L 393 75 L 375 51 L 357 75 L 343 75 L 367 46.5 Z"/>
+                <g class="logo-x" style="cursor: pointer;">
+                    <path d="M 435 18 L 449 18 L 465 40 L 481 18 L 495 18 L 473 46.5 L 497 75 L 483 75 L 465 51 L 447 75 L 433 75 L 457 46.5 Z"/>
                 </g>
                 <g class="logo-text">
-                    <path d="M 422 25 L 429 25 L 429 31 Q 433 25 442 25 Q 454 25 454 37 L 454 68 L 447 68 L 447 38 Q 447 30 440 30 Q 429 30 429 42 L 429 68 L 422 68 Z"/>
-                    <path d="M 469 25 Q 484 25 484 42 L 470 42 Q 470 50 470 52 Q 470 63 478 63 Q 483 63 484 58 L 491 58 Q 490 68 478 68 Q 463 68 463 46.5 Q 463 25 478 25 Z M 470 37 L 477 37 Q 477 30 478 30 Q 484 30 484 37 Z"/>
                     <path d="M 512 25 L 519 25 L 519 55 Q 519 63 526 63 Q 537 63 537 51 L 537 25 L 544 25 L 544 68 L 537 68 L 537 62 Q 533 68 524 68 Q 512 68 512 56 Z"/>
                     <path d="M 559 25 Q 574 25 574 35 L 567 35 Q 567 30 559 30 Q 554 30 554 33.5 Q 554 37 559 38 L 567 40 Q 576 42 576 51 Q 576 68 562 68 Q 547 68 547 57 L 554 57 Q 554 63 562 63 Q 568 63 568 59 Q 568 56 563 54.5 L 555 52.5 Q 547 50.5 547 42 Q 547 25 559 25 Z"/>
                 </g>
             </svg>
-        </a>
-        
-        <a href="https://inkrealm.info/altstadt" class="band-link">Read full bio &rarr;</a>
+
+            <!-- Navigation Links -->
+            <div class="links-container">
+                <a href="#" class="ws-link">ARCHIVES</a>
+                <a href="#" class="ws-link">SYSTEMS</a>
+                <a href="#" class="ws-link">CONTACT</a>
+                <a href="#" class="ws-link">LOGIN</a>
+            </div>
+        </div>
+
+        <!-- WordStar Style Footer Menu -->
+        <div class="menu-bar">
+            <span class="menu-key">^X</span> EXIT &nbsp; 
+            <span class="menu-key">^S</span> SAVE &nbsp; 
+            <span class="menu-key">^K</span> BLOCK &nbsp; 
+            <span class="menu-key">^Q</span> QUICK &nbsp; 
+            <span class="menu-key">^P</span> PRINT &nbsp; 
+            <span class="menu-key">1</span> HELP
+        </div>
     </div>
 
-    <script>
-        // ==== AUDIO VISUALIZER ====
-        const canvas = document.getElementById('sigil-canvas');
-        const ctx = canvas.getContext('2d');
-        const audio = document.getElementById('viz-audio');
-        const statusEl = document.getElementById('witch-status');
-        let audioContext, analyser, source, dataArray;
-        let isInitialized = false;
-
-        // Initialize audio context on first interaction
-        function initAudio() {
-            if (!isInitialized) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                analyser = audioContext.createAnalyser();
-                source = audioContext.createMediaElementSource(audio);
-                source.connect(analyser);
-                analyser.connect(audioContext.destination);
-                
-                analyser.fftSize = 256;
-                const bufferLength = analyser.frequencyBinCount;
-                dataArray = new Uint8Array(bufferLength);
-                
-                isInitialized = true;
-                visualize();
+    <!-- THREE.JS IMPORTS (ES Modules via CDN) -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
             }
         }
+    </script>
 
-        // Visualization function
-        function visualize() {
-            if (!analyser) return;
-            
-            const width = canvas.width;
-            const height = canvas.height;
-            
-            requestAnimationFrame(visualize);
-            
-            analyser.getByteFrequencyData(dataArray);
-            
-            // Clear with fade effect
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-            ctx.fillRect(0, 0, width, height);
-            
-            const barWidth = (width / dataArray.length) * 2.5;
-            let barHeight;
-            let x = 0;
-            
-            // Draw frequency bars
-            for(let i = 0; i < dataArray.length; i++) {
-                barHeight = (dataArray[i] / 255) * height * 0.8;
-                
-                // Red gradient based on frequency
-                const gradient = ctx.createLinearGradient(0, height - barHeight, 0, height);
-                gradient.addColorStop(0, '#ff0033');
-                gradient.addColorStop(0.7, '#ff4444');
-                gradient.addColorStop(1, '#ff8888');
-                
-                ctx.fillStyle = gradient;
-                ctx.fillRect(x, height - barHeight, barWidth, barHeight);
-                
-                x += barWidth + 1;
-            }
-            
-            // Draw center waveform
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            
-            const sliceWidth = width / dataArray.length;
-            x = 0;
-            
-            for(let i = 0; i < dataArray.length; i++) {
-                const v = dataArray[i] / 128.0;
-                const y = v * height / 2;
-                
-                if(i === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-                
-                x += sliceWidth;
-            }
-            
-            ctx.lineTo(width, height / 2);
-            ctx.stroke();
-            
-            // Draw pulsing circle in center
-            const avgFreq = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-            const centerSize = 8 + (avgFreq / 15);
-            ctx.beginPath();
-            ctx.arc(width / 2, height / 2, centerSize, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255, 0, 0, ${0.3 + avgFreq / 400})`;
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-            ctx.lineWidth = 1;
-            ctx.stroke();
+    <script type="module">
+        import * as THREE from 'three';
+
+        // --- SCENE SETUP ---
+        const scene = new THREE.Scene();
+        // Add subtle fog to blend background
+        scene.fog = new THREE.FogExp2(0x050510, 0.02);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        
+        const container = document.getElementById('canvas-container');
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // --- OBJECTS: THE NEXUS CUBE ---
+        const geometry = new THREE.BoxGeometry(20, 20, 20);
+        
+        // Wireframe Material
+        const edges = new THREE.EdgesGeometry(geometry);
+        const lineMaterial = new THREE.LineBasicMaterial({ color: 0x00FFFF, transparent: true, opacity: 0.3 });
+        const wireCube = new THREE.LineSegments(edges, lineMaterial);
+        
+        // Inner "Core" Cube
+        const coreGeo = new THREE.BoxGeometry(10, 10, 10);
+        const coreMat = new THREE.MeshBasicMaterial({ color: 0xFF0055, wireframe: true, transparent: true, opacity: 0.1 });
+        const coreCube = new THREE.Mesh(coreGeo, coreMat);
+
+        // Particle System (Stars/Data bits)
+        const particlesGeo = new THREE.BufferGeometry();
+        const particleCount = 200;
+        const posArray = new Float32Array(particleCount * 3);
+        
+        for(let i = 0; i < particleCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 60; // Spread within 60 units
         }
-
-        // Event listeners
-        audio.addEventListener('play', function() {
-            initAudio();
-            statusEl.textContent = "Playing...";
-            statusEl.classList.add('animate-pulse');
-            statusEl.style.color = "#ff0033";
+        
+        particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMat = new THREE.PointsMaterial({
+            size: 0.15,
+            color: 0xE0E0E0,
+            transparent: true,
+            opacity: 0.8
         });
+        const particlesMesh = new THREE.Points(particlesGeo, particlesMat);
 
-        audio.addEventListener('pause', function() {
-            statusEl.textContent = "Paused - Click to Resume";
-            statusEl.classList.remove('animate-pulse');
-            statusEl.style.color = "#888";
-        });
+        scene.add(wireCube);
+        scene.add(coreCube);
+        scene.add(particlesMesh);
 
-        audio.addEventListener('ended', function() {
-            statusEl.textContent = "Audio Ended - Click to Replay";
-            statusEl.classList.remove('animate-pulse');
-            statusEl.style.color = "#888";
-        });
+        camera.position.z = 30;
 
-        // Click canvas to play/pause
-        canvas.addEventListener('click', function() {
-            if (audio.paused) {
-                audio.play().catch(err => {
-                    console.log('Playback prevented:', err);
-                    statusEl.textContent = "Click again to play";
-                });
+        // --- INTERACTION STATE ---
+        let rotationSpeed = 0.002;
+        let isGlitching = false;
+
+        // --- ANIMATION LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Base Rotation
+            wireCube.rotation.x += rotationSpeed;
+            wireCube.rotation.y += rotationSpeed;
+            
+            coreCube.rotation.x -= rotationSpeed * 1.5; // Rotate opposite
+            coreCube.rotation.y -= rotationSpeed * 1.5;
+
+            particlesMesh.rotation.y += rotationSpeed * 0.2;
+
+            // Mouse Interaction (Glitch Effect)
+            if (isGlitching) {
+                wireCube.scale.setScalar(1 + Math.random() * 0.1);
+                lineMaterial.color.setHex(Math.random() > 0.5 ? 0xFF0055 : 0x00FFFF);
             } else {
-                audio.pause();
+                wireCube.scale.setScalar(1);
+                lineMaterial.color.setHex(0x00FFFF);
             }
-        });
 
-        // Hexagon hover effects
-        const hexagons = document.querySelectorAll('.hexagon');
-        hexagons.forEach((hex, index) => {
-            hex.addEventListener('click', () => {
-                hexagons.forEach(h => h.style.opacity = '0.5');
-                hex.style.opacity = '1';
-                hex.style.filter = 'brightness(1.3) drop-shadow(0 0 20px rgba(255, 0, 51, 0.6))';
-                
-                setTimeout(() => {
-                    hexagons.forEach(h => {
-                        h.style.opacity = '1';
-                        h.style.filter = 'none';
-                    });
-                }, 500);
-            });
-        });
-
-        // Glitch effect on logo hover
-        const logoWrapper = document.querySelector('.logo-section-wrapper');
-        if (logoWrapper) {
-            logoWrapper.addEventListener('mouseenter', () => {
-                logoWrapper.style.transform = 'scale(1.05)';
-            });
-            
-            logoWrapper.addEventListener('mouseleave', () => {
-                logoWrapper.style.transform = 'scale(1)';
-            });
+            renderer.render(scene, camera);
         }
 
-        // Idle animation for canvas when no audio
-        function idleVisualization() {
-            if (!audio.paused) return;
-            
-            const width = canvas.width;
-            const height = canvas.height;
-            const time = Date.now() * 0.001;
-            
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-            ctx.fillRect(0, 0, width, height);
-            
-            // Draw sine waves
-            ctx.strokeStyle = 'rgba(255, 0, 51, 0.3)';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            
-            for(let x = 0; x < width; x++) {
-                const y = height / 2 + Math.sin((x * 0.02) + time) * 20;
-                if(x === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            }
-            ctx.stroke();
-            
-            // Second wave
-            ctx.strokeStyle = 'rgba(255, 0, 51, 0.2)';
-            ctx.beginPath();
-            for(let x = 0; x < width; x++) {
-                const y = height / 2 + Math.sin((x * 0.03) + time * 1.5) * 15;
-                if(x === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            }
-            ctx.stroke();
-            
-            requestAnimationFrame(idleVisualization);
-        }
+        animate();
 
-        // Start idle animation
-        idleVisualization();
-
-        // Smooth scroll for internal links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
+        // --- RESIZE HANDLER ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
         });
-    </script>
-    <script>
-        // Trigger box interaction
-const triggerBoxes = document.querySelectorAll('.trigger-box');
-const detailPanels = document.querySelectorAll('.detail-panel');
 
-triggerBoxes.forEach(box => {
-    box.addEventListener('click', () => {
-        const targetId = box.getAttribute('data-box');
+        // --- INTERACTIVITY ---
+        // Connect the SVG "X" to the 3D scene
+        const logoX = document.querySelector('.logo-x');
         
-        // Remove active from all
-        triggerBoxes.forEach(b => b.classList.remove('active'));
-        detailPanels.forEach(p => p.classList.remove('active'));
-        
-        // Add active to clicked
-        box.classList.add('active');
-        document.getElementById(`panel-${targetId}`).classList.add('active');
-    });
-});
+        logoX.addEventListener('mousedown', () => {
+            isGlitching = true;
+            rotationSpeed = 0.05; // Fast spin
+        });
 
-// Show first panel by default
-triggerBoxes[0].classList.add('active');
-detailPanels[0].classList.add('active');
+        logoX.addEventListener('mouseup', () => {
+            isGlitching = false;
+            rotationSpeed = 0.002; // Return to normal
+        });
+
+        logoX.addEventListener('mouseleave', () => {
+            isGlitching = false;
+            rotationSpeed = 0.002;
+        });
+
     </script>
-
 </body>
 </html>
