@@ -123,31 +123,36 @@
     resize: none;
     outline: none;
     white-space: pre-wrap;
-    cursor: text; /* Classic block cursor logic handled via CSS usually, keeping default here for usability */
+    cursor: text; 
   }
   
-  /* Hide scrollbar for immersion */
   #editor::-webkit-scrollbar { width: 0px; background: transparent; }
 
-  /* --- 5. THE F-KEY FOOTER --- */
+  /* --- 5. THE F-KEY FOOTER (Redesigned) --- */
   #f-key-bar {
     display: flex;
     background-color: var(--bar-bg);
-    height: 25px;
+    height: 30px;
+    align-items: center;
+    border-top: 1px solid #000;
   }
   
   .f-key {
     flex: 1;
     color: var(--bar-text);
-    padding-left: 5px;
+    padding: 0 5px;
     font-size: 0.9rem;
     border-right: 1px solid #555;
     white-space: nowrap;
     overflow: hidden;
     cursor: pointer;
+    height: 100%;
+    display: flex;
+    align-items: center;
   }
-  .f-key b { font-weight: 900; }
+  .f-key b { font-weight: 900; margin-right: 4px; }
   .f-key:hover { background-color: var(--accent-red); color: white; }
+  .f-key:active { background-color: #fff; color: #000; }
 
 </style>
 </head>
@@ -185,15 +190,15 @@
         </div>
         <div>
           <div class="col-header">OTHER</div>
-          <div class="cmd-row"><span class="cmd-key">^J</span><span class="cmd-desc">stats/help</span></div>
-          <div class="cmd-row"><span class="cmd-key">^V</span><span class="cmd-desc">ins/over</span></div>
-          <div class="cmd-row"><span class="cmd-key">^L</span><span class="cmd-desc">find/repl</span></div>
+          <div class="cmd-row"><span class="cmd-key">^J</span><span class="cmd-desc">help</span></div>
+          <div class="cmd-row"><span class="cmd-key">^V</span><span class="cmd-desc">insert</span></div>
+          <div class="cmd-row"><span class="cmd-key">^L</span><span class="cmd-desc">find</span></div>
         </div>
         <div>
           <div class="col-header">MENUS</div>
-          <div class="cmd-row"><span class="cmd-key">^K</span><span class="cmd-desc">block & save</span></div>
+          <div class="cmd-row"><span class="cmd-key">^K</span><span class="cmd-desc">block</span></div>
           <div class="cmd-row"><span class="cmd-key">^P</span><span class="cmd-desc">print</span></div>
-          <div class="cmd-row"><span class="cmd-key">^Q</span><span class="cmd-desc">lorem ipsum</span></div>
+          <div class="cmd-row"><span class="cmd-key">^Q</span><span class="cmd-desc">quick</span></div>
         </div>
       </div>
     </div>
@@ -211,140 +216,122 @@
 
 (This is the Legacy Interface. Type here...)</textarea>
 
-  <!-- FOOTER -->
+  <!-- FOOTER: REORGANIZED AND CONNECTED -->
   <div id="f-key-bar">
-    <div class="f-key" onclick="showStats()"><b>1</b>Help</div>
-    <div class="f-key" onclick="insertControlCode('^S')"><b>3</b>Undrlin</div>
-    <div class="f-key" onclick="insertControlCode('^B')"><b>4</b>Bold</div>
-    <div class="f-key" onclick="performWordStarCommand('^Y')"><b>5</b>DelLine</div>
-    <div class="f-key" onclick="performWordStarCommand('^L')"><b>7</b>Find</div>
-    <div class="f-key" onclick="saveDocument()"><b>9</b>Save</div>
-    <div class="f-key" onclick="window.close()"><b>0</b>Exit</div>
+    <div class="f-key" onclick="cmd('help')"><b>1</b>HELP</div>
+    <div class="f-key" onclick="cmd('lorem')"><b>2</b>LOREM</div>
+    <div class="f-key" onclick="cmd('code', '^S')"><b>3</b>UNDLIN</div>
+    <div class="f-key" onclick="cmd('code', '^B')"><b>4</b>BOLD</div>
+    <div class="f-key" onclick="cmd('delLine')"><b>5</b>DEL LIN</div>
+    <div class="f-key" onclick="cmd('delWord')"><b>6</b>DEL WRD</div>
+    <div class="f-key" onclick="cmd('find')"><b>7</b>FIND</div>
+    <div class="f-key" onclick="cmd('ruler')"><b>8</b>RULER</div>
+    <div class="f-key" onclick="cmd('save')"><b>9</b>SAVE</div>
+    <div class="f-key" onclick="cmd('exit')"><b>10</b>CLEAR</div>
   </div>
+
 <script>
   const editor = document.getElementById('editor');
   const docStats = document.getElementById('doc-stats');
   const flags = document.getElementById('flags');
+  const rulerLine = document.getElementById('ruler-line');
   
   let insertMode = true;
 
-  // --- 1. THE GUARDIAN (Prevents Browser Keys) ---
+  // --- 1. THE BRIDGE (Connecting Buttons to Logic) ---
+  // This function handles all clicks from the Footer
+  window.cmd = function(action, param) {
+    editor.focus(); // Always return focus to editor
+    
+    switch(action) {
+      case 'help': showStats(); break;
+      case 'lorem': insertTextAtCursor('\n\n(LOREM IPSUM GENERATED TEXT)\n\n'); break;
+      case 'code': insertTextAtCursor(param); break;
+      case 'delLine': runKeyLogic('y'); break;
+      case 'delWord': runKeyLogic('t'); break;
+      case 'find': findReplace(); break;
+      case 'ruler': 
+        rulerLine.style.display = (rulerLine.style.display === 'none' ? 'block' : 'none');
+        break;
+      case 'save': saveDocument(); break;
+      case 'exit': 
+        if(confirm("EXIT: Clear current document buffer?")) {
+            editor.value = "";
+            updateUI();
+        }
+        break;
+    }
+  }
+
+  // --- 2. KEYBOARD INTERCEPTOR ---
   editor.addEventListener('keydown', function(e) {
     if (e.ctrlKey) {
       const k = e.key.toLowerCase();
       
-      // LIST OF KEYS TO COMPLETELY HIJACK
-      // w=CloseTab, t=NewTab, n=NewWin, r=Reload, u=ViewSource, 
-      // s=Save, o=Open, p=Print, d=Bookmark, f=Find, h=History, j=Downloads
-      const blockedKeys = [
-        'w', 't', 'n', 'r', 'u', 
-        's', 'd', 'o', 'p', 'f', 
-        'g', 'h', 'j', 'k', 'l', 
-        'z', 'x', 'c', 'v', 'b', 
-        'q', 'e', 'y', 'a' 
-      ];
-
-      if (blockedKeys.includes(k)) {
-        e.preventDefault(); // STOP THE BROWSER ACTION
-        e.stopPropagation(); // Stop it bubbling up
+      // Block Browser Defaults
+      const blocked = ['w','t','n','r','u','s','d','o','p','f','g','h','j','k','l','z','x','c','v','b','q','e','y','a'];
+      if (blocked.includes(k)) {
+        e.preventDefault();
+        e.stopPropagation();
       }
       
-      // Now run OUR logic
-      handleWordStarCommand(k, e);
+      runKeyLogic(k);
     } else {
-      // Normal typing: just update stats
       setTimeout(updateUI, 0);
     }
   });
 
-  // --- 2. WORDSTAR LOGIC ROUTER ---
-  function handleWordStarCommand(key, event) {
+  // --- 3. LOGIC CORE ---
+  function runKeyLogic(key) {
     
-    // === CURSOR MOVEMENT ===
-    if (key === 'd') { // ^D Right
-      editor.selectionStart = editor.selectionEnd = editor.selectionStart + 1;
-    }
-    else if (key === 's') { // ^S Left
-      editor.selectionStart = editor.selectionEnd = Math.max(0, editor.selectionStart - 1);
-    }
-    // ^E (Up) and ^X (Down) are approximated here. 
-    // Real line movement in a textarea is complex, so we assume ~80 chars/line or use system defaults if user uses Arrows.
-    // For authenticity, we will focus on the unique formatting/editing commands below.
-
-    // === EDITING ===
+    // CURSOR
+    if (key === 'd') editor.selectionStart = editor.selectionEnd = editor.selectionStart + 1;
+    if (key === 's') editor.selectionStart = editor.selectionEnd = Math.max(0, editor.selectionStart - 1);
     
-    // ^G = Delete Character (at cursor)
-    if (key === 'g') {
-      const p = editor.selectionStart;
-      editor.setRangeText('', p, p+1, 'start');
+    // SCROLL
+    if (key === 'w') editor.scrollTop -= 20;
+    if (key === 'z') editor.scrollTop += 20;
+
+    // DELETE
+    if (key === 'g') { // Del Char
+        const p = editor.selectionStart;
+        editor.setRangeText('', p, p+1, 'start');
+    }
+    if (key === 't') { // Del Word
+        const text = editor.value;
+        let p = editor.selectionStart;
+        // Skip current non-space
+        while(p < text.length && !/\s/.test(text[p])) p++;
+        // Skip spaces
+        while(p < text.length && /\s/.test(text[p])) p++;
+        editor.setRangeText('', editor.selectionStart, p, 'start');
+    }
+    if (key === 'y') { // Del Line
+        const text = editor.value;
+        const start = editor.selectionStart;
+        const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+        const lineEnd = text.indexOf('\n', start);
+        const actualEnd = (lineEnd === -1) ? text.length : lineEnd + 1;
+        editor.setRangeText('', lineStart, actualEnd, 'start');
     }
 
-    // ^H or Backspace is handled natively unless we want ^H specific logic
-    if (key === 'h') { 
-      // standard backspace logic often handled by browser, but if mapped:
-      const p = editor.selectionStart;
-      if(p > 0) editor.setRangeText('', p-1, p, 'start');
-    }
-
-    // ^T = Delete Word
-    if (key === 't') {
-      const text = editor.value;
-      const start = editor.selectionStart;
-      // Find next space or punctuation
-      let end = start;
-      while (end < text.length && !/\s/.test(text[end])) { end++; }
-      // Consume the whitespace after it too
-      while (end < text.length && /\s/.test(text[end])) { end++; }
-      editor.setRangeText('', start, end, 'start');
-    }
-
-    // ^Y = Delete Line
-    if (key === 'y') {
-      const text = editor.value;
-      const start = editor.selectionStart;
-      // Find start of line
-      const lineStart = text.lastIndexOf('\n', start - 1) + 1;
-      // Find end of line
-      const lineEnd = text.indexOf('\n', start);
-      const actualEnd = (lineEnd === -1) ? text.length : lineEnd + 1;
-      editor.setRangeText('', lineStart, actualEnd, 'start');
-    }
-
-    // ^N = Split Line (Carriage Return)
-    if (key === 'n') {
-      insertTextAtCursor('\n');
-    }
-
-    // === FORMATTING & MENUS ===
-    
-    // ^B = Bold (Legacy Marker)
-    if (key === 'b') insertTextAtCursor('^B');
-    
-    // ^U = Unerase (Undo) - Mapping to standard Undo
-    if (key === 'u') document.execCommand('undo');
-
-    // ^K = Save
+    // FORMAT & MENUS
+    if (key === 'n') insertTextAtCursor('\n');
+    if (key === 'b') insertTextAtCursor('^B'); // Visual Bold
     if (key === 'k') saveDocument();
-
-    // ^P = Print
     if (key === 'p') window.print();
-
-    // ^L = Find/Replace
     if (key === 'l') findReplace();
-
-    // ^J = Help/Stats
     if (key === 'j') showStats();
-
-    // ^V = Toggle Insert Mode
+    if (key === 'q') insertTextAtCursor('(QUICK TEXT)');
     if (key === 'v') {
-      insertMode = !insertMode;
+        insertMode = !insertMode;
+        updateUI();
     }
-
-    // Update the header after any command
+    
     setTimeout(updateUI, 0);
   }
 
-  // --- 3. UI & UTILITIES ---
+  // --- 4. UTILITIES ---
 
   function updateUI() {
     const text = editor.value;
@@ -373,17 +360,14 @@
   function showStats() {
     const text = editor.value;
     const words = text.trim().split(/\s+/).filter(w=>w).length;
-    const chars = text.length;
-    alert(`*** DIAGNOSTICS ***\n\nWords: ${words}\nCharacters: ${chars}`);
+    alert(`*** DIAGNOSTICS ***\n\nWords: ${words}\nBytes: ${text.length}`);
   }
 
   function findReplace() {
     const find = prompt("FIND?");
     if(find) {
       const rep = prompt("REPLACE?");
-      if(rep !== null) {
-        editor.value = editor.value.replaceAll(find, rep);
-      }
+      if(rep !== null) editor.value = editor.value.replaceAll(find, rep);
     }
   }
 
@@ -409,10 +393,18 @@
     }, 1000);
   }
 
-  // Handle F-Keys
+  // Handle Physical F-Keys
   document.addEventListener('keydown', (e) => {
     if(e.key === "F1") { e.preventDefault(); showStats(); }
+    if(e.key === "F2") { e.preventDefault(); cmd('lorem'); }
+    if(e.key === "F3") { e.preventDefault(); cmd('code', '^S'); }
+    if(e.key === "F4") { e.preventDefault(); cmd('code', '^B'); }
+    if(e.key === "F5") { e.preventDefault(); runKeyLogic('y'); }
+    if(e.key === "F6") { e.preventDefault(); runKeyLogic('t'); }
+    if(e.key === "F7") { e.preventDefault(); findReplace(); }
+    if(e.key === "F8") { e.preventDefault(); cmd('ruler'); }
     if(e.key === "F9") { e.preventDefault(); saveDocument(); }
+    if(e.key === "F10") { e.preventDefault(); cmd('exit'); }
   });
 
   // Init
