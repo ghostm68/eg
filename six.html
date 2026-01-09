@@ -29,6 +29,7 @@
     flex-direction: column;
     overflow: hidden;
     font-size: 20px;
+    user-select: none; /* UI is fixed, Editor is selectable */
   }
 
   /* Scanline CRT Effect */
@@ -124,6 +125,7 @@
     outline: none;
     white-space: pre-wrap;
     cursor: text; 
+    user-select: text; /* Crucial for mouse selection */
   }
   
   #editor::-webkit-scrollbar { width: 0px; background: transparent; }
@@ -132,7 +134,7 @@
   #f-key-bar {
     display: flex;
     background-color: var(--bar-bg);
-    height: 30px;
+    height: 35px;
     align-items: center;
     border-top: 1px solid #000;
   }
@@ -149,8 +151,10 @@
     height: 100%;
     display: flex;
     align-items: center;
+    justify-content: center;
+    transition: background 0.1s;
   }
-  .f-key b { font-weight: 900; margin-right: 4px; }
+  .f-key b { font-weight: 900; margin-right: 4px; color: #fff; }
   .f-key:hover { background-color: var(--accent-red); color: white; }
   .f-key:active { background-color: #fff; color: #000; }
 
@@ -176,6 +180,8 @@
           <div class="cmd-row"><span class="cmd-key">^X</span><span class="cmd-desc">down</span></div>
           <div class="cmd-row"><span class="cmd-key">^S</span><span class="cmd-desc">left</span></div>
           <div class="cmd-row"><span class="cmd-key">^D</span><span class="cmd-desc">right</span></div>
+          <div class="cmd-row"><span class="cmd-key">^A</span><span class="cmd-desc">word left</span></div>
+          <div class="cmd-row"><span class="cmd-key">^F</span><span class="cmd-desc">word right</span></div>
         </div>
         <div>
           <div class="col-header">SCROLL</div>
@@ -187,16 +193,18 @@
           <div class="cmd-row"><span class="cmd-key">^G</span><span class="cmd-desc">char</span></div>
           <div class="cmd-row"><span class="cmd-key">^T</span><span class="cmd-desc">word</span></div>
           <div class="cmd-row"><span class="cmd-key">^Y</span><span class="cmd-desc">line</span></div>
+          <div class="cmd-row"><span class="cmd-key">^U</span><span class="cmd-desc">undo</span></div>
         </div>
         <div>
           <div class="col-header">OTHER</div>
           <div class="cmd-row"><span class="cmd-key">^J</span><span class="cmd-desc">help</span></div>
           <div class="cmd-row"><span class="cmd-key">^V</span><span class="cmd-desc">insert</span></div>
           <div class="cmd-row"><span class="cmd-key">^L</span><span class="cmd-desc">find</span></div>
+          <div class="cmd-row"><span class="cmd-key">^I</span><span class="cmd-desc">tab</span></div>
         </div>
         <div>
           <div class="col-header">MENUS</div>
-          <div class="cmd-row"><span class="cmd-key">^K</span><span class="cmd-desc">block</span></div>
+          <div class="cmd-row"><span class="cmd-key">^K</span><span class="cmd-desc">save</span></div>
           <div class="cmd-row"><span class="cmd-key">^P</span><span class="cmd-desc">print</span></div>
           <div class="cmd-row"><span class="cmd-key">^Q</span><span class="cmd-desc">quick</span></div>
         </div>
@@ -218,16 +226,16 @@
 
   <!-- FOOTER: REORGANIZED AND CONNECTED -->
   <div id="f-key-bar">
-    <div class="f-key" onclick="cmd('help')"><b>1</b>HELP</div>
-    <div class="f-key" onclick="cmd('lorem')"><b>2</b>LOREM</div>
-    <div class="f-key" onclick="cmd('code', '^S')"><b>3</b>UNDLIN</div>
-    <div class="f-key" onclick="cmd('code', '^B')"><b>4</b>BOLD</div>
-    <div class="f-key" onclick="cmd('delLine')"><b>5</b>DEL LIN</div>
-    <div class="f-key" onclick="cmd('delWord')"><b>6</b>DEL WRD</div>
-    <div class="f-key" onclick="cmd('find')"><b>7</b>FIND</div>
-    <div class="f-key" onclick="cmd('ruler')"><b>8</b>RULER</div>
-    <div class="f-key" onclick="cmd('save')"><b>9</b>SAVE</div>
-    <div class="f-key" onclick="cmd('exit')"><b>10</b>CLEAR</div>
+    <div class="f-key" onclick="cmd('help')"><b>F1</b>HELP</div>
+    <div class="f-key" onclick="cmd('lorem')"><b>F2</b>LOREM</div>
+    <div class="f-key" onclick="cmd('code', '^S')"><b>F3</b>UNDLIN</div>
+    <div class="f-key" onclick="cmd('code', '^B')"><b>F4</b>BOLD</div>
+    <div class="f-key" onclick="cmd('delLine')"><b>F5</b>DEL LIN</div>
+    <div class="f-key" onclick="cmd('delWord')"><b>F6</b>DEL WRD</div>
+    <div class="f-key" onclick="cmd('find')"><b>F7</b>FIND</div>
+    <div class="f-key" onclick="cmd('ruler')"><b>F8</b>RULER</div>
+    <div class="f-key" onclick="cmd('save')"><b>F9</b>SAVE</div>
+    <div class="f-key" onclick="cmd('exit')"><b>F10</b>CLEAR</div>
   </div>
 
 <script>
@@ -239,10 +247,8 @@
   let insertMode = true;
 
   // --- 1. THE BRIDGE (Connecting Buttons to Logic) ---
-  // This function handles all clicks from the Footer
   window.cmd = function(action, param) {
-    editor.focus(); // Always return focus to editor
-    
+    editor.focus(); 
     switch(action) {
       case 'help': showStats(); break;
       case 'lorem': insertTextAtCursor('\n\n(LOREM IPSUM GENERATED TEXT)\n\n'); break;
@@ -268,15 +274,32 @@
     if (e.ctrlKey) {
       const k = e.key.toLowerCase();
       
-      // Block Browser Defaults
-      const blocked = ['w','t','n','r','u','s','d','o','p','f','g','h','j','k','l','z','x','c','v','b','q','e','y','a'];
+      // BLOCK BROWSER DEFAULTS
+      const blocked = ['w','t','n','r','u','s','d','o','p','f','g','h','j','k','l','z','x','c','v','b','q','e','y','a','i'];
       if (blocked.includes(k)) {
         e.preventDefault();
         e.stopPropagation();
       }
       
       runKeyLogic(k);
-    } else {
+    } 
+    // Handle F-Keys physically
+    else if (e.key.startsWith('F')) {
+        // Prevent default browser F-keys
+        e.preventDefault();
+        
+        if(e.key === "F1") showStats();
+        if(e.key === "F2") cmd('lorem');
+        if(e.key === "F3") cmd('code', '^S');
+        if(e.key === "F4") cmd('code', '^B');
+        if(e.key === "F5") runKeyLogic('y');
+        if(e.key === "F6") runKeyLogic('t');
+        if(e.key === "F7") findReplace();
+        if(e.key === "F8") cmd('ruler');
+        if(e.key === "F9") saveDocument();
+        if(e.key === "F10") cmd('exit');
+    }
+    else {
       setTimeout(updateUI, 0);
     }
   });
@@ -284,25 +307,45 @@
   // --- 3. LOGIC CORE ---
   function runKeyLogic(key) {
     
-    // CURSOR
-    if (key === 'd') editor.selectionStart = editor.selectionEnd = editor.selectionStart + 1;
-    if (key === 's') editor.selectionStart = editor.selectionEnd = Math.max(0, editor.selectionStart - 1);
+    // === CURSOR & MOVEMENT ===
+    if (key === 'd') { // Right
+        editor.selectionStart = editor.selectionEnd = editor.selectionStart + 1;
+    }
+    if (key === 's') { // Left
+        editor.selectionStart = editor.selectionEnd = Math.max(0, editor.selectionStart - 1);
+    }
+    if (key === 'a') { // Word Left
+        const text = editor.value;
+        let p = editor.selectionStart - 1;
+        while(p >= 0 && /\s/.test(text[p])) p--; 
+        while(p >= 0 && !/\s/.test(text[p])) p--; 
+        editor.selectionStart = editor.selectionEnd = p + 1;
+    }
+    if (key === 'f') { // Word Right
+        const text = editor.value;
+        let p = editor.selectionStart;
+        while(p < text.length && !/\s/.test(text[p])) p++; 
+        while(p < text.length && /\s/.test(text[p])) p++; 
+        editor.selectionStart = editor.selectionEnd = p;
+    }
     
-    // SCROLL
+    // === SCROLL ===
     if (key === 'w') editor.scrollTop -= 20;
     if (key === 'z') editor.scrollTop += 20;
 
-    // DELETE
+    // === DELETION ===
     if (key === 'g') { // Del Char
         const p = editor.selectionStart;
         editor.setRangeText('', p, p+1, 'start');
     }
+    if (key === 'h') { // Backspace (Manual handle if needed)
+        const p = editor.selectionStart;
+        if(p > 0) editor.setRangeText('', p-1, p, 'start');
+    }
     if (key === 't') { // Del Word
         const text = editor.value;
         let p = editor.selectionStart;
-        // Skip current non-space
         while(p < text.length && !/\s/.test(text[p])) p++;
-        // Skip spaces
         while(p < text.length && /\s/.test(text[p])) p++;
         editor.setRangeText('', editor.selectionStart, p, 'start');
     }
@@ -315,8 +358,10 @@
         editor.setRangeText('', lineStart, actualEnd, 'start');
     }
 
-    // FORMAT & MENUS
-    if (key === 'n') insertTextAtCursor('\n');
+    // === FORMAT & MENUS ===
+    if (key === 'i') insertTextAtCursor('\t'); // Tab
+    if (key === 'u') document.execCommand('undo'); // Undo
+    if (key === 'n') insertTextAtCursor('\n'); // Split Line
     if (key === 'b') insertTextAtCursor('^B'); // Visual Bold
     if (key === 'k') saveDocument();
     if (key === 'p') window.print();
@@ -392,20 +437,6 @@
       titleObj.style.color = "";
     }, 1000);
   }
-
-  // Handle Physical F-Keys
-  document.addEventListener('keydown', (e) => {
-    if(e.key === "F1") { e.preventDefault(); showStats(); }
-    if(e.key === "F2") { e.preventDefault(); cmd('lorem'); }
-    if(e.key === "F3") { e.preventDefault(); cmd('code', '^S'); }
-    if(e.key === "F4") { e.preventDefault(); cmd('code', '^B'); }
-    if(e.key === "F5") { e.preventDefault(); runKeyLogic('y'); }
-    if(e.key === "F6") { e.preventDefault(); runKeyLogic('t'); }
-    if(e.key === "F7") { e.preventDefault(); findReplace(); }
-    if(e.key === "F8") { e.preventDefault(); cmd('ruler'); }
-    if(e.key === "F9") { e.preventDefault(); saveDocument(); }
-    if(e.key === "F10") { e.preventDefault(); cmd('exit'); }
-  });
 
   // Init
   updateUI();
