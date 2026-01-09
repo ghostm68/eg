@@ -29,7 +29,7 @@
     flex-direction: column;
     overflow: hidden;
     font-size: 20px;
-    user-select: none; /* UI is fixed, Editor is selectable */
+    user-select: none;
   }
 
   /* Scanline CRT Effect */
@@ -125,7 +125,7 @@
     outline: none;
     white-space: pre-wrap;
     cursor: text; 
-    user-select: text; /* Crucial for mouse selection */
+    user-select: text;
   }
   
   #editor::-webkit-scrollbar { width: 0px; background: transparent; }
@@ -243,23 +243,38 @@
   const docStats = document.getElementById('doc-stats');
   const flags = document.getElementById('flags');
   const rulerLine = document.getElementById('ruler-line');
+  const filePath = document.getElementById('file-path');
   
   let insertMode = true;
 
-  // --- 1. THE BRIDGE (Connecting Buttons to Logic) ---
+  // --- COMMAND SYSTEM ---
   window.cmd = function(action, param) {
     editor.focus(); 
     switch(action) {
-      case 'help': showStats(); break;
-      case 'lorem': insertTextAtCursor('\n\n(LOREM IPSUM GENERATED TEXT)\n\n'); break;
-      case 'code': insertTextAtCursor(param); break;
-      case 'delLine': runKeyLogic('y'); break;
-      case 'delWord': runKeyLogic('t'); break;
-      case 'find': findReplace(); break;
+      case 'help': 
+        showStats(); 
+        break;
+      case 'lorem': 
+        insertTextAtCursor('\n\n(LOREM IPSUM)\nThe quick brown fox jumped over the lazy dog. Pack my box with five dozen liquor jugs. How vexingly quick daft zebras jump!\n');
+        break;
+      case 'code': 
+        insertTextAtCursor(param); 
+        break;
+      case 'delLine': 
+        deleteLine(); 
+        break;
+      case 'delWord': 
+        deleteWord(); 
+        break;
+      case 'find': 
+        findReplace(); 
+        break;
       case 'ruler': 
         rulerLine.style.display = (rulerLine.style.display === 'none' ? 'block' : 'none');
         break;
-      case 'save': saveDocument(); break;
+      case 'save': 
+        saveDocument(); 
+        break;
       case 'exit': 
         if(confirm("EXIT: Clear current document buffer?")) {
             editor.value = "";
@@ -269,34 +284,33 @@
     }
   }
 
-  // --- 2. KEYBOARD INTERCEPTOR ---
+  // --- KEYBOARD HANDLER ---
   editor.addEventListener('keydown', function(e) {
     if (e.ctrlKey) {
       const k = e.key.toLowerCase();
       
-      // BLOCK BROWSER DEFAULTS
+      // Block browser defaults
       const blocked = ['w','t','n','r','u','s','d','o','p','f','g','h','j','k','l','z','x','c','v','b','q','e','y','a','i'];
       if (blocked.includes(k)) {
         e.preventDefault();
         e.stopPropagation();
       }
       
-      runKeyLogic(k);
+      handleCtrlKey(k);
     } 
-    // Handle F-Keys physically
+    // Handle F-Keys
     else if (e.key.startsWith('F')) {
-        // Prevent default browser F-keys
         e.preventDefault();
         
-        if(e.key === "F1") showStats();
+        if(e.key === "F1") cmd('help');
         if(e.key === "F2") cmd('lorem');
         if(e.key === "F3") cmd('code', '^S');
         if(e.key === "F4") cmd('code', '^B');
-        if(e.key === "F5") runKeyLogic('y');
-        if(e.key === "F6") runKeyLogic('t');
-        if(e.key === "F7") findReplace();
+        if(e.key === "F5") cmd('delLine');
+        if(e.key === "F6") cmd('delWord');
+        if(e.key === "F7") cmd('find');
         if(e.key === "F8") cmd('ruler');
-        if(e.key === "F9") saveDocument();
+        if(e.key === "F9") cmd('save');
         if(e.key === "F10") cmd('exit');
     }
     else {
@@ -304,15 +318,17 @@
     }
   });
 
-  // --- 3. LOGIC CORE ---
-  function runKeyLogic(key) {
+  // --- CORE LOGIC ---
+  function handleCtrlKey(key) {
     
-    // === CURSOR & MOVEMENT ===
+    // === CURSOR MOVEMENT ===
     if (key === 'd') { // Right
-        editor.selectionStart = editor.selectionEnd = editor.selectionStart + 1;
+        const pos = Math.min(editor.value.length, editor.selectionStart + 1);
+        editor.selectionStart = editor.selectionEnd = pos;
     }
     if (key === 's') { // Left
-        editor.selectionStart = editor.selectionEnd = Math.max(0, editor.selectionStart - 1);
+        const pos = Math.max(0, editor.selectionStart - 1);
+        editor.selectionStart = editor.selectionEnd = pos;
     }
     if (key === 'a') { // Word Left
         const text = editor.value;
@@ -329,40 +345,40 @@
         editor.selectionStart = editor.selectionEnd = p;
     }
     
-    // === SCROLL ===
+    // === SCROLLING ===
     if (key === 'w') editor.scrollTop -= 20;
     if (key === 'z') editor.scrollTop += 20;
 
     // === DELETION ===
     if (key === 'g') { // Del Char
         const p = editor.selectionStart;
-        editor.setRangeText('', p, p+1, 'start');
+        if (p < editor.value.length) {
+            editor.setRangeText('', p, p+1, 'start');
+        }
     }
-    if (key === 'h') { // Backspace (Manual handle if needed)
+    if (key === 'h') { // Backspace
         const p = editor.selectionStart;
-        if(p > 0) editor.setRangeText('', p-1, p, 'start');
+        if (p > 0) {
+            editor.setRangeText('', p-1, p, 'start');
+        }
     }
     if (key === 't') { // Del Word
-        const text = editor.value;
-        let p = editor.selectionStart;
-        while(p < text.length && !/\s/.test(text[p])) p++;
-        while(p < text.length && /\s/.test(text[p])) p++;
-        editor.setRangeText('', editor.selectionStart, p, 'start');
+        deleteWord();
     }
     if (key === 'y') { // Del Line
-        const text = editor.value;
-        const start = editor.selectionStart;
-        const lineStart = text.lastIndexOf('\n', start - 1) + 1;
-        const lineEnd = text.indexOf('\n', start);
-        const actualEnd = (lineEnd === -1) ? text.length : lineEnd + 1;
-        editor.setRangeText('', lineStart, actualEnd, 'start');
+        deleteLine();
     }
 
-    // === FORMAT & MENUS ===
+    // === FORMATTING & COMMANDS ===
     if (key === 'i') insertTextAtCursor('\t'); // Tab
-    if (key === 'u') document.execCommand('undo'); // Undo
-    if (key === 'n') insertTextAtCursor('\n'); // Split Line
-    if (key === 'b') insertTextAtCursor('^B'); // Visual Bold
+    if (key === 'u') {
+        // Undo simulation
+        editor.value = editor.value.substring(0, editor.selectionStart - 1) + 
+                       editor.value.substring(editor.selectionStart);
+        updateUI();
+    }
+    if (key === 'n') insertTextAtCursor('\n'); // New line
+    if (key === 'b') insertTextAtCursor('^B'); // Bold marker
     if (key === 'k') saveDocument();
     if (key === 'p') window.print();
     if (key === 'l') findReplace();
@@ -376,8 +392,7 @@
     setTimeout(updateUI, 0);
   }
 
-  // --- 4. UTILITIES ---
-
+  // --- UTILITY FUNCTIONS ---
   function updateUI() {
     const text = editor.value;
     const cursorPos = editor.selectionStart;
@@ -389,30 +404,60 @@
 
     docStats.innerText = `P${page.toString().padStart(2,'0')} L${currentLine.toString().padStart(2,'0')} C${currentCol.toString().padStart(2,'0')}`;
     flags.innerText = insertMode ? "INSERT ON" : "OVERWRITE";
+    
+    // Visual feedback for mode
+    editor.style.backgroundColor = insertMode ? '#000' : '#0a0a0a';
   }
 
   function insertTextAtCursor(text) {
     const start = editor.selectionStart;
     const end = editor.selectionEnd;
+    
     if (insertMode) {
       editor.setRangeText(text, start, end, 'end');
     } else {
-      editor.setRangeText(text, start, start + text.length, 'end');
+      const textLength = Math.min(text.length, editor.value.length - start);
+      editor.setRangeText(text, start, start + textLength, 'end');
     }
+    updateUI();
+  }
+
+  function deleteLine() {
+    const text = editor.value;
+    const start = editor.selectionStart;
+    const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+    const lineEnd = text.indexOf('\n', start);
+    const actualEnd = (lineEnd === -1) ? text.length : lineEnd + 1;
+    editor.setRangeText('', lineStart, actualEnd, 'start');
+    updateUI();
+  }
+
+  function deleteWord() {
+    const text = editor.value;
+    let p = editor.selectionStart;
+    while(p < text.length && !/\s/.test(text[p])) p++;
+    while(p < text.length && /\s/.test(text[p])) p++;
+    editor.setRangeText('', editor.selectionStart, p, 'start');
     updateUI();
   }
 
   function showStats() {
     const text = editor.value;
     const words = text.trim().split(/\s+/).filter(w=>w).length;
-    alert(`*** DIAGNOSTICS ***\n\nWords: ${words}\nBytes: ${text.length}`);
+    const chars = text.length;
+    const lines = text.split('\n').length;
+    
+    alert(`*** WORDSTAR DIAGNOSTICS ***\n\nWords: ${words}\nChars: ${chars}\nLines: ${lines}\nMode: ${insertMode ? 'INSERT' : 'OVERWRITE'}`);
   }
 
   function findReplace() {
-    const find = prompt("FIND?");
+    const find = prompt("FIND WHAT?");
     if(find) {
-      const rep = prompt("REPLACE?");
-      if(rep !== null) editor.value = editor.value.replaceAll(find, rep);
+      const rep = prompt("REPLACE WITH?");
+      if(rep !== null) {
+        editor.value = editor.value.replaceAll(find, rep);
+        updateUI();
+      }
     }
   }
 
@@ -438,8 +483,13 @@
     }, 1000);
   }
 
-  // Init
+  // Initialize
   updateUI();
+  
+  // Add cursor position tracking
+  editor.addEventListener('click', updateUI);
+  editor.addEventListener('keyup', updateUI);
+  editor.addEventListener('input', updateUI);
 </script>
 
 </body>
