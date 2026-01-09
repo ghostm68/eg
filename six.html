@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WordStar Nexus: Legacy Mode</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg-color: #000000;
+    --text-main: #cccccc;
+    --text-dim: #888888;
+    --accent-red: #cc0000;
+    --bar-bg: #b0b0b0;
+    --bar-text: #000000;
+  }
+
+  * { box-sizing: border-box; }
+
+  body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'VT323', monospace;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-size: 20px; /* Large DOS-like text */
+  }
+
+  /* Scanline CRT Effect */
+  .crt::before {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 999;
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
+  }
+
+  /* --- 1. TOP HEADER BAR --- */
+  #header-bar {
+    background-color: var(--bar-bg);
+    color: var(--bar-text);
+    padding: 0 10px;
+    height: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* --- 2. THE MASSIVE EDIT MENU (The Screenshot Replica) --- */
+  #edit-menu-container {
+    padding: 5px 10px;
+    border-bottom: 1px solid var(--text-dim);
+  }
+
+  /* The Double Border Box */
+  .dos-box {
+    border: 4px double var(--text-main); /* The classic double line */
+    position: relative;
+    padding: 10px 5px;
+    margin-top: 10px;
+  }
+
+  .box-title {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--bg-color);
+    padding: 0 10px;
+    font-weight: bold;
+    color: var(--text-main);
+  }
+
+  /* The 5-Column Grid */
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    font-size: 0.85rem;
+    line-height: 1.2;
+  }
+
+  .col-header {
+    color: var(--accent-red); /* Nexus Twist */
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-decoration: underline;
+    text-align: center;
+  }
+
+  .cmd-row {
+    display: flex;
+    white-space: pre;
+  }
+  .cmd-key { color: #fff; font-weight: bold; margin-right: 5px; }
+  .cmd-desc { color: var(--text-dim); }
+
+  /* --- 3. THE RULER --- */
+  #ruler-line {
+    padding: 0 10px;
+    color: var(--text-dim);
+    font-size: 1rem;
+    white-space: pre;
+    overflow: hidden;
+  }
+
+  /* --- 4. THE EDITOR --- */
+  #editor {
+    flex-grow: 1;
+    background-color: transparent;
+    color: var(--text-main);
+    border: none;
+    padding: 5px 10px;
+    font-family: 'VT323', monospace;
+    font-size: 1.2rem;
+    line-height: 1.2;
+    resize: none;
+    outline: none;
+    white-space: pre-wrap;
+    cursor: text;
+  }
+
+  /* --- 5. THE F-KEY FOOTER --- */
+  #f-key-bar {
+    display: flex;
+    background-color: var(--bar-bg); /* Inverted style like screenshot */
+    height: 25px;
+  }
+  
+  .f-key {
+    flex: 1;
+    color: var(--bar-text);
+    padding-left: 5px;
+    font-size: 0.9rem;
+    border-right: 1px solid #555;
+    white-space: nowrap;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .f-key b { font-weight: 900; }
+  .f-key:hover { background-color: var(--accent-red); color: white; }
+
+</style>
+</head>
+<body class="crt">
+
+  <!-- HEADER: C:TEST P01... -->
+  <div id="header-bar">
+    <span id="file-path">C:NEXUS.DOC</span>
+    <span id="doc-stats">P01 L01 C01</span>
+    <span id="flags">Insert Align</span>
+  </div>
+
+  <!-- THE CLASSIC MENU BLOCK -->
+  <div id="edit-menu-container">
+    <div class="dos-box">
+      <div class="box-title">= E D I T &nbsp; M E N U =</div>
+      
+      <div class="menu-grid">
+        <!-- COL 1: CURSOR -->
+        <div>
+          <div class="col-header">CURSOR</div>
+          <div class="cmd-row"><span class="cmd-key">^E</span><span class="cmd-desc">up</span></div>
+          <div class="cmd-row"><span class="cmd-key">^X</span><span class="cmd-desc">down</span></div>
+          <div class="cmd-row"><span class="cmd-key">^S</span><span class="cmd-desc">left</span></div>
+          <div class="cmd-row"><span class="cmd-key">^D</span><span class="cmd-desc">right</span></div>
+          <div class="cmd-row"><span class="cmd-key">^A</span><span class="cmd-desc">word left</span></div>
+          <div class="cmd-row"><span class="cmd-key">^F</span><span class="cmd-desc">word right</span></div>
+        </div>
+
+        <!-- COL 2: SCROLL -->
+        <div>
+          <div class="col-header">SCROLL</div>
+          <div class="cmd-row"><span class="cmd-key">^W</span><span class="cmd-desc">up</span></div>
+          <div class="cmd-row"><span class="cmd-key">^Z</span><span class="cmd-desc">down</span></div>
+          <div class="cmd-row"><span class="cmd-key">^R</span><span class="cmd-desc">up screen</span></div>
+          <div class="cmd-row"><span class="cmd-key">^C</span><span class="cmd-desc">down screen</span></div>
+        </div>
+
+        <!-- COL 3: ERASE -->
+        <div>
+          <div class="col-header">ERASE</div>
+          <div class="cmd-row"><span class="cmd-key">^G</span><span class="cmd-desc">char</span></div>
+          <div class="cmd-row"><span class="cmd-key">^T</span><span class="cmd-desc">word</span></div>
+          <div class="cmd-row"><span class="cmd-key">^Y</span><span class="cmd-desc">line</span></div>
+          <div class="cmd-row"><span class="cmd-key">Del</span><span class="cmd-desc">char left</span></div>
+          <div class="cmd-row"><span class="cmd-key">^U</span><span class="cmd-desc">unerase</span></div>
+        </div>
+
+        <!-- COL 4: OTHER -->
+        <div>
+          <div class="col-header">OTHER</div>
+          <div class="cmd-row"><span class="cmd-key">^J</span><span class="cmd-desc">help</span></div>
+          <div class="cmd-row"><span class="cmd-key">^I</span><span class="cmd-desc">tab</span></div>
+          <div class="cmd-row"><span class="cmd-key">^V</span><span class="cmd-desc">insert toggle</span></div>
+          <div class="cmd-row"><span class="cmd-key">^B</span><span class="cmd-desc">align para</span></div>
+          <div class="cmd-row"><span class="cmd-key">^N</span><span class="cmd-desc">split line</span></div>
+          <div class="cmd-row"><span class="cmd-key">^L</span><span class="cmd-desc">find/replace</span></div>
+        </div>
+
+        <!-- COL 5: MENUS -->
+        <div>
+          <div class="col-header">MENUS</div>
+          <div class="cmd-row"><span class="cmd-key">^K</span><span class="cmd-desc">block & save</span></div>
+          <div class="cmd-row"><span class="cmd-key">^O</span><span class="cmd-desc">onscreen fmt</span></div>
+          <div class="cmd-row"><span class="cmd-key">^P</span><span class="cmd-desc">print ctrl</span></div>
+          <div class="cmd-row"><span class="cmd-key">^Q</span><span class="cmd-desc">quick func</span></div>
+          <div class="cmd-row"><span class="cmd-key">Esc</span><span class="cmd-desc">shorthand</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RULER LINE -->
+  <div id="ruler-line">L----!----!----!----!----!----!----!----!----!----!----!----!----R</div>
+
+  <!-- EDITOR -->
+  <textarea id="editor" spellcheck="false" autofocus>The quick brown fox jumped over the lazy dog.
+
+^BSome bold text^B
+^Ssome underlined^S
+^YSome italic text^Y
+
+(This is the Legacy Interface. Type here...)</textarea>
+
+  <!-- FOOTER F-KEYS -->
+  <div id="f-key-bar">
+    <div class="f-key"><b>1</b>Help</div>
+    <div class="f-key"><b>2</b>Undo</div>
+    <div class="f-key"><b>3</b>Undrlin</div>
+    <div class="f-key"><b>4</b>Bold</div>
+    <div class="f-key"><b>5</b>DelLine</div>
+    <div class="f-key"><b>6</b>DelWord</div>
+    <div class="f-key"><b>7</b>Align</div>
+    <div class="f-key"><b>8</b>Ruler</div>
+    <div class="f-key"><b>9</b>Save</div>
+    <div class="f-key"><b>0</b>Done</div>
+  </div>
+
+<script>
+  const editor = document.getElementById('editor');
+  const docStats = document.getElementById('doc-stats');
+  
+  // Update Pxx Lxx Cxx
+  function updateStats() {
+    const text = editor.value.substr(0, editor.selectionStart);
+    const lines = text.split("\n");
+    const lineCount = lines.length;
+    const colCount = lines[lines.length-1].length + 1;
+    
+    // Page count is simulated (approx 40 lines per page)
+    const pageCount = Math.floor(lineCount / 40) + 1;
+
+    // Formatting numbers to 2 digits (L07, C17)
+    const pStr = pageCount.toString().padStart(2, '0');
+    const lStr = lineCount.toString().padStart(2, '0');
+    const cStr = colCount.toString().padStart(2, '0');
+
+    docStats.innerText = `P${pStr} L${lStr} C${cStr}`;
+  }
+
+  editor.addEventListener('input', updateStats);
+  editor.addEventListener('click', updateStats);
+  editor.addEventListener('keyup', updateStats);
+
+  // Key Interception (Simulating the chords)
+  editor.addEventListener('keydown', function(e) {
+    if (e.ctrlKey) {
+      // Allow default behavior but log it or handle custom logic if you want
+      // For now, we let browser defaults handle Bold (Ctrl+B) etc.
+      // But purely visually, WordStar just showed the control codes on screen.
+    }
+  });
+
+  // F-Key Interception
+  document.addEventListener('keydown', function(e) {
+    if(e.key === "F4") { e.preventDefault(); insertCode('^B'); } // Bold
+    if(e.key === "F3") { e.preventDefault(); insertCode('^S'); } // Underline
+  });
+
+  function insertCode(code) {
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    const val = editor.value;
+    editor.value = val.substring(0, start) + code + val.substring(end);
+    editor.selectionStart = editor.selectionEnd = start + code.length;
+    updateStats();
+  }
+
+  updateStats();
+</script>
+
+</body>
+</html>
