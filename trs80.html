@@ -29,11 +29,13 @@
     user-select: none;
   }
 
+  /* Universal Scrollbar */
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-track { background: #000; }
   ::-webkit-scrollbar-thumb { background: #333; border: 1px solid #000; }
   ::-webkit-scrollbar-thumb:hover { background: var(--accent-red); }
 
+  /* CRT Overlay */
   .crt::before {
     content: " ";
     display: block;
@@ -45,6 +47,7 @@
     pointer-events: none;
   }
 
+  /* --- SECTION 1: TOP COMMAND BAR --- */
   #top-bar {
     background-color: var(--panel-bg);
     padding: 5px 10px;
@@ -68,6 +71,7 @@
   .shortcut-key { color: var(--accent-red); margin-right: 4px; }
   .menu-btn:hover .shortcut-key { color: #000; }
 
+  /* --- SECTION 2: EDITOR --- */
   #editor-container {
     flex-grow: 1;
     position: relative;
@@ -101,8 +105,11 @@
     white-space: pre-wrap;
     line-height: 1.4;
     user-select: text;
+    overflow-y: auto;
+    cursor: text;
   }
 
+  /* Read Mode Class */
   .read-mode #editor {
     max-width: 800px;
     margin: 0 auto;
@@ -111,11 +118,13 @@
     background-color: #0a0a0a;
   }
 
+  /* --- SECTION 3: LOWER UI STACK --- */
   #lower-stack {
     border-top: 1px solid var(--border-color);
     background-color: var(--panel-bg);
   }
 
+  /* Tab Row (Visual Only) */
   #tabs-row {
     display: flex;
     background-color: #1a1a1a;
@@ -130,6 +139,7 @@
   }
   .tab-item:hover { background-color: #333; color: #ccc; }
 
+  /* Status Bar */
   #status-bar {
     background-color: var(--accent-red);
     color: #000;
@@ -141,6 +151,7 @@
     text-transform: uppercase;
   }
 
+  /* --- SECTION 4: THE F-KEY DECK --- */
   #bottom-commands {
     display: flex;
     background-color: #111;
@@ -163,6 +174,7 @@
   .f-key:hover b { color: #000; }
   .f-key:active { background-color: #fff; }
 
+  /* --- SECTION 5: SYSTEM DECK (Map & GIF) --- */
   #system-deck {
     height: 150px;
     display: flex;
@@ -176,6 +188,7 @@
     overflow: hidden;
   }
 
+  /* Map Specifics */
   #map-panel { flex-grow: 1; }
   #map {
     width: 100%;
@@ -185,6 +198,7 @@
   }
   #map:hover { filter: grayscale(0%); }
 
+  /* GIF/Logo Specifics */
   #logo-panel {
     width: 200px;
     display: flex;
@@ -215,36 +229,43 @@
     body, html, #editor-container { background-color: white !important; height: auto !important; display: block !important; }
     #editor { color: black !important; font-family: 'Courier New', monospace !important; width: 100% !important; padding: 0 !important; }
   }
+
 </style>
 </head>
 <body class="crt">
 
+    <!-- 1. TOP SHORTCUTS (The "Above" Commands) -->
     <div id="top-bar">
-        <div class="menu-btn" onclick="cmd('bold')"><span class="shortcut-key">^B</span> Bold</div>
-        <div class="menu-btn" onclick="cmd('italic')"><span class="shortcut-key">^I</span> Italic</div>
-        <div class="menu-btn" onclick="cmd('underline')"><span class="shortcut-key">^U</span> Undrln</div>
-        <div class="menu-btn" onclick="cmd('date')"><span class="shortcut-key">^D</span> Date</div>
-        <div class="menu-btn" onclick="cmd('count')"><span class="shortcut-key">^W</span> Count</div>
-        <div class="menu-btn" onclick="cmd('ruler')"><span class="shortcut-key">^R</span> Ruler</div>
-        <div class="menu-btn" onclick="cmd('save')"><span class="shortcut-key">^S</span> Save</div>
-        <div class="menu-btn" onclick="cmd('print')"><span class="shortcut-key">^P</span> Print</div>
-        <div class="menu-btn" onclick="cmd('toggleMode')"><span class="shortcut-key">^O</span> Mode</div>
+        <div class="menu-btn" onclick="handleCommand('bold')"><span class="shortcut-key">^B</span> Bold</div>
+        <div class="menu-btn" onclick="handleCommand('italic')"><span class="shortcut-key">^I</span> Italic</div>
+        <div class="menu-btn" onclick="handleCommand('underline')"><span class="shortcut-key">^U</span> Undrln</div>
+        <div class="menu-btn" onclick="handleCommand('date')"><span class="shortcut-key">^D</span> Date</div>
+        <div class="menu-btn" onclick="handleCommand('count')"><span class="shortcut-key">^W</span> Count</div>
+        <div class="menu-btn" onclick="handleCommand('ruler')"><span class="shortcut-key">^R</span> Ruler</div>
+        <div class="menu-btn" onclick="handleCommand('save')"><span class="shortcut-key">^S</span> Save</div>
+        <div class="menu-btn" onclick="handleCommand('print')"><span class="shortcut-key">^P</span> Print</div>
+        <div class="menu-btn" onclick="handleCommand('toggleMode')"><span class="shortcut-key">^O</span> Mode</div>
     </div>
 
+    <!-- 2. EDITOR AREA -->
     <div id="editor-container">
         <div id="ruler"></div>
-        <textarea id="editor" spellcheck="false" autofocus>WORDSTAR NEXUS [FUSION ARCHITECTURE]
+        <div id="editor" contenteditable="true" spellcheck="false">
+WORDSTAR NEXUS [FUSION ARCHITECTURE]
 ------------------------------------
 System Online.
 ISS Tracker: Active.
 Command Bridge: Active.
 
 INSERT Mode: ON
-(Type here... use F1 for Help)</textarea>
+(Type here... use F1 for Help)
+        </div>
     </div>
 
+    <!-- 3. LOWER UI STACK -->
     <div id="lower-stack">
         
+        <!-- Tabs (Visual only for now) -->
         <div id="tabs-row">
             <div class="tab-item">File</div>
             <div class="tab-item">Edit</div>
@@ -254,25 +275,28 @@ INSERT Mode: ON
             <div class="tab-item">Help</div>
         </div>
 
+        <!-- Status Line -->
         <div id="status-bar">
             <span id="cursor-pos">L:01 C:01</span>
             <span id="doc-status">EDITING: UNTITLED</span>
-            <span id="insert-state">INSERT</span>
+            <span id="insert-state">INSERT ON</span>
         </div>
 
+        <!-- 4. BOTTOM COMMANDS (The Clear F-Keys) -->
         <div id="bottom-commands">
-            <div class="f-key" onclick="cmd('help')"><b>F1</b>HELP</div>
-            <div class="f-key" onclick="cmd('lorem')"><b>F2</b>LOREM</div>
-            <div class="f-key" onclick="cmd('bold')"><b>F3</b>BOLD</div>
-            <div class="f-key" onclick="cmd('undln')"><b>F4</b>UNDLN</div>
-            <div class="f-key" onclick="cmd('delline')"><b>F5</b>DEL LIN</div>
-            <div class="f-key" onclick="cmd('delword')"><b>F6</b>DEL WRD</div>
-            <div class="f-key" onclick="cmd('find')"><b>F7</b>FIND</div>
-            <div class="f-key" onclick="cmd('ruler')"><b>F8</b>RULER</div>
-            <div class="f-key" onclick="cmd('save')"><b>F9</b>SAVE</div>
-            <div class="f-key" onclick="cmd('exit')"><b>F10</b>CLEAR</div>
+            <div class="f-key" onclick="handleCommand('help')"><b>F1</b>HELP</div>
+            <div class="f-key" onclick="handleCommand('lorem')"><b>F2</b>LOREM</div>
+            <div class="f-key" onclick="handleCommand('bold')"><b>F3</b>BOLD</div>
+            <div class="f-key" onclick="handleCommand('undln')"><b>F4</b>UNDLN</div>
+            <div class="f-key" onclick="handleCommand('delline')"><b>F5</b>DEL LIN</div>
+            <div class="f-key" onclick="handleCommand('delword')"><b>F6</b>DEL WRD</div>
+            <div class="f-key" onclick="handleCommand('find')"><b>F7</b>FIND</div>
+            <div class="f-key" onclick="handleCommand('ruler')"><b>F8</b>RULER</div>
+            <div class="f-key" onclick="handleCommand('save')"><b>F9</b>SAVE</div>
+            <div class="f-key" onclick="handleCommand('exit')"><b>F10</b>CLEAR</div>
         </div>
 
+        <!-- 5. SYSTEM DECK (Map + Gif) -->
         <div id="system-deck">
             <div class="deck-panel" id="map-panel">
                 <div id="map"></div>
@@ -296,7 +320,7 @@ INSERT Mode: ON
     
     let insertMode = true;
 
-    /* --- RULER SETUP --- */
+    /* --- 1. RULER SETUP --- */
     let rulerStr = "L";
     for(let i=2; i<80; i++) {
         if(i % 10 === 0) rulerStr += (i/10); 
@@ -306,25 +330,33 @@ INSERT Mode: ON
     rulerStr += "R";
     ruler.innerText = rulerStr;
 
-    /* --- CENTRAL COMMAND SYSTEM --- */
-    window.cmd = function(action) {
+    /* --- 2. THE BRIDGE: Working Command System --- */
+    window.handleCommand = function(action) {
         editor.focus();
 
         switch(action) {
-            case 'bold': insertAtCursor('**BOLD**'); break;
-            case 'italic': insertAtCursor('*ITALIC*'); break;
-            case 'underline': insertAtCursor('__UNDERLINE__'); break;
-            case 'undln': insertAtCursor('__UNDERLINE__'); break;
+            case 'bold':
+                document.execCommand('bold');
+                break;
+            case 'italic':
+                document.execCommand('italic');
+                break;
+            case 'underline':
+                document.execCommand('underline');
+                break;
+            case 'undln':
+                document.execCommand('underline');
+                break;
             
             case 'date': 
                 const d = new Date();
-                insertAtCursor(`${d.toLocaleTimeString()} ${d.toLocaleDateString()}`);
+                document.execCommand('insertText', false, `${d.toLocaleTimeString()} ${d.toLocaleDateString()}`);
                 break;
             
             case 'count':
-                const txt = editor.value.trim();
-                const wc = txt ? txt.split(/\s+/).length : 0;
-                alert(`NEXUS ANALYTICS:\nWords: ${wc}\nChars: ${txt.length}`);
+                const text = editor.innerText;
+                const wc = text.trim() ? text.trim().split(/\s+/).length : 0;
+                alert(`NEXUS ANALYTICS:\nWords: ${wc}\nChars: ${text.length}`);
                 break;
             
             case 'ruler':
@@ -332,44 +364,33 @@ INSERT Mode: ON
                 break;
             
             case 'save':
-                const blob = new Blob([editor.value], {type:'text/plain'});
+                const blob = new Blob([editor.innerHTML], {type:'text/html'});
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
-                a.download = 'nexus_fusion.txt';
+                a.download = 'nexus_fusion.html';
                 a.click();
                 break;
             
-            case 'print': window.print(); break;
+            case 'print': 
+                window.print(); 
+                break;
             
             case 'toggleMode': 
                 insertMode = !insertMode;
-                statusInsert.innerText = insertMode ? 'INSERT' : 'OVERWRITE';
+                statusInsert.innerText = insertMode ? 'INSERT ON' : 'OVERWRITE';
                 editor.style.backgroundColor = insertMode ? '#000' : '#1a1a1a';
                 break;
             
             case 'delline':
-                const val = editor.value;
-                const start = editor.selectionStart;
-                const lineStart = val.lastIndexOf('\n', start - 1) + 1;
-                const lineEnd = val.indexOf('\n', start);
-                const actualEnd = (lineEnd === -1) ? val.length : lineEnd + 1;
-                editor.setRangeText('', lineStart, actualEnd, 'start');
+                deleteLine();
                 break;
             
             case 'delword':
-                const v = editor.value;
-                let p = editor.selectionStart;
-                while(p < v.length && !/\s/.test(v[p])) p++;
-                while(p < v.length && /\s/.test(v[p])) p++;
-                editor.setRangeText('', editor.selectionStart, p, 'start');
+                deleteWord();
                 break;
             
             case 'find':
-                const f = prompt("FIND TEXT:");
-                if(f) {
-                    const r = prompt("REPLACE WITH:");
-                    if(r !== null) editor.value = editor.value.replaceAll(f, r);
-                }
+                findReplace();
                 break;
             
             case 'help':
@@ -377,98 +398,141 @@ INSERT Mode: ON
                 break;
 
             case 'lorem':
-                insertAtCursor("\n(LOREM) The quick brown fox jumped over the lazy dog. Pack my box with five dozen liquor jugs. How vexingly quick daft zebras jump!\n");
+                const loremText = "\n(LOREM) The quick brown fox jumped over the lazy dog.\n";
+                document.execCommand('insertText', false, loremText);
                 break;
 
             case 'exit':
                 if(confirm("CLEAR BUFFER? Unsaved text will be lost.")) {
-                    editor.value = "";
+                    editor.innerHTML = "";
                 }
                 break;
         }
         updateStats();
     };
 
-    function insertAtCursor(text) {
-        const start = editor.selectionStart;
-        const end = editor.selectionEnd;
-        
-        if(insertMode) {
-            editor.setRangeText(text, start, end, 'end');
-        } else {
-            const textLength = Math.min(text.length, editor.value.length - start);
-            editor.setRangeText(text, start, start + textLength, 'end');
+    function deleteLine() {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const textNode = range.startContainer;
+            const text = textNode.textContent;
+            const pos = range.startOffset;
+            
+            const lineStart = text.lastIndexOf('\n', pos - 1) + 1;
+            const lineEnd = text.indexOf('\n', pos);
+            const actualEnd = (lineEnd === -1) ? text.length : lineEnd + 1;
+            
+            range.setStart(textNode, lineStart);
+            range.setEnd(textNode, actualEnd);
+            range.deleteContents();
+            
+            range.setStart(textNode, lineStart);
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
         }
     }
 
-    /* --- KEYBOARD INTERCEPTOR --- */
+    function deleteWord() {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const textNode = range.startContainer;
+            const text = textNode.textContent;
+            let p = range.startOffset;
+            
+            while(p < text.length && !/\s/.test(text[p])) p++;
+            while(p < text.length && /\s/.test(text[p])) p++;
+            
+            range.setEnd(textNode, p);
+            range.deleteContents();
+            
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+    }
+
+    function findReplace() {
+        const find = prompt("FIND TEXT:");
+        if(find) {
+            const rep = prompt("REPLACE WITH:");
+            if(rep !== null) {
+                editor.innerHTML = editor.innerHTML.replace(new RegExp(find, 'g'), rep);
+            }
+        }
+    }
+
+    /* --- 3. THE GUARDIAN: Keyboard Interceptor --- */
     document.addEventListener('keydown', function(e) {
         if (e.ctrlKey) {
             const k = e.key.toLowerCase();
             
+            // LIST OF KEYS TO HIJACK
             const blocked = ['w', 'r', 'd', 's', 'p', 't', 'n', 'j', 'u', 'o', 'm', 'b', 'i', 'l', 'y', 'g'];
             if (blocked.includes(k)) {
                 e.preventDefault();
                 e.stopPropagation();
             }
 
-            if(k === 'b') cmd('bold');
-            if(k === 'i') cmd('italic');
-            if(k === 'u') cmd('underline');
-            if(k === 's') cmd('save');
-            if(k === 'p') cmd('print');
-            if(k === 'w') cmd('count');
-            if(k === 'r') cmd('ruler');
-            if(k === 'd') cmd('date');
-            if(k === 'm') cmd('toggleMode');
-            if(k === 'l') cmd('find');
-            if(k === 'y') cmd('delline');
-            if(k === 't') cmd('delword');
-            if(k === 'o') cmd('toggleMode');
+            // ROUTE KEYS TO COMMANDS
+            if(k === 'b') handleCommand('bold');
+            if(k === 'i') handleCommand('italic');
+            if(k === 'u') handleCommand('underline');
+            if(k === 's') handleCommand('save');
+            if(k === 'p') handleCommand('print');
+            if(k === 'w') handleCommand('count'); // ^W = Word Count
+            if(k === 'r') handleCommand('ruler'); // ^R = Ruler
+            if(k === 'd') handleCommand('date');  // ^D = Date
+            if(k === 'o') handleCommand('toggleMode');
+            if(k === 'l') handleCommand('find');
+            if(k === 'y') handleCommand('delline');
+            if(k === 't') handleCommand('delword');
         }
         
-        if(e.key === "F1") { e.preventDefault(); cmd('help'); }
-        if(e.key === "F2") { e.preventDefault(); cmd('lorem'); }
-        if(e.key === "F3") { e.preventDefault(); cmd('bold'); }
-        if(e.key === "F4") { e.preventDefault(); cmd('undln'); }
-        if(e.key === "F5") { e.preventDefault(); cmd('delline'); }
-        if(e.key === "F6") { e.preventDefault(); cmd('delword'); }
-        if(e.key === "F7") { e.preventDefault(); cmd('find'); }
-        if(e.key === "F8") { e.preventDefault(); cmd('ruler'); }
-        if(e.key === "F9") { e.preventDefault(); cmd('save'); }
-        if(e.key === "F10") { e.preventDefault(); cmd('exit'); }
+        // Handle Physical F-Keys
+        if(e.key === "F1") { e.preventDefault(); handleCommand('help'); }
+        if(e.key === "F2") { e.preventDefault(); handleCommand('lorem'); }
+        if(e.key === "F3") { e.preventDefault(); handleCommand('bold'); }
+        if(e.key === "F4") { e.preventDefault(); handleCommand('undln'); }
+        if(e.key === "F5") { e.preventDefault(); handleCommand('delline'); }
+        if(e.key === "F6") { e.preventDefault(); handleCommand('delword'); }
+        if(e.key === "F7") { e.preventDefault(); handleCommand('find'); }
+        if(e.key === "F8") { e.preventDefault(); handleCommand('ruler'); }
+        if(e.key === "F9") { e.preventDefault(); handleCommand('save'); }
+        if(e.key === "F10") { e.preventDefault(); handleCommand('exit'); }
         
         setTimeout(updateStats, 0);
     });
 
+    // Update stats on click/type
     function updateStats() {
-        const text = editor.value.substr(0, editor.selectionStart);
-        const lines = text.split('\n');
-        statusPos.innerText = `L:${lines.length.toString().padStart(2,'0')} C:${(lines[lines.length-1].length+1).toString().padStart(2,'0')}`;
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const text = editor.innerText;
+            const cursorPos = range.startOffset;
+            
+            const lines = text.substr(0, cursorPos).split('\n');
+            statusPos.innerText = `L:${lines.length.toString().padStart(2,'0')} C:${(lines[lines.length-1].length+1).toString().padStart(2,'0')}`;
+        }
     }
     
     editor.addEventListener('click', updateStats);
     editor.addEventListener('keyup', updateStats);
     editor.addEventListener('input', updateStats);
 
-    /* --- MAP SYSTEM --- */
-    const map = L.map('map', {
-        zoomControl: false, 
-        attributionControl: false
-    }).setView([0,0], 2);
-    
+    /* --- 4. MAP SYSTEM --- */
+    const map = L.map('map', {zoomControl: false, attributionControl:false}).setView([0,0], 2);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        subdomains: 'abcd', 
-        maxZoom: 19,
-        opacity: 0.8
+        subdomains: 'abcd', maxZoom: 19
     }).addTo(map);
     
     const issIcon = L.icon({
         iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/International_Space_Station.svg',
-        iconSize: [30, 18], 
-        iconAnchor: [15, 9]
+        iconSize: [30, 18], iconAnchor: [15, 9]
     });
-    
     const marker = L.marker([0,0], {icon: issIcon}).addTo(map);
 
     async function updateISS() {
@@ -479,13 +543,11 @@ INSERT Mode: ON
             map.panTo([d.latitude, d.longitude]);
             document.getElementById('lat').innerText = d.latitude.toFixed(2);
             document.getElementById('lon').innerText = d.longitude.toFixed(2);
-        } catch(e) {
-            console.log('ISS fetch error:', e);
-        }
+        } catch(e) {}
     }
-    
     setInterval(updateISS, 5000);
     updateISS();
+
 </script>
 </body>
 </html>
