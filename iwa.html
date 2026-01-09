@@ -5,258 +5,258 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>IBM Writing Assistant</title>
     <script src="https://cdn.jsdelivr.net/npm/typo-js@1.2.1/typo.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-        body {
-            font-family: 'Courier New', monospace;
-            background-color: #000;
-            color: #33ff33;
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
-        }
+    body {
+        font-family: 'Courier New', monospace;
+        background-color: #000;
+        color: #ff3333;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+    }
 
-        /* CRT Scanline Effect */
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: repeating-linear-gradient(
-                0deg,
-                rgba(0, 0, 0, 0.15),
-                rgba(0, 0, 0, 0.15) 1px,
-                transparent 1px,
-                transparent 2px
-            );
-            pointer-events: none;
-            z-index: 9999;
-        }
+    /* CRT Scanline Effect */
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+            0deg,
+            rgba(0, 0, 0, 0.15),
+            rgba(0, 0, 0, 0.15) 1px,
+            transparent 1px,
+            transparent 2px
+        );
+        pointer-events: none;
+        z-index: 9999;
+    }
 
-        /* CRT Flicker */
-        @keyframes flicker {
-            0% { opacity: 0.97; }
-            50% { opacity: 1; }
-            100% { opacity: 0.97; }
-        }
+    /* CRT Flicker */
+    @keyframes flicker {
+        0% { opacity: 0.97; }
+        50% { opacity: 1; }
+        100% { opacity: 0.97; }
+    }
 
-        body::after {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 255, 0, 0.02);
-            pointer-events: none;
-            animation: flicker 0.15s infinite;
-            z-index: 9998;
-        }
+    body::after {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 0, 0, 0.02);
+        pointer-events: none;
+        animation: flicker 0.15s infinite;
+        z-index: 9998;
+    }
 
-        /* Terminal Splash Screen */
-        .splash-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 2rem;
-            text-align: center;
-            text-shadow: 0 0 10px #33ff33;
-        }
+    /* Terminal Splash Screen */
+    .splash-screen {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 2rem;
+        text-align: center;
+        text-shadow: 0 0 10px #ff3333;
+    }
 
+    .splash-screen h1 {
+        font-size: 3rem;
+        letter-spacing: 0.5rem;
+        margin-bottom: 2rem;
+        animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+        from { text-shadow: 0 0 10px #ff3333, 0 0 20px #ff3333; }
+        to { text-shadow: 0 0 20px #ff3333, 0 0 30px #ff3333, 0 0 40px #ff3333; }
+    }
+
+    .splash-screen p {
+        font-size: 1.2rem;
+        margin: 1rem 0;
+        letter-spacing: 0.1rem;
+    }
+
+    /* SVG 9 Button */
+    #nine-btn {
+        margin: 3rem 0;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    #nine-btn:hover svg {
+        filter: drop-shadow(0 0 15px #ff3333) drop-shadow(0 0 25px #ff3333);
+    }
+
+    #nine-btn svg {
+        filter: drop-shadow(0 0 5px #ff3333);
+        transition: all 0.3s ease;
+    }
+
+    .menu-links {
+        margin-top: 2rem;
+        display: flex;
+        gap: 2rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .menu-links a {
+        color: #ff3333;
+        text-decoration: none;
+        font-size: 1.1rem;
+        padding: 0.5rem 1rem;
+        border: 1px solid #ff3333;
+        transition: all 0.3s ease;
+    }
+
+    .menu-links a:hover {
+        background: #ff3333;
+        color: #000;
+        box-shadow: 0 0 10px #ff3333;
+    }
+
+    /* Editor Container */
+    .editor-container {
+        padding: 2rem;
+        min-height: 100vh;
+        background: #000;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .toolbar {
+        background-color: #505050;
+        color: white;
+        padding: 1rem;
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .toolbar button {
+        background-color: #e0e0e0;
+        border: 2px solid #505050;
+        color: #202020;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        transition: all 0.2s ease;
+    }
+
+    .toolbar button:hover {
+        background-color: #505050;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .toolbar button:active {
+        transform: translateY(0);
+    }
+
+    .text-editor {
+        border: 2px solid #ff3333;
+        padding: 1.5rem;
+        min-height: 500px;
+        margin-top: 1rem;
+        background-color: #ffffff;
+        color: #000;
+        font-family: 'Courier New', monospace;
+        font-size: 1rem;
+        line-height: 1.6;
+        outline: none;
+        box-shadow: 0 0 20px rgba(255, 51, 51, 0.3);
+    }
+
+    /* IBM Strip */
+    #ibm-strip {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 24px;
+        background: #000;
+        color: #ff3333;
+        font: 12px/24px 'Courier New', monospace;
+        letter-spacing: 1px;
+        text-align: center;
+        z-index: 999;
+        text-shadow: 0 0 5px #ff3333;
+        border-top: 1px solid #ff3333;
+    }
+
+    /* F-key Bar */
+    #f-key-bar {
+        background: #000;
+        color: #ff3333;
+        font: 13px 'Courier New', monospace;
+        padding: 0.75rem 1rem;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        border-bottom: 2px solid #ff3333;
+        text-shadow: 0 0 5px #ff3333;
+    }
+
+    .f-key {
+        cursor: pointer;
+        padding: 0.25rem 0.5rem;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .f-key:hover {
+        background: rgba(255, 51, 51, 0.1);
+        border-color: #ff3333;
+        box-shadow: 0 0 8px rgba(255, 51, 51, 0.3);
+    }
+
+    .f-key:active {
+        background: rgba(255, 51, 51, 0.2);
+    }
+
+    @media (max-width: 768px) {
         .splash-screen h1 {
-            font-size: 3rem;
-            letter-spacing: 0.5rem;
-            margin-bottom: 2rem;
-            animation: glow 2s ease-in-out infinite alternate;
-        }
-
-        @keyframes glow {
-            from { text-shadow: 0 0 10px #33ff33, 0 0 20px #33ff33; }
-            to { text-shadow: 0 0 20px #33ff33, 0 0 30px #33ff33, 0 0 40px #33ff33; }
+            font-size: 2rem;
+            letter-spacing: 0.3rem;
         }
 
         .splash-screen p {
-            font-size: 1.2rem;
-            margin: 1rem 0;
-            letter-spacing: 0.1rem;
-        }
-
-        /* SVG 9 Button */
-        #nine-btn {
-            margin: 3rem 0;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            padding: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        #nine-btn:hover svg {
-            filter: drop-shadow(0 0 15px #33ff33) drop-shadow(0 0 25px #33ff33);
-        }
-
-        #nine-btn svg {
-            filter: drop-shadow(0 0 5px #33ff33);
-            transition: all 0.3s ease;
-        }
-
-        .menu-links {
-            margin-top: 2rem;
-            display: flex;
-            gap: 2rem;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .menu-links a {
-            color: #33ff33;
-            text-decoration: none;
-            font-size: 1.1rem;
-            padding: 0.5rem 1rem;
-            border: 1px solid #33ff33;
-            transition: all 0.3s ease;
-        }
-
-        .menu-links a:hover {
-            background: #33ff33;
-            color: #000;
-            box-shadow: 0 0 10px #33ff33;
-        }
-
-        /* Editor Container */
-        .editor-container {
-            padding: 2rem;
-            min-height: 100vh;
-            background: #000;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .toolbar {
-            background-color: #505050;
-            color: white;
-            padding: 1rem;
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .toolbar button {
-            background-color: #e0e0e0;
-            border: 2px solid #505050;
-            color: #202020;
-            padding: 0.5rem 1rem;
-            cursor: pointer;
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-            transition: all 0.2s ease;
-        }
-
-        .toolbar button:hover {
-            background-color: #505050;
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        .toolbar button:active {
-            transform: translateY(0);
-        }
-
-        .text-editor {
-            border: 2px solid #33ff33;
-            padding: 1.5rem;
-            min-height: 500px;
-            margin-top: 1rem;
-            background-color: #ffffff;
-            color: #000;
-            font-family: 'Courier New', monospace;
             font-size: 1rem;
-            line-height: 1.6;
-            outline: none;
-            box-shadow: 0 0 20px rgba(51, 255, 51, 0.3);
         }
 
-        /* IBM Strip */
-        #ibm-strip {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 24px;
-            background: #000;
-            color: #33ff33;
-            font: 12px/24px 'Courier New', monospace;
-            letter-spacing: 1px;
-            text-align: center;
-            z-index: 999;
-            text-shadow: 0 0 5px #33ff33;
-            border-top: 1px solid #33ff33;
-        }
-
-        /* F-key Bar */
         #f-key-bar {
-            background: #000;
-            color: #33ff33;
-            font: 13px 'Courier New', monospace;
-            padding: 0.75rem 1rem;
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 1rem;
-            border-bottom: 2px solid #33ff33;
-            text-shadow: 0 0 5px #33ff33;
+            font-size: 11px;
+            padding: 0.5rem;
+            gap: 0.5rem;
         }
 
         .f-key {
-            cursor: pointer;
-            padding: 0.25rem 0.5rem;
-            border: 1px solid transparent;
-            transition: all 0.2s ease;
-            white-space: nowrap;
+            font-size: 11px;
         }
-
-        .f-key:hover {
-            background: rgba(51, 255, 51, 0.1);
-            border-color: #33ff33;
-            box-shadow: 0 0 8px rgba(51, 255, 51, 0.3);
-        }
-
-        .f-key:active {
-            background: rgba(51, 255, 51, 0.2);
-        }
-
-        @media (max-width: 768px) {
-            .splash-screen h1 {
-                font-size: 2rem;
-                letter-spacing: 0.3rem;
-            }
-
-            .splash-screen p {
-                font-size: 1rem;
-            }
-
-            #f-key-bar {
-                font-size: 11px;
-                padding: 0.5rem;
-                gap: 0.5rem;
-            }
-
-            .f-key {
-                font-size: 11px;
-            }
-        }
-    </style>
+    }
+</style>
 </head>
 <body>
     <!-- Terminal Splash Screen -->
