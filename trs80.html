@@ -3,40 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Wordstar Nexus Seven - The Redux." />
-<title>WordStar Nexus Seven</title>
-<!-- VT323 for the retro terminal look -->
+<title>WordStar Nexus: Original Architecture</title>
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
 
 <style>
   :root {
     --bg-color: #050505;
+    --panel-bg: #111;
     --text-color: #b0b0b0;
     --accent-red: #cc0000;
-    --dim-grey: #333;
-    --menu-bg: #111;
+    --border-color: #333;
   }
-
-  /* Custom Scrollbar */
-  ::-webkit-scrollbar { width: 12px; }
-  ::-webkit-scrollbar-track { background: #111; border-left: 1px solid #333; }
-  ::-webkit-scrollbar-thumb { background: var(--dim-grey); border: 1px solid #000; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--accent-red); }
 
   body, html {
     margin: 0;
     padding: 0;
-    font-family: 'VT323', 'Courier New', monospace;
+    font-family: 'VT323', monospace;
     background-color: var(--bg-color);
     color: var(--text-color);
     height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden; 
+    overflow: hidden;
   }
 
-  /* CRT Scanline Overlay */
+  /* Universal Scrollbar */
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: #000; }
+  ::-webkit-scrollbar-thumb { background: #333; border: 1px solid #000; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent-red); }
+
+  /* CRT Overlay */
   .crt::before {
     content: " ";
     display: block;
@@ -48,414 +46,367 @@
     pointer-events: none;
   }
 
-  /* Menu Bar (Top) */
-  #top-menu-bar {
-    background-color: var(--menu-bg);
-    padding: 0 10px;
-    display: flex;
-    justify-content: flex-start;
-    border-bottom: 2px solid var(--accent-red);
-    font-size: 1.3rem;
-    user-select: none;
-    height: 35px;
-    align-items: center;
-  }
-  
-  .menu-item {
-    margin-right: 20px;
-    cursor: pointer;
-    text-transform: uppercase;
+  /* --- SECTION 1: TOP COMMAND BAR --- */
+  #top-bar {
+    background-color: var(--panel-bg);
     padding: 5px 10px;
-    position: relative; /* For positioning dropdowns if needed */
+    display: flex;
+    justify-content: space-between; /* Spread them out nicely */
+    border-bottom: 1px solid var(--accent-red);
+    font-size: 1.1rem;
   }
   
-  .menu-item:hover { 
-    background-color: var(--accent-red); 
-    color: #000; 
-  }
-
-  /* Dropdown Menus */
-  .dropdown-menu {
-    position: absolute;
-    background-color: #000;
-    border: 1px solid var(--accent-red);
-    z-index: 1000;
-    box-shadow: 5px 5px 10px rgba(0,0,0,0.8);
-    min-width: 150px;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .dropdown-option {
-    padding: 8px 15px;
+  .menu-btn {
     cursor: pointer;
-    color: #ccc;
-    font-family: 'VT323', monospace;
-    font-size: 1.2rem;
-    border-bottom: 1px solid #222;
+    padding: 2px 8px;
+    border: 1px solid transparent;
   }
-
-  .dropdown-option:hover {
+  .menu-btn:hover {
     background-color: var(--accent-red);
-    color: black;
+    color: #000;
   }
+  .shortcut-key { color: var(--accent-red); margin-right: 4px; }
+  .menu-btn:hover .shortcut-key { color: #000; }
 
-  /* Editor Area */
+  /* --- SECTION 2: EDITOR --- */
   #editor-container {
     flex-grow: 1;
     position: relative;
+    background-color: #000;
     display: flex;
     flex-direction: column;
-    background-color: #0a0a0a;
   }
 
   #ruler {
     display: flex;
-    background: #111;
-    color: #555;
+    background: #080808;
+    color: #444;
     font-size: 1rem;
     padding: 2px 0;
-    border-bottom: 1px dashed #333;
+    border-bottom: 1px dashed #222;
   }
 
-  textarea#editor {
+  #editor {
     flex-grow: 1;
     background-color: transparent;
-    color: #e0e0e0;
+    color: #ccc;
     border: none;
     padding: 20px;
-    font-size: 1.4rem; 
-    line-height: 1.4;
+    font-size: 1.3rem;
     font-family: 'VT323', monospace;
     resize: none;
     outline: none;
     white-space: pre-wrap;
-  }
-  
-  /* Reading Mode Style */
-  textarea#editor.reading-mode {
-    max-width: 800px;
-    margin: 0 auto;
-    border-left: 1px solid #333;
-    border-right: 1px solid #333;
-    background-color: #0e0e0e;
+    line-height: 1.4;
   }
 
-  /* Dashboard (Bottom) */
-  #dashboard {
-    height: 250px; 
+  /* --- SECTION 3: LOWER UI STACK --- */
+  #lower-stack {
+    border-top: 1px solid var(--border-color);
+    background-color: var(--panel-bg);
+  }
+
+  /* Tab Row (File, Edit, etc) */
+  #tabs-row {
     display: flex;
-    border-top: 4px solid var(--accent-red);
-    background-color: #111;
+    background-color: #1a1a1a;
+    border-bottom: 1px solid var(--border-color);
   }
-
-  .dashboard-panel {
-    flex: 1;
-    padding: 10px;
-    border-right: 1px solid #333;
-    overflow: hidden;
-    position: relative;
+  .tab-item {
+    padding: 4px 15px;
+    cursor: pointer;
+    border-right: 1px solid var(--border-color);
+    font-size: 1.1rem;
   }
+  .tab-item:hover { background-color: #333; }
 
   /* Status Bar */
   #status-bar {
     background-color: var(--accent-red);
-    color: black;
+    color: #000;
     padding: 2px 10px;
     display: flex;
     justify-content: space-between;
     font-weight: bold;
-    font-size: 1.1rem;
+    font-size: 1rem;
     text-transform: uppercase;
   }
 
-  /* Map Styling */
+  /* The "MicroPro" Command Row */
+  #bottom-commands {
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0;
+    background-color: #111;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 1rem;
+  }
+
+  /* --- SECTION 4: SYSTEM DECK (Map & GIF) --- */
+  #system-deck {
+    height: 160px; /* Minimized height */
+    display: flex;
+    background-color: #000;
+    border-top: 2px solid var(--accent-red);
+  }
+
+  .deck-panel {
+    border-right: 1px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Map Specifics */
+  #map-panel {
+    flex-grow: 1; /* Takes up most space */
+  }
   #map {
     width: 100%;
     height: 100%;
-    filter: grayscale(100%) contrast(1.2) brightness(0.8);
+    filter: grayscale(100%) contrast(1.2) brightness(0.7);
     transition: filter 0.3s;
   }
   #map:hover { filter: grayscale(0%); }
 
-  .pantheon-container {
+  /* GIF/Logo Specifics */
+  #logo-panel {
+    width: 200px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: #000;
+    background: #050505;
   }
-  .pantheon-container img {
-    height: 120px;
-    filter: sepia(100%) hue-rotate(-50deg) saturate(300%);
+  #logo-panel img {
+    height: 100px;
+    /* Red Shift Effect on GIF */
+    filter: sepia(100%) hue-rotate(-50deg) saturate(300%) contrast(1.2);
     opacity: 0.8;
   }
 
-  .hidden { display: none !important; }
+  .coord-overlay {
+    position: absolute;
+    top: 5px; right: 5px;
+    background: rgba(0,0,0,0.8);
+    color: var(--accent-red);
+    padding: 2px 5px;
+    font-size: 0.8rem;
+    z-index: 500;
+    border: 1px solid #333;
+  }
+	/* --- PRINT STYLES --- */
+@media print {
+  /* Hide the interface elements (Top bar, bottom stack, scrollbars) */
+  #top-bar, #lower-stack, .crt::before { 
+    display: none !important; 
+  }
+
+  /* Reset the page container */
+  body, html, #editor-container {
+    background-color: white !important;
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  /* Format the text for paper */
+  #editor {
+    color: black !important;
+    background-color: white !important;
+    font-family: 'Courier New', Courier, monospace !important;
+    font-size: 12pt !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+  }
+}
 
 </style>
 </head>
 <body class="crt">
 
-    <!-- Top App Menu -->
-    <div id="top-menu-bar">
-        <div class="menu-item tab" data-menu="file">File</div>
-        <div class="menu-item tab" data-menu="edit">Edit</div>
-        <div class="menu-item tab" data-menu="format">Format</div>
-        <div class="menu-item tab" data-menu="view">View</div>
-        <div class="menu-item tab" data-menu="tools">Tools</div>
-        <div class="menu-item tab" data-menu="help">Help</div>
+    <!-- 1. TOP SHORTCUTS (The "Above" Commands) -->
+    <div id="top-bar">
+        <div class="menu-btn" onclick="format('bold')"><span class="shortcut-key">^B</span> Bold</div>
+        <div class="menu-btn" onclick="format('italic')"><span class="shortcut-key">^I</span> Italic</div>
+        <div class="menu-btn" onclick="format('underline')"><span class="shortcut-key">^U</span> Underline</div>
+        <div class="menu-btn" onclick="insertDateTime()"><span class="shortcut-key">^D</span> Date/Time</div>
+        <div class="menu-btn" onclick="countWords()"><span class="shortcut-key">^W</span> Count</div>
+        <div class="menu-btn" onclick="toggleRuler()"><span class="shortcut-key">^R</span> Ruler</div>
+        <div class="menu-btn" onclick="saveDoc()"><span class="shortcut-key">^S</span> Save</div>
+        <div class="menu-btn" onclick="window.print()"><span class="shortcut-key">^P</span> Print</div>
+        <div class="menu-btn" onclick="toggleReadMode()"><span class="shortcut-key">^M</span> Read Mode</div>
     </div>
 
-    <!-- Main Editor -->
+    <!-- 2. EDITOR AREA -->
     <div id="editor-container">
-        <div id="ruler" class="hidden"></div> 
-        <textarea id="editor" spellcheck="false" placeholder="NEXUS SEVEN... SYSTEM READY.">Slide this frame out, to fit as needed. Version-control-3, 2nd environment. (Some features are still under construction) Welcome to WordStar Nexus Seven! A writing space. Enjoy the feel of the classic word processing preferred by William F Buckley jr. now with modern web technologies. (^=ctrl...the map is tracking the international space station in real time...)</textarea>
-    </div>
-
-    <!-- Status Bar -->
-    <div id="status-bar">
-        <span id="file-name">UNTITLED.WS7</span>
-        <span id="cursor-position">L:01 C:01</span>
-        <span id="iss-telemetry">ISS: ACQUIRING SIGNAL...</span>
-        <span id="insert-mode">INSERT</span>
-    </div>
-
-    <!-- Dashboard -->
-    <div id="dashboard">
-     <div class="dashboard-panel" style="flex: 0 0 240px; font-size: 0.85rem; display: flex; flex-direction: column;">
+        <div id="ruler" style="display:none;"></div>
+        <textarea id="editor" spellcheck="false">WORDSTAR NEXUS [ORIGINAL ARCHITECTURE]
+------------------------------------
+Version-control-3, 3nd environment. (Some features are still under construction) Welcome to WordStar Nexus Seven! A writing space. Enjoy the feel of the classic word processing preferred by William F Buckley jr. now with modern web technologies. (^=ctrl...the map is tracking the international space station in real time...)</textarea>
     
-    <!-- SECTION 1: THE MICROPRO ROOTS -->
-    <div style="color: #555; font-size: 0.7rem; margin-bottom: 5px; border-bottom: 1px solid #333;">ROOT MENUS</div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; margin-bottom: 10px;">
-        <div title="Block Operations"><span style="color: var(--accent-red);">^K</span> Block</div>
-        <div title="Onscreen Formatting"><span style="color: var(--accent-red);">^O</span> Onscreen</div>
-        <div title="Quick Functions"><span style="color: var(--accent-red);">^Q</span> Quick</div>
-        <div title="Print Control"><span style="color: var(--accent-red);">^P</span> Print</div>
-        <div title="Cursor Movement"><span style="color: var(--accent-red);">^C</span> Cursor</div>
-        <div title="Reform Paragraph"><span style="color: var(--accent-red);">^R</span> Reform</div>
-        <div title="Insert Mode"><span style="color: var(--accent-red);">^V</span> Insert</div>
-        <div title="Delete Options"><span style="color: var(--accent-red);">^D</span> Delete</div>
     </div>
 
-    <!-- SECTION 2: MODERN UTILITIES -->
-    <div style="color: #555; font-size: 0.7rem; margin-bottom: 5px; border-bottom: 1px solid #333;">ACTIONS</div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px;">
-        <div><span style="color: var(--accent-red);">^S</span> Save</div>
-        <div><span style="color: var(--accent-red);">^B</span> Bold</div>
-        <div><span style="color: var(--accent-red);">^I</span> Italic</div>
-        <div><span style="color: var(--accent-red);">^M</span> Read Mode</div>
-    </div>
-</div>
-
-        <div class="dashboard-panel" style="flex: 2;">
-             <div id="map"></div>
-             <div style="position: absolute; top: 5px; right: 5px; background: black; color: red; padding: 2px; font-size: 0.8rem; z-index: 1000;">
-                 <span id="lat">0.00</span>, <span id="lon">0.00</span> | <span id="day-night">...</span>
-             </div>
-        </div>
-
-        <div class="dashboard-panel pantheon-container" style="flex: 0 0 200px;">
-            <img src="https://raw.githubusercontent.com/ghostm68/pantheon/main/quirky.gif" alt="Pantheon">
-            <div style="margin-top: 10px; font-size: 0.8rem; color: #555;">SYSTEM: ONLINE</div>
-        </div>
-    </div>
-
-<!-- SCRIPTS -->
-<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
-
-<script>
-/** 
- * EDITOR LOGIC 
- */
-const editor = document.getElementById('editor');
-const ruler = document.getElementById('ruler');
-const cursorDisplay = document.getElementById('cursor-position');
-
-// Initialize Ruler
-for (let i = 1; i <= 80; i++) {
-    const mark = document.createElement('span');
-    mark.style.flex = '0 0 1.25%'; 
-    mark.style.textAlign = 'center';
-    mark.textContent = (i % 10 === 0) ? (i/10) : (i % 5 === 0 ? '+' : '-');
-    ruler.appendChild(mark);
-}
-
-// Update Cursor Stats
-const updateStatus = () => {
-    const text = editor.value;
-    const cursorPos = editor.selectionStart;
-    const lines = text.substr(0, cursorPos).split("\n");
-    const currentLine = lines.length;
-    const currentPos = lines[lines.length - 1].length + 1;
-    cursorDisplay.textContent = `L:${currentLine.toString().padStart(2,'0')} C:${currentPos.toString().padStart(2,'0')}`;
-};
-editor.addEventListener('input', updateStatus);
-editor.addEventListener('click', updateStatus);
-editor.addEventListener('keyup', updateStatus);
-
-// Core Functions
-const format = (cmd, value=null) => document.execCommand(cmd, false, value);
-
-function saveDocument() {
-    const blob = new Blob([editor.value], {type: 'text/plain'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'nexus_log.txt';
-    a.click();
-}
-
-function toggleReadingMode() {
-    editor.classList.toggle('reading-mode');
-}
-
-function generateLoremIpsum() {
-    const text = "More people die every year as a result of the war against drugs than die from what we call, generically, overdosing...";
-    editor.setRangeText(text, editor.selectionStart, editor.selectionEnd, 'end');
-}
-
-/**
- * MENU SYSTEM (Restored & Updated)
- */
-const tabs = document.querySelectorAll('.tab');
-
-tabs.forEach(tab => {
-    tab.addEventListener('click', function(e) {
-        e.stopPropagation(); // Prevent closing immediately
-        const menuName = this.dataset.menu;
-        showMenu(menuName, this);
-    });
-});
-
-function showMenu(menuName, targetElement) {
-    // 1. Remove existing menus
-    closeAllMenus();
-
-    // 2. Define Menu Items
-    let items = [];
-    switch(menuName) {
-        case 'file':
-            items = [
-                { name: 'New', action: () => { if(confirm('Clear?')) editor.value = ''; } },
-                { name: 'Open', action: () => { alert('Open Dialog (Simulated)'); } },
-                { name: 'Save (^S)', action: saveDocument },
-                { name: 'Print', action: () => window.print() },
-                { name: 'Exit', action: () => window.close() }
-            ];
-            break;
-        case 'edit':
-            items = [
-                { name: 'Cut', action: () => document.execCommand('cut') },
-                { name: 'Copy', action: () => document.execCommand('copy') },
-                { name: 'Paste', action: () => navigator.clipboard.readText().then(t => editor.setRangeText(t)) },
-                { name: 'Select All', action: () => editor.select() }
-            ];
-            break;
-        case 'format':
-            items = [
-                { name: 'Bold (^B)', action: () => format('bold') },
-                { name: 'Italic (^I)', action: () => format('italic') },
-                { name: 'Underline (^U)', action: () => format('underline') }
-            ];
-            break;
-        case 'view':
-            items = [
-                { name: 'Toggle Ruler (^R)', action: () => ruler.classList.toggle('hidden') },
-                { name: 'Reading Mode (^M)', action: toggleReadingMode },
-                { name: 'Status Bar', action: () => document.getElementById('status-bar').classList.toggle('hidden') }
-            ];
-            break;
-        case 'tools':
-            items = [
-                { name: 'Word Count', action: () => alert('Words: ' + editor.value.trim().split(/\s+/).length) },
-                { name: 'Lorem Ipsum (^L)', action: generateLoremIpsum }
-            ];
-            break;
-        case 'help':
-            items = [
-                { name: 'About Nexus', action: () => alert('WordStar Nexus Seven\nVersion 3.0 (Redux)') }
-            ];
-            break;
-    }
-
-    // 3. Create DOM Elements
-    const menuDiv = document.createElement('div');
-    menuDiv.className = 'dropdown-menu';
-    
-    // Position it just below the clicked tab
-    const rect = targetElement.getBoundingClientRect();
-    menuDiv.style.left = rect.left + 'px';
-    menuDiv.style.top = (rect.bottom + 2) + 'px';
-
-    items.forEach(item => {
-        const option = document.createElement('div');
-        option.className = 'dropdown-option';
-        option.textContent = item.name;
-        option.onclick = (e) => {
-            e.stopPropagation();
-            item.action();
-            closeAllMenus();
-        };
-        menuDiv.appendChild(option);
-    });
-
-    document.body.appendChild(menuDiv);
-
-    // 4. Add listener to close menu when clicking outside
-    document.addEventListener('click', closeAllMenus, { once: true });
-}
-
-function closeAllMenus() {
-    const existing = document.querySelectorAll('.dropdown-menu');
-    existing.forEach(el => el.remove());
-}
-
-
-/**
- * ISS TRACKER & MAP
- */
-const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([0, 0], 2);
-
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-	subdomains: 'abcd',
-	maxZoom: 19
-}).addTo(map);
-
-const issIcon = L.icon({
-    iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/International_Space_Station.svg',
-    iconSize: [40, 24],
-    iconAnchor: [20, 12]
-});
-
-const issMarker = L.marker([0, 0], {icon: issIcon}).addTo(map);
-const issTrail = L.polyline([], {color: '#cc0000', weight: 1, opacity: 0.7}).addTo(map);
-
-async function updateISS() {
-    try {
-        const response = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
-        const data = await response.json();
-        const { latitude, longitude, altitude, velocity } = data;
-
-        issMarker.setLatLng([latitude, longitude]);
-        issTrail.addLatLng([latitude, longitude]);
-        map.panTo([latitude, longitude]);
-
-        document.getElementById('lat').textContent = latitude.toFixed(2);
-        document.getElementById('lon').textContent = longitude.toFixed(2);
-        document.getElementById('iss-telemetry').textContent = `ISS: ALT ${altitude.toFixed(0)}KM // VEL ${velocity.toFixed(0)}KPH`;
+    <!-- 3. LOWER UI STACK -->
+    <div id="lower-stack">
         
-        const times = SunCalc.getTimes(new Date(), latitude, longitude);
-        const isDay = new Date() > times.sunrise && new Date() < times.sunset;
-        document.getElementById('day-night').textContent = isDay ? "DAYLIGHT" : "ECLIPSE";
-        document.getElementById('day-night').style.color = isDay ? "#fff" : "#555";
+        <!-- Tabs -->
+        <div id="tabs-row">
+            <div class="tab-item">File</div>
+            <div class="tab-item">Edit</div>
+            <div class="tab-item">Format</div>
+            <div class="tab-item">View</div>
+            <div class="tab-item">Tools</div>
+            <div class="tab-item">Help</div>
+        </div>
 
-    } catch (e) {
-        // Silent fail for offline dev
+        <!-- Status Line -->
+        <div id="status-bar">
+            <span id="cursor-pos">L:01 C:01</span>
+            <span id="doc-status">EDITING: UNTITLED</span>
+            <span id="insert-state">INSERT</span>
+        </div>
+
+        <!-- 4. BOTTOM COMMANDS (The "Below" Commands) -->
+        <div id="bottom-commands">
+            <div class="menu-btn"><span class="shortcut-key">^K</span> Block</div>
+            <div class="menu-btn"><span class="shortcut-key">^O</span> Onscreen</div>
+            <div class="menu-btn"><span class="shortcut-key">^Q</span> Quick</div>
+            <div class="menu-btn"><span class="shortcut-key">^P</span> Print</div>
+            <div class="menu-btn"><span class="shortcut-key">^C</span> Cursor</div>
+            <div class="menu-btn"><span class="shortcut-key">^R</span> Reform</div>
+            <div class="menu-btn"><span class="shortcut-key">^V</span> Insert</div>
+            <div class="menu-btn"><span class="shortcut-key">^D</span> Delete</div>
+        </div>
+
+        <!-- 5. SYSTEM DECK (Map + Gif) -->
+        <div id="system-deck">
+            <!-- Map Panel -->
+            <div class="deck-panel" id="map-panel">
+                <div id="map"></div>
+                <div class="coord-overlay">
+                    ISS: <span id="lat">0.00</span>, <span id="lon">0.00</span>
+                </div>
+            </div>
+
+            <!-- GIF Panel -->
+            <div class="deck-panel" id="logo-panel">
+                <img src="https://raw.githubusercontent.com/ghostm68/pantheon/main/quirky.gif" alt="System">
+                <div style="margin-top:5px; font-size: 0.8rem; color: #666;">SYS.MONITOR</div>
+            </div>
+        </div>
+
+    </div>
+
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script>
+    /* --- EDITOR LOGIC & SAFETY --- */
+    const editor = document.getElementById('editor');
+    const ruler = document.getElementById('ruler');
+    
+    // 1. Generate Ruler
+    for(let i=1; i<=80; i++) {
+        ruler.innerHTML += `<span style="flex:0 0 1.25%; text-align:center;">${i%10===0?i/10:i%5===0?'+':'-'}</span>`;
     }
-}
-setInterval(updateISS, 3000);
-updateISS();
+
+    // 2. The Actions
+    const format = (cmd) => document.execCommand(cmd);
+    
+    const toggleRuler = () => {
+        ruler.style.display = (ruler.style.display === 'none' ? 'flex' : 'none');
+    };
+
+    const saveDoc = () => {
+        const blob = new Blob([editor.value], {type:'text/plain'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'nexus_seven.txt';
+        a.click();
+    };
+
+    const toggleReadMode = () => {
+        editor.style.maxWidth = editor.style.maxWidth ? '' : '800px';
+        editor.style.margin = editor.style.margin ? '' : '0 auto';
+        editor.style.borderLeft = editor.style.borderLeft ? '' : '1px solid #333';
+        editor.style.borderRight = editor.style.borderRight ? '' : '1px solid #333';
+    };
+
+    const insertDateTime = () => {
+        const d = new Date().toLocaleString();
+        const start = editor.selectionStart;
+        const end = editor.selectionEnd;
+        editor.setRangeText(d, start, end, 'end');
+    };
+
+    const countWords = () => {
+        const count = editor.value.trim().split(/\s+/).length;
+        alert("NEXUS ANALYTICS:\nWord Count: " + count);
+    };
+
+    // 3. THE KEYBOARD INTERCEPTOR (The Safety System)
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey) {
+            const key = e.key.toLowerCase();
+
+            // LIST OF DANGEROUS BROWSER KEYS TO BLOCK
+            // w=close tab, r=refresh, d=bookmark, p=print, s=save, t=new tab, n=new window
+            if (['w', 'r', 'd', 'p', 's', 't', 'n', 'm', 'b', 'i', 'u'].includes(key)) {
+                e.preventDefault(); // STOP BROWSER DEFAULT
+            }
+
+            // MAP TO NEXUS FUNCTIONS
+            switch(key) {
+                case 's': saveDoc(); break;
+                case 'p': window.print(); break;
+                case 'w': countWords(); break; // Saves you from Closing Tab!
+                case 'r': toggleRuler(); break; // Saves you from Refreshing!
+                case 'd': insertDateTime(); break; // Saves you from Bookmarking!
+                case 'm': toggleReadMode(); break;
+                case 'b': format('bold'); break;
+                case 'i': format('italic'); break;
+                case 'u': format('underline'); break;
+                // Optional: Map ^N to "New Document" or just block it
+                case 'n': if(confirm("Clear All Text?")) editor.value = ""; break;
+            }
+        }
+    });
+
+    // 4. Status Bar Update
+    editor.addEventListener('input', () => {
+        const text = editor.value.substring(0, editor.selectionStart);
+        const lines = text.split('\n');
+        document.getElementById('cursor-pos').innerText = `L:${lines.length} C:${lines[lines.length-1].length+1}`;
+        // Update "Editing" status
+        document.getElementById('doc-status').innerText = "EDITING: ACTIVE";
+        document.getElementById('doc-status').style.color = "#fff";
+    });
+
+    /* --- MAP LOGIC (Keep this exactly as is) --- */
+    const map = L.map('map', {zoomControl: false, attributionControl:false}).setView([0,0], 2);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+    
+    const issIcon = L.icon({
+        iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/International_Space_Station.svg',
+        iconSize: [30, 18], iconAnchor: [15, 9]
+    });
+    const marker = L.marker([0,0], {icon: issIcon}).addTo(map);
+
+    async function updateISS() {
+        try {
+            const r = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
+            const d = await r.json();
+            marker.setLatLng([d.latitude, d.longitude]);
+            map.panTo([d.latitude, d.longitude]);
+            document.getElementById('lat').innerText = d.latitude.toFixed(2);
+            document.getElementById('lon').innerText = d.longitude.toFixed(2);
+        } catch(e){}
+    }
+    setInterval(updateISS, 3000);
+    updateISS();
 
 </script>
 </body>
