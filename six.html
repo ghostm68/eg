@@ -251,18 +251,17 @@
 <script>
   const editor = document.getElementById('editor');
   const docStats = document.getElementById('doc-stats');
+  const flags = document.getElementById('flags');
   
-  // Update Pxx Lxx Cxx
+  // 1. STATS UPDATE ENGINE
   function updateStats() {
     const text = editor.value.substr(0, editor.selectionStart);
     const lines = text.split("\n");
     const lineCount = lines.length;
     const colCount = lines[lines.length-1].length + 1;
-    
-    // Page count is simulated (approx 40 lines per page)
-    const pageCount = Math.floor(lineCount / 40) + 1;
+    const pageCount = Math.floor(lineCount / 55) + 1; // Approx 55 lines per page
 
-    // Formatting numbers to 2 digits (L07, C17)
+    // Format: P01 L01 C01
     const pStr = pageCount.toString().padStart(2, '0');
     const lStr = lineCount.toString().padStart(2, '0');
     const cStr = colCount.toString().padStart(2, '0');
@@ -270,34 +269,95 @@
     docStats.innerText = `P${pStr} L${lStr} C${cStr}`;
   }
 
+  // Update stats on any movement
   editor.addEventListener('input', updateStats);
   editor.addEventListener('click', updateStats);
   editor.addEventListener('keyup', updateStats);
 
-  // Key Interception (Simulating the chords)
+  // 2. THE KEYBOARD INTERCEPTOR
   editor.addEventListener('keydown', function(e) {
     if (e.ctrlKey) {
-      // Allow default behavior but log it or handle custom logic if you want
-      // For now, we let browser defaults handle Bold (Ctrl+B) etc.
-      // But purely visually, WordStar just showed the control codes on screen.
+      const key = e.key.toLowerCase();
+      
+      // LIST OF DANGEROUS KEYS TO BLOCK
+      // w=close tab, t=new tab, n=new window, d=bookmark, o=open file, j=downloads, p=print
+      if (['w', 't', 'n', 'd', 'o', 'j', 'p', 's', 'k'].includes(key)) {
+        e.preventDefault(); // STOP THE BROWSER COMMAND
+      }
+
+      // --- COMMAND SIMULATIONS ---
+
+      // ^P -> Print
+      if (key === 'p') {
+        window.print();
+      }
+      
+      // ^K or ^S -> Save (Download)
+      if (key === 'k' || key === 's') {
+        saveDocument();
+      }
+
+      // ^N -> Split Line (Insert Newline)
+      if (key === 'n') {
+        insertText('\n');
+      }
+
+      // ^T -> Delete Word (Simple simulation)
+      if (key === 't') {
+        // Logic to delete next word would go here, 
+        // for now we prevent the new tab
+      }
+      
+      // ^B -> Toggle Bold Visual (Just inserts visual markers for the retro feel)
+      if (key === 'b') {
+        insertText('^B');
+      }
+
+      // ^O -> Just prevents "Open File" dialog
+      if (key === 'o') {
+        // Visual flair only
+      }
     }
   });
 
-  // F-Key Interception
+  // 3. F-KEYS & CLICK ACTIONS
   document.addEventListener('keydown', function(e) {
-    if(e.key === "F4") { e.preventDefault(); insertCode('^B'); } // Bold
-    if(e.key === "F3") { e.preventDefault(); insertCode('^S'); } // Underline
+    // F9 is classic WordStar Save
+    if(e.key === "F9") { e.preventDefault(); saveDocument(); }
+    if(e.key === "F1") { e.preventDefault(); alert("HELP: This is a visual replica of WordStar 3.3."); }
   });
 
-  function insertCode(code) {
+  // Helper: Insert text at cursor
+  function insertText(text) {
     const start = editor.selectionStart;
     const end = editor.selectionEnd;
-    const val = editor.value;
-    editor.value = val.substring(0, start) + code + val.substring(end);
-    editor.selectionStart = editor.selectionEnd = start + code.length;
+    editor.setRangeText(text, start, end, 'end');
     updateStats();
   }
 
+  // Helper: Save/Download
+  function saveDocument() {
+    // Flash the header to show "SAVING"
+    const originalText = document.getElementById('file-path').innerText;
+    document.getElementById('file-path').innerText = "SAVING...";
+    document.getElementById('file-path').style.backgroundColor = "#cc0000"; // Red Flash
+    document.getElementById('file-path').style.color = "#000";
+
+    const blob = new Blob([editor.value], {type:'text/plain'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'NEXUS.DOC';
+    a.click();
+
+    // Reset header after 1 second
+    setTimeout(() => {
+        document.getElementById('file-path').innerText = originalText;
+        document.getElementById('file-path').style.backgroundColor = ""; 
+        document.getElementById('file-path').style.color = "";
+    }, 1000);
+  }
+
+  // Init
   updateStats();
 </script>
 
