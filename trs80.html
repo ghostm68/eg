@@ -26,16 +26,14 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    user-select: none; /* Prevents accidental UI selection */
+    user-select: none;
   }
 
-  /* Universal Scrollbar */
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-track { background: #000; }
   ::-webkit-scrollbar-thumb { background: #333; border: 1px solid #000; }
   ::-webkit-scrollbar-thumb:hover { background: var(--accent-red); }
 
-  /* CRT Overlay */
   .crt::before {
     content: " ";
     display: block;
@@ -47,7 +45,6 @@
     pointer-events: none;
   }
 
-  /* --- SECTION 1: TOP COMMAND BAR --- */
   #top-bar {
     background-color: var(--panel-bg);
     padding: 5px 10px;
@@ -71,7 +68,6 @@
   .shortcut-key { color: var(--accent-red); margin-right: 4px; }
   .menu-btn:hover .shortcut-key { color: #000; }
 
-  /* --- SECTION 2: EDITOR --- */
   #editor-container {
     flex-grow: 1;
     position: relative;
@@ -104,10 +100,9 @@
     outline: none;
     white-space: pre-wrap;
     line-height: 1.4;
-    user-select: text; /* Allow text selection inside editor */
+    user-select: text;
   }
 
-  /* Read Mode Class */
   .read-mode #editor {
     max-width: 800px;
     margin: 0 auto;
@@ -116,13 +111,11 @@
     background-color: #0a0a0a;
   }
 
-  /* --- SECTION 3: LOWER UI STACK --- */
   #lower-stack {
     border-top: 1px solid var(--border-color);
     background-color: var(--panel-bg);
   }
 
-  /* Tab Row (Visual Only) */
   #tabs-row {
     display: flex;
     background-color: #1a1a1a;
@@ -137,7 +130,6 @@
   }
   .tab-item:hover { background-color: #333; color: #ccc; }
 
-  /* Status Bar */
   #status-bar {
     background-color: var(--accent-red);
     color: #000;
@@ -149,7 +141,6 @@
     text-transform: uppercase;
   }
 
-  /* --- SECTION 4: THE F-KEY DECK (Replaces old confusing menu) --- */
   #bottom-commands {
     display: flex;
     background-color: #111;
@@ -172,7 +163,6 @@
   .f-key:hover b { color: #000; }
   .f-key:active { background-color: #fff; }
 
-  /* --- SECTION 5: SYSTEM DECK (Map & GIF) --- */
   #system-deck {
     height: 150px;
     display: flex;
@@ -186,7 +176,6 @@
     overflow: hidden;
   }
 
-  /* Map Specifics */
   #map-panel { flex-grow: 1; }
   #map {
     width: 100%;
@@ -196,7 +185,6 @@
   }
   #map:hover { filter: grayscale(0%); }
 
-  /* GIF/Logo Specifics */
   #logo-panel {
     width: 200px;
     display: flex;
@@ -227,12 +215,10 @@
     body, html, #editor-container { background-color: white !important; height: auto !important; display: block !important; }
     #editor { color: black !important; font-family: 'Courier New', monospace !important; width: 100% !important; padding: 0 !important; }
   }
-
 </style>
 </head>
 <body class="crt">
 
-    <!-- 1. TOP SHORTCUTS (The "Above" Commands) -->
     <div id="top-bar">
         <div class="menu-btn" onclick="cmd('bold')"><span class="shortcut-key">^B</span> Bold</div>
         <div class="menu-btn" onclick="cmd('italic')"><span class="shortcut-key">^I</span> Italic</div>
@@ -242,25 +228,23 @@
         <div class="menu-btn" onclick="cmd('ruler')"><span class="shortcut-key">^R</span> Ruler</div>
         <div class="menu-btn" onclick="cmd('save')"><span class="shortcut-key">^S</span> Save</div>
         <div class="menu-btn" onclick="cmd('print')"><span class="shortcut-key">^P</span> Print</div>
-        <div class="menu-btn" onclick="cmd('readmode')"><span class="shortcut-key">^M</span> Read Mode</div>
+        <div class="menu-btn" onclick="cmd('toggleMode')"><span class="shortcut-key">^O</span> Mode</div>
     </div>
 
-    <!-- 2. EDITOR AREA -->
     <div id="editor-container">
         <div id="ruler"></div>
         <textarea id="editor" spellcheck="false" autofocus>WORDSTAR NEXUS [FUSION ARCHITECTURE]
 ------------------------------------
 System Online.
-Leaflet Map: Active.
+ISS Tracker: Active.
 Command Bridge: Active.
 
+INSERT Mode: ON
 (Type here... use F1 for Help)</textarea>
     </div>
 
-    <!-- 3. LOWER UI STACK -->
     <div id="lower-stack">
         
-        <!-- Tabs (Visual only for now) -->
         <div id="tabs-row">
             <div class="tab-item">File</div>
             <div class="tab-item">Edit</div>
@@ -270,14 +254,12 @@ Command Bridge: Active.
             <div class="tab-item">Help</div>
         </div>
 
-        <!-- Status Line -->
         <div id="status-bar">
             <span id="cursor-pos">L:01 C:01</span>
             <span id="doc-status">EDITING: UNTITLED</span>
-            <span id="insert-state">INSERT ON</span>
+            <span id="insert-state">INSERT</span>
         </div>
 
-        <!-- 4. BOTTOM COMMANDS (The Clear F-Keys) -->
         <div id="bottom-commands">
             <div class="f-key" onclick="cmd('help')"><b>F1</b>HELP</div>
             <div class="f-key" onclick="cmd('lorem')"><b>F2</b>LOREM</div>
@@ -291,7 +273,6 @@ Command Bridge: Active.
             <div class="f-key" onclick="cmd('exit')"><b>F10</b>CLEAR</div>
         </div>
 
-        <!-- 5. SYSTEM DECK (Map + Gif) -->
         <div id="system-deck">
             <div class="deck-panel" id="map-panel">
                 <div id="map"></div>
@@ -315,7 +296,7 @@ Command Bridge: Active.
     
     let insertMode = true;
 
-    /* --- 1. RULER SETUP --- */
+    /* --- RULER SETUP --- */
     let rulerStr = "L";
     for(let i=2; i<80; i++) {
         if(i % 10 === 0) rulerStr += (i/10); 
@@ -325,16 +306,15 @@ Command Bridge: Active.
     rulerStr += "R";
     ruler.innerText = rulerStr;
 
-    /* --- 2. THE BRIDGE: Central Command System --- */
-    // This connects Buttons AND Keys to the same logic
+    /* --- CENTRAL COMMAND SYSTEM --- */
     window.cmd = function(action) {
         editor.focus();
 
         switch(action) {
-            case 'bold': insertAtCursor('^B'); break;
-            case 'italic': insertAtCursor('^I'); break;
-            case 'underline': insertAtCursor('^S'); break;
-            case 'undln': insertAtCursor('^S'); break;
+            case 'bold': insertAtCursor('**BOLD**'); break;
+            case 'italic': insertAtCursor('*ITALIC*'); break;
+            case 'underline': insertAtCursor('__UNDERLINE__'); break;
+            case 'undln': insertAtCursor('__UNDERLINE__'); break;
             
             case 'date': 
                 const d = new Date();
@@ -361,7 +341,11 @@ Command Bridge: Active.
             
             case 'print': window.print(); break;
             
-            case 'readmode': container.classList.toggle('read-mode'); break;
+            case 'toggleMode': 
+                insertMode = !insertMode;
+                statusInsert.innerText = insertMode ? 'INSERT' : 'OVERWRITE';
+                editor.style.backgroundColor = insertMode ? '#000' : '#1a1a1a';
+                break;
             
             case 'delline':
                 const val = editor.value;
@@ -375,8 +359,8 @@ Command Bridge: Active.
             case 'delword':
                 const v = editor.value;
                 let p = editor.selectionStart;
-                while(p < v.length && !/\s/.test(v[p])) p++; // Skip chars
-                while(p < v.length && /\s/.test(v[p])) p++; // Skip space
+                while(p < v.length && !/\s/.test(v[p])) p++;
+                while(p < v.length && /\s/.test(v[p])) p++;
                 editor.setRangeText('', editor.selectionStart, p, 'start');
                 break;
             
@@ -389,11 +373,11 @@ Command Bridge: Active.
                 break;
             
             case 'help':
-                alert("HELP:\n^B=Bold, ^S=Save, ^P=Print, ^R=Ruler\nF-Keys below trigger commands.");
+                alert("HELP:\n^B=Bold, ^I=Italic, ^U=Underline, ^D=Date\n^W=Word Count, ^R=Ruler, ^S=Save, ^P=Print\n^O=Toggle Insert/Overwrite Mode\nF-Keys below trigger commands.");
                 break;
 
             case 'lorem':
-                insertAtCursor("\n(LOREM) The quick brown fox jumped over the lazy dog.\n");
+                insertAtCursor("\n(LOREM) The quick brown fox jumped over the lazy dog. Pack my box with five dozen liquor jugs. How vexingly quick daft zebras jump!\n");
                 break;
 
             case 'exit':
@@ -408,42 +392,41 @@ Command Bridge: Active.
     function insertAtCursor(text) {
         const start = editor.selectionStart;
         const end = editor.selectionEnd;
+        
         if(insertMode) {
             editor.setRangeText(text, start, end, 'end');
         } else {
-            editor.setRangeText(text, start, start + text.length, 'end');
+            const textLength = Math.min(text.length, editor.value.length - start);
+            editor.setRangeText(text, start, start + textLength, 'end');
         }
     }
 
-    /* --- 3. THE GUARDIAN: Keyboard Interceptor --- */
+    /* --- KEYBOARD INTERCEPTOR --- */
     document.addEventListener('keydown', function(e) {
         if (e.ctrlKey) {
             const k = e.key.toLowerCase();
             
-            // LIST OF KEYS TO HIJACK
-            // w=CloseTab, r=Refresh, d=Bookmark, s=Save, p=Print
             const blocked = ['w', 'r', 'd', 's', 'p', 't', 'n', 'j', 'u', 'o', 'm', 'b', 'i', 'l', 'y', 'g'];
             if (blocked.includes(k)) {
                 e.preventDefault();
                 e.stopPropagation();
             }
 
-            // ROUTE KEYS TO COMMANDS
             if(k === 'b') cmd('bold');
             if(k === 'i') cmd('italic');
             if(k === 'u') cmd('underline');
             if(k === 's') cmd('save');
             if(k === 'p') cmd('print');
-            if(k === 'w') cmd('count'); // ^W = Word Count
-            if(k === 'r') cmd('ruler'); // ^R = Ruler
-            if(k === 'd') cmd('date');  // ^D = Date
-            if(k === 'm') cmd('readmode');
+            if(k === 'w') cmd('count');
+            if(k === 'r') cmd('ruler');
+            if(k === 'd') cmd('date');
+            if(k === 'm') cmd('toggleMode');
             if(k === 'l') cmd('find');
             if(k === 'y') cmd('delline');
             if(k === 't') cmd('delword');
+            if(k === 'o') cmd('toggleMode');
         }
         
-        // Handle Physical F-Keys
         if(e.key === "F1") { e.preventDefault(); cmd('help'); }
         if(e.key === "F2") { e.preventDefault(); cmd('lorem'); }
         if(e.key === "F3") { e.preventDefault(); cmd('bold'); }
@@ -458,25 +441,34 @@ Command Bridge: Active.
         setTimeout(updateStats, 0);
     });
 
-    // Update stats on click/type
     function updateStats() {
         const text = editor.value.substr(0, editor.selectionStart);
         const lines = text.split('\n');
         statusPos.innerText = `L:${lines.length.toString().padStart(2,'0')} C:${(lines[lines.length-1].length+1).toString().padStart(2,'0')}`;
     }
+    
     editor.addEventListener('click', updateStats);
     editor.addEventListener('keyup', updateStats);
+    editor.addEventListener('input', updateStats);
 
-    /* --- 4. MAP SYSTEM --- */
-    const map = L.map('map', {zoomControl: false, attributionControl:false}).setView([0,0], 2);
+    /* --- MAP SYSTEM --- */
+    const map = L.map('map', {
+        zoomControl: false, 
+        attributionControl: false
+    }).setView([0,0], 2);
+    
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        subdomains: 'abcd', maxZoom: 19
+        subdomains: 'abcd', 
+        maxZoom: 19,
+        opacity: 0.8
     }).addTo(map);
     
     const issIcon = L.icon({
         iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/International_Space_Station.svg',
-        iconSize: [30, 18], iconAnchor: [15, 9]
+        iconSize: [30, 18], 
+        iconAnchor: [15, 9]
     });
+    
     const marker = L.marker([0,0], {icon: issIcon}).addTo(map);
 
     async function updateISS() {
@@ -487,11 +479,13 @@ Command Bridge: Active.
             map.panTo([d.latitude, d.longitude]);
             document.getElementById('lat').innerText = d.latitude.toFixed(2);
             document.getElementById('lon').innerText = d.longitude.toFixed(2);
-        } catch(e) {}
+        } catch(e) {
+            console.log('ISS fetch error:', e);
+        }
     }
+    
     setInterval(updateISS, 5000);
     updateISS();
-
 </script>
 </body>
 </html>
