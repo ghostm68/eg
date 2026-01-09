@@ -51,9 +51,10 @@
     background-color: var(--panel-bg);
     padding: 5px 10px;
     display: flex;
-    justify-content: space-between; /* Spread them out nicely */
+    justify-content: space-between;
     border-bottom: 1px solid var(--accent-red);
     font-size: 1.1rem;
+    user-select: none;
   }
   
   .menu-btn {
@@ -75,15 +76,18 @@
     background-color: #000;
     display: flex;
     flex-direction: column;
+    transition: all 0.3s ease;
   }
 
   #ruler {
-    display: flex;
+    display: none; /* Hidden by default */
     background: #080808;
     color: #444;
     font-size: 1rem;
     padding: 2px 0;
     border-bottom: 1px dashed #222;
+    white-space: pre;
+    overflow: hidden;
   }
 
   #editor {
@@ -98,6 +102,15 @@
     outline: none;
     white-space: pre-wrap;
     line-height: 1.4;
+  }
+
+  /* Read Mode Class */
+  .read-mode #editor {
+    max-width: 800px;
+    margin: 0 auto;
+    border-left: 1px solid #333;
+    border-right: 1px solid #333;
+    background-color: #0a0a0a;
   }
 
   /* --- SECTION 3: LOWER UI STACK --- */
@@ -144,7 +157,7 @@
 
   /* --- SECTION 4: SYSTEM DECK (Map & GIF) --- */
   #system-deck {
-    height: 160px; /* Minimized height */
+    height: 160px;
     display: flex;
     background-color: #000;
     border-top: 2px solid var(--accent-red);
@@ -157,9 +170,7 @@
   }
 
   /* Map Specifics */
-  #map-panel {
-    flex-grow: 1; /* Takes up most space */
-  }
+  #map-panel { flex-grow: 1; }
   #map {
     width: 100%;
     height: 100%;
@@ -179,7 +190,6 @@
   }
   #logo-panel img {
     height: 100px;
-    /* Red Shift Effect on GIF */
     filter: sepia(100%) hue-rotate(-50deg) saturate(300%) contrast(1.2);
     opacity: 0.8;
   }
@@ -194,46 +204,23 @@
     z-index: 500;
     border: 1px solid #333;
   }
-	/* --- PRINT STYLES --- */
-@media print {
-  /* Hide the interface elements (Top bar, bottom stack, scrollbars) */
-  #top-bar, #lower-stack, .crt::before { 
-    display: none !important; 
-  }
 
-  /* Reset the page container */
-  body, html, #editor-container {
-    background-color: white !important;
-    height: auto !important;
-    overflow: visible !important;
-    display: block !important;
+  @media print {
+    #top-bar, #lower-stack, .crt::before { display: none !important; }
+    body, html, #editor-container { background-color: white !important; height: auto !important; display: block !important; }
+    #editor { color: black !important; font-family: 'Courier New', monospace !important; width: 100% !important; padding: 0 !important; }
   }
-
-  /* Format the text for paper */
-  #editor {
-    color: black !important;
-    background-color: white !important;
-    font-family: 'Courier New', Courier, monospace !important;
-    font-size: 12pt !important;
-    width: 100% !important;
-    height: auto !important;
-    overflow: visible !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-  }
-}
 
 </style>
 </head>
 <body class="crt">
 
-    <!-- 1. TOP SHORTCUTS (The "Above" Commands) -->
+    <!-- 1. TOP SHORTCUTS -->
     <div id="top-bar">
         <div class="menu-btn" onclick="format('bold')"><span class="shortcut-key">^B</span> Bold</div>
         <div class="menu-btn" onclick="format('italic')"><span class="shortcut-key">^I</span> Italic</div>
-        <div class="menu-btn" onclick="format('underline')"><span class="shortcut-key">^U</span> Underline</div>
-        <div class="menu-btn" onclick="insertDateTime()"><span class="shortcut-key">^D</span> Date/Time</div>
+        <div class="menu-btn" onclick="format('underline')"><span class="shortcut-key">^U</span> Undrln</div>
+        <div class="menu-btn" onclick="insertDateTime()"><span class="shortcut-key">^D</span> Date</div>
         <div class="menu-btn" onclick="countWords()"><span class="shortcut-key">^W</span> Count</div>
         <div class="menu-btn" onclick="toggleRuler()"><span class="shortcut-key">^R</span> Ruler</div>
         <div class="menu-btn" onclick="saveDoc()"><span class="shortcut-key">^S</span> Save</div>
@@ -243,11 +230,10 @@
 
     <!-- 2. EDITOR AREA -->
     <div id="editor-container">
-        <div id="ruler" style="display:none;"></div>
-        <textarea id="editor" spellcheck="false">WORDSTAR NEXUS [ORIGINAL ARCHITECTURE]
+        <div id="ruler"></div>
+        <textarea id="editor" spellcheck="false" autofocus>WORDSTAR NEXUS [ORIGINAL ARCHITECTURE]
 ------------------------------------
 Version-control-3, 3nd environment. (Some features are still under construction) Welcome to WordStar Nexus Seven! A writing space. Enjoy the feel of the classic word processing preferred by William F Buckley jr. now with modern web technologies. (^=ctrl...the map is tracking the international space station in real time...)</textarea>
-    
     </div>
 
     <!-- 3. LOWER UI STACK -->
@@ -267,10 +253,10 @@ Version-control-3, 3nd environment. (Some features are still under construction)
         <div id="status-bar">
             <span id="cursor-pos">L:01 C:01</span>
             <span id="doc-status">EDITING: UNTITLED</span>
-            <span id="insert-state">INSERT</span>
+            <span id="insert-state">INSERT ON</span>
         </div>
 
-        <!-- 4. BOTTOM COMMANDS (The "Below" Commands) -->
+        <!-- 4. BOTTOM COMMANDS -->
         <div id="bottom-commands">
             <div class="menu-btn"><span class="shortcut-key">^K</span> Block</div>
             <div class="menu-btn"><span class="shortcut-key">^O</span> Onscreen</div>
@@ -282,17 +268,12 @@ Version-control-3, 3nd environment. (Some features are still under construction)
             <div class="menu-btn"><span class="shortcut-key">^D</span> Delete</div>
         </div>
 
-        <!-- 5. SYSTEM DECK (Map + Gif) -->
+        <!-- 5. SYSTEM DECK -->
         <div id="system-deck">
-            <!-- Map Panel -->
             <div class="deck-panel" id="map-panel">
                 <div id="map"></div>
-                <div class="coord-overlay">
-                    ISS: <span id="lat">0.00</span>, <span id="lon">0.00</span>
-                </div>
+                <div class="coord-overlay">ISS: <span id="lat">0.00</span>, <span id="lon">0.00</span></div>
             </div>
-
-            <!-- GIF Panel -->
             <div class="deck-panel" id="logo-panel">
                 <img src="https://raw.githubusercontent.com/ghostm68/pantheon/main/quirky.gif" alt="System">
                 <div style="margin-top:5px; font-size: 0.8rem; color: #666;">SYS.MONITOR</div>
@@ -302,25 +283,53 @@ Version-control-3, 3nd environment. (Some features are still under construction)
     </div>
 
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 <script>
-    /* --- EDITOR LOGIC & SAFETY --- */
     const editor = document.getElementById('editor');
     const ruler = document.getElementById('ruler');
+    const container = document.getElementById('editor-container');
+    const statusInsert = document.getElementById('insert-state');
+    const statusPos = document.getElementById('cursor-pos');
     
-    // 1. Generate Ruler
-    for(let i=1; i<=80; i++) {
-        ruler.innerHTML += `<span style="flex:0 0 1.25%; text-align:center;">${i%10===0?i/10:i%5===0?'+':'-'}</span>`;
+    let insertMode = true;
+
+    // --- 1. RULER GENERATOR ---
+    // Classic 1-80 character width ruler
+    let rulerStr = "L";
+    for(let i=2; i<80; i++) {
+        if(i % 10 === 0) rulerStr += (i/10); // 1, 2, 3...
+        else if(i % 5 === 0) rulerStr += "+";
+        else rulerStr += "-";
+    }
+    rulerStr += "R";
+    ruler.innerText = rulerStr;
+
+    // --- 2. CORE FUNCTIONS (Fixed for Textarea) ---
+    
+    // Replacement for execCommand
+    function insertAtCursor(text) {
+        const start = editor.selectionStart;
+        const end = editor.selectionEnd;
+        if(insertMode) {
+            editor.setRangeText(text, start, end, 'end');
+        } else {
+            editor.setRangeText(text, start, start + text.length, 'end');
+        }
+        updateStats();
     }
 
-    // 2. The Actions
-    const format = (cmd) => document.execCommand(cmd);
+    // Maps to buttons
+    window.format = (type) => {
+        if(type === 'bold') insertAtCursor('^B');
+        if(type === 'italic') insertAtCursor('^I');
+        if(type === 'underline') insertAtCursor('^S');
+        editor.focus();
+    };
     
-    const toggleRuler = () => {
-        ruler.style.display = (ruler.style.display === 'none' ? 'flex' : 'none');
+    window.toggleRuler = () => {
+        ruler.style.display = (ruler.style.display === 'block' ? 'none' : 'block');
     };
 
-    const saveDoc = () => {
+    window.saveDoc = () => {
         const blob = new Blob([editor.value], {type:'text/plain'});
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
@@ -328,85 +337,112 @@ Version-control-3, 3nd environment. (Some features are still under construction)
         a.click();
     };
 
-    const toggleReadMode = () => {
-        editor.style.maxWidth = editor.style.maxWidth ? '' : '800px';
-        editor.style.margin = editor.style.margin ? '' : '0 auto';
-        editor.style.borderLeft = editor.style.borderLeft ? '' : '1px solid #333';
-        editor.style.borderRight = editor.style.borderRight ? '' : '1px solid #333';
+    window.toggleReadMode = () => {
+        container.classList.toggle('read-mode');
     };
 
-    const insertDateTime = () => {
-        const d = new Date().toLocaleString();
-        const start = editor.selectionStart;
-        const end = editor.selectionEnd;
-        editor.setRangeText(d, start, end, 'end');
+    window.insertDateTime = () => {
+        const d = new Date();
+        const str = `${d.toLocaleTimeString()} ${d.toLocaleDateString()}`;
+        insertAtCursor(str);
     };
 
-    const countWords = () => {
-        const count = editor.value.trim().split(/\s+/).length;
-        alert("NEXUS ANALYTICS:\nWord Count: " + count);
+    window.countWords = () => {
+        const text = editor.value.trim();
+        const count = text ? text.split(/\s+/).length : 0;
+        alert(`NEXUS ANALYTICS\n----------------\nWords: ${count}\nChars: ${text.length}`);
     };
 
-    // 3. THE KEYBOARD INTERCEPTOR (The Safety System)
+    function updateStats() {
+        const text = editor.value.substr(0, editor.selectionStart);
+        const lines = text.split('\n');
+        const l = lines.length;
+        const c = lines[lines.length-1].length + 1;
+        statusPos.innerText = `L:${l.toString().padStart(2,'0')} C:${c.toString().padStart(2,'0')}`;
+    }
+
+    // --- 3. THE GUARDIAN (Keyboard Interceptor) ---
+    
     document.addEventListener('keydown', function(e) {
         if (e.ctrlKey) {
             const key = e.key.toLowerCase();
-
-            // LIST OF DANGEROUS BROWSER KEYS TO BLOCK
-            // w=close tab, r=refresh, d=bookmark, p=print, s=save, t=new tab, n=new window
-            if (['w', 'r', 'd', 'p', 's', 't', 'n', 'm', 'b', 'i', 'u'].includes(key)) {
-                e.preventDefault(); // STOP BROWSER DEFAULT
+            
+            // A. BLOCK BROWSER DEFAULTS
+            // W(Close), R(Refresh), D(Bookmark), S(Save), P(Print), T(NewTab), N(NewWin), J(Downloads)
+            const blocked = ['w', 'r', 'd', 's', 'p', 't', 'n', 'j', 'u', 'o', 'm', 'b', 'i'];
+            if (blocked.includes(key)) {
+                e.preventDefault();
+                e.stopPropagation();
             }
 
-            // MAP TO NEXUS FUNCTIONS
+            // B. EXECUTE APP COMMANDS
             switch(key) {
-                case 's': saveDoc(); break;
+                case 's': window.saveDoc(); break;
                 case 'p': window.print(); break;
-                case 'w': countWords(); break; // Saves you from Closing Tab!
-                case 'r': toggleRuler(); break; // Saves you from Refreshing!
-                case 'd': insertDateTime(); break; // Saves you from Bookmarking!
-                case 'm': toggleReadMode(); break;
-                case 'b': format('bold'); break;
-                case 'i': format('italic'); break;
-                case 'u': format('underline'); break;
-                // Optional: Map ^N to "New Document" or just block it
-                case 'n': if(confirm("Clear All Text?")) editor.value = ""; break;
+                case 'w': window.countWords(); break; // ^W = Count (Overrides Close Tab)
+                case 'r': window.toggleRuler(); break; // ^R = Ruler (Overrides Refresh)
+                case 'd': window.insertDateTime(); break; // ^D = Date (Overrides Bookmark)
+                case 'm': window.toggleReadMode(); break;
+                
+                // Formatting
+                case 'b': window.format('bold'); break;
+                case 'i': window.format('italic'); break;
+                case 'u': window.format('underline'); break;
+                
+                // Editing
+                case 'v': 
+                    insertMode = !insertMode;
+                    statusInsert.innerText = insertMode ? "INSERT ON" : "OVERWRITE";
+                    break;
+
+                // WordStar Cursor Diamond (Optional override)
+                case 'c': 
+                    // ^C = Page Down usually, here we just focus
+                    editor.focus(); 
+                    break;
             }
         }
     });
 
-    // 4. Status Bar Update
-    editor.addEventListener('input', () => {
-        const text = editor.value.substring(0, editor.selectionStart);
-        const lines = text.split('\n');
-        document.getElementById('cursor-pos').innerText = `L:${lines.length} C:${lines[lines.length-1].length+1}`;
-        // Update "Editing" status
-        document.getElementById('doc-status').innerText = "EDITING: ACTIVE";
-        document.getElementById('doc-status').style.color = "#fff";
-    });
+    editor.addEventListener('input', updateStats);
+    editor.addEventListener('click', updateStats);
+    editor.addEventListener('keyup', updateStats);
 
-    /* --- MAP LOGIC (Keep this exactly as is) --- */
+    /* --- 4. MAP LOGIC (Leaflet) --- */
+    // Initialize map
     const map = L.map('map', {zoomControl: false, attributionControl:false}).setView([0,0], 2);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd',
+        maxZoom: 19
+    }).addTo(map);
     
+    // Custom Icon
     const issIcon = L.icon({
         iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/International_Space_Station.svg',
         iconSize: [30, 18], iconAnchor: [15, 9]
     });
     const marker = L.marker([0,0], {icon: issIcon}).addTo(map);
 
+    // API Polling
     async function updateISS() {
         try {
             const r = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
             const d = await r.json();
-            marker.setLatLng([d.latitude, d.longitude]);
-            map.panTo([d.latitude, d.longitude]);
-            document.getElementById('lat').innerText = d.latitude.toFixed(2);
-            document.getElementById('lon').innerText = d.longitude.toFixed(2);
-        } catch(e){}
+            const lat = d.latitude;
+            const lon = d.longitude;
+            
+            marker.setLatLng([lat, lon]);
+            map.panTo([lat, lon]);
+            
+            document.getElementById('lat').innerText = lat.toFixed(2);
+            document.getElementById('lon').innerText = lon.toFixed(2);
+        } catch(e) {
+            console.log("Sat Comms Offline");
+        }
     }
-    setInterval(updateISS, 3000);
-    updateISS();
+    
+    setInterval(updateISS, 5000); // Update every 5s
+    updateISS(); // Init load
 
 </script>
 </body>
