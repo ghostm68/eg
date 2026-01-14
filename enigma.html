@@ -1,273 +1,213 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>NEXUS Code Machine</title>
+  <title>NEXUS ENIGMA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
+    :root {
+        --bg-color: #050505;
+        --term-red: #ff2a2a;
+        --term-dim: #8f0000;
+        --text-white: #eeeeee;
+        --glass: rgba(20, 0, 0, 0.9);
+        --border-grey: #333333;
+    }
+
     body {
-      background-image: url('https://cdn.britannica.com/15/25015-050-180E683B/computer-Colossus-Bletchley-Park-Buckinghamshire-England-Funding-1943.jpg'); 
-      background-size: cover;   
-      background-repeat: no-repeat; 
-      background-position: center;
-      background-attachment: fixed;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Slightly more modern font */
-      -webkit-font-smoothing: antialiased;
+      background-color: var(--bg-color);
+      color: var(--text-white);
+      font-family: 'Courier New', Courier, monospace;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       min-height: 100vh;
-      background-color: #111; /* Darker fallback */
-      color: #eee; 
       margin: 0;
-      padding: 20px 0;
+      padding: 20px;
+    }
+
+    /* Scanline effect */
+    body::before {
+        content: " ";
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                    linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(255, 255, 255, 0.02), rgba(255, 0, 0, 0.03));
+        z-index: -1;
+        background-size: 100% 2px, 3px 100%;
+        pointer-events: none;
     }
 
     h1 {
-      font-size: 2.5rem;
-      margin-bottom: 1.5rem;
-      color: #fff;
-      text-shadow: 2px 2px 4px #000;
+      color: var(--term-red);
+      letter-spacing: 5px;
+      border-bottom: 2px solid var(--term-red);
+      padding-bottom: 10px;
+      text-shadow: 0 0 8px var(--term-dim);
       text-transform: uppercase;
-      letter-spacing: 2px;
+      margin-bottom: 2rem;
     }
 
     h2 {
+      color: var(--term-red);
+      border-bottom: 1px solid var(--term-dim);
+      padding-bottom: 5px;
+      font-size: 1.2rem;
       margin-top: 0;
-      border-bottom: 1px solid #cc0000; /* Red underline */
-      padding-bottom: 10px;
-      margin-bottom: 20px;
     }
 
-    /* Main Card Styling */
     .container {
-      width: 36rem;
-      max-width: 90%;
-      background-color: rgba(18, 18, 18, 0.95); /* Deep Black/Grey with slight transparency */
-      border: 1px solid #333;
-      border-top: 4px solid #cc0000; /* Red accent top */
-      border-radius: 0.25rem;
+      width: 100%;
+      max-width: 600px;
+      background: var(--glass);
+      border: 1px solid var(--term-dim);
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.15);
       padding: 2rem;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.8);
       margin-bottom: 2rem;
+      position: relative;
     }
 
     label {
       display: block;
       margin-bottom: 0.5rem;
-      color: #bbb; /* Light Grey text */
+      color: var(--term-red);
       font-weight: bold;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       text-transform: uppercase;
     }
 
-    /* Inputs and Selects styling */
-    input[type="text"],
-    textarea, 
-    select {
+    input[type="text"], textarea, select {
       width: 100%;
-      box-sizing: border-box; /* Ensures padding doesn't break layout */
-      padding: 0.75rem;
-      margin-bottom: 1rem; 
-      border-radius: 0; /* Squared off edges for industrial look */
-      border: 1px solid #444;
-      background-color: #000; /* Pure Black input background */
-      color: #fff;
-      font-family: monospace; /* Code look */
+      box-sizing: border-box;
+      padding: 10px;
+      margin-bottom: 1rem;
+      border: 1px solid var(--border-grey);
+      background-color: #000;
+      color: var(--text-white);
+      font-family: 'Courier New', Courier, monospace;
       font-size: 1rem;
-      transition: border-color 0.3s;
     }
 
-    input[type="text"]:focus,
-    textarea:focus,
-    select:focus {
+    input:focus, textarea:focus, select:focus {
       outline: none;
-      border-color: #cc0000; /* Red glow on focus */
+      border-color: var(--term-red);
+      box-shadow: 0 0 5px var(--term-dim);
     }
 
     /* Button Styling */
     button {
-      padding: 0.75rem 1.5rem;
-      border: 1px solid #444;
-      border-radius: 0;
-      font-weight: bold;
-      cursor: pointer;
-      margin-right: 0.5rem; 
-      margin-bottom: 0.5rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      transition: all 0.2s ease;
-      font-size: 0.85rem;
-    }
-
-    /* Primary Action - Red */
-    .cipher {
-      background-color: #cc0000; 
-      color: white; 
-      border-color: #cc0000;
-    }
-    .cipher:hover {
-      background-color: #ff0000;
-      box-shadow: 0 0 10px rgba(255, 0, 0, 0.4);
-    }
-
-    /* Secondary Actions - Dark Grey/Black */
-    .decipher, .generate-key, .use-custom-code, button {
-      background-color: #222; 
-      color: #fff; 
-    }
-    
-    .decipher:hover, .generate-key:hover, .use-custom-code:hover, button:hover {
-      background-color: #444;
-      border-color: #fff;
-    }
-
-    /* Help Tooltip */
-    .help-menu {
-      position: absolute;
-      top: 1.5rem;
-      right: 1.5rem;
-    }
-
-    .help-icon {
-      cursor: pointer;
-      font-size: 1.2rem;
-      opacity: 0.7;
-    }
-    
-    .container {
-        position: relative; /* Needed for absolute positioning of help icon */
-    }
-
-    .tooltip {
-      position: absolute;
-      top: 100%;
-      right: 0; /* Align right */
-      width: 250px;
-      transform: none;
-      background-color: #000;
-      border: 1px solid #cc0000;
-      color: #ddd;
-      padding: 1rem;
-      z-index: 10;
-      opacity: 0;
-      visibility: hidden; 
-      transition: opacity 0.2s, visibility 0.2s;
-      text-align: left;
+      background: transparent;
+      border: 1px solid var(--term-red);
+      color: var(--term-red);
+      padding: 10px 20px;
+      font-family: inherit;
       font-size: 0.9rem;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      font-weight: bold;
+      margin-right: 10px;
+      margin-bottom: 10px;
     }
 
-    .help-menu:hover .tooltip { 
-      opacity: 1;
-      visibility: visible;
+    button:hover {
+      background: var(--term-red);
+      color: #000;
+      box-shadow: 0 0 15px var(--term-red);
     }
-    
-    /* Enigma Specific Layout */
+
     .enigma-row {
       display: flex;
       gap: 1rem;
       margin-bottom: 1rem;
     }
-    .enigma-group {
-      flex: 1;
+    
+    .enigma-group { flex: 1; }
+
+    .help-icon {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        color: var(--term-dim);
+        cursor: help;
     }
+
+    .blink { animation: blinker 1s linear infinite; }
+    @keyframes blinker { 50% { opacity: 0; } }
+
   </style>
 </head>
 <body>
 
-  <h1>NEXUS Code Machine</h1>
+  <h1>NEXUS <span class="blink">ENIGMA</span></h1>
 
+  <!-- STANDARD CIPHER MODULE -->
   <div class="container">
-    <div class="help-menu"> 
-      <span class="help-icon">❓</span>
-      <div class="tooltip">
-        <p><b style="color: #cc0000;">NEXUS Code Machine</b></p>
-        <p>Enter your message, choose a key (or generate one), and click Cipher or Decipher. </p>
-        <p><i>Note: "Generate Key" creates a random sequence.</i></p> 
-      </div>
-    </div> 
+    <div class="help-icon" title="Standard Vigenère / Substitution Cipher">?</div>
+    <h2>Module: Alpha-Shift</h2>
+
+    <label for="key">Encryption Key:</label>
+    <input type="text" id="key" value="NEXUS">
+    
+    <div>
+      <button onclick="generateKey()">Generate Key</button>
+      <button onclick="useCustomCode()">Use Custom Symbols</button> 
+    </div>
+
+    <label for="input">Input Data:</label>
+    <textarea id="input" rows="3"></textarea> 
 
     <div>
-      <label for="key">Key:</label>
-      <input type="text" id="key" value="default">
-      <div style="display:flex; flex-wrap:wrap;">
-        <button class="generate-key" onclick="generateKey()">Generate Key</button>
-        <button class="use-custom-code" onclick="useCustomCode()">Use Custom Code</button> 
-      </div>
+      <button onclick="cipher()">ENCRYPT</button>
+      <button onclick="decipher()">DECRYPT</button>
     </div>
 
-   <div style="margin-top: 1rem;">
-      <label for="input">Input:</label>
-      <textarea id="input" rows="4"></textarea> 
-    </div>
-
-    <div>
-      <button class="cipher" onclick="cipher()">Cipher</button>
-      <button class="decipher" onclick="decipher()">Decipher</button>
-    </div>
-
-    <div style="margin-top: 1rem;">
-      <label for="output">Output:</label>
-      <textarea id="output" rows="4" readonly style="background-color: #0a0a0a; color: #888;"></textarea>
-    </div>
+    <label for="output">Result:</label>
+    <textarea id="output" rows="3" readonly></textarea>
   </div>
 
-  <!-- Enigma Section - Now wrapped in a matching container -->
+  <!-- ENIGMA MODULE -->
   <div class="container">
-    <h2>Streamlined Enigma</h2>
-    <div class="help-menu"> 
-        <span class="help-icon">❓</span>
-        <div class="tooltip">
-          <p><strong>Enigma Simulation</strong></p>
-          <p>A simplified version of the machine invented by Arthur Scherbius. Intended for educational purposes to illustrate basic encryption concepts.</p>
-        </div>
-      </div> 
+    <div class="help-icon" title="Rotor-Based Enigma Simulation">?</div>
+    <h2>Module: Rotor-Machine</h2>
 
     <div class="enigma-row">
       <div class="enigma-group">
-        <label for="enigma-rotor1">Rotor 1:</label>
+        <label>Rotor 1 Config</label>
         <select id="enigma-rotor1">
-          <option value="rotor1">Rotor I</option>
-          <option value="rotor2">Rotor II</option> 
+          <option value="rotor1">Rotor I (D-K-V...)</option>
+          <option value="rotor2">Rotor II (H-Q-Z...)</option> 
         </select>
-      </div>
-      <div class="enigma-group">
-        <label for="enigma-position1">Pos 1:</label>
         <select id="enigma-position1">
-          <option value="A">A</option><option value="B">B</option><option value="C">C</option>
-          <option value="D">D</option><option value="E">E</option><option value="F">F</option>
+          <option value="A">Pos A</option><option value="B">Pos B</option><option value="C">Pos C</option>
+          <option value="D">Pos D</option><option value="E">Pos E</option><option value="F">Pos F</option>
         </select>
       </div>
-    </div>
 
-    <div class="enigma-row">
       <div class="enigma-group">
-        <label for="enigma-rotor2">Rotor 2:</label>
+        <label>Rotor 2 Config</label>
         <select id="enigma-rotor2">
           <option value="rotor1">Rotor I</option>
-          <option value="rotor2">Rotor II</option> 
+          <option value="rotor2" selected>Rotor II</option> 
         </select>
-      </div>
-      <div class="enigma-group">
-        <label for="enigma-position2">Pos 2:</label>
         <select id="enigma-position2">
-          <option value="A">A</option><option value="B">B</option><option value="C">C</option>
-          <option value="D">D</option><option value="E">E</option><option value="F">F</option>
+          <option value="A">Pos A</option><option value="B">Pos B</option><option value="C">Pos C</option>
+          <option value="D">Pos D</option><option value="E">Pos E</option><option value="F">Pos F</option>
         </select>
       </div>
     </div>
 
     <div>
-      <button class="cipher" onclick="enigmaCipher()">Enigma Cipher</button>
-      <button class="decipher" onclick="enigmaDecipher()">Enigma Decipher</button>
+      <button onclick="enigmaCipher()">ENIGMA ENCRYPT</button>
+      <button onclick="enigmaDecipher()">ENIGMA DECRYPT</button>
     </div>
   </div>
 
 <script>
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    const symbols = '!@#$%^&*()_+=-`~[]\{}|;\':",./<>?';
-
-    // Define your custom symbol-based code:
     const customCode = {
       'A': '!', 'B': '@', 'C': '#', 'D': '$', 'E': '%', 'F': '^', 
       'G': '&', 'H': '*', 'I': '(', 'J': ')', 'K': '_', 'L': '+', 
@@ -296,7 +236,6 @@
 
       for (let i = 0; i < input.length; i++) {
         const char = input[i];
-        
         if (key === "(CUSTOM CODE)") {
           result += customCode[char] || char; 
         } else {
@@ -319,7 +258,6 @@
 
       for (let i = 0; i < input.length; i++) {
         const char = input[i];
-
         if (key === "(CUSTOM CODE)") {
           for (const [plain, coded] of Object.entries(customCode)) {
             if (coded === char) {
@@ -343,89 +281,126 @@
       document.getElementById('output').value = result;
     }
 
-// Enigma Logic
-const rotor1Wiring = {
-  'A': 'D', 'B': 'K', 'C': 'V', 'D': 'Q', 'E': 'L', 'F': 'G', 
-  'G': 'Z', 'H': 'B', 'I': 'P', 'J': 'S', 'K': 'O', 'L': 'M', 
-  'M': 'R', 'N': 'W', 'O': 'C', 'P': 'I', 'Q': 'U', 'R': 'Y', 
-  'S': 'A', 'T': 'N', 'U': 'F', 'V': 'X', 'W': 'J', 'X': 'H',
-  'Y': 'T', 'Z': 'E'
-};
+    // --- ENIGMA LOGIC ---
+    const rotors = {
+        rotor1: {
+            'A': 'D', 'B': 'K', 'C': 'V', 'D': 'Q', 'E': 'L', 'F': 'G', 
+            'G': 'Z', 'H': 'B', 'I': 'P', 'J': 'S', 'K': 'O', 'L': 'M', 
+            'M': 'R', 'N': 'W', 'O': 'C', 'P': 'I', 'Q': 'U', 'R': 'Y', 
+            'S': 'A', 'T': 'N', 'U': 'F', 'V': 'X', 'W': 'J', 'X': 'H',
+            'Y': 'T', 'Z': 'E'
+        },
+        rotor2: {
+            'A': 'H', 'B': 'Q', 'C': 'Z', 'D': 'G', 'E': 'P', 'F': 'J', 
+            'G': 'T', 'H': 'M', 'I': 'O', 'J': 'B', 'K': 'L', 'L': 'N', 
+            'M': 'C', 'N': 'V', 'O': 'F', 'P': 'D', 'Q': 'U', 'R': 'S', 
+            'S': 'R', 'T': 'A', 'U': 'X', 'V': 'Y', 'W': 'I', 'X': 'K',
+            'Y': 'E', 'Z': 'W' 
+        }
+    };
 
-const rotor2Wiring = {
-  'A': 'H', 'B': 'Q', 'C': 'Z', 'D': 'G', 'E': 'P', 'F': 'J', 
-  'G': 'T', 'H': 'M', 'I': 'O', 'J': 'B', 'K': 'L', 'L': 'N', 
-  'M': 'C', 'N': 'V', 'O': 'F', 'P': 'D', 'Q': 'U', 'R': 'S', 
-  'S': 'R', 'T': 'A', 'U': 'X', 'V': 'Y', 'W': 'I', 'X': 'K',
-  'Y': 'E', 'Z': 'W' 
-};
-
-function encryptLetter(letter, rotorWiring, position) {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  let letterIndex = alphabet.indexOf(letter);
-  if(letterIndex === -1) return letter;
-  letterIndex = (letterIndex + alphabet.indexOf(position)) % 26;
-  const substitutedLetter = rotorWiring[alphabet[letterIndex]];
-  let substitutedIndex = alphabet.indexOf(substitutedLetter);
-  substitutedIndex = (substitutedIndex - alphabet.indexOf(position) + 26) % 26;
-  return alphabet[substitutedIndex];
-}
-
-function decryptLetter(letter, rotorWiring, position) {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  let letterIndex = alphabet.indexOf(letter);
-  if(letterIndex === -1) return letter;
-  letterIndex = (letterIndex + alphabet.indexOf(position)) % 26;
-  let originalLetter = '';
-  for (const [key, value] of Object.entries(rotorWiring)) {
-    if (value === alphabet[letterIndex]) {
-      originalLetter = key;
-      break;
+    function encryptLetter(letter, rotorMap, position) {
+      const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let idx = alpha.indexOf(letter);
+      if(idx === -1) return letter;
+      
+      // Shift for position
+      idx = (idx + alpha.indexOf(position)) % 26;
+      
+      // Rotor Swap
+      const subChar = rotorMap[alpha[idx]];
+      let subIdx = alpha.indexOf(subChar);
+      
+      // Shift Back
+      subIdx = (subIdx - alpha.indexOf(position) + 26) % 26;
+      return alpha[subIdx];
     }
-  }
-  let originalIndex = alphabet.indexOf(originalLetter);
-  originalIndex = (originalIndex - alphabet.indexOf(position) + 26) % 26;
-  return alphabet[originalIndex];
-}
 
-function enigmaCipher() {
-  const inputText = document.getElementById('input').value.toUpperCase();
-  const rotor1 = document.getElementById('enigma-rotor1').value;
-  const position1 = document.getElementById('enigma-position1').value;
-  const rotor2 = document.getElementById('enigma-rotor2').value;
-  const position2 = document.getElementById('enigma-position2').value;
-  let outputText = '';
-
-  for (let i = 0; i < inputText.length; i++) {
-    let letter = inputText[i];
-    if (letter.match(/[A-Z]/)) {
-      letter = encryptLetter(letter, eval(rotor1 + 'Wiring'), position1);
-      letter = encryptLetter(letter, eval(rotor2 + 'Wiring'), position2);
+    function decryptLetter(letter, rotorMap, position) {
+      const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let idx = alpha.indexOf(letter);
+      if(idx === -1) return letter;
+      
+      idx = (idx + alpha.indexOf(position)) % 26;
+      
+      let originalChar = '';
+      for (const [k, v] of Object.entries(rotorMap)) {
+        if (v === alpha[idx]) {
+          originalChar = k;
+          break;
+        }
+      }
+      
+      let originalIdx = alpha.indexOf(originalChar);
+      originalIdx = (originalIdx - alpha.indexOf(position) + 26) % 26;
+      return alpha[originalIdx];
     }
-    outputText += letter;
-  }
-  document.getElementById('output').value = outputText;
-}
 
-function enigmaDecipher() {
-  const inputText = document.getElementById('input').value.toUpperCase();
-  const rotor1 = document.getElementById('enigma-rotor1').value;
-  const position1 = document.getElementById('enigma-position1').value;
-  const rotor2 = document.getElementById('enigma-rotor2').value;
-  const position2 = document.getElementById('enigma-position2').value;
-  let outputText = '';
+   function enigmaCipher() {
+      const input = document.getElementById('input').value.toUpperCase();
+      const r1Name = document.getElementById('enigma-rotor1').value;
+      const r2Name = document.getElementById('enigma-rotor2').value;
+      
+      // Get starting positions as numbers (0-25)
+      const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let p1Idx = alpha.indexOf(document.getElementById('enigma-position1').value);
+      let p2Idx = alpha.indexOf(document.getElementById('enigma-position2').value);
+      
+      let output = '';
+      
+      for (let char of input) {
+        if (char.match(/[A-Z]/)) {
+            // --- THE ODOMETER STEPPING (The Real Magic) ---
+            p1Idx = (p1Idx + 1) % 26; // Spin Rotor 1
+            if (p1Idx === 0) {        // Did it wrap around from Z to A?
+                p2Idx = (p2Idx + 1) % 26; // If yes, spin Rotor 2
+            }
+            
+            // Convert numbers back to letters for your existing logic
+            let currentP1 = alpha[p1Idx];
+            let currentP2 = alpha[p2Idx];
 
-  for (let i = 0; i < inputText.length; i++) {
-    let letter = inputText[i];
-    if (letter.match(/[A-Z]/)) {
-      letter = decryptLetter(letter, eval(rotor2 + 'Wiring'), position2);
-      letter = decryptLetter(letter, eval(rotor1 + 'Wiring'), position1);
+            // Encrypt using the NEW positions
+            char = encryptLetter(char, rotors[r1Name], currentP1);
+            char = encryptLetter(char, rotors[r2Name], currentP2);
+        }
+        output += char;
+      }
+      document.getElementById('output').value = output;
     }
-    outputText += letter;
-  }
-  document.getElementById('output').value = outputText;
-}
+
+    function enigmaDecipher() {
+      // Decrypting works exactly the same way: You must simulate the spins forward
+      // to know which setting decoded which letter.
+      const input = document.getElementById('input').value.toUpperCase();
+      const r1Name = document.getElementById('enigma-rotor1').value;
+      const r2Name = document.getElementById('enigma-rotor2').value;
+      
+      const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let p1Idx = alpha.indexOf(document.getElementById('enigma-position1').value);
+      let p2Idx = alpha.indexOf(document.getElementById('enigma-position2').value);
+      
+      let output = '';
+      
+      for (let char of input) {
+        if (char.match(/[A-Z]/)) {
+            // --- STEP FORWARD (Must match the encryption step) ---
+            p1Idx = (p1Idx + 1) % 26; 
+            if (p1Idx === 0) {        
+                p2Idx = (p2Idx + 1) % 26; 
+            }
+            
+            let currentP1 = alpha[p1Idx];
+            let currentP2 = alpha[p2Idx];
+
+            // Decrypt backwards
+            char = decryptLetter(char, rotors[r2Name], currentP2);
+            char = decryptLetter(char, rotors[r1Name], currentP1);
+        }
+        output += char;
+      }
+      document.getElementById('output').value = output;
+    }
 </script>
-
 </body>
 </html>
