@@ -1,317 +1,291 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>NEXUS ENIGMA</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    :root {
-        --bg-color: #050505;
-        --term-red: #ff2a2a;
-        --term-dim: #8f0000;
-        --text-white: #eeeeee;
-        --glass: rgba(20, 0, 0, 0.9);
-        --border-grey: #333333;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WORDSTAR NEXUS // CRYPTO</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --term-red: #ff2a2a;
+            --term-dim: #8f0000;
+            --text-white: #eeeeee;
+            --glass: rgba(20, 0, 0, 0.9);
+            --border-grey: #333333;
+        }
 
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-white);
-      font-family: 'Courier New', Courier, monospace;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 20px;
-    }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-white);
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-    /* Scanline effect */
-    body::before {
-        content: " ";
-        display: block;
-        position: fixed;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        right: 0;
-        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                    linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(255, 255, 255, 0.02), rgba(255, 0, 0, 0.03));
-        z-index: -1;
-        background-size: 100% 2px, 3px 100%;
-        pointer-events: none;
-    }
+        /* Scanline Background */
+        body::before {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(255, 255, 255, 0.02), rgba(255, 0, 0, 0.03));
+            z-index: -1;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
 
-    h1 {
-      color: var(--term-red);
-      letter-spacing: 5px;
-      border-bottom: 2px solid var(--term-red);
-      padding-bottom: 10px;
-      text-shadow: 0 0 8px var(--term-dim);
-      text-transform: uppercase;
-      margin-bottom: 2rem;
-    }
+        h1.main-title {
+            color: var(--term-red);
+            font-size: 2.5rem;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px var(--term-dim);
+            margin-bottom: 2rem;
+            text-align: center;
+            border-bottom: 2px solid var(--term-red);
+            padding-bottom: 1rem;
+            width: 100%;
+            max-width: 1200px;
+        }
 
-    h2 {
-      color: var(--term-red);
-      border-bottom: 1px solid var(--term-dim);
-      padding-bottom: 5px;
-      font-size: 1.2rem;
-      margin-top: 0;
-    }
+        .blink { animation: blinker 1s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
 
-    .container {
-      width: 100%;
-      max-width: 600px;
-      background: var(--glass);
-      border: 1px solid var(--term-dim);
-      box-shadow: 0 0 20px rgba(255, 0, 0, 0.15);
-      padding: 2rem;
-      margin-bottom: 2rem;
-      position: relative;
-    }
+        /* THE DUAL LAYOUT */
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            width: 100%;
+            max-width: 1400px;
+        }
 
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      color: var(--term-red);
-      font-weight: bold;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-    }
+        .panel {
+            flex: 1;
+            min-width: 350px; /* Stacks on mobile */
+            max-width: 600px;
+            background: var(--glass);
+            border: 1px solid var(--term-dim);
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.15);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
 
-    input[type="text"], textarea, select {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 10px;
-      margin-bottom: 1rem;
-      border: 1px solid var(--border-grey);
-      background-color: #000;
-      color: var(--text-white);
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 1rem;
-    }
+        h2 {
+            color: var(--term-red);
+            border-bottom: 1px solid var(--border-grey);
+            padding-bottom: 10px;
+            margin-top: 0;
+            text-transform: uppercase;
+            font-size: 1.2rem;
+        }
 
-    input:focus, textarea:focus, select:focus {
-      outline: none;
-      border-color: var(--term-red);
-      box-shadow: 0 0 5px var(--term-dim);
-    }
+        /* Inputs & Buttons */
+        label { color: var(--term-red); font-weight: bold; font-size: 0.8rem; text-transform: uppercase; display: block; margin-bottom: 5px; margin-top: 10px;}
+        
+        input, textarea, select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            margin-bottom: 5px;
+            border: 1px solid var(--border-grey);
+            background-color: #000;
+            color: var(--text-white);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1rem;
+        }
 
-    /* Button Styling */
-    button {
-      background: transparent;
-      border: 1px solid var(--term-red);
-      color: var(--term-red);
-      padding: 10px 20px;
-      font-family: inherit;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.3s;
-      text-transform: uppercase;
-      font-weight: bold;
-      margin-right: 10px;
-      margin-bottom: 10px;
-    }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--term-red);
+        }
 
-    button:hover {
-      background: var(--term-red);
-      color: #000;
-      box-shadow: 0 0 15px var(--term-red);
-    }
+        .btn-row { display: flex; gap: 10px; margin-top: 10px; margin-bottom: 10px; }
 
-    .enigma-row {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
-    
-    .enigma-group { flex: 1; }
+        button {
+            flex: 1;
+            background: transparent;
+            border: 1px solid var(--term-red);
+            color: var(--term-red);
+            padding: 10px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
 
-    .help-icon {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        color: var(--term-dim);
-        cursor: help;
-    }
+        button:hover { background: var(--term-red); color: #000; box-shadow: 0 0 15px var(--term-red); }
 
-    .blink { animation: blinker 1s linear infinite; }
-    @keyframes blinker { 50% { opacity: 0; } }
+        .enigma-row { display: flex; gap: 10px; }
+        .enigma-group { flex: 1; }
+        
+        .status-line { 
+            font-size: 0.7rem; color: #666; text-align: right; 
+            margin-top: auto; padding-top: 15px; border-top: 1px solid #333;
+        }
 
-  </style>
+    </style>
 </head>
 <body>
 
-  <h1>NEXUS <span class="blink">ENIGMA</span></h1>
+    <h1 class="main-title">NEXUS <span class="blink">CIPHER</span> // PUBLIC</h1>
 
-  <!-- STANDARD CIPHER MODULE -->
-  <div class="container">
-    <div class="help-icon" title="Standard Vigenère / Substitution Cipher">?</div>
-    <h2>Module: Alpha-Shift</h2>
+    <div class="dashboard">
+        
+        <!-- LEFT PANEL: ALPHA SHIFT (Vigenere) -->
+        <div class="panel">
+            <h2>Alpha-Shift Module</h2>
+            
+            <label>Encryption Key</label>
+            <input type="text" id="alpha-key" value="NEXUS">
+            <div class="btn-row">
+                <button onclick="generateAlphaKey()">Gen Key</button>
+                <button onclick="document.getElementById('alpha-key').value='(CUSTOM CODE)'">Custom Symbols</button>
+            </div>
 
-    <label for="key">Encryption Key:</label>
-    <input type="text" id="key" value="NEXUS">
-    
-    <div>
-      <button onclick="generateKey()">Generate Key</button>
-      <button onclick="useCustomCode()">Use Custom Symbols</button> 
+            <label>Input Data</label>
+            <textarea id="alpha-input" rows="3"></textarea>
+            
+            <div class="btn-row">
+                <button onclick="alphaCipher()">Encrypt</button>
+                <button onclick="alphaDecipher()">Decrypt</button>
+            </div>
+
+            <label>Result</label>
+            <textarea id="alpha-output" rows="3" readonly></textarea>
+
+            <div class="status-line">Algorithm: Polyalphabetic Substitution</div>
+        </div>
+
+        <!-- RIGHT PANEL: ENIGMA MACHINE -->
+        <div class="panel">
+            <h2>Rotor-Machine (Enigma)</h2>
+
+            <div class="enigma-row">
+                <div class="enigma-group">
+                    <label>Rotor 1</label>
+                    <select id="enigma-rotor1">
+                        <option value="rotor1">I (D-K-V)</option>
+                        <option value="rotor2">II (H-Q-Z)</option> 
+                    </select>
+                </div>
+                <div class="enigma-group">
+                    <label>Pos 1</label>
+                    <select id="enigma-position1">
+                        <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="enigma-row">
+                <div class="enigma-group">
+                    <label>Rotor 2</label>
+                    <select id="enigma-rotor2">
+                        <option value="rotor1">I (D-K-V)</option>
+                        <option value="rotor2" selected>II (H-Q-Z)</option> 
+                    </select>
+                </div>
+                <div class="enigma-group">
+                    <label>Pos 2</label>
+                    <select id="enigma-position2">
+                        <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option>
+                    </select>
+                </div>
+            </div>
+
+            <label>Input Data</label>
+            <textarea id="enigma-input" rows="2"></textarea>
+
+            <div class="btn-row">
+                <button onclick="enigmaCipher()">Encrypt</button>
+                <button onclick="enigmaDecipher()">Decrypt</button>
+            </div>
+
+            <label>Result</label>
+            <textarea id="enigma-output" rows="2" readonly></textarea>
+            
+            <div class="status-line">Simulation: Odometer Stepping | Reflector: None</div>
+        </div>
+
     </div>
-
-    <label for="input">Input Data:</label>
-    <textarea id="input" rows="3"></textarea> 
-
-    <div>
-      <button onclick="cipher()">ENCRYPT</button>
-      <button onclick="decipher()">DECRYPT</button>
-    </div>
-
-    <label for="output">Result:</label>
-    <textarea id="output" rows="3" readonly></textarea>
-  </div>
-
-  <!-- ENIGMA MODULE -->
-  <div class="container">
-    <div class="help-icon" title="Rotor-Based Enigma Simulation">?</div>
-    <h2>Module: Rotor-Machine</h2>
-
-    <div class="enigma-row">
-      <div class="enigma-group">
-        <label>Rotor 1 Config</label>
-        <select id="enigma-rotor1">
-          <option value="rotor1">Rotor I (D-K-V...)</option>
-          <option value="rotor2">Rotor II (H-Q-Z...)</option> 
-        </select>
-        <select id="enigma-position1">
-          <option value="A">Pos A</option><option value="B">Pos B</option><option value="C">Pos C</option>
-          <option value="D">Pos D</option><option value="E">Pos E</option><option value="F">Pos F</option>
-        </select>
-      </div>
-
-      <div class="enigma-group">
-        <label>Rotor 2 Config</label>
-        <select id="enigma-rotor2">
-          <option value="rotor1">Rotor I</option>
-          <option value="rotor2" selected>Rotor II</option> 
-        </select>
-        <select id="enigma-position2">
-          <option value="A">Pos A</option><option value="B">Pos B</option><option value="C">Pos C</option>
-          <option value="D">Pos D</option><option value="E">Pos E</option><option value="F">Pos F</option>
-        </select>
-      </div>
-    </div>
-
-    <div>
-      <button onclick="enigmaCipher()">ENIGMA ENCRYPT</button>
-      <button onclick="enigmaDecipher()">ENIGMA DECRYPT</button>
-    </div>
-  </div>
 
 <script>
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    const customCode = {
-      'A': '!', 'B': '@', 'C': '#', 'D': '$', 'E': '%', 'F': '^', 
-      'G': '&', 'H': '*', 'I': '(', 'J': ')', 'K': '_', 'L': '+', 
-      'M': '-', 'N': '=', 'O': '`', 'P': '~', 'Q': '[', 'R': ']',
-      'S': '{', 'T': '}', 'U': '|', 'V': ';', 'W': ':', 'X': '\'',
-      'Y': '"', 'Z': '<', '0': '>', '1': '.', '2': ',', '3': '/', 
-      '4': '?', '5': '\\', '6': '7', '7': '8', '8': '9', '9': '0' 
-    };
+    const customCode = {'A':'!','B':'@','C':'#','D':'$','E':'%','F':'^','G':'&','H':'*','I':'(','J':')','K':'_','L':'*','M':'-','N':'=','O':'`','P':'~','Q':'[','R':']','S':'{','T':'}','U':'|','V':';','W':':','X':'\'','Y':'"','Z':'<','0':'>','1':'.','2':',','3':'/','4':'?','5':'\\','6':'7','7':'8','8':'9','9':'0'};
 
-    function generateKey() {
-      let newKey = '';
-      for (let i = 0; i < 10; i++) {
-        newKey += alphabet[Math.floor(Math.random() * alphabet.length)];
-      }
-      document.getElementById('key').value = newKey;
+    // --- ALPHA SHIFT LOGIC ---
+    function generateAlphaKey() {
+        let newKey = '';
+        for (let i = 0; i < 10; i++) newKey += alphabet[Math.floor(Math.random() * alphabet.length)];
+        document.getElementById('alpha-key').value = newKey;
     }
 
-    function useCustomCode() {
-      document.getElementById('key').value = "(CUSTOM CODE)"; 
-    }
-
-    function cipher() {
-      const input = document.getElementById('input').value.toUpperCase();
-      const key = document.getElementById('key').value.toUpperCase();
-      let result = '';
-
-      for (let i = 0; i < input.length; i++) {
-        const char = input[i];
-        if (key === "(CUSTOM CODE)") {
-          result += customCode[char] || char; 
-        } else {
-          const index = alphabet.indexOf(char);
-          if (index !== -1) {
-            const shiftedIndex = (index + alphabet.indexOf(key[i % key.length])) % alphabet.length;
-            result += alphabet[shiftedIndex];
-          } else {
-            result += char;
-          }
-        }
-      }
-      document.getElementById('output').value = result;
-    }
-
-    function decipher() {
-      const input = document.getElementById('input').value.toUpperCase();
-      const key = document.getElementById('key').value.toUpperCase();
-      let result = '';
-
-      for (let i = 0; i < input.length; i++) {
-        const char = input[i];
-        if (key === "(CUSTOM CODE)") {
-          for (const [plain, coded] of Object.entries(customCode)) {
-            if (coded === char) {
-              result += plain;
-              break;
+    function alphaCipher() {
+        const input = document.getElementById('alpha-input').value.toUpperCase();
+        const key = document.getElementById('alpha-key').value.toUpperCase();
+        let result = '';
+        for (let i = 0; i < input.length; i++) {
+            const char = input[i];
+            if (key === "(CUSTOM CODE)") {
+                result += customCode[char] || char; 
+            } else {
+                const index = alphabet.indexOf(char);
+                if (index !== -1) {
+                    const shiftedIndex = (index + alphabet.indexOf(key[i % key.length])) % alphabet.length;
+                    result += alphabet[shiftedIndex];
+                } else { result += char; }
             }
-          }
-          if (!Object.values(customCode).includes(char)) {
-            result += char; 
-          }
-        } else {
-          const index = alphabet.indexOf(char);
-          if (index !== -1) {
-            let shiftedIndex = (index - alphabet.indexOf(key[i % key.length]) + alphabet.length) % alphabet.length;
-            result += alphabet[shiftedIndex];
-          } else {
-            result += char;
-          }
         }
-      }
-      document.getElementById('output').value = result;
+        document.getElementById('alpha-output').value = result;
     }
 
-    // --- ENIGMA LOGIC ---
-    const rotors = {
-        rotor1: {
-            'A': 'D', 'B': 'K', 'C': 'V', 'D': 'Q', 'E': 'L', 'F': 'G', 
-            'G': 'Z', 'H': 'B', 'I': 'P', 'J': 'S', 'K': 'O', 'L': 'M', 
-            'M': 'R', 'N': 'W', 'O': 'C', 'P': 'I', 'Q': 'U', 'R': 'Y', 
-            'S': 'A', 'T': 'N', 'U': 'F', 'V': 'X', 'W': 'J', 'X': 'H',
-            'Y': 'T', 'Z': 'E'
-        },
-        rotor2: {
-            'A': 'H', 'B': 'Q', 'C': 'Z', 'D': 'G', 'E': 'P', 'F': 'J', 
-            'G': 'T', 'H': 'M', 'I': 'O', 'J': 'B', 'K': 'L', 'L': 'N', 
-            'M': 'C', 'N': 'V', 'O': 'F', 'P': 'D', 'Q': 'U', 'R': 'S', 
-            'S': 'R', 'T': 'A', 'U': 'X', 'V': 'Y', 'W': 'I', 'X': 'K',
-            'Y': 'E', 'Z': 'W' 
+    function alphaDecipher() {
+        const input = document.getElementById('alpha-input').value.toUpperCase();
+        const key = document.getElementById('alpha-key').value.toUpperCase();
+        let result = '';
+        for (let i = 0; i < input.length; i++) {
+            const char = input[i];
+            if (key === "(CUSTOM CODE)") {
+                // Reverse lookup for custom
+                let found = false;
+                for (const [plain, coded] of Object.entries(customCode)) {
+                    if (coded === char) { result += plain; found = true; break; }
+                }
+                if (!found) result += char;
+            } else {
+                const index = alphabet.indexOf(char);
+                if (index !== -1) {
+                    let shiftedIndex = (index - alphabet.indexOf(key[i % key.length]) + alphabet.length) % alphabet.length;
+                    result += alphabet[shiftedIndex];
+                } else { result += char; }
+            }
         }
+        document.getElementById('alpha-output').value = result;
+    }
+
+    // --- ENIGMA LOGIC (With Odometer) ---
+    const rotors = {
+        rotor1: {'A':'D','B':'K','C':'V','D':'Q','E':'L','F':'G','G':'Z','H':'B','I':'P','J':'S','K':'O','L':'M','M':'R','N':'W','O':'C','P':'I','Q':'U','R':'Y','S':'A','T':'N','U':'F','V':'X','W':'J','X':'H','Y':'T','Z':'E'},
+        rotor2: {'A':'H','B':'Q','C':'Z','D':'G','E':'P','F':'J','G':'T','H':'M','I':'O','J':'B','K':'L','L':'N','M':'C','N':'V','O':'F','P':'D','Q':'U','R':'S','S':'R','T':'A','U':'X','V':'Y','W':'I','X':'K','Y':'E','Z':'W'}
     };
 
     function encryptLetter(letter, rotorMap, position) {
       const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
       let idx = alpha.indexOf(letter);
       if(idx === -1) return letter;
-      
-      // Shift for position
       idx = (idx + alpha.indexOf(position)) % 26;
-      
-      // Rotor Swap
       const subChar = rotorMap[alpha[idx]];
       let subIdx = alpha.indexOf(subChar);
-      
-      // Shift Back
       subIdx = (subIdx - alpha.indexOf(position) + 26) % 26;
       return alpha[subIdx];
     }
@@ -320,87 +294,59 @@
       const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
       let idx = alpha.indexOf(letter);
       if(idx === -1) return letter;
-      
       idx = (idx + alpha.indexOf(position)) % 26;
-      
-      let originalChar = '';
-      for (const [k, v] of Object.entries(rotorMap)) {
-        if (v === alpha[idx]) {
-          originalChar = k;
-          break;
-        }
-      }
-      
+      let originalChar = Object.keys(rotorMap).find(key => rotorMap[key] === alpha[idx]);
       let originalIdx = alpha.indexOf(originalChar);
       originalIdx = (originalIdx - alpha.indexOf(position) + 26) % 26;
       return alpha[originalIdx];
     }
 
-   function enigmaCipher() {
-      const input = document.getElementById('input').value.toUpperCase();
+    function enigmaCipher() {
+      const input = document.getElementById('enigma-input').value.toUpperCase();
       const r1Name = document.getElementById('enigma-rotor1').value;
       const r2Name = document.getElementById('enigma-rotor2').value;
-      
-      // Get starting positions as numbers (0-25)
       const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
       let p1Idx = alpha.indexOf(document.getElementById('enigma-position1').value);
       let p2Idx = alpha.indexOf(document.getElementById('enigma-position2').value);
       
       let output = '';
-      
       for (let char of input) {
         if (char.match(/[A-Z]/)) {
-            // --- THE ODOMETER STEPPING (The Real Magic) ---
-            p1Idx = (p1Idx + 1) % 26; // Spin Rotor 1
-            if (p1Idx === 0) {        // Did it wrap around from Z to A?
-                p2Idx = (p2Idx + 1) % 26; // If yes, spin Rotor 2
-            }
+            // STEPPING
+            p1Idx = (p1Idx + 1) % 26; 
+            if (p1Idx === 0) p2Idx = (p2Idx + 1) % 26; 
             
-            // Convert numbers back to letters for your existing logic
-            let currentP1 = alpha[p1Idx];
-            let currentP2 = alpha[p2Idx];
-
-            // Encrypt using the NEW positions
-            char = encryptLetter(char, rotors[r1Name], currentP1);
-            char = encryptLetter(char, rotors[r2Name], currentP2);
+            char = encryptLetter(char, rotors[r1Name], alpha[p1Idx]);
+            char = encryptLetter(char, rotors[r2Name], alpha[p2Idx]);
         }
         output += char;
       }
-      document.getElementById('output').value = output;
+      document.getElementById('enigma-output').value = output;
     }
 
     function enigmaDecipher() {
-      // Decrypting works exactly the same way: You must simulate the spins forward
-      // to know which setting decoded which letter.
-      const input = document.getElementById('input').value.toUpperCase();
+      const input = document.getElementById('enigma-input').value.toUpperCase();
       const r1Name = document.getElementById('enigma-rotor1').value;
       const r2Name = document.getElementById('enigma-rotor2').value;
-      
       const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
       let p1Idx = alpha.indexOf(document.getElementById('enigma-position1').value);
       let p2Idx = alpha.indexOf(document.getElementById('enigma-position2').value);
       
       let output = '';
-      
       for (let char of input) {
         if (char.match(/[A-Z]/)) {
-            // --- STEP FORWARD (Must match the encryption step) ---
+            // STEPPING
             p1Idx = (p1Idx + 1) % 26; 
-            if (p1Idx === 0) {        
-                p2Idx = (p2Idx + 1) % 26; 
-            }
-            
-            let currentP1 = alpha[p1Idx];
-            let currentP2 = alpha[p2Idx];
+            if (p1Idx === 0) p2Idx = (p2Idx + 1) % 26; 
 
-            // Decrypt backwards
-            char = decryptLetter(char, rotors[r2Name], currentP2);
-            char = decryptLetter(char, rotors[r1Name], currentP1);
+            char = decryptLetter(char, rotors[r2Name], alpha[p2Idx]);
+            char = decryptLetter(char, rotors[r1Name], alpha[p1Idx]);
         }
         output += char;
       }
-      document.getElementById('output').value = output;
+      document.getElementById('enigma-output').value = output;
     }
 </script>
+
 </body>
 </html>
