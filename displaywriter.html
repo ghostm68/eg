@@ -79,55 +79,55 @@ Private personal information, ព័ត៌មានផ្ទាល់ខ្ល�
   }
 
 /* 1. The "Wall" (Container) */
+/* 1. The Container (The Wall) */
 #image-content {
   flex: 1;
   position: relative;
   overflow: hidden;
-  background-color: #000;
+  background-color: #111;
   
-  /* This centers the artwork vertically and horizontally */
+  /* Centers the image perfectly */
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-/* 2. The "Atmosphere" (Blurry Background) */
+/* 2. The Background (The Atmosphere) */
 #background-blur {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   z-index: 1;
   background-size: cover;
   background-position: center;
-  filter: blur(30px) brightness(0.4);
-  transition: all 0.5s ease;
+  /* Darken it enough so the small image stands out */
+  filter: blur(20px) brightness(0.3) grayscale(20%); 
 }
 
-/* 3. The "Canvas" (Foreground Artwork) */
+/* 3. The Foreground (The Framed Print) */
 #background {
-  /* Instead of stretching to edges, we give it limits */
-  position: relative; /* Sits naturally in the flex center */
+  position: relative;
   z-index: 2;
   
-  /* "Fixed" Size Logic: */
-  /* It will try to be 85% of the screen width... */
-  width: 85%;
-  /* ...but never taller than 85% of the screen height. */
-  height: 85%;
+  /* CRITICAL CHANGE: */
+  /* Setting this to 70% guarantees a wide "mat" around the image. */
+  /* No image will ever touch the edge of the screen. */
+  width: 70%;
+  height: 70%;
   
-  /* Ensure the image fits inside this specific box */
-  background-size: contain; 
+  /* Ensure the image fits entirely within that 70% box */
+  background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
   
-  /* Add a shadow so it pops off the background */
-  filter: drop-shadow(0 0 20px rgba(0,0,0,0.8));
+  /* Add a clean shadow to define the edges of the image */
+  filter: drop-shadow(0 15px 30px rgba(0,0,0,0.7));
   
-  transition: transform 0.5s ease, background-image 1s ease;
+  transition: transform 0.3s ease;
 }
 
-/* Hover Effect */
+/* Optional: Slight lift on hover */
 #image-content:hover #background {
-  transform: scale(1.02); /* Subtle pop */
+  transform: scale(1.02);
 }
 
 
@@ -569,26 +569,27 @@ body.dark-theme ::-webkit-scrollbar-track {
     }
 
 function setBackgroundImage(index) {
-  if (!imageData || imageData.length === 0 || !imageData[index]) return;
+  if (!imageData || imageData.length === 0) return;
+  const safeIndex = index % imageData.length;
+  if (!imageData[safeIndex]) return;
 
-  const imageUrl = imageData[index].url;
-  
-  // 1. Foreground (The Art) - FORCE CONTAIN
+  const imageUrl = imageData[safeIndex].url;
+
+  // 1. Foreground
   gsap.to('#background', {
     backgroundImage: `url(${imageUrl})`,
-    backgroundSize: 'contain', 
+    // We let CSS handle the width/height (70%), we just set the image
+    backgroundSize: 'contain',
     backgroundPosition: 'center center',
-    duration: 1,
-    ease: 'power2.inOut'
+    duration: 0.5,
+    ease: 'power1.out'
   });
 
-  // 2. Background (The Blur) - FORCE COVER
+  // 2. Background Blur
   gsap.to('#background-blur', {
     backgroundImage: `url(${imageUrl})`,
     backgroundSize: 'cover',
-    backgroundPosition: 'center center',
-    duration: 1,
-    ease: 'power2.inOut'
+    duration: 0.5
   });
 }
 
