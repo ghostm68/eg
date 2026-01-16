@@ -186,9 +186,11 @@
 
     <!-- Controls -->
     <div style="display:flex; gap:10px; margin-bottom:15px;">
-        <select id="nvidiaModel" style="background:#111; color:#aaa; border:1px solid #333; padding:5px; flex:1; font-family:'Courier New', monospace; font-size:12px;">
-            <option value="nvidia/nemotron-4-340b-instruct">Nemotron-4 340B (Heavy)</option>
-        </select>
+       <select id="nvidiaModel" style="background:#111; color:#aaa; border:1px solid #333; padding:5px; flex:1; font-family:'Courier New', monospace; font-size:12px;">
+    <!-- Set this one to SELECTED -->
+    <option value="nvidia/nvidia-nemotron-nano-9b-v2" selected>Nvidia Nemotron Nano 9B v2 (Hybrid/Mamba)</option>
+    <option value="nvidia/llama-3.1-nemotron-70b-instruct">Nvidia Llama-3.1-Nemotron 70B</option>
+</select>
         <button id="nvidiaBtn" onclick="runNvidiaAnalysis()" style="background:#ff3333; color:#000; border:none; padding:8px 20px; font-weight:bold; cursor:pointer; font-family:'Courier New', monospace; letter-spacing:1px; transition:all 0.3s;">INITIALIZE</button>
     </div>
 
@@ -201,12 +203,15 @@
    // ==========================================
     // 1. GLOBAL CONFIGURATION & STATE
     // ==========================================
-    const NOVEL_URL = 'https://wordstar.nexus/horse.txt'; // <--- The book file
-    let novelText = '';      // Stores the book in browser memory
-    let aiContext = 'novel'; // Context switch state
+// ==========================================
+    // 1. GLOBAL CONFIGURATION
+    // ==========================================
+    const NOVEL_URL = 'https://wordstar.nexus/horse.txt';
+    let novelText = '';      
+    let aiContext = 'novel'; 
     let isLoading = false;
 
-    // Elements
+    // Main Elements
     const modelSelect = document.getElementById('model');
     const input = document.getElementById('input');
     const askBtn = document.getElementById('ask');
@@ -215,15 +220,14 @@
     const statusBadge = document.getElementById('statusBadge');
 
     // ==========================================
-    // 2. SYSTEM STARTUP (Downloads the book)
+    // 2. SYSTEM STARTUP (Downloads Book)
     // ==========================================
     async function loadNovel() {
       try {
-        contextInfo.textContent = 'Linking to Wordstar.Nexus...';
+        contextInfo.textContent = 'Contacting Wordstar.Nexus...';
         statusBadge.textContent = 'DOWNLOADING';
-        statusBadge.classList.add('text-[#ff3333]', 'animate-pulse');
+        statusBadge.classList.add('text-theme-gold', 'animate-pulse');
         
-        // This is where we grab the text file
         const res = await fetch(NOVEL_URL);
         if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
         
@@ -232,22 +236,22 @@
         console.log(`System: Loaded ${novelText.length} characters.`);
         contextInfo.textContent = 'Manuscript loaded & indexed.';
         statusBadge.textContent = 'ONLINE';
-        statusBadge.classList.remove('animate-pulse');
-        statusBadge.classList.add('text-[#ff3333]', 'font-bold');
+        statusBadge.classList.remove('text-theme-gold', 'animate-pulse');
+        statusBadge.classList.add('text-green-500'); // Or your theme red class
         
       } catch (error) {
         console.error('Load Error:', error);
-        contextInfo.innerHTML = 'Error loading text. <span class="text-red-500">Check CORS.</span>';
+        contextInfo.innerHTML = 'Error loading file. <span class="text-red-500">Check CORS.</span>';
         statusBadge.textContent = 'OFFLINE';
       }
     }
 
     // ==========================================
-    // 3. STANDARD CHAT LOGIC (Puter)
+    // 3. PUTER CHAT (Standard)
     // ==========================================
     function buildPuterPrompt(userMessage) {
-      // For Puter, we just send the first 15k chars because it's simpler
       if (aiContext === 'novel' && novelText) {
+        // Puter gets the intro (First 15k chars)
         const preview = novelText.substring(0, 15000); 
         return `You are an AI editor analyzing a novel.\n\nCONTEXT (START OF BOOK):\n${preview}\n\n---\nQUERY: ${userMessage}`;
       }
@@ -256,7 +260,7 @@
 
     async function callPuterAI(prompt) {
       const selectedModelText = modelSelect.options[modelSelect.selectedIndex].text;
-      response.innerHTML = `<p class="text-[#ff3333] animate-pulse">>> CONTACTING ${selectedModelText}...</p>`;
+      response.innerHTML = `<p class="text-theme-gold animate-pulse">>> CONTACTING ${selectedModelText}...</p>`;
       
       try {
         const result = await puter.ai.chat(prompt, {
@@ -264,7 +268,7 @@
           temperature: 0.7,
           max_tokens: 2500
         });
-        response.innerHTML = `<span class="text-[#ff3333] block mb-2 border-b border-[#333] pb-1 text-xs">>> TRANSMISSION RECEIVED:</span>${result}`;
+        response.innerHTML = `<span class="text-theme-gold block mb-2 border-b border-theme-border pb-1 text-xs">>> TRANSMISSION RECEIVED:</span>${result}`;
       } catch (error) {
         response.innerHTML = `<p class="text-red-500 font-bold">>> ERROR: ${error.message}</p>`;
       }
@@ -273,13 +277,11 @@
     askBtn.addEventListener('click', async () => {
       const msg = input.value.trim();
       if (!msg || isLoading) return;
-      
       isLoading = true;
       askBtn.disabled = true;
       askBtn.classList.add('opacity-50');
       
-      const prompt = buildPuterPrompt(msg);
-      await callPuterAI(prompt);
+      await callPuterAI(buildPuterPrompt(msg));
       
       isLoading = false;
       askBtn.disabled = false;
@@ -287,7 +289,7 @@
     });
 
     // ==========================================
-    // 4. NVIDIA SMART SCANNER LOGIC (Client-Side RAG)
+    // 4. NVIDIA MODAL (Nano 9B Smart Scan)
     // ==========================================
 
     function openNvidiaModal() {
@@ -302,35 +304,35 @@
         document.getElementById('nvidia-modal').style.display = 'none';
     }
 
-    // The "Search Light" Function
+    // The "Search Light" Scanner
     function getRelevantContext(query, fullText) {
         if (!fullText) return { text: "", method: "NO DATA" };
         
-        // Clean query terms
+        // Filter for significant words > 3 chars
         const keywords = query.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length > 3);
 
         if (keywords.length === 0) {
+            // Default to start if query is vague
             return { text: fullText.substring(0, 5000), method: "DEFAULT (BEGINNING)" };
         }
 
-        // Scan for best match
         const chunkSize = 2000;
         let bestChunkIndex = 0;
         let maxScore = 0;
         
+        // Scan the book
         for (let i = 0; i < fullText.length; i += 1000) {
             let chunk = fullText.substring(i, i + chunkSize).toLowerCase();
             let score = 0;
-            keywords.forEach(word => {
-                if(chunk.includes(word)) score++;
-            });
+            keywords.forEach(word => { if(chunk.includes(word)) score++; });
+            
             if (score > maxScore) {
                 maxScore = score;
                 bestChunkIndex = i;
             }
         }
 
-        // Extract context (3000 chars before, 5000 chars after match)
+        // Grab Context (Nano 9B handles 32k context easily)
         const start = Math.max(0, bestChunkIndex - 3000);
         const end = Math.min(fullText.length, bestChunkIndex + 5000);
         
@@ -352,24 +354,31 @@
         localStorage.setItem('inkrealm_nvidia_key', key);
         
         btn.disabled = true; 
-        btn.textContent = "SCANNING...";
+        btn.textContent = "PROCESSING...";
         btn.style.backgroundColor = "#555";
-        out.textContent = ">> SCANNING LOCAL TEXT FOR RELEVANCE...";
+        out.textContent = ">> ACCESSING MAMBA-HYBRID NEURAL NET...";
 
-        // 1. Find relevant part of the book
+        // 1. Scan for relevant text
         const scanResult = getRelevantContext(prompt, novelText);
         
         out.textContent += `\n>> TARGET: ${scanResult.method}`;
         out.textContent += `\n>> UPLOADING FRAGMENT (${scanResult.text.length} chars)...`;
 
         try {
+            // Using CORS proxy for client-side access
             const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
             
             const requestBody = {
                 model: model, 
                 messages: [
-                    { "role": "system", "content": "You are the WORDSTAR RECURSIVE ANALYSIS ENGINE. Your directive is to critique, analyze, and deconstruct the manuscript fragment provided." },
-                    { "role": "user", "content": `CONTEXT FRAGMENT:\n...${scanResult.text}...\n\n---\n\nQUESTION: ${prompt}` }
+                    { 
+                        "role": "system", 
+                        "content": "You are the WORDSTAR ANALYSIS ENGINE. Analyze the specific text fragment provided below." 
+                    },
+                    { 
+                        "role": "user", 
+                        "content": `CONTEXT FRAGMENT:\n...${scanResult.text}...\n\n---\n\nQUESTION: ${prompt}` 
+                    }
                 ],
                 temperature: 0.5, top_p: 1, max_tokens: 1024
             };
@@ -391,6 +400,7 @@
 
         } catch(e) { 
             out.innerHTML = `<span style="color:red">>> FAILURE:</span> ${e.message}`; 
+            console.error(e);
         } finally { 
             btn.disabled = false; 
             btn.textContent = "INITIALIZE"; 
