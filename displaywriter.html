@@ -548,26 +548,28 @@ body.dark-theme ::-webkit-scrollbar-track {
     }
 
 function setBackgroundImage(index) {
-  // Add safety check for undefined data
+  // Safety check to prevent errors
   if (!imageData || imageData.length === 0 || !imageData[index]) return;
 
-  if (imageData.length > 0) {
-    const imageUrl = imageData[index].url;
-    
-    // Animate the main artwork (fitted)
-    gsap.to('#background', {
-      backgroundImage: `url(${imageUrl})`,
-      duration: 1,
-      ease: 'power2.inOut'
-    });
+  const imageUrl = imageData[index].url;
 
-    // Animate the blurred background (filled)
-    gsap.to('#background-blur', {
-      backgroundImage: `url(${imageUrl})`,
-      duration: 1,
-      ease: 'power2.inOut'
-    });
-  }
+  // 1. Animate the SHARP artwork (Foreground)
+  // We force backgroundSize: 'contain' here to override any previous inline styles
+  gsap.to('#background', {
+    backgroundImage: `url(${imageUrl})`,
+    backgroundSize: 'contain', 
+    duration: 1,
+    ease: 'power2.inOut'
+  });
+
+  // 2. Animate the BLURRY framing (Background)
+  // We force backgroundSize: 'cover' so it fills the gaps
+  gsap.to('#background-blur', {
+    backgroundImage: `url(${imageUrl})`,
+    backgroundSize: 'cover',
+    duration: 1,
+    ease: 'power2.inOut'
+  });
 }
 
     function handleScroll() {
