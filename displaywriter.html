@@ -78,23 +78,30 @@ Private personal information, ព័ត៌មានផ្ទាល់ខ្ល�
     background-color: rgba(0, 0, 0, 0.8);
   }
 
-  #image-content {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease-in-out;
-  }
+#image-content {
+  position: relative;
+  background-color: #000; /* Fallback */
+}
 
-  #background {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-size: cover;
-    background-position: center;
-    transition: all 0.3s ease-in-out;
-  }
+#background-blur {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(20px) brightness(0.6); /* Blurs and darkens the back layer */
+  z-index: 1;
+  transition: all 0.5s ease;
+}
+
+#background {
+  position: absolute;
+  top: 20px; left: 20px; right: 20px; bottom: 20px; /* Give it some breathing room (matte) */
+  background-size: contain; /* <--- CRITICAL: Ensures the whole image fits */
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: 2; /* Sits on top of the blur */
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); /* Adds depth to the artwork */
+}
 
   #image-content:hover #background {
     transform: scale(1.05);
@@ -426,9 +433,10 @@ body.dark-theme ::-webkit-scrollbar-track {
       <div id="content">Loading content...</div>
     </div>
     <div id="image-content">
-      <div id="background"></div>
-    </div>
-  </div>
+  <div id="background-blur"></div> <!-- New atmospheric layer -->
+  <div id="background"></div>      <!-- The actual artwork -->
+</div>
+</div>
 
   <script>
     let currentImageIndex = 0;
@@ -537,17 +545,24 @@ body.dark-theme ::-webkit-scrollbar-track {
     }
 
     function setBackgroundImage(index) {
-      if (imageData.length > 0) {
-        const imageUrl = imageData[index].url;
-        gsap.to('#background', {
-          backgroundImage: `url(${imageUrl})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          duration: 1,
-          ease: 'power2.inOut'
-        });
-      }
-    }
+  if (imageData.length > 0) {
+    const imageUrl = imageData[index].url;
+    
+    // Animate the main artwork (fitted)
+    gsap.to('#background', {
+      backgroundImage: `url(${imageUrl})`,
+      duration: 1,
+      ease: 'power2.inOut'
+    });
+
+    // Animate the blurred background (filled)
+    gsap.to('#background-blur', {
+      backgroundImage: `url(${imageUrl})`,
+      duration: 1,
+      ease: 'power2.inOut'
+    });
+  }
+}
 
     function handleScroll() {
       const scrollTop = $('#text-content').scrollTop();
