@@ -1,7 +1,7 @@
 // AI MODULE FOR QUANTUM WORDSTAR - NO AUDIO DUPLICATION
 // Save this as ai-module.js
 
-// Modal functions - NO VIEWPORT declaration here!
+// Modal functions
 function openNvidiaModal() {
     // Use main app's beep function
     if (window.beep) window.beep();
@@ -34,6 +34,8 @@ async function generateInsight() {
 
     const apiKey = keyField.value.trim();
     const prompt = promptField.value.trim();
+    
+    // FIXED: Using the correct NVIDIA Nemotron Nano 9B model name
     const model = "nvidia/nvidia-nemotron-nano-9b-v2";
     
     // Validate
@@ -63,7 +65,7 @@ async function generateInsight() {
         const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
         
         const requestBody = {
-            model: model,
+            model: model, // ✅ MODEL NAME INCLUDED HERE
             messages: [
                 {
                     "role": "system", 
@@ -79,6 +81,8 @@ async function generateInsight() {
             stream: false
         };
 
+        console.log('Sending AI request with model:', model); // Debug
+
         const response = await fetch(proxyUrl, {
             method: 'POST',
             headers: {
@@ -90,16 +94,18 @@ async function generateInsight() {
 
         // Check response
         const responseText = await response.text();
+        console.log('AI Response status:', response.status);
 
         if (!response.ok) {
-            throw new Error(`API error: ${response.status} - ${responseText}`);
+            throw new Error(`API error: ${response.status} - ${responseText.substring(0, 100)}`);
         }
 
         let data;
         try {
             data = JSON.parse(responseText);
         } catch (parseError) {
-            throw new Error(`Invalid JSON response`);
+            console.error('Parse error:', parseError);
+            throw new Error(`Invalid JSON response from AI`);
         }
         
         if (data.choices && data.choices[0] && data.choices[0].message) {
@@ -108,19 +114,21 @@ async function generateInsight() {
             // Display in modal
             out.textContent = generatedText;
             
-            // Insert into main editor - use global VIEWPORT from main app
-            if (window.VIEWPORT) {
-                window.VIEWPORT.focus();
+            // Insert into main editor
+            const viewport = document.getElementById('viewport');
+            if (viewport) {
+                viewport.focus();
                 document.execCommand('insertHTML', false, 
                     `<br><br><span style="color:#ff0000;text-shadow:0 0 5px #ff0000">[AI-GENERATED]</span><br>${generatedText}<br>`
                 );
             }
             
-            status.textContent = `Status: Generated ${generatedText.split(' ').length} words`;
+            status.textContent = `Status: Generated ${generatedText.split(' ').length} words | Model: ${model}`;
             
         } else if (data.error) {
             throw new Error(data.error.message || 'API returned an error');
         } else {
+            console.error('Unexpected response format:', data);
             throw new Error('Unexpected response format from AI');
         }
 
@@ -143,11 +151,46 @@ function initAIEvents() {
         modeIndicator.style.cursor = 'pointer';
     }
     
-    // Auto-init when DOM is ready
-    console.log('AI Module initialized');
+    // Generate button
+    const genBtn = document.getElementById('genBtn');
+    if (genBtn) {
+        genBtn.onclick = generateInsight;
+    }
+    
+    // Cancel button
+    const cancelBtn = document.querySelector('.ai-btn[onclick*="closeAIModal"]');
+    if (cancelBtn) {
+        cancelBtn.onclick = closeAIModal;
+    }
+    
+    // Overlay click
+    const overlay = document.getElementById('ai-overlay');
+    if (overlay) {
+        overlay.onclick = closeAIModal;
+    }
+    
+    // Auto-save API key
+    const keyField = document.getElementById('nvidiaKey');
+    if (keyField) {
+        keyField.addEventListener('change', function(e) {
+            if (e.target.value) {
+                localStorage.setItem('quantum_nvidia_key', e.target.value);
+            }
+        });
+    }
+    
+    // Escape key to close modal
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.getElementById('ai-modal').style.display === 'block') {
+            e.preventDefault();
+            closeAIModal();
+        }
+    });
+    
+    console.log('AI Module initialized with model: nvidia/nvidia-nemotron-nano-9b-v2');
 }
 
-// Auto-init
+// Auto-init when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initAIEvents);
 } else {
