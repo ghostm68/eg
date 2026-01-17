@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#050000">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22  viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💾</text></svg>"> 
-<title>QUANTUM WORDSTAR 2077</title>
+<title>display writer ii</title>
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -18,7 +18,6 @@
   --shadow:#1a0000;
   --crt-glow:rgba(255,0,0,.15);
   --ai-purple:var(--blood);
-  --ai-blue:#ccccff;
   --ai-green:#ccffcc;
   --ai-dark:var(--bg);
 }
@@ -31,7 +30,6 @@
 
 body{
   margin:0;
-  /* Dynamic viewport height handles mobile browser bars better */
   height:100vh;
   height:100dvh; 
   display:flex;
@@ -128,8 +126,6 @@ body::after{
   margin-right:4px;
 }
 
-.cmd:active span { color: var(--bg); }
-
 #ruler{
   flex:0 0 20px;
   padding:0 12px;
@@ -163,7 +159,6 @@ body::after{
   background: rgba(20,0,0,0.15);
 }
 
-/* FORMATTING STYLES */
 #viewport b, #viewport strong {
   color:var(--blood);
   font-weight:normal; 
@@ -233,7 +228,8 @@ body::after{
 }
 #mode-indicator:hover{ text-shadow:0 0 8px var(--blood); color:var(--paper); }
 
-#ai-overlay{
+/* Ensure modal is hidden by default with high specificity */
+#ai-overlay {
   display:none;
   position:fixed;
   inset:0;
@@ -242,8 +238,8 @@ body::after{
   backdrop-filter:blur(2px);
 }
 
-#ai-modal{
-  display:none;
+#ai-modal {
+  display:none; /* Hidden by default */
   position:fixed;
   top:50%;left:50%;
   transform:translate(-50%,-50%);
@@ -255,7 +251,6 @@ body::after{
   z-index:1001;
   box-shadow:0 0 40px rgba(255,0,0,0.3);
   font-family:'VT323',monospace;
-  display: flex;
   flex-direction: column;
 }
 
@@ -301,7 +296,7 @@ body::after{
 #aiPrompt{ 
   min-height:80px; 
   resize:vertical; 
-  border-left: 3px solid var(--blood); /* Red border for input */
+  border-left: 3px solid var(--blood); 
 }
 
 #aiOutput{
@@ -310,7 +305,7 @@ body::after{
   overflow-y: auto;
   background:#0a0a0a;
   border:1px solid #446644;
-  border-left: 3px solid #44ff44; /* Green border for output */
+  border-left: 3px solid #44ff44;
   padding:10px;
   white-space:pre-wrap;
   font-size:1rem;
@@ -341,7 +336,6 @@ body::after{
 .ai-btn.primary { background: var(--blood); color: var(--bg); border-color: var(--blood); }
 .ai-btn:disabled{ opacity:0.5; cursor: wait; }
 
-/* MOBILE ADJUSTMENTS */
 @media (max-width: 768px) {
   body, #viewport { font-size: 20px; }
   .menu-grid { gap: 8px; justify-content: space-between; }
@@ -356,10 +350,10 @@ body::after{
 <body>
 
 <!-- AI Modal -->
-<div id="ai-overlay"></div>
-<div id="ai-modal">
+<div id="ai-overlay" style="display:none;"></div>
+<div id="ai-modal" style="display:none;">
     <div class="ai-header">
-        <span>🤖 NEMOTRON-70B LINK</span>
+        <span>🤖 NVIDIA NANO-9B v2</span>
         <button id="closeAiBtn" style="background:transparent; border:none; color:var(--bg); font-size:1.5em; line-height:1;">&times;</button>
     </div>
     <div class="ai-body">
@@ -372,13 +366,13 @@ body::after{
         </div>
 
         <div class="ai-input-group">
-            <label>INPUT PROMPT (RED):</label>
-            <textarea id="aiPrompt" placeholder="Describe a cyberpunk city at midnight..."></textarea>
+            <label>INPUT PROMPT:</label>
+            <textarea id="aiPrompt" placeholder="Describe the static snow..."></textarea>
         </div>
 
         <div class="ai-input-group">
-            <label>TERMINAL OUTPUT (GREEN):</label>
-            <div id="aiOutput">System Ready... Waiting for input.</div>
+            <label>OUTPUT:</label>
+            <div id="aiOutput">Waiting for signal...</div>
         </div>
     </div>
     <div class="ai-btn-row">
@@ -429,7 +423,6 @@ body::after{
 </div>
 
 <script>
-/* ----------  SETUP & AUDIO ---------- */
 const VIEWPORT = document.getElementById('viewport');
 const STATUS = document.getElementById('status-readout');
 let audioCtx = null;
@@ -458,11 +451,10 @@ function beep(freq = 880, type = 'square', dur = 0.05) {
   }
 }
 
-/* ----------  CRITICAL: COMMAND HANDLING ---------- */
-// 1. Prevent focus loss on button click so selection stays active
+// 1. Prevent focus loss on button click
 document.querySelectorAll('.prevent-focus').forEach(el => {
     const handleStart = (e) => {
-        e.preventDefault(); // Stop focus stealing
+        e.preventDefault(); 
         const fkey = el.getAttribute('data-fkey');
         if(fkey) triggerFKey(fkey);
     };
@@ -480,7 +472,6 @@ function cmd(command) {
 function triggerFKey(k) {
   beep(880, 'square');
   VIEWPORT.focus();
-  
   switch(k) {
     case 'F1': generate(); break;
     case 'F2': collapse(); break;
@@ -489,17 +480,13 @@ function triggerFKey(k) {
     case 'F5': if(confirm('CLEAR BUFFER?')) VIEWPORT.innerHTML = ''; break;
     case 'F6': cmd('bold'); break;      
     case 'F7': cmd('underline'); break; 
-    case 'F8': {
-      const s = prompt('SEARCH:');
-      if (s) window.find(s);
-      break;
-    }
-    case 'F9': alert('F6: BOLD (Select text first)\nF7: UNDERLINE\nAI: Click Top Right Corner'); break;
+    case 'F8': { const s = prompt('SEARCH:'); if(s) window.find(s); break; }
+    case 'F9': alert('F6: BOLD\nF7: UNDERLINE\nAI: Click Top Right Corner'); break;
     case 'F10': location.reload(); break;
   }
 }
 
-/* ----------  AI INTEGRATION (FIXED) ---------- */
+/* ----------  AI INTEGRATION (NANO V2) ---------- */
 const aiModal = document.getElementById('ai-modal');
 const aiOverlay = document.getElementById('ai-overlay');
 const aiOut = document.getElementById('aiOutput');
@@ -519,7 +506,6 @@ function closeAI() {
     VIEWPORT.focus();
 }
 
-// Event Listeners for AI Modal
 document.getElementById('mode-indicator').addEventListener('click', openAI);
 document.getElementById('closeAiBtn').addEventListener('click', closeAI);
 document.getElementById('cancelAiBtn').addEventListener('click', closeAI);
@@ -532,87 +518,71 @@ genBtn.addEventListener('click', async () => {
     if(!key) { aiOut.textContent = ">>> ERROR: Missing API Key"; return; }
     if(!prompt) { aiOut.textContent = ">>> ERROR: Missing Prompt"; return; }
     
-    // UI State: Loading
     localStorage.setItem('quantum_nvidia_key', key);
     genBtn.disabled = true;
     genBtn.textContent = "PROCESSING...";
-    aiOut.textContent = ">>> ESTABLISHING UPLINK...\n>>> SENDING PACKETS...";
+    aiOut.textContent = ">>> CONTACTING NANO-9B...";
     
     try {
-        // Use a more capable model to avoid "Snow/null" issues
-        // Nemotron-70b-instruct is much smarter than the Nano version
-        const modelName = "nvidia/llama-3.1-nemotron-70b-instruct";
-        
         const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
         
+        // Exact configuration for Nano-9B to prevent nulls
+        const requestBody = {
+            model: "nvidia/nvidia-nemotron-nano-9b-v2",
+            messages: [
+                { role: "system", content: "You are a creative writing assistant." },
+                { role: "user", content: prompt }
+            ],
+            temperature: 0.5,
+            top_p: 1,
+            max_tokens: 1024,
+            stream: false
+        };
+
         const response = await fetch(proxyUrl, {
             method: 'POST',
             headers: { 
                 'Authorization': 'Bearer ' + key, 
                 'Content-Type': 'application/json' 
             },
-            body: JSON.stringify({
-                model: modelName,
-                messages: [
-                    {
-                        role: "system", 
-                        content: "You are a creative writing assistant. Write a short, vivid paragraph based on the user's request. Do not output JSON. Do not repeat the prompt."
-                    },
-                    {
-                        role: "user", 
-                        content: prompt
-                    }
-                ],
-                temperature: 0.7,
-                max_tokens: 256,
-                stream: false
-            })
+            body: JSON.stringify(requestBody)
         });
 
         const rawText = await response.text();
-        
         let data;
-        try {
-            data = JSON.parse(rawText);
-        } catch(e) {
-            throw new Error("Invalid JSON from API: " + rawText.substring(0,50));
-        }
+        try { data = JSON.parse(rawText); } catch(e) { throw new Error("JSON Parse Error"); }
 
-        if(data.error) {
-            throw new Error(data.error.message || "Unknown API Error");
-        }
+        if(data.error) throw new Error(data.error.message || "Unknown API Error");
 
-        // Robust parsing to find the actual text
-        let resultText = null;
+        // Safety check for empty content
+        let resultText = "";
         if(data.choices && data.choices[0] && data.choices[0].message) {
             resultText = data.choices[0].message.content;
         }
 
-        if(!resultText || resultText === "null") {
-            console.error("Full Response:", data);
-            throw new Error("Model returned empty content.");
+        // Handle the case where content is literally null or empty string
+        if (!resultText) {
+             resultText = "[NO_DATA_RECEIVED]";
+             console.warn("API returned empty content", data);
         }
 
-        // Success Output
-        aiOut.textContent = ">>> SUCCESS.\n>>> " + resultText;
+        aiOut.textContent = ">>> RESPONSE:\n" + resultText;
         
-        // Insert into Document
         VIEWPORT.focus();
-        document.execCommand('insertHTML', false, `<br><br><b>[AI_INJECT]</b> ${resultText}<br>`);
+        document.execCommand('insertHTML', false, `<br><br><b>[AI]</b> ${resultText}<br>`);
         beep(1200, 'sine');
 
     } catch (e) {
         console.error(e);
-        aiOut.textContent = ">>> SYSTEM FAILURE:\n" + e.message;
+        aiOut.textContent = ">>> SYSTEM FAILURE: " + e.message;
         beep(220, 'sawtooth');
     } finally {
-        // UI State: Reset
         genBtn.disabled = false;
         genBtn.textContent = "GENERATE";
     }
 });
 
-/* ----------  LOCAL GENERATOR & UTILS ---------- */
+/* ----------  LOCAL UTILS ---------- */
 const FB = {
   nouns: ["nebula","echo","void","nexus","fragment","signal","horizon","monolith","spectre","glitch"],
   verbs: ["fractured","hummed","collapsed","ignited","shattered","pulsed","dissolved","encoded","erased"],
@@ -649,12 +619,10 @@ function updateUI() {
     STATUS.textContent = `L:${String(l).padStart(2,'0')} C:${String(c).padStart(4,'0')}`;
 }
 
-// Listeners
 VIEWPORT.addEventListener('keyup', updateUI);
 VIEWPORT.addEventListener('click', updateUI);
 VIEWPORT.addEventListener('input', updateUI);
 
-// Keyboard Shortcuts
 document.addEventListener('keydown', (e) => {
     initAudio();
     if(e.key.match(/^F([1-9]|10)$/)) {
@@ -663,7 +631,6 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Boot
 (async () => {
     VIEWPORT.focus();
     try {
