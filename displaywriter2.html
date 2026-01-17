@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QUANTUM WORDSTAR 2077</title>
-<!-- Load the library globally -->
-<script type="text/javascript" src="https://unpkg.com/quantum-circuit"></script>
+<!-- 1. Load the Quantum Library -->
+<script src="https://unpkg.com/quantum-circuit"></script>
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -95,8 +95,7 @@ const RULER = document.getElementById('ruler');
 const HORSE = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/horse.txt';
 
 let liveLex = null, insertMode = true;
-// GLOBAL AUDIO CONTEXT (Fixes the memory leak and the autoplay error)
-let audioCtx = null;
+let audioCtx = null; // Global audio context
 
 const FB = {
   nouns: ["nebula","echo","whisper","chronometer","void","nexus","fragment","signal","horizon","monolith","algorithm","spectre","isotope","vortex","cipher","drone","glitch","network","phantom","mainframe","reactor","synapse","artifact","shard","memory","paradox","entropy","vector","protocol","silence","shadow","circuit"],
@@ -106,23 +105,50 @@ const FB = {
 
 /* ----------  quantum functions  ---------- */
 function quantumChoice(list) {
-  const qc = new QuantumCircuit(5); 
-  for (let i = 0; i < 5; i++) qc.appendGate("h", i);
-  qc.run();
-  const p = qc.getState().map(s => s.magnitude ** 2);
-  let r = Math.random(), i = 0;
-  for (; i < p.length; i++) {
-    r -= p[i];
-    if (r <= 0) break;
+  try {
+    // 1. Create a 5-qubit circuit (2^5 = 32 states, matches your word lists)
+    const qc = new QuantumCircuit(5);
+    
+    // 2. Put all 5 qubits into superposition (Hadamard gate)
+    for (let i = 0; i < 5; i++) {
+      qc.appendGate("h", i);
+    }
+    
+    // 3. Run the simulation
+    qc.run();
+    
+    // 4. Get probabilities directly (the library returns an array of 32 floats)
+    // IMPORTANT: The method is probabilities(), not getState()
+    const p = qc.probabilities();
+    
+    // 5. Weighted random selection based on quantum probabilities
+    let r = Math.random(), i = 0;
+    for (; i < p.length; i++) {
+      r -= p[i];
+      if (r <= 0) break;
+    }
+    
+    // Wrap around if index exceeds list length
+    return list[i % list.length];
+    
+  } catch (e) {
+    console.error("Quantum Core Malfunction:", e);
+    // Fallback if library fails
+    return list[Math.floor(Math.random() * list.length)];
   }
-  return list[i % list.length];
 }
 
 function generate() {
   const nouns = liveLex || FB.nouns;
   const verbs = FB.verbs;
   const adjs = FB.adjs;
-  const txt = ` The <b>${quantumChoice(adjs)}</b> ${quantumChoice(nouns)} <u>${quantumChoice(verbs)}</u>.`;
+  
+  // Now uses the fixed quantumChoice function
+  const n = quantumChoice(nouns);
+  const v = quantumChoice(verbs);
+  const a = quantumChoice(adjs);
+  
+  const txt = ` The <b>${a}</b> ${n} <u>${v}</u>.`;
   document.execCommand('insertHTML', false, txt);
 }
 
@@ -134,6 +160,40 @@ function collapse() {
 function rulerBlink() {
   RULER.style.borderBottomColor = 'var(--blood)';
   setTimeout(() => RULER.style.borderBottomColor = '', 150);
+}
+
+/* ----------  audio engine (fixed)  ---------- */
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
+
+function beep() {
+  // Try to init, but if user hasn't clicked yet, just return silently
+  if (!audioCtx) initAudio();
+  if (audioCtx.state !== 'running') return; 
+
+  try {
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'square';
+    o.frequency.value = 880;
+    
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    
+    o.start();
+    // Quick fade out to prevent clicking
+    g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.05);
+    o.stop(audioCtx.currentTime + 0.05);
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 /* ----------  editing functions  ---------- */
@@ -173,6 +233,10 @@ function save80() {
 function updateUI() {
   const sel = window.getSelection();
   if (!sel.rangeCount) return;
+  
+  // Ensure we are inside the viewport before calculating
+  if(!VIEWPORT.contains(sel.anchorNode)) return;
+
   const range = sel.getRangeAt(0);
   const pre = range.cloneRange();
   pre.selectNodeContents(VIEWPORT);
@@ -185,47 +249,15 @@ function updateUI() {
 
   STATUS.textContent = `P ${String(P).padStart(2, '0')} L ${String(L).padStart(2, '0')} C ${String(C).padStart(2, '0')}`;
   MODE.textContent = `${insertMode ? 'INSERT' : 'OVERSTRIKE'} | ${liveLex ? 'ONLINE' : 'LOCAL'}`;
-  MODE.classList.toggle('online', liveLex);
-}
-
-// FIXED AUDIO FUNCTION
-function initAudio() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
-}
-
-function beep() {
-  // If audio isn't initialized yet (user hasn't clicked), don't crash.
-  if (!audioCtx) initAudio();
-  
-  // Only play if we are running. If we are still suspended, browser blocked us.
-  if (audioCtx.state !== 'running') return;
-
-  try {
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain(); // Use gain node to avoid clicking sounds
-    o.type = 'square';
-    o.frequency.value = 880;
-    
-    o.connect(g);
-    g.connect(audioCtx.destination);
-    
-    o.start();
-    // Smooth release to prevent audio "pop"
-    g.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.06);
-    o.stop(audioCtx.currentTime + 0.06);
-  } catch (e) {
-    console.log('Audio error:', e);
-  }
+  MODE.classList.toggle('online', !!liveLex);
 }
 
 /* ----------  F-key handler  ---------- */
 function triggerFKey(k) {
-  initAudio(); // Ensure audio is ready on keypress
+  initAudio();
+  beep();
+  VIEWPORT.focus();
+
   switch(k) {
     case 'F1': generate(); break;
     case 'F2': collapse(); break;
@@ -242,13 +274,12 @@ function triggerFKey(k) {
       break;
     }
     case 'F9':
-      alert('F1-F10  |  Ctrl+1-0 (laptop)  |  Ctrl+S/E/D/X move  |  Ctrl+Y kill line');
+      alert('F1: Gen | F2: Hex | F3: Save | F4: Print | F5: Clear');
       break;
     case 'F10': location.reload(); break;
   }
-  VIEWPORT.focus();
-  updateUI();
-  beep(); // Beep on F-keys
+  
+  setTimeout(updateUI, 10);
 }
 
 /* ----------  boot  ---------- */
@@ -257,38 +288,38 @@ function triggerFKey(k) {
   ENTROPY.textContent = 'CONNECTING...';
 
   try {
-    const txt = await (await fetch(HORSE)).text();
+    const response = await fetch(HORSE);
+    if(!response.ok) throw new Error("Net Error");
+    const txt = await response.text();
     const words = [...new Set(txt.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length > 4))];
     if (words.length < 10) throw new Error('short');
     liveLex = words;
     ENTROPY.innerHTML = '<span class="online">HORSE.TXT</span>';
     MODE.classList.add('online');
     rulerBlink();
-    // beep();  <-- REMOVED: Cannot beep automatically without user interaction first
-  } catch {
+    // Note: Removed automatic beep() to comply with Autoplay Policy
+  } catch(e) {
     ENTROPY.textContent = 'INTERNAL BUFFER';
+    console.log("Offline or Fetch Error:", e);
   }
 
   updateUI();
 })();
 
 /* ----------  event listeners  ---------- */
-
-// Initialize audio on first interaction
 document.addEventListener('click', initAudio, { once: true });
 document.addEventListener('keydown', initAudio, { once: true });
 
 document.querySelectorAll('.cmd, .f-key').forEach(button => {
   button.addEventListener('click', (e) => {
-    initAudio(); 
+    e.preventDefault();
     const fkey = e.currentTarget.getAttribute('data-fkey');
     if (fkey) triggerFKey(fkey);
   });
 });
 
-// Keyboard listener
 document.addEventListener('keydown', e => {
-  initAudio(); // Ensure audio starts on typing
+  initAudio(); // Wake audio on any key
   let handled = false;
 
   // F1-F10
@@ -321,11 +352,10 @@ document.addEventListener('keydown', e => {
 
   if (handled) {
     e.stopPropagation();
-    setTimeout(updateUI, 0);
+    setTimeout(updateUI, 10);
   }
 }, { capture: true });
 
-// Export to global scope for inline onclick (backup)
 window.triggerFKey = triggerFKey;
 </script>
 </body>
