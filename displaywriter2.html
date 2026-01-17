@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#050000">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22  viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💾</text></svg>"> 
-<title>display writer ii</title>
+<title>QUANTUM WORDSTAR 2077</title>
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -18,7 +18,8 @@
   --shadow:#1a0000;
   --crt-glow:rgba(255,0,0,.15);
   --ai-purple:var(--blood);
-  --ai-blue:var(--paper);
+  --ai-blue:#ccccff;
+  --ai-green:#ccffcc;
   --ai-dark:var(--bg);
 }
 
@@ -30,9 +31,9 @@
 
 body{
   margin:0;
-  /* Use dvh for mobile browsers to account for address bars */
+  /* Dynamic viewport height handles mobile browser bars better */
   height:100vh;
-  height:100dvh;
+  height:100dvh; 
   display:flex;
   flex-direction:column;
   font-family:'VT323',monospace;
@@ -44,7 +45,6 @@ body{
   position:relative;
 }
 
-/* CRT Scanline Effect */
 body::after{
   content:"";
   position:absolute;
@@ -107,8 +107,14 @@ body::after{
 
 .cmd{
   cursor:pointer;
-  transition:color .2s;
+  transition:all .1s;
   padding:5px;
+  border: 1px solid transparent;
+}
+
+.cmd:active {
+  background: var(--blood);
+  color: var(--bg);
 }
 
 .cmd:hover{
@@ -121,6 +127,8 @@ body::after{
   color:var(--blood);
   margin-right:4px;
 }
+
+.cmd:active span { color: var(--bg); }
 
 #ruler{
   flex:0 0 20px;
@@ -141,9 +149,9 @@ body::after{
   outline:none;
   cursor:text;
   animation:textFlicker .1s infinite;
-  /* Ensure browser knows this is text */
   -webkit-user-select:text;
   user-select:text;
+  caret-color: var(--blood);
 }
 
 @keyframes textFlicker{
@@ -152,16 +160,13 @@ body::after{
 }
 
 #viewport:focus{
-  background: rgba(20,0,0,0.2);
+  background: rgba(20,0,0,0.15);
 }
 
-/* 
-   FIX FOR BOLD: Include strong tag
-   FIX FOR UNDERLINE: Include ins tag and u
-*/
+/* FORMATTING STYLES */
 #viewport b, #viewport strong {
   color:var(--blood);
-  font-weight:normal; /* VT323 creates bold via color/glow usually, but we keep weight normal to maintain grid */
+  font-weight:normal; 
   text-shadow:0 0 4px var(--blood);
 }
 
@@ -177,15 +182,14 @@ body::after{
   border-top:1px solid var(--blood);
   border-bottom:1px solid var(--blood);
   z-index:10;
-  /* Mobile Scroll Fix */
   overflow-x: auto; 
   overflow-y: hidden;
-  scrollbar-width: none; /* Firefox */
+  scrollbar-width: none;
 }
 #f-key-strip::-webkit-scrollbar { display: none; }
 
 .f-key{
-  flex:1 0 auto; /* Allow shrinking/growing but keep width sensible */
+  flex:1 0 auto;
   min-width: 80px;
   display:flex;
   flex-direction: column;
@@ -199,20 +203,9 @@ body::after{
   line-height: 1;
 }
 
-.f-key:hover{
-  background:var(--iron);
-  color:var(--paper);
-}
-
-.f-key:active{
-  background:var(--blood);
-  color:var(--bg);
-}
-
-.f-key b{
-  color:var(--paper);
-  margin-bottom: 2px;
-}
+.f-key:hover{ background:var(--iron); color:var(--paper); }
+.f-key:active{ background:var(--blood); color:var(--bg); }
+.f-key b{ color:var(--paper); margin-bottom: 2px; }
 
 #info-line{
   flex:0 0 24px;
@@ -229,22 +222,8 @@ body::after{
   overflow: hidden;
 }
 
-#info-line span{
-  color:var(--paper);
-  font-weight:bold;
-}
-
-.online{
-  background:var(--blood);
-  color:var(--bg);
-  padding:0 4px;
-}
-
-small{
-  font-size:12px;
-  color:var(--dim);
-  text-transform: uppercase;
-}
+#info-line span{ color:var(--paper); font-weight:bold; }
+.online{ background:var(--blood); color:var(--bg); padding:0 4px; }
 
 /* AI MODAL STYLES */
 #mode-indicator{
@@ -252,19 +231,15 @@ small{
   transition:all 0.2s;
   padding:2px 5px;
 }
-
-#mode-indicator:hover{
-  text-shadow:0 0 8px var(--blood);
-  color:var(--paper);
-}
+#mode-indicator:hover{ text-shadow:0 0 8px var(--blood); color:var(--paper); }
 
 #ai-overlay{
   display:none;
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,0.8);
+  background:rgba(0,0,0,0.85);
   z-index:1000;
-  backdrop-filter:blur(3px);
+  backdrop-filter:blur(2px);
 }
 
 #ai-modal{
@@ -272,179 +247,169 @@ small{
   position:fixed;
   top:50%;left:50%;
   transform:translate(-50%,-50%);
-  width:90%;
+  width:95%;
   max-width:600px;
-  max-height:85vh;
-  background:var(--ai-dark);
-  border:2px solid var(--ai-purple);
+  max-height:90vh;
+  background:var(--bg);
+  border:2px solid var(--blood);
   z-index:1001;
-  box-shadow:0 0 30px rgba(255,0,0,0.5);
+  box-shadow:0 0 40px rgba(255,0,0,0.3);
   font-family:'VT323',monospace;
-  overflow-y:auto;
   display: flex;
   flex-direction: column;
 }
 
 .ai-header{
-  background:linear-gradient(90deg, var(--blood), var(--paper));
+  background:var(--blood);
   color:var(--bg); 
-  padding:12px 15px;
+  padding:10px 15px;
   display:flex;
   justify-content:space-between;
   align-items:center;
   font-size:1.2rem;
-  border-bottom:1px solid var(--ai-purple);
+  font-weight: bold;
 }
 
 .ai-body{
-  padding:20px;
+  padding:15px;
   color:var(--paper);
-  font-size:1.1rem;
   overflow-y: auto;
+  flex: 1;
 }
 
-.ai-input-group{ margin-bottom:20px; }
-.ai-input-group label{ display:block; margin-bottom:8px; color:var(--paper); }
+.ai-input-group{ margin-bottom:15px; }
+.ai-input-group label{ display:block; margin-bottom:5px; color:var(--dim); font-size: 0.9rem; text-transform: uppercase;}
 
 .ai-input-group input,
-.ai-input-group select,
 .ai-input-group textarea{
   width:100%;
   padding:10px;
-  background:rgba(80,0,0,0.7);
-  border:1px solid var(--ai-purple);
+  background:rgba(20,0,0,0.5);
+  border:1px solid var(--dim);
   color:var(--paper);
   font-family:'VT323',monospace;
   font-size:1.1rem;
   box-sizing:border-box;
   border-radius: 0;
 }
+.ai-input-group input:focus, .ai-input-group textarea:focus {
+  outline: none;
+  border-color: var(--blood);
+  background: rgba(40,0,0,0.8);
+}
 
-#aiPrompt{ min-height:100px; resize:vertical; }
+#aiPrompt{ 
+  min-height:80px; 
+  resize:vertical; 
+  border-left: 3px solid var(--blood); /* Red border for input */
+}
 
 #aiOutput{
   min-height:100px;
-  background:rgba(40,0,0,0.7);
-  border:1px solid var(--ai-purple);
-  padding:15px;
-  margin-top:15px;
+  max-height:200px;
+  overflow-y: auto;
+  background:#0a0a0a;
+  border:1px solid #446644;
+  border-left: 3px solid #44ff44; /* Green border for output */
+  padding:10px;
   white-space:pre-wrap;
   font-size:1rem;
+  color: #ccffcc;
+  font-family: monospace;
+}
+
+.ai-btn-row{
+  display:flex; 
+  justify-content:flex-end; 
+  gap:10px;
+  padding: 15px;
+  border-top: 1px solid var(--iron);
+  background: var(--shadow);
 }
 
 .ai-btn{
-  background:linear-gradient(90deg, var(--ai-purple), var(--ai-blue));
-  color:var(--bg);
-  border:none;
-  padding:10px 25px;
+  background:var(--iron);
+  color:var(--paper);
+  border:1px solid var(--dim);
+  padding:10px 20px;
   font-family:'VT323',monospace;
   font-size:1.2rem;
   cursor:pointer;
-  margin:5px;
+  text-transform: uppercase;
 }
+.ai-btn:hover { background: var(--dim); color: white; }
+.ai-btn.primary { background: var(--blood); color: var(--bg); border-color: var(--blood); }
+.ai-btn:disabled{ opacity:0.5; cursor: wait; }
 
-.ai-btn:disabled{ opacity:0.5; }
-
-/* --------------------------------- */
-/* MOBILE SPECIFIC MEDIA QUERIES     */
-/* --------------------------------- */
-
+/* MOBILE ADJUSTMENTS */
 @media (max-width: 768px) {
-  body { font-size: 20px; }
-  #viewport { font-size: 20px; padding: 10px; }
-  
-  /* Compact Menu Grid */
-  .menu-grid { gap: 10px; justify-content: space-between; }
-  .cmd { font-size: 0.9rem; padding: 2px 5px; flex: 1 0 40%; text-align: center; border: 1px solid var(--dim); }
-  
-  /* Hide Ruler on small screens to save space */
+  body, #viewport { font-size: 20px; }
+  .menu-grid { gap: 8px; justify-content: space-between; }
+  .cmd { font-size: 0.9rem; flex: 1 0 30%; text-align: center; border: 1px solid var(--iron); }
   #ruler { display: none; }
-  
-  /* Smaller Info Line */
   #info-line { font-size: 12px; gap: 8px; }
-  
-  /* F-Keys become a swipeable bottom bar */
-  #f-key-strip { 
-    height: 60px; 
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  .f-key { min-width: 70px; font-size: 16px; }
-  
-  .dos-box legend { font-size: 0.9rem; }
-}
-
-@media (max-width: 480px) {
-  /* Ultra compact for phones */
-  #header-band span:first-child { 
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  
-  /* Hide the memory stats on tiny screens */
-  #info-line { justify-content: space-between; }
+  #f-key-strip { height: 60px; padding-bottom: env(safe-area-inset-bottom); }
+  .f-key { min-width: 65px; font-size: 16px; }
 }
 </style>
 </head>
 <body>
 
-<!-- AI Modal Overlay -->
-<div id="ai-overlay" style="display:none;"></div>
-<div id="ai-modal" style="display:none;">
+<!-- AI Modal -->
+<div id="ai-overlay"></div>
+<div id="ai-modal">
     <div class="ai-header">
-        <span>🤖 NEMOTRON AI</span>
-        <button id="closeAiBtn" style="background:transparent; border:none; color:var(--bg); font-size:1.5em; cursor:pointer;">&times;</button>
+        <span>🤖 NEMOTRON-70B LINK</span>
+        <button id="closeAiBtn" style="background:transparent; border:none; color:var(--bg); font-size:1.5em; line-height:1;">&times;</button>
     </div>
     <div class="ai-body">
         <div class="ai-input-group">
             <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                 <label style="margin-bottom:0;">NVIDIA API Key:</label>
-                <a href="https://build.nvidia.com" target="_blank" style="color:var(--paper); border-bottom:1px dotted var(--paper);">[GET KEY]</a>
+                <a href="https://build.nvidia.com" target="_blank" style="color:var(--dim); text-decoration: none; border-bottom:1px dotted;">[ GET KEY ]</a>
             </div>
             <input type="password" id="nvidiaKey" placeholder="nvapi-..." autocomplete="off">
         </div>
 
         <div class="ai-input-group">
-            <label>Prompt:</label>
-            <textarea id="aiPrompt" placeholder="Describe a quantum city..."></textarea>
-        </div>
-
-        <div style="display:flex; justify-content:flex-end; gap:10px;">
-            <button id="cancelAiBtn" class="ai-btn">Cancel</button>
-            <button id="genBtn" class="ai-btn" style="background:linear-gradient(90deg, var(--blood), var(--paper));">Generate</button>
+            <label>INPUT PROMPT (RED):</label>
+            <textarea id="aiPrompt" placeholder="Describe a cyberpunk city at midnight..."></textarea>
         </div>
 
         <div class="ai-input-group">
-            <label>Output:</label>
-            <div id="aiOutput">Waiting for input...</div>
+            <label>TERMINAL OUTPUT (GREEN):</label>
+            <div id="aiOutput">System Ready... Waiting for input.</div>
         </div>
-        <div id="aiStatus" style="font-size:0.9rem; color:var(--dim); margin-top:10px;">Status: Ready</div>
+    </div>
+    <div class="ai-btn-row">
+        <button id="cancelAiBtn" class="ai-btn">Cancel</button>
+        <button id="genBtn" class="ai-btn primary">GENERATE</button>
     </div>
 </div>
 
-<!-- Main UI -->
+<!-- Main App -->
 <div id="header-band">
   <span>C:\QUANTUM.DOC</span>
   <span id="status-readout">L:01 C:01</span>
-  <span id="mode-indicator">INSERT | LOCAL</span>
+  <span id="mode-indicator">INSERT | AI MENU</span>
 </div>
 
 <div id="edit-block">
   <fieldset class="dos-box">
-    <legend>≡ MENU ≡</legend>
+    <legend>≡ COMMANDS ≡</legend>
     <div class="menu-grid">
       <div class="cmd prevent-focus" data-fkey="F1"><span>F1</span>GEN</div>
       <div class="cmd prevent-focus" data-fkey="F2"><span>F2</span>HEX</div>
       <div class="cmd prevent-focus" data-fkey="F3"><span>F3</span>SAVE</div>
-      <div class="cmd prevent-focus" data-fkey="F4"><span>F4</span>PRNT</div>
+      <div class="cmd prevent-focus" data-fkey="F6"><span>F6</span>BOLD</div>
+      <div class="cmd prevent-focus" data-fkey="F7"><span>F7</span>UNDR</div>
     </div>
   </fieldset>
 </div>
 
 <div id="ruler">L────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────R</div>
 
-<div id="viewport" contenteditable="true" spellcheck="false">Initializing Quantum Core...<br>Ready for Input.<br><br>Click "INSERT | LOCAL" for AI.<br>Try selecting text and clicking F6 (Bold).</div>
+<div id="viewport" contenteditable="true" spellcheck="false">Initializing Quantum Core...<br>Ready.<br><br>Type text, select it, and press F6 for BOLD.<br>Click "INSERT | AI MENU" (top right) to open AI tools.</div>
 
 <div id="f-key-strip">
   <div class="f-key prevent-focus" data-fkey="F1"><b>F1</b><small>GEN</small></div>
@@ -464,23 +429,15 @@ small{
 </div>
 
 <script>
-/* ----------  CORE SETUP & AUDIO ---------- */
+/* ----------  SETUP & AUDIO ---------- */
 const VIEWPORT = document.getElementById('viewport');
 const STATUS = document.getElementById('status-readout');
-const MODE = document.getElementById('mode-indicator');
-const ENTROPY = document.getElementById('entropy-source');
-const RULER = document.getElementById('ruler');
 let audioCtx = null;
 let liveLex = null;
-let insertMode = true;
 
 function initAudio() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
 }
 
 function beep(freq = 880, type = 'square', dur = 0.05) {
@@ -494,67 +451,171 @@ function beep(freq = 880, type = 'square', dur = 0.05) {
       o.connect(g);
       g.connect(audioCtx.destination);
       o.start();
-      g.gain.setValueAtTime(0.1, audioCtx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + dur);
+      g.gain.setValueAtTime(0.05, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
       o.stop(audioCtx.currentTime + dur);
     } catch(e){}
   }
 }
 
-/* ----------  CRITICAL FIX: PREVENT FOCUS LOSS ---------- */
-// This is the most important fix for Bold/Underline.
-// By default, clicking a button takes focus away from the viewport (text editor).
-// We use 'mousedown' (and touchstart) to preventDefault, keeping focus on the text.
+/* ----------  CRITICAL: COMMAND HANDLING ---------- */
+// 1. Prevent focus loss on button click so selection stays active
 document.querySelectorAll('.prevent-focus').forEach(el => {
-    el.addEventListener('mousedown', (e) => {
-        e.preventDefault(); // Stop focus from leaving the editor
+    const handleStart = (e) => {
+        e.preventDefault(); // Stop focus stealing
         const fkey = el.getAttribute('data-fkey');
         if(fkey) triggerFKey(fkey);
-    });
-    
-    // Mobile equivalent
-    el.addEventListener('touchstart', (e) => {
-        e.preventDefault(); 
-        const fkey = el.getAttribute('data-fkey');
-        if(fkey) triggerFKey(fkey);
-    });
+    };
+    el.addEventListener('mousedown', handleStart);
+    el.addEventListener('touchstart', handleStart);
 });
 
-/* ----------  COMMAND LOGIC ---------- */
+// 2. Formatting Commands
 function cmd(command) {
-  // Execute standard contenteditable commands
-  // Note: execCommand is deprecated but still the only reliable way 
-  // to handle bold/underline without a massive custom engine.
-  document.execCommand(command, false, null);
-  VIEWPORT.focus(); // Ensure focus remains
-  updateUI();
+    document.execCommand(command, false, null);
+    VIEWPORT.focus();
+    updateUI();
 }
 
 function triggerFKey(k) {
   beep(880, 'square');
+  VIEWPORT.focus();
   
   switch(k) {
     case 'F1': generate(); break;
     case 'F2': collapse(); break;
-    case 'F3': save80(); break;
+    case 'F3': saveFile(); break;
     case 'F4': window.print(); break;
     case 'F5': if(confirm('CLEAR BUFFER?')) VIEWPORT.innerHTML = ''; break;
-    case 'F6': cmd('bold'); break;      // Functionality verified via preventDefault fix
-    case 'F7': cmd('underline'); break; // Functionality verified via preventDefault fix
+    case 'F6': cmd('bold'); break;      
+    case 'F7': cmd('underline'); break; 
     case 'F8': {
       const s = prompt('SEARCH:');
       if (s) window.find(s);
       break;
     }
-    case 'F9': alert('F1: Generate Text\nF2: Insert Entropy\nF3: Save HTML\nF6: Bold (Select text first)\nF7: Underline\n\nAI: Click Top Right Corner'); break;
+    case 'F9': alert('F6: BOLD (Select text first)\nF7: UNDERLINE\nAI: Click Top Right Corner'); break;
     case 'F10': location.reload(); break;
   }
 }
 
-/* ----------  TEXT GENERATION ---------- */
+/* ----------  AI INTEGRATION (FIXED) ---------- */
+const aiModal = document.getElementById('ai-modal');
+const aiOverlay = document.getElementById('ai-overlay');
+const aiOut = document.getElementById('aiOutput');
+const genBtn = document.getElementById('genBtn');
+
+function openAI() {
+    beep(1200, 'sine');
+    aiModal.style.display = 'flex';
+    aiOverlay.style.display = 'block';
+    const savedKey = localStorage.getItem('quantum_nvidia_key');
+    if(savedKey) document.getElementById('nvidiaKey').value = savedKey;
+}
+
+function closeAI() {
+    aiModal.style.display = 'none';
+    aiOverlay.style.display = 'none';
+    VIEWPORT.focus();
+}
+
+// Event Listeners for AI Modal
+document.getElementById('mode-indicator').addEventListener('click', openAI);
+document.getElementById('closeAiBtn').addEventListener('click', closeAI);
+document.getElementById('cancelAiBtn').addEventListener('click', closeAI);
+document.getElementById('ai-overlay').addEventListener('click', closeAI);
+
+genBtn.addEventListener('click', async () => {
+    const key = document.getElementById('nvidiaKey').value.trim();
+    const prompt = document.getElementById('aiPrompt').value.trim();
+    
+    if(!key) { aiOut.textContent = ">>> ERROR: Missing API Key"; return; }
+    if(!prompt) { aiOut.textContent = ">>> ERROR: Missing Prompt"; return; }
+    
+    // UI State: Loading
+    localStorage.setItem('quantum_nvidia_key', key);
+    genBtn.disabled = true;
+    genBtn.textContent = "PROCESSING...";
+    aiOut.textContent = ">>> ESTABLISHING UPLINK...\n>>> SENDING PACKETS...";
+    
+    try {
+        // Use a more capable model to avoid "Snow/null" issues
+        // Nemotron-70b-instruct is much smarter than the Nano version
+        const modelName = "nvidia/llama-3.1-nemotron-70b-instruct";
+        
+        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
+        
+        const response = await fetch(proxyUrl, {
+            method: 'POST',
+            headers: { 
+                'Authorization': 'Bearer ' + key, 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify({
+                model: modelName,
+                messages: [
+                    {
+                        role: "system", 
+                        content: "You are a creative writing assistant. Write a short, vivid paragraph based on the user's request. Do not output JSON. Do not repeat the prompt."
+                    },
+                    {
+                        role: "user", 
+                        content: prompt
+                    }
+                ],
+                temperature: 0.7,
+                max_tokens: 256,
+                stream: false
+            })
+        });
+
+        const rawText = await response.text();
+        
+        let data;
+        try {
+            data = JSON.parse(rawText);
+        } catch(e) {
+            throw new Error("Invalid JSON from API: " + rawText.substring(0,50));
+        }
+
+        if(data.error) {
+            throw new Error(data.error.message || "Unknown API Error");
+        }
+
+        // Robust parsing to find the actual text
+        let resultText = null;
+        if(data.choices && data.choices[0] && data.choices[0].message) {
+            resultText = data.choices[0].message.content;
+        }
+
+        if(!resultText || resultText === "null") {
+            console.error("Full Response:", data);
+            throw new Error("Model returned empty content.");
+        }
+
+        // Success Output
+        aiOut.textContent = ">>> SUCCESS.\n>>> " + resultText;
+        
+        // Insert into Document
+        VIEWPORT.focus();
+        document.execCommand('insertHTML', false, `<br><br><b>[AI_INJECT]</b> ${resultText}<br>`);
+        beep(1200, 'sine');
+
+    } catch (e) {
+        console.error(e);
+        aiOut.textContent = ">>> SYSTEM FAILURE:\n" + e.message;
+        beep(220, 'sawtooth');
+    } finally {
+        // UI State: Reset
+        genBtn.disabled = false;
+        genBtn.textContent = "GENERATE";
+    }
+});
+
+/* ----------  LOCAL GENERATOR & UTILS ---------- */
 const FB = {
-  nouns: ["nebula","echo","whisper","void","nexus","fragment","signal","horizon","monolith","algorithm","spectre","glitch"],
-  verbs: ["fractured","hummed","collapsed","ignited","shattered","pulsed","dissolved","encoded","transmitted","erased"],
+  nouns: ["nebula","echo","void","nexus","fragment","signal","horizon","monolith","spectre","glitch"],
+  verbs: ["fractured","hummed","collapsed","ignited","shattered","pulsed","dissolved","encoded","erased"],
   adjs: ["silent","obsidian","infinite","hollow","electric","forgotten","crimson","static","digital","frozen"]
 };
 
@@ -563,142 +624,60 @@ function generate() {
   const n = nouns[Math.floor(Math.random() * nouns.length)];
   const v = FB.verbs[Math.floor(Math.random() * FB.verbs.length)];
   const a = FB.adjs[Math.floor(Math.random() * FB.adjs.length)];
-  
-  // Insert at cursor position
   document.execCommand('insertHTML', false, ` The <b>${a}</b> ${n} <u>${v}</u>. `);
-  VIEWPORT.focus();
+  updateUI();
 }
 
 function collapse() {
-  const hex = [...Array(6)].map(() => Math.floor(Math.random() * 255).toString(16).padStart(2,'0')).join(':');
-  document.execCommand('insertHTML', false, `<br><span style="background:var(--blood);color:var(--bg)">[ENTROPY:${hex.toUpperCase()}]</span><br>`);
+  const hex = Math.floor(Math.random()*16777215).toString(16).toUpperCase();
+  document.execCommand('insertHTML', false, `<span style="background:var(--blood);color:var(--bg)">[HEX:${hex}]</span>`);
 }
 
-function save80() {
-  const html = `<!DOCTYPE html><html><body style="background:#000;color:#fcc;font-family:monospace;white-space:pre-wrap;">${VIEWPORT.innerHTML}</body></html>`;
+function saveFile() {
+  const html = `<!DOCTYPE html><html><body style="background:#000;color:#ccc;font-family:monospace;white-space:pre-wrap;">${VIEWPORT.innerHTML}</body></html>`;
   const blob = new Blob([html], {type: 'text/html'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'quantum_save.html';
+  a.download = 'quantum_doc.html';
   a.click();
 }
 
-/* ----------  UI UPDATES ---------- */
 function updateUI() {
-    // Simple line/char counter
-    const text = VIEWPORT.innerText || "";
-    const lines = text.split('\n').length;
-    const chars = text.length;
-    STATUS.textContent = `L:${String(lines).padStart(2,'0')} C:${String(chars).padStart(4,'0')}`;
+    const t = VIEWPORT.innerText || "";
+    const l = t.split('\n').length;
+    const c = t.length;
+    STATUS.textContent = `L:${String(l).padStart(2,'0')} C:${String(c).padStart(4,'0')}`;
 }
 
-// Monitor typing
+// Listeners
 VIEWPORT.addEventListener('keyup', updateUI);
 VIEWPORT.addEventListener('click', updateUI);
 VIEWPORT.addEventListener('input', updateUI);
 
-/* ----------  AI MODAL LOGIC ---------- */
-const aiModal = document.getElementById('ai-modal');
-const aiOverlay = document.getElementById('ai-overlay');
-
-function openAI() {
-    beep(1200, 'sine');
-    aiModal.style.display = 'flex';
-    aiOverlay.style.display = 'block';
-    
-    const savedKey = localStorage.getItem('quantum_nvidia_key');
-    if(savedKey) document.getElementById('nvidiaKey').value = savedKey;
-}
-
-function closeAI() {
-    aiModal.style.display = 'none';
-    aiOverlay.style.display = 'none';
-}
-
-document.getElementById('mode-indicator').addEventListener('click', openAI);
-document.getElementById('closeAiBtn').addEventListener('click', closeAI);
-document.getElementById('cancelAiBtn').addEventListener('click', closeAI);
-document.getElementById('ai-overlay').addEventListener('click', closeAI);
-
-document.getElementById('genBtn').addEventListener('click', async () => {
-    const key = document.getElementById('nvidiaKey').value.trim();
-    const prompt = document.getElementById('aiPrompt').value.trim();
-    const out = document.getElementById('aiOutput');
-    const status = document.getElementById('aiStatus');
-    
-    if(!key) { out.textContent = "Error: Missing API Key"; return; }
-    if(!prompt) { out.textContent = "Error: Missing Prompt"; return; }
-    
-    localStorage.setItem('quantum_nvidia_key', key);
-    out.textContent = "Transmitting to Neural Core...";
-    status.textContent = "Status: Sending...";
-    
-    try {
-        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
-        
-        const response = await fetch(proxyUrl, {
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model: "nvidia/nvidia-nemotron-nano-9b-v2",
-                messages: [{role: "user", content: "Write a short creative paragraph: " + prompt}],
-                temperature: 0.7,
-                max_tokens: 200 
-            })
-        });
-
-        if(!response.ok) throw new Error("API Connection Failed");
-        const data = await response.json();
-        const text = data.choices[0].message.content;
-        
-        out.textContent = text;
-        status.textContent = "Status: Success";
-        
-        // Insert into doc
-        document.execCommand('insertHTML', false, `<br><br><b>[AI_INJECT]</b> ${text}<br>`);
-        
-    } catch (e) {
-        out.textContent = "Error: " + e.message;
-        status.textContent = "Status: Failed";
+// Keyboard Shortcuts
+document.addEventListener('keydown', (e) => {
+    initAudio();
+    if(e.key.match(/^F([1-9]|10)$/)) {
+        e.preventDefault();
+        triggerFKey(e.key);
     }
 });
 
-/* ----------  BOOT SEQUENCE ---------- */
+// Boot
 (async () => {
     VIEWPORT.focus();
-    initAudio();
-    
-    // Simulate loading external dictionary
     try {
         const r = await fetch('https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/horse.txt');
         if(r.ok) {
             const txt = await r.text();
             liveLex = [...new Set(txt.toLowerCase().match(/\b[a-z]{5,}\b/g))];
-            ENTROPY.innerHTML = '<span class="online">ONLINE</span>';
-            MODE.classList.add('online');
-        } else { throw new Error(); }
+            document.getElementById('entropy-source').innerHTML = '<span class="online">ONLINE</span>';
+            document.getElementById('mode-indicator').classList.add('online');
+        }
     } catch(e) {
-        ENTROPY.textContent = 'OFFLINE';
+        document.getElementById('entropy-source').textContent = 'OFFLINE';
     }
 })();
-
-// Keyboard Shortcuts
-document.addEventListener('keydown', (e) => {
-    initAudio();
-    
-    // F-Keys
-    if(e.key.match(/^F([1-9]|10)$/)) {
-        e.preventDefault();
-        triggerFKey(e.key);
-    }
-    
-    // Ctrl+B / Ctrl+U overrides (Standard behavior is fine, but this ensures our sound effects play)
-    if((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'u')) {
-        beep(880, 'square');
-        // Let browser handle the actual bolding/underlining natively
-    }
-});
-
 </script>
 </body>
 </html>
