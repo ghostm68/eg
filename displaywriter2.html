@@ -83,9 +83,7 @@ small{font-size:11px;color:var(--dim);}
   Quantum DisplayWriter 370 | Memory: 640 K | Entropy: <span id="entropy-source">INITIALIZING...</span>
 </div>
 
-<script type="module">
-import * as qr from 'https://unpkg.com/quantum-circuit@0.2.2/lib/quantum-circuit.min.mjs';
-
+<script>
 /* ----------  state  ---------- */
 const VIEWPORT=document.getElementById('viewport');
 const STATUS=document.getElementById('status-readout');
@@ -103,7 +101,7 @@ const FB={
 
 /* ----------  boot  ---------- */
 (async()=>{
-  beep(); VIEWPORT.focus();
+  VIEWPORT.focus();
   ENTROPY.textContent='CONNECTING...';
   try{
     const txt=await (await fetch(HORSE)).text();
@@ -157,22 +155,30 @@ window.triggerFKey=k=>{
 
 /* ----------  quantum  ---------- */
 function quantumChoice(list){
-  const qc=new qr.QuantumCircuit(5);
-  for(let i=0;i<5;i++) qc.addGate('h',i,i);
-  qc.run();
-  const p=qc.getState().map(s=>s.magnitude**2);
-  let r=Math.random(),i=0; for(;i<p.length;i++){ r-=p[i]; if(r<=0) break; }
-  return list[i%list.length];
+  // Simplified quantum-like random choice
+  const randomFloat = () => {
+    // Create more "quantum-like" randomness with multiple sources
+    const buffer = new Uint32Array(4);
+    crypto.getRandomValues(buffer);
+    let sum = buffer.reduce((a, b) => a + b, 0);
+    return sum / (0xFFFFFFFF * 4);
+  };
+  
+  const idx = Math.floor(randomFloat() * list.length);
+  return list[idx];
 }
+
 function generate(){
   const nouns=liveLex||FB.nouns, verbs=FB.verbs, adjs=FB.adjs;
   const txt=` The <b>${quantumChoice(adjs)}</b> ${quantumChoice(nouns)} <u>${quantumChoice(verbs)}</u>.`;
   document.execCommand('insertHTML',false,txt);
 }
+
 function collapse(){
   const hex=[...Array(6)].map(()=>Math.floor(Math.random()*255).toString(16).padStart(2,'0')).join(':');
   document.execCommand('insertHTML',false,`<br><span style="background:var(--blood);color:var(--bg)">[ENTROPY:${hex.toUpperCase()}]</span><br>`);
 }
+
 function rulerBlink(){
   RULER.style.borderBottomColor='var(--blood)';
   setTimeout(()=>RULER.style.borderBottomColor='',150);
@@ -192,11 +198,13 @@ function cmd(c){
     case 'bold':case 'underline': document.execCommand(c); break;
   }
 }
+
 function save80(){
   const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>quantum-backup</title><style>body{background:#000;color:#fcc;font:22px/1.4 VT323,monospace;white-space:pre-wrap;}</style></head><body>${VIEWPORT.innerHTML}</body></html>`;
   const blob=new Blob([html],{type:'text/html'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='quantum-backup.html'; a.click();
 }
+
 function updateUI(){
   const sel=window.getSelection(); if(!sel.rangeCount) return;
   const range=sel.getRangeAt(0);
@@ -207,11 +215,6 @@ function updateUI(){
   STATUS.textContent=`P ${String(P).padStart(2,'0')} L ${String(L).padStart(2,'0')} C ${String(C).padStart(2,'0')}`;
   MODE.textContent=`${insertMode?'INSERT':'OVERSTRIKE'} | ${liveLex?'ONLINE':'LOCAL'}`;
   MODE.classList.toggle('online',liveLex);
-}
-function beep(){
-  const c=new (window.AudioContext||webkitAudioContext)();
-  const o=c.createOscillator(); o.type='square'; o.frequency.value=880;
-  o.connect(c.destination); o.start(); o.stop(c.currentTime+0.06);
 }
 </script>
 </body>
