@@ -54,7 +54,8 @@ async function generateInsight() {
     
     try {
         // Using CORS proxy
-        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
+        
+                const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
         
         const requestBody = {
             model: model,
