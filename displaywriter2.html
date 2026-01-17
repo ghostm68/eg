@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>displaywriter2</title>
+
+    <!-- 1. IMPORT THE RETRO FONT (Essential for the look) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #050000;          /* Deepest red-black */
+  --paper: #ffcccc;       /* White with red tint */
+  --dim: #884444;         /* Desaturated red-grey */
+  --iron: #4a2a2a;        /* Brown-grey chassis */
+  --blood: #ff0000;       /* Pure red channel */
+  --shadow: #1a0000;
+  --crt-glow: rgba(255, 0, 0, 0.15);
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: 'VT323', monospace;
+  font-size: 24px;
+  background: var(--bg);
+  color: var(--paper);
+  overflow: hidden;
+  user-select: none;
+  text-shadow: 0 0 2px var(--dim), 0 0 5px var(--crt-glow);
+}
+
+/* ---- RED CHANNEL SCANLINES (CSS Generated) ---- */
+body::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: 
+    /* Horizontal scanlines */
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 2px,
+      rgba(0, 0, 0, 0.5) 3px,
+      rgba(0, 0, 0, 0.7) 4px
+    ),
+    /* Vertical Aperture Grille */
+    repeating-linear-gradient(
+      90deg,
+      rgba(255,0,0,0.03),
+      transparent 2px,
+      rgba(0,0,0,0.1) 4px
+    );
+  pointer-events: none;
+  z-index: 100;
+  mix-blend-mode: multiply;
+}
+
+/* ---- LAYOUT ---- */
+#header-band {
+  flex: 0 0 30px;
+  background: var(--iron);
+  color: var(--bg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 12px;
+  text-transform: uppercase;
+  font-weight: bold;
+  letter-spacing: 1px;
+  border-bottom: 2px solid var(--blood);
+  z-index: 10;
+}
+
+#edit-block {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--dim);
+  background: var(--bg);
+}
+.dos-box {
+  border: 2px solid var(--dim);
+  position: relative;
+  padding: 10px 8px;
+  margin: 0;
+}
+.dos-box legend {
+  position: absolute;
+  top: -12px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg);
+  padding: 0 6px;
+  color: var(--blood);
+  font-weight: bold;
+}
+.menu-grid {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  font-size: 1rem;
+}
+.cmd { cursor: pointer; transition: color 0.2s; }
+.cmd:hover { color: var(--blood); text-shadow: 0 0 8px var(--blood); }
+.cmd span { font-weight: bold; color: var(--blood); margin-right: 4px; }
+
+#ruler {
+  flex: 0 0 20px;
+  padding: 0 12px;
+  color: var(--dim);
+  white-space: pre;
+  overflow: hidden;
+  border-bottom: 1px solid var(--iron);
+}
+
+#viewport {
+  flex: 1 1 auto;
+  padding: 15px 12px;
+  font-size: 24px;
+  line-height: 1.4;
+  overflow-y: auto;
+  outline: none;
+  cursor: text;
+  /* Subtle flicker animation for the text */
+  animation: textFlicker 0.1s infinite;
+}
+@keyframes textFlicker {
+  0% { opacity: 0.99; }
+  50% { opacity: 0.97; }
+  100% { opacity: 0.99; }
+}
+
+#viewport b { color: var(--blood); font-weight: normal; text-shadow: 0 0 4px var(--blood); }
+#viewport u { text-decoration: none; border-bottom: 2px solid var(--blood); }
+
+/* ---- F-KEY STRIP ---- */
+#f-key-strip {
+  flex: 0 0 40px;
+  display: flex;
+  background: var(--shadow);
+  border-top: 1px solid var(--blood);
+  border-bottom: 1px solid var(--blood);
+  z-index: 10;
+}
+.f-key {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--iron);
+  cursor: pointer;
+  transition: 0.1s;
+  font-size: 18px;
+}
+.f-key:hover { background: var(--iron); color: var(--paper); }
+.f-key:active { background: var(--blood); color: var(--bg); }
+.f-key b { margin-right: 5px; color: var(--paper); }
+
+#info-line {
+  flex: 0 0 24px;
+  background: var(--iron);
+  color: var(--bg);
+  text-align: right;
+  padding: 0 12px;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 15px;
+}
+#info-line span { color: var(--paper); font-weight: bold; }
+</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QUANTUM WORDSTAR 2077</title>
+<!-- Import VT323 Font for that Terminal Look -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Status Band -->
+  <div id="header-band">
+    <span>C:\QUANTUM.DOC</span>
+    <span id="status-readout">P 01 L 01 C 01</span>
+    <span id="mode-indicator">INSERT</span>
+  </div>
+
+  <!-- Command Menu (DisplayWriter Style) -->
+  <div id="edit-block">
+    <fieldset class="dos-box">
+      <legend>≡ Q U A N T U M   M E N U ≡</legend>
+      <div class="menu-grid">
+        <div class="cmd" onclick="triggerFKey('F1')"><span>F1</span>GENERATE</div>
+        <div class="cmd" onclick="triggerFKey('F2')"><span>F2</span>COLLAPSE</div>
+        <div class="cmd" onclick="triggerFKey('F3')"><span>F3</span>SAVE</div>
+        <div class="cmd" onclick="triggerFKey('F4')"><span>F4</span>PRINT</div>
+      </div>
+    </fieldset>
+  </div>
+
+  <!-- Ruler -->
+  <div id="ruler">L────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────R</div>
+
+  <!-- The Editor Viewport -->
+  <div id="viewport" contenteditable="true" spellcheck="false">
+    Initializing Quantum Core...<br>
+    Ready for Input.
+  </div>
+
+  <!-- Function Key Strip (Clickable Labels) -->
+  <div id="f-key-strip">
+    <div class="f-key" onclick="triggerFKey('F1')"><b>F1</b>Gen</div>
+    <div class="f-key" onclick="triggerFKey('F2')"><b>F2</b>WvFn</div>
+    <div class="f-key" onclick="triggerFKey('F3')"><b>F3</b>Save</div>
+    <div class="f-key" onclick="triggerFKey('F4')"><b>F4</b>Prnt</div>
+    <div class="f-key" onclick="triggerFKey('F5')"><b>F5</b>Clr</div>
+    <div class="f-key" onclick="triggerFKey('F6')"><b>F6</b>Bold</div>
+    <div class="f-key" onclick="triggerFKey('F7')"><b>F7</b>Undr</div>
+    <div class="f-key" onclick="triggerFKey('F8')"><b>F8</b>Find</div>
+    <div class="f-key" onclick="triggerFKey('F9')"><b>F9</b>Help</div>
+    <div class="f-key" onclick="triggerFKey('F10')"><b>F10</b>Exit</div>
+  </div>
+
+  <!-- Footer Info -->
+  <div id="info-line">
+    Quantum DisplayWriter 370 | Memory: 640K | Entropy: <span id="entropy-source">INITIALIZING...</span>
+  </div>
+
+  <!-- Main Logic -->
+  <script type="module" src="script.js">
+
+
+import * as qr from 'https://unpkg.com/quantum-circuit@0.2.2/lib/quantum-circuit.min.mjs';
+
+
+/* =========================================
+   1. SYSTEM STATE & CONFIG
+   ========================================= */
+const VIEWPORT = document.getElementById('viewport');
+const STATUS_READOUT = document.getElementById('status-readout');
+const MODE_INDICATOR = document.getElementById('mode-indicator');
+const ENTROPY_LABEL = document.getElementById('entropy-source');
+
+// YOUR SPECIFIC RAW DATA SOURCE
+const REMOTE_HORSE = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/horse.txt';
+
+let insertMode = true;
+let liveLexicon = null; 
+
+// Internal Buffer (Used if GitHub is unreachable)
+const FALLBACK = {
+  nouns: ["nebula","echo","whisper","chronometer","void","nexus","fragment","signal","horizon","monolith","algorithm","spectre","isotope","vortex","cipher","drone","glitch","network","phantom","mainframe","reactor","synapse","artifact","shard","memory","paradox","entropy","vector","protocol","silence","shadow","circuit"],
+  verbs: ["fractured","hummed","collapsed","drifted","ignited","observed","shattered","pulsed","dissolved","encoded","transmitted","erased","aligned","resonated","orbited","scanned","corrupted","merged","decoded","manifested","echoed","vibrated","locked","severed","mapped","synced","traced","hunted","breached","calibrated","awoke","slept"],
+  adjs: ["silent","obsidian","infinite","hollow","electric","forgotten","crimson","static","digital","frozen","luminous","fractal","haunted","cybernetic","terminal","kinetic","dormant","volatile","synthetic","solar","magnetic","spectral","unseen","ancient","liquid","binary","nuclear","astral","chrome","velvet","fading","hidden"]
+};
+
+/* =========================================
+   2. INITIALIZATION & HARVESTER
+   ========================================= */
+async function initSystem() {
+  VIEWPORT.focus();
+  ENTROPY_LABEL.textContent = "CONNECTING TO GITHUB...";
+  ENTROPY_LABEL.style.color = "var(--paper)";
+  
+  try {
+    // We use the full URL so it works even if you test locally
+    const response = await fetch(REMOTE_HORSE);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    
+    const text = await response.text();
+    
+    // Clean and Parse the text
+    const words = text.toLowerCase()
+                      .replace(/[\r\n]+/g, ' ')  // Remove newlines
+                      .replace(/[^\w\s]/g,'')     // Remove punctuation
+                      .split(/\s+/)               // Split by spaces
+                      .filter(w => w.length > 4); // Only keep words 5+ letters
+    
+    // Deduplicate the list
+    liveLexicon = [...new Set(words)];
+    
+    if(liveLexicon.length < 10) throw new Error("Data stream too short");
+
+    ENTROPY_LABEL.innerHTML = "LINK ESTABLISHED: <span style='color:#55ff55'>HORSE.TXT</span>";
+    
+  } catch (e) {
+    console.warn("GitHub Link Failed:", e.message);
+    ENTROPY_LABEL.textContent = "OFFLINE: INTERNAL BUFFER";
+    ENTROPY_LABEL.style.color = "var(--dim)";
+  }
+
+  updateUI();
+}
+
+/* =========================================
+   3. KEYBOARD HANDLER (WordStar Logic)
+   ========================================= */
+VIEWPORT.addEventListener('keydown', function(e) {
+
+  // --- 1. Control Keys (Diamond Cursor) ---
+  if (e.ctrlKey) {
+    const key = e.key.toUpperCase();
+    
+    // Keys to override
+    const overrides = ['S','E','D','X','A','F','G','H','T','Y','B','U','I'];
+    if (overrides.includes(key)) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    const keyMap = {
+      'S': 'left',        
+      'D': 'right',       
+      'E': 'up',          
+      'X': 'down',        
+      'A': 'wordLeft',    
+      'F': 'wordRight',   
+      'G': 'delChar',     
+      'H': 'backspace',   
+      'T': 'delWord',     
+      'Y': 'delLine',     
+      'B': 'bold',        
+      'U': 'underline',   
+      'I': 'italic'       
+    };
+
+    if (keyMap[key]) performAction(keyMap[key]);
+  }
+  
+  // --- 2. Function Keys ---
+  else if (e.key.startsWith('F')) {
+    e.preventDefault(); 
+    triggerFKey(e.key);
+  }
+
+  setTimeout(updateUI, 0);
+});
+
+VIEWPORT.addEventListener('click', updateUI);
+VIEWPORT.addEventListener('keyup', updateUI);
+
+/* =========================================
+   4. ACTIONS & F-KEYS
+   ========================================= */
+window.triggerFKey = function(key) {
+  switch(key) {
+    case 'F1': generateMuse(); break;
+    case 'F2': collapseWavefunction(); break;
+    case 'F3': saveDisk(); break;
+    case 'F4': document.execCommand('print'); break;
+    case 'F5': 
+      if(confirm("PURGE BUFFER?")) VIEWPORT.innerHTML = ""; 
+      break;
+    case 'F6': performAction('bold'); break;
+    case 'F7': performAction('underline'); break;
+    case 'F8': 
+      const term = prompt("SEARCH PATTERN:");
+      if(term) window.find(term); 
+      break;
+    case 'F9': alert("COMMANDS:\n\nCTRL+S/E/D/X : Navigation\nCTRL+A/F     : Word Jump\nCTRL+Y       : Del Line\nF1           : Quantum Gen"); break;
+    case 'F10': location.reload(); break;
+  }
+  VIEWPORT.focus();
+};
+
+function performAction(cmd) {
+  const sel = window.getSelection();
+  
+  switch(cmd) {
+    case 'left': case 'right': 
+      sel.modify('move', cmd === 'left' ? 'backward' : 'forward', 'character'); break;
+    case 'up': case 'down': 
+      sel.modify('move', cmd === 'up' ? 'backward' : 'forward', 'line'); break;
+    case 'wordLeft': case 'wordRight':
+      sel.modify('move', cmd === 'wordLeft' ? 'backward' : 'forward', 'word'); break;
+    case 'delChar': document.execCommand('delete'); break;
+    case 'backspace': document.execCommand('delete', false, null); break; 
+    case 'delWord':
+      sel.modify('extend', 'forward', 'word');
+      document.execCommand('delete'); break;
+    case 'delLine':
+      sel.modify('move', 'backward', 'lineboundary');
+      sel.modify('extend', 'forward', 'lineboundary');
+      document.execCommand('delete');
+      document.execCommand('insertHTML', false, '<br>'); break;
+    case 'bold': document.execCommand('bold'); break;
+    case 'underline': document.execCommand('underline'); break;
+    case 'italic': document.execCommand('italic'); break;
+  }
+}
+
+/* =========================================
+   5. QUANTUM LOGIC
+   ========================================= */
+function quantumChoice(list) {
+  // 5 Qubits = 32 states (Superposition)
+  const qc = new qr.QuantumCircuit(5);
+  for(let i=0; i<5; i++) qc.addGate('h', i, i); 
+  qc.run();
+  
+  // Measure Probability
+  const state = qc.getState();
+  const probs = state.map(s => Math.pow(s.magnitude, 2));
+  
+  // Collapse Wavefunction
+  let r = Math.random();
+  let idx = 0;
+  for(let i=0; i<probs.length; i++) {
+    r -= probs[i];
+    if(r <= 0) { idx = i; break; }
+  }
+  
+  return list[idx % list.length];
+}
+
+function generateMuse() {
+  // Use words from GitHub if available, otherwise fallback
+  const nouns = liveLexicon || FALLBACK.nouns;
+  const verbs = FALLBACK.verbs;
+  const adjs  = FALLBACK.adjs;
+
+  // Insert generated text at cursor position
+  const phrase = ` The <b>${quantumChoice(adjs)}</b> ${quantumChoice(nouns)} <u>${quantumChoice(verbs)}</u>.`;
+  document.execCommand('insertHTML', false, phrase);
+}
+
+function collapseWavefunction() {
+  const hex = [...Array(6)].map(() => Math.floor(Math.random()*255).toString(16).padStart(2,'0')).join(':').toUpperCase();
+  const block = `<br><span style="background:var(--blood); color:var(--bg)">[ENTROPY: ${hex}]</span><br>`;
+  document.execCommand('insertHTML', false, block);
+}
+
+/* =========================================
+   6. UTILITIES
+   ========================================= */
+function saveDisk() {
+  const content = `
+    <html><body style="background:black;color:#e5e5e5;font-family:monospace">
+    ${VIEWPORT.innerHTML}
+    </body></html>`;
+  
+  const blob = new Blob([content], {type: "text/html"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "QUANTUM.HTML";
+  a.click();
+}
+
+function updateUI() {
+  const sel = window.getSelection();
+  if(!sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  
+  const preRange = range.cloneRange();
+  preRange.selectNodeContents(VIEWPORT);
+  preRange.setEnd(range.endContainer, range.endOffset);
+  const text = preRange.toString();
+  
+  const lines = text.split('\n');
+  const L = lines.length;
+  const C = lines[lines.length-1].length + 1;
+  const P = Math.floor(L / 50) + 1;
+
+  STATUS_READOUT.innerText = `P ${pad(P)} L ${pad(L)} C ${pad(C)}`;
+  MODE_INDICATOR.style.opacity = insertMode ? "1" : "0.5";
+}
+
+function pad(n) { return n.toString().padStart(2,'0'); }
+
+// Start System
+initSystem();
+</script>
+</body>
+</html>
