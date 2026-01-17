@@ -17,9 +17,10 @@
   --blood:#ff0000;
   --shadow:#1a0000;
   --crt-glow:rgba(255,0,0,.15);
-  --ai-purple:#9d00ff;
-  --ai-blue:#00b3ff;
-  --ai-dark:#0a0015;
+  /* Change these AI colors to match site theme */
+  --ai-purple:var(--blood);        /* Changed from #9d00ff */
+  --ai-blue:var(--paper);          /* Changed from #00b3ff */
+  --ai-dark:var(--bg);             /* Changed from #0a0015 */
 }
 body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:'VT323',monospace;font-size:24px;background:var(--bg);color:var(--paper);overflow:hidden;user-select:none;text-shadow:0 0 2px var(--dim),0 0 5px var(--crt-glow);}
 body::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 2px,rgba(0,0,0,.5) 3px 4px),repeating-linear-gradient(90deg,var(--crt-glow),transparent 2px,rgba(0,0,0,.1) 4px);pointer-events:none;z-index:100;mix-blend-mode:multiply;}
@@ -78,14 +79,16 @@ small{font-size:11px;color:var(--dim);}
 }
 
 .ai-header{
-    background:linear-gradient(90deg, var(--ai-purple), var(--ai-blue));
-    color:white;
+    
+    background:linear-gradient(90deg, var(--blood), var(--paper));
+     color:var(--bg); 
     padding:12px 15px;
     display:flex;
     justify-content:space-between;
     align-items:center;
     font-size:1.2rem;
     border-bottom:1px solid var(--ai-purple);
+ 
 }
 
 .ai-header span{
@@ -178,21 +181,18 @@ small{font-size:11px;color:var(--dim);}
 }
 
 .ai-link{
-    color:var(--ai-blue);
-    text-decoration:none;
-    border-bottom:1px dotted var(--ai-blue);
-    transition:all 0.2s;
+    color:var(--paper); /* Changed from var(--ai-blue) */
+    border-bottom:1px dotted var(--paper); /* Changed */
 }
 
 .ai-link:hover{
-    color:#ff1991;
-    border-bottom-color:#ff1991;
+    color:var(--blood); /* Changed from #ff1991 */
+    border-bottom-color:var(--blood); /* Changed */
 }
 
 #genBtn{
-    background:linear-gradient(90deg, #00ff88, #00ccff);
-    color:#001122;
-    font-weight:bold;
+    background:linear-gradient(90deg, var(--blood), var(--paper)); /* Changed */
+    color:var(--bg); /* Changed */
 }
 
 #genBtn:hover{
@@ -475,9 +475,10 @@ let liveLex = null, insertMode = true;
 let audioCtx = null; // Global audio context
 
 const FB = {
-  nouns: ["nebula","echo","whisper","chronometer","void","nexus","fragment","signal","horizon","monolith","algorithm","spectre","isotope","vortex","cipher","drone","glitch","network","phantom","mainframe","reactor","synapse","artifact","shard","memory","paradox","entropy","vector","protocol","silence","shadow","circuit"],
-  verbs: ["fractured","hummed","collapsed","drifted","ignited","observed","shattered","pulsed","dissolved","encoded","transmitted","erased","aligned","resonated","orbited","scanned","corrupted","merged","decoded","manifested","echoed","vibrated","locked","severed","mapped","synced","traced","hunted","breached","calibrated","awoke","slept"],
-  adjs: ["silent","obsidian","infinite","hollow","electric","forgotten","crimson","static","digital","frozen","luminous","fractal","haunted","cybernetic","terminal","kinetic","dormant","volatile","synthetic","solar","magnetic","spectral","unseen","ancient","liquid","binary","nuclear","astral","chrome","velvet","fading","hidden"]
+  nouns: ["nebula","echo","whisper","chronometer","void","nexus","fragment","signal","horizon","monolith","algorithm","spectre","isotope","vortex","cipher","drone","glitch","network","phantom","mainframe","reactor","synapse","artifact","shard","memory","paradox","entropy","vector","protocol","silence","shadow","circuit"/* ADD MORE NOUNS HERE: */ ,"datastream","firewall","cyborg","nexus","mainframe"],
+  verbs: ["fractured","hummed","collapsed","drifted","ignited","observed","shattered","pulsed","dissolved","encoded","transmitted","erased","aligned","resonated","orbited","scanned","corrupted","merged","decoded","manifested","echoed","vibrated","locked","severed","mapped","synced","traced","hunted","breached","calibrated","awoke","slept"/* ADD MORE VERBS HERE: */ ,"encrypted","rebooted","glitched","uploaded"],
+  adjs: ["silent","obsidian","infinite","hollow","electric","forgotten","crimson","static","digital","frozen","luminous","fractal","haunted","cybernetic","terminal","kinetic","dormant","volatile","synthetic","solar","magnetic","spectral","unseen","ancient","liquid","binary","nuclear","astral","chrome","velvet","fading","hidden"
+  /* ADD MORE ADJECTIVES HERE: */ ,"encrypted","neural","quantum","thermal"]
 };
 
 /* ----------  quantum functions  ---------- */
@@ -502,8 +503,84 @@ function generate() {
 }
 
 function collapse() {
-  const hex = [...Array(6)].map(() => Math.floor(Math.random() * 255).toString(16).padStart(2, '0')).join(':');
-  document.execCommand('insertHTML', false, `<br><span style="background:var(--blood);color:var(--bg)">[ENTROPY:${hex.toUpperCase()}]</span><br>`);
+  const entropyTypes = [
+    // 1. HEX Format (Original)
+    () => {
+      const hex = [...Array(6)].map(() => 
+        Math.floor(Math.random() * 255).toString(16).padStart(2, '0')
+      ).join(':');
+      return `[ENTROPY:${hex.toUpperCase()}]`;
+    },
+    
+    // 2. Binary String
+    () => {
+      const binary = [...Array(24)].map(() => 
+        Math.random() > 0.5 ? '1' : '0'
+      ).join('');
+      return `[BITSTREAM:${binary.match(/.{1,8}/g).join(' ')}]`;
+    },
+    
+    // 3. Quantum State Notation
+    () => {
+      const amps = ['α','β','γ','δ','ε','ζ','η','θ'];
+      const state = `|ψ⟩ = ${(Math.random()*0.9+0.1).toFixed(3)}|0⟩ + ${(Math.random()*0.9+0.1).toFixed(3)}|1⟩`;
+      return `[QSTATE:${state}]`;
+    },
+    
+    // 4. DNA-like Sequence
+    () => {
+      const bases = ['A','T','C','G','X','Ψ','Ω','Φ'];
+      const seq = [...Array(12)].map(() => 
+        bases[Math.floor(Math.random() * bases.length)]
+      ).join('');
+      return `[SEQUENCE:${seq}]`;
+    },
+    
+    // 5. Timestamp Entropy
+    () => {
+      const now = new Date();
+      const ms = now.getMilliseconds().toString().padStart(3, '0');
+      const entropy = parseInt(ms) ^ now.getSeconds();
+      return `[TIMESTAMP:${now.getHours().toString().padStart(2,'0')}:${now.getMinutes()}:${ms} Δ=${entropy}]`;
+    },
+    
+    // 6. Symbolic Entropy
+    () => {
+      const symbols = ['§','¶','†','‡','◊','⌘','⌀','⌂','⌥','⌫','⎋','⏎'];
+      const sym = [...Array(8)].map(() => 
+        symbols[Math.floor(Math.random() * symbols.length)]
+      ).join('');
+      return `[SYMBOLS:${sym}]`;
+    },
+    
+    // 7. Word-based Entropy (using your word lists!)
+    () => {
+      const nouns = liveLex || FB.nouns;
+      const verbs = FB.verbs;
+      const adjs = FB.adjs;
+      const n = quantumChoice(nouns);
+      const v = quantumChoice(verbs);
+      const a = quantumChoice(adjs);
+      return `[LEXICAL:${n}:${v}:${a}]`;
+    },
+    
+    // 8. Pi-based Entropy
+    () => {
+      const pi = Math.PI.toString().replace('.','');
+      const start = Math.floor(Math.random() * (pi.length - 6));
+      return `[PI-DIGITS:${pi.substring(start, start+6)}]`;
+    }
+  ];
+  
+  // Choose a random entropy type
+  const type = Math.floor(Math.random() * entropyTypes.length);
+  const entropy = entropyTypes[type]();
+  
+  // Insert with styling
+  VIEWPORT.focus();
+  document.execCommand('insertHTML', false, 
+    `<br><span style="background:var(--blood);color:var(--bg);font-family:monospace">${entropy}</span><br>`
+  );
 }
 
 function rulerBlink() {
