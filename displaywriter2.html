@@ -105,37 +105,28 @@ const FB = {
 
 /* ----------  quantum functions  ---------- */
 function quantumChoice(list) {
-  try {
-    // 1. Create a 5-qubit circuit (2^5 = 32 states, matches your word lists)
-    const qc = new QuantumCircuit(5);
-    
-    // 2. Put all 5 qubits into superposition (Hadamard gate)
-    for (let i = 0; i < 5; i++) {
-      qc.appendGate("h", i);
-    }
-    
-    // 3. Run the simulation
-    qc.run();
-    
-    // 4. Get probabilities directly (the library returns an array of 32 floats)
-    // IMPORTANT: The method is probabilities(), not getState()
-    const p = qc.probabilities();
-    
-    // 5. Weighted random selection based on quantum probabilities
-    let r = Math.random(), i = 0;
-    for (; i < p.length; i++) {
-      r -= p[i];
-      if (r <= 0) break;
-    }
-    
-    // Wrap around if index exceeds list length
-    return list[i % list.length];
-    
-  } catch (e) {
-    console.error("Quantum Core Malfunction:", e);
-    // Fallback if library fails
-    return list[Math.floor(Math.random() * list.length)];
+  // 1. Initialize Circuit
+  const qc = new QuantumCircuit(5); 
+  
+  // 2. Add Hadamard gates to create superposition
+  for (let i = 0; i < 5; i++) {
+    qc.appendGate("h", i); 
   }
+
+  // 3. Run the simulation
+  qc.run();
+
+  // 4. FIX: Use probabilities() instead of getState()
+  // The library returns the raw probabilities directly.
+  const p = qc.probabilities(); 
+
+  // 5. Select word based on quantum probability distribution
+  let r = Math.random(), i = 0;
+  for (; i < p.length; i++) {
+    r -= p[i];
+    if (r <= 0) break;
+  }
+  return list[i % list.length];
 }
 
 function generate() {
@@ -143,11 +134,11 @@ function generate() {
   const verbs = FB.verbs;
   const adjs = FB.adjs;
   
-  // Now uses the fixed quantumChoice function
+  // Run quantum selection for each word type
   const n = quantumChoice(nouns);
   const v = quantumChoice(verbs);
   const a = quantumChoice(adjs);
-  
+
   const txt = ` The <b>${a}</b> ${n} <u>${v}</u>.`;
   document.execCommand('insertHTML', false, txt);
 }
@@ -162,7 +153,7 @@ function rulerBlink() {
   setTimeout(() => RULER.style.borderBottomColor = '', 150);
 }
 
-/* ----------  audio engine (fixed)  ---------- */
+/* ----------  audio engine  ---------- */
 function initAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -173,21 +164,19 @@ function initAudio() {
 }
 
 function beep() {
-  // Try to init, but if user hasn't clicked yet, just return silently
   if (!audioCtx) initAudio();
-  if (audioCtx.state !== 'running') return; 
+  if (audioCtx.state !== 'running') return; // Browser blocked audio
 
   try {
     const o = audioCtx.createOscillator();
     const g = audioCtx.createGain();
     o.type = 'square';
-    o.frequency.value = 880;
+    o.frequency.value = 880; 
     
     o.connect(g);
     g.connect(audioCtx.destination);
     
     o.start();
-    // Quick fade out to prevent clicking
     g.gain.setValueAtTime(0.1, audioCtx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.05);
     o.stop(audioCtx.currentTime + 0.05);
@@ -207,17 +196,13 @@ function cmd(c) {
         c.includes('word') ? 'word' : (c.includes('Left') || c === 'left' || c === 'right') ? 'character' : 'line'
       );
       break;
-    case 'delChar':
-      document.execCommand('delete');
-      break;
+    case 'delChar': document.execCommand('delete'); break;
     case 'delLine':
       s.modify('move', 'backward', 'lineboundary');
       s.modify('extend', 'forward', 'lineboundary');
       document.execCommand('delete');
       break;
-    case 'bold': case 'underline':
-      document.execCommand(c);
-      break;
+    case 'bold': case 'underline': document.execCommand(c); break;
   }
 }
 
@@ -232,11 +217,8 @@ function save80() {
 
 function updateUI() {
   const sel = window.getSelection();
-  if (!sel.rangeCount) return;
+  if (!sel.rangeCount || !VIEWPORT.contains(sel.anchorNode)) return;
   
-  // Ensure we are inside the viewport before calculating
-  if(!VIEWPORT.contains(sel.anchorNode)) return;
-
   const range = sel.getRangeAt(0);
   const pre = range.cloneRange();
   pre.selectNodeContents(VIEWPORT);
@@ -263,9 +245,7 @@ function triggerFKey(k) {
     case 'F2': collapse(); break;
     case 'F3': save80(); break;
     case 'F4': window.print(); break;
-    case 'F5':
-      if (confirm('PURGE BUFFER?')) VIEWPORT.innerHTML = '';
-      break;
+    case 'F5': if (confirm('PURGE BUFFER?')) VIEWPORT.innerHTML = ''; break;
     case 'F6': cmd('bold'); break;
     case 'F7': cmd('underline'); break;
     case 'F8': {
@@ -273,12 +253,9 @@ function triggerFKey(k) {
       if (s) window.find(s);
       break;
     }
-    case 'F9':
-      alert('F1: Gen | F2: Hex | F3: Save | F4: Print | F5: Clear');
-      break;
+    case 'F9': alert('F1: Gen | F2: Hex | F3: Save | F4: Print'); break;
     case 'F10': location.reload(); break;
   }
-  
   setTimeout(updateUI, 10);
 }
 
@@ -286,23 +263,22 @@ function triggerFKey(k) {
 (async () => {
   VIEWPORT.focus();
   ENTROPY.textContent = 'CONNECTING...';
-
+  
   try {
     const response = await fetch(HORSE);
-    if(!response.ok) throw new Error("Net Error");
+    if (!response.ok) throw new Error('Network error');
     const txt = await response.text();
     const words = [...new Set(txt.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length > 4))];
     if (words.length < 10) throw new Error('short');
+    
     liveLex = words;
     ENTROPY.innerHTML = '<span class="online">HORSE.TXT</span>';
     MODE.classList.add('online');
     rulerBlink();
-    // Note: Removed automatic beep() to comply with Autoplay Policy
-  } catch(e) {
+  } catch (e) {
+    console.log(e);
     ENTROPY.textContent = 'INTERNAL BUFFER';
-    console.log("Offline or Fetch Error:", e);
   }
-
   updateUI();
 })();
 
@@ -319,24 +295,15 @@ document.querySelectorAll('.cmd, .f-key').forEach(button => {
 });
 
 document.addEventListener('keydown', e => {
-  initAudio(); // Wake audio on any key
+  initAudio();
   let handled = false;
 
-  // F1-F10
   if (e.key.match(/^F([1-9]|10)$/)) {
     e.preventDefault();
     triggerFKey(e.key);
     handled = true;
   }
 
-  // Ctrl 1-0 (laptop fallback)
-  if (e.ctrlKey && e.key.match(/^[1-9]$/)) {
-    e.preventDefault();
-    triggerFKey('F' + e.key);
-    handled = true;
-  }
-
-  // WordStar diamond
   if (e.ctrlKey) {
     const m = {
       S: 'left', D: 'right', E: 'up', X: 'down',
