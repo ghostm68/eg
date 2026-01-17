@@ -54,10 +54,10 @@ small{font-size:11px;color:var(--dim);}
   <fieldset class="dos-box">
     <legend>≡ Q U A N T U M   M E N U ≡</legend>
     <div class="menu-grid">
-      <div class="cmd" onclick="triggerFKey('F1')"><span>F1</span>GENERATE</div>
-      <div class="cmd" onclick="triggerFKey('F2')"><span>F2</span>COLLAPSE</div>
-      <div class="cmd" onclick="triggerFKey('F3')"><span>F3</span>SAVE</div>
-      <div class="cmd" onclick="triggerFKey('F4')"><span>F4</span>PRINT</div>
+      <div class="cmd" data-fkey="F1"><span>F1</span>GENERATE</div>
+      <div class="cmd" data-fkey="F2"><span>F2</span>COLLAPSE</div>
+      <div class="cmd" data-fkey="F3"><span>F3</span>SAVE</div>
+      <div class="cmd" data-fkey="F4"><span>F4</span>PRINT</div>
     </div>
   </fieldset>
 </div>
@@ -67,155 +67,234 @@ small{font-size:11px;color:var(--dim);}
 <div id="viewport" contenteditable="true" spellcheck="false">Initializing Quantum Core...<br>Ready for Input.</div>
 
 <div id="f-key-strip">
-  <div class="f-key" onclick="triggerFKey('F1')"><b>F1</b>Gen<br><small>GENERATE</small></div>
-  <div class="f-key" onclick="triggerFKey('F2')"><b>F2</b>WvFn<br><small>COLLAPSE</small></div>
-  <div class="f-key" onclick="triggerFKey('F3')"><b>F3</b>Save<br><small>DISK</small></div>
-  <div class="f-key" onclick="triggerFKey('F4')"><b>F4</b>Prnt<br><small>PRINT</small></div>
-  <div class="f-key" onclick="triggerFKey('F5')"><b>F5</b>Purge<br><small>CLEAR</small></div>
-  <div class="f-key" onclick="triggerFKey('F6')"><b>F6</b>Bold<br><small>BOLD</small></div>
-  <div class="f-key" onclick="triggerFKey('F7')"><b>F7</b>Undr<br><small>UNDER</small></div>
-  <div class="f-key" onclick="triggerFKey('F8')"><b>F8</b>Find<br><small>SEARCH</small></div>
-  <div class="f-key" onclick="triggerFKey('F9')"><b>F9</b>Help<br><small>HELP</small></div>
-  <div class="f-key" onclick="triggerFKey('F10')"><b>F10</b>Exit<br><small>REBOOT</small></div>
+  <div class="f-key" data-fkey="F1"><b>F1</b>Gen<br><small>GENERATE</small></div>
+  <div class="f-key" data-fkey="F2"><b>F2</b>WvFn<br><small>COLLAPSE</small></div>
+  <div class="f-key" data-fkey="F3"><b>F3</b>Save<br><small>DISK</small></div>
+  <div class="f-key" data-fkey="F4"><b>F4</b>Prnt<br><small>PRINT</small></div>
+  <div class="f-key" data-fkey="F5"><b>F5</b>Purge<br><small>CLEAR</small></div>
+  <div class="f-key" data-fkey="F6"><b>F6</b>Bold<br><small>BOLD</small></div>
+  <div class="f-key" data-fkey="F7"><b>F7</b>Undr<br><small>UNDER</small></div>
+  <div class="f-key" data-fkey="F8"><b>F8</b>Find<br><small>SEARCH</small></div>
+  <div class="f-key" data-fkey="F9"><b>F9</b>Help<br><small>HELP</small></div>
+  <div class="f-key" data-fkey="F10"><b>F10</b>Exit<br><small>REBOOT</small></div>
 </div>
 
 <div id="info-line">
   Quantum DisplayWriter 370 | Memory: 640 K | Entropy: <span id="entropy-source">INITIALIZING...</span>
 </div>
 
-<script>
-/* ----------  state  ---------- */
-const VIEWPORT=document.getElementById('viewport');
-const STATUS=document.getElementById('status-readout');
-const MODE=document.getElementById('mode-indicator');
-const ENTROPY=document.getElementById('entropy-source');
-const RULER=document.getElementById('ruler');
-const HORSE='https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/horse.txt';
+<script type="module">
+import * as qr from 'https://unpkg.com/quantum-circuit@0.2.2/lib/quantum-circuit.min.mjs';
 
-let liveLex=null, insertMode=true;
-const FB={
-  nouns:["nebula","echo","whisper","chronometer","void","nexus","fragment","signal","horizon","monolith","algorithm","spectre","isotope","vortex","cipher","drone","glitch","network","phantom","mainframe","reactor","synapse","artifact","shard","memory","paradox","entropy","vector","protocol","silence","shadow","circuit"],
-  verbs:["fractured","hummed","collapsed","drifted","ignited","observed","shattered","pulsed","dissolved","encoded","transmitted","erased","aligned","resonated","orbited","scanned","corrupted","merged","decoded","manifested","echoed","vibrated","locked","severed","mapped","synced","traced","hunted","breached","calibrated","awoke","slept"],
-  adjs:["silent","obsidian","infinite","hollow","electric","forgotten","crimson","static","digital","frozen","luminous","fractal","haunted","cybernetic","terminal","kinetic","dormant","volatile","synthetic","solar","magnetic","spectral","unseen","ancient","liquid","binary","nuclear","astral","chrome","velvet","fading","hidden"]
+/* ----------  state  ---------- */
+const VIEWPORT = document.getElementById('viewport');
+const STATUS = document.getElementById('status-readout');
+const MODE = document.getElementById('mode-indicator');
+const ENTROPY = document.getElementById('entropy-source');
+const RULER = document.getElementById('ruler');
+const HORSE = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/horse.txt';
+
+let liveLex = null, insertMode = true;
+const FB = {
+  nouns: ["nebula","echo","whisper","chronometer","void","nexus","fragment","signal","horizon","monolith","algorithm","spectre","isotope","vortex","cipher","drone","glitch","network","phantom","mainframe","reactor","synapse","artifact","shard","memory","paradox","entropy","vector","protocol","silence","shadow","circuit"],
+  verbs: ["fractured","hummed","collapsed","drifted","ignited","observed","shattered","pulsed","dissolved","encoded","transmitted","erased","aligned","resonated","orbited","scanned","corrupted","merged","decoded","manifested","echoed","vibrated","locked","severed","mapped","synced","traced","hunted","breached","calibrated","awoke","slept"],
+  adjs: ["silent","obsidian","infinite","hollow","electric","forgotten","crimson","static","digital","frozen","luminous","fractal","haunted","cybernetic","terminal","kinetic","dormant","volatile","synthetic","solar","magnetic","spectral","unseen","ancient","liquid","binary","nuclear","astral","chrome","velvet","fading","hidden"]
 };
 
-/* ----------  boot  ---------- */
-(async()=>{
-  VIEWPORT.focus();
-  ENTROPY.textContent='CONNECTING...';
-  try{
-    const txt=await (await fetch(HORSE)).text();
-    const words=[...new Set(txt.toLowerCase().replace(/[^\w\s]/g,'').split(/\s+/).filter(w=>w.length>4))];
-    if(words.length<10) throw new Error('short');
-    liveLex=words; ENTROPY.innerHTML='<span class="online">HORSE.TXT</span>';
-    MODE.classList.add('online'); rulerBlink();
-  }catch{ ENTROPY.textContent='INTERNAL BUFFER'; }
-  updateUI();
-})();
+/* ----------  quantum functions  ---------- */
+function quantumChoice(list) {
+  const qc = new qr.QuantumCircuit(5);
+  for (let i = 0; i < 5; i++) qc.addGate('h', i, i);
+  qc.run();
+  const p = qc.getState().map(s => s.magnitude ** 2);
+  let r = Math.random(), i = 0;
+  for (; i < p.length; i++) {
+    r -= p[i];
+    if (r <= 0) break;
+  }
+  return list[i % list.length];
+}
 
-/* ----------  key router  (BLOCKS browser defaults)  ---------- */
-document.addEventListener('keydown', e=>{
-  let handled=false;
-  /* F1-F10  */
-  if(e.key.match(/^F([1-9]|10)$/)){
-    e.preventDefault();           // stop Chrome help / refresh
-    triggerFKey(e.key);
-    handled=true;
-  }
-  /* Ctrl 1-0  (laptop fallback)  */
-  if(e.ctrlKey && e.key.match(/^[1-9]$/)){
-    e.preventDefault();
-    triggerFKey('F'+e.key);
-    handled=true;
-  }
-  /* WordStar diamond  */
-  if(e.ctrlKey){
-    const m={S:'left',D:'right',E:'up',X:'down',A:'wordLeft',F:'wordRight',G:'delChar',Y:'delLine',B:'bold',U:'underline'};
-    if(m[e.key.toUpperCase()]){ e.preventDefault(); cmd(m[e.key.toUpperCase()]); handled=true; }
-  }
-  if(handled){ e.stopPropagation(); setTimeout(updateUI,0); }
-}, {capture:true});
+function generate() {
+  const nouns = liveLex || FB.nouns;
+  const verbs = FB.verbs;
+  const adjs = FB.adjs;
+  const txt = ` The <b>${quantumChoice(adjs)}</b> ${quantumChoice(nouns)} <u>${quantumChoice(verbs)}</u>.`;
+  document.execCommand('insertHTML', false, txt);
+}
 
-/* ----------  click handlers (keep for mouse users)  ---------- */
-window.triggerFKey=k=>{
-  switch(k){
+function collapse() {
+  const hex = [...Array(6)].map(() => Math.floor(Math.random() * 255).toString(16).padStart(2, '0')).join(':');
+  document.execCommand('insertHTML', false, `<br><span style="background:var(--blood);color:var(--bg)">[ENTROPY:${hex.toUpperCase()}]</span><br>`);
+}
+
+function rulerBlink() {
+  RULER.style.borderBottomColor = 'var(--blood)';
+  setTimeout(() => RULER.style.borderBottomColor = '', 150);
+}
+
+/* ----------  editing functions  ---------- */
+function cmd(c) {
+  const s = window.getSelection();
+  if (!s.rangeCount) return;
+  switch(c) {
+    case 'left': case 'right': case 'up': case 'down': case 'wordLeft': case 'wordRight':
+      s.modify('move', 
+        c.includes('Left') || c === 'left' || c === 'up' ? 'backward' : 'forward', 
+        c.includes('word') ? 'word' : (c.includes('Left') || c === 'left' || c === 'right') ? 'character' : 'line'
+      );
+      break;
+    case 'delChar': 
+      document.execCommand('delete'); 
+      break;
+    case 'delLine':
+      s.modify('move', 'backward', 'lineboundary');
+      s.modify('extend', 'forward', 'lineboundary');
+      document.execCommand('delete');
+      break;
+    case 'bold': case 'underline': 
+      document.execCommand(c); 
+      break;
+  }
+}
+
+function save80() {
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>quantum-backup</title><style>body{background:#000;color:#fcc;font:22px/1.4 VT323,monospace;white-space:pre-wrap;}</style></head><body>${VIEWPORT.innerHTML}</body></html>`;
+  const blob = new Blob([html], {type: 'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'quantum-backup.html';
+  a.click();
+}
+
+function updateUI() {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  const pre = range.cloneRange();
+  pre.selectNodeContents(VIEWPORT);
+  pre.setEnd(range.endContainer, range.endOffset);
+  const txt = pre.toString();
+  const lines = txt.split('\n');
+  const L = lines.length;
+  const C = lines[L - 1].length + 1;
+  const P = Math.floor(L / 50) + 1;
+  
+  STATUS.textContent = `P ${String(P).padStart(2, '0')} L ${String(L).padStart(2, '0')} C ${String(C).padStart(2, '0')}`;
+  MODE.textContent = `${insertMode ? 'INSERT' : 'OVERSTRIKE'} | ${liveLex ? 'ONLINE' : 'LOCAL'}`;
+  MODE.classList.toggle('online', liveLex);
+}
+
+function beep() {
+  try {
+    const c = new (window.AudioContext || window.webkitAudioContext)();
+    const o = c.createOscillator();
+    o.type = 'square';
+    o.frequency.value = 880;
+    o.connect(c.destination);
+    o.start();
+    o.stop(c.currentTime + 0.06);
+  } catch (e) {
+    console.log('Audio not supported');
+  }
+}
+
+/* ----------  F-key handler  ---------- */
+function triggerFKey(k) {
+  switch(k) {
     case 'F1': generate(); break;
     case 'F2': collapse(); break;
     case 'F3': save80(); break;
     case 'F4': window.print(); break;
-    case 'F5': if(confirm('PURGE BUFFER?')) VIEWPORT.innerHTML=''; break;
+    case 'F5': 
+      if (confirm('PURGE BUFFER?')) VIEWPORT.innerHTML = ''; 
+      break;
     case 'F6': cmd('bold'); break;
     case 'F7': cmd('underline'); break;
-    case 'F8':{const s=prompt('SEARCH:'); if(s) window.find(s);} break;
-    case 'F9': alert('F1-F10  |  Ctrl+1-0 (laptop)  |  Ctrl+S/E/D/X move  |  Ctrl+Y kill line'); break;
+    case 'F8': {
+      const s = prompt('SEARCH:');
+      if (s) window.find(s);
+      break;
+    }
+    case 'F9': 
+      alert('F1-F10  |  Ctrl+1-0 (laptop)  |  Ctrl+S/E/D/X move  |  Ctrl+Y kill line');
+      break;
     case 'F10': location.reload(); break;
   }
   VIEWPORT.focus();
-};
+  updateUI();
+}
 
-/* ----------  quantum  ---------- */
-function quantumChoice(list){
-  // Simplified quantum-like random choice
-  const randomFloat = () => {
-    // Create more "quantum-like" randomness with multiple sources
-    const buffer = new Uint32Array(4);
-    crypto.getRandomValues(buffer);
-    let sum = buffer.reduce((a, b) => a + b, 0);
-    return sum / (0xFFFFFFFF * 4);
-  };
+/* ----------  boot  ---------- */
+(async () => {
+  VIEWPORT.focus();
+  ENTROPY.textContent = 'CONNECTING...';
   
-  const idx = Math.floor(randomFloat() * list.length);
-  return list[idx];
-}
-
-function generate(){
-  const nouns=liveLex||FB.nouns, verbs=FB.verbs, adjs=FB.adjs;
-  const txt=` The <b>${quantumChoice(adjs)}</b> ${quantumChoice(nouns)} <u>${quantumChoice(verbs)}</u>.`;
-  document.execCommand('insertHTML',false,txt);
-}
-
-function collapse(){
-  const hex=[...Array(6)].map(()=>Math.floor(Math.random()*255).toString(16).padStart(2,'0')).join(':');
-  document.execCommand('insertHTML',false,`<br><span style="background:var(--blood);color:var(--bg)">[ENTROPY:${hex.toUpperCase()}]</span><br>`);
-}
-
-function rulerBlink(){
-  RULER.style.borderBottomColor='var(--blood)';
-  setTimeout(()=>RULER.style.borderBottomColor='',150);
-}
-
-/* ----------  editing  ---------- */
-function cmd(c){
-  const s=window.getSelection(); if(!s.rangeCount) return;
-  switch(c){
-    case 'left':case 'right':case 'up':case 'down':case 'wordLeft':case 'wordRight':
-      s.modify('move',c.includes('Left')||c==='left'||c==='up'?'backward':'forward',c.includes('word')?'word':c.includes('Left')||c==='left'||c==='right'?'character':'line'); break;
-    case 'delChar': document.execCommand('delete'); break;
-    case 'delLine':
-      s.modify('move','backward','lineboundary');
-      s.modify('extend','forward','lineboundary');
-      document.execCommand('delete'); break;
-    case 'bold':case 'underline': document.execCommand(c); break;
+  try {
+    const txt = await (await fetch(HORSE)).text();
+    const words = [...new Set(txt.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length > 4))];
+    if (words.length < 10) throw new Error('short');
+    liveLex = words;
+    ENTROPY.innerHTML = '<span class="online">HORSE.TXT</span>';
+    MODE.classList.add('online');
+    rulerBlink();
+    beep();
+  } catch {
+    ENTROPY.textContent = 'INTERNAL BUFFER';
   }
-}
+  
+  updateUI();
+})();
 
-function save80(){
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>quantum-backup</title><style>body{background:#000;color:#fcc;font:22px/1.4 VT323,monospace;white-space:pre-wrap;}</style></head><body>${VIEWPORT.innerHTML}</body></html>`;
-  const blob=new Blob([html],{type:'text/html'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='quantum-backup.html'; a.click();
-}
+/* ----------  event listeners  ---------- */
+// Add click listeners to all F-key buttons
+document.querySelectorAll('.cmd, .f-key').forEach(button => {
+  button.addEventListener('click', (e) => {
+    const fkey = e.currentTarget.getAttribute('data-fkey');
+    if (fkey) triggerFKey(fkey);
+  });
+});
 
-function updateUI(){
-  const sel=window.getSelection(); if(!sel.rangeCount) return;
-  const range=sel.getRangeAt(0);
-  const pre=range.cloneRange(); pre.selectNodeContents(VIEWPORT); pre.setEnd(range.endContainer,range.endOffset);
-  const txt=pre.toString();
-  const lines=txt.split('\n');
-  const L=lines.length, C=lines[L-1].length+1, P=Math.floor(L/50)+1;
-  STATUS.textContent=`P ${String(P).padStart(2,'0')} L ${String(L).padStart(2,'0')} C ${String(C).padStart(2,'0')}`;
-  MODE.textContent=`${insertMode?'INSERT':'OVERSTRIKE'} | ${liveLex?'ONLINE':'LOCAL'}`;
-  MODE.classList.toggle('online',liveLex);
-}
+// Keyboard listener
+document.addEventListener('keydown', e => {
+  let handled = false;
+  
+  // F1-F10
+  if (e.key.match(/^F([1-9]|10)$/)) {
+    e.preventDefault();
+    triggerFKey(e.key);
+    handled = true;
+  }
+  
+  // Ctrl 1-0 (laptop fallback)
+  if (e.ctrlKey && e.key.match(/^[1-9]$/)) {
+    e.preventDefault();
+    triggerFKey('F' + e.key);
+    handled = true;
+  }
+  
+  // WordStar diamond
+  if (e.ctrlKey) {
+    const m = {
+      S: 'left', D: 'right', E: 'up', X: 'down',
+      A: 'wordLeft', F: 'wordRight', G: 'delChar',
+      Y: 'delLine', B: 'bold', U: 'underline'
+    };
+    if (m[e.key.toUpperCase()]) {
+      e.preventDefault();
+      cmd(m[e.key.toUpperCase()]);
+      handled = true;
+    }
+  }
+  
+  if (handled) {
+    e.stopPropagation();
+    setTimeout(updateUI, 0);
+  }
+}, { capture: true });
+
+// Export to global scope for inline onclick (backup)
+window.triggerFKey = triggerFKey;
 </script>
 </body>
 </html>
