@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QUANTUM WORDSTAR 2077</title>
- <script type="text/javascript" src="https://unpkg.com/quantum-circuit"></script> 
+<!-- Load the library globally -->
+<script type="text/javascript" src="https://unpkg.com/quantum-circuit"></script>
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -84,9 +85,7 @@ small{font-size:11px;color:var(--dim);}
   Quantum DisplayWriter 370 | Memory: 640 K | Entropy: <span id="entropy-source">INITIALIZING...</span>
 </div>
 
-<script type="module">
-import * as qr from 'https://unpkg.com/quantum-circuit@0.9.246/lib/quantum-circuit.min.mjs';
-
+<script>
 /* ----------  state  ---------- */
 const VIEWPORT = document.getElementById('viewport');
 const STATUS = document.getElementById('status-readout');
@@ -104,8 +103,8 @@ const FB = {
 
 /* ----------  quantum functions  ---------- */
 function quantumChoice(list) {
-  const qc = new qr.QuantumCircuit(5);
-  for (let i = 0; i < 5; i++) qc.addGate('h', i, i);
+  const qc = new QuantumCircuit(5); // CORRECT: Use the globally available class
+  for (let i = 0; i < 5; i++) qc.appendGate("h", i); // CORRECT: Use 'appendGate' method
   qc.run();
   const p = qc.getState().map(s => s.magnitude ** 2);
   let r = Math.random(), i = 0;
@@ -140,21 +139,21 @@ function cmd(c) {
   if (!s.rangeCount) return;
   switch(c) {
     case 'left': case 'right': case 'up': case 'down': case 'wordLeft': case 'wordRight':
-      s.modify('move', 
-        c.includes('Left') || c === 'left' || c === 'up' ? 'backward' : 'forward', 
+      s.modify('move',
+        c.includes('Left') || c === 'left' || c === 'up' ? 'backward' : 'forward',
         c.includes('word') ? 'word' : (c.includes('Left') || c === 'left' || c === 'right') ? 'character' : 'line'
       );
       break;
-    case 'delChar': 
-      document.execCommand('delete'); 
+    case 'delChar':
+      document.execCommand('delete');
       break;
     case 'delLine':
       s.modify('move', 'backward', 'lineboundary');
       s.modify('extend', 'forward', 'lineboundary');
       document.execCommand('delete');
       break;
-    case 'bold': case 'underline': 
-      document.execCommand(c); 
+    case 'bold': case 'underline':
+      document.execCommand(c);
       break;
   }
 }
@@ -180,7 +179,7 @@ function updateUI() {
   const L = lines.length;
   const C = lines[L - 1].length + 1;
   const P = Math.floor(L / 50) + 1;
-  
+
   STATUS.textContent = `P ${String(P).padStart(2, '0')} L ${String(L).padStart(2, '0')} C ${String(C).padStart(2, '0')}`;
   MODE.textContent = `${insertMode ? 'INSERT' : 'OVERSTRIKE'} | ${liveLex ? 'ONLINE' : 'LOCAL'}`;
   MODE.classList.toggle('online', liveLex);
@@ -207,8 +206,8 @@ function triggerFKey(k) {
     case 'F2': collapse(); break;
     case 'F3': save80(); break;
     case 'F4': window.print(); break;
-    case 'F5': 
-      if (confirm('PURGE BUFFER?')) VIEWPORT.innerHTML = ''; 
+    case 'F5':
+      if (confirm('PURGE BUFFER?')) VIEWPORT.innerHTML = '';
       break;
     case 'F6': cmd('bold'); break;
     case 'F7': cmd('underline'); break;
@@ -217,7 +216,7 @@ function triggerFKey(k) {
       if (s) window.find(s);
       break;
     }
-    case 'F9': 
+    case 'F9':
       alert('F1-F10  |  Ctrl+1-0 (laptop)  |  Ctrl+S/E/D/X move  |  Ctrl+Y kill line');
       break;
     case 'F10': location.reload(); break;
@@ -230,7 +229,7 @@ function triggerFKey(k) {
 (async () => {
   VIEWPORT.focus();
   ENTROPY.textContent = 'CONNECTING...';
-  
+
   try {
     const txt = await (await fetch(HORSE)).text();
     const words = [...new Set(txt.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length > 4))];
@@ -243,7 +242,7 @@ function triggerFKey(k) {
   } catch {
     ENTROPY.textContent = 'INTERNAL BUFFER';
   }
-  
+
   updateUI();
 })();
 
@@ -259,21 +258,21 @@ document.querySelectorAll('.cmd, .f-key').forEach(button => {
 // Keyboard listener
 document.addEventListener('keydown', e => {
   let handled = false;
-  
+
   // F1-F10
   if (e.key.match(/^F([1-9]|10)$/)) {
     e.preventDefault();
     triggerFKey(e.key);
     handled = true;
   }
-  
+
   // Ctrl 1-0 (laptop fallback)
   if (e.ctrlKey && e.key.match(/^[1-9]$/)) {
     e.preventDefault();
     triggerFKey('F' + e.key);
     handled = true;
   }
-  
+
   // WordStar diamond
   if (e.ctrlKey) {
     const m = {
@@ -287,7 +286,7 @@ document.addEventListener('keydown', e => {
       handled = true;
     }
   }
-  
+
   if (handled) {
     e.stopPropagation();
     setTimeout(updateUI, 0);
