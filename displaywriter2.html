@@ -95,6 +95,9 @@ const RULER = document.getElementById('ruler');
 const HORSE = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/horse.txt';
 
 let liveLex = null, insertMode = true;
+// GLOBAL AUDIO CONTEXT (Fixes the memory leak and the autoplay error)
+let audioCtx = null;
+
 const FB = {
   nouns: ["nebula","echo","whisper","chronometer","void","nexus","fragment","signal","horizon","monolith","algorithm","spectre","isotope","vortex","cipher","drone","glitch","network","phantom","mainframe","reactor","synapse","artifact","shard","memory","paradox","entropy","vector","protocol","silence","shadow","circuit"],
   verbs: ["fractured","hummed","collapsed","drifted","ignited","observed","shattered","pulsed","dissolved","encoded","transmitted","erased","aligned","resonated","orbited","scanned","corrupted","merged","decoded","manifested","echoed","vibrated","locked","severed","mapped","synced","traced","hunted","breached","calibrated","awoke","slept"],
@@ -103,8 +106,8 @@ const FB = {
 
 /* ----------  quantum functions  ---------- */
 function quantumChoice(list) {
-  const qc = new QuantumCircuit(5); // CORRECT: Use the globally available class
-  for (let i = 0; i < 5; i++) qc.appendGate("h", i); // CORRECT: Use 'appendGate' method
+  const qc = new QuantumCircuit(5); 
+  for (let i = 0; i < 5; i++) qc.appendGate("h", i);
   qc.run();
   const p = qc.getState().map(s => s.magnitude ** 2);
   let r = Math.random(), i = 0;
@@ -185,22 +188,44 @@ function updateUI() {
   MODE.classList.toggle('online', liveLex);
 }
 
+// FIXED AUDIO FUNCTION
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
+
 function beep() {
+  // If audio isn't initialized yet (user hasn't clicked), don't crash.
+  if (!audioCtx) initAudio();
+  
+  // Only play if we are running. If we are still suspended, browser blocked us.
+  if (audioCtx.state !== 'running') return;
+
   try {
-    const c = new (window.AudioContext || window.webkitAudioContext)();
-    const o = c.createOscillator();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain(); // Use gain node to avoid clicking sounds
     o.type = 'square';
     o.frequency.value = 880;
-    o.connect(c.destination);
+    
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    
     o.start();
-    o.stop(c.currentTime + 0.06);
+    // Smooth release to prevent audio "pop"
+    g.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.06);
+    o.stop(audioCtx.currentTime + 0.06);
   } catch (e) {
-    console.log('Audio not supported');
+    console.log('Audio error:', e);
   }
 }
 
 /* ----------  F-key handler  ---------- */
 function triggerFKey(k) {
+  initAudio(); // Ensure audio is ready on keypress
   switch(k) {
     case 'F1': generate(); break;
     case 'F2': collapse(); break;
@@ -223,6 +248,7 @@ function triggerFKey(k) {
   }
   VIEWPORT.focus();
   updateUI();
+  beep(); // Beep on F-keys
 }
 
 /* ----------  boot  ---------- */
@@ -238,7 +264,7 @@ function triggerFKey(k) {
     ENTROPY.innerHTML = '<span class="online">HORSE.TXT</span>';
     MODE.classList.add('online');
     rulerBlink();
-    beep();
+    // beep();  <-- REMOVED: Cannot beep automatically without user interaction first
   } catch {
     ENTROPY.textContent = 'INTERNAL BUFFER';
   }
@@ -247,9 +273,14 @@ function triggerFKey(k) {
 })();
 
 /* ----------  event listeners  ---------- */
-// Add click listeners to all F-key buttons
+
+// Initialize audio on first interaction
+document.addEventListener('click', initAudio, { once: true });
+document.addEventListener('keydown', initAudio, { once: true });
+
 document.querySelectorAll('.cmd, .f-key').forEach(button => {
   button.addEventListener('click', (e) => {
+    initAudio(); 
     const fkey = e.currentTarget.getAttribute('data-fkey');
     if (fkey) triggerFKey(fkey);
   });
@@ -257,6 +288,7 @@ document.querySelectorAll('.cmd, .f-key').forEach(button => {
 
 // Keyboard listener
 document.addEventListener('keydown', e => {
+  initAudio(); // Ensure audio starts on typing
   let handled = false;
 
   // F1-F10
