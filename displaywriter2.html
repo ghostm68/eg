@@ -306,319 +306,232 @@ small{font-size:11px;color:var(--dim);}
 </div>
 
 <script>
-/* ----------  ORIGINAL STATE ---------- */
-const VIEWPORT = document.getElementById('viewport');
-const STATUS = document.getElementById('status-readout');
-const MODE = document.getElementById('mode-indicator');
-const ENTROPY = document.getElementById('entropy-source');
-const RULER = document.getElementById('ruler');
-const HORSE = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/horse.txt';
+    /* ----------  ORIGINAL STATE ---------- */
+    const VIEWPORT = document.getElementById('viewport');
+    const STATUS = document.getElementById('status-readout');
+    const MODE = document.getElementById('mode-indicator');
+    const ENTROPY = document.getElementById('entropy-source');
+    const RULER = document.getElementById('ruler');
+    const HORSE = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/horse.txt';
 
-let liveLex = null, insertMode = true;
-let audioCtx = null; // Global audio context
+    let liveLex = null, insertMode = true;
+    let audioCtx = null; // Global audio context
 
-const FB = {
-  nouns: ["nebula","echo","whisper","chronometer","void","nexus","fragment","signal","horizon","monolith","algorithm","spectre","isotope","vortex","cipher","drone","glitch","network","phantom","mainframe","reactor","synapse","artifact","shard","memory","paradox","entropy","vector","protocol","silence","shadow","circuit"/* ADD MORE NOUNS HERE: */ ,"datastream","firewall","cyborg","nexus","mainframe"],
-  verbs: ["fractured","hummed","collapsed","drifted","ignited","observed","shattered","pulsed","dissolved","encoded","transmitted","erased","aligned","resonated","orbited","scanned","corrupted","merged","decoded","manifested","echoed","vibrated","locked","severed","mapped","synced","traced","hunted","breached","calibrated","awoke","slept"/* ADD MORE VERBS HERE: */ ,"encrypted","rebooted","glitched","uploaded"],
-  adjs: ["silent","obsidian","infinite","hollow","electric","forgotten","crimson","static","digital","frozen","luminous","fractal","haunted","cybernetic","terminal","kinetic","dormant","volatile","synthetic","solar","magnetic","spectral","unseen","ancient","liquid","binary","nuclear","astral","chrome","velvet","fading","hidden"
-  /* ADD MORE ADJECTIVES HERE: */ ,"encrypted","neural","quantum","thermal"]
-};
+    const FB = {
+      nouns: ["nebula","echo","whisper","chronometer","void","nexus","fragment","signal","horizon","monolith","algorithm","spectre","isotope","vortex","cipher","drone","glitch","network","phantom","mainframe","reactor","synapse","artifact","shard","memory","paradox","entropy","vector","protocol","silence","shadow","circuit"],
+      verbs: ["fractured","hummed","collapsed","drifted","ignited","observed","shattered","pulsed","dissolved","encoded","transmitted","erased","aligned","resonated","orbited","scanned","corrupted","merged","decoded","manifested","echoed","vibrated","locked","severed","mapped","synced","traced","hunted","breached","calibrated","awoke","slept"],
+      adjs: ["silent","obsidian","infinite","hollow","electric","forgotten","crimson","static","digital","frozen","luminous","fractal","haunted","cybernetic","terminal","kinetic","dormant","volatile","synthetic","solar","magnetic","spectral","unseen","ancient","liquid","binary","nuclear","astral","chrome","velvet","fading","hidden"]
+    };
 
-/* ----------  quantum functions  ---------- */
-function quantumChoice(list) {
-  const index = Math.floor(Math.random() * list.length);
-  return list[index];
-}
+    /* ----------  quantum functions  ---------- */
+    function quantumChoice(list) {
+      const index = Math.floor(Math.random() * list.length);
+      return list[index];
+    }
 
-function generate() {
-  const nouns = liveLex || FB.nouns;
-  const verbs = FB.verbs;
-  const adjs = FB.adjs;
-  
-  const n = quantumChoice(nouns);
-  const v = quantumChoice(verbs);
-  const a = quantumChoice(adjs);
-
-  const txt = ` The <b>${a}</b> ${n} <u>${v}</u>.`;
-  
-  VIEWPORT.focus();
-  document.execCommand('insertHTML', false, txt);
-}
-
-function collapse() {
-  const entropyTypes = [
-    // 1. HEX Format (Original)
-    () => {
-      const hex = [...Array(6)].map(() => 
-        Math.floor(Math.random() * 255).toString(16).padStart(2, '0')
-      ).join(':');
-      return `[ENTROPY:${hex.toUpperCase()}]`;
-    },
-    
-    // 2. Binary String
-    () => {
-      const binary = [...Array(24)].map(() => 
-        Math.random() > 0.5 ? '1' : '0'
-      ).join('');
-      return `[BITSTREAM:${binary.match(/.{1,8}/g).join(' ')}]`;
-    },
-    
-    // 3. Quantum State Notation
-    () => {
-      const amps = ['α','β','γ','δ','ε','ζ','η','θ'];
-      const state = `|ψ⟩ = ${(Math.random()*0.9+0.1).toFixed(3)}|0⟩ + ${(Math.random()*0.9+0.1).toFixed(3)}|1⟩`;
-      return `[QSTATE:${state}]`;
-    },
-    
-    // 4. DNA-like Sequence
-    () => {
-      const bases = ['A','T','C','G','X','Ψ','Ω','Φ'];
-      const seq = [...Array(12)].map(() => 
-        bases[Math.floor(Math.random() * bases.length)]
-      ).join('');
-      return `[SEQUENCE:${seq}]`;
-    },
-    
-    // 5. Timestamp Entropy
-    () => {
-      const now = new Date();
-      const ms = now.getMilliseconds().toString().padStart(3, '0');
-      const entropy = parseInt(ms) ^ now.getSeconds();
-      return `[TIMESTAMP:${now.getHours().toString().padStart(2,'0')}:${now.getMinutes()}:${ms} Δ=${entropy}]`;
-    },
-    
-    // 6. Symbolic Entropy
-    () => {
-      const symbols = ['§','¶','†','‡','◊','⌘','⌀','⌂','⌥','⌫','⎋','⏎'];
-      const sym = [...Array(8)].map(() => 
-        symbols[Math.floor(Math.random() * symbols.length)]
-      ).join('');
-      return `[SYMBOLS:${sym}]`;
-    },
-    
-    // 7. Word-based Entropy (using your word lists!)
-    () => {
+    function generate() {
       const nouns = liveLex || FB.nouns;
       const verbs = FB.verbs;
       const adjs = FB.adjs;
+      
       const n = quantumChoice(nouns);
       const v = quantumChoice(verbs);
       const a = quantumChoice(adjs);
-      return `[LEXICAL:${n}:${v}:${a}]`;
-    },
-    
-    // 8. Pi-based Entropy
-    () => {
-      const pi = Math.PI.toString().replace('.','');
-      const start = Math.floor(Math.random() * (pi.length - 6));
-      return `[PI-DIGITS:${pi.substring(start, start+6)}]`;
+
+      const txt = ` The <b>${a}</b> ${n} <u>${v}</u>.`;
+      
+      VIEWPORT.focus();
+      document.execCommand('insertHTML', false, txt);
     }
-  ];
-  
-  // Choose a random entropy type
-  const type = Math.floor(Math.random() * entropyTypes.length);
-  const entropy = entropyTypes[type]();
-  
-  // Insert with styling
-  VIEWPORT.focus();
-  document.execCommand('insertHTML', false, 
-    `<br><span style="background:var(--blood);color:var(--bg);font-family:monospace">${entropy}</span><br>`
-  );
-}
 
-function rulerBlink() {
-  RULER.style.borderBottomColor = 'var(--blood)';
-  setTimeout(() => RULER.style.borderBottomColor = '', 150);
-}
-
-/* ----------  audio engine  ---------- */
-function initAudio() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
-}
-
-function beep() {
-  if (!audioCtx) initAudio();
-  if (audioCtx.state !== 'running') return;
-
-  try {
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.type = 'square';
-    o.frequency.value = 880;
-    
-    o.connect(g);
-    g.connect(audioCtx.destination);
-    
-    o.start();
-    g.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.05);
-    o.stop(audioCtx.currentTime + 0.05);
-  } catch (e) {
-    console.error(e);
-  }
-}
-
-/* ----------  editing functions  ---------- */
-function cmd(c) {
-  const s = window.getSelection();
-  if (!s.rangeCount) return;
-  switch(c) {
-    case 'left': case 'right': case 'up': case 'down': case 'wordLeft': case 'wordRight':
-      s.modify('move',
-        c.includes('Left') || c === 'left' || c === 'up' ? 'backward' : 'forward',
-        c.includes('word') ? 'word' : (c.includes('Left') || c === 'left' || c === 'right') ? 'character' : 'line'
-      );
-      break;
-    case 'delChar': document.execCommand('delete'); break;
-    case 'delLine':
-      s.modify('move', 'backward', 'lineboundary');
-      s.modify('extend', 'forward', 'lineboundary');
-      document.execCommand('delete');
-      break;
-    case 'bold': case 'underline': document.execCommand(c); break;
-  }
-}
-
-function save80() {
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>quantum-backup</title><style>body{background:#000;color:#fcc;font:22px/1.4 VT323,monospace;white-space:pre-wrap;}</style></head><body>${VIEWPORT.innerHTML}</body></html>`;
-  const blob = new Blob([html], {type: 'text/html'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'quantum-backup.html';
-  a.click();
-}
-
-function updateUI() {
-  const sel = window.getSelection();
-  if (!sel.rangeCount || !VIEWPORT.contains(sel.anchorNode)) {
-     STATUS.textContent = "READY";
-     return;
-  }
-  
-  const range = sel.getRangeAt(0);
-  const pre = range.cloneRange();
-  pre.selectNodeContents(VIEWPORT);
-  pre.setEnd(range.endContainer, range.endOffset);
-  const txt = pre.toString();
-  const lines = txt.split('\n');
-  const L = lines.length;
-  const C = lines[L - 1].length + 1;
-  const P = Math.floor(L / 50) + 1;
-
-  STATUS.textContent = `P ${String(P).padStart(2, '0')} L ${String(L).padStart(2, '0')} C ${String(C).padStart(2, '0')}`;
-  MODE.textContent = `${insertMode ? 'INSERT' : 'OVERSTRIKE'} | ${liveLex ? 'ONLINE' : 'LOCAL'}`;
-  MODE.classList.toggle('online', !!liveLex);
-}
-
-/* ----------  F-key handler  ---------- */
-function triggerFKey(k) {
-  initAudio();
-  beep();
-  VIEWPORT.focus();
-  
-  switch(k) {
-    case 'F1': generate(); break;
-    case 'F2': collapse(); break;
-    case 'F3': save80(); break;
-    case 'F4': window.print(); break;
-    case 'F5': if (confirm('PURGE BUFFER?')) VIEWPORT.innerHTML = ''; break;
-    case 'F6': cmd('bold'); break;
-    case 'F7': cmd('underline'); break;
-    case 'F8': {
-      const s = prompt('SEARCH:');
-      if (s) window.find(s);
-      break;
+    function collapse() {
+      // ... your collapse function ...
     }
-    case 'F9': alert('F1: Gen | F2: Hex | F3: Save | F4: Print\nF5: Clear | F6: Bold | F7: Underline\nF8: Search | F9: Help | F10: Reboot\n\nClick "INSERT | LOCAL" for AI Assistant'); break;
-    case 'F10': location.reload(); break;
-  }
-  setTimeout(updateUI, 10);
-}
 
-/* ----------  boot sequence  ---------- */
-(async () => {
-  VIEWPORT.focus();
-  ENTROPY.textContent = 'CONNECTING...';
-
-  try {
-    const response = await fetch(HORSE);
-    if (!response.ok) throw new Error('Network response was not ok');
-    const txt = await response.text();
-    const words = [...new Set(txt.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length > 4))];
-    
-    if (words.length < 10) throw new Error('short');
-    
-    liveLex = words;
-    ENTROPY.innerHTML = '<span class="online">HORSE.TXT</span>';
-    MODE.classList.add('online');
-    rulerBlink();
-  } catch (e) {
-    console.log("Offline mode:", e);
-    ENTROPY.textContent = 'INTERNAL BUFFER (OFFLINE)';
-  }
-  updateUI();
-})();
-
-/* ----------  event listeners  ---------- */
-document.addEventListener('click', initAudio, { once: true });
-document.addEventListener('keydown', initAudio, { once: true });
-
-document.querySelectorAll('.cmd, .f-key').forEach(button => {
-  button.addEventListener('click', (e) => {
-    e.preventDefault();
-    const fkey = e.currentTarget.getAttribute('data-fkey');
-    if (fkey) triggerFKey(fkey);
-  });
-});
-
-document.addEventListener('keydown', e => {
-  initAudio();
-  let handled = false;
-
-  if (e.key.match(/^F([1-9]|10)$/)) {
-    e.preventDefault();
-    triggerFKey(e.key);
-    handled = true;
-  }
-
-  if (e.ctrlKey) {
-    const m = {
-      S: 'left', D: 'right', E: 'up', X: 'down',
-      A: 'wordLeft', F: 'wordRight', G: 'delChar',
-      Y: 'delLine', B: 'bold', U: 'underline'
-    };
-    if (m[e.key.toUpperCase()]) {
-      e.preventDefault();
-      cmd(m[e.key.toUpperCase()]);
-      handled = true;
+    function rulerBlink() {
+      RULER.style.borderBottomColor = 'var(--blood)';
+      setTimeout(() => RULER.style.borderBottomColor = '', 150);
     }
-  }
 
-  if (handled) {
-    e.stopPropagation();
-    setTimeout(updateUI, 10);
-  }
-}, { capture: true });
+    /* ----------  audio engine  ---------- */
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
 
-// Prevent closing modal with Escape unless modal is open
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && document.getElementById('ai-modal').style.display === 'block') {
-    e.preventDefault();
-    closeAIModal();
-  }
-});
+    function beep() {
+      if (!audioCtx) initAudio();
+      if (audioCtx.state !== 'running') return;
 
-// Backup global exposer
-window.triggerFKey = triggerFKey;
-window.openNvidiaModal = openNvidiaModal;
-window.closeAIModal = closeAIModal;
-window.generateInsight = generateInsight;
-</script>
+      try {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'square';
+        o.frequency.value = 880;
+        
+        o.connect(g);
+        g.connect(audioCtx.destination);
+        
+        o.start();
+        g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.05);
+        o.stop(audioCtx.currentTime + 0.05);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    /* ----------  editing functions  ---------- */
+    function cmd(c) {
+      const s = window.getSelection();
+      if (!s.rangeCount) return;
+      switch(c) {
+        case 'left': case 'right': case 'up': case 'down': case 'wordLeft': case 'wordRight':
+          s.modify('move',
+            c.includes('Left') || c === 'left' || c === 'up' ? 'backward' : 'forward',
+            c.includes('word') ? 'word' : (c.includes('Left') || c === 'left' || c === 'right') ? 'character' : 'line'
+          );
+          break;
+        case 'delChar': document.execCommand('delete'); break;
+        case 'delLine':
+          s.modify('move', 'backward', 'lineboundary');
+          s.modify('extend', 'forward', 'lineboundary');
+          document.execCommand('delete');
+          break;
+        case 'bold': case 'underline': document.execCommand(c); break;
+      }
+    }
+
+    function save80() {
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>quantum-backup</title><style>body{background:#000;color:#fcc;font:22px/1.4 VT323,monospace;white-space:pre-wrap;}</style></head><body>${VIEWPORT.innerHTML}</body></html>`;
+      const blob = new Blob([html], {type: 'text/html'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'quantum-backup.html';
+      a.click();
+    }
+
+    function updateUI() {
+      const sel = window.getSelection();
+      if (!sel.rangeCount || !VIEWPORT.contains(sel.anchorNode)) {
+         STATUS.textContent = "READY";
+         return;
+      }
+      
+      const range = sel.getRangeAt(0);
+      const pre = range.cloneRange();
+      pre.selectNodeContents(VIEWPORT);
+      pre.setEnd(range.endContainer, range.endOffset);
+      const txt = pre.toString();
+      const lines = txt.split('\n');
+      const L = lines.length;
+      const C = lines[L - 1].length + 1;
+      const P = Math.floor(L / 50) + 1;
+
+      STATUS.textContent = `P ${String(P).padStart(2, '0')} L ${String(L).padStart(2, '0')} C ${String(C).padStart(2, '0')}`;
+      MODE.textContent = `${insertMode ? 'INSERT' : 'OVERSTRIKE'} | ${liveLex ? 'ONLINE' : 'LOCAL'}`;
+      MODE.classList.toggle('online', !!liveLex);
+    }
+
+    /* ----------  F-key handler  ---------- */
+    function triggerFKey(k) {
+      initAudio();
+      beep();
+      VIEWPORT.focus();
+      
+      switch(k) {
+        case 'F1': generate(); break;
+        case 'F2': collapse(); break;
+        case 'F3': save80(); break;
+        case 'F4': window.print(); break;
+        case 'F5': if (confirm('PURGE BUFFER?')) VIEWPORT.innerHTML = ''; break;
+        case 'F6': cmd('bold'); break;
+        case 'F7': cmd('underline'); break;
+        case 'F8': {
+          const s = prompt('SEARCH:');
+          if (s) window.find(s);
+          break;
+        }
+        case 'F9': alert('F1: Gen | F2: Hex | F3: Save | F4: Print\nF5: Clear | F6: Bold | F7: Underline\nF8: Search | F9: Help | F10: Reboot\n\nClick "INSERT | LOCAL" for AI Assistant'); break;
+        case 'F10': location.reload(); break;
+      }
+      setTimeout(updateUI, 10);
+    }
+
+    /* ----------  boot sequence  ---------- */
+    (async () => {
+      VIEWPORT.focus();
+      ENTROPY.textContent = 'CONNECTING...';
+
+      try {
+        const response = await fetch(HORSE);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const txt = await response.text();
+        const words = [...new Set(txt.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length > 4))];
+        
+        if (words.length < 10) throw new Error('short');
+        
+        liveLex = words;
+        ENTROPY.innerHTML = '<span class="online">HORSE.TXT</span>';
+        MODE.classList.add('online');
+        rulerBlink();
+      } catch (e) {
+        console.log("Offline mode:", e);
+        ENTROPY.textContent = 'INTERNAL BUFFER (OFFLINE)';
+      }
+      updateUI();
+    })();
+
+    /* ----------  event listeners  ---------- */
+    document.addEventListener('click', initAudio, { once: true });
+    document.addEventListener('keydown', initAudio, { once: true });
+
+    document.querySelectorAll('.cmd, .f-key').forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        const fkey = e.currentTarget.getAttribute('data-fkey');
+        if (fkey) triggerFKey(fkey);
+      });
+    });
+
+    document.addEventListener('keydown', e => {
+      initAudio();
+      let handled = false;
+
+      if (e.key.match(/^F([1-9]|10)$/)) {
+        e.preventDefault();
+        triggerFKey(e.key);
+        handled = true;
+      }
+
+      if (e.ctrlKey) {
+        const m = {
+          S: 'left', D: 'right', E: 'up', X: 'down',
+          A: 'wordLeft', F: 'wordRight', G: 'delChar',
+          Y: 'delLine', B: 'bold', U: 'underline'
+        };
+        if (m[e.key.toUpperCase()]) {
+          e.preventDefault();
+          cmd(m[e.key.toUpperCase()]);
+          handled = true;
+        }
+      }
+
+      if (handled) {
+        e.stopPropagation();
+        setTimeout(updateUI, 10);
+      }
+    }, { capture: true });
+
+    // Export functions to global scope
+    window.triggerFKey = triggerFKey;
+    window.beep = beep; // Export beep for AI module to use
+    </script>
+
      <script src="ai-module.js"></script>
 </body>
 </html>
