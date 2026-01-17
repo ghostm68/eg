@@ -95,8 +95,9 @@ const RULER = document.getElementById('ruler');
 const HORSE = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/horse.txt';
 
 let liveLex = null, insertMode = true;
-let audioCtx = null; // Global audio context
+let audioCtx = null; 
 
+// Default Dictionary
 const FB = {
   nouns: ["nebula","echo","whisper","chronometer","void","nexus","fragment","signal","horizon","monolith","algorithm","spectre","isotope","vortex","cipher","drone","glitch","network","phantom","mainframe","reactor","synapse","artifact","shard","memory","paradox","entropy","vector","protocol","silence","shadow","circuit"],
   verbs: ["fractured","hummed","collapsed","drifted","ignited","observed","shattered","pulsed","dissolved","encoded","transmitted","erased","aligned","resonated","orbited","scanned","corrupted","merged","decoded","manifested","echoed","vibrated","locked","severed","mapped","synced","traced","hunted","breached","calibrated","awoke","slept"],
@@ -105,46 +106,57 @@ const FB = {
 
 /* ----------  quantum functions  ---------- */
 function quantumChoice(list) {
-  // 1. Initialize Circuit
-  const qc = new QuantumCircuit(5); 
-  
-  // 2. Add Hadamard gates to create superposition
-  for (let i = 0; i < 5; i++) {
-    qc.appendGate("h", i); 
+  try {
+    const qc = new QuantumCircuit(5); 
+    
+    // CORRECT SYNTAX: ('gate', time, qubit)
+    // -1 means "append to end of circuit"
+    for (let i = 0; i < 5; i++) {
+      qc.addGate("h", -1, i); 
+    }
+
+    qc.run();
+
+    // Get probabilities (array of 32 floats)
+    const p = qc.probabilities(); 
+    
+    // Select based on quantum probability distribution
+    let r = Math.random(), i = 0;
+    for (; i < p.length; i++) {
+      r -= p[i];
+      if (r <= 0) break;
+    }
+    
+    // Safety: ensure i is within bounds
+    return list[i % list.length];
+
+  } catch (e) {
+    console.warn("Quantum fallback triggered", e);
+    // Fallback to standard random if library fails
+    return list[Math.floor(Math.random() * list.length)];
   }
-
-  // 3. Run the simulation
-  qc.run();
-
-  // 4. FIX: Use probabilities() instead of getState()
-  // The library returns the raw probabilities directly.
-  const p = qc.probabilities(); 
-
-  // 5. Select word based on quantum probability distribution
-  let r = Math.random(), i = 0;
-  for (; i < p.length; i++) {
-    r -= p[i];
-    if (r <= 0) break;
-  }
-  return list[i % list.length];
 }
 
 function generate() {
-  const nouns = liveLex || FB.nouns;
+  // Merge live words with defaults to ensure variety even if file is small
+  const nouns = liveLex ? [...new Set([...FB.nouns, ...liveLex])] : FB.nouns;
   const verbs = FB.verbs;
   const adjs = FB.adjs;
   
-  // Run quantum selection for each word type
   const n = quantumChoice(nouns);
   const v = quantumChoice(verbs);
   const a = quantumChoice(adjs);
 
   const txt = ` The <b>${a}</b> ${n} <u>${v}</u>.`;
+  
+  // Restore focus before inserting
+  VIEWPORT.focus();
   document.execCommand('insertHTML', false, txt);
 }
 
 function collapse() {
   const hex = [...Array(6)].map(() => Math.floor(Math.random() * 255).toString(16).padStart(2, '0')).join(':');
+  VIEWPORT.focus();
   document.execCommand('insertHTML', false, `<br><span style="background:var(--blood);color:var(--bg)">[ENTROPY:${hex.toUpperCase()}]</span><br>`);
 }
 
@@ -165,19 +177,17 @@ function initAudio() {
 
 function beep() {
   if (!audioCtx) initAudio();
-  if (audioCtx.state !== 'running') return; // Browser blocked audio
+  if (audioCtx.state !== 'running') return; 
 
   try {
     const o = audioCtx.createOscillator();
     const g = audioCtx.createGain();
     o.type = 'square';
     o.frequency.value = 880; 
-    
     o.connect(g);
     g.connect(audioCtx.destination);
-    
     o.start();
-    g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    g.gain.setValueAtTime(0.05, audioCtx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.05);
     o.stop(audioCtx.currentTime + 0.05);
   } catch (e) {
@@ -187,22 +197,33 @@ function beep() {
 
 /* ----------  editing functions  ---------- */
 function cmd(c) {
+  VIEWPORT.focus(); // Force focus back to editor
   const s = window.getSelection();
-  if (!s.rangeCount) return;
+  
+  // If no range, or range is collapsed (just cursor), bold/underline still works like a toggle for next char
+  // But we need to ensure command is executed on the document
+  
   switch(c) {
     case 'left': case 'right': case 'up': case 'down': case 'wordLeft': case 'wordRight':
-      s.modify('move',
-        c.includes('Left') || c === 'left' || c === 'up' ? 'backward' : 'forward',
-        c.includes('word') ? 'word' : (c.includes('Left') || c === 'left' || c === 'right') ? 'character' : 'line'
-      );
+      if(s.rangeCount) {
+        s.modify('move',
+          c.includes('Left') || c === 'left' || c === 'up' ? 'backward' : 'forward',
+          c.includes('word') ? 'word' : (c.includes('Left') || c === 'left' || c === 'right') ? 'character' : 'line'
+        );
+      }
       break;
     case 'delChar': document.execCommand('delete'); break;
     case 'delLine':
-      s.modify('move', 'backward', 'lineboundary');
-      s.modify('extend', 'forward', 'lineboundary');
-      document.execCommand('delete');
+      if(s.rangeCount) {
+        s.modify('move', 'backward', 'lineboundary');
+        s.modify('extend', 'forward', 'lineboundary');
+        document.execCommand('delete');
+      }
       break;
-    case 'bold': case 'underline': document.execCommand(c); break;
+    case 'bold': 
+    case 'underline': 
+      document.execCommand(c); 
+      break;
   }
 }
 
@@ -217,7 +238,12 @@ function save80() {
 
 function updateUI() {
   const sel = window.getSelection();
-  if (!sel.rangeCount || !VIEWPORT.contains(sel.anchorNode)) return;
+  
+  // UI Calculations
+  if (!sel.rangeCount || !VIEWPORT.contains(sel.anchorNode)) {
+      // If we clicked outside, don't crash, just hold state
+      return; 
+  }
   
   const range = sel.getRangeAt(0);
   const pre = range.cloneRange();
@@ -253,7 +279,7 @@ function triggerFKey(k) {
       if (s) window.find(s);
       break;
     }
-    case 'F9': alert('F1: Gen | F2: Hex | F3: Save | F4: Print'); break;
+    case 'F9': alert('F1: Gen | F2: Hex | F3: Save | F4: Print | F6/F7: Format'); break;
     case 'F10': location.reload(); break;
   }
   setTimeout(updateUI, 10);
@@ -263,30 +289,40 @@ function triggerFKey(k) {
 (async () => {
   VIEWPORT.focus();
   ENTROPY.textContent = 'CONNECTING...';
-  
+
   try {
     const response = await fetch(HORSE);
-    if (!response.ok) throw new Error('Network error');
+    if (!response.ok) throw new Error('Net Error');
     const txt = await response.text();
+    // Parse words > 4 chars, remove punctuation
     const words = [...new Set(txt.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length > 4))];
-    if (words.length < 10) throw new Error('short');
     
-    liveLex = words;
-    ENTROPY.innerHTML = '<span class="online">HORSE.TXT</span>';
-    MODE.classList.add('online');
-    rulerBlink();
+    if (words.length > 0) {
+      liveLex = words;
+      ENTROPY.innerHTML = '<span class="online">HORSE.TXT</span>';
+      MODE.classList.add('online');
+      rulerBlink();
+    }
   } catch (e) {
-    console.log(e);
+    console.log("Offline mode active");
     ENTROPY.textContent = 'INTERNAL BUFFER';
   }
   updateUI();
 })();
 
 /* ----------  event listeners  ---------- */
+
+// 1. Audio Wake
 document.addEventListener('click', initAudio, { once: true });
 document.addEventListener('keydown', initAudio, { once: true });
 
+// 2. Button Listeners (FIXED)
 document.querySelectorAll('.cmd, .f-key').forEach(button => {
+  // CRITICAL FIX: Prevent focus loss when clicking buttons
+  button.addEventListener('mousedown', (e) => {
+    e.preventDefault(); 
+  });
+  
   button.addEventListener('click', (e) => {
     e.preventDefault();
     const fkey = e.currentTarget.getAttribute('data-fkey');
@@ -294,6 +330,7 @@ document.querySelectorAll('.cmd, .f-key').forEach(button => {
   });
 });
 
+// 3. Keyboard Listeners
 document.addEventListener('keydown', e => {
   initAudio();
   let handled = false;
@@ -301,6 +338,12 @@ document.addEventListener('keydown', e => {
   if (e.key.match(/^F([1-9]|10)$/)) {
     e.preventDefault();
     triggerFKey(e.key);
+    handled = true;
+  }
+
+  if (e.ctrlKey && e.key.match(/^[1-9]$/)) {
+    e.preventDefault();
+    triggerFKey('F' + e.key);
     handled = true;
   }
 
@@ -322,6 +365,11 @@ document.addEventListener('keydown', e => {
     setTimeout(updateUI, 10);
   }
 }, { capture: true });
+
+// 4. Input Listener (Keep UI updated)
+VIEWPORT.addEventListener('input', updateUI);
+VIEWPORT.addEventListener('keyup', updateUI);
+VIEWPORT.addEventListener('mouseup', updateUI);
 
 window.triggerFKey = triggerFKey;
 </script>
