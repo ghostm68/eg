@@ -1,10 +1,12 @@
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💾</text></svg>"> 
-<title>displaywriter ii</title>
+<title>QUANTUM WORDSTAR 2077</title>
+<!-- 1. Load the Quantum Library -->
+<script src="https://unpkg.com/quantum-circuit"></script>
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -96,7 +98,7 @@ small{font-size:11px;color:var(--dim);}
 
 .ai-body{
     padding:20px;
-    color:#f72840;
+    color:#e0e0ff;
     font-size:1.1rem;
 }
 
@@ -107,7 +109,7 @@ small{font-size:11px;color:var(--dim);}
 .ai-input-group label{
     display:block;
     margin-bottom:8px;
-    color:#5e2b38;
+    color:#b3b3ff;
     font-size:1rem;
 }
 
@@ -116,8 +118,8 @@ small{font-size:11px;color:var(--dim);}
 .ai-input-group textarea{
     width:100%;
     padding:10px;
-    background:rgb(216, 0, 25);
-    border:1px solid var(--ai-red);
+    background:rgba(10,0,25,0.7);
+    border:1px solid var(--ai-purple);
     color:white;
     font-family:'VT323',monospace;
     font-size:1.1rem;
@@ -129,7 +131,7 @@ small{font-size:11px;color:var(--dim);}
 .ai-input-group textarea:focus{
     outline:none;
     border-color:var(--ai-blue);
-    box-shadow:0 0 10px rgb(216, 0, 25);
+    box-shadow:0 0 10px rgba(0,179,255,0.3);
 }
 
 #aiPrompt{
@@ -139,8 +141,8 @@ small{font-size:11px;color:var(--dim);}
 
 #aiOutput{
     min-height:150px;
-    background:rgb(216, 0, 25);
-    border:1px solid var(--ai-red);
+    background:rgba(20,0,40,0.7);
+    border:1px solid var(--ai-purple);
     padding:15px;
     margin-top:15px;
     white-space:pre-wrap;
@@ -302,12 +304,17 @@ small{font-size:11px;color:var(--dim);}
 <div id="info-line">
   Quantum DisplayWriter 370 | Memory: 640 K | Entropy: <span id="entropy-source">INITIALIZING...</span>
 </div>
-<script>
 
+<script>
+/* ----------  AI MODAL FUNCTIONS ---------- */
+
+// 1. OPEN FUNCTION
 function openNvidiaModal() {
+    beep();
     document.getElementById('ai-overlay').style.display = 'block';
     document.getElementById('ai-modal').style.display = 'block';
     
+    // Load saved API key
     const k = localStorage.getItem('quantum_nvidia_key');
     if(k) {
         document.getElementById('nvidiaKey').value = k;
@@ -315,139 +322,175 @@ function openNvidiaModal() {
     }
 }
 
+// 2. CLOSE FUNCTION
 function closeAIModal() {
+    beep();
     document.getElementById('ai-overlay').style.display = 'none';
     document.getElementById('ai-modal').style.display = 'none';
 }
 
-// Main AI generation function
+// 3. GENERATE INSIGHT (Using "Creative Writing" robustness)
 async function generateInsight() {
     const keyField = document.getElementById('nvidiaKey');
     const promptField = document.getElementById('aiPrompt');
+    const modelField = document.getElementById('nvidiaModel'); // Gets your hidden input
     const out = document.getElementById('aiOutput');
     const btn = document.getElementById('genBtn');
     const status = document.getElementById('aiStatus');
 
     const apiKey = keyField.value.trim();
     const prompt = promptField.value.trim();
-    const model = "nvidia/nvidia-nemotron-nano-9b-v2";
     
-    // Validate
+    // Gets "nvidia/nvidia-nemotron-nano-9b-v2" from your hidden input
+    const model = modelField ? modelField.value : "nvidia/nvidia-nemotron-nano-9b-v2";
+    
+    // Validate input
     if (!apiKey) {
         out.textContent = "ERROR: No API key provided.\n\nGet a free key from: https://build.nvidia.com";
         status.textContent = 'Status: Missing API key';
+        beepError();
         return;
     }
     
     if (!prompt) {
-        out.textContent = "ERROR: Please enter a creative prompt.";
+        out.textContent = "ERROR: Please enter a creative prompt.\n\nExample: 'Describe a cyberpunk city at midnight, with neon reflections on wet streets...'";
         status.textContent = 'Status: Missing prompt';
+        beepError();
         return;
     }
     
-    // Save API key
+    // Save API key to localStorage
     localStorage.setItem('quantum_nvidia_key', apiKey);
     
-  // UI updates
+    // Disable button and show loading
     btn.disabled = true;
     btn.textContent = "Generating...";
-    out.textContent = "⏳ AI is crafting your paragraph...";
-    status.textContent = 'Status: Contacting NVIDIA API...';
+    out.textContent = "Initiating neural synthesis...\n" + "█".repeat(20) + "\nContacting NVIDIA API via proxy...";
+    status.textContent = 'Status: Establishing secure connection...';
     
     try {
-      // Direct API call - NVIDIA API supports CORS
-        const apiUrl = 'https://integrate.api.nvidia.com/v1/chat/completions';
-        
+        // Create the request body
         const requestBody = {
-            model: model,
+            model: model, // Uses the value from your hidden input
             messages: [
                 {
-                    "role": "system", 
-                    "content": "You are a creative writing assistant specializing in cyberpunk, sci-fi, and poetic prose. Write with rich descriptions, compelling imagery, and atmospheric mood. Focus on showing rather than telling."
+                    role: "system",
+                    content: "You are a creative writing assistant specialized in cyberpunk, sci-fi, and poetic prose. Generate vivid, atmospheric paragraphs with rich imagery and emotional depth. Focus on sensory details, mood, and atmosphere."
                 },
                 {
-                    "role": "user", 
-                    "content": prompt
+                    role: "user",
+                    content: `Write a compelling paragraph about: ${prompt}\n\nMake it vivid, atmospheric, and suitable for a cyberpunk word processor. Use descriptive language and create a strong mood.`
                 }
             ],
             temperature: 0.8,
             max_tokens: 500,
             stream: false
         };
-
+        
+        // === CORS PROXY LINE ===
+        // Using corsproxy.io to bypass CORS restrictions
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions')}`;
+        
         const response = await fetch(proxyUrl, {
             method: 'POST',
             headers: {
-                'Authorization': 'Bearer ' + apiKey,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             },
             body: JSON.stringify(requestBody)
         });
-
-        // Check response
-        const responseText = await response.text();
-
+        
         if (!response.ok) {
-            throw new Error(`API error: ${response.status} - ${responseText.substring(0, 100)}`);
-        }
-
-        let data;
-        try {
-            data = JSON.parse(responseText);
-        } catch (parseError) {
-            throw new Error(`Invalid JSON response from AI`);
+            let errorMsg = `API Error: ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMsg = errorData.error?.message || JSON.stringify(errorData);
+            } catch (e) { /* ignore */ }
+            
+            throw new Error(errorMsg);
         }
         
-        if (data.choices && data.choices[0] && data.choices[0].message) {
-            const generatedText = data.choices[0].message.content;
-            
-            // Display in modal
-            out.textContent = generatedText;
-            
-            // Insert into main editor
-            const viewport = document.getElementById('viewport');
-            if (viewport) {
-                viewport.focus();
-                document.execCommand('insertHTML', false, 
-                    `<br><br><span style="color:#ff0000;text-shadow:0 0 5px #ff0000">[AI-GENERATED]</span><br>${generatedText}<br>`
-                );
-            }
-            
-            status.textContent = `Status: Generated ${generatedText.split(' ').length} words | Model: ${model}`;
-            
-        } else if (data.error) {
-            throw new Error(data.error.message || 'API returned an error');
-        } else {
-            throw new Error('Unexpected response format from AI');
-        }
-
+        const data = await response.json();
+        const generatedText = data.choices[0].message.content;
+        
+        // Display in AI output
+        out.textContent = generatedText;
+        
+        // Also insert into main editor viewport
+        VIEWPORT.focus();
+        document.execCommand('insertHTML', false, `<br><br><span style="color:var(--blood);text-shadow:0 0 5px var(--blood)">[AI-GENERATED]</span><br>${generatedText}<br>`);
+        
+        status.textContent = `Status: Generated ${generatedText.split(' ').length} words | Model: ${model.split('/').pop()}`;
+        beepSuccess();
+        
     } catch (error) {
         console.error('AI Generation Error:', error);
-        out.textContent = '❌ Error: ' + error.message;
+        
+        // User-friendly error messages
+        let errorMessage = error.message;
+        if (error.message.includes('Failed to fetch')) {
+            errorMessage = "Network error: Could not connect to NVIDIA API.\n\nPossible issues:\n1. No internet connection\n2. API key is invalid/expired\n3. CORS proxy is blocked\n\nTry getting a new API key from build.nvidia.com";
+        } else if (error.message.includes('401')) {
+            errorMessage = "Authentication error: Invalid API key.\n\nPlease check your NVIDIA API key and make sure it's active.";
+        } else if (error.message.includes('429')) {
+            errorMessage = "Rate limit exceeded: Too many requests.\n\nFree tier has limited requests. Try again in a few minutes.";
+        }
+        
+        out.textContent = `ERROR: ${errorMessage}\n\nCheck your API key and internet connection.`;
         status.textContent = 'Status: Generation failed';
+        beepError();
     } finally {
         btn.disabled = false;
         btn.textContent = "Generate Paragraph";
     }
 }
 
-// Initialize when page loads
-// wait until the indicator is really in the DOM
-const wait = setInterval(() => {
-  const el = document.getElementById('mode-indicator');
-  if (!el) return;                 // still parsing – wait
-  clearInterval(wait);
-  el.addEventListener('click', openNvidiaModal);
-  el.style.cursor = 'pointer';
-  console.log('click handler attached');
-}, 50);
+// Special beep functions for AI
+function beepError() {
+    if (!audioCtx) initAudio();
+    if (audioCtx.state !== 'running') return;
+    
+    try {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sawtooth';
+        o.frequency.value = 220;
+        
+        o.connect(g);
+        g.connect(audioCtx.destination);
+        
+        o.start();
+        g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
+        o.stop(audioCtx.currentTime + 0.3);
+    } catch (e) {
+        console.error(e);
+    }
+}
 
-// Export functions to global scope
-window.openNvidiaModal = openNvidiaModal;
-window.closeAIModal = closeAIModal;
-window.generateInsight = generateInsight;
-</script> 
-<script>
+function beepSuccess() {
+    if (!audioCtx) initAudio();
+    if (audioCtx.state !== 'running') return;
+    
+    try {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sine';
+        o.frequency.value = 880;
+        
+        o.connect(g);
+        g.connect(audioCtx.destination);
+        
+        o.start();
+        g.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
+        o.stop(audioCtx.currentTime + 0.5);
+    } catch (e) {
+        console.error(e);
+    }
+}
+
 /* ----------  ORIGINAL STATE ---------- */
 const VIEWPORT = document.getElementById('viewport');
 const STATUS = document.getElementById('status-readout');
@@ -460,9 +503,10 @@ let liveLex = null, insertMode = true;
 let audioCtx = null; // Global audio context
 
 const FB = {
-  nouns: ["nebula","echo","whisper","chronometer","void","nexus","fragment","signal","horizon","monolith","algorithm","spectre","isotope","vortex","cipher","drone","glitch","network","phantom","mainframe","reactor","synapse","artifact","shard","memory","paradox","entropy","vector","protocol","silence","shadow","circuit"],
-  verbs: ["fractured","hummed","collapsed","drifted","ignited","observed","shattered","pulsed","dissolved","encoded","transmitted","erased","aligned","resonated","orbited","scanned","corrupted","merged","decoded","manifested","echoed","vibrated","locked","severed","mapped","synced","traced","hunted","breached","calibrated","awoke","slept"],
-  adjs: ["silent","obsidian","infinite","hollow","electric","forgotten","crimson","static","digital","frozen","luminous","fractal","haunted","cybernetic","terminal","kinetic","dormant","volatile","synthetic","solar","magnetic","spectral","unseen","ancient","liquid","binary","nuclear","astral","chrome","velvet","fading","hidden"]
+  nouns: ["nebula","echo","whisper","chronometer","void","nexus","fragment","signal","horizon","monolith","algorithm","spectre","isotope","vortex","cipher","drone","glitch","network","phantom","mainframe","reactor","synapse","artifact","shard","memory","paradox","entropy","vector","protocol","silence","shadow","circuit"/* ADD MORE NOUNS HERE: */ ,"datastream","firewall","cyborg","nexus","mainframe"],
+  verbs: ["fractured","hummed","collapsed","drifted","ignited","observed","shattered","pulsed","dissolved","encoded","transmitted","erased","aligned","resonated","orbited","scanned","corrupted","merged","decoded","manifested","echoed","vibrated","locked","severed","mapped","synced","traced","hunted","breached","calibrated","awoke","slept"/* ADD MORE VERBS HERE: */ ,"encrypted","rebooted","glitched","uploaded"],
+  adjs: ["silent","obsidian","infinite","hollow","electric","forgotten","crimson","static","digital","frozen","luminous","fractal","haunted","cybernetic","terminal","kinetic","dormant","volatile","synthetic","solar","magnetic","spectral","unseen","ancient","liquid","binary","nuclear","astral","chrome","velvet","fading","hidden"
+  /* ADD MORE ADJECTIVES HERE: */ ,"encrypted","neural","quantum","thermal"]
 };
 
 /* ----------  quantum functions  ---------- */
@@ -721,7 +765,7 @@ document.addEventListener('keydown', e => {
   initAudio();
   let handled = false;
 
-  if (e.key && e.key.match(/^F([1-9]|10)$/)) {
+  if (e.key.match(/^F([1-9]|10)$/)) {
     e.preventDefault();
     triggerFKey(e.key);
     handled = true;
@@ -746,13 +790,19 @@ document.addEventListener('keydown', e => {
   }
 }, { capture: true });
 
-// Export functions to global scope
+// Prevent closing modal with Escape unless modal is open
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('ai-modal').style.display === 'block') {
+    e.preventDefault();
+    closeAIModal();
+  }
+});
+
+// Backup global exposer
 window.triggerFKey = triggerFKey;
-window.beep = beep; // Export beep for AI module
+window.openNvidiaModal = openNvidiaModal;
+window.closeAIModal = closeAIModal;
+window.generateInsight = generateInsight;
 </script>
-
-
-
- 
 </body>
 </html>
