@@ -86,6 +86,7 @@ small{font-size:11px;color:var(--dim);}
 <script type="module">
 import * as qr from 'https://unpkg.com/quantum-circuit@0.2.2/lib/quantum-circuit.min.mjs';
 
+/* ----------  state  ---------- */
 const VIEWPORT=document.getElementById('viewport');
 const STATUS=document.getElementById('status-readout');
 const MODE=document.getElementById('mode-indicator');
@@ -94,69 +95,73 @@ const RULER=document.getElementById('ruler');
 const HORSE='https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/horse.txt';
 
 let liveLex=null, insertMode=true;
-
 const FB={
   nouns:["nebula","echo","whisper","chronometer","void","nexus","fragment","signal","horizon","monolith","algorithm","spectre","isotope","vortex","cipher","drone","glitch","network","phantom","mainframe","reactor","synapse","artifact","shard","memory","paradox","entropy","vector","protocol","silence","shadow","circuit"],
   verbs:["fractured","hummed","collapsed","drifted","ignited","observed","shattered","pulsed","dissolved","encoded","transmitted","erased","aligned","resonated","orbited","scanned","corrupted","merged","decoded","manifested","echoed","vibrated","locked","severed","mapped","synced","traced","hunted","breached","calibrated","awoke","slept"],
   adjs:["silent","obsidian","infinite","hollow","electric","forgotten","crimson","static","digital","frozen","luminous","fractal","haunted","cybernetic","terminal","kinetic","dormant","volatile","synthetic","solar","magnetic","spectral","unseen","ancient","liquid","binary","nuclear","astral","chrome","velvet","fading","hidden"]
 };
 
-/* --------- init --------- */
+/* ----------  boot  ---------- */
 (async()=>{
-  beep();
-  VIEWPORT.focus();
+  beep(); VIEWPORT.focus();
   ENTROPY.textContent='CONNECTING...';
   try{
     const txt=await (await fetch(HORSE)).text();
     const words=[...new Set(txt.toLowerCase().replace(/[^\w\s]/g,'').split(/\s+/).filter(w=>w.length>4))];
     if(words.length<10) throw new Error('short');
-    liveLex=words;
-    ENTROPY.innerHTML='<span class="online">HORSE.TXT</span>';
-    MODE.classList.add('online');
-    rulerBlink();
-  }catch{
-    ENTROPY.textContent='INTERNAL BUFFER';
-    liveLex=null;
-  }
+    liveLex=words; ENTROPY.innerHTML='<span class="online">HORSE.TXT</span>';
+    MODE.classList.add('online'); rulerBlink();
+  }catch{ ENTROPY.textContent='INTERNAL BUFFER'; }
   updateUI();
 })();
 
-/* --------- F-key router --------- */
+/* ----------  key router  (BLOCKS browser defaults)  ---------- */
+document.addEventListener('keydown', e=>{
+  let handled=false;
+  /* F1-F10  */
+  if(e.key.match(/^F([1-9]|10)$/)){
+    e.preventDefault();           // stop Chrome help / refresh
+    triggerFKey(e.key);
+    handled=true;
+  }
+  /* Ctrl 1-0  (laptop fallback)  */
+  if(e.ctrlKey && e.key.match(/^[1-9]$/)){
+    e.preventDefault();
+    triggerFKey('F'+e.key);
+    handled=true;
+  }
+  /* WordStar diamond  */
+  if(e.ctrlKey){
+    const m={S:'left',D:'right',E:'up',X:'down',A:'wordLeft',F:'wordRight',G:'delChar',Y:'delLine',B:'bold',U:'underline'};
+    if(m[e.key.toUpperCase()]){ e.preventDefault(); cmd(m[e.key.toUpperCase()]); handled=true; }
+  }
+  if(handled){ e.stopPropagation(); setTimeout(updateUI,0); }
+}, {capture:true});
+
+/* ----------  click handlers (keep for mouse users)  ---------- */
 window.triggerFKey=k=>{
   switch(k){
     case 'F1': generate(); break;
     case 'F2': collapse(); break;
     case 'F3': save80(); break;
-    case 'F4': print(); break;
+    case 'F4': window.print(); break;
     case 'F5': if(confirm('PURGE BUFFER?')) VIEWPORT.innerHTML=''; break;
     case 'F6': cmd('bold'); break;
     case 'F7': cmd('underline'); break;
     case 'F8':{const s=prompt('SEARCH:'); if(s) window.find(s);} break;
-    case 'F9': alert('CTRL+S/E/D/X move\nCTRL+Y kill line\nF1 quantum\nF2 entropy'); break;
+    case 'F9': alert('F1-F10  |  Ctrl+1-0 (laptop)  |  Ctrl+S/E/D/X move  |  Ctrl+Y kill line'); break;
     case 'F10': location.reload(); break;
   }
   VIEWPORT.focus();
 };
 
-/* --------- keyboard --------- */
-VIEWPORT.onkeydown=e=>{
-  if(e.ctrlKey){
-    const m={S:'left',D:'right',E:'up',X:'down',A:'wordLeft',F:'wordRight',G:'delChar',Y:'delLine',B:'bold',U:'underline'};
-    if(m[e.key.toUpperCase()]){ e.preventDefault(); cmd(m[e.key.toUpperCase()]); }
-  }
-  if(e.key.startsWith('F')){ e.preventDefault(); triggerFKey(e.key); }
-  setTimeout(updateUI,0);
-};
-VIEWPORT.onkeyup=VIEWPORT.onclick=updateUI;
-
-/* --------- quantum --------- */
+/* ----------  quantum  ---------- */
 function quantumChoice(list){
   const qc=new qr.QuantumCircuit(5);
   for(let i=0;i<5;i++) qc.addGate('h',i,i);
   qc.run();
   const p=qc.getState().map(s=>s.magnitude**2);
-  let r=Math.random(),i=0;
-  for(;i<p.length;i++){ r-=p[i]; if(r<=0) break; }
+  let r=Math.random(),i=0; for(;i<p.length;i++){ r-=p[i]; if(r<=0) break; }
   return list[i%list.length];
 }
 function generate(){
@@ -173,10 +178,9 @@ function rulerBlink(){
   setTimeout(()=>RULER.style.borderBottomColor='',150);
 }
 
-/* --------- util --------- */
+/* ----------  editing  ---------- */
 function cmd(c){
-  const s=window.getSelection();
-  if(!s.rangeCount) return;
+  const s=window.getSelection(); if(!s.rangeCount) return;
   switch(c){
     case 'left':case 'right':case 'up':case 'down':case 'wordLeft':case 'wordRight':
       s.modify('move',c.includes('Left')||c==='left'||c==='up'?'backward':'forward',c.includes('word')?'word':c.includes('Left')||c==='left'||c==='right'?'character':'line'); break;
@@ -189,11 +193,10 @@ function cmd(c){
   }
 }
 function save80(){
-  const text=VIEWPORT.innerText.split('\n').map(l=>l.padEnd(80,' ').slice(0,80)).join('\r\n');
-  const blob=new Blob([text],{type:'text/plain'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='QUANTUM.DOC'; a.click();
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>quantum-backup</title><style>body{background:#000;color:#fcc;font:22px/1.4 VT323,monospace;white-space:pre-wrap;}</style></head><body>${VIEWPORT.innerHTML}</body></html>`;
+  const blob=new Blob([html],{type:'text/html'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='quantum-backup.html'; a.click();
 }
-function print(){ window.print(); }
 function updateUI(){
   const sel=window.getSelection(); if(!sel.rangeCount) return;
   const range=sel.getRangeAt(0);
