@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Quantum Wordstar Nexus</title>
+    <!-- Library for Local Simulation Fallback -->
     <script src="https://unpkg.com/quantum-circuit@0.9.246/dist/quantum-circuit.min.js"></script>
 
     <style>
-        /* (SAME STYLING AS BEFORE - NO CHANGES NEEDED HERE) */
         :root {
             --bg-color: #050505;
             --term-red: #ff2a2a;
@@ -35,16 +35,35 @@
             background: var(--glass);
             box-shadow: 0 0 20px rgba(255, 0, 0, 0.15);
             position: relative;
+            z-index: 10;
         }
 
+        /* VISUALIZER CONTAINER */
+        .visualizer-frame {
+            width: 100%;
+            height: 120px;
+            border: 1px solid #333;
+            margin-bottom: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* THE QUIRK EMBED */
+        /* We invert the colors to make it Dark Mode (Black/Neon) */
+        iframe {
+            width: 100%;
+            height: 200%; /* Taller to hide the bottom toolbar */
+            border: none;
+            filter: invert(1) hue-rotate(180deg) contrast(1.2);
+            transform: translateY(-20px); /* Shift up to hide top menu */
+        }
+
+        /* Scanline effect */
         .container::before {
             content: " ";
             display: block;
             position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
+            top: 0; left: 0; bottom: 0; right: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
                         linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(255, 255, 255, 0.02), rgba(255, 0, 0, 0.03));
             z-index: 2;
@@ -141,12 +160,19 @@
 <div class="container">
     <h1>WORDSTAR <span class="blink">NEXUS</span> // QUANTUM MUSE</h1>
     
+    <!-- HEADER METADATA -->
     <div style="display: flex; justify-content: space-between; color: #888; font-size: 0.9rem; margin-bottom: 10px;">
         <span>System Status: <span style="color: var(--text-white)">CONNECTED</span></span>
-        <!-- UPDATE: Visual label for 9 Qubits -->
         <span>Register: <span style="color: var(--text-white)">9 QUBITS</span></span>
     </div>
 
+    <!-- QUIRK VISUALIZER (Live from algassert.com, styled Dark via CSS) -->
+    <!-- The URL hash defines 9 H gates and 1 Entanglement -->
+    <div class="visualizer-frame">
+        <iframe src='https://algassert.com/quirk#circuit={"cols":[["H","H","H","H","H","H","H","H","H"],["•",1,1,1,1,1,1,1,"X"]]}'></iframe>
+    </div>
+
+    <!-- MAIN DISPLAY -->
     <div class="split-display">
         <div class="output-screen" id="poem-output">
             Awaiting quantum initialization...<br>
@@ -156,86 +182,99 @@
 Waiting for circuit construction...</div>
     </div>
 
-    <button onclick="generateEntropy()">COLLAPSE WAVE FUNCTION</button>
+    <button onclick="runQuantumProcess()">COLLAPSE WAVE FUNCTION</button>
 
     <div class="status" id="log">
-        Tunnel: Active | Encryption: <span>Quantum-512</span>
+        Tunnel: Secured | Crypto-Source: <span style="color:var(--term-red)">Standby</span>
     </div>
 </div>
 
 <script>
     // ============================================
-    // 1. DATASETS (EXPAND HERE)
+    // 1. CONFIGURATION
     // ============================================
-    // You can add hundreds of lines here. The engine will handle it.
-    // Ensure every line ends with a comma "," except the last one.
+    // Paste your key here. If it's empty, it defaults to simulation.
+    const ANU_API_KEY = "PASTE_YOUR_KEY_HERE"; 
     
+    const numQubits = 9;
+
+    // ============================================
+    // 2. DATASETS (Your Expanded Lists)
+    // ============================================
     const openers = [
-        "In the silence of the neon void,",
-        "Fragments of a lost memory,",
-        "Digital ghosts whisper softly,",
-        "Under the weight of a dying sun,",
-        "Between the static and the signal,", 
-        "The sky was the color of a dead channel,",
-        "Reflections in the obsidian glass,", 
-        "Upon the edge of the event horizon,",
-        // PASTE MORE "OPENERS" HERE...
-        "A glitch in the fabric of morning,"
+        "In the silence of the neon void,", "Fragments of a lost memory,", "Digital ghosts whisper softly,",
+        "Under the weight of a dying sun,", "Between the static and the signal,", "The sky was the color of a dead channel,",
+        "Reflections in the obsidian glass,", "Upon the edge of the event horizon,", "A glitch in the fabric of morning,"
     ];
 
     const middles = [
-        "entropy dissolves the concrete,",
-        "wires tangle with human veins,",
-        "the algorithm learns to weep,",
-        "time fractures into binary dust,",
-        "the logic gates slam shut,",
-        "a heartbeat echoes in the server room,",
-        "shadows stretch across the motherboard,",
-        "data streams bleed into the rain,",
-        // PASTE MORE "MIDDLES" HERE...
-        "silence overwrites the protocol,"
+        "entropy dissolves the concrete,", "wires tangle with human veins,", "the algorithm learns to weep,",
+        "time fractures into binary dust,", "the logic gates slam shut,", "a heartbeat echoes in the server room,",
+        "shadows stretch across the motherboard,", "data streams bleed into the rain,", "silence overwrites the protocol,"
     ];
 
     const closers = [
-        "seeking a signal that never comes.",
-        "fading into absolute zero.",
-        "dreaming of electric sleep.",
-        "waiting for the reboot.",
-        "lost in the infinite loop.",
-        "until the power fails.",
-        "becoming one with the noise.",
-        "erasing the user history.",
-        // PASTE MORE "CLOSERS" HERE...
-        "terminating the session."
+        "seeking a signal that never comes.", "fading into absolute zero.", "dreaming of electric sleep.",
+        "waiting for the reboot.", "lost in the infinite loop.", "until the power fails.",
+        "becoming one with the noise.", "erasing the user history.", "terminating the session."
     ];
 
-
     // ============================================
-    // 2. QUANTUM LOGIC ENGINE
+    // 3. MAIN LOGIC (Hybrid API + Sim)
     // ============================================
-    
- function generateEntropy() {
+    async function runQuantumProcess() {
         const poemDisplay = document.getElementById('poem-output');
         const qasmDisplay = document.getElementById('qasm-output');
         const statusLog = document.getElementById('log');
-        
-        // 1. SETUP QUANTUM SIMULATION
-        // (If you get an API later, you would pause this part and fetch the number instead)
-        const numQubits = 9; 
-        var circuit = new QuantumCircuit(numQubits);
 
-        for(let i = 0; i < numQubits; i++) {
-            circuit.addGate("h", i, i);
+        poemDisplay.innerHTML = `<span class="blink">Collapsing wave function...</span>`;
+
+        let seedValue = 0;
+        let sourceLabel = "";
+        let binaryString = "";
+
+        try {
+            // STEP A: Try to get Real Quantum Numbers (ANU)
+            if (!ANU_API_KEY || ANU_API_KEY === "PASTE_YOUR_KEY_HERE") {
+                throw new Error("No Key");
+            }
+
+            // Note: ANU V2 API call
+            const response = await fetch('https://api.quantumnumbers.anu.edu.au/api/v1/quantum/rand_uint8?length=1&type=uint8', {
+                headers: { 'x-api-key': ANU_API_KEY }
+            });
+
+            if (!response.ok) throw new Error("API Blocked");
+
+            const data = await response.json();
+            seedValue = data.data[0]; // The real quantum number (0-255)
+            
+            // Convert to binary for display (pad to 9 bits roughly)
+            binaryString = seedValue.toString(2).padStart(9, '0');
+            sourceLabel = "ANU QUANTUM VACUUM";
+
+        } catch (error) {
+            // STEP B: Fallback to Local Simulation
+            console.log("Using Local Simulation due to:", error.message);
+            
+            var circuit = new QuantumCircuit(numQubits);
+            for(let i = 0; i < numQubits; i++) { circuit.addGate("h", i, i); }
+            circuit.addGate("cx", numQubits-1, [0, numQubits-1]); 
+            circuit.run();
+            
+            const measurement = circuit.measureAll(); 
+            binaryString = measurement.join('');
+            seedValue = parseInt(binaryString, 2);
+            
+            // Generate QASM for the right panel
+            const rawQASM = circuit.exportToQASM();
+            qasmDisplay.innerText = "// OPENQASM 2.0 (9-Qubit Register)\n" + rawQASM;
+            
+            sourceLabel = "LOCAL SIMULATION CLUSTER";
         }
-        circuit.addGate("cx", numQubits-1, [0, numQubits-1]); 
 
-        // 2. MEASUREMENT
-        circuit.run();
-        const measurement = circuit.measureAll(); 
-        const binaryString = measurement.join('');
-        const seedValue = parseInt(binaryString, 2);
-
-        // 3. POEM GENERATION
+        // STEP C: Construct Poem
+        // We use offsets to get 3 unique lines from 1 seed
         let idx1 = seedValue;
         let idx2 = seedValue + 15; 
         let idx3 = seedValue + 30; 
@@ -244,8 +283,7 @@ Waiting for circuit construction...</div>
         let line2 = middles[idx2 % middles.length];
         let line3 = closers[idx3 % closers.length];
 
-        // 4. UI UPDATE (Reordered)
-        // We use a "flex" layout inside the string to push the footer to the bottom
+        // STEP D: Update UI
         poemDisplay.innerHTML = `
             <div style="margin-bottom: 2rem;">
                 ${line1}<br>
@@ -255,22 +293,13 @@ Waiting for circuit construction...</div>
 
             <!-- TECHNICAL FOOTER -->
             <div style="border-top: 1px dashed #333; padding-top: 10px; font-size: 0.8rem; font-family: 'Consolas', monospace; color: #666;">
-                <span style="color: var(--term-red);">>> SOURCE ID:</span> LOCAL_SIM_CLUSTER<br>
+                <span style="color: var(--term-red);">>> SOURCE:</span> ${sourceLabel}<br>
                 <span>>> VECTOR:</span> |${binaryString}⟩<br>
                 <span>>> SEED:</span> ${seedValue}
             </div>
         `;
 
-        // 5. QASM UPDATE
-        const rawQASM = circuit.exportToQASM();
-        qasmDisplay.innerText = "// OPENQASM 2.0 (9-Qubit Register)\n" + rawQASM;
-
-        // 6. STATUS BAR
-       statusLog.innerHTML = `Tunnel: Secured | Crypto-Source: <span style="color:var(--term-red)">Berlin-QRNG</span>`;
-    }
-
-        // Update Log
-        document.getElementById('log').innerHTML = `Tunnel: Active | Entropy: <span>${Math.pow(2, numQubits)} States</span>`;
+        statusLog.innerHTML = `Tunnel: Secured | Entropy: <span style="color:var(--term-red)">${sourceLabel}</span>`;
     }
 </script>
 
