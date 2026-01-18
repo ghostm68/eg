@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <title>Quantum Wordstar Nexus</title>
-    <!-- Library for Local Quantum Simulation -->
+    <!-- Library for Quantum Simulation -->
     <script src="https://unpkg.com/quantum-circuit@0.9.246/dist/quantum-circuit.min.js"></script>
 
-  <style>
+    <style>
         :root {
-            --bg-color: #050505;
-            --term-red: #ff2a2a;
-            --term-dim: #8f0000;
-            --text-white: #eeeeee;
-            --glass: rgba(20, 0, 0, 0.8);
-            --border-grey: #333333;
+            /* CYBERPUNK PALETTE */
+            --bg-color: #050505;       /* Deep Black (Page Background) */
+            --term-red: #ff2a2a;       /* Bright Neon Red */
+            --term-dim: #8f0000;       /* Dark Red */
+            --text-white: #eeeeee;     /* Standard Off-White */
+            --glass: rgba(20, 0, 0, 0.8); /* Tinted Glass */
+            --border-grey: #333333;    /* Subtle borders */
         }
 
-        /* --- THE MAGIC HIGHLIGHT FIX --- */
-        /* This makes selected text RED instead of Blue */
+        /* --- RED HIGHLIGHTING --- */
         ::selection {
             background: var(--term-red);
             color: #000;
@@ -49,7 +49,7 @@
             z-index: 10;
         }
 
-        /* Scanlines */
+        /* Scanline Overlay */
         .container::before {
             content: " ";
             display: block;
@@ -62,7 +62,19 @@
             pointer-events: none;
         }
 
-        /* --- EDITOR STYLES (Replaces Iframe Styles) --- */
+        h1 {
+            color: var(--term-red);
+            letter-spacing: 5px;
+            border-bottom: 2px solid var(--term-red);
+            padding-bottom: 10px;
+            text-shadow: 0 0 8px var(--term-dim);
+            margin-top: 0;
+        }
+
+        .blink { animation: blinker 1s linear infinite; color: #fff; }
+        @keyframes blinker { 50% { opacity: 0; } }
+
+        /* --- LIVE EDITOR STYLING (UPDATED) --- */
         .article-header {
             font-size: 0.8rem;
             color: #666;
@@ -79,10 +91,14 @@
             display: block;
             width: 100%;
             height: 120px;
-            background-color: #080000; /* Darker black for input */
-            border: 1px solid #333;
-            border-left: 2px solid var(--term-red); /* The Red Stripe */
-            color: var(--text-white);
+            
+            /* --- COLOR UPDATE START --- */
+            background-color: #2a2a2a; /* Grey Background */
+            color: #ffffff;            /* Bright White Text */
+            /* --- COLOR UPDATE END --- */
+            
+            border: 1px solid #444;
+            border-left: 2px solid var(--term-red);
             padding: 15px;
             box-sizing: border-box;
             overflow-y: auto;
@@ -92,32 +108,21 @@
             line-height: 1.4;
             margin-bottom: 20px;
             transition: all 0.3s ease;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         }
 
         article:focus {
             border-color: var(--term-red);
-            background-color: #0c0000;
+            /* Slightly lighter grey when active */
+            background-color: #333333; 
             box-shadow: inset 0 0 15px rgba(255, 42, 42, 0.05);
         }
 
-        /* Editor Scrollbar */
         article::-webkit-scrollbar { width: 8px; }
-        article::-webkit-scrollbar-track { background: #000; }
+        article::-webkit-scrollbar-track { background: #222; }
         article::-webkit-scrollbar-thumb { background: var(--term-dim); }
 
-        /* --- REST OF THE UI --- */
-        h1 {
-            color: var(--term-red);
-            letter-spacing: 5px;
-            border-bottom: 2px solid var(--term-red);
-            padding-bottom: 10px;
-            text-shadow: 0 0 8px var(--term-dim);
-            margin-top: 0;
-        }
-
-        .blink { animation: blinker 1s linear infinite; color: #fff; }
-        @keyframes blinker { 50% { opacity: 0; } }
-
+        /* --- OUTPUT AREA --- */
         .split-display {
             display: flex;
             gap: 15px;
@@ -154,6 +159,7 @@
             opacity: 0.8;
         }
 
+        /* --- BUTTONS & STATUS --- */
         button {
             background: transparent;
             border: 1px solid var(--term-red);
@@ -189,15 +195,14 @@
 <div class="container">
     <h1>WORDSTAR <span class="blink">NEXUS</span> // QUANTUM MUSE</h1>
     
-    <!-- SYSTEM INFO -->
     <div style="display: flex; justify-content: space-between; color: #888; font-size: 0.9rem; margin-bottom: 15px;">
         <span>System Status: <span style="color: var(--text-white)">CONNECTED</span></span>
         <span>Register: <span style="color: var(--text-white)">9 QUBITS</span></span>
     </div>
 
-    <!-- NEW LIVE EDITOR (Replaces Iframe) -->
+    <!-- LIVE EDITOR -->
     <div class="article-header">
-        <span>>> INPUT BUFFER (URL_ENCODED)</span>
+        <span>>> INPUT BUFFER (HASH_STORAGE)</span>
         <span>AUTO-SAVE: ACTIVE</span>
     </div>
     <article contenteditable="plaintext-only" spellcheck="false"></article>
@@ -219,23 +224,20 @@ Waiting for circuit construction...</div>
     </div>
 </div>
 
-<!-- SCRIPT 1: EDITOR LOGIC (URL HASH SAVE) -->
+<!-- SCRIPT 1: LIVE EDITOR LOGIC -->
 <script>
 (function() {
     const article = document.querySelector('article');
     if (!article) return;
 
-    // Optional: Default text if empty
     if(!location.hash && !localStorage.getItem('article-hash')) {
-        article.textContent = "Waiting for input...\nType here to store data in the URL hash.";
+        article.textContent = "Welcome to the Wordstar Nexus.\nText typed here is preserved in the URL hash.\n\nUse it to store your quantum results...";
     }
 
-    // Event listeners
     article.addEventListener('input', debounce(500, saveArticle));
     window.addEventListener('DOMContentLoaded', loadArticle);
     window.addEventListener('hashchange', loadArticle);
 
-    // Load article from URL or localStorage
     async function loadArticle() {
         try {
             if (location.hash !== '') {
@@ -244,43 +246,25 @@ Waiting for circuit construction...</div>
                 const saved = localStorage.getItem('article-hash');
                 if (saved) await setArticle(saved);
             }
-            updateArticleTitle();
-        } catch (e) {
-            console.log('No article loaded');
-        }
+        } catch (e) { console.log('No article loaded'); }
     }
 
-    // Save article to URL and localStorage
     async function saveArticle() {
         const hash = await getArticleHash();
-        if (location.hash !== hash) {
-            history.replaceState({}, '', hash);
-        }
-        try { 
-            localStorage.setItem('article-hash', hash);
-        } catch (e) {}
-        updateArticleTitle();
+        if (location.hash !== hash) { history.replaceState({}, '', hash); }
+        try { localStorage.setItem('article-hash', hash); } catch (e) {}
     }
 
-    // Set article content from hash
     async function setArticle(hash) {
         const content = await decompressArticle(hash.slice(1));
         article.textContent = content;
     }
 
-    // Get hash from article content
     async function getArticleHash() {
         const content = article.textContent;
         return '#' + await compressArticle(content);
     }
 
-    // Update page title from article
-    function updateArticleTitle() {
-        const match = article.textContent.match(/^\n*#(.+)\n/);
-        if (match) document.title = `${match[1]} - INK REALM`;
-    }
-
-    // Compress article content
     async function compressArticle(string) {
         const byteArray = new TextEncoder().encode(string);
         const stream = new CompressionStream('deflate-raw');
@@ -292,7 +276,6 @@ Waiting for circuit construction...</div>
             .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
     }
 
-    // Decompress article content
     async function decompressArticle(b64) {
         const byteArray = Uint8Array.from(
             atob(b64.replace(/-/g, "+").replace(/_/g, "/")), 
@@ -306,7 +289,6 @@ Waiting for circuit construction...</div>
         return new TextDecoder().decode(buffer);
     }
 
-    // Debounce helper
     function debounce(ms, fn) {
         let timer;
         return (...args) => {
@@ -317,13 +299,16 @@ Waiting for circuit construction...</div>
 })();
 </script>
 
-<!-- SCRIPT 2: QUANTUM GENERATOR LOGIC -->
+<!-- SCRIPT 2: QUANTUM LOGIC -->
 <script>
-    // Config
-    const ANU_API_KEY = "PASTE_YOUR_KEY_HERE"; 
+    // --- OPTIONAL API KEY ---
+    const ANU_API_KEY = "pqp6gSBSycaEhZ45uSWYH4fMd5xU5ZBn3Jgu1fGQ "; 
+
+    // --- WORD LIMIT MATH ---
+    // 9 Qubits = 512 max words. (Lines 0 to 511)
     const numQubits = 9;
 
-    // Datasets
+    // --- YOUR DATASETS ---
     const openers = [
         "In the silence of the neon void,", "Fragments of a lost memory,", "Digital ghosts whisper softly,",
         "Under the weight of a dying sun,", "Between the static and the signal,", "The sky was the color of a dead channel,",
@@ -354,8 +339,8 @@ Waiting for circuit construction...</div>
         let binaryString = "";
 
         try {
-            // Try Real Quantum API
-            if (!ANU_API_KEY || ANU_API_KEY === "pqp6gSBSycaEhZ45uSWYH4fMd5xU5ZBn3Jgu1fGQ") { throw new Error("No Key"); }
+            // Attempt ANU API Call (Only if key is present)
+            if (!ANU_API_KEY) throw new Error("No Key");
 
             const response = await fetch('https://api.quantumnumbers.anu.edu.au/api/v1/quantum/rand_uint8?length=1&type=uint8', {
                 headers: { 'x-api-key': ANU_API_KEY }
@@ -364,21 +349,24 @@ Waiting for circuit construction...</div>
 
             const data = await response.json();
             seedValue = data.data[0];
-            binaryString = seedValue.toString(2).padStart(9, '0');
+            binaryString = seedValue.toString(2).padStart(numQubits, '0');
             sourceLabel = "ANU QUANTUM VACUUM";
 
         } catch (error) {
-            // Fallback to Simulation
+            // Fallback to Local Simulation
             var circuit = new QuantumCircuit(numQubits);
+            // Apply Hadamard to all 9 qubits
             for(let i = 0; i < numQubits; i++) { circuit.addGate("h", i, i); }
+            // Apply Entanglement
             circuit.addGate("cx", numQubits-1, [0, numQubits-1]); 
             circuit.run();
+            
             const measurement = circuit.measureAll(); 
             binaryString = measurement.join('');
             seedValue = parseInt(binaryString, 2);
             
             const rawQASM = circuit.exportToQASM();
-            qasmDisplay.innerText = "// OPENQASM 2.0 (9-Qubit Register)\n" + rawQASM;
+            qasmDisplay.innerText = "// OPENQASM 2.0 ("+numQubits+"-Qubit Register)\n" + rawQASM;
             sourceLabel = "LOCAL SIMULATION CLUSTER";
         }
 
@@ -397,6 +385,7 @@ Waiting for circuit construction...</div>
                 ${line2}<br>
                 ${line3}
             </div>
+            <!-- Technical Footer -->
             <div style="border-top: 1px dashed #333; padding-top: 10px; font-size: 0.8rem; font-family: 'Consolas', monospace; color: #666;">
                 <span style="color: var(--term-red);">>> SOURCE:</span> ${sourceLabel}<br>
                 <span>>> VECTOR:</span> |${binaryString}⟩<br>
@@ -410,3 +399,5 @@ Waiting for circuit construction...</div>
 
 </body>
 </html>
+
+        
