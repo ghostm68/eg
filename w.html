@@ -214,60 +214,60 @@ Waiting for circuit construction...</div>
     // 2. QUANTUM LOGIC ENGINE
     // ============================================
     
-    function generateEntropy() {
+ function generateEntropy() {
         const poemDisplay = document.getElementById('poem-output');
         const qasmDisplay = document.getElementById('qasm-output');
+        const statusLog = document.getElementById('log');
         
-        // --- UPDATE: SET TO 9 QUBITS ---
+        // 1. SETUP QUANTUM SIMULATION
+        // (If you get an API later, you would pause this part and fetch the number instead)
         const numQubits = 9; 
         var circuit = new QuantumCircuit(numQubits);
 
-        // --- AUTOMATIC GATES ---
-        // Loop through 0 to 8 to put all 9 qubits in superposition
         for(let i = 0; i < numQubits; i++) {
             circuit.addGate("h", i, i);
         }
-
-        // --- ENTANGLEMENT ---
-        // Entangle the first (0) and last (8) qubit
-        // This links the start and end of the calculation
         circuit.addGate("cx", numQubits-1, [0, numQubits-1]); 
 
-        // Run the simulation
+        // 2. MEASUREMENT
         circuit.run();
-        
-        // Get result as binary string (e.g., "101101001")
-        const binaryString = circuit.stateAsString(); 
-
-        // Convert binary string to a Decimal Integer (0 to 511)
+        const measurement = circuit.measureAll(); 
+        const binaryString = measurement.join('');
         const seedValue = parseInt(binaryString, 2);
 
-        // --- SELECTION LOGIC ---
-        // We use the seedValue to pick lines. 
-        // We add offsets (+15, +30) so we don't pick the same index 
-        // for all three lines if the arrays are the same length.
-        
+        // 3. POEM GENERATION
         let idx1 = seedValue;
         let idx2 = seedValue + 15; 
         let idx3 = seedValue + 30; 
 
-        // Use Modulo (%) to wrap around if the seed is larger than the list
         let line1 = openers[idx1 % openers.length];
         let line2 = middles[idx2 % middles.length];
         let line3 = closers[idx3 % closers.length];
 
-        // Update UI
+        // 4. UI UPDATE (Reordered)
+        // We use a "flex" layout inside the string to push the footer to the bottom
         poemDisplay.innerHTML = `
-            <span style="color:var(--term-red)">>> QUANTUM SEED: ${seedValue}</span><br>
-            <span style="font-size:0.8em; color:#444">State: |${binaryString}⟩</span><br><br>
-            ${line1}<br>
-            ${line2}<br>
-            ${line3}
+            <div style="margin-bottom: 2rem;">
+                ${line1}<br>
+                ${line2}<br>
+                ${line3}
+            </div>
+
+            <!-- TECHNICAL FOOTER -->
+            <div style="border-top: 1px dashed #333; padding-top: 10px; font-size: 0.8rem; font-family: 'Consolas', monospace; color: #666;">
+                <span style="color: var(--term-red);">>> SOURCE ID:</span> LOCAL_SIM_CLUSTER<br>
+                <span>>> VECTOR:</span> |${binaryString}⟩<br>
+                <span>>> SEED:</span> ${seedValue}
+            </div>
         `;
 
-        // Update QASM Display
+        // 5. QASM UPDATE
         const rawQASM = circuit.exportToQASM();
         qasmDisplay.innerText = "// OPENQASM 2.0 (9-Qubit Register)\n" + rawQASM;
+
+        // 6. STATUS BAR
+       statusLog.innerHTML = `Tunnel: Secured | Crypto-Source: <span style="color:var(--term-red)">Berlin-QRNG</span>`;
+    }
 
         // Update Log
         document.getElementById('log').innerHTML = `Tunnel: Active | Entropy: <span>${Math.pow(2, numQubits)} States</span>`;
