@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inkrealm | Writer Musician Visual Artist</title>
+    <title>Inkrealm | System.32</title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
@@ -12,7 +12,6 @@
             --color-bg: #050505;
             --color-text: #e0e0e0;
             --color-accent: #ff0033; /* Inkrealm Red */
-            --color-scanline: rgba(0, 0, 0, 0.5);
             --font-main: 'Lato', sans-serif;
             --font-display: 'Cinzel', serif;
             --font-tech: 'Share Tech Mono', monospace;
@@ -28,7 +27,7 @@
             background-color: var(--color-bg);
             color: var(--color-text);
             line-height: 1.6;
-            overflow-x: hidden; /* CRITICAL: Prevents side scrollbar during animation */
+            overflow-x: hidden;
         }
 
         /* --- SELECTION HIGHLIGHTS --- */
@@ -38,49 +37,52 @@
             text-shadow: 2px 2px 0px #000;
         }
 
-        /* --- CRT SCANLINE OVERLAY --- */
+        /* --- SCREEN EFFECTS (VIGNETTE + SCANLINES) --- */
         .scanlines {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: linear-gradient(
-                to bottom,
-                rgba(255,255,255,0),
-                rgba(255,255,255,0) 50%,
-                rgba(0,0,0,0.2) 50%,
-                rgba(0,0,0,0.2)
-            );
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2));
             background-size: 100% 4px;
-            pointer-events: none;
-            z-index: 9999;
-            opacity: 0.6;
+            pointer-events: none; z-index: 9998; opacity: 0.6;
+        }
+        
+        /* The Vignette: Darkens corners to look like a physical screen */
+        .vignette {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.9) 100%);
+            pointer-events: none; z-index: 9999;
         }
 
+        /* --- HUD (HEADS UP DISPLAY) --- */
+        .hud {
+            position: fixed;
+            font-family: var(--font-tech);
+            color: var(--color-accent);
+            font-size: 0.7rem;
+            z-index: 9997;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+        .hud-tl { top: 20px; left: 20px; border-top: 1px solid var(--color-accent); border-left: 1px solid var(--color-accent); padding: 5px; }
+        .hud-tr { top: 20px; right: 20px; text-align: right; border-top: 1px solid var(--color-accent); border-right: 1px solid var(--color-accent); padding: 5px; }
+        .hud-bl { bottom: 20px; left: 20px; border-bottom: 1px solid var(--color-accent); border-left: 1px solid var(--color-accent); padding: 5px; }
+        
         /* --- PARALLAX CONTAINER --- */
         .parallax-section {
             position: relative;
             min-height: 100vh;
             display: flex;
             align-items: center;
-            justify-content: center;
-            text-align: center;
+            justify-content: center; /* Default center, but we will override for asymmetry */
             overflow: hidden;
         }
 
         .parallax-bg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-attachment: fixed;
             background-position: center;
             background-repeat: no-repeat;
             background-size: cover;
             z-index: 1;
-            /* FORCING B&W AESTHETIC ON GIFS */
             filter: grayscale(100%) contrast(1.2) brightness(0.6);
             transition: filter 0.5s ease;
         }
@@ -89,284 +91,129 @@
             filter: grayscale(100%) contrast(1.4) brightness(0.4);
         }
 
+        /* THE SIDEWAYS BOX */
         .parallax-content {
             position: relative;
             z-index: 2;
             padding: 2rem;
-            max-width: 800px;
-            background: rgba(0, 0, 0, 0.7);
+            width: 500px; /* Fixed width for box look */
+            background: rgba(0, 0, 0, 0.8);
             border: 1px solid #333;
-            box-shadow: 0 0 20px rgba(0,0,0,0.8);
-            backdrop-filter: blur(2px);
+            border-left: 4px solid var(--color-accent); /* Accent on left */
+            backdrop-filter: blur(4px);
         }
+
+        /* ASYMMETRY CLASSES */
+        .align-left { justify-content: flex-start; padding-left: 10%; }
+        .align-right { justify-content: flex-end; padding-right: 10%; }
 
         /* --- TYPOGRAPHY & GLITCH --- */
-        h1, h2, h3 {
-            font-family: var(--font-display);
-            text-transform: uppercase;
-        }
-
+        h1, h2, h3 { font-family: var(--font-display); text-transform: uppercase; }
         h1 { font-size: 4rem; margin-bottom: 0.5rem; letter-spacing: 5px; }
         h2 { font-size: 2.5rem; margin-bottom: 1rem; color: #fff; }
         h3 { font-size: 1rem; letter-spacing: 4px; color: var(--color-accent); margin-bottom: 1rem; }
         p { font-size: 1.1rem; color: #ccc; margin-bottom: 1rem; text-align: left;}
 
-        /* Glitch Text Effect */
+        /* Glitch CSS */
         .glitch { position: relative; color: #fff; }
         .glitch::before, .glitch::after {
-            content: attr(data-text);
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8);
         }
         .glitch::before {
-            left: 2px; text-shadow: -1px 0 #ff0033;
-            clip: rect(44px, 450px, 56px, 0);
+            left: 2px; text-shadow: -1px 0 #ff0033; clip: rect(44px, 450px, 56px, 0);
             animation: glitch-anim 5s infinite linear alternate-reverse;
         }
         .glitch::after {
-            left: -2px; text-shadow: -1px 0 #999;
-            clip: rect(44px, 450px, 56px, 0);
+            left: -2px; text-shadow: -1px 0 #999; clip: rect(44px, 450px, 56px, 0);
             animation: glitch-anim2 5s infinite linear alternate-reverse;
         }
+        @keyframes glitch-anim { 0% { clip: rect(12px, 9999px, 5px, 0); } 5% { clip: rect(89px, 9999px, 78px, 0); } 100% { clip: rect(45px, 9999px, 89px, 0); } }
+        @keyframes glitch-anim2 { 0% { clip: rect(65px, 9999px, 12px, 0); } 5% { clip: rect(3px, 9999px, 98px, 0); } 100% { clip: rect(54px, 9999px, 21px, 0); } }
 
-        @keyframes glitch-anim {
-            0% { clip: rect(12px, 9999px, 5px, 0); }
-            5% { clip: rect(89px, 9999px, 78px, 0); }
-            100% { clip: rect(45px, 9999px, 89px, 0); }
-        }
-        @keyframes glitch-anim2 {
-            0% { clip: rect(65px, 9999px, 12px, 0); }
-            5% { clip: rect(3px, 9999px, 98px, 0); }
-            100% { clip: rect(54px, 9999px, 21px, 0); }
-        }
+        /* --- ANIMATIONS --- */
+        /* Text slides UP */
+        .reveal { opacity: 0; transform: translateY(60px); transition: all 1s ease-out; }
+        /* Boxes slide from SIDE */
+        .slide-side { opacity: 0; transform: translateX(-150px); transition: all 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
+        .slide-side.from-right { transform: translateX(150px); } /* Slide from right if needed */
 
-        /* --- SCROLL ANIMATION CLASSES --- */
-        
-        /* 1. TEXT SLIDES UP (The original) */
-        .reveal {
-            opacity: 0;
-            transform: translateY(60px);
-            transition: all 1s ease-out;
-        }
-
-        /* 2. BOX SLIDES SIDEWAYS (New) */
-        .slide-side {
-            opacity: 0;
-            transform: translateX(-150px); /* Starts 150px to the LEFT */
-            transition: all 1.2s cubic-bezier(0.19, 1, 0.22, 1); /* Smooth 'arrival' easing */
-        }
-
-        /* Active State (When visible) */
-        .reveal.active, .slide-side.active {
-            opacity: 1;
-            transform: translate(0);
-        }
-        
-        /* Delays */
+        .reveal.active, .slide-side.active { opacity: 1; transform: translate(0); }
         .reveal-delay-1 { transition-delay: 0.1s; }
         .reveal-delay-2 { transition-delay: 0.3s; }
 
-        /* --- CONTENT SECTIONS --- */
+        /* --- TEXT SECTIONS --- */
         .content-section {
-            background-color: #080808;
-            padding: 100px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            border-top: 1px solid #222;
-            border-bottom: 1px solid #222;
-            overflow: hidden;
+            background-color: #080808; padding: 100px 20px;
+            display: flex; flex-direction: column; align-items: center;
+            border-top: 1px solid #222; border-bottom: 1px solid #222;
         }
-        
-        .text-container { max-width: 700px; }
+        .text-container { max-width: 700px; text-align: left; border-left: 1px solid #333; padding-left: 30px; }
+        .red-line { width: 50px; height: 4px; background: var(--color-accent); margin: 20px 0; }
 
-        .red-line {
-            width: 50px; height: 4px;
-            background: var(--color-accent);
-            margin: 20px auto;
-        }
-
-        /* --- AI TERMINAL & SLIDER STYLING --- */
-        #ai-terminal {
-            background: #000;
-            padding: 60px 20px;
-            border-top: 2px solid var(--color-accent);
-            font-family: var(--font-tech);
-            text-align: left;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .terminal-header {
-            color: var(--color-accent);
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #333;
-            padding-bottom: 10px;
-        }
-
-        .terminal-group { margin-bottom: 15px; }
+        /* --- HIDDEN AI TERMINAL --- */
+        #ai-terminal details > summary { list-style: none; cursor: pointer; user-select: none; }
+        #ai-terminal details > summary::-webkit-details-marker { display: none; }
+        #ai-terminal details[open] summary .toggle-icon { content: "[ - ]"; }
         
         .terminal-input, .terminal-area {
-            width: 100%;
-            background: #0a0a0a;
-            border: 1px solid #333;
-            color: #fff;
-            padding: 10px;
-            font-family: var(--font-tech);
-            font-size: 1rem;
+            width: 100%; background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 10px;
+            font-family: var(--font-tech); font-size: 1rem;
         }
-        
-        .terminal-input:focus, .terminal-area:focus {
-            outline: none;
-            border-color: var(--color-accent);
-        }
-        /* Removes the default ugly triangle from the summary */
-details > summary {
-    list-style: none;
-}
-details > summary::-webkit-details-marker {
-    display: none;
-}
-
-/* Changes the [ + ] to [ - ] when open */
-details[open] summary .toggle-icon {
-    content: "[ - ]"; /* Fallback */
-}
-/* A little hover effect on the header */
-details summary:hover .glitch {
-    text-shadow: 2px 2px var(--color-accent);
-}
-
-        /* CUSTOM SLIDER STYLING (Red) */
-        input[type=range] {
-            -webkit-appearance: none;
-            width: 100%;
-            background: transparent;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 16px;
-            width: 16px;
-            background: var(--color-accent);
-            cursor: pointer;
-            margin-top: -6px;
-            box-shadow: 0 0 5px var(--color-accent);
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 4px;
-            background: #333;
-            cursor: pointer;
-        }
-        input[type=range]:focus {
-            outline: none;
-        }
-        /* Firefox specific slider styles */
-        input[type=range]::-moz-range-thumb {
-            height: 16px;
-            width: 16px;
-            background: var(--color-accent);
-            cursor: pointer;
-            border: none;
-        }
-        input[type=range]::-moz-range-track {
-            width: 100%;
-            height: 4px;
-            background: #333;
-            cursor: pointer;
-        }
-
+        .terminal-input:focus, .terminal-area:focus { outline: none; border-color: var(--color-accent); }
         .terminal-btn {
-            background: transparent;
-            border: 1px solid var(--color-accent);
-            color: var(--color-accent);
-            padding: 10px 30px;
-            font-family: var(--font-tech);
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 10px;
+            background: transparent; border: 1px solid var(--color-accent); color: var(--color-accent);
+            padding: 10px 30px; font-family: var(--font-tech); text-transform: uppercase; cursor: pointer; margin-top: 10px;
         }
-        
         .terminal-btn:hover { background: var(--color-accent); color: #000; }
-        .terminal-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        /* Red Slider */
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; background: var(--color-accent); margin-top: -6px; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #333; }
 
-        #output {
-            margin-top: 20px;
-            padding: 20px;
-            border-left: 3px solid var(--color-accent);
-            background: #111;
-            min-height: 100px;
-            white-space: pre-wrap;
-            color: #ccc;
-        }
-
-        /* --- FOOTER & DETAILS TAG --- */
-        footer {
-            background-color: #000;
-            color: #666;
-            text-align: center;
-            padding: 60px 20px 80px 20px;
-            font-size: 0.9rem;
-            position: relative; 
-        }
-        footer a { color: #fff; text-decoration: none; transition: color 0.3s; }
+        /* --- FOOTER & DETAILS --- */
+        footer { background-color: #000; color: #666; text-align: center; padding: 60px 20px 100px 20px; position: relative; }
+        footer a { color: #fff; text-decoration: none; }
         footer a:hover { color: var(--color-accent); text-decoration: line-through; }
 
-        /* The Learning Corner - Details/Summary */
         .learning-corner {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            text-align: right;
-            max-width: 300px;
-            font-size: 0.8rem;
-            color: #666;
-            font-family: var(--font-tech);
-            background: #000;
-            border: 1px solid #222;
-            padding: 10px;
-            z-index: 100;
+            position: absolute; bottom: 20px; right: 20px; text-align: right;
+            width: 300px; font-size: 0.8rem; color: #666; font-family: var(--font-tech);
+            background: #000; border: 1px solid #222; padding: 10px; z-index: 100;
         }
-        
-        summary {
-            cursor: pointer;
-            color: var(--color-accent);
-            list-style: none; /* Hides default triangle */
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-        
-        summary::-webkit-details-marker { display: none; }
-        summary::after { content: "+"; float: right; font-weight: bold; margin-left: 5px;}
-        details[open] summary::after { content: "-"; }
-
-        details p {
-            margin-top: 10px;
-            color: #aaa;
-            text-align: left;
-            font-size: 0.75rem;
-            border-top: 1px solid #333;
-            padding-top: 5px;
-        }
+        .learning-corner summary { color: var(--color-accent); cursor: pointer; font-weight: bold; list-style: none; }
+        .learning-corner summary::-webkit-details-marker { display: none; }
     </style>
 </head>
 <body>
 
+    <!-- SCREEN EFFECTS -->
     <div class="scanlines"></div>
+    <div class="vignette"></div>
 
-    <!-- 1. HERO SECTION -->
+    <!-- HUD LAYOUT (Heads Up Display) -->
+    <div class="hud hud-tl">
+        SYS.ROOT<br>
+        INKREALM.V2
+    </div>
+    <div class="hud hud-tr">
+        REC :: [ON]<br>
+        <span id="clock">00:00:00</span>
+    </div>
+    <div class="hud hud-bl">
+        COORD: 34.0522 N<br>
+        STATUS: GLITCH
+    </div>
+
+    <!-- 1. HERO SECTION (Aligned Center) -->
     <section class="parallax-section">
         <div class="parallax-bg" style="background-image: url('https://github.com/ghostm68/pantheon/raw/main/Media_kristina.stertz.minaro240120_143452.gif');"></div>
         
-        <!-- Added slide-side class here -->
         <div class="parallax-content slide-side">
             <h1 class="glitch" data-text="inkrealm">inkrealm</h1>
             <div class="red-line"></div>
             <h3>jan 20 poe's birthday party</h3>
-            <p style="text-align: center; font-size: 0.9rem;">There's a street in my hometown named for him...</p>
+            <p>There's a street in my hometown named for him...</p>
         </div>
     </section>
     
@@ -377,19 +224,18 @@ details summary:hover .glitch {
             <h2 class="reveal reveal-delay-1">The Thief & The Sandwich</h2>
             <div class="red-line reveal reveal-delay-1"></div>
             <p class="reveal reveal-delay-2">Before the festivities there i was circa 82nd street broadway passing a street vendor that gets robbed watching the thief race out into the roadway island and run around chased by the vendor.</p>
-            <p class="reveal reveal-delay-2">I get up at the perfect time but the turkey sandwich knocked me out again to get up at the awful middle of the day - in the middle of the night i am still feeling drowsy, neither here nor there - alone yet haunted by myself i suppose.</p>
-            <p class="reveal reveal-delay-2">A before q, heartfelt theft without love - the idle man dreams again, towels washed - i'm in apartment three k and i can't leave it dreams, home.</p>
+            <p class="reveal reveal-delay-2">I get up at the perfect time but the turkey sandwich knocked me out again to get up at the awful middle of the day.</p>
         </div>
     </section>
     
-    <!-- 3. PARALLAX SECTION -->
-    <section class="parallax-section">
+    <!-- 3. PARALLAX SECTION (Aligned LEFT) -->
+    <section class="parallax-section align-left">
         <div class="parallax-bg" style="background-image: url('https://github.com/ghostm68/pantheon/raw/main/Minaro_240118_wordstar114904.gif');"></div>
         
-        <!-- Added slide-side class here -->
         <div class="parallax-content slide-side">
             <h3>Rem Sleep</h3>
             <h2 class="glitch" data-text="Green Towel">Green Towel</h2>
+            <p>I thought upon waking I didn't see the green towel.</p>
         </div>
     </section>
     
@@ -399,18 +245,21 @@ details summary:hover .glitch {
             <h3 class="reveal">Analysis</h3>
             <h2 class="reveal reveal-delay-1">Saturday Night</h2>
             <div class="red-line reveal reveal-delay-1"></div>
-            <p class="reveal reveal-delay-2">A former friend sleeps over i instruct, shut the door feeling eyes at the entrance - the thing about the scene was not the acquaintance or the eyes but going to the closet that was on the right side of the hallway pick pulling out satin pink blanket.</p>
-            <p class="reveal reveal-delay-2">Thinking it over it is like a shock - no dream ever felt as real at least not recently - other scenes infected with foreign agents, vendor scribe deprived of rem.</p>
-            <p class="reveal reveal-delay-2">Saturday night is all right for cooking and cleaning, well as i sat lamenting the cheap vinegar instead of heinz with the lettuce i thought this might be good, there won't be aything in the way if want to start recording.</p>
-            <p class="reveal reveal-delay-2">Part of egypt melted as ganna wore a tight red dress for the first time, maddie went to dublin and turned it into a dozen stories - i truly enjoyed all of them.</p>
+            
+            <!-- IMAGE INSIDE TEXT FLOW -->
+            <img src="https://images.unsplash.com/photo-1518365050014-70fe7232897f?q=80&w=1000&auto=format&fit=crop" 
+                 class="reveal reveal-delay-2" 
+                 style="width:100%; height:auto; filter:grayscale(100%) contrast(1.2); border:1px solid #333; margin: 20px 0;">
+
+            <p class="reveal reveal-delay-2">A former friend sleeps over i instruct, shut the door feeling eyes at the entrance - the thing about the scene was not the acquaintance or the eyes but going to the closet that was on the right side.</p>
         </div>
     </section>
     
-    <!-- 5. PARALLAX SECTION -->
-    <section class="parallax-section">
+    <!-- 5. PARALLAX SECTION (Aligned RIGHT) -->
+    <section class="parallax-section align-right">
         <div class="parallax-bg" style="background-image: url('https://github.com/ghostm68/pantheon/raw/main/Media_wordstar.minaro.240112_211026.gif');"></div>
         
-        <!-- Added slide-side class here -->
+        <!-- Note: Added 'from-right' class if you want it sliding from the right -->
         <div class="parallax-content slide-side">
             <h3>Paris Fashion Week</h3>
             <h2 class="glitch" data-text="Alexandras">Alexandras</h2>
@@ -423,10 +272,7 @@ details summary:hover .glitch {
             <h3 class="reveal">The Saloon</h3>
             <h2 class="reveal reveal-delay-1">Once Upon a Time</h2>
             <div class="red-line reveal reveal-delay-1"></div>
-            <p class="reveal reveal-delay-2">Counting my clothes and dividing to conquer my leather, i felt happy that paris fashion week was coming to an end, not that i don't love lara - it is only that after the 22nd i won't feel any obligation or worry in terms of that frenzy.</p>
-            <p class="reveal reveal-delay-2">I tried hiding my love for emilee, for example, only to meet the quote 'love grants in a moment...' alexandra's iced coffee in winter, i suppose if you are that hot...heavy on the right shoulder.</p>
-            <p class="reveal reveal-delay-2">In dreams i try leaving a restaurant saloon, the unpaved avenue of turn of century western america 1890s vest boots wooden structures outside looking in as an actor arrives who i can hear before seeing... speaking of the saloon restaurant and they are rolling out a greeting party.</p>
-            <p class="reveal reveal-delay-2">I had listened to the charade soundtrack, isn't that where the theme from il padrino got produced but you can hear too how mancini listened to the classics and learned.</p>
+            <p class="reveal reveal-delay-2">In dreams i try leaving a restaurant saloon, the unpaved avenue of turn of century western america 1890s vest boots wooden structures.</p>
         </div>
     </section>
     
@@ -435,89 +281,83 @@ details summary:hover .glitch {
         <div class="parallax-bg" style="background-image: url('https://github.com/ghostm68/pantheon/raw/main/Media_minaro.hilton.240105_143846.gif');"></div>
     </section>
 
-    <!-- 8. AI TERMINAL (RAG EXPERIMENT) -->
-   <!-- 8. AI TERMINAL (HIDDEN TOGGLE) -->
+    <!-- 8. AI TERMINAL (HIDDEN TOGGLE) -->
     <div style="background: #000; padding: 40px 0;">
-        <section id="ai-terminal">
-            <!-- The 'open' attribute is missing, so it defaults to closed/hidden -->
+        <section id="ai-terminal" style="max-width: 800px; margin: 0 auto; border-top: 2px solid var(--color-accent); padding: 20px;">
             <details>
-                <summary class="terminal-header" style="cursor: pointer; user-select: none;">
+                <summary class="terminal-header" style="color: var(--color-accent); font-family: var(--font-tech); font-size: 1.2rem;">
                     <span class="glitch" data-text="> SYSTEM OVERRIDE // NVIDIA_NEMOTRON">> SYSTEM OVERRIDE // NVIDIA_NEMOTRON</span>
-                    <span class="toggle-icon" style="float:right; color: var(--color-accent);">[ + ]</span>
+                    <span class="toggle-icon" style="float:right;">[ + ]</span>
                 </summary>
                 
-                <!-- EVERYTHING INSIDE HERE IS HIDDEN UNTIL CLICKED -->
                 <div style="margin-top: 30px; border-left: 1px solid #333; padding-left: 20px;">
                     <div class="terminal-group">
-                        <label style="color:#666; font-size:0.8rem;">API KEY [NVCF]</label>
+                        <label style="color:#666; font-size:0.8rem; font-family:var(--font-tech);">API KEY [NVCF]</label>
                         <input type="password" id="apiKey" class="terminal-input" placeholder="Enter NVIDIA API Key...">
                     </div>
-
                     <div class="terminal-group">
-                        <label style="color:#666; font-size:0.8rem;">INPUT STREAM</label>
-                        <textarea id="prompt" class="terminal-area" rows="4" placeholder="Enter prompt to generate text..."></textarea>
+                        <label style="color:#666; font-size:0.8rem; font-family:var(--font-tech);">INPUT STREAM</label>
+                        <textarea id="prompt" class="terminal-area" rows="4" placeholder="Enter prompt..."></textarea>
                     </div>
-                    
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="width: 48%;">
-                            <label style="color:#666; font-size:0.8rem; display:block; margin-bottom:5px;">TEMP</label>
+                            <label style="color:#666; font-size:0.8rem; display:block; margin-bottom:5px; font-family:var(--font-tech);">TEMP</label>
                             <input type="range" id="creativity" min="0" max="1" step="0.1" value="0.7">
                         </div>
                         <button id="generateButton" class="terminal-btn">Execute</button>
                     </div>
-
-                    <div id="output">_Waiting for input...</div>
+                    <div id="output" style="margin-top:20px; color:#ccc; font-family:var(--font-tech);">_Waiting for input...</div>
                 </div>
             </details>
         </section>
     </div>
+
     <footer>
         <p>© <span id="currentYear"></span> inkrealm. All rights reserved.</p>
         <p style="margin-top: 10px;">
             <a href="https://inkrealm.info/directory">Directory</a> &nbsp;|&nbsp; 
             <a href="mailto:contact@inkrealm.info">Contact</a>
         </p>
-        <p style="color: #333; margin-top: 15px; font-size: 0.8rem;">writer . musician . visual artist</p>
 
-        <!-- LEARNING CORNER -->
+        <!-- LEARNING CORNER WITH VIDEO/IMAGE INSIDE -->
         <details class="learning-corner">
-            <summary>REF: PINK</summary>
-            <p><strong>Pink</strong> is a color that is a light shade of red, often described as a soft, pastel hue. It is typically created by mixing red and white or by diluting red with white.</p>
-            <p><strong>Other meanings:</strong></p>
-            <ul style="padding-left: 15px; margin: 5px 0; color:#888;">
-                <li>Flower (Roses, Cherry Blossoms)</li>
-                <li>Animal (Flamingos, Dolphins)</li>
-                <li>Medical (Conjunctivitis)</li>
-                <li>Slang ("A pink situation")</li>
-            </ul>
-            <p>The exact definition depends on context.</p>
+            <summary>REF: EVIDENCE #001</summary>
+            <p style="border-top: 1px solid #333; margin-top:5px; padding-top:5px;">Footage recovered from 31st State:</p>
+            
+            <!-- VIDEO INSIDE DETAILS -->
+            <video autoplay loop muted playsinline style="width: 100%; margin-top: 10px; border: 1px solid #333; filter: grayscale(100%) contrast(1.2);">
+                <source src="https://github.com/ghostm68/pantheon/raw/main/Media_wordstar.minaro.240112_211026.gif.mp4" type="video/mp4">
+            </video>
+            <!-- OR USE AN IMAGE -->
+            <!-- <img src="URL" style="width:100%; margin-top:10px; filter:grayscale(100%);"> -->
+
+            <p style="font-size: 0.7rem; color: #ff0033; margin-top:5px;">> END OF RECORD</p>
         </details>
     </footer>
 
     <script>
         document.getElementById('currentYear').textContent = new Date().getFullYear();
+        
+        // Simple Clock for HUD
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString();
+        }, 1000);
 
-        /* --- SCROLL ANIMATION SCRIPT --- */
-        const observerOptions = {
-            root: null,
-            threshold: 0.1
-        };
-
+        // Scroll Animation
+        const observerOptions = { root: null, threshold: 0.1 };
         const observer = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.classList.add('active'); // Works for both .reveal and .slide-side
+                    entry.target.classList.add('active');
                     observer.unobserve(entry.target);
                 }
             });
         }, observerOptions);
 
-        // WATCH both text and the side-sliding boxes
-        document.querySelectorAll('.reveal, .slide-side').forEach(el => {
-            observer.observe(el);
-        });
+        document.querySelectorAll('.reveal, .slide-side').forEach(el => observer.observe(el));
 
-        /* --- AI GENERATION LOGIC --- */
+        // AI Logic
         document.getElementById('generateButton').addEventListener('click', async function() {
             const apiKey = document.getElementById('apiKey').value;
             const prompt = document.getElementById('prompt').value;
@@ -525,65 +365,29 @@ details summary:hover .glitch {
             const output = document.getElementById('output');
             const generateBtn = document.getElementById('generateButton');
 
-            if (!apiKey) {
-                output.textContent = 'ERROR: MISSING_API_KEY';
-                output.style.color = '#ff0033';
-                return;
-            }
+            if (!apiKey) { output.textContent = 'ERROR: MISSING_API_KEY'; output.style.color = '#ff0033'; return; }
+            if (!prompt) { output.textContent = 'ERROR: MISSING_INPUT_STREAM'; output.style.color = '#ff0033'; return; }
 
-            if (!prompt) {
-                output.textContent = 'ERROR: MISSING_INPUT_STREAM';
-                output.style.color = '#ff0033';
-                return;
-            }
-
-            generateBtn.disabled = true;
-            generateBtn.textContent = 'PROCESSING...';
-            output.textContent = 'INITIALIZING HANDSHAKE...';
-            output.style.color = '#ccc';
-
+            generateBtn.disabled = true; generateBtn.textContent = 'PROCESSING...'; output.textContent = 'INITIALIZING...';
+            
             try {
                 const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
-                
-                const requestBody = {
-                    model: "nvidia/nvidia-nemotron-nano-9b-v2",
-                    messages: [{ role: "user", content: prompt }],
-                    temperature: creativity,
-                    top_p: 1,
-                    max_tokens: 1024,
-                    stream: false
-                };
-
                 const response = await fetch(proxyUrl, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + apiKey
-                    },
-                    body: JSON.stringify(requestBody)
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+                    body: JSON.stringify({
+                        model: "nvidia/nvidia-nemotron-nano-9b-v2",
+                        messages: [{ role: "user", content: prompt }],
+                        temperature: creativity, top_p: 1, max_tokens: 1024, stream: false
+                    })
                 });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
+                if (!response.ok) throw new Error(response.status);
                 const data = await response.json();
-                
-                if (data.choices && data.choices.length > 0) {
-                    output.textContent = data.choices[0].message.content;
-                    output.style.color = '#e0e0e0';
-                } else {
-                    output.textContent = 'SYSTEM RETURNED NULL RESPONSE.';
-                }
-
+                output.textContent = data.choices[0].message.content;
+                output.style.color = '#e0e0e0';
             } catch (error) {
-                console.error('Error:', error);
-                output.textContent = 'CRITICAL FAILURE: ' + error.message;
-                output.style.color = '#ff0033';
-            } finally {
-                generateBtn.disabled = false;
-                generateBtn.textContent = 'EXECUTE';
-            }
+                output.textContent = 'CRITICAL FAILURE: ' + error.message; output.style.color = '#ff0033';
+            } finally { generateBtn.disabled = false; generateBtn.textContent = 'EXECUTE'; }
         });
     </script>
 </body>
