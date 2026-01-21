@@ -28,7 +28,7 @@
             background-color: var(--color-bg);
             color: var(--color-text);
             line-height: 1.6;
-            overflow-x: hidden;
+            overflow-x: hidden; /* CRITICAL: Prevents side scrollbar during animation */
         }
 
         /* --- SELECTION HIGHLIGHTS --- */
@@ -141,19 +141,29 @@
             100% { clip: rect(54px, 9999px, 21px, 0); }
         }
 
-        /* --- SCROLL ANIMATION CLASSES (The Fix) --- */
+        /* --- SCROLL ANIMATION CLASSES --- */
+        
+        /* 1. TEXT SLIDES UP (The original) */
         .reveal {
             opacity: 0;
-            transform: translateY(50px); /* Starts 50px lower */
-            transition: all 1s ease;     /* Smooth 1 second transition */
+            transform: translateY(60px);
+            transition: all 1s ease-out;
         }
 
-        .reveal.active {
+        /* 2. BOX SLIDES SIDEWAYS (New) */
+        .slide-side {
+            opacity: 0;
+            transform: translateX(-150px); /* Starts 150px to the LEFT */
+            transition: all 1.2s cubic-bezier(0.19, 1, 0.22, 1); /* Smooth 'arrival' easing */
+        }
+
+        /* Active State (When visible) */
+        .reveal.active, .slide-side.active {
             opacity: 1;
-            transform: translateY(0);    /* Slides to natural position */
+            transform: translate(0);
         }
         
-        /* Stagger delays so title appears before text */
+        /* Delays */
         .reveal-delay-1 { transition-delay: 0.1s; }
         .reveal-delay-2 { transition-delay: 0.3s; }
 
@@ -166,7 +176,7 @@
             align-items: center;
             border-top: 1px solid #222;
             border-bottom: 1px solid #222;
-            overflow: hidden; /* Prevents scrollbars during animation */
+            overflow: hidden;
         }
         
         .text-container { max-width: 700px; }
@@ -335,7 +345,8 @@
     <section class="parallax-section">
         <div class="parallax-bg" style="background-image: url('https://github.com/ghostm68/pantheon/raw/main/Media_kristina.stertz.minaro240120_143452.gif');"></div>
         
-        <div class="parallax-content">
+        <!-- Added slide-side class here -->
+        <div class="parallax-content slide-side">
             <h1 class="glitch" data-text="inkrealm">inkrealm</h1>
             <div class="red-line"></div>
             <h3>jan 20 poe's birthday party</h3>
@@ -346,7 +357,6 @@
     <!-- 2. CONTENT TEXT 1 -->
     <section class="content-section">
         <div class="text-container">
-            <!-- Added 'reveal' class for animation -->
             <h3 class="reveal">Apartment Three K</h3>
             <h2 class="reveal reveal-delay-1">The Thief & The Sandwich</h2>
             <div class="red-line reveal reveal-delay-1"></div>
@@ -360,7 +370,8 @@
     <section class="parallax-section">
         <div class="parallax-bg" style="background-image: url('https://github.com/ghostm68/pantheon/raw/main/Minaro_240118_wordstar114904.gif');"></div>
         
-        <div class="parallax-content">
+        <!-- Added slide-side class here -->
+        <div class="parallax-content slide-side">
             <h3>Rem Sleep</h3>
             <h2 class="glitch" data-text="Green Towel">Green Towel</h2>
         </div>
@@ -383,7 +394,8 @@
     <section class="parallax-section">
         <div class="parallax-bg" style="background-image: url('https://github.com/ghostm68/pantheon/raw/main/Media_wordstar.minaro.240112_211026.gif');"></div>
         
-        <div class="parallax-content">
+        <!-- Added slide-side class here -->
+        <div class="parallax-content slide-side">
             <h3>Paris Fashion Week</h3>
             <h2 class="glitch" data-text="Alexandras">Alexandras</h2>
         </div>
@@ -444,8 +456,7 @@
         </p>
         <p style="color: #333; margin-top: 15px; font-size: 0.8rem;">writer . musician . visual artist</p>
 
-        <!-- LEARNING CORNER: Details & Summary Tag -->
-        <!-- You can hide entire stories in here! -->
+        <!-- LEARNING CORNER -->
         <details class="learning-corner">
             <summary>REF: PINK</summary>
             <p><strong>Pink</strong> is a color that is a light shade of red, often described as a soft, pastel hue. It is typically created by mixing red and white or by diluting red with white.</p>
@@ -463,23 +474,23 @@
     <script>
         document.getElementById('currentYear').textContent = new Date().getFullYear();
 
-        /* --- SCROLL ANIMATION SCRIPT (Works on all browsers) --- */
+        /* --- SCROLL ANIMATION SCRIPT --- */
         const observerOptions = {
-            root: null,    // Use the viewport as the container
-            threshold: 0.1 // Trigger when 10% of the element is visible
+            root: null,
+            threshold: 0.1
         };
 
         const observer = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.classList.add('active'); // Add class to slide it in
-                    observer.unobserve(entry.target);     // Stop watching once it slides in
+                    entry.target.classList.add('active'); // Works for both .reveal and .slide-side
+                    observer.unobserve(entry.target);
                 }
             });
         }, observerOptions);
 
-        // Tell the observer to watch all elements with the class 'reveal'
-        document.querySelectorAll('.reveal').forEach(el => {
+        // WATCH both text and the side-sliding boxes
+        document.querySelectorAll('.reveal, .slide-side').forEach(el => {
             observer.observe(el);
         });
 
@@ -503,7 +514,6 @@
                 return;
             }
 
-            // UI Loading State
             generateBtn.disabled = true;
             generateBtn.textContent = 'PROCESSING...';
             output.textContent = 'INITIALIZING HANDSHAKE...';
