@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUS ROOT // SYSTEM LAUNCHER</title>
+<style>
+    body {
+        background-color: #050505;
+        color: #b0b0b0;
+        font-family: 'Courier New', monospace;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+        overflow-x: hidden;
+    }
+
+    /* Scanline Overlay */
+    body::after {
+        content: " ";
+        display: block;
+        position: absolute;
+        top: 0; left: 0; bottom: 0; right: 0;
+        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+        z-index: 2;
+        background-size: 100% 2px, 3px 100%;
+        pointer-events: none;
+    }
+
+    .container {
+        width: 900px;
+        max-width: 95%;
+        border: 1px solid #333;
+        padding: 40px;
+        box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        background-color: #0a0a0a;
+        z-index: 1;
+        position: relative;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+
+    h1 {
+        font-size: 3rem;
+        margin: 0 0 1rem 0;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 5px;
+        text-shadow: 2px 2px 0px #cc0000;
+        border-bottom: 2px solid #cc0000;
+        padding-bottom: 10px;
+    }
+
+    .subtitle {
+        color: #cc0000;
+        font-size: 1rem;
+        margin-bottom: 40px;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    /* --- THE APPLIANCE GRID --- */
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Slightly smaller min-width to fit more */
+        gap: 15px;
+        margin-bottom: 40px;
+    }
+
+    a.module-link {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-decoration: none;
+        background-color: #111;
+        border: 1px solid #333;
+        padding: 15px 15px;
+        color: #888;
+        transition: all 0.2s ease;
+    }
+
+    a.module-link:hover {
+        background-color: #cc0000;
+        color: #000;
+        border-color: #fff;
+        transform: translateX(5px);
+    }
+
+    .module-title {
+        font-weight: bold;
+        font-size: 1rem;
+        text-transform: uppercase;
+        display: block;
+    }
+
+    .module-meta {
+        font-size: 0.7rem;
+        opacity: 0.7;
+        display: block;
+        margin-top: 4px;
+    }
+
+    .status-badge {
+        font-size: 0.6rem;
+        padding: 1px 4px;
+        border: 1px solid #555;
+        margin-left: 5px;
+        float: right;
+    }
+
+    /* --- THE MANIFEST (YOUR WORK) --- */
+    .manifest-section {
+        border: 1px dashed #333;
+        background-color: #0e0e0e;
+        padding: 20px;
+        margin-bottom: 40px;
+        font-size: 0.9rem;
+    }
+
+    .manifest-header {
+        color: #cc0000;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 15px;
+        letter-spacing: 2px;
+        border-bottom: 1px solid #222;
+        padding-bottom: 5px;
+    }
+
+    .manifest-row {
+        display: flex;
+        margin-bottom: 8px;
+        align-items: baseline;
+    }
+
+    .manifest-label {
+        width: 120px;
+        color: #555;
+        font-weight: bold;
+        flex-shrink: 0;
+    }
+
+    .manifest-data {
+        color: #999;
+    }
+    
+    .manifest-data a {
+        color: #b0b0b0;
+        text-decoration: none;
+        border-bottom: 1px dotted #444;
+        margin-right: 10px;
+        transition: color 0.2s;
+    }
+
+    .manifest-data a:hover {
+        color: #fff;
+        border-color: #cc0000;
+    }
+
+    /* --- THE NETWORK UPLINKS (EXTERNAL LINKS) --- */
+    .directory-section {
+        border-top: 1px solid #333;
+        padding-top: 20px;
+    }
+
+    .directory-header {
+        color: #444;
+        font-size: 0.7rem;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .directory-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 20px;
+    }
+
+    a.dir-link {
+        color: #555;
+        text-decoration: none;
+        font-size: 0.75rem;
+        transition: color 0.2s ease;
+        display: inline-block;
+    }
+
+    a.dir-link::before { content: "+ "; color: #333; }
+    a.dir-link:hover { color: #cc0000; }
+
+    /* Footer Stats */
+    .system-footer {
+        margin-top: 30px;
+        padding-top: 10px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.7rem;
+        color: #333;
+        border-top: 1px solid #1a1a1a;
+    }
+
+    @media (max-width: 600px) {
+        .grid { grid-template-columns: 1fr; }
+        .manifest-row { flex-direction: column; margin-bottom: 15px; }
+        .manifest-label { width: 100%; margin-bottom: 2px; }
+    }
+
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>WordStar Nexus</h1>
+    <div class="subtitle">
+        <span>INKREALM SYSTEM ROOT</span>
+        <span>V. 7.0</span>
+    </div>
+
+    <!-- APPLIANCES (THE TOOLS) -->
+    <div class="grid">
+        <!-- Main Tool -->
+        <a href="/seven" class="module-link">
+            <div>
+                <span class="module-title">Nexus Seven <span class="status-badge" style="color:#cc0000; border-color:#cc0000;">ACTIVE</span></span>
+                <span class="module-meta">MODERNIZED WORDSTAR CLI</span>
+            </div>
+        </a>
+
+        <!-- Your Specific Appliances -->
+        <a href="/cut&rune" class="module-link">
+            <div>
+                <span class="module-title">Cut & Rune <span class="status-badge">TOOL</span></span>
+                <span class="module-meta">TEXT SURGERY PROTOCOL</span>
+            </div>
+        </a>
+
+        <a href="/birch" class="module-link">
+            <div>
+                <span class="module-title">Birch <span class="status-badge">TOOL</span></span>
+                <span class="module-meta">ORGANIC FORMATTING</span>
+            </div>
+        </a>
+
+        <a href="/q" class="module-link">
+            <div>
+                <span class="module-title">Project Q <span class="status-badge">AI-NODE</span></span>
+                <span class="module-meta">GENERATIVE ENVIRONMENT</span>
+            </div>
+        </a>
+
+        <!-- Legacy/Emulation -->
+        <a href="/wordstar3" class="module-link">
+            <div>
+                <span class="module-title">WordStar 3.0 <span class="status-badge">LEGACY</span></span>
+                <span class="module-meta">CP/M ARCHIVE (1982)</span>
+            </div>
+        </a>
+    </div>
+
+    <!-- OPERATIONAL MANIFEST (THE "ABOUT" DATA) -->
+    <div class="manifest-section">
+        <div class="manifest-header">Primary Output // Manifest</div>
+        
+        <div class="manifest-row">
+            <span class="manifest-label">IDENTITY:</span>
+            <span class="manifest-data">INKREALM ("Inky") // Writer // Musician // Visual Architect</span>
+        </div>
+
+        <div class="manifest-row">
+            <span class="manifest-label">TEXT_FILES:</span>
+            <span class="manifest-data">
+                <a href="/dejavuglitches">DEJAVU_GLITCHES</a>
+                <a href="/dreamweaver">DREAMWEAVER</a>
+                <a href="/displaywriter">DISPLAYWRITER</a>
+            </span>
+        </div>
+
+        <div class="manifest-row">
+            <span class="manifest-label">AUDIO_SIG:</span>
+            <span class="manifest-data">
+                "Two Skinny Girls" (Available on all streaming frequencies)
+            </span>
+        </div>
+
+        <div class="manifest-row">
+            <span class="manifest-label">CINEMA_DB:</span>
+            <span class="manifest-data">
+                <a href="/90263">FILE_90263</a>
+                <a href="/netherlands">THE_NETHERLANDS</a>
+            </span>
+        </div>
+
+        <div class="manifest-row">
+            <span class="manifest-label">VISUALS:</span>
+            <span class="manifest-data">
+                <a href="https://artbreeder.com" target="_blank">Artbreeder</a>
+                <a href="https://artstation.com/inkrealm" target="_blank">ArtStation</a>
+                <a href="https://behance.net/inkrealm" target="_blank">Behance</a>
+                <a href="https://vsco.co/inkrealm" target="_blank">VSCO</a>
+            </span>
+        </div>
+    </div>
+
+    <!-- NETWORK UPLINKS (THE THANKS LIST) -->
+    <div class="directory-section">
+        <div class="directory-header">Network Uplinks // External Protocols</div>
+        <div class="directory-grid">
+            <a href="https://inkrealm.company.site" class="dir-link" target="_blank">STORE</a>
+            <a href="https://www.crunchbase.com/organization/inkrealm" class="dir-link" target="_blank">CRUNCHBASE</a>
+            <a href="https://pico.link/inkrealm" class="dir-link" target="_blank">PICO</a>
+            <a href="http://linktr.ee/inkrealm" class="dir-link" target="_blank">LINKTREE</a>
+            <a href="https://inkrealm.carrd.co/" class="dir-link" target="_blank">CARRD</a>
+            <a href="https://beacons.ai/inkrealm" class="dir-link" target="_blank">BEACONS</a>
+            <a href="https://www.clubhouse.com/@inkrealm" class="dir-link" target="_blank">CLUBHOUSE</a>
+            <a href="https://www.wattpad.com/user/inkrealm" class="dir-link" target="_blank">WATTPAD</a>
+            <a href="https://www.spatial.io/s/inkrealms-Next-World-6218fa3ed2b7ae0001fb9703" class="dir-link" target="_blank">SPATIAL</a>
+            <a href="https://orcid.org/0009-0008-7073-0515" class="dir-link" target="_blank">ORCID</a>
+            <a href="https://inkrealm.medium.com/prompt-and-circumstance-b9fd902861b1" class="dir-link" target="_blank">MEDIUM</a>
+            <a href="https://hackaday.io/inkrealm" class="dir-link" target="_blank">HACKADAY</a>
+            <a href="https://www.cosmos.so/inkrealm" class="dir-link" target="_blank">COSMOS</a>
+            <a href="https://hashnode.com/@Inkrealm" class="dir-link" target="_blank">HASHNODE</a>
+            <a href="https://odysee.com/@inkrealm" class="dir-link" target="_blank">ODYSEE</a>
+            <a href="https://paragraph.com/@inkrealm" class="dir-link" target="_blank">PARAGRAPH</a>
+            <a href="https://opensea.io/inkrealm" class="dir-link" target="_blank">OPENSEA</a>
+            <a href="https://bafybeih2krsr35gj6afanlglhec47ycvtjerr75rck24t4ahhf6i6pf6sm.ipfs.infura-ipfs.io/" class="dir-link" target="_blank">IPFS</a>
+            <a href="https://dev-inkrealm.pantheonsite.io/home" class="dir-link" target="_blank">PANTHEON</a>
+            <a href="https://www.minds.com/inkrealm" class="dir-link" target="_blank">MINDS</a>
+            <a href="https://www.are.na/ink-realm/wordstar" class="dir-link" target="_blank">ARE.NA</a>
+            <a href="https://inkrealm.pythonanywhere.com/" class="dir-link" target="_blank">PYTHONANYWHERE</a>
+            <a href="https://soundcloud.com/inkrealm" class="dir-link" target="_blank">SOUNDCLOUD</a>
+        </div>
+    </div>
+
+    <div class="system-footer">
+        <span>SYS.ADMIN: GHOST</span>
+        <span>STATUS: ONLINE</span>
+        <span>DOMAIN: WORDSTAR.NEXUS</span>
+    </div>
+</div>
+
+<script>
+    document.querySelector('h1').innerText = "";
+    let text = "WORDSTAR NEXUS";
+    let i = 0;
+    function typeWriter() {
+        if (i < text.length) {
+            document.querySelector('h1').innerHTML += text.charAt(i);
+            i++;
+            setTimeout(typeWriter, 100);
+        }
+    }
+    window.onload = typeWriter;
+</script>
+
+</body>
+</html>
