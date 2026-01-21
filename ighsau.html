@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inkrealm | Writer Musician Visual Artist</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        /* --- GLOBAL VARIABLES --- */
+        :root {
+            --color-bg: #050505;
+            --color-text: #e0e0e0;
+            --color-accent: #ff0033; /* Inkrealm Red */
+            --color-scanline: rgba(0, 0, 0, 0.5);
+            --font-main: 'Lato', sans-serif;
+            --font-display: 'Cinzel', serif;
+            --font-tech: 'Share Tech Mono', monospace;
+        }
+
+        /* --- RESET & BASICS --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        html { scroll-behavior: smooth; }
+        
+        body {
+            font-family: var(--font-main);
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* --- SELECTION HIGHLIGHTS --- */
+        ::selection {
+            background: var(--color-accent);
+            color: #ffffff;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        /* --- CRT SCANLINE OVERLAY --- */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0,0,0,0.2) 50%,
+                rgba(0,0,0,0.2)
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.6;
+        }
+
+        /* --- PARALLAX CONTAINER --- */
+        .parallax-section {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .parallax-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            z-index: 1;
+            /* FORCING B&W AESTHETIC ON GIFS */
+            filter: grayscale(100%) contrast(1.2) brightness(0.6);
+            transition: filter 0.5s ease;
+        }
+
+        .parallax-section:hover .parallax-bg {
+            filter: grayscale(100%) contrast(1.4) brightness(0.4);
+        }
+
+        .parallax-content {
+            position: relative;
+            z-index: 2;
+            padding: 2rem;
+            max-width: 800px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #333;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            backdrop-filter: blur(2px);
+        }
+
+        /* --- TYPOGRAPHY & GLITCH --- */
+        h1, h2, h3 {
+            font-family: var(--font-display);
+            text-transform: uppercase;
+        }
+
+        h1 { font-size: 4rem; margin-bottom: 0.5rem; letter-spacing: 5px; }
+        h2 { font-size: 2.5rem; margin-bottom: 1rem; color: #fff; }
+        h3 { font-size: 1rem; letter-spacing: 4px; color: var(--color-accent); margin-bottom: 1rem; }
+        p { font-size: 1.1rem; color: #ccc; margin-bottom: 1rem; text-align: left;}
+
+        /* Glitch Text Effect */
+        .glitch { position: relative; color: #fff; }
+        .glitch::before, .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+        }
+        .glitch::before {
+            left: 2px; text-shadow: -1px 0 #ff0033;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+        .glitch::after {
+            left: -2px; text-shadow: -1px 0 #999;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim2 5s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(12px, 9999px, 5px, 0); }
+            5% { clip: rect(89px, 9999px, 78px, 0); }
+            100% { clip: rect(45px, 9999px, 89px, 0); }
+        }
+        @keyframes glitch-anim2 {
+            0% { clip: rect(65px, 9999px, 12px, 0); }
+            5% { clip: rect(3px, 9999px, 98px, 0); }
+            100% { clip: rect(54px, 9999px, 21px, 0); }
+        }
+
+        /* --- CONTENT SECTIONS --- */
+        .content-section {
+            background-color: #080808;
+            padding: 100px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-top: 1px solid #222;
+            border-bottom: 1px solid #222;
+        }
+        
+        .text-container { max-width: 700px; }
+
+        .red-line {
+            width: 50px; height: 4px;
+            background: var(--color-accent);
+            margin: 20px auto;
+        }
+
+        /* --- AI TERMINAL SECTION --- */
+        #ai-terminal {
+            background: #000;
+            padding: 60px 20px;
+            border-top: 2px solid var(--color-accent);
+            font-family: var(--font-tech);
+            text-align: left;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .terminal-header {
+            color: var(--color-accent);
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .terminal-group { margin-bottom: 15px; }
+        
+        .terminal-input, .terminal-area {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 10px;
+            font-family: var(--font-tech);
+            font-size: 1rem;
+        }
+        
+        .terminal-input:focus, .terminal-area:focus {
+            outline: none;
+            border-color: var(--color-accent);
+        }
+
+        .terminal-btn {
+            background: transparent;
+            border: 1px solid var(--color-accent);
+            color: var(--color-accent);
+            padding: 10px 30px;
+            font-family: var(--font-tech);
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .terminal-btn:hover { background: var(--color-accent); color: #000; }
+        .terminal-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        #output {
+            margin-top: 20px;
+            padding: 20px;
+            border-left: 3px solid var(--color-accent);
+            background: #111;
+            min-height: 100px;
+            white-space: pre-wrap;
+            color: #ccc;
+        }
+
+        /* --- FOOTER --- */
+        footer {
+            background-color: #000;
+            color: #666;
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 0.9rem;
+        }
+        footer a { color: #fff; text-decoration: none; transition: color 0.3s; }
+        footer a:hover { color: var(--color-accent); text-decoration: line-through; }
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+
+    <!-- 1. HERO SECTION (GIF 1) -->
+    <section class="parallax-section">
+        <div class="parallax-bg" style="background-image: url('https://github.com/ghostm68/pantheon/raw/main/Media_kristina.stertz.minaro240120_143452.gif');"></div>
+        
+        <div class="parallax-content">
+            <h1 class="glitch" data-text="inkrealm">inkrealm</h1>
+            <div class="red-line"></div>
+            <h3>jan 20 poe's birthday party</h3>
+            <p style="text-align: center; font-size: 0.9rem;">There's a street in my hometown named for him...</p>
+        </div>
+    </section>
+    
+    <!-- 2. CONTENT TEXT 1 -->
+    <section class="content-section">
+        <div class="text-container">
+            <h3>Apartment Three K</h3>
+            <h2>The Thief & The Sandwich</h2>
+            <div class="red-line"></div>
+            <p>Before the festivities there i was circa 82nd street broadway passing a street vendor that gets robbed watching the thief race out into the roadway island and run around chased by the vendor.</p>
+            <p>I get up at the perfect time but the turkey sandwich knocked me out again to get up at the awful middle of the day - in the middle of the night i am still feeling drowsy, neither here nor there - alone yet haunted by myself i suppose.</p>
+            <p>A before q, heartfelt theft without love - the idle man dreams again, towels washed - i'm in apartment three k and i can't leave it dreams, home.</p>
+        </div>
+    </section>
+    
+    <!-- 3. PARALLAX SECTION (GIF 2) -->
+    <section class="parallax-section">
+        <div class="parallax-bg" style="background-image: url('https://github.com/ghostm68/pantheon/raw/main/Minaro_240118_wordstar114904.gif');"></div>
+        
+        <div class="parallax-content">
+            <h3>Rem Sleep</h3>
+            <h2 class="glitch" data-text="Green Towel">Green Towel</h2>
+        </div>
+    </section>
+    
+    <!-- 4. CONTENT TEXT 2 -->
+    <section class="content-section">
+        <div class="text-container">
+            <h3>Analysis</h3>
+            <h2>Saturday Night</h2>
+            <div class="red-line"></div>
+            <p>A former friend sleeps over i instruct, shut the door feeling eyes at the entrance - the thing about the scene was not the acquaintance or the eyes but going to the closet that was on the right side of the hallway pick pulling out satin pink blanket.</p>
+            <p>Thinking it over it is like a shock - no dream ever felt as real at least not recently - other scenes infected with foreign agents, vendor scribe deprived of rem.</p>
+            <p>Saturday night is all right for cooking and cleaning, well as i sat lamenting the cheap vinegar instead of heinz with the lettuce i thought this might be good, there won't be aything in the way if want to start recording.</p>
+            <p>Part of egypt melted as ganna wore a tight red dress for the first time, maddie went to dublin and turned it into a dozen stories - i truly enjoyed all of them.</p>
+        </div>
+    </section>
+    
+    <!-- 5. PARALLAX SECTION (GIF 3) -->
+    <section class="parallax-section">
+        <div class="parallax-bg" style="background-image: url('https://github.com/ghostm68/pantheon/raw/main/Media_wordstar.minaro.240112_211026.gif');"></div>
+        
+        <div class="parallax-content">
+            <h3>Paris Fashion Week</h3>
+            <h2 class="glitch" data-text="Alexandras">Alexandras</h2>
+        </div>
+    </section>
+    
+    <!-- 6. FINAL TEXT -->
+    <section class="content-section">
+        <div class="text-container">
+            <h3>The Saloon</h3>
+            <h2>Once Upon a Time</h2>
+            <div class="red-line"></div>
+            <p>Counting my clothes and dividing to conquer my leather, i felt happy that paris fashion week was coming to an end, not that i don't love lara - it is only that after the 22nd i won't feel any obligation or worry in terms of that frenzy.</p>
+            <p>I tried hiding my love for emilee, for example, only to meet the quote 'love grants in a moment...' alexandra's iced coffee in winter, i suppose if you are that hot...heavy on the right shoulder.</p>
+            <p>In dreams i try leaving a restaurant saloon, the unpaved avenue of turn of century western america 1890s vest boots wooden structures outside looking in as an actor arrives who i can hear before seeing... speaking of the saloon restaurant and they are rolling out a greeting party.</p>
+            <p>I had listened to the charade soundtrack, isn't that where the theme from il padrino got produced but you can hear too how mancini listened to the classics and learned.</p>
+        </div>
+    </section>
+    
+    <!-- 7. FINAL GIF -->
+    <section class="parallax-section" style="min-height: 50vh;">
+        <div class="parallax-bg" style="background-image: url('https://github.com/ghostm68/pantheon/raw/main/Media_minaro.hilton.240105_143846.gif');"></div>
+    </section>
+
+    <!-- 8. AI TERMINAL (RAG EXPERIMENT) -->
+    <div style="background: #000; padding: 40px 0;">
+        <section id="ai-terminal">
+            <div class="terminal-header">
+                <span class="glitch" data-text="> SYSTEM OVERRIDE // NVIDIA_NEMOTRON">> SYSTEM OVERRIDE // NVIDIA_NEMOTRON</span>
+            </div>
+            
+            <div class="terminal-group">
+                <label style="color:#666; font-size:0.8rem;">API KEY [NVCF]</label>
+                <input type="password" id="apiKey" class="terminal-input" placeholder="Enter NVIDIA API Key...">
+            </div>
+
+            <div class="terminal-group">
+                <label style="color:#666; font-size:0.8rem;">INPUT STREAM</label>
+                <textarea id="prompt" class="terminal-area" rows="4" placeholder="Enter prompt to generate text..."></textarea>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <label style="color:#666; font-size:0.8rem;">TEMP</label>
+                    <input type="range" id="creativity" min="0" max="1" step="0.1" value="0.7">
+                </div>
+                <button id="generateButton" class="terminal-btn">Execute</button>
+            </div>
+
+            <div id="output">_Waiting for input...</div>
+        </section>
+    </div>
+
+    <footer>
+        <p>© <span id="currentYear"></span> inkrealm. All rights reserved.</p>
+        <p style="margin-top: 10px;">
+            <a href="https://inkrealm.info/directory">Directory</a> &nbsp;|&nbsp; 
+            <a href="mailto:contact@inkrealm.info">Contact</a>
+        </p>
+        <p style="color: #333; margin-top: 15px; font-size: 0.8rem;">writer . musician . visual artist</p>
+    </footer>
+
+    <script>
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        // AI GENERATION LOGIC
+        document.getElementById('generateButton').addEventListener('click', async function() {
+            const apiKey = document.getElementById('apiKey').value;
+            const prompt = document.getElementById('prompt').value;
+            const creativity = parseFloat(document.getElementById('creativity').value);
+            const output = document.getElementById('output');
+            const generateBtn = document.getElementById('generateButton');
+
+            if (!apiKey) {
+                output.textContent = 'ERROR: MISSING_API_KEY';
+                output.style.color = '#ff0033';
+                return;
+            }
+
+            if (!prompt) {
+                output.textContent = 'ERROR: MISSING_INPUT_STREAM';
+                output.style.color = '#ff0033';
+                return;
+            }
+
+            // UI Loading State
+            generateBtn.disabled = true;
+            generateBtn.textContent = 'PROCESSING...';
+            output.textContent = 'INITIALIZING HANDSHAKE...';
+            output.style.color = '#ccc';
+
+            try {
+                // Using corsproxy to bypass browser restrictions
+                const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
+                
+                const requestBody = {
+                    model: "nvidia/nvidia-nemotron-nano-9b-v2",
+                    messages: [{ role: "user", content: prompt }],
+                    temperature: creativity,
+                    top_p: 1,
+                    max_tokens: 1024,
+                    stream: false
+                };
+
+                const response = await fetch(proxyUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiKey
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.choices && data.choices.length > 0) {
+                    output.textContent = data.choices[0].message.content;
+                    output.style.color = '#e0e0e0';
+                } else {
+                    output.textContent = 'SYSTEM RETURNED NULL RESPONSE.';
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                output.textContent = 'CRITICAL FAILURE: ' + error.message;
+                output.style.color = '#ff0033';
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.textContent = 'EXECUTE';
+            }
+        });
+    </script>
+</body>
+</html>
