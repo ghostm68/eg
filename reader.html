@@ -5,828 +5,342 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>dreamweaver reader</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- new fonts -->
   <link href="https://fonts.cdnfonts.com/css/voodoo" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
-  
+
   <style>
-    /* === DEFINE VARIABLES FIRST === */
-    :root {
-      --red: #ff0033;
-      --black: #0a0a0a;
-      --dark-grey: #121212;
-      --white: #d1d1d1;
-    }
-
-    /* === NOW selection can use them === */
-    ::selection {
-      background: var(--red);
-      color: var(--black);
-      text-shadow: none;
-    }
-
-    /* Base Settings */
-    body {
-      background-color: var(--black);
-      color: var(--white);
-      overscroll-behavior-y: contain; 
-      overflow-y: auto;
-      margin: 0;
-      padding: 0;
-      font-family: 'Special Elite', monospace;
-    }
-    
-    /* Font Assignments */
-    .font-voodoo {
-      font-family: 'Voodoo', 'Special Elite', monospace;
-      letter-spacing: 1px;
-    }
-    
-    .font-mono {
-      font-family: 'Special Elite', monospace;
-    }
-
-    /* Red Highlight for Search Terms */
-    .highlight {
-      background-color: var(--red);
-      color: var(--black);
-      padding: 0px 2px;
-      font-weight: bold;
-      border-radius: 2px;
-    }
-
-    /* Custom Red/Black Scrollbar */
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 8px;
-    }
-    
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: var(--black);
-      border-left: 1px solid #333;
-    }
-    
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background-color: var(--red);
-      border: 2px solid var(--black);
-    }
-    
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background-color: #cc0000;
-    }
-
-    /* Hide standard focus rings */
-    *:focus {
-      outline: none !important;
-    }
-    
-    /* Fix for the layout height */
-    html, body {
-      height: 100%;
-      overflow: hidden;
-    }
-    
-    /* Entry styling */
-    .entry-date {
-      color: var(--red);
-      font-weight: bold;
-      margin-bottom: 0.5rem;
-    }
-    
-    .entry-content {
-      line-height: 1.6;
-      margin-bottom: 2rem;
-    }
+    :root{--red:#ff0033;--black:#0a0a0a;--dark-grey:#121212;--white:#d1d1d1;}
+    ::selection{background:var(--red);color:var(--black);text-shadow:none;}
+    *{-webkit-tap-highlight-color:transparent;}
+    body{font-family:'Special Elite',serif;background:var(--black);color:var(--white);margin:0;touch-action:manipulation;}
+    body::after{content:"";position:fixed;inset:0;background:linear-gradient(rgba(18,16,16,0) 50%,rgba(0,0,0,.15) 50%),linear-gradient(90deg,rgba(255,0,0,.04),rgba(0,255,0,.02),rgba(0,0,255,.04));background-size:100% 3px,3px 100%;z-index:999;pointer-events:none;}
+    .highlight{background:var(--red);color:var(--black);padding:1px 3px;}
+    .custom-scrollbar::-webkit-scrollbar{width:6px;}.custom-scrollbar::-webkit-scrollbar-track{background:var(--black);}.custom-scrollbar::-webkit-scrollbar-thumb{background:var(--red);border-radius:3px;}
+    input,textarea,button{font-family:'Special Elite',serif;}
+    button{user-select:none;cursor:pointer;}
+    /* headings in voodoo */
+    .voodoo{font-family:'Voodoo',sans-serif;}
   </style>
 </head>
-<body class="bg-black text-gray-200">
-  <!-- HEADER -->
-  <div class="sticky top-0 z-50 w-full pt-4 pb-4 px-4 sm:px-6 border-b border-gray-800" style="background: var(--black);">
-    <div class="flex justify-between items-center max-w-full">
-      <h1 class="text-3xl font-voodoo text-red-600 leading-none tracking-tight">DREAMWEAVER</h1>
-      <a href="https://inkrealm.info" 
-         class="text-xs font-mono border border-gray-700 px-3 py-1 hover:bg-red-600 hover:text-black hover:border-red-600 transition-all duration-300 uppercase tracking-widest no-underline text-gray-400">
-        Return to Realm
-      </a>
-    </div>
+
+<body class="bg-black text-gray-300">
+<!-- HEADER -->
+<div class="sticky top-0 z-50 w-full pt-4 pb-4 px-4 sm:px-6 md:px-8 border-b border-red-800 bg-black">
+  <div class="flex justify-between items-center max-w-full">
+    <h1 class="text-3xl font-bold voodoo" style="color:var(--red)">⚡ dreamweaver reader ⚡</h1>
+    <a href="https://inkrealm.info" class="text-xs font-mono border border-gray-600 px-3 py-1 hover:bg-red-600 hover:text-black hover:border-red-600 transition-all duration-300 uppercase tracking-widest no-underline text-gray-400">Return to Realm</a>
+  </div>
+</div>
+
+<!-- TWO-COLUMN LAYOUT -->
+<div id="brim-layout" class="flex flex-col md:flex-row w-full h-[calc(100vh-80px)] overflow-hidden bg-black">
+  <!-- LEFT: READER -->
+  <div class="flex-1 flex flex-col h-full border-r border-gray-800 relative min-w-0">
+    <div id="loading" class="absolute inset-0 flex items-center justify-center text-xl" style="color:var(--red)">Loading dreamweaver.txt …</div>
+    <div id="content" class="flex-1 overflow-y-auto p-6 md:p-8 lg:p-10 text-base md:text-lg leading-relaxed whitespace-pre-wrap custom-scrollbar" style="display:none;"></div>
+    <div id="entryInfo" class="p-3 border-t border-gray-800 text-xs text-gray-500 bg-black flex-shrink-0"></div>
   </div>
 
-  <!-- MAIN TWO-COLUMN LAYOUT -->
-  <div id="brim-layout" class="flex flex-col md:flex-row w-full h-[calc(100vh-80px)] overflow-hidden">
-    
-    <!-- LEFT COLUMN: READER -->
-    <div class="flex-1 flex flex-col h-full border-r border-gray-800 relative min-w-0">
-        
-      <!-- Loading State -->
-      <div id="loading" class="absolute inset-0 flex items-center justify-center text-xl z-10" style="color: var(--red); background: var(--black);">
-        Loading dreamweaver.txt ...
+  <!-- RIGHT: CONTROLS -->
+  <div class="w-full md:w-[400px] flex flex-col h-full bg-[#0a0a0a] border-l border-gray-800 flex-shrink-0">
+    <div class="flex-1 overflow-y-auto p-5 custom-scrollbar">
+      <!-- NAV -->
+      <div class="flex items-center justify-between mb-6 gap-2">
+        <button id="prevBtn" class="flex-1 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors">← Prev</button>
+        <button id="randomBtn" class="px-4 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors">⚡</button>
+        <button id="nextBtn" class="flex-1 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors">Next →</button>
       </div>
 
-      <!-- The Text Content Area -->
-      <div id="content" class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 text-base leading-relaxed whitespace-pre-wrap font-mono custom-scrollbar" style="display:none; background: var(--black);">
-        <!-- Text gets injected here -->
+      <!-- SEARCH -->
+      <div class="mb-6">
+        <input type="text" id="searchBox" class="w-full bg-[#111] border border-gray-700 p-3 text-white focus:border-red-500 focus:outline-none transition-colors" placeholder="Search text...">
+        <div class="flex justify-between items-center mt-2">
+          <div id="searchStats" class="text-xs text-gray-500 h-4"></div>
+          <button id="indexBtn" class="text-xs text-gray-500 hover:text-red-500 uppercase tracking-widest border-b border-transparent hover:border-red-500">Toggle Index</button>
+        </div>
       </div>
 
-      <!-- Footer Info -->
-      <div id="entryInfo" class="p-3 border-t border-gray-800 text-xs text-gray-500 bg-black flex-shrink-0">
-        <!-- Info gets injected here -->
+      <!-- FILTERS -->
+      <div id="filterBtns" class="flex flex-wrap gap-2 mb-6 pb-6 border-b border-gray-800">
+        <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="all">All</button>
+        <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="lyric">Lyric</button>
+        <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="poem">Poem</button>
+        <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="film">Film</button>
+        <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="book">Book</button>
+        <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="dream">Dream</button>
       </div>
-    </div>
 
-    <!-- RIGHT COLUMN: CONTROLS & AI -->
-    <div class="w-full md:w-[350px] lg:w-[400px] flex flex-col h-full bg-gray-900 border-l border-gray-800 flex-shrink-0">
-      
-      <!-- SCROLLABLE TOOLBAR -->
-      <div class="flex-1 overflow-y-auto p-4 sm:p-5 custom-scrollbar">
-        
-        <!-- 1. NAVIGATION -->
-        <div class="flex items-center justify-between mb-6 gap-2">
-          <button id="prevBtn" class="flex-1 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors text-sm font-mono">← Prev</button>
-          <button id="randomBtn" class="px-3 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors text-sm font-mono">⚡</button>
-          <button id="nextBtn" class="flex-1 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors text-sm font-mono">Next →</button>
+      <!-- INDEX -->
+      <div id="dateNav" class="hidden mb-6 max-h-60 overflow-y-auto border border-gray-800 bg-[#111] custom-scrollbar"></div>
+
+      <!-- NVIDIA AI -->
+      <div class="mt-2">
+        <h2 class="text-xl font-bold mb-4 text-gray-600 voodoo">AI EDITOR</h2>
+        <input type="password" id="apiKeyInput" class="w-full bg-black border border-gray-800 p-2 text-xs text-red-500 font-mono mb-4 focus:outline-none focus:border-red-900" placeholder="NVIDIA API KEY...">
+        <div class="flex gap-2 mb-2">
+          <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500" data-context="current">Current</button>
+          <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500" data-context="all">Outline</button>
+          <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500" data-context="none">None</button>
         </div>
-
-        <!-- 2. SEARCH -->
-        <div class="mb-6">
-          <input type="text" id="searchBox" 
-            class="w-full bg-gray-800 border border-gray-700 p-3 text-white focus:border-red-500 focus:outline-none transition-colors text-sm font-mono"
-            placeholder="Search text...">
-          
-          <div class="flex justify-between items-center mt-2">
-            <div id="searchStats" class="text-xs text-gray-500 h-4 font-mono"></div>
-            <button id="indexBtn" class="text-xs text-gray-500 hover:text-red-500 uppercase tracking-widest border-b border-transparent hover:border-red-500 font-mono">
-              Toggle Index
-            </button>
-          </div>
-        </div>
-
-        <!-- 3. FILTERS -->
-        <div id="filterBtns" class="flex flex-wrap gap-2 mb-6 pb-6 border-b border-gray-800">
-          <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500 hover:text-red-500 font-mono transition-colors" data-filter="all">All</button>
-          <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500 hover:text-red-500 font-mono transition-colors" data-filter="lyric">Lyric</button>
-          <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500 hover:text-red-500 font-mono transition-colors" data-filter="poem">Poem</button>
-          <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500 hover:text-red-500 font-mono transition-colors" data-filter="film">Film</button>
-          <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500 hover:text-red-500 font-mono transition-colors" data-filter="book">Book</button>
-          <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500 hover:text-red-500 font-mono transition-colors" data-filter="dream">Dream</button>
-        </div>
-
-        <!-- HIDDEN INDEX -->
-        <div id="dateNav" class="hidden mb-6 max-h-60 overflow-y-auto border border-gray-800 bg-gray-800 custom-scrollbar"></div>
-
-        <!-- 4. NVIDIA AI -->
-        <div class="mt-2">
-          <h2 class="text-lg font-bold mb-4 text-gray-400 font-voodoo">AI EDITOR</h2>
-          
-          <!-- Key -->
-          <input type="password" id="apiKeyInput" 
-            class="w-full bg-black border border-gray-700 p-2 text-xs text-red-500 font-mono mb-3 focus:outline-none focus:border-red-600" 
-            placeholder="NVIDIA API KEY...">
-
-          <!-- Context Switches -->
-          <div class="flex gap-2 mb-2">
-            <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500 font-mono hover:border-red-500 hover:text-red-500 transition-colors" data-context="current">Current</button>
-            <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500 font-mono hover:border-red-500 hover:text-red-500 transition-colors" data-context="all">Outline</button>
-            <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500 font-mono hover:border-red-500 hover:text-red-500 transition-colors" data-context="none">None</button>
-          </div>
-          <p id="contextInfo" class="text-[10px] text-gray-600 mb-3 text-right font-mono">Target: Current Entry</p>
-
-          <!-- Input -->
-          <textarea id="aiInput" 
-            class="w-full bg-gray-800 border border-gray-700 p-3 text-sm text-gray-300 focus:border-red-500 focus:outline-none min-h-[80px] mb-2 font-mono"
-            placeholder="Enter prompt..."></textarea>
-          
-          <button id="askAiBtn" class="w-full bg-red-900/20 hover:bg-red-900/40 border border-red-900 text-red-500 py-2 text-xs font-bold tracking-widest transition-all font-mono hover:bg-red-900/60">
-            TRANSMIT
-          </button>
-
-          <!-- Response -->
-          <div id="aiResponse" class="mt-4 p-3 bg-black border border-gray-700 text-sm text-gray-400 min-h-[100px] whitespace-pre-wrap font-mono custom-scrollbar">
-            <span class="opacity-30">:: Awaiting Input ::</span>
-          </div>
-        </div>
+        <p id="contextInfo" class="text-[10px] text-gray-600 mb-3 text-right">Target: Current Entry</p>
+        <textarea id="aiInput" class="w-full bg-[#111] border border-gray-800 p-3 text-sm text-gray-300 focus:border-red-500 focus:outline-none min-h-[80px] mb-2" placeholder="Enter prompt..."></textarea>
+        <button id="askAiBtn" class="w-full bg-red-900/20 hover:bg-red-900/40 border border-red-900 text-red-500 py-2 text-xs font-bold tracking-widest transition-all">TRANSMIT</button>
+        <div id="aiResponse" class="mt-4 p-3 bg-black border border-gray-800 text-sm text-gray-400 min-h-[100px] whitespace-pre-wrap font-mono custom-scrollbar"><span class="opacity-30">:: Awaiting Input ::</span></div>
       </div>
     </div>
   </div>
+</div>
 
+<!-- ============  READER SCRIPT  ============ -->
 <script id="reader-script">
-    // ==========================================
-    // CONFIGURATION FOR DREAMWEAVER.TXT
-    // ==========================================
-    const TXT_FILE_URL = 'dreamweaver.txt';
-    
-    // Pattern for dates (common formats)
-    // Examples: 2023-12-25, 12/25/2023, Dec 25 2023, 25.12.2023
-    const DATE_PATTERN = /^(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4}|\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2},? \d{4})/i;
-    
-    // Alternative: If entries start with specific markers
-    // const ENTRY_PATTERN = /^---\s*$/; // For separator lines
-    // const ENTRY_PATTERN = /^DREAM:|^NOTE:|^ENTRY:/i; // For labeled entries
-    
-    // Use date pattern by default
-    const ENTRY_PATTERN = DATE_PATTERN;
+/* ----------  CONFIG  ---------- */
+const TXT_FILE_URL = 'dreamweaver.txt';
+// flexible date splitter
+const ENTRY_PATTERN = /^(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4}|\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2},? \d{4})/i;
+const TAG_PATTERNS = {
+  all: /.*/,
+  lyric: /\b lyric s? \b | \[lyric\] /xi,
+  poem:  /\b poem s?  \b | \[poem\]  /xi,
+  film:  /\b film s? | movie s? \b | \[film\] /xi,
+  book:  /\b book s? | reading \b | \[book\] /xi,
+  dream: /\b dream s? | dreamt \b | \[dream\] /xi
+};
 
-    const TAG_PATTERNS = {
-      all: /.*/,
-      lyric: /\[lyric\]|\blyrics?\b/i,
-      poem: /\[poem\]|\bpoems?\b/i,
-      film: /\[film\]|\bfilms?\b|\bmovies?\b/i,
-      book: /\[book\]|\bbooks?\b|\breading\b/i,
-      dream: /\[dream\]|\bdreams?\b|\bdreamt\b/i
-    };
+/* ----------  STATE  ---------- */
+window.readerEntries = [];
+window.readerCurrentIndex = 0;
+let currentFilter = 'all', searchQuery = '', searchResults = [], isSearching = false, isIndexVisible = false, searchTimeout = null;
 
-    // ==========================================
-    // STATE
-    // ==========================================
-    window.readerEntries = [];
-    window.readerCurrentIndex = 0;
-    let currentFilter = 'all';
-    let searchQuery = '';
-    let searchResults = [];
-    let isSearching = false;
-    let isIndexVisible = false;
-    let searchTimeout = null;
+/* ----------  DOM  ---------- */
+const searchBox  = document.getElementById('searchBox');
+const searchStats= document.getElementById('searchStats');
+const prevBtn    = document.getElementById('prevBtn');
+const nextBtn    = document.getElementById('nextBtn');
+const randomBtn  = document.getElementById('randomBtn');
+const indexBtn   = document.getElementById('indexBtn');
+const dateNav    = document.getElementById('dateNav');
+const entryInfo  = document.getElementById('entryInfo');
+const loadingDiv = document.getElementById('loading');
+const contentDiv = document.getElementById('content');
 
-    // ==========================================
-    // DOM ELEMENTS
-    // ==========================================
-    const searchBox = document.getElementById('searchBox');
-    const searchStats = document.getElementById('searchStats');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const randomBtn = document.getElementById('randomBtn');
-    const indexBtn = document.getElementById('indexBtn');
-    const dateNav = document.getElementById('dateNav');
-    const entryInfo = document.getElementById('entryInfo');
-    const loadingDiv = document.getElementById('loading');
-    const contentDiv = document.getElementById('content');
+/* ----------  SEARCH UTILS  ---------- */
+function parseSearchQuery(q){
+  const t={and:[],or:[],not:[],exact:[]};
+  (q.match(/"[^"]+"/g)||[]).forEach(m=>{t.exact.push(m.replace(/"/g,'').toLowerCase());q=q.replace(m,'');});
+  let op='and'; q.toLowerCase().split(/\s+/).filter(Boolean).forEach(w=>{
+    if(w==='and')op='and';else if(w==='or')op='or';else if(w.startsWith('-'))t.not.push(w.slice(1));else t[op].push(w);
+  });return t;
+}
+function matchesSearch(e,terms){
+  const txt=(e.content+' '+e.title).toLowerCase();
+  if(terms.not.some(x=>txt.includes(x)))return false;
+  if(terms.exact.length&&!terms.exact.every(x=>txt.includes(x)))return false;
+  if(terms.and.length&&!terms.and.every(x=>txt.includes(x)))return false;
+  if(terms.or.length&&!terms.or.some(x=>txt.includes(x)))return false;
+  return true;
+}
+function highlightText(text,query){
+  if(!query.trim())return text;
+  const terms=[...parseSearchQuery(query).exact,...parseSearchQuery(query).and,...parseSearchQuery(query).or]
+        .filter((v,i,a)=>a.indexOf(v)===i);
+  let result=text;
+  terms.sort((a,b)=>b.length-a.length).forEach(t=>{
+    const safe=t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    result=result.replace(new RegExp(`(${safe})`,'gi'),'<span class="highlight">$1</span>');
+  });return result;
+}
 
-    // ==========================================
-    // PARSING AND SEARCH FUNCTIONS
-    // ==========================================
-    
-    function parseSearchQuery(query) {
-      const terms = { and: [], or: [], not: [], exact: [] };
-      const exactMatches = query.match(/"([^"]+)"/g);
-      if (exactMatches) {
-        exactMatches.forEach(match => {
-          terms.exact.push(match.replace(/"/g, '').toLowerCase());
-          query = query.replace(match, '');
-        });
-      }
-      const words = query.toLowerCase().split(/\s+/).filter(w => w);
-      let currentOp = 'and';
-      words.forEach(word => {
-        if (word === 'and') currentOp = 'and';
-        else if (word === 'or') currentOp = 'or';
-        else if (word.startsWith('-')) terms.not.push(word.substring(1));
-        else if (word) terms[currentOp].push(word);
-      });
-      return terms;
-    }
+/* ----------  LOAD & PARSE  ---------- */
+async function loadText(){
+  try{
+    const res=await fetch(TXT_FILE_URL);
+    if(!res.ok)throw new Error('File not found');
+    let text=await res.text();
+    text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+    parseEntries(text);
+    loadingDiv.style.display='none';
+    contentDiv.style.display='block';
+    if(window.readerEntries.length){showEntry(window.readerEntries[0].id);}
+    styleActiveFilter(document.querySelector('.filter-btn[data-filter="all"]'));
+    buildIndex();updateUIState();
+  }catch(err){loadingDiv.innerHTML=`<p style="color:var(--red)">Error: ${err.message}</p>`;}
+}
+function parseEntries(text){
+  const lines=text.split('\n');
+  let current=null,id=0;
+  lines.forEach(l=>{
+    const m=l.match(ENTRY_PATTERN);
+    if(m){
+      if(current&&current.content.trim()){detectTags(current);window.readerEntries.push(current);}
+      current={id:++id,title:m[0].trim(),content:l+'\n',tags:[]};
+    }else if(current){current.content+=l+'\n';}
+  });
+  if(current&&current.content.trim()){detectTags(current);window.readerEntries.push(current);}
+}
+function detectTags(e){
+  Object.entries(TAG_PATTERNS).forEach(([tag,re])=>{if(tag!=='all'&&re.test(e.content))e.tags.push(tag);});
+}
+function getFilteredEntries(){return currentFilter==='all'?window.readerEntries:window.readerEntries.filter(e=>e.tags.includes(currentFilter));}
 
-    function matchesSearch(entry, terms) {
-      const searchText = (entry.content + ' ' + entry.title).toLowerCase();
-      if (terms.not.some(t => searchText.includes(t))) return false;
-      if (terms.exact.some(t => !searchText.includes(t))) return false;
-      if (terms.and.some(t => !searchText.includes(t))) return false;
-      if (terms.or.length > 0 && !terms.or.some(t => searchText.includes(t))) return false;
-      return true;
-    }
+/* ----------  DISPLAY  ---------- */
+function showEntry(entryId){
+  const e=window.readerEntries.find(x=>x.id===entryId);
+  if(!e)return;
+  window.readerCurrentIndex=entryId;
+  let html=(isSearching&&searchQuery)?highlightText(e.content,searchQuery):e.content;
+  html=html.split('\n').map(l=>l.trim()?`<p class="mb-4 leading-relaxed">${l}</p>`:'<br>').join('');
+  contentDiv.innerHTML=html;
+  const pool=isSearching?searchResults:getFilteredEntries();
+  const idx=pool.findIndex(x=>x.id===entryId);
+  const words=e.content.replace(/<[^>]*>/g,'').trim().split(/\s+/).length;
+  entryInfo.innerHTML=`
+    <div class="flex flex-col gap-1">
+      <div><span class="text-xs text-gray-500 uppercase tracking-widest">DREAMWEAVER ARCHIVE</span>
+      <span class="ml-2 font-bold text-xl voodoo" style="color:var(--red)">${e.title}</span></div>
+      <div class="text-xs text-gray-400 flex items-center gap-2 flex-wrap">
+        ${isSearching?`Result ${idx+1}/${searchResults.length}`:`Entry ${idx+1}/${pool.length}`}
+        <span>•</span>${words} words
+        <span class="ml-2 flex gap-1 flex-wrap">${e.tags.map(t=>`<span class="px-2 py-1 border text-[10px] uppercase ${t==='lyric'?'border-red-300 text-red-300':t==='poem'?'border-red-400 text-red-400':t==='film'?'border-red-500 text-red-500':t==='book'?'border-red-600 text-red-600':t==='dream'?'border-red-700 text-red-700':'border-gray-600 text-gray-600'}">${t}</span>`).join('')}</span>
+      </div>
+    </div>`;
+  prevBtn.disabled=idx<=0;nextBtn.disabled=idx>=pool.length-1;
+  contentDiv.scrollTop=0;if(isIndexVisible)buildIndex();
+}
+function showRandomEntry(){
+  const pool=isSearching?searchResults:getFilteredEntries();
+  if(!pool.length)return;let r;do{r=Math.floor(Math.random()*pool.length);}while(pool[r].id===window.readerCurrentIndex&&pool.length>1);showEntry(pool[r].id);
+}
+function navigateEntries(dir){
+  const pool=isSearching?searchResults:getFilteredEntries();
+  const idx=pool.findIndex(x=>x.id===window.readerCurrentIndex);
+  const n=dir==='next'?idx+1:idx-1;if(n>=0&&n<pool.length)showEntry(pool[n].id);
+}
+function buildIndex(){
+  const pool=isSearching?searchResults:getFilteredEntries();
+  dateNav.innerHTML='';
+  pool.forEach(e=>{
+    const div=document.createElement('div');
+    div.className='p-3 border-b border-gray-700 cursor-pointer hover:bg-gray-900 transition-colors';
+    if(e.id===window.readerCurrentIndex){div.style.background='#1a1a1a';div.style.borderLeft='3px solid var(--red)';}
+    div.innerHTML=`<div class="text-sm font-bold text-gray-300 mb-1 truncate voodoo">${e.title}</div><div class="text-xs text-gray-600 font-mono truncate">${e.content.replace(/<[^>]*>/g,'').substring(0,60).replace(/\n/g,' ')}...</div>`;
+    div.addEventListener('click',()=>showEntry(e.id));
+    dateNav.appendChild(div);
+  });
+}
+function styleActiveFilter(btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>{b.style.background='transparent';b.style.borderColor='#333';b.style.color='#666';});
+  btn.style.background='var(--red)';btn.style.color='black';btn.style.borderColor='var(--red)';
+}
 
-    function highlightText(text, query) {
-      if (!query.trim()) return text;
-      const terms = parseSearchQuery(query);
-      const allTerms = [...terms.exact, ...terms.and, ...terms.or].filter((t, i, s) => s.indexOf(t) === i);
-      
-      let result = text;
-      allTerms.sort((a, b) => b.length - a.length).forEach(term => {
-        const safeTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`(${safeTerm})`, 'gi');
-        result = result.replace(regex, '<span class="highlight">$1</span>');
-      });
-      return result;
-    }
+/* ----------  SEARCH  ---------- */
+function performSearch(q){
+  searchQuery=q;if(!q.trim()){isSearching=false;searchResults=[];updateUIState();showEntry(window.readerCurrentIndex);return;}
+  isSearching=true;const pool=getFilteredEntries();const terms=parseSearchQuery(q);
+  searchResults=pool.filter(e=>matchesSearch(e,terms));updateUIState();
+  if(searchResults.length){showEntry(searchResults[0].id);}else{
+    contentDiv.innerHTML='<div class="text-center mt-10 text-gray-500">No matches found.</div>';entryInfo.innerHTML='';
+  }
+}
+function updateUIState(){
+  searchStats.textContent=isSearching?`${searchResults.length} matches`:
+    `${getFilteredEntries().length}${currentFilter==='all'?' total':` ${currentFilter}`}`;
+  buildIndex();
+}
 
-    function getTagClass(tag) {
-      const classes = {
-        'lyric': 'border-red-500 text-red-500',
-        'poem': 'border-red-600 text-red-600',
-        'film': 'border-red-700 text-red-700',
-        'book': 'border-red-800 text-red-800',
-        'dream': 'border-red-400 text-red-400'
-      };
-      return classes[tag] || 'border-gray-600 text-gray-600';
-    }
-
-    function debounce(func, delay) {
-      return function(...args) {
-        if (searchTimeout) clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => func.apply(this, args), delay);
-      };
-    }
-
-    // ==========================================
-    // LOADING & PARSING
-    // ==========================================
-    async function loadText() {
-      try {
-        const response = await fetch(TXT_FILE_URL);
-        if (!response.ok) throw new Error("File not found");
-        let text = await response.text();
-        
-        // Normalize line endings
-        text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-        
-        console.log("Loaded dreamweaver.txt, length:", text.length);
-        parseEntries(text);
-
-        loadingDiv.style.display = 'none';
-        contentDiv.style.display = 'block';
-
-        if (window.readerEntries.length > 0) {
-          showEntry(window.readerEntries[0].id);
-        } else {
-          // If no entries parsed, show raw text
-          contentDiv.innerHTML = `<div class="p-6"><pre class="whitespace-pre-wrap font-mono text-gray-400">${text.substring(0, 5000)}</pre></div>`;
-          entryInfo.innerHTML = `<div class="text-red-500">Warning: No entries parsed. Check date format.</div>`;
-        }
-        
-        // Set "All" button active
-        const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
-        if (allBtn) styleActiveFilter(allBtn);
-
-        buildIndex();
-        updateUIState();
-        
-      } catch (error) {
-        console.error("Load error:", error);
-        loadingDiv.innerHTML = `<p style="color: var(--red);">Error: ${error.message}</p>`;
-      }
-    }
-
-    function parseEntries(text) {
-      console.log("Parsing text with pattern:", ENTRY_PATTERN);
-      
-      const lines = text.split('\n');
-      let entries = [];
-      let currentEntry = null;
-      let entryId = 0;
-      let inEntry = false;
-      
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        const match = line.match(ENTRY_PATTERN);
-        
-        if (match && line.trim().length > 0) {
-          // Save previous entry if exists
-          if (currentEntry && currentEntry.content.trim()) {
-            detectTags(currentEntry);
-            entries.push(currentEntry);
-          }
-          
-          // Start new entry with date as title
-          currentEntry = {
-            id: ++entryId,
-            title: line.trim(),
-            content: line + '\n',
-            tags: []
-          };
-          inEntry = true;
-        } else if (currentEntry) {
-          currentEntry.content += line + '\n';
-        } else if (!inEntry && line.trim()) {
-          // Content before first date (prologue/intro)
-          currentEntry = {
-            id: ++entryId,
-            title: 'Beginning',
-            content: line + '\n',
-            tags: []
-          };
-          inEntry = true;
-        }
-      }
-      
-      // Don't forget the last entry
-      if (currentEntry && currentEntry.content.trim()) {
-        detectTags(currentEntry);
-        entries.push(currentEntry);
-      }
-      
-      window.readerEntries = entries;
-      console.log(`Parsed ${window.readerEntries.length} entries`);
-      
-      // Debug: log first few entries
-      window.readerEntries.slice(0, 3).forEach((entry, i) => {
-        console.log(`Entry ${i}: "${entry.title.substring(0, 50)}..."`);
-        console.log(`Tags: ${entry.tags.join(', ')}`);
-      });
-    }
-
-    function detectTags(entry) {
-      for (const [tag, pattern] of Object.entries(TAG_PATTERNS)) {
-        if (tag !== 'all' && pattern.test(entry.content)) {
-          if (!entry.tags.includes(tag)) {
-            entry.tags.push(tag);
-          }
-        }
-      }
-    }
-
-    function getFilteredEntries() {
-      if (currentFilter === 'all') return window.readerEntries;
-      return window.readerEntries.filter(e => e.tags.includes(currentFilter));
-    }
-
-    // ==========================================
-    // SEARCH ACTIONS
-    // ==========================================
-    function performSearch(query) {
-      searchQuery = query;
-      if (!query.trim()) {
-        isSearching = false;
-        searchResults = [];
-        updateUIState();
-        if (window.readerCurrentIndex > 0) {
-          showEntry(window.readerCurrentIndex);
-        }
-        return;
-      }
-
-      isSearching = true;
-      const pool = getFilteredEntries();
-      const terms = parseSearchQuery(query);
-      
-      searchResults = pool.filter(e => matchesSearch(e, terms));
-      console.log(`Search found ${searchResults.length} results`);
-
-      updateUIState();
-      if (searchResults.length > 0) {
-        showEntry(searchResults[0].id);
-      } else {
-        contentDiv.innerHTML = '<div class="text-center mt-10 text-gray-500 p-8">No matches found.</div>';
-        entryInfo.innerHTML = '<div class="text-gray-500 p-2">No matches</div>';
-      }
-    }
-
-    function updateUIState() {
-      if (isSearching) {
-        if (searchStats) searchStats.textContent = `${searchResults.length} matches`;
-      } else {
-        const count = getFilteredEntries().length;
-        if (searchStats) searchStats.textContent = currentFilter !== 'all' ? `${count} items` : `${count} total`;
-      }
-      if (isIndexVisible) buildIndex();
-    }
-
-    // ==========================================
-    // DISPLAY & NAVIGATION
-    // ==========================================
-    function showEntry(entryId) {
-      const entry = window.readerEntries.find(e => e.id === entryId);
-      if (!entry) {
-        console.log("Entry not found:", entryId);
-        return;
-      }
-
-      window.readerCurrentIndex = entryId;
-
-      let displayContent = entry.content;
-      
-      // Apply search highlighting if searching
-      if (isSearching && searchQuery.trim()) {
-        displayContent = highlightText(displayContent, searchQuery);
-      }
-      
-      // Format content with proper line breaks
-      displayContent = displayContent.split('\n').map(line => {
-        const trimmed = line.trim();
-        if (!trimmed) return '<br>';
-        
-        // Check if line starts with a date (entry title)
-        const dateMatch = line.match(ENTRY_PATTERN);
-        if (dateMatch && line === entry.title) {
-          return `<div class="entry-date text-red-500 font-bold mb-2 mt-4">${line}</div>`;
-        }
-        
-        return `<div class="mb-2">${line}</div>`;
-      }).join('');
-
-      contentDiv.innerHTML = displayContent;
-
-      const viewableItems = isSearching ? searchResults : getFilteredEntries();
-      const itemIndex = viewableItems.findIndex(e => e.id === entryId);
-      const wordCount = entry.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
-
-      entryInfo.innerHTML = `
-        <div class="flex flex-col gap-1">
-          <div>
-            <span class="text-xs text-gray-500 uppercase tracking-widest">DREAMWEAVER ARCHIVE</span>
-            <span class="ml-2 font-bold text-lg font-voodoo" style="color: var(--red);">${entry.title}</span>
-          </div>
-          <div class="text-xs text-gray-400 flex items-center gap-2 flex-wrap">
-            ${isSearching ? `Result ${itemIndex + 1}/${searchResults.length}` : `Entry ${itemIndex + 1}/${viewableItems.length}`}
-            <span>•</span>
-            ${wordCount} words
-            <span class="ml-2 flex gap-1 flex-wrap">
-              ${entry.tags.map(tag => `<span class="px-2 py-1 border ${getTagClass(tag)} text-[10px] uppercase">${tag}</span>`).join('')}
-            </span>
-          </div>
-        </div>
-      `;
-
-      // Update button states
-      if (prevBtn) {
-        prevBtn.disabled = itemIndex <= 0;
-        prevBtn.style.opacity = itemIndex <= 0 ? '0.5' : '1';
-      }
-      if (nextBtn) {
-        nextBtn.disabled = itemIndex >= viewableItems.length - 1;
-        nextBtn.style.opacity = itemIndex >= viewableItems.length - 1 ? '0.5' : '1';
-      }
-
-      // Scroll to top
-      contentDiv.scrollTop = 0;
-      
-      // Update index if visible
-      if (isIndexVisible) buildIndex();
-    }
-
-    function showRandomEntry() {
-      const pool = isSearching ? searchResults : getFilteredEntries();
-      if (pool.length === 0) {
-        console.log("No entries to randomize");
-        return;
-      }
-      let randomIndex;
-      do {
-        randomIndex = Math.floor(Math.random() * pool.length);
-      } while (pool[randomIndex].id === window.readerCurrentIndex && pool.length > 1);
-      showEntry(pool[randomIndex].id);
-    }
-
-    function navigateEntries(direction) {
-      const items = isSearching ? searchResults : getFilteredEntries();
-      if (items.length === 0) {
-        console.log("No items to navigate");
-        return;
-      }
-      const currentIdxInView = items.findIndex(e => e.id === window.readerCurrentIndex);
-      let newIdx = direction === 'next' ? currentIdxInView + 1 : currentIdxInView - 1;
-      if (newIdx >= 0 && newIdx < items.length) {
-        showEntry(items[newIdx].id);
-      } else {
-        console.log(`Cannot navigate ${direction}, at boundary`);
-      }
-    }
-
-    function buildIndex() {
-      if (!dateNav) return;
-      
-      const items = isSearching ? searchResults : getFilteredEntries();
-      dateNav.innerHTML = '';
-      if (items.length === 0) {
-        dateNav.innerHTML = '<div class="p-3 text-center text-gray-500">No items</div>';
-        return;
-      }
-
-      items.forEach(entry => {
-        const div = document.createElement('div');
-        const rawText = entry.content.replace(/<[^>]*>/g, '');
-        const preview = rawText.substring(0, 80).replace(/\n/g, ' ') + '...';
-        
-        div.className = 'p-3 border-b border-gray-700 cursor-pointer hover:bg-gray-800 transition-colors';
-        if (entry.id === window.readerCurrentIndex) {
-          div.style.background = 'var(--dark-grey)';
-          div.style.borderLeft = '3px solid var(--red)';
-        }
-        div.innerHTML = `
-          <div class="text-sm font-bold text-gray-300 mb-1 truncate font-voodoo">${entry.title}</div>
-          <div class="text-xs text-gray-500 font-mono truncate">${preview}</div>
-          <div class="text-[10px] text-gray-600 mt-1 flex gap-1">
-            ${entry.tags.map(tag => `<span class="px-1 border ${getTagClass(tag)}">${tag}</span>`).join('')}
-          </div>
-        `;
-        div.addEventListener('click', () => {
-          showEntry(entry.id);
-          // On mobile, auto-close the index
-          if (window.innerWidth < 768) {
-            dateNav.classList.add('hidden');
-            isIndexVisible = false;
-          }
-        });
-        dateNav.appendChild(div);
-      });
-    }
-
-    function styleActiveFilter(activeBtn) {
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.style.background = 'transparent';
-        btn.style.borderColor = '#333';
-        btn.style.color = '#666';
-      });
-      if (activeBtn) {
-        activeBtn.style.background = 'var(--red)';
-        activeBtn.style.color = 'black';
-        activeBtn.style.borderColor = 'var(--red)';
-      }
-    }
-
-    // ==========================================
-    // EVENT LISTENERS
-    // ==========================================
-    document.addEventListener('DOMContentLoaded', () => {
-      console.log("Initializing dreamweaver reader...");
-      loadText();
-    });
-    
-    if (searchBox) {
-      searchBox.addEventListener('input', debounce(e => {
-        console.log("Searching for:", e.target.value);
-        performSearch(e.target.value);
-      }, 300));
-    }
-    
-    if (prevBtn) prevBtn.addEventListener('click', () => navigateEntries('prev'));
-    if (nextBtn) nextBtn.addEventListener('click', () => navigateEntries('next'));
-    if (randomBtn) randomBtn.addEventListener('click', showRandomEntry);
-    
-    if (indexBtn) {
-      indexBtn.addEventListener('click', () => {
-        isIndexVisible = !isIndexVisible;
-        dateNav.classList.toggle('hidden');
-        if (isIndexVisible) buildIndex();
-      });
-    }
-    
-    const filterBtns = document.getElementById('filterBtns');
-    if (filterBtns) {
-      filterBtns.addEventListener('click', e => {
-        if (e.target.classList.contains('filter-btn')) {
-          console.log("Filter clicked:", e.target.dataset.filter);
-          styleActiveFilter(e.target);
-          currentFilter = e.target.dataset.filter;
-          if (searchBox) searchBox.value = '';
-          isSearching = false;
-          updateUIState();
-          const filtered = getFilteredEntries();
-          console.log(`Filtered entries: ${filtered.length}`);
-          if (filtered.length > 0) {
-            showEntry(filtered[0].id);
-          } else {
-            contentDiv.innerHTML = '<div class="text-center mt-10 text-gray-500 p-8">No entries with this tag.</div>';
-            entryInfo.innerHTML = '<div class="text-gray-500 p-2">No entries</div>';
-          }
-        }
-      });
-    }
-    
-    document.addEventListener('keydown', e => {
-      if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-      if (e.key === 'ArrowLeft') navigateEntries('prev');
-      if (e.key === 'ArrowRight') navigateEntries('next');
-      if (e.key.toLowerCase() === 'r') showRandomEntry();
-      if (e.key === 'Escape' && isIndexVisible) {
-        dateNav.classList.add('hidden');
-        isIndexVisible = false;
-      }
-    });
-    
-    // Handle window resize for responsive filters
-    window.addEventListener('resize', () => {
-      if (isIndexVisible) buildIndex();
-    });
+/* ----------  EVENTS  ---------- */
+document.addEventListener('DOMContentLoaded',loadText);
+searchBox.addEventListener('input',debounce(e=>performSearch(e.target.value),300));
+prevBtn.addEventListener('click',()=>navigateEntries('prev'));
+nextBtn.addEventListener('click',()=>navigateEntries('next'));
+randomBtn.addEventListener('click',showRandomEntry);
+indexBtn.addEventListener('click',()=>{isIndexVisible=!isIndexVisible;dateNav.classList.toggle('hidden');if(isIndexVisible)buildIndex();});
+document.getElementById('filterBtns').addEventListener('click',e=>{
+  if(!e.target.classList.contains('filter-btn'))return;
+  styleActiveFilter(e.target);currentFilter=e.target.dataset.filter;
+  searchBox.value='';isSearching=false;updateUIState();
+  const fe=getFilteredEntries();if(fe.length)showEntry(fe[0].id);
+});
+document.addEventListener('keydown',e=>{
+  if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;
+  if(e.key==='ArrowLeft')navigateEntries('prev');
+  if(e.key==='ArrowRight')navigateEntries('next');
+  if(e.key.toLowerCase()==='r')showRandomEntry();
+  if(e.key==='Escape'&&isIndexVisible){dateNav.classList.add('hidden');isIndexVisible=false;}
+});
 </script>
 
+<!-- keep your existing ai-script block here -->
 <script id="ai-script">
-    // ==========================================
-    // AI CONFIGURATION
-    // ==========================================
-    const NVIDIA_MODELS = {
-      "stable": "meta/llama-3.3-70b-instruct", 
-      "backup": "nvidia/llama-3.1-nemotron-70b-instruct",
-    };
-    let currentModel = NVIDIA_MODELS.stable;
-    let aiContext = 'current';
+/* ----------  AI CONFIG  ---------- */
+const NVIDIA_MODELS={
+  stable:"meta/llama-3.3-70b-instruct",
+  backup:"nvidia/llama-3.1-nemotron-70b-instruct"
+};
+let currentModel=NVIDIA_MODELS.stable,aiContext='current';
+const apiKeyInput=document.getElementById('apiKeyInput');
+const aiInput=document.getElementById('aiInput');
+const askAiBtn=document.getElementById('askAiBtn');
+const aiResponseDiv=document.getElementById('aiResponse');
+const contextInfo=document.getElementById('contextInfo');
 
-    const apiKeyInput = document.getElementById('apiKeyInput');
-    const aiInput = document.getElementById('aiInput');
-    const askAiBtn = document.getElementById('askAiBtn');
-    const aiResponseDiv = document.getElementById('aiResponse');
-    const contextInfo = document.getElementById('contextInfo');
+/* ----------  INIT  ---------- */
+if(localStorage.getItem('dreamweaver_nvidia_key'))apiKeyInput.value=localStorage.getItem('dreamweaver_nvidia_key');
+apiKeyInput.addEventListener('input',e=>localStorage.setItem('dreamweaver_nvidia_key',e.target.value));
 
-    // Load saved API key
-    if(localStorage.getItem('dreamweaver_nvidia_key')) {
-      apiKeyInput.value = localStorage.getItem('dreamweaver_nvidia_key');
+/* ----------  TRANSMIT  ---------- */
+askAiBtn.addEventListener('click',async()=>{
+  const key=apiKeyInput.value.trim(),msg=aiInput.value.trim();
+  if(!key){aiResponseDiv.innerHTML='<p class="text-red-500">Please enter an NVIDIA API Key.</p>';return;}
+  if(!msg)return;
+  if(!window.readerEntries?.length){aiResponseDiv.innerHTML='<p class="text-red-500">dreamweaver.txt not loaded yet.</p>';return;}
+  askAiBtn.disabled=true;askAiBtn.textContent='TRANSMITTING...';
+  aiResponseDiv.innerHTML='<p class="animate-pulse" style="color:var(--red)">Consulting Llama...</p>';
+  try{
+    let ctx='';
+    if(aiContext==='current'){
+      const e=window.readerEntries.find(x=>x.id===window.readerCurrentIndex);
+      if(e)ctx=`CONTEXT (Current – ${e.title}):\n${e.content.substring(0,4000)}\n\n---\n`;
+    }else if(aiContext==='all'){
+      ctx=`CONTEXT (Outline):\n${window.readerEntries.map(x=>`- ${x.title} (${x.tags.join(', ')})`).join('\n')}\n\n---\n`;
     }
-    
-    // Save API key on input
-    apiKeyInput.addEventListener('input', (e) => {
-      localStorage.setItem('dreamweaver_nvidia_key', e.target.value);
+    const proxy='https://corsproxy.io/?'+encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
+    const res=await fetch(proxy,{
+      method:'POST',
+      headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:currentModel,
+        messages:[
+          {role:'system',content:'You are an editor for DREAMWEAVER, a narrative where reality and dreams blur. Analyse via surrealism. Be bold, concise, literary.'},
+          {role:'user',content:ctx+'User Question: '+msg}
+        ],
+        temperature:.6,top_p:1,max_tokens:1024
+      })
     });
+    if(!res.ok){if(res.status===404)throw new Error('404 Switch');const t=await res.text();let m=t;try{m=JSON.parse(t).error?.message||t;}catch{m=t}throw new Error(m);}
+    const data=await res.json();
+    let txt=data.choices[0].message.content;
+    txt=txt.replace(/\*\*(.*?)\*\*/g,'<strong style="color:var(--red)">$1</strong>').replace(/\n/g,'<br>');
+    aiResponseDiv.innerHTML=txt;
+  }catch(err){
+    console.error(err);
+    if(err.message.includes('404')||err.message.includes('Switch')){
+      currentModel=NVIDIA_MODELS.backup;
+      aiResponseDiv.innerHTML='<p style="color:#888">Primary model unavailable. Switched to Backup.<br><strong>Please click Transmit again.</strong></p>';
+    }else{
+      aiResponseDiv.innerHTML=`<p style="color:var(--red)">Error: ${err.message}</p>`;
+    }
+  }finally{askAiBtn.disabled=false;askAiBtn.textContent='TRANSMIT';}
+});
 
-    // Context button handlers
-    document.addEventListener('click', e => {
-      if (e.target.classList.contains('context-btn')) {
-        document.querySelectorAll('.context-btn').forEach(btn => {
-          btn.style.background = 'transparent';
-          btn.style.color = '#888';
-          btn.style.borderColor = '#333';
-        });
-        
-        e.target.style.background = 'var(--red)';
-        e.target.style.color = 'black';
-        e.target.style.borderColor = 'var(--red)';
-        
-        aiContext = e.target.dataset.context;
-        
-        const helpText = aiContext === 'current' ? 'Reading current entry' : 'Reading all titles';
-        if(contextInfo) contextInfo.textContent = `Context: ${aiContext.toUpperCase()} (${helpText})`;
-      }
-    });
-
-    // AI Logic
-    askAiBtn.addEventListener('click', async () => {
-      const apiKey = apiKeyInput.value.trim();
-      const msg = aiInput.value.trim();
-      
-      if (!apiKey) {
-        aiResponseDiv.innerHTML = '<p class="text-red-500">Please enter an NVIDIA API Key.</p>';
-        return;
-      }
-      if (!msg) return;
-
-      if (!window.readerEntries || window.readerEntries.length === 0) {
-        aiResponseDiv.innerHTML = '<p class="text-red-500">Text not loaded yet. Please wait.</p>';
-        return;
-      }
-
-      askAiBtn.disabled = true;
-      askAiBtn.textContent = "TRANSMITTING...";
-      aiResponseDiv.innerHTML = `<p class="animate-pulse" style="color: var(--red);">Consulting Llama...</p>`;
-
-      try {
-        let systemContext = '';
-        
-        if (aiContext === 'current') {
-          const entry = window.readerEntries.find(e => e.id === window.readerCurrentIndex);
-          if (entry) {
-            const cleanContent = entry.content.substring(0, 4000); 
-            systemContext = `CONTEXT (Current Entry - ${entry.title}):\n${cleanContent}\n\n---\n`;
-          }
-        } else if (aiContext === 'all') {
-          const outline = window.readerEntries.map(e => `- ${e.title} (${e.tags.join(', ')})`).join('\n');
-          systemContext = `CONTEXT (Full Archive Outline):\n${outline}\n\n---\n`;
-        }
-
-        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
-        
-        const response = await fetch(proxyUrl, {
-          method: 'POST',
-          headers: { 
-            'Authorization': `Bearer ${apiKey}`, 
-            'Content-Type': 'application/json' 
-          },
-          body: JSON.stringify({
-            model: currentModel,
-            messages: [
-              { role: "system", content: "You are an editor for DREAMWEAVER, a collection of dreams, lyrics, poems, and fragments. Analyze with poetic insight. Be concise and literary. Use red/black color scheme references." },
-              { role: "user", content: systemContext + "\nUser Question: " + msg }
-            ],
-            temperature: 0.6,
-            top_p: 1,
-            max_tokens: 1024
-          })
-        });
-
-        if (!response.ok) {
-          if (response.status === 404) throw new Error("404 Switch");
-          const errText = await response.text();
-          try {
-            const errJson = JSON.parse(errText);
-            throw new Error(errJson.error?.message || errText);
-          } catch (e) {
-            throw new Error(errText);
-          }
-        }
-
-        const data = await response.json();
-        let aiText = data.choices[0].message.content;
-        // Convert markdown bold to red text
-        aiText = aiText.replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--red)">$1</strong>');
-        aiText = aiText.replace(/\n/g, '<br>');
-        aiResponseDiv.innerHTML = aiText;
-
-      } catch (error) {
-        console.error(error);
-        if(error.message.includes("404") || error.message.includes("Switch")) {
-          currentModel = NVIDIA_MODELS.backup;
-          aiResponseDiv.innerHTML = `<p style="color:#ff6666;">Primary model unavailable. Switched to Backup.<br><strong style="color:var(--red)">Please click Transmit again.</strong></p>`;
-        } else {
-          aiResponseDiv.innerHTML = `<p style="color: var(--red);">Error: ${error.message}</p>`;
-        }
-      } finally {
-        askAiBtn.disabled = false;
-        askAiBtn.textContent = "TRANSMIT";
-      }
-    });
+/* ----------  CONTEXT BUTTONS  ---------- */
+document.addEventListener('click',e=>{
+  if(!e.target.classList.contains('context-btn'))return;
+  document.querySelectorAll('.context-btn').forEach(b=>{b.style.background='var(--dark-grey)';b.style.color='#888';b.style.borderColor='#333';});
+  e.target.style.background='var(--red)';e.target.style.color='black';e.target.style.borderColor='var(--red)';
+  aiContext=e.target.dataset.context;
+  contextInfo.textContent=`Context: ${aiContext.toUpperCase()} (${aiContext==='current'?'Reading current entry':aiContext==='all'?'Reading all titles':'No context'})`;
+});
 </script>
 </body>
 </html>
