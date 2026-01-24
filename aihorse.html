@@ -3,24 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AI RIDER - A Horse Struck Down By Lightning</title>
+  <title>horse reader</title>
   <script src="https://cdn.tailwindcss.com"></script>
-
   <link href="https://fonts.googleapis.com/css2?family=Nova+Mono&family=Special+Elite&display=swap" rel="stylesheet">
+  
   <style>
     /* === DEFINE VARIABLES FIRST === */
     :root {
-        --red: #ff0033;
-        --black: #0a0a0a;
-        --dark-grey: #121212;
-        --white: #d1d1d1;
+      --red: #ff0033;
+      --black: #0a0a0a;
     }
 
     /* === NOW selection can use them === */
     ::selection {
-        background: var(--red);
-        color: var(--black);
-        text-shadow: none;
+      background: var(--red);
+      color: var(--black);
+      text-shadow: none;
+    }
+
+    :root { 
+      --red: #ff0000; 
+      --black: #050505; 
+      --dark-grey: #121212; 
+      --white: #d1d1d1; 
     }
     
     * {
@@ -32,10 +37,7 @@
       background: var(--black);
       color: var(--white);
       margin: 0;
-      padding: 0;
       touch-action: manipulation;
-      overflow: hidden; /* Prevent body scroll */
-      height: 100vh;
     }
     
     /* CRT Scanline Overlay */
@@ -89,6 +91,55 @@
       font-family: 'Special Elite', serif;
     }
     
+    /* Markdown styling */
+    .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+      color: var(--red);
+      margin-top: 1.5em;
+      margin-bottom: 0.5em;
+      font-family: 'Special Elite', serif;
+    }
+    
+    .markdown-content h1 {
+      font-size: 1.8em;
+      border-bottom: 1px solid var(--red);
+      padding-bottom: 0.3em;
+    }
+    
+    .markdown-content h2 {
+      font-size: 1.5em;
+    }
+    
+    .markdown-content h3 {
+      font-size: 1.2em;
+    }
+    
+    .markdown-content p {
+      margin-bottom: 1em;
+      line-height: 1.6;
+    }
+    
+    .markdown-content pre {
+      background: #111;
+      padding: 1em;
+      border-left: 3px solid var(--red);
+      overflow-x: auto;
+      margin: 1em 0;
+    }
+    
+    .markdown-content code {
+      background: #111;
+      padding: 2px 4px;
+      font-family: 'Nova Mono', monospace;
+    }
+    
+    .markdown-content blockquote {
+      border-left: 3px solid var(--red);
+      padding-left: 1em;
+      margin-left: 0;
+      color: #aaa;
+      font-style: italic;
+    }
+    
     /* Fix for the layout height */
     html, body {
       height: 100%;
@@ -97,293 +148,140 @@
   </style>
 </head>
 <body class="bg-black text-gray-300">
-  <!-- HEADER - Fixed at top -->
-  <div class="sticky top-0 z-50 w-full pt-4 pb-4 px-4 sm:px-6 md:px-8 border-b" style="background: var(--black); border-color: var(--red);">
+  <!-- HEADER -->
+  <div class="sticky top-0 z-50 w-full pt-4 pb-4 px-4 sm:px-6 md:px-8 border-b border-red-800" style="background: var(--black);">
     <div class="flex justify-between items-center max-w-full">
       <h1 class="text-3xl font-bold" style="color: var(--red); font-family: 'Special Elite', serif;">⚡ horse reader ⚡</h1>
       <a href="https://inkrealm.info" 
-         class="text-xs font-mono border px-2 py-1 hover:bg-red-600 transition-all duration-300 uppercase tracking-widest no-underline"
-         style="color: #666; border-color: #333;">
+         class="text-xs font-mono border border-gray-600 px-3 py-1 hover:bg-red-600 hover:text-black hover:border-red-600 transition-all duration-300 uppercase tracking-widest no-underline text-gray-400">
         Return to Realm
       </a>
     </div>
   </div>
 
-  <!-- MAIN TWO-COLUMN LAYOUT - Takes full width and remaining height -->
+  <!-- MAIN TWO-COLUMN LAYOUT -->
   <div id="brim-layout" class="flex flex-col md:flex-row w-full h-[calc(100vh-80px)] overflow-hidden bg-black">
     
-    <!-- ========================================== -->
-    <!-- LEFT COLUMN: READER (The Content) -->
-    <!-- ========================================== -->
-    <div class="flex-1 flex flex-col h-full border-r border-gray-800 relative min-w-0"> <!-- min-w-0 prevents overflow -->
+    <!-- LEFT COLUMN: READER -->
+    <div class="flex-1 flex flex-col h-full border-r border-gray-800 relative min-w-0">
         
-        <!-- Loading State -->
-        <div id="loading" class="absolute inset-0 flex items-center justify-center text-xl z-10" style="color: var(--red); background: var(--black);">
-            Loading horse.txt ...
-        </div>
+      <!-- Loading State -->
+      <div id="loading" class="absolute inset-0 flex items-center justify-center text-xl z-10" style="color: var(--red); background: var(--black);">
+        Loading horse.txt ...
+      </div>
 
-        <!-- The Text Content Area -->
-        <div id="content" class="flex-1 overflow-y-auto p-6 md:p-8 lg:p-10 text-base md:text-lg leading-relaxed whitespace-pre-wrap special-elite custom-scrollbar" style="display:none; background: var(--black);">
-            <!-- Text gets injected here -->
-        </div>
+      <!-- The Text Content Area -->
+      <div id="content" class="flex-1 overflow-y-auto p-6 md:p-8 lg:p-10 text-base md:text-lg leading-relaxed whitespace-pre-wrap special-elite custom-scrollbar markdown-content" style="display:none; background: var(--black);">
+        <!-- Text gets injected here -->
+      </div>
 
-        <!-- Footer Info (Word count, tags for current entry) -->
-        <div id="entryInfo" class="p-3 border-t border-gray-800 text-xs text-gray-500 bg-black flex-shrink-0">
-            <!-- Info gets injected here -->
-        </div>
+      <!-- Footer Info -->
+      <div id="entryInfo" class="p-3 border-t border-gray-800 text-xs text-gray-500 bg-black flex-shrink-0">
+        <!-- Info gets injected here -->
+      </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- RIGHT COLUMN: CONTROLS (Search & AI) -->
-    <!-- ========================================== -->
+    <!-- RIGHT COLUMN: CONTROLS & AI -->
     <div class="w-full md:w-[400px] flex flex-col h-full bg-[#0a0a0a] border-l border-gray-800 flex-shrink-0">
+      
+      <!-- SCROLLABLE TOOLBAR -->
+      <div class="flex-1 overflow-y-auto p-5 custom-scrollbar">
         
-        <!-- SCROLLABLE TOOLBAR -->
-        <div class="flex-1 overflow-y-auto p-5 custom-scrollbar">
-            
-            <!-- 1. NAVIGATION -->
-            <div class="flex items-center justify-between mb-6 gap-2">
-                <button id="prevBtn" class="flex-1 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors">← Prev</button>
-                <button id="randomBtn" class="px-4 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors">⚡</button>
-                <button id="nextBtn" class="flex-1 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors">Next →</button>
-            </div>
-
-            <!-- 2. SEARCH -->
-            <div class="mb-6">
-                <input type="text" id="searchBox" 
-                    class="w-full bg-[#111] border border-gray-700 p-3 text-white focus:border-red-500 focus:outline-none transition-colors"
-                    placeholder="Search text...">
-                
-                <div class="flex justify-between items-center mt-2">
-                    <div id="searchStats" class="text-xs text-gray-500 h-4"></div>
-                    <button id="indexBtn" class="text-xs text-gray-500 hover:text-red-500 uppercase tracking-widest border-b border-transparent hover:border-red-500">
-                        Toggle Index
-                    </button>
-                </div>
-            </div>
-
-            <!-- 3. FILTERS -->
-            <div id="filterBtns" class="flex flex-wrap gap-2 mb-6 pb-6 border-b border-gray-800">
-                <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-gray-500" data-filter="all">All</button>
-                <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-400" data-filter="fragments">Fragments</button>
-                <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="passages">Passages</button>
-                <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-600" data-filter="sections">Sections</button>
-                <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-700" data-filter="sketches">Sketches</button>
-            </div>
-
-            <!-- HIDDEN INDEX (Pops open here when clicked) -->
-            <div id="dateNav" class="hidden mb-6 max-h-60 overflow-y-auto border border-gray-800 bg-[#111] custom-scrollbar"></div>
-
-            <!-- 4. NVIDIA AI -->
-            <div class="mt-2">
-                <h2 class="text-xl font-bold mb-4 text-gray-600 special-elite">AI EDITOR</h2>
-                
-                <!-- Key -->
-                <input type="password" id="apiKeyInput" 
-                    class="w-full bg-black border border-gray-800 p-2 text-xs text-red-500 font-mono mb-4 focus:outline-none focus:border-red-900" 
-                    placeholder="NVIDIA API KEY...">
-
-                <!-- Context Switches -->
-                <div class="flex gap-2 mb-2">
-                    <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500" data-context="current">Current</button>
-                    <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500" data-context="all">Outline</button>
-                    <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500" data-context="none">None</button>
-                </div>
-                <p id="contextInfo" class="text-[10px] text-gray-600 mb-3 text-right">Target: Current Entry</p>
-
-                <!-- Input -->
-                <textarea id="aiInput" 
-                    class="w-full bg-[#111] border border-gray-800 p-3 text-sm text-gray-300 focus:border-red-500 focus:outline-none min-h-[80px] mb-2"
-                    placeholder="Enter prompt..."></textarea>
-                
-                <button id="askAiBtn" class="w-full bg-red-900/20 hover:bg-red-900/40 border border-red-900 text-red-500 py-2 text-xs font-bold tracking-widest transition-all">
-                    TRANSMIT
-                </button>
-
-                <!-- Response -->
-                <div id="aiResponse" class="mt-4 p-3 bg-black border border-gray-800 text-sm text-gray-400 min-h-[100px] whitespace-pre-wrap special-elite font-mono custom-scrollbar">
-                    <span class="opacity-30">:: Awaiting Input ::</span>
-                </div>
-            </div>
-
+        <!-- 1. NAVIGATION -->
+        <div class="flex items-center justify-between mb-6 gap-2">
+          <button id="prevBtn" class="flex-1 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors font-mono">← Prev</button>
+          <button id="randomBtn" class="px-4 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors font-mono">⚡</button>
+          <button id="nextBtn" class="flex-1 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors font-mono">Next →</button>
         </div>
+
+        <!-- 2. SEARCH -->
+        <div class="mb-6">
+          <input type="text" id="searchBox" 
+            class="w-full bg-[#111] border border-gray-700 p-3 text-white focus:border-red-500 focus:outline-none transition-colors font-mono"
+            placeholder="Search text...">
+          
+          <div class="flex justify-between items-center mt-2">
+            <div id="searchStats" class="text-xs text-gray-500 h-4 font-mono"></div>
+            <button id="indexBtn" class="text-xs text-gray-500 hover:text-red-500 uppercase tracking-widest border-b border-transparent hover:border-red-500 font-mono">
+              Toggle Index
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. FILTERS -->
+        <div id="filterBtns" class="flex flex-wrap gap-2 mb-6 pb-6 border-b border-gray-800">
+          <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500 font-mono" data-filter="all">All</button>
+          <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500 font-mono" data-filter="fragments">Fragments</button>
+          <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500 font-mono" data-filter="passages">Passages</button>
+          <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500 font-mono" data-filter="sections">Sections</button>
+          <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500 font-mono" data-filter="sketches">Sketches</button>
+          <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500 font-mono" data-filter="vignettes">Vignettes</button>
+        </div>
+
+        <!-- HIDDEN INDEX -->
+        <div id="dateNav" class="hidden mb-6 max-h-60 overflow-y-auto border border-gray-800 bg-[#111] custom-scrollbar"></div>
+
+        <!-- 4. NVIDIA AI -->
+        <div class="mt-2">
+          <h2 class="text-xl font-bold mb-4 text-gray-600 special-elite">AI EDITOR</h2>
+          
+          <!-- Key -->
+          <input type="password" id="apiKeyInput" 
+            class="w-full bg-black border border-gray-800 p-2 text-xs text-red-500 font-mono mb-4 focus:outline-none focus:border-red-900" 
+            placeholder="NVIDIA API KEY...">
+
+          <!-- Context Switches -->
+          <div class="flex gap-2 mb-2">
+            <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500 font-mono" data-context="current">Current</button>
+            <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500 font-mono" data-context="all">Outline</button>
+            <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500 font-mono" data-context="none">None</button>
+          </div>
+          <p id="contextInfo" class="text-[10px] text-gray-600 mb-3 text-right font-mono">Target: Current Entry</p>
+
+          <!-- Input -->
+          <textarea id="aiInput" 
+            class="w-full bg-[#111] border border-gray-800 p-3 text-sm text-gray-300 focus:border-red-500 focus:outline-none min-h-[80px] mb-2 font-mono"
+            placeholder="Enter prompt..."></textarea>
+          
+          <button id="askAiBtn" class="w-full bg-red-900/20 hover:bg-red-900/40 border border-red-900 text-red-500 py-2 text-xs font-bold tracking-widest transition-all font-mono">
+            TRANSMIT
+          </button>
+
+          <!-- Response -->
+          <div id="aiResponse" class="mt-4 p-3 bg-black border border-gray-800 text-sm text-gray-400 min-h-[100px] whitespace-pre-wrap special-elite font-mono custom-scrollbar">
+            <span class="opacity-30">:: Awaiting Input ::</span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-<script id="ai-script">
-    // ==========================================
-    // AI CONFIGURATION
-    // ==========================================
-    const NVIDIA_MODELS = {
-        "stable": "meta/llama-3.3-70b-instruct", 
-        "backup": "nvidia/llama-3.1-nemotron-70b-instruct",
-    };
-    let currentModel = NVIDIA_MODELS.stable;
-    let aiContext = 'current';
 
-    const apiKeyInput = document.getElementById('apiKeyInput');
-    const aiInput = document.getElementById('aiInput');
-    const askAiBtn = document.getElementById('askAiBtn');
-    const aiResponseDiv = document.getElementById('aiResponse');
-    const contextInfo = document.getElementById('contextInfo');
-
-    // ==========================================
-    // INITIALIZATION
-    // ==========================================
-    // Load saved API key
-    if(localStorage.getItem('horse_nvidia_key')) {
-        apiKeyInput.value = localStorage.getItem('horse_nvidia_key');
-    }
-    
-    // Save API key on input
-    apiKeyInput.addEventListener('input', (e) => {
-        localStorage.setItem('horse_nvidia_key', e.target.value);
-    });
-
-    // ==========================================
-    // LOGIC
-    // ==========================================
-    askAiBtn.addEventListener('click', async () => {
-        const apiKey = apiKeyInput.value.trim();
-        const msg = aiInput.value.trim();
-        
-        // 1. Basic Validation
-        if (!apiKey) {
-            aiResponseDiv.innerHTML = '<p class="text-red-500">Please enter an NVIDIA API Key.</p>';
-            return;
-        }
-        if (!msg) return;
-
-        // 2. Ensure Reader Data exists (links to the previous script)
-        if (!window.readerEntries || window.readerEntries.length === 0) {
-            aiResponseDiv.innerHTML = '<p class="text-red-500">Horse text not loaded yet. Please wait.</p>';
-            return;
-        }
-
-        // 3. Prepare UI
-        askAiBtn.disabled = true;
-        askAiBtn.textContent = "TRANSMITTING...";
-        aiResponseDiv.innerHTML = `<p class="animate-pulse" style="color: var(--red);">Consulting Llama...</p>`;
-
-        try {
-            // 4. Build Context
-            let systemContext = '';
-            
-            if (aiContext === 'current') {
-                const entry = window.readerEntries.find(e => e.id === window.readerCurrentIndex);
-                if (entry) {
-                    // Limit characters to avoid token limits
-                    const cleanContent = entry.content.substring(0, 4000); 
-                    systemContext = `CONTEXT (Current Section - ${entry.title}):\n${cleanContent}\n\n---\n`;
-                }
-            } else if (aiContext === 'all') {
-                // Just send titles for the outline view to save tokens
-                const outline = window.readerEntries.map(e => `- ${e.title} (${e.tags.join(', ')})`).join('\n');
-                systemContext = `CONTEXT (Full Manuscript Outline):\n${outline}\n\n---\n`;
-            }
-
-            // 5. Send Request
-            // Note: Using corsproxy to bypass local browser restrictions.
-            const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
-            
-            const response = await fetch(proxyUrl, {
-                method: 'POST',
-                headers: { 
-                    'Authorization': `Bearer ${apiKey}`, 
-                    'Content-Type': 'application/json' 
-                },
-                body: JSON.stringify({
-                    model: currentModel,
-                    messages: [
-                        { role: "system", content: "You are an editor for HORSE, a narrative where reality and dreams blur. Analyze via surrealism. Be bold, concise, and literary." },
-                        { role: "user", content: systemContext + "\nUser Question: " + msg }
-                    ],
-                    temperature: 0.6,
-                    top_p: 1,
-                    max_tokens: 1024
-                })
-            });
-
-            if (!response.ok) {
-                // Handle errors
-                if (response.status === 404) throw new Error("404 Switch");
-                
-                // Try to parse JSON error from NVIDIA for better readability
-                const errText = await response.text();
-                try {
-                    const errJson = JSON.parse(errText);
-                    throw new Error(errJson.error?.message || errText);
-                } catch (e) {
-                    throw new Error(errText);
-                }
-            }
-
-            const data = await response.json();
-            
-            // Format the output (simple markdown to html conversion for bolding)
-            let aiText = data.choices[0].message.content;
-            aiText = aiText.replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--red)">$1</strong>');
-            aiText = aiText.replace(/\n/g, '<br>');
-            
-            aiResponseDiv.innerHTML = aiText;
-
-        } catch (error) {
-            console.error(error);
-            if(error.message.includes("404") || error.message.includes("Switch")) {
-                currentModel = NVIDIA_MODELS.backup;
-                aiResponseDiv.innerHTML = `<p style="color:#888">Primary model unavailable. Switched to Backup (Nemotron). <br><strong>Please click Transmit again.</strong></p>`;
-            } else {
-                aiResponseDiv.innerHTML = `<p style="color: var(--red);">Error: ${error.message}</p>`;
-            }
-        } finally {
-            askAiBtn.disabled = false;
-            askAiBtn.textContent = "TRANSMIT TO NVIDIA";
-        }
-    });
-
-    // ==========================================
-    // UI HANDLERS
-    // ==========================================
-    document.addEventListener('click', e => {
-        if (e.target.classList.contains('context-btn')) {
-            // Reset all buttons
-            document.querySelectorAll('.context-btn').forEach(btn => {
-                btn.style.background = 'var(--dark-grey, #333)';
-                btn.style.color = '#888';
-                btn.style.borderColor = '#333';
-            });
-            
-            // Activate clicked button
-            e.target.style.background = 'var(--red)';
-            e.target.style.color = 'black'; // Better contrast on red
-            e.target.style.borderColor = 'var(--red)';
-            
-            aiContext = e.target.dataset.context;
-            
-            // Update Helper Text
-            const helpText = aiContext === 'current' ? 'Reading current entry' : 'Reading all titles';
-            if(contextInfo) contextInfo.textContent = `Context: ${aiContext.toUpperCase()} (${helpText})`;
-        }
-    });
-</script>
 <script id="reader-script">
     // ==========================================
-    // 1. CONFIGURATION & REGEX
+    // CONFIGURATION FOR HORSE.TXT WITH MARKDOWN
     // ==========================================
     const TXT_FILE_URL = 'horse.txt';
-    // Improved regex pattern
-    const horsePattern = /^(\d{1,2}\s*(?:0r|\/)\s*\d{1,2}\s*.*?(?:HORSE|horse)|HORSE.*?\d{1,2})/im;
+    
+    // Pattern for markdown headings (## Chapter Five, ### Section, etc.)
+    const MARKDOWN_PATTERN = /^(#{1,3})\s+(.+)$/;
+    
+    // Alternative: If you have specific chapter markers
+    const CHAPTER_PATTERN = /^##\s+(Chapter|CHAPTER)\s+.+$/i;
+    
+    // Use markdown pattern by default
+    const ENTRY_PATTERN = MARKDOWN_PATTERN;
 
     const TAG_PATTERNS = {
-        all: /.*/,
-        fragments: /\[fragment\]|\bfragment(s)?\b/i,
-        passages: /\[passage\]|\bpassage(s)?\b/i,
-        sections: /\[section\]|\bsection(s)?\b/i,
-        sketches: /\[sketch\]|\bsketch(es)?\b/i,
-        vignettes: /\[vignette\]|\bvignette(s)?\b/i
+      all: /.*/,
+      fragments: /\[fragment\]|\bfragment(s)?\b/i,
+      passages: /\[passage\]|\bpassage(s)?\b/i,
+      sections: /\[section\]|\bsection(s)?\b/i,
+      sketches: /\[sketch\]|\bsketch(es)?\b/i,
+      vignettes: /\[vignette\]|\bvignette(s)?\b/i
     };
 
     // ==========================================
-    // 2. STATE
+    // STATE
     // ==========================================
     window.readerEntries = [];
     window.readerCurrentIndex = 0;
@@ -395,7 +293,7 @@
     let searchTimeout = null;
 
     // ==========================================
-    // 3. DOM ELEMENTS
+    // DOM ELEMENTS
     // ==========================================
     const searchBox = document.getElementById('searchBox');
     const searchStats = document.getElementById('searchStats');
@@ -409,353 +307,452 @@
     const contentDiv = document.getElementById('content');
 
     // ==========================================
-    // 4. PARSING AND SEARCH FUNCTIONS
+    // PARSING AND SEARCH FUNCTIONS
     // ==========================================
     
     function parseSearchQuery(query) {
-        const terms = { and: [], or: [], not: [], exact: [] };
-        const exactMatches = query.match(/"([^"]+)"/g);
-        if (exactMatches) {
-            exactMatches.forEach(match => {
-                terms.exact.push(match.replace(/"/g, '').toLowerCase());
-                query = query.replace(match, '');
-            });
-        }
-        const words = query.toLowerCase().split(/\s+/).filter(w => w);
-        let currentOp = 'and';
-        words.forEach(word => {
-            if (word === 'and') currentOp = 'and';
-            else if (word === 'or') currentOp = 'or';
-            else if (word.startsWith('-')) terms.not.push(word.substring(1));
-            else if (word) terms[currentOp].push(word);
+      const terms = { and: [], or: [], not: [], exact: [] };
+      const exactMatches = query.match(/"([^"]+)"/g);
+      if (exactMatches) {
+        exactMatches.forEach(match => {
+          terms.exact.push(match.replace(/"/g, '').toLowerCase());
+          query = query.replace(match, '');
         });
-        return terms;
+      }
+      const words = query.toLowerCase().split(/\s+/).filter(w => w);
+      let currentOp = 'and';
+      words.forEach(word => {
+        if (word === 'and') currentOp = 'and';
+        else if (word === 'or') currentOp = 'or';
+        else if (word.startsWith('-')) terms.not.push(word.substring(1));
+        else if (word) terms[currentOp].push(word);
+      });
+      return terms;
     }
 
     function matchesSearch(entry, terms) {
-        const searchText = (entry.content + ' ' + entry.title).toLowerCase();
-        if (terms.not.some(t => searchText.includes(t))) return false;
-        if (terms.exact.some(t => !searchText.includes(t))) return false;
-        if (terms.and.some(t => !searchText.includes(t))) return false;
-        if (terms.or.length > 0 && !terms.or.some(t => searchText.includes(t))) return false;
-        return true;
+      const searchText = (entry.content + ' ' + entry.title).toLowerCase();
+      if (terms.not.some(t => searchText.includes(t))) return false;
+      if (terms.exact.some(t => !searchText.includes(t))) return false;
+      if (terms.and.some(t => !searchText.includes(t))) return false;
+      if (terms.or.length > 0 && !terms.or.some(t => searchText.includes(t))) return false;
+      return true;
     }
 
     function highlightText(text, query) {
-        if (!query.trim()) return text;
-        const terms = parseSearchQuery(query);
-        const allTerms = [...terms.exact, ...terms.and, ...terms.or].filter((t, i, s) => s.indexOf(t) === i);
+      if (!query.trim()) return text;
+      const terms = parseSearchQuery(query);
+      const allTerms = [...terms.exact, ...terms.and, ...terms.or].filter((t, i, s) => s.indexOf(t) === i);
+      
+      let result = text;
+      allTerms.sort((a, b) => b.length - a.length).forEach(term => {
+        const safeTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(${safeTerm})`, 'gi');
+        result = result.replace(regex, '<span class="highlight">$1</span>');
+      });
+      return result;
+    }
+
+    // Simple markdown to HTML converter
+    function markdownToHtml(text) {
+      if (!text) return '';
+      
+      // Split into lines and process
+      const lines = text.split('\n');
+      let html = '';
+      let inCodeBlock = false;
+      let codeBlockContent = '';
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
         
-        let result = text;
-        allTerms.sort((a, b) => b.length - a.length).forEach(term => {
-            const safeTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp(`(${safeTerm})`, 'gi');
-            result = result.replace(regex, '<span style="background:var(--red); color:black; padding:0 2px;">$1</span>');
-        });
-        return result;
+        // Handle code blocks
+        if (line.trim().startsWith('```')) {
+          if (inCodeBlock) {
+            // End code block
+            html += `<pre><code>${codeBlockContent}</code></pre>`;
+            codeBlockContent = '';
+            inCodeBlock = false;
+          } else {
+            // Start code block
+            inCodeBlock = true;
+          }
+          continue;
+        }
+        
+        if (inCodeBlock) {
+          codeBlockContent += line + '\n';
+          continue;
+        }
+        
+        // Headings
+        if (line.match(/^#{1,3}\s/)) {
+          const match = line.match(/^(#{1,3})\s+(.+)$/);
+          if (match) {
+            const level = match[1].length;
+            const title = match[2];
+            html += `<h${level}>${title}</h${level}>`;
+          }
+          continue;
+        }
+        
+        // Blockquotes
+        if (line.trim().startsWith('>')) {
+          const content = line.replace(/^>\s*/, '');
+          html += `<blockquote>${content}</blockquote>`;
+          continue;
+        }
+        
+        // Horizontal rules
+        if (line.match(/^[-*_]{3,}$/)) {
+          html += '<hr>';
+          continue;
+        }
+        
+        // Empty line
+        if (line.trim() === '') {
+          html += '<br>';
+          continue;
+        }
+        
+        // Regular paragraph
+        html += `<p>${line}</p>`;
+      }
+      
+      return html;
     }
 
     function getTagClass(tag) {
-        switch (tag) {
-            case 'fragments': return 'border-red-600 text-red-600';
-            case 'passages': return 'border-red-700 text-red-700';
-            case 'sections': return 'border-red-500 text-red-500';
-            case 'sketches': return 'border-red-400 text-red-400';
-            case 'vignettes': return 'border-red-300 text-red-300';
-            default: return 'border-gray-600 text-gray-600';
-        }
+      const classes = {
+        'fragments': 'border-red-400 text-red-400',
+        'passages': 'border-red-500 text-red-500', 
+        'sections': 'border-red-600 text-red-600',
+        'sketches': 'border-red-700 text-red-700',
+        'vignettes': 'border-red-300 text-red-300'
+      };
+      return classes[tag] || 'border-gray-600 text-gray-600';
     }
 
     function debounce(func, delay) {
-        return function(...args) {
-            if (searchTimeout) clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => func.apply(this, args), delay);
-        };
+      return function(...args) {
+        if (searchTimeout) clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => func.apply(this, args), delay);
+      };
     }
 
     // ==========================================
-    // 5. LOADING & PARSING
+    // LOADING & PARSING
     // ==========================================
     async function loadText() {
-        try {
-            const response = await fetch(TXT_FILE_URL);
-            if (!response.ok) throw new Error("File not found");
-            let text = await response.text();
-            
-            // Normalize line endings
-            text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-            
-            console.log("Loaded text, length:", text.length);
-            parseEntries(text);
+      try {
+        const response = await fetch(TXT_FILE_URL);
+        if (!response.ok) throw new Error("File not found");
+        let text = await response.text();
+        
+        // Normalize line endings
+        text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        
+        console.log("Loaded horse.txt, length:", text.length);
+        parseEntries(text);
 
-            loadingDiv.style.display = 'none';
-            contentDiv.style.display = 'block';
+        loadingDiv.style.display = 'none';
+        contentDiv.style.display = 'block';
 
-            if (window.readerEntries.length > 0) {
-                showEntry(window.readerEntries[0].id);
-            } else {
-                // If no entries parsed, show raw text
-                contentDiv.innerHTML = `<div class="p-6"><pre class="whitespace-pre-wrap font-mono">${text.substring(0, 5000)}</pre></div>`;
-                entryInfo.innerHTML = `<div class="text-red-500">Warning: No entries parsed with current pattern</div>`;
-            }
-            
-            // Set "All" button active
-            const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
-            if (allBtn) styleActiveFilter(allBtn);
-
-            buildIndex();
-            updateUIState();
-            
-        } catch (error) {
-            console.error("Load error:", error);
-            loadingDiv.innerHTML = `<p style="color: var(--red);">Error: ${error.message}</p>`;
+        if (window.readerEntries.length > 0) {
+          showEntry(window.readerEntries[0].id);
+        } else {
+          // If no entries parsed, show raw text with markdown conversion
+          contentDiv.innerHTML = markdownToHtml(text.substring(0, 5000));
+          entryInfo.innerHTML = `<div class="text-red-500">Warning: No entries parsed with current pattern. Showing raw text.</div>`;
         }
+        
+        // Set "All" button active
+        const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
+        if (allBtn) styleActiveFilter(allBtn);
+
+        buildIndex();
+        updateUIState();
+        
+      } catch (error) {
+        console.error("Load error:", error);
+        loadingDiv.innerHTML = `<p style="color: #ff0000;">Error: ${error.message}</p>`;
+      }
     }
 
     function parseEntries(text) {
-        // Try multiple parsing strategies
-        console.log("Parsing text with pattern:", horsePattern);
+      console.log("Parsing text with markdown pattern");
+      
+      const lines = text.split('\n');
+      let entries = [];
+      let currentEntry = null;
+      let entryId = 0;
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const match = line.match(ENTRY_PATTERN);
         
-        // Strategy 1: Split by pattern
-        const lines = text.split('\n');
-        let entries = [];
-        let currentEntry = null;
-        let entryId = 0;
-        
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            const match = line.match(horsePattern);
-            
-            if (match) {
-                // Save previous entry if exists
-                if (currentEntry && currentEntry.content.trim()) {
-                    detectTags(currentEntry);
-                    entries.push(currentEntry);
-                }
-                
-                // Start new entry
-                currentEntry = {
-                    id: ++entryId,
-                    title: match[0].trim(),
-                    content: line + '\n',
-                    tags: []
-                };
-            } else if (currentEntry) {
-                currentEntry.content += line + '\n';
-            } else {
-                // Content before first match
-                if (!entries.length) {
-                    currentEntry = {
-                        id: ++entryId,
-                        title: 'Prologue',
-                        content: line + '\n',
-                        tags: []
-                    };
-                }
-            }
-        }
-        
-        // Don't forget the last entry
-        if (currentEntry && currentEntry.content.trim()) {
+        if (match) {
+          // Save previous entry if exists
+          if (currentEntry && currentEntry.content.trim()) {
             detectTags(currentEntry);
             entries.push(currentEntry);
+          }
+          
+          // Start new entry with markdown heading as title
+          const headingText = match[2] || line;
+          currentEntry = {
+            id: ++entryId,
+            title: headingText.trim(),
+            content: line + '\n',
+            tags: []
+          };
+        } else if (currentEntry) {
+          currentEntry.content += line + '\n';
+        } else {
+          // Content before first heading
+          if (!entries.length) {
+            currentEntry = {
+              id: ++entryId,
+              title: 'Prologue',
+              content: line + '\n',
+              tags: []
+            };
+          }
         }
-        
-        window.readerEntries = entries;
-        console.log(`Parsed ${window.readerEntries.length} entries`);
-        
-        // Debug: log first few entries
-        window.readerEntries.slice(0, 3).forEach((entry, i) => {
-            console.log(`Entry ${i}: "${entry.title.substring(0, 50)}..."`);
-        });
+      }
+      
+      // Don't forget the last entry
+      if (currentEntry && currentEntry.content.trim()) {
+        detectTags(currentEntry);
+        entries.push(currentEntry);
+      }
+      
+      window.readerEntries = entries;
+      console.log(`Parsed ${window.readerEntries.length} entries`);
+      
+      // Debug: log first few entries
+      window.readerEntries.slice(0, 3).forEach((entry, i) => {
+        console.log(`Entry ${i}: "${entry.title.substring(0, 50)}..."`);
+      });
     }
 
     function detectTags(entry) {
-        for (const [tag, pattern] of Object.entries(TAG_PATTERNS)) {
-            if (tag !== 'all' && pattern.test(entry.content)) {
-                if (!entry.tags.includes(tag)) {
-                    entry.tags.push(tag);
-                }
-            }
+      for (const [tag, pattern] of Object.entries(TAG_PATTERNS)) {
+        if (tag !== 'all' && pattern.test(entry.content)) {
+          if (!entry.tags.includes(tag)) {
+            entry.tags.push(tag);
+          }
         }
+      }
     }
 
     function getFilteredEntries() {
-        if (currentFilter === 'all') return window.readerEntries;
-        return window.readerEntries.filter(e => e.tags.includes(currentFilter));
+      if (currentFilter === 'all') return window.readerEntries;
+      return window.readerEntries.filter(e => e.tags.includes(currentFilter));
     }
 
     // ==========================================
-    // 6. SEARCH ACTIONS
+    // SEARCH ACTIONS
     // ==========================================
     function performSearch(query) {
-        searchQuery = query;
-        if (!query.trim()) {
-            isSearching = false;
-            searchResults = [];
-            updateUIState();
-            showEntry(window.readerCurrentIndex); // Show current entry
-            return;
-        }
-
-        isSearching = true;
-        const pool = getFilteredEntries();
-        const terms = parseSearchQuery(query);
-        
-        searchResults = pool.filter(e => matchesSearch(e, terms));
-
+      searchQuery = query;
+      if (!query.trim()) {
+        isSearching = false;
+        searchResults = [];
         updateUIState();
-        if (searchResults.length > 0) {
-            showEntry(searchResults[0].id);
-        } else {
-            contentDiv.innerHTML = '<div class="text-center mt-10 text-gray-500">No matches found.</div>';
-            entryInfo.innerHTML = '<div class="text-gray-500">No matches</div>';
-        }
+        showEntry(window.readerCurrentIndex);
+        return;
+      }
+
+      isSearching = true;
+      const pool = getFilteredEntries();
+      const terms = parseSearchQuery(query);
+      
+      searchResults = pool.filter(e => matchesSearch(e, terms));
+
+      updateUIState();
+      if (searchResults.length > 0) {
+        showEntry(searchResults[0].id);
+      } else {
+        contentDiv.innerHTML = '<div class="text-center mt-10 text-gray-500">No matches found.</div>';
+        entryInfo.innerHTML = '<div class="text-gray-500">No matches</div>';
+      }
     }
 
     function updateUIState() {
-        if (isSearching) {
-            if (searchStats) searchStats.textContent = `${searchResults.length} matches`;
-        } else {
-            const count = getFilteredEntries().length;
-            if (searchStats) searchStats.textContent = currentFilter !== 'all' ? `${count} items` : `${count} total`;
-        }
-        if (isIndexVisible) buildIndex();
+      if (isSearching) {
+        if (searchStats) searchStats.textContent = `${searchResults.length} matches`;
+      } else {
+        const count = getFilteredEntries().length;
+        if (searchStats) searchStats.textContent = currentFilter !== 'all' ? `${count} items` : `${count} total`;
+      }
+      if (isIndexVisible) buildIndex();
     }
 
     // ==========================================
-    // 7. DISPLAY & NAV
+    // DISPLAY & NAVIGATION
     // ==========================================
     function showEntry(entryId) {
-        const entry = window.readerEntries.find(e => e.id === entryId);
-        if (!entry) {
-            console.log("Entry not found:", entryId);
-            return;
+      const entry = window.readerEntries.find(e => e.id === entryId);
+      if (!entry) {
+        console.log("Entry not found:", entryId);
+        return;
+      }
+
+      window.readerCurrentIndex = entryId;
+
+      let displayContent = entry.content;
+      
+      // Apply search highlighting if searching
+      if (isSearching && searchQuery.trim()) {
+        displayContent = highlightText(displayContent, searchQuery);
+      }
+      
+      // Convert markdown to HTML
+      displayContent = markdownToHtml(displayContent);
+      
+      // Also highlight within the HTML (after markdown conversion)
+      if (isSearching && searchQuery.trim()) {
+        // Create a temporary element to manipulate
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = displayContent;
+        
+        // Apply highlighting to text nodes
+        const terms = parseSearchQuery(searchQuery);
+        const allTerms = [...terms.exact, ...terms.and, ...terms.or].filter((t, i, s) => s.indexOf(t) === i);
+        
+        function highlightNode(node) {
+          if (node.nodeType === Node.TEXT_NODE) {
+            let text = node.textContent;
+            allTerms.sort((a, b) => b.length - a.length).forEach(term => {
+              const safeTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const regex = new RegExp(`(${safeTerm})`, 'gi');
+              text = text.replace(regex, '<span class="highlight">$1</span>');
+            });
+            
+            if (text !== node.textContent) {
+              const span = document.createElement('span');
+              span.innerHTML = text;
+              node.parentNode.replaceChild(span, node);
+            }
+          } else if (node.nodeType === Node.ELEMENT_NODE && 
+                     !['SCRIPT', 'STYLE', 'PRE', 'CODE'].includes(node.tagName)) {
+            Array.from(node.childNodes).forEach(child => highlightNode(child));
+          }
         }
-
-        window.readerCurrentIndex = entryId;
-
-        let displayContent = entry.content;
         
-        // Apply search highlighting if searching
-        if (isSearching && searchQuery.trim()) {
-            displayContent = highlightText(displayContent, searchQuery);
-        }
-        
-        // Convert to paragraphs
-        displayContent = displayContent.split('\n').map(line => {
-            if (!line.trim()) return '<br>';
-            return `<p class="mb-4 leading-relaxed">${line}</p>`;
-        }).join('');
+        highlightNode(tempDiv);
+        displayContent = tempDiv.innerHTML;
+      }
 
-        contentDiv.innerHTML = displayContent;
+      contentDiv.innerHTML = displayContent;
 
-        const viewableItems = isSearching ? searchResults : getFilteredEntries();
-        const itemIndex = viewableItems.findIndex(e => e.id === entryId);
-        const wordCount = entry.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
+      const viewableItems = isSearching ? searchResults : getFilteredEntries();
+      const itemIndex = viewableItems.findIndex(e => e.id === entryId);
+      const wordCount = entry.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
 
-        entryInfo.innerHTML = `
-            <div class="flex flex-col gap-1">
-                <div>
-                    <span class="text-xs text-gray-500 uppercase tracking-widest">HORSE ARCHIVE</span>
-                    <span class="ml-2 font-bold text-xl" style="color: var(--red);">${entry.title}</span>
-                </div>
-                <div class="text-xs text-gray-400 flex items-center gap-2">
-                    ${isSearching ? `Result ${itemIndex + 1}/${searchResults.length}` : `Entry ${itemIndex + 1}/${viewableItems.length}`}
-                    <span>•</span>
-                    ${wordCount} words
-                    <span class="ml-2 flex gap-1">
-                        ${entry.tags.map(tag => `<span class="px-1 border ${getTagClass(tag)} text-[10px] uppercase">${tag}</span>`).join('')}
-                    </span>
-                </div>
-            </div>
-        `;
+      entryInfo.innerHTML = `
+        <div class="flex flex-col gap-1">
+          <div>
+            <span class="text-xs text-gray-500 uppercase tracking-widest">HORSE ARCHIVE</span>
+            <span class="ml-2 font-bold text-xl special-elite" style="color: var(--red);">${entry.title}</span>
+          </div>
+          <div class="text-xs text-gray-400 flex items-center gap-2 flex-wrap">
+            ${isSearching ? `Result ${itemIndex + 1}/${searchResults.length}` : `Entry ${itemIndex + 1}/${viewableItems.length}`}
+            <span>•</span>
+            ${wordCount} words
+            <span class="ml-2 flex gap-1 flex-wrap">
+              ${entry.tags.map(tag => `<span class="px-2 py-1 border ${getTagClass(tag)} text-[10px] uppercase">${tag}</span>`).join('')}
+            </span>
+          </div>
+        </div>
+      `;
 
-        // Update button states
-        if (prevBtn) prevBtn.disabled = itemIndex <= 0;
-        if (nextBtn) nextBtn.disabled = itemIndex >= viewableItems.length - 1;
+      // Update button states
+      if (prevBtn) prevBtn.disabled = itemIndex <= 0;
+      if (nextBtn) nextBtn.disabled = itemIndex >= viewableItems.length - 1;
 
-        // Scroll to top
-        contentDiv.scrollTop = 0;
-        
-        // Update index if visible
-        if (isIndexVisible) buildIndex();
+      // Scroll to top
+      contentDiv.scrollTop = 0;
+      
+      // Update index if visible
+      if (isIndexVisible) buildIndex();
     }
 
     function showRandomEntry() {
-        const pool = isSearching ? searchResults : getFilteredEntries();
-        if (pool.length === 0) return;
-        let randomIndex;
-        do {
-            randomIndex = Math.floor(Math.random() * pool.length);
-        } while (pool[randomIndex].id === window.readerCurrentIndex && pool.length > 1);
-        showEntry(pool[randomIndex].id);
+      const pool = isSearching ? searchResults : getFilteredEntries();
+      if (pool.length === 0) return;
+      let randomIndex;
+      do {
+        randomIndex = Math.floor(Math.random() * pool.length);
+      } while (pool[randomIndex].id === window.readerCurrentIndex && pool.length > 1);
+      showEntry(pool[randomIndex].id);
     }
 
     function navigateEntries(direction) {
-        const items = isSearching ? searchResults : getFilteredEntries();
-        if (items.length === 0) return;
-        const currentIdxInView = items.findIndex(e => e.id === window.readerCurrentIndex);
-        let newIdx = direction === 'next' ? currentIdxInView + 1 : currentIdxInView - 1;
-        if (newIdx >= 0 && newIdx < items.length) showEntry(items[newIdx].id);
+      const items = isSearching ? searchResults : getFilteredEntries();
+      if (items.length === 0) return;
+      const currentIdxInView = items.findIndex(e => e.id === window.readerCurrentIndex);
+      let newIdx = direction === 'next' ? currentIdxInView + 1 : currentIdxInView - 1;
+      if (newIdx >= 0 && newIdx < items.length) showEntry(items[newIdx].id);
     }
 
     function buildIndex() {
-        if (!dateNav) return;
-        
-        const items = isSearching ? searchResults : getFilteredEntries();
-        dateNav.innerHTML = '';
-        if (items.length === 0) {
-            dateNav.innerHTML = '<div class="p-3 text-center text-gray-500">No items</div>';
-            return;
-        }
+      if (!dateNav) return;
+      
+      const items = isSearching ? searchResults : getFilteredEntries();
+      dateNav.innerHTML = '';
+      if (items.length === 0) {
+        dateNav.innerHTML = '<div class="p-3 text-center text-gray-500">No items</div>';
+        return;
+      }
 
-        items.forEach(entry => {
-            const div = document.createElement('div');
-            const rawText = entry.content.replace(/<[^>]*>/g, '');
-            const preview = rawText.substring(0, 60).replace(/\n/g, ' ') + '...';
-            
-            div.className = 'p-3 border-b border-gray-800 cursor-pointer hover:bg-gray-900 transition-colors';
-            if (entry.id === window.readerCurrentIndex) {
-                div.style.background = '#1a1a1a';
-                div.style.borderLeft = '3px solid var(--red)';
-            }
-            div.innerHTML = `
-                <div class="text-sm font-bold text-gray-300 mb-1 truncate">${entry.title}</div>
-                <div class="text-xs text-gray-600 font-mono truncate">${preview}</div>
-            `;
-            div.addEventListener('click', () => {
-                showEntry(entry.id);
-                // On mobile, you might want to auto-close the index
-                if (window.innerWidth < 768) {
-                    dateNav.classList.add('hidden');
-                    isIndexVisible = false;
-                }
-            });
-            dateNav.appendChild(div);
+      items.forEach(entry => {
+        const div = document.createElement('div');
+        const rawText = entry.content.replace(/<[^>]*>/g, '');
+        const preview = rawText.substring(0, 60).replace(/\n/g, ' ') + '...';
+        
+        div.className = 'p-3 border-b border-gray-700 cursor-pointer hover:bg-gray-900 transition-colors';
+        if (entry.id === window.readerCurrentIndex) {
+          div.style.background = '#1a1a1a';
+          div.style.borderLeft = '3px solid var(--red)';
+        }
+        div.innerHTML = `
+          <div class="text-sm font-bold text-gray-300 mb-1 truncate special-elite">${entry.title}</div>
+          <div class="text-xs text-gray-600 font-mono truncate">${preview}</div>
+        `;
+        div.addEventListener('click', () => {
+          showEntry(entry.id);
+          // On mobile, auto-close the index
+          if (window.innerWidth < 768) {
+            dateNav.classList.add('hidden');
+            isIndexVisible = false;
+          }
         });
+        dateNav.appendChild(div);
+      });
     }
 
     function styleActiveFilter(activeBtn) {
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.style.background = 'transparent';
-            btn.style.borderColor = '#333';
-            btn.style.color = '#666';
-        });
-        if (activeBtn) {
-            activeBtn.style.background = 'var(--red)';
-            activeBtn.style.color = 'black';
-            activeBtn.style.borderColor = 'var(--red)';
-        }
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.style.background = 'transparent';
+        btn.style.borderColor = '#333';
+        btn.style.color = '#666';
+      });
+      if (activeBtn) {
+        activeBtn.style.background = 'var(--red)';
+        activeBtn.style.color = 'black';
+        activeBtn.style.borderColor = 'var(--red)';
+      }
     }
 
     // ==========================================
-    // 8. EVENT LISTENERS
+    // EVENT LISTENERS
     // ==========================================
     document.addEventListener('DOMContentLoaded', loadText);
     
     if (searchBox) {
-        searchBox.addEventListener('input', debounce(e => performSearch(e.target.value), 300));
+      searchBox.addEventListener('input', debounce(e => performSearch(e.target.value), 300));
     }
     
     if (prevBtn) prevBtn.addEventListener('click', () => navigateEntries('prev'));
@@ -763,43 +760,175 @@
     if (randomBtn) randomBtn.addEventListener('click', showRandomEntry);
     
     if (indexBtn) {
-        indexBtn.addEventListener('click', () => {
-            isIndexVisible = !isIndexVisible;
-            dateNav.classList.toggle('hidden');
-            if (isIndexVisible) buildIndex();
-        });
+      indexBtn.addEventListener('click', () => {
+        isIndexVisible = !isIndexVisible;
+        dateNav.classList.toggle('hidden');
+        if (isIndexVisible) buildIndex();
+      });
     }
     
     const filterBtns = document.getElementById('filterBtns');
     if (filterBtns) {
-        filterBtns.addEventListener('click', e => {
-            if (e.target.classList.contains('filter-btn')) {
-                styleActiveFilter(e.target);
-                currentFilter = e.target.dataset.filter;
-                if (searchBox) searchBox.value = '';
-                isSearching = false;
-                updateUIState();
-                const filtered = getFilteredEntries();
-                if (filtered.length > 0) showEntry(filtered[0].id);
-            }
-        });
+      filterBtns.addEventListener('click', e => {
+        if (e.target.classList.contains('filter-btn')) {
+          styleActiveFilter(e.target);
+          currentFilter = e.target.dataset.filter;
+          if (searchBox) searchBox.value = '';
+          isSearching = false;
+          updateUIState();
+          const filtered = getFilteredEntries();
+          if (filtered.length > 0) showEntry(filtered[0].id);
+        }
+      });
     }
     
     document.addEventListener('keydown', e => {
-        if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-        if (e.key === 'ArrowLeft') navigateEntries('prev');
-        if (e.key === 'ArrowRight') navigateEntries('next');
-        if (e.key.toLowerCase() === 'r') showRandomEntry();
-        if (e.key === 'Escape' && isIndexVisible) {
-            dateNav.classList.add('hidden');
-            isIndexVisible = false;
-        }
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+      if (e.key === 'ArrowLeft') navigateEntries('prev');
+      if (e.key === 'ArrowRight') navigateEntries('next');
+      if (e.key.toLowerCase() === 'r') showRandomEntry();
+      if (e.key === 'Escape' && isIndexVisible) {
+        dateNav.classList.add('hidden');
+        isIndexVisible = false;
+      }
+    });
+    
+    // Handle window resize for responsive filters
+    window.addEventListener('resize', () => {
+      if (isIndexVisible) buildIndex();
+    });
+</script>
+
+<script id="ai-script">
+    // ==========================================
+    // AI CONFIGURATION
+    // ==========================================
+    const NVIDIA_MODELS = {
+      "stable": "meta/llama-3.3-70b-instruct", 
+      "backup": "nvidia/llama-3.1-nemotron-70b-instruct",
+    };
+    let currentModel = NVIDIA_MODELS.stable;
+    let aiContext = 'current';
+
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const aiInput = document.getElementById('aiInput');
+    const askAiBtn = document.getElementById('askAiBtn');
+    const aiResponseDiv = document.getElementById('aiResponse');
+    const contextInfo = document.getElementById('contextInfo');
+
+    // Load saved API key
+    if(localStorage.getItem('horse_nvidia_key')) {
+      apiKeyInput.value = localStorage.getItem('horse_nvidia_key');
+    }
+    
+    // Save API key on input
+    apiKeyInput.addEventListener('input', (e) => {
+      localStorage.setItem('horse_nvidia_key', e.target.value);
     });
 
-    // Handle window resize
-    window.addEventListener('resize', () => {
-        // Rebuild index if visible to ensure proper sizing
-        if (isIndexVisible) buildIndex();
+    // AI Logic
+    askAiBtn.addEventListener('click', async () => {
+      const apiKey = apiKeyInput.value.trim();
+      const msg = aiInput.value.trim();
+      
+      if (!apiKey) {
+        aiResponseDiv.innerHTML = '<p class="text-red-500">Please enter an NVIDIA API Key.</p>';
+        return;
+      }
+      if (!msg) return;
+
+      if (!window.readerEntries || window.readerEntries.length === 0) {
+        aiResponseDiv.innerHTML = '<p class="text-red-500">Text not loaded yet. Please wait.</p>';
+        return;
+      }
+
+      askAiBtn.disabled = true;
+      askAiBtn.textContent = "TRANSMITTING...";
+      aiResponseDiv.innerHTML = `<p class="animate-pulse" style="color: var(--red);">Consulting Llama...</p>`;
+
+      try {
+        let systemContext = '';
+        
+        if (aiContext === 'current') {
+          const entry = window.readerEntries.find(e => e.id === window.readerCurrentIndex);
+          if (entry) {
+            const cleanContent = entry.content.substring(0, 4000); 
+            systemContext = `CONTEXT (Current Section - ${entry.title}):\n${cleanContent}\n\n---\n`;
+          }
+        } else if (aiContext === 'all') {
+          const outline = window.readerEntries.map(e => `- ${e.title} (${e.tags.join(', ')})`).join('\n');
+          systemContext = `CONTEXT (Full Manuscript Outline):\n${outline}\n\n---\n`;
+        }
+
+        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
+        
+        const response = await fetch(proxyUrl, {
+          method: 'POST',
+          headers: { 
+            'Authorization': `Bearer ${apiKey}`, 
+            'Content-Type': 'application/json' 
+          },
+          body: JSON.stringify({
+            model: currentModel,
+            messages: [
+              { role: "system", content: "You are an editor for HORSE, a narrative where reality and dreams blur. Analyze via surrealism. Be bold, concise, and literary." },
+              { role: "user", content: systemContext + "\nUser Question: " + msg }
+            ],
+            temperature: 0.6,
+            top_p: 1,
+            max_tokens: 1024
+          })
+        });
+
+        if (!response.ok) {
+          if (response.status === 404) throw new Error("404 Switch");
+          const errText = await response.text();
+          try {
+            const errJson = JSON.parse(errText);
+            throw new Error(errJson.error?.message || errText);
+          } catch (e) {
+            throw new Error(errText);
+          }
+        }
+
+        const data = await response.json();
+        let aiText = data.choices[0].message.content;
+        aiText = aiText.replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--red)">$1</strong>');
+        aiText = aiText.replace(/\n/g, '<br>');
+        aiResponseDiv.innerHTML = aiText;
+
+      } catch (error) {
+        console.error(error);
+        if(error.message.includes("404") || error.message.includes("Switch")) {
+          currentModel = NVIDIA_MODELS.backup;
+          aiResponseDiv.innerHTML = `<p style="color:#888">Primary model unavailable. Switched to Backup.<br><strong>Please click Transmit again.</strong></p>`;
+        } else {
+          aiResponseDiv.innerHTML = `<p style="color: var(--red);">Error: ${error.message}</p>`;
+        }
+      } finally {
+        askAiBtn.disabled = false;
+        askAiBtn.textContent = "TRANSMIT TO NVIDIA";
+      }
+    });
+
+    // Context button handlers
+    document.addEventListener('click', e => {
+      if (e.target.classList.contains('context-btn')) {
+        document.querySelectorAll('.context-btn').forEach(btn => {
+          btn.style.background = 'var(--dark-grey, #333)';
+          btn.style.color = '#888';
+          btn.style.borderColor = '#333';
+        });
+        
+        e.target.style.background = 'var(--red)';
+        e.target.style.color = 'black';
+        e.target.style.borderColor = 'var(--red)';
+        
+        aiContext = e.target.dataset.context;
+        
+        const helpText = aiContext === 'current' ? 'Reading current entry' : 'Reading all titles';
+        if(contextInfo) contextInfo.textContent = `Context: ${aiContext.toUpperCase()} (${helpText})`;
+      }
     });
 </script>
 </body>
