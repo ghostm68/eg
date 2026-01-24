@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>AI RIDER - A Horse Struck Down By Lightning</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://js.puter.com/v2/"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Nova+Mono&family=Special+Elite&display=swap" rel="stylesheet">
          <style>
 /* === DEFINE VARIABLES FIRST === */
 :root {
@@ -20,412 +21,712 @@
     text-shadow: none;
 }
 </style>
- <style>
-    /* Theme Setup: Wordstar Red / Black / White / Grey */
-    body { 
-      font-family: 'Courier New', monospace; 
-      background-color: #000000; /* Pitch Black */
-      color: #e0e0e0; /* Off-White/Light Grey for text */
-    }
-
-    /* Custom Scrollbar */
-    .custom-scrollbar::-webkit-scrollbar { 
-      width: 8px; 
+  <style>
+    :root { 
+      --red: #ff0000; 
+      --black: #050505; 
+      --dark-grey: #121212; 
+      --white: #d1d1d1; 
     }
     
-    .custom-scrollbar::-webkit-scrollbar-track { 
-      background: #111111; /* Dark Grey Track */
-      border-left: 1px solid #333333; /* Mechanical border */
+    * {
+      -webkit-tap-highlight-color: transparent;
     }
     
-    .custom-scrollbar::-webkit-scrollbar-thumb { 
-      background-color: #666666; /* Industrial Grey Handle */
-      border: 1px solid #000000; 
+    body {
+      font-family: 'Nova Mono', monospace;
+      background: var(--black);
+      color: var(--white);
+      margin: 0;
+      touch-action: manipulation;
     }
     
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover { 
-      background-color: #ff0000; /* Bright Red on Interaction */
-    }
-
-    /* Selection Highlighting */
-    ::selection { 
-      background: #ff0000; /* Red Background */
-      color: #ffffff;      /* White Text */
-    }
-    
-    /* Form Elements */
-    select, textarea, input { 
-      color-scheme: dark; 
-      background-color: #1a1a1a;
-      color: #fff;
-      border-color: #333;
-    }
-
-    /* Animation for loading/processing */
-    @keyframes pulse-red {
-      0%, 100% { opacity: 1; color: #ff0000; }
-      50% { opacity: 0.5; color: #800000; }
+    /* CRT Scanline Overlay */
+    body::after {
+      content: " "; 
+      display: block; 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      bottom: 0; 
+      right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), 
+                  linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.04));
+      z-index: 999; 
+      background-size: 100% 3px, 3px 100%; 
+      pointer-events: none;
     }
     
-    .animate-pulse-red {
-      animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    .highlight {
+      background-color: var(--red);
+      color: var(--black);
+      padding: 1px 3px;
+      border-radius: 0;
     }
-</style>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            theme: {
-              dark: '#1a120b',
-              panel: '#271c19',
-              tan: '#d6c0b3',
-              gold: '#fbbf24',
-              brown: '#78350f',
-              border: '#4a3b32'
-            }
-          }
-        }
-      }
+    
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
     }
-  </script>
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: var(--black);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: var(--red);
+      border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background-color: #cc0000;
+    }
+    
+    input, textarea, select {
+      font-family: 'Nova Mono', monospace;
+    }
+    
+    button {
+      font-family: 'Nova Mono', monospace;
+      user-select: none;
+      cursor: pointer;
+    }
+    
+    .special-elite {
+      font-family: 'Special Elite', serif;
+    }
+  </style>
 </head>
-<body class="p-4 h-screen flex flex-col items-center justify-center bg-[#050505] text-[#cccccc]">
-  <div class="w-full max-w-3xl relative z-10">
-    
-    <!-- AI Assistant Card -->
-    <div class="bg-[#0a0a0a] border border-[#333] rounded-lg p-4 shadow-2xl shadow-black/80">
+<body class="bg-gray-900 text-gray-300 antialiased p-4 sm:p-6 md:p-8" style="background: var(--black); color: var(--white);">
+  <div class="max-w-4xl mx-auto">
+    <div id="controls" class="sticky top-0 pt-4 pb-6 border-b z-10" style="background: var(--black); border-color: var(--red);">
+      <h1 class="text-3xl font-bold mb-4" style="color: var(--red); font-family: 'Special Elite', serif;">⚡ b/R-im reader ⚡</h1>
+      <a href="https://inkrealm.info" 
+         class="absolute top-6 right-4 sm:right-8 text-xs font-mono border px-2 py-1 hover:bg-red-600 transition-all duration-300 uppercase tracking-widest no-underline z-50"
+         style="color: #666; border-color: #333;">
+        Return to Realm
+      </a>
       
-      <!-- HEADER -->
-      <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 border-b border-[#333] pb-4">
-        <h3 class="text-xl font-bold text-[#ff3333] tracking-widest flex items-center gap-2 font-mono">
-            <span>⚡</span> AI RIDER
-        </h3>
+      <!-- SEARCH CONTROLS -->
+<!-- MAIN CONTAINER -->
+<div id="brim-layout" class="flex flex-col md:flex-row h-screen w-full overflow-hidden bg-black text-gray-300">
+
+    <!-- ========================================== -->
+    <!-- LEFT COLUMN: READER (The Content)          -->
+    <!-- ========================================== -->
+    <div class="flex-1 flex flex-col h-full border-r border-gray-800 relative">
         
-        <!-- TRIGGER BUTTON FOR NVIDIA -->
-        <button onclick="openNvidiaModal()" class="text-[10px] border border-dashed border-[#666] text-[#666] px-3 py-2 hover:border-[#ff3333] hover:text-[#ff3333] transition-colors font-mono uppercase tracking-widest cursor-pointer">
-            [ + OPEN DEEP ANALYSIS NODE ]
-        </button>
-
-        <span id="statusBadge" class="text-[10px] text-gray-500 uppercase tracking-widest border border-[#333] px-2 py-1 rounded font-mono">
-          Initializing...
-        </span>
-      </div>
-      
-      <!-- STANDARD MODEL SELECTION (PUTER) -->
-      <div class="mb-4">
-        <label class="block text-[10px] uppercase tracking-widest text-[#ff3333] mb-2 opacity-80 font-mono">Standard Transmission Channel:</label>
-        <select id="model" class="w-full p-2 bg-[#121212] border border-[#333] rounded text-xs text-[#cccccc] focus:border-[#ff3333] focus:outline-none transition-all cursor-pointer font-mono">
-            <optgroup label="🏆 TOP PICKS">
-                <option value="deepseek-chat" selected>DeepSeek Chat V3 (Best Free) 🏆</option>
-                <option value="openrouter/anthropic/claude-sonnet-4-20250514">Claude Sonnet 4 (Best Overall) 👑</option>
-            </optgroup>
-            <optgroup label="🟢 RELIABLE">
-                <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Fast)</option>
-                <option value="google/gemma-2-9b-it:free">Gemma 2 9B (Free)</option>
-            </optgroup>
-            <optgroup label="🔵 PREMIUM (OpenRouter)">
-                <option value="openrouter/openai/gpt-4o">GPT-4o</option>
-                <option value="openrouter/anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
-            </optgroup>
-        </select>
-      </div>
-
-      <!-- Context Toggle -->
-      <div class="mb-4 bg-[#121212] p-2 rounded border border-[#333]">
-        <div class="flex justify-between items-center mb-2">
-            <label class="block text-[10px] uppercase tracking-widest text-[#ff3333] opacity-80 font-mono">Context Scope:</label>
-            <p id="contextInfo" class="text-[10px] text-gray-500 italic font-mono">Linking to wordstar.nexus...</p>
+        <!-- Loading State -->
+        <div id="loading" class="absolute inset-0 flex items-center justify-center text-xl" style="color: var(--red);">
+            Loading horse.txt ...
         </div>
-        <div class="flex gap-2">
-          <button class="context-btn flex-1 bg-[#660000] text-white border border-[#ff3333] px-3 py-1 text-xs font-bold transition uppercase tracking-wider font-mono" data-context="novel">Full Novel</button>
-          <button class="context-btn flex-1 bg-[#1a1a1a] text-gray-500 border border-[#333] px-3 py-1 text-xs hover:text-[#ff3333] hover:border-[#ff3333] transition uppercase tracking-wider font-mono" data-context="none">No Context</button>
+
+        <!-- The Text Content Area -->
+        <div id="content" class="flex-1 overflow-y-auto p-8 md:p-12 text-base md:text-lg leading-relaxed whitespace-pre-wrap special-elite custom-scrollbar" style="display:none;">
+            <!-- Text gets injected here -->
         </div>
-      </div>
 
-      <!-- Input -->
-      <div class="mb-4">
-        <label class="block text-[10px] uppercase tracking-widest text-[#ff3333] mb-2 opacity-80 font-mono">Input Query:</label>
-        <textarea id="input" class="w-full p-3 bg-[#121212] border border-[#333] rounded text-sm text-[#e0e0e0] focus:border-[#ff3333] focus:outline-none min-h-[80px] placeholder-gray-700 font-mono" placeholder="Query the manuscript..."></textarea>
-      </div>
+        <!-- Footer Info (Word count, tags for current entry) -->
+        <div id="entryInfo" class="p-4 border-t border-gray-800 text-xs text-gray-500 bg-black z-10"></div>
+    </div>
 
-      <!-- Ask Button -->
-      <button id="ask" class="w-full bg-[#1a1a1a] text-[#ff3333] border border-[#333] py-3 rounded font-bold hover:bg-[#ff3333] hover:text-black transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest font-mono">
-        Execute Protocol
-      </button>
+    <!-- ========================================== -->
+    <!-- RIGHT COLUMN: CONTROLS (Search & AI)       -->
+    <!-- ========================================== -->
+    <div class="w-full md:w-[400px] flex flex-col h-full bg-[#0a0a0a]">
+        
+        <!-- SCROLLABLE TOOLBAR -->
+        <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
+            
+            <!-- 1. NAVIGATION -->
+            <div class="flex items-center justify-between mb-6 gap-2">
+                <button id="prevBtn" class="flex-1 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors">← Prev</button>
+                <button id="randomBtn" class="px-4 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors">⚡</button>
+                <button id="nextBtn" class="flex-1 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors">Next →</button>
+            </div>
 
-      <!-- Response -->
-      <div class="mt-6">
-        <label class="block text-[10px] uppercase tracking-widest text-[#ff3333] mb-2 opacity-80 font-mono">System Output:</label>
-        <div id="response" class="bg-[#121212] border border-[#333] rounded p-4 text-sm min-h-[120px] max-h-[400px] overflow-y-auto custom-scrollbar whitespace-pre-wrap font-mono leading-relaxed text-gray-400">
-          <p class="italic opacity-30">...Waiting for input signal...</p>
+            <!-- 2. SEARCH -->
+            <div class="mb-6">
+                <input type="text" id="searchBox" 
+                    class="w-full bg-[#111] border border-gray-700 p-3 text-white focus:border-red-500 focus:outline-none transition-colors"
+                    placeholder="Search text...">
+                
+                <div class="flex justify-between items-center mt-2">
+                    <div id="searchStats" class="text-xs text-gray-500 h-4"></div>
+                    <button id="indexBtn" class="text-xs text-gray-500 hover:text-red-500 uppercase tracking-widest border-b border-transparent hover:border-red-500">
+                        Toggle Index
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. FILTERS -->
+            <div id="filterBtns" class="flex flex-wrap gap-2 mb-6 pb-6 border-b border-gray-800">
+                <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-gray-500" data-filter="all">All</button>
+                <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-400" data-filter="fragments">Fragments</button>
+                <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="passages">Passages</button>
+                <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-600" data-filter="sections">Sections</button>
+                <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-700" data-filter="sketches">Sketches</button>
+            </div>
+
+            <!-- HIDDEN INDEX (Pops open here when clicked) -->
+            <div id="dateNav" class="hidden mb-6 max-h-60 overflow-y-auto border border-gray-800 bg-[#111]"></div>
+
+            <!-- 4. NVIDIA AI -->
+            <div class="mt-2">
+                <h2 class="text-xl font-bold mb-4 text-gray-600 special-elite">AI EDITOR</h2>
+                
+                <!-- Key -->
+                <input type="password" id="apiKeyInput" 
+                    class="w-full bg-black border border-gray-800 p-2 text-xs text-red-500 font-mono mb-4 focus:outline-none focus:border-red-900" 
+                    placeholder="NVIDIA API KEY...">
+
+                <!-- Context Switches -->
+                <div class="flex gap-2 mb-2">
+                    <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500" data-context="current">Current</button>
+                    <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500" data-context="all">Outline</button>
+                    <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500" data-context="none">None</button>
+                </div>
+                <p id="contextInfo" class="text-[10px] text-gray-600 mb-3 text-right">Target: Current Entry</p>
+
+                <!-- Input -->
+                <textarea id="aiInput" 
+                    class="w-full bg-[#111] border border-gray-800 p-3 text-sm text-gray-300 focus:border-red-500 focus:outline-none min-h-[80px] mb-2"
+                    placeholder="Enter prompt..."></textarea>
+                
+                <button id="askAiBtn" class="w-full bg-red-900/20 hover:bg-red-900/40 border border-red-900 text-red-500 py-2 text-xs font-bold tracking-widest transition-all">
+                    TRANSMIT
+                </button>
+
+                <!-- Response -->
+                <div id="aiResponse" class="mt-4 p-3 bg-black border border-gray-800 text-sm text-gray-400 min-h-[100px] whitespace-pre-wrap special-elite font-mono">
+                    <span class="opacity-30">:: Awaiting Input ::</span>
+                </div>
+            </div>
+
         </div>
-      </div>
     </div>
-    
-    <div class="mt-2 text-center text-[10px] text-[#333] uppercase tracking-[0.3em] font-mono">
-        Terminal Access // GhostM68 // Wordstar.Nexus
-    </div>
-  </div>
-
-  <!-- ========================================== -->
-  <!-- NVIDIA "DEEP THOUGHT" MODAL (HIDDEN)       -->
-  <!-- ========================================== -->
-  <div id="nvidia-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9000; backdrop-filter:blur(5px);"></div>
-
-  <div id="nvidia-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:600px; max-width:95%; background:#000000; border:2px solid #ff3333; padding:20px; z-index:9001; box-shadow:0 0 50px rgba(255, 0, 0, 0.2);">
-    
-    <!-- Header -->
-    <div style="border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="color:#ff3333; margin:0; font-family:'Courier New', monospace; font-weight:bold; letter-spacing: 2px;">>> NVIDIA NEMOTRON [DEEP ANALYSIS]</h3>
-        <button onclick="closeNvidiaModal()" style="background:none; border:none; color:#666; cursor:pointer; font-family:'Courier New', monospace;">[ X ]</button>
-    </div>
-
-    <!-- Key Input -->
-        <div style="margin-bottom:15px;">
-        <label style="color:#666; font-size:10px; display:block; margin-bottom:5px; font-family:'Courier New', monospace;">
-            NVIDIA API KEY (SECURE STORAGE) 
-            <a href="https://build.nvidia.com" target="_blank" style="color:#ff3333; text-decoration:none; font-weight:bold; margin-left:10px; border-bottom:1px dotted #ff3333; transition: color 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#ff3333'">
-                [ ACQUIRE FREE KEY @ BUILD.NVIDIA.COM ]
-            </a>
-        </label>
-        <input type="password" id="nvidiaKey" placeholder="nvapi-..." style="width:100%; background:#111; border:1px solid #333; color:#ff3333; padding:10px; font-family:'Courier New', monospace; outline:none; font-size:12px;">
-    </div>
-
-    <!-- Prompt -->
-    <div style="margin-bottom:15px;">
-        <label style="color:#666; font-size:10px; display:block; margin-bottom:5px; font-family:'Courier New', monospace;">ANALYSIS PARAMETERS</label>
-        <textarea id="nvidiaPrompt" rows="4" placeholder="Enter deep analysis query (e.g., 'Analyze the thematic structure of the first 3 chapters')..." style="width:100%; background:#111; border:1px solid #333; color:#e0e0e0; padding:10px; font-family:'Courier New', monospace; outline:none; resize:vertical; font-size:12px;"></textarea>
-    </div>
-
-    <!-- Controls -->
-    <div style="display:flex; gap:10px; margin-bottom:15px;">
-       <select id="nvidiaModel" style="background:#111; color:#aaa; border:1px solid #333; padding:5px; flex:1; font-family:'Courier New', monospace; font-size:12px;">
-    <!-- Set this one to SELECTED -->
-    <option value="nvidia/nvidia-nemotron-nano-9b-v2" selected>Nvidia Nemotron Nano 9B v2 (Hybrid/Mamba)</option>
-    <option value="nvidia/llama-3.1-nemotron-70b-instruct">Nvidia Llama-3.1-Nemotron 70B</option>
-</select>
-        <button id="nvidiaBtn" onclick="runNvidiaAnalysis()" style="background:#ff3333; color:#000; border:none; padding:8px 20px; font-weight:bold; cursor:pointer; font-family:'Courier New', monospace; letter-spacing:1px; transition:all 0.3s;">INITIALIZE</button>
-    </div>
-
-    <!-- Output Console -->
-    <div id="nvidiaOutput" style="background:#050505; border:1px solid #333; color:#ccc; padding:15px; height:200px; overflow-y:auto; font-size:12px; white-space:pre-wrap; font-family:'Courier New', monospace; line-height: 1.5;">>> STANDBY... WAITING FOR INSTRUCTIONS.</div>
-  </div>
-
-  <!-- MAIN SCRIPT LOGIC -->
-  <script>
-   // ==========================================
-    // 1. GLOBAL CONFIGURATION & STATE
+</div>
+<script id="ai-script">
     // ==========================================
-// ==========================================
-    // 1. GLOBAL CONFIGURATION
+    // AI CONFIGURATION
     // ==========================================
-    const NOVEL_URL = 'https://wordstar.nexus/horse.txt';
-    let novelText = '';      
-    let aiContext = 'novel'; 
-    let isLoading = false;
+    const NVIDIA_MODELS = {
+        "stable": "meta/llama-3.3-70b-instruct", 
+        "backup": "nvidia/llama-3.1-nemotron-70b-instruct",
+    };
+    let currentModel = NVIDIA_MODELS.stable;
+    let aiContext = 'current';
 
-    // Main Elements
-    const modelSelect = document.getElementById('model');
-    const input = document.getElementById('input');
-    const askBtn = document.getElementById('ask');
-    const response = document.getElementById('response');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const aiInput = document.getElementById('aiInput');
+    const askAiBtn = document.getElementById('askAiBtn');
+    const aiResponseDiv = document.getElementById('aiResponse');
     const contextInfo = document.getElementById('contextInfo');
-    const statusBadge = document.getElementById('statusBadge');
 
     // ==========================================
-    // 2. SYSTEM STARTUP (Downloads Book)
+    // INITIALIZATION
     // ==========================================
-    async function loadNovel() {
-      try {
-        contextInfo.textContent = 'Contacting Wordstar.Nexus...';
-        statusBadge.textContent = 'DOWNLOADING';
-        statusBadge.classList.add('text-theme-gold', 'animate-pulse');
-        
-        const res = await fetch(NOVEL_URL);
-        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-        
-        novelText = await res.text();
-        
-        console.log(`System: Loaded ${novelText.length} characters.`);
-        contextInfo.textContent = 'Manuscript loaded & indexed.';
-        statusBadge.textContent = 'ONLINE';
-        statusBadge.classList.remove('text-theme-gold', 'animate-pulse');
-        statusBadge.classList.add('text-green-500'); // Or your theme red class
-        
-      } catch (error) {
-        console.error('Load Error:', error);
-        contextInfo.innerHTML = 'Error loading file. <span class="text-red-500">Check CORS.</span>';
-        statusBadge.textContent = 'OFFLINE';
-      }
+    // Load saved API key
+    if(localStorage.getItem('brim_nvidia_key')) {
+        apiKeyInput.value = localStorage.getItem('horse_nvidia_key');
     }
-
-    // ==========================================
-    // 3. PUTER CHAT (Standard)
-    // ==========================================
-    function buildPuterPrompt(userMessage) {
-      if (aiContext === 'novel' && novelText) {
-        // Puter gets the intro (First 15k chars)
-        const preview = novelText.substring(0, 15000); 
-        return `You are an AI editor analyzing a novel.\n\nCONTEXT (START OF BOOK):\n${preview}\n\n---\nQUERY: ${userMessage}`;
-      }
-      return userMessage;
-    }
-
-    async function callPuterAI(prompt) {
-      const selectedModelText = modelSelect.options[modelSelect.selectedIndex].text;
-      response.innerHTML = `<p class="text-theme-gold animate-pulse">>> CONTACTING ${selectedModelText}...</p>`;
-      
-      try {
-        const result = await puter.ai.chat(prompt, {
-          model: modelSelect.value,
-          temperature: 0.7,
-          max_tokens: 2500
-        });
-        response.innerHTML = `<span class="text-theme-gold block mb-2 border-b border-theme-border pb-1 text-xs">>> TRANSMISSION RECEIVED:</span>${result}`;
-      } catch (error) {
-        response.innerHTML = `<p class="text-red-500 font-bold">>> ERROR: ${error.message}</p>`;
-      }
-    }
-
-    askBtn.addEventListener('click', async () => {
-      const msg = input.value.trim();
-      if (!msg || isLoading) return;
-      isLoading = true;
-      askBtn.disabled = true;
-      askBtn.classList.add('opacity-50');
-      
-      await callPuterAI(buildPuterPrompt(msg));
-      
-      isLoading = false;
-      askBtn.disabled = false;
-      askBtn.classList.remove('opacity-50');
+    
+    // Save API key on input
+    apiKeyInput.addEventListener('input', (e) => {
+        localStorage.setItem('horse_nvidia_key', e.target.value);
     });
 
     // ==========================================
-    // 4. NVIDIA MODAL (Nano 9B Smart Scan)
+    // LOGIC
     // ==========================================
-
-    function openNvidiaModal() {
-        document.getElementById('nvidia-overlay').style.display = 'block';
-        document.getElementById('nvidia-modal').style.display = 'block';
-        const k = localStorage.getItem('inkrealm_nvidia_key');
-        if(k) document.getElementById('nvidiaKey').value = k;
-    }
-
-    function closeNvidiaModal() {
-        document.getElementById('nvidia-overlay').style.display = 'none';
-        document.getElementById('nvidia-modal').style.display = 'none';
-    }
-
-    // The "Search Light" Scanner
-    function getRelevantContext(query, fullText) {
-        if (!fullText) return { text: "", method: "NO DATA" };
+    askAiBtn.addEventListener('click', async () => {
+        const apiKey = apiKeyInput.value.trim();
+        const msg = aiInput.value.trim();
         
-        // Filter for significant words > 3 chars
-        const keywords = query.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length > 3);
+        // 1. Basic Validation
+        if (!apiKey) {
+            aiResponseDiv.innerHTML = '<p class="text-red-500">Please enter an NVIDIA API Key.</p>';
+            return;
+        }
+        if (!msg) return;
 
-        if (keywords.length === 0) {
-            // Default to start if query is vague
-            return { text: fullText.substring(0, 5000), method: "DEFAULT (BEGINNING)" };
+        // 2. Ensure Reader Data exists (links to the previous script)
+        if (!window.readerEntries || window.readerEntries.length === 0) {
+            aiResponseDiv.innerHTML = '<p class="text-red-500">Brim text not loaded yet. Please wait.</p>';
+            return;
         }
 
-        const chunkSize = 2000;
-        let bestChunkIndex = 0;
-        let maxScore = 0;
-        
-        // Scan the book
-        for (let i = 0; i < fullText.length; i += 1000) {
-            let chunk = fullText.substring(i, i + chunkSize).toLowerCase();
-            let score = 0;
-            keywords.forEach(word => { if(chunk.includes(word)) score++; });
+        // 3. Prepare UI
+        askAiBtn.disabled = true;
+        askAiBtn.textContent = "TRANSMITTING...";
+        aiResponseDiv.innerHTML = `<p class="animate-pulse" style="color: var(--red);">Consulting Llama...</p>`;
+
+        try {
+            // 4. Build Context
+            let systemContext = '';
             
-            if (score > maxScore) {
-                maxScore = score;
-                bestChunkIndex = i;
+            if (aiContext === 'current') {
+                const entry = window.readerEntries.find(e => e.id === window.readerCurrentIndex);
+                if (entry) {
+                    // Limit characters to avoid token limits
+                    const cleanContent = entry.content.substring(0, 4000); 
+                    systemContext = `CONTEXT (Current Section - ${entry.title}):\n${cleanContent}\n\n---\n`;
+                }
+            } else if (aiContext === 'all') {
+                // Just send titles for the outline view to save tokens
+                const outline = window.readerEntries.map(e => `- ${e.title} (${e.tags.join(', ')})`).join('\n');
+                systemContext = `CONTEXT (Full Manuscript Outline):\n${outline}\n\n---\n`;
             }
-        }
 
-        // Grab Context (Nano 9B handles 32k context easily)
-        const start = Math.max(0, bestChunkIndex - 3000);
-        const end = Math.min(fullText.length, bestChunkIndex + 5000);
+            // 5. Send Request
+            // Note: Using corsproxy to bypass local browser restrictions.
+            const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
+            
+            const response = await fetch(proxyUrl, {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${apiKey}`, 
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify({
+                    model: currentModel,
+                    messages: [
+                        { role: "system", content: "You are an editor for HORSE, a narrative where reality and dreams blur. Analyze via surrealism. Be bold, concise, and literary." },
+                        { role: "user", content: systemContext + "\nUser Question: " + msg }
+                    ],
+                    temperature: 0.6,
+                    top_p: 1,
+                    max_tokens: 1024
+                })
+            });
+
+            if (!response.ok) {
+                // Handle errors
+                if (response.status === 404) throw new Error("404 Switch");
+                
+                // Try to parse JSON error from NVIDIA for better readability
+                const errText = await response.text();
+                try {
+                    const errJson = JSON.parse(errText);
+                    throw new Error(errJson.error?.message || errText);
+                } catch (e) {
+                    throw new Error(errText);
+                }
+            }
+
+            const data = await response.json();
+            
+            // Format the output (simple markdown to html conversion for bolding)
+            let aiText = data.choices[0].message.content;
+            aiText = aiText.replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--red)">$1</strong>');
+            aiText = aiText.replace(/\n/g, '<br>');
+            
+            aiResponseDiv.innerHTML = aiText;
+
+        } catch (error) {
+            console.error(error);
+            if(error.message.includes("404") || error.message.includes("Switch")) {
+                currentModel = NVIDIA_MODELS.backup;
+                aiResponseDiv.innerHTML = `<p style="color:#888">Primary model unavailable. Switched to Backup (Nemotron). <br><strong>Please click Transmit again.</strong></p>`;
+            } else {
+                aiResponseDiv.innerHTML = `<p style="color: var(--red);">Error: ${error.message}</p>`;
+            }
+        } finally {
+            askAiBtn.disabled = false;
+            askAiBtn.textContent = "TRANSMIT TO NVIDIA";
+        }
+    });
+
+    // ==========================================
+    // UI HANDLERS
+    // ==========================================
+    document.addEventListener('click', e => {
+        if (e.target.classList.contains('context-btn')) {
+            // Reset all buttons
+            document.querySelectorAll('.context-btn').forEach(btn => {
+                btn.style.background = 'var(--dark-grey, #333)';
+                btn.style.color = '#888';
+                btn.style.borderColor = '#333';
+            });
+            
+            // Activate clicked button
+            e.target.style.background = 'var(--red)';
+            e.target.style.color = 'black'; // Better contrast on red
+            e.target.style.borderColor = 'var(--red)';
+            
+            aiContext = e.target.dataset.context;
+            
+            // Update Helper Text
+            const helpText = aiContext === 'current' ? 'Reading current entry' : 'Reading all titles';
+            if(contextInfo) contextInfo.textContent = `Context: ${aiContext.toUpperCase()} (${helpText})`;
+        }
+    });
+</script>
+<script id="reader-script">
+    // ==========================================
+    // 1. CONFIGURATION & REGEX
+    // ==========================================
+    const TXT_FILE_URL = 'horse.txt';
+    // This regex splits your entries. 
+    const horsePattern = /^(\d+\s*(?:0r|\/)\s*\d+\s*.{0,4}\s*(?:HORSE|horse)|(?:HORSE|horse\s+\d+)/im;
+
+    const TAG_PATTERNS = {
+        all: /.*/,
+        fragments: /\[fragment\]|\bfragment(s)?\b/i,
+        passages: /\[passage\]|\bpassage(s)?\b/i,
+        sections: /\[section\]|\bsection(s)?\b/i,
+        sketches: /\[sketch\]|\bsketch(es)?\b/i,
+        vignettes: /\[vignette\]|\bvignette(s)?\b/i
+    };
+
+    // ==========================================
+    // 2. STATE
+    // ==========================================
+    window.readerEntries = [];
+    window.readerCurrentIndex = 0;
+    let currentFilter = 'all';
+    let searchQuery = '';
+    let searchResults = [];
+    let isSearching = false;
+    let isIndexVisible = false;
+    let searchTimeout = null;
+
+    // ==========================================
+    // 3. DOM ELEMENTS
+    // ==========================================
+    const searchBox = document.getElementById('searchBox');
+    const searchStats = document.getElementById('searchStats');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const randomBtn = document.getElementById('randomBtn');
+    const indexBtn = document.getElementById('indexBtn');
+    const dateNav = document.getElementById('dateNav');
+    const entryInfo = document.getElementById('entryInfo');
+    const loadingDiv = document.getElementById('loading');
+    const contentDiv = document.getElementById('content');
+
+    // ==========================================
+    // 4. RESTORED LOGIC (The Fix)
+    // ==========================================
+    
+    // --- Restored: Advanced Search Parser ---
+    function parseSearchQuery(query) {
+        const terms = { and: [], or: [], not: [], exact: [] };
+        // Extract exact matches "like this"
+        const exactMatches = query.match(/"([^"]+)"/g);
+        if (exactMatches) {
+            exactMatches.forEach(match => {
+                terms.exact.push(match.replace(/"/g, '').toLowerCase());
+                query = query.replace(match, '');
+            });
+        }
+        const words = query.toLowerCase().split(/\s+/).filter(w => w);
+        let currentOp = 'and';
+        words.forEach(word => {
+            if (word === 'and') currentOp = 'and';
+            else if (word === 'or') currentOp = 'or';
+            else if (word.startsWith('-')) terms.not.push(word.substring(1));
+            else if (word) terms[currentOp].push(word);
+        });
+        return terms;
+    }
+
+    // --- Restored: Smart Matching ---
+    function matchesSearch(entry, terms) {
+        const searchText = (entry.content + ' ' + entry.title).toLowerCase();
+        if (terms.not.some(t => searchText.includes(t))) return false;
+        if (terms.exact.some(t => !searchText.includes(t))) return false;
+        if (terms.and.some(t => !searchText.includes(t))) return false;
+        if (terms.or.length > 0 && !terms.or.some(t => searchText.includes(t))) return false;
+        return true;
+    }
+
+    // --- Restored: Highlighter ---
+    function highlightText(text, query) {
+        if (!query.trim()) return text;
+        const terms = parseSearchQuery(query);
+        // Combine all positive terms for highlighting
+        const allTerms = [...terms.exact, ...terms.and, ...terms.or].filter((t, i, s) => s.indexOf(t) === i);
         
-        return {
-            text: fullText.substring(start, end),
-            method: `SMART SCAN (Found "${keywords[0]}")`
+        let result = text; // We will process formatting later
+        allTerms.sort((a, b) => b.length - a.length).forEach(term => {
+            // Escape special regex chars
+            const safeTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(${safeTerm})`, 'gi');
+            result = result.replace(regex, '<span style="background:var(--red); color:black; padding:0 2px;">$1</span>');
+        });
+        return result;
+    }
+
+    // --- Helper: Format Paragraphs ---
+    function formatContent(text) {
+        if (!text) return '';
+        return text.split('\n').map(line => {
+            const trimmed = line.trim();
+            if (!trimmed) return '<br>';
+            return `<p class="mb-4 leading-relaxed">${trimmed}</p>`;
+        }).join('');
+    }
+
+    function getTagClass(tag) {
+        switch (tag) {
+            case 'fragments': return 'border-red-600 text-red-600';
+            case 'passages': return 'border-red-700 text-red-700';
+            case 'sections': return 'border-red-500 text-red-500';
+            case 'sketches': return 'border-red-400 text-red-400';
+            case 'vignettes': return 'border-red-300 text-red-300';
+            default: return 'border-gray-600 text-gray-600';
+        }
+    }
+
+    function debounce(func, delay) {
+        return function(...args) {
+            if (searchTimeout) clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => func.apply(this, args), delay);
         };
     }
 
-    async function runNvidiaAnalysis() {
-        const key = document.getElementById('nvidiaKey').value.trim();
-        const prompt = document.getElementById('nvidiaPrompt').value.trim();
-        const model = document.getElementById('nvidiaModel').value;
-        const out = document.getElementById('nvidiaOutput');
-        const btn = document.getElementById('nvidiaBtn');
-        
-        if(!key || !prompt) { out.textContent = ">> ERROR: MISSING KEY OR PROMPT."; return; }
-        
-        localStorage.setItem('inkrealm_nvidia_key', key);
-        
-        btn.disabled = true; 
-        btn.textContent = "PROCESSING...";
-        btn.style.backgroundColor = "#555";
-        out.textContent = ">> ACCESSING MAMBA-HYBRID NEURAL NET...";
-
-        // 1. Scan for relevant text
-        const scanResult = getRelevantContext(prompt, novelText);
-        
-        out.textContent += `\n>> TARGET: ${scanResult.method}`;
-        out.textContent += `\n>> UPLOADING FRAGMENT (${scanResult.text.length} chars)...`;
-
+    // ==========================================
+    // 5. LOADING & PARSING
+    // ==========================================
+    async function loadText() {
         try {
-            // Using CORS proxy for client-side access
-            const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
+            const response = await fetch(TXT_FILE_URL);
+            if (!response.ok) throw new Error("File not found");
+            let text = await response.text();
             
-            const requestBody = {
-                model: model, 
-                messages: [
-                    { 
-                        "role": "system", 
-                        "content": "You are the WORDSTAR ANALYSIS ENGINE. Analyze the specific text fragment provided below." 
-                    },
-                    { 
-                        "role": "user", 
-                        "content": `CONTEXT FRAGMENT:\n...${scanResult.text}...\n\n---\n\nQUESTION: ${prompt}` 
-                    }
-                ],
-                temperature: 0.5, top_p: 1, max_tokens: 1024
-            };
+            // FIX: Normalize line endings for Puter/Linux/Windows compatibility
+            text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            
+            parseEntries(text);
 
-            const res = await fetch(proxyUrl, {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody)
-            });
-            
-            if (!res.ok) throw new Error(`API ERROR: ${res.status}`);
-            
-            const data = await res.json();
-            
-            if (data.choices && data.choices[0]) {
-                const result = data.choices[0].message.content;
-                out.innerHTML = `<span style="color:#ff3333">>> ANALYSIS COMPLETE:</span>\n\n${result}`;
-            } else { throw new Error("EMPTY RESPONSE."); }
+            loadingDiv.style.display = 'none';
+            contentDiv.style.display = 'block';
 
-        } catch(e) { 
-            out.innerHTML = `<span style="color:red">>> FAILURE:</span> ${e.message}`; 
-            console.error(e);
-        } finally { 
-            btn.disabled = false; 
-            btn.textContent = "INITIALIZE"; 
-            btn.style.backgroundColor = "#ff3333";
+            if (window.readerEntries.length > 0) {
+                showEntry(window.readerEntries[0].id);
+            }
+            
+            // Set "All" button active
+            const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
+            if (allBtn) styleActiveFilter(allBtn);
+
+            buildIndex();
+        } catch (error) {
+            loadingDiv.innerHTML = `<p style="color: var(--red);">Error: ${error.message}</p>`;
         }
     }
 
+    function parseEntries(text) {
+        const lines = text.split('\n');
+        let currentEntry = { id: 0, title: 'Intro', content: '', tags: [] };
+        let entryId = 0;
+        let isFirst = true;
+
+        lines.forEach(line => {
+            const match = line.match(brimPattern);
+            if (match) {
+                if (currentEntry.content.trim() && !isFirst) {
+                    detectTags(currentEntry);
+                    window.readerEntries.push(currentEntry);
+                }
+                isFirst = false;
+                currentEntry = { id: ++entryId, title: match[0].trim(), content: '', tags: [] };
+            } else {
+                currentEntry.content += line + '\n';
+            }
+        });
+
+        if (currentEntry.content.trim()) {
+            detectTags(currentEntry);
+            window.readerEntries.push(currentEntry);
+        }
+        console.log(`Parsed ${window.readerEntries.length} entries`); // Check console to see if > 1
+    }
+
+    function detectTags(entry) {
+        for (const [tag, pattern] of Object.entries(TAG_PATTERNS)) {
+            if (tag !== 'all' && pattern.test(entry.content)) entry.tags.push(tag);
+        }
+    }
+
+    function getFilteredEntries() {
+        if (currentFilter === 'all') return window.readerEntries;
+        return window.readerEntries.filter(e => e.tags.includes(currentFilter));
+    }
+
     // ==========================================
-    // 5. STARTUP
+    // 6. SEARCH ACTIONS
     // ==========================================
-    loadNovel();
-  </script>
+    function performSearch(query) {
+        searchQuery = query;
+        if (!query.trim()) {
+            isSearching = false;
+            searchResults = [];
+            updateUIState();
+            return;
+        }
+
+        isSearching = true;
+        const pool = getFilteredEntries();
+        const terms = parseSearchQuery(query); // Uses the restored parser
+        
+        searchResults = pool.filter(e => matchesSearch(e, terms)); // Uses the restored matcher
+
+        updateUIState();
+        if (searchResults.length > 0) {
+            showEntry(searchResults[0].id);
+        } else {
+            contentDiv.innerHTML = '<div class="text-center mt-10 text-gray-500">No matches found.</div>';
+            entryInfo.innerHTML = '';
+        }
+    }
+
+    function updateUIState() {
+        if (isSearching) {
+            searchStats.textContent = `${searchResults.length} matches`;
+        } else {
+            const count = getFilteredEntries().length;
+            searchStats.textContent = currentFilter !== 'all' ? `${count} items` : `${count} total`;
+        }
+        buildIndex();
+    }
+
+    // ==========================================
+    // 7. DISPLAY & NAV
+    // ==========================================
+    function showEntry(entryId) {
+        const entry = window.readerEntries.find(e => e.id === entryId);
+        if (!entry) return;
+
+        window.readerCurrentIndex = entryId;
+
+        // Apply Highlights + Format Paragraphs
+        let displayContent = entry.content;
+        
+        // 1. Highlight raw text first (so we don't break HTML tags later)
+        if (isSearching && searchQuery.trim()) {
+             displayContent = highlightText(displayContent, searchQuery);
+        }
+        
+        // 2. Convert newlines to P tags (but respect the spans we just added)
+        // We need a slightly custom formatter here because highlight adds HTML
+        displayContent = displayContent.split('\n').map(line => {
+            if (!line.trim()) return '<br>';
+            return `<p class="mb-4 leading-relaxed">${line}</p>`;
+        }).join('');
+
+        contentDiv.innerHTML = displayContent;
+
+        const viewableItems = isSearching ? searchResults : getFilteredEntries();
+        const itemIndex = viewableItems.findIndex(e => e.id === entryId);
+        const wordCount = entry.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
+
+        entryInfo.innerHTML = `
+            <div class="flex flex-col gap-1">
+                <div>
+                    <span class="text-xs text-gray-500 uppercase tracking-widest">BRIM ARCHIVE</span>
+                    <span class="ml-2 font-bold text-xl" style="color: var(--red);">${entry.title}</span>
+                </div>
+                <div class="text-xs text-gray-400 flex items-center gap-2">
+                    ${isSearching ? `Result ${itemIndex + 1}/${searchResults.length}` : `Entry ${itemIndex + 1}/${viewableItems.length}`}
+                    <span>•</span>
+                    ${wordCount} words
+                    <span class="ml-2 flex gap-1">
+                        ${entry.tags.map(tag => `<span class="px-1 border ${getTagClass(tag)} text-[10px] uppercase">${tag}</span>`).join('')}
+                    </span>
+                </div>
+            </div>
+        `;
+
+        prevBtn.disabled = itemIndex <= 0;
+        nextBtn.disabled = itemIndex >= viewableItems.length - 1;
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        contentDiv.scrollTo({ top: 0 });
+    }
+
+    function showRandomEntry() {
+        const pool = isSearching ? searchResults : getFilteredEntries();
+        if (pool.length === 0) return;
+        let randomIndex;
+        do {
+            randomIndex = Math.floor(Math.random() * pool.length);
+        } while (pool[randomIndex].id === window.readerCurrentIndex && pool.length > 1);
+        showEntry(pool[randomIndex].id);
+    }
+
+    function navigateEntries(direction) {
+        const items = isSearching ? searchResults : getFilteredEntries();
+        if (items.length === 0) return;
+        const currentIdxInView = items.findIndex(e => e.id === window.readerCurrentIndex);
+        let newIdx = direction === 'next' ? currentIdxInView + 1 : currentIdxInView - 1;
+        if (newIdx >= 0 && newIdx < items.length) showEntry(items[newIdx].id);
+    }
+
+    function buildIndex() {
+        const items = isSearching ? searchResults : getFilteredEntries();
+        dateNav.innerHTML = '';
+        if (items.length === 0) return;
+
+        items.forEach(entry => {
+            const div = document.createElement('div');
+            // Strip HTML from preview in case highlights are baked in (rare here but safe)
+            const rawText = entry.content.replace(/<[^>]*>/g, '');
+            const preview = rawText.substring(0, 60).replace(/\n/g, ' ') + '...';
+            
+            div.className = 'p-3 border-b border-gray-800 cursor-pointer hover:bg-gray-900 transition-colors';
+            if (entry.id === window.readerCurrentIndex) {
+                div.style.background = '#1a1a1a';
+                div.style.borderLeft = '3px solid var(--red)';
+            }
+            div.innerHTML = `
+                <div class="text-sm font-bold text-gray-300 mb-1">${entry.title}</div>
+                <div class="text-xs text-gray-600 font-mono">${preview}</div>
+            `;
+            div.addEventListener('click', () => showEntry(entry.id));
+            dateNav.appendChild(div);
+        });
+    }
+
+    function styleActiveFilter(activeBtn) {
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.style.background = 'transparent';
+            btn.style.borderColor = '#333';
+            btn.style.color = '#666';
+        });
+        activeBtn.style.background = 'var(--red)';
+        activeBtn.style.color = 'black';
+        activeBtn.style.borderColor = 'var(--red)';
+    }
+
+    // ==========================================
+    // 8. LISTENERS
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', loadText);
+    searchBox.addEventListener('input', debounce(e => performSearch(e.target.value), 300));
+    prevBtn.addEventListener('click', () => navigateEntries('prev'));
+    nextBtn.addEventListener('click', () => navigateEntries('next'));
+    randomBtn.addEventListener('click', showRandomEntry);
+    indexBtn.addEventListener('click', () => {
+        isIndexVisible = !isIndexVisible;
+        dateNav.classList.toggle('hidden');
+        if (isIndexVisible) buildIndex();
+    });
+    document.getElementById('filterBtns').addEventListener('click', e => {
+        if (e.target.classList.contains('filter-btn')) {
+            styleActiveFilter(e.target);
+            currentFilter = e.target.dataset.filter;
+            // Clear search when switching filters to avoid confusion
+            searchBox.value = '';
+            isSearching = false;
+            updateUIState();
+            const filtered = getFilteredEntries();
+            if (filtered.length > 0) showEntry(filtered[0].id);
+        }
+    });
+    document.addEventListener('keydown', e => {
+        if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+        if (e.key === 'ArrowLeft') navigateEntries('prev');
+        if (e.key === 'ArrowRight') navigateEntries('next');
+        if (e.key.toLowerCase() === 'r') showRandomEntry();
+    });
+</script>
 </body>
 </html>
