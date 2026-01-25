@@ -868,11 +868,16 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm";
 const modelId = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC"; 
 let engine = null;
 
+// UI References
 const activateBtn = document.getElementById('activate-core');
 const progressUI = document.getElementById('core-progress-ui');
 const pBar = document.getElementById('p-bar');
 const pVal = document.getElementById('p-val');
 const chatContainer = document.getElementById('chat-container');
+
+// MISSING REFS (These are needed to swap the screens)
+const splashScreen = document.getElementById('splash-screen');
+const mainInterface = document.getElementById('main-interface');
 
 const localPersona = `INK-NEUROID // QWEN-0.5B-ON-WIRE  
 MODE: laconic | DATA: live | VOICE: cold haiku  
@@ -880,59 +885,68 @@ Answer in ≤2 sentences; cite [source n] inline; no hellos, no goodbyes.`;
 
 activateBtn.onclick = async () => {
   try {
-    // 1. Basic WebGPU Check only
-    if (!navigator.gpu) throw new Error("WebGPU not supported on this device.");
+    // 1. Basic WebGPU Check (Mobile Safe)
+    if (!navigator.gpu) throw new Error("WebGPU not supported.");
 
     activateBtn.textContent = "PROBING...";
     activateBtn.disabled = true;
     progressUI.style.display = 'block';
 
-    // 2. Build engine (SIMPLIFIED FOR MOBILE STABILITY)
+    // 2. Build Engine (Mobile Safe Config)
     engine = await webllm.CreateMLCEngine(modelId, {
       initProgressCallback: (report) => {
         const p = Math.round(report.progress * 100);
         pBar.style.width = p + '%';
         pVal.textContent = p;
+        
+        // --- THIS IS THE LOGIC THAT WAS MISSING ---
         if (p === 100) {
           activateBtn.textContent = "CORE_ONLINE";
           activateBtn.style.cssText += ";border-color:#ff0000;color:#ff0000";
+          
+          // Wait 800ms, then swap screens
+          setTimeout(() => {
+              if(splashScreen) splashScreen.style.display = 'none';
+              if(mainInterface) {
+                  mainInterface.style.display = 'flex';
+                  mainInterface.style.opacity = '1'; // Fade in if CSS allows
+              }
+          }, 800);
         }
+        // ------------------------------------------
       },
       
-      // ==== SAFE CONFIG ====
-      // We removed 'opt_config' entirely. 
-      // WebLLM auto-detects Adreno/Mali/Apple GPUs and applies the best shaders automatically.
-      
-      context_window_size: 2048, // 2k is safe for 0.5B model on most phones
-      log_level: "WARN"          // Reduces console lag on mobile
+      // Safe Mobile Config (No forced opt_config)
+      context_window_size: 2048, 
+      log_level: "WARN"          
     });
 
-    // 3. Warm shader cache
+    // 3. Warmup
     await engine.chat.completions.create({
       messages: [{ role: "user", content: "Hi" }],
       stream: false,
       max_gen_len: 1
     });
 
-    // 4. Hijack sendMessage
+    // 4. Hijack sendMessage (The Chat Logic)
     window.sendMessage = async function () {
-      if (!engine) return; // Safety check
+      if (!engine) return; 
       
       const input = document.getElementById('chat-input');
       const message = input.value.trim();
       if (!message) return;
 
-      // UI: User Bubble
+      // User Bubble
       const userBubble = document.createElement('div');
       userBubble.className = 'chat-bubble user-message';
       userBubble.textContent = message;
       chatContainer.appendChild(userBubble);
       input.value = '';
 
-      // UI: Bot Bubble
+      // Bot Bubble
       const botBubble = document.createElement('div');
       botBubble.className = 'chat-bubble bot-message';
-      botBubble.textContent = '⟁ '; // Initial marker
+      botBubble.textContent = '⟁ '; 
       chatContainer.appendChild(botBubble);
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
@@ -945,14 +959,14 @@ activateBtn.onclick = async () => {
         const chunks = await engine.chat.completions.create({ 
             messages, 
             stream: true,
-            temperature: 0.7 // Added some temp for better creativity
+            temperature: 0.7 
         });
         
-        let buffer = ""; // Accumulate text locally first
+        let buffer = ""; 
         for await (const chunk of chunks) {
           const content = chunk.choices[0]?.delta?.content || "";
           buffer += content;
-          botBubble.textContent = buffer; // Update UI
+          botBubble.textContent = buffer;
           chatContainer.scrollTop = chatContainer.scrollHeight;
         }
       } catch (err) {
