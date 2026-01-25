@@ -104,9 +104,12 @@
         <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="all">All</button>
         <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="fragments">Fragments</button>
         <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="passages">Passages</button>
-        <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="sections">Sections</button>
-        <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="sketches">Sketches</button>
-        <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="vignettes">Vignettes</button>
+       <button class="filter-btn px-3 py-1 border text-xs uppercase" data-filter="sections">Sections</button>
+  <button class="filter-btn px-3 py-1 border text-xs uppercase" data-filter="sketches">Sketches</button>
+  <button class="filter-btn px-3 py-1 border text-xs uppercase" data-filter="characters">Characters</button>
+  <button class="filter-btn px-3 py-1 border text-xs uppercase" data-filter="dialogue">Dialogue</button>
+  <button class="filter-btn px-3 py-1 border text-xs uppercase" data-filter="scenes">Scenes</button>
+  <button class="filter-btn px-3 py-1 border text-xs uppercase" data-filter="settings">Settings</button>
       </div>
 
       <!-- INDEX -->
@@ -133,6 +136,7 @@
 <!-- ============  SCRIPTS  ============ -->
 <!-- ============  READER SCRIPT  ============ -->
 <!-- ============  READER SCRIPT  ============ -->
+<!-- ============  READER SCRIPT  ============ -->
 <script id="reader-script">
 /* ==========  CONFIG  ========== */
 const TXT_FILE_URL = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/horse.txt';
@@ -140,30 +144,30 @@ const IMAGES_JSON_URL = 'https://raw.githubusercontent.com/ghostm68/eg/refs/head
 
 // Markdown pattern - captures headings (#, ##, ###) and their content
 const ENTRY_PATTERN = /^(#{1,3})\s+(.+)$/;
+
+// Updated for novel structure - with better regex patterns
 const TAG_PATTERNS = {
   all: /.*/,
   fragments: /\bfragment(s)?\b|\[fragment\]/i,
   passages: /\bpassage(s)?\b|\[passage\]/i,
   sections: /\bsection(s)?\b|\[section\]/i,
-  sketches: /\bsketch(es)?\b|\[sketch\]/i,
-  vignettes: /\bvignette(s)?\b|\[vignette\]/i
+  sketches: /\bsketch(es)?\b|\[sketch\]|\[image\]/i,
+  characters: /\bcharacter(s)?\b|\[character\]|\[char\]/i,    // Changed vignettes to characters
+  dialogue: /\bdialogue\b|\[dialogue\]|\[dialog\]|\[speech\]/i, // New novel tag
+  scenes: /\bscene(s)?\b|\[scene\]/i,                         // New novel tag
+  settings: /\bsetting(s)?\b|\[setting\]|\[location\]/i        // New novel tag
 };
-
-// For novel structure, you might want different tags:
-// const NOVEL_TAG_PATTERNS = {
-//   all: /.*/,
-//   chapter: /\bchapter(s)?\b|\[chapter\]/i,
-//   scene: /\bscene(s)?\b|\[scene\]/i,
-//   character: /\bcharacter(s)?\b|\[character\]/i,
-//   location: /\blocation(s)?\b|\[location\]/i,
-//   dialogue: /\bdialogue\b|\[dialogue\]/i
-// };
 
 /* ==========  STATE  ========== */
 window.readerEntries = [];
 window.readerCurrentIndex = 0;
-let currentFilter = 'all', searchQuery = '', searchResults = [], isSearching = false, isIndexVisible = false, searchTimeout = null;
-let imagesData = {}; // Store loaded images
+let currentFilter = 'all';
+let searchQuery = '';
+let searchResults = [];
+let isSearching = false;
+let isIndexVisible = false;
+let searchTimeout = null;
+let imagesData = [];
 
 /* ==========  DOM  ========== */
 const searchBox = document.getElementById('searchBox');
@@ -176,48 +180,84 @@ const dateNav = document.getElementById('dateNav');
 const entryInfo = document.getElementById('entryInfo');
 const loadingDiv = document.getElementById('loading');
 const contentDiv = document.getElementById('content');
-const imagesSidebar = document.getElementById('imagesSidebar'); // You'll need to add this to your HTML
 
-/* ==========  SEARCH UTILITIES  ========== */
+/* ==========  INITIALIZATION  ========== */
+function initializeDOMReferences() {
+  // Ensure all DOM elements are properly referenced
+  window.searchBox = document.getElementById('searchBox') || searchBox;
+  window.searchStats = document.getElementById('searchStats') || searchStats;
+  window.prevBtn = document.getElementById('prevBtn') || prevBtn;
+  window.nextBtn = document.getElementById('nextBtn') || nextBtn;
+  window.randomBtn = document.getElementById('randomBtn') || randomBtn;
+  window.indexBtn = document.getElementById('indexBtn') || indexBtn;
+  window.dateNav = document.getElementById('dateNav') || dateNav;
+  window.entryInfo = document.getElementById('entryInfo') || entryInfo;
+  window.loadingDiv = document.getElementById('loading') || loadingDiv;
+  window.contentDiv = document.getElementById('content') || contentDiv;
+}
+
+/* ==========  SEARCH UTILITIES - FIXED ========== */
 function parseSearchQuery(q) {
-  const t = { and: [], or: [], not: [], exact: [] };
+  const terms = { and: [], or: [], not: [], exact: [] };
+  if (!q) return terms;
+  
+  // Extract exact matches "like this"
   const exactMatches = q.match(/"[^"]+"/g);
   if (exactMatches) {
     exactMatches.forEach(m => {
-      t.exact.push(m.replace(/"/g, '').toLowerCase());
+      terms.exact.push(m.replace(/"/g, '').toLowerCase());
       q = q.replace(m, '');
     });
   }
+  
   let op = 'and';
-  q.toLowerCase().split(/\s+/).filter(Boolean).forEach(w => {
+  const words = q.toLowerCase().split(/\s+/).filter(w => w.trim() && w !== 'and' && w !== 'or');
+  
+  words.forEach(w => {
     if (w === 'and') op = 'and';
     else if (w === 'or') op = 'or';
-    else if (w.startsWith('-')) t.not.push(w.slice(1));
-    else t[op].push(w);
+    else if (w.startsWith('-')) terms.not.push(w.slice(1));
+    else terms[op].push(w);
   });
-  return t;
+  
+  return terms;
 }
 
 function matchesSearch(e, terms) {
   const txt = (e.content + ' ' + e.title).toLowerCase();
+  
+  // NOT terms - if any NOT term is found, exclude
   if (terms.not.some(x => txt.includes(x))) return false;
-  if (terms.exact.length && !terms.exact.every(x => txt.includes(x))) return false;
-  if (terms.and.length && !terms.and.every(x => txt.includes(x))) return false;
-  if (terms.or.length && !terms.or.some(x => txt.includes(x))) return false;
-  return true;
+  
+  // EXACT phrases - all must be present
+  if (terms.exact.length > 0 && !terms.exact.every(x => txt.includes(x))) return false;
+  
+  // AND terms - all must be present
+  if (terms.and.length > 0 && !terms.and.every(x => txt.includes(x))) return false;
+  
+  // OR terms - at least one must be present (if OR terms exist)
+  if (terms.or.length > 0 && !terms.or.some(x => txt.includes(x))) return false;
+  
+  // If no search terms (after filtering), return true
+  return !(terms.exact.length === 0 && terms.and.length === 0 && terms.or.length === 0);
 }
 
 function highlightText(text, query) {
-  if (!query.trim()) return text;
+  if (!query || !query.trim()) return text;
+  
   const terms = parseSearchQuery(query);
   const allTerms = [...terms.exact, ...terms.and, ...terms.or]
-    .filter((v, i, a) => a.indexOf(v) === i);
+    .filter((v, i, a) => a.indexOf(v) === i && v.length > 0);
+  
+  if (allTerms.length === 0) return text;
   
   let result = text;
   allTerms.sort((a, b) => b.length - a.length).forEach(t => {
     const safe = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    result = result.replace(new RegExp(`(${safe})`, 'gi'), '<span class="highlight" style="background:var(--red); color:black; padding:0 2px;">$1</span>');
+    const regex = new RegExp(`(${safe})`, 'gi');
+    result = result.replace(regex, '<span class="highlight" style="background:var(--red); color:black; padding:0 2px;">$1</span>');
   });
+  
   return result;
 }
 
@@ -231,21 +271,25 @@ function debounce(func, delay) {
 /* ==========  LOAD DATA  ========== */
 async function loadText() {
   try {
-    // Load both text and images in parallel
-    const [textRes, imagesRes] = await Promise.all([
-      fetch(TXT_FILE_URL),
-      fetch(IMAGES_JSON_URL)
-    ]);
+    initializeDOMReferences();
     
+    // Load text first, then images
+    const textRes = await fetch(TXT_FILE_URL);
     if (!textRes.ok) throw new Error('Text file not found');
     
     let text = await textRes.text();
     text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
     parseEntries(text);
     
-    if (imagesRes.ok) {
-      imagesData = await imagesRes.json();
-      console.log(`Loaded ${Object.keys(imagesData).length} images`);
+    // Try to load images, but don't fail if it doesn't work
+    try {
+      const imagesRes = await fetch(IMAGES_JSON_URL);
+      if (imagesRes.ok) {
+        imagesData = await imagesRes.json();
+        console.log('Images data loaded:', imagesData);
+      }
+    } catch (imageError) {
+      console.warn('Could not load images:', imageError);
     }
     
     loadingDiv.style.display = 'none';
@@ -259,48 +303,76 @@ async function loadText() {
     const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
     if (allBtn) styleActiveFilter(allBtn);
     
+    // Setup event listeners
+    setupEventListeners();
+    
     buildIndex();
     updateUIState();
-    setupNavigationListeners(); // FIX: Setup listeners after content loads
+    
   } catch (err) {
+    console.error('Load error:', err);
     loadingDiv.innerHTML = `<p style="color:var(--red)">Error: ${err.message}</p>`;
   }
 }
 
-/* ==========  NAVIGATION FIXES  ========== */
-function setupNavigationListeners() {
-  // Clear previous listeners to avoid duplicates
-  const newPrevBtn = prevBtn.cloneNode(true);
-  const newNextBtn = nextBtn.cloneNode(true);
-  const newRandomBtn = randomBtn.cloneNode(true);
+/* ==========  EVENT LISTENERS SETUP ========== */
+function setupEventListeners() {
+  // Remove any existing listeners first
+  const newSearchBox = searchBox.cloneNode(true);
+  searchBox.parentNode.replaceChild(newSearchBox, searchBox);
+  window.searchBox = newSearchBox;
   
-  prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
-  nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
-  randomBtn.parentNode.replaceChild(newRandomBtn, randomBtn);
+  // Setup search with debounce
+  searchBox.addEventListener('input', debounce(function(e) {
+    console.log('Search input:', e.target.value);
+    performSearch(e.target.value);
+  }, 300));
   
-  // Re-get references
-  const prevBtnRef = document.getElementById('prevBtn');
-  const nextBtnRef = document.getElementById('nextBtn');
-  const randomBtnRef = document.getElementById('randomBtn');
+  // Setup filter buttons
+  const filterContainer = document.getElementById('filterBtns');
+  if (filterContainer) {
+    filterContainer.addEventListener('click', function(e) {
+      if (e.target.classList.contains('filter-btn')) {
+        console.log('Filter clicked:', e.target.dataset.filter);
+        handleFilterClick(e.target);
+      }
+    });
+  }
   
-  // Add fresh event listeners
-  prevBtnRef.addEventListener('click', () => {
-    console.log('Prev clicked, current index:', window.readerCurrentIndex);
-    navigateEntries('prev');
-  });
+  // Setup navigation buttons (already working)
+  if (prevBtn) prevBtn.addEventListener('click', () => navigateEntries('prev'));
+  if (nextBtn) nextBtn.addEventListener('click', () => navigateEntries('next'));
+  if (randomBtn) randomBtn.addEventListener('click', showRandomEntry);
+  if (indexBtn) indexBtn.addEventListener('click', toggleIndex);
   
-  nextBtnRef.addEventListener('click', () => {
-    console.log('Next clicked, current index:', window.readerCurrentIndex);
-    navigateEntries('next');
-  });
-  
-  randomBtnRef.addEventListener('click', () => {
-    console.log('Random clicked');
-    showRandomEntry();
-  });
-  
-  // Also add keyboard navigation
+  // Keyboard navigation
   document.addEventListener('keydown', handleKeyboardNavigation);
+}
+
+function handleFilterClick(button) {
+  styleActiveFilter(button);
+  currentFilter = button.dataset.filter;
+  
+  // Clear search when switching filters
+  searchBox.value = '';
+  isSearching = false;
+  updateUIState();
+  
+  const filtered = getFilteredEntries();
+  console.log(`${currentFilter} filter: ${filtered.length} entries`);
+  
+  if (filtered.length > 0) {
+    showEntry(filtered[0].id);
+  } else {
+    contentDiv.innerHTML = '<div class="text-center mt-10 text-gray-500">No entries with this tag.</div>';
+    entryInfo.innerHTML = '';
+  }
+}
+
+function toggleIndex() {
+  isIndexVisible = !isIndexVisible;
+  dateNav.classList.toggle('hidden');
+  if (isIndexVisible) buildIndex();
 }
 
 function handleKeyboardNavigation(e) {
@@ -330,7 +402,7 @@ function parseEntries(text) {
   let current = null;
   let id = 0;
   
-  lines.forEach((line, index) => {
+  lines.forEach((line) => {
     const m = line.match(ENTRY_PATTERN);
     if (m) {
       // Save previous entry if exists
@@ -346,7 +418,7 @@ function parseEntries(text) {
         headingLevel: m[1].length,
         content: line + '\n',
         tags: [],
-        images: [] // Will be populated if this entry has associated images
+        images: []
       };
     } else if (current) {
       // Continue current entry
@@ -360,42 +432,64 @@ function parseEntries(text) {
     window.readerEntries.push(current);
   }
   
-  console.log(`Parsed ${window.readerEntries.length} markdown entries`);
+  console.log(`Parsed ${window.readerEntries.length} entries with tags:`, 
+    window.readerEntries.map(e => ({ title: e.title, tags: e.tags })));
 }
 
 function detectTags(e) {
-  for (const [tag, re] of Object.entries(TAG_PATTERNS)) {
-    if (tag !== 'all' && re.test(e.content)) {
-      e.tags.push(tag);
-      
-      // If it's a sketch, check for associated images
-      if (tag === 'sketches' && imagesData) {
-        // Find images that might be related to this entry by title or content
-        e.images = findImagesForEntry(e);
-      }
+  const detectedTags = [];
+  
+  for (const [tag, pattern] of Object.entries(TAG_PATTERNS)) {
+    if (tag !== 'all' && pattern.test(e.content)) {
+      detectedTags.push(tag);
+    }
+  }
+  
+  e.tags = detectedTags;
+  
+  // Special handling for sketches - find associated images
+  if (detectedTags.includes('sketches') && imagesData.length > 0) {
+    e.images = findImagesForEntry(e);
+    if (e.images.length > 0) {
+      console.log(`Found ${e.images.length} images for sketch: ${e.title}`);
     }
   }
 }
 
 function findImagesForEntry(entry) {
-  const foundImages = [];
+  if (!imagesData || imagesData.length === 0) return [];
   
-  // You can customize this logic based on how your images JSON is structured
-  // Example: match by entry title, keywords, or content
-  Object.entries(imagesData).forEach(([imageKey, imageData]) => {
-    // Simple matching: check if entry title contains image keywords or vice versa
-    const entryText = (entry.title + ' ' + entry.content).toLowerCase();
-    const imageKeywords = (imageData.keywords || imageData.description || imageKey).toLowerCase();
+  const foundImages = [];
+  const entryText = (entry.title + ' ' + entry.content).toLowerCase();
+  
+  // Try different matching strategies
+  imagesData.forEach((img, index) => {
+    // Check if image has a title/description that matches entry
+    const imgText = (img.title || img.description || img.filename || '').toLowerCase();
     
-    // Check for matches - adjust this logic based on your JSON structure
-    if (entryText.includes(imageKeywords) || imageKeywords.includes(entry.title.toLowerCase())) {
+    // Simple keyword matching
+    if (imgText && entryText.includes(imgText.substring(0, 20))) {
       foundImages.push({
-        url: imageData.url || imageKey,
-        description: imageData.description || imageKey,
-        title: imageData.title || imageKey
+        url: img.url || img.path || `image_${index}.jpg`,
+        title: img.title || `Image ${index + 1}`,
+        description: img.description || ''
       });
     }
   });
+  
+  // If no matches found, you might want to associate images by index
+  // For example, first sketch gets first image, etc.
+  const sketchEntries = window.readerEntries.filter(e => e.tags.includes('sketches'));
+  const sketchIndex = sketchEntries.findIndex(e => e.id === entry.id);
+  
+  if (foundImages.length === 0 && sketchIndex < imagesData.length) {
+    const img = imagesData[sketchIndex];
+    foundImages.push({
+      url: img.url || img.path || `image_${sketchIndex}.jpg`,
+      title: img.title || `Sketch Image ${sketchIndex + 1}`,
+      description: img.description || `Associated with: ${entry.title}`
+    });
+  }
   
   return foundImages;
 }
@@ -407,31 +501,28 @@ function getFilteredEntries() {
     entries = entries.filter(e => e.tags.includes(currentFilter));
   }
   
-  // SPECIAL HANDLING FOR SKETCHES WITH IMAGES
-  if (currentFilter === 'sketches' && Object.keys(imagesData).length > 0) {
-    // Ensure sketches with images are included
-    entries = entries.filter(e => e.tags.includes('sketches') || e.images?.length > 0);
-  }
-  
   return entries;
 }
 
 /* ==========  DISPLAY FUNCTIONS  ========== */
 function showEntry(entryId) {
   const e = window.readerEntries.find(x => x.id === entryId);
-  if (!e) return;
+  if (!e) {
+    console.error('Entry not found:', entryId);
+    return;
+  }
   
   window.readerCurrentIndex = entryId;
   
-  let html = e.content;
+  let displayContent = e.content;
   
   // Apply highlighting if searching
   if (isSearching && searchQuery) {
-    html = highlightText(html, searchQuery);
+    displayContent = highlightText(displayContent, searchQuery);
   }
   
   // Process markdown formatting for display
-  html = html.split('\n').map(line => {
+  const html = displayContent.split('\n').map(line => {
     const trimmed = line.trim();
     if (!trimmed) return '<br>';
     
@@ -451,30 +542,41 @@ function showEntry(entryId) {
   }).join('');
   
   // Add images if this entry has them
+  let imagesHtml = '';
   if (e.images && e.images.length > 0) {
-    const imagesHtml = e.images.map(img => `
+    imagesHtml = e.images.map(img => `
       <div class="my-6 p-4 border border-gray-700 rounded-lg bg-gray-900">
         <img src="${img.url}" 
-             alt="${img.description}" 
+             alt="${img.description || img.title}" 
              class="w-full h-64 object-cover rounded mb-2"
-             onerror="this.style.display='none'">
+             loading="lazy"
+             onerror="this.onerror=null; this.src='https://placehold.co/600x400/111/666?text=Image+Not+Found';">
         <div class="text-xs text-gray-400 mt-2">
-          <strong class="text-gray-300">${img.title}</strong>
+          <strong class="text-gray-300">${img.title || 'Untitled'}</strong>
           ${img.description ? `<br>${img.description}` : ''}
         </div>
       </div>
     `).join('');
-    
-    html += imagesHtml;
   }
   
-  contentDiv.innerHTML = html;
+  contentDiv.innerHTML = html + imagesHtml;
   
   const pool = isSearching ? searchResults : getFilteredEntries();
   const idx = pool.findIndex(x => x.id === entryId);
   const words = e.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
   
-  // Update entry info with better tag display
+  // Tag color mapping - updated for new tags
+  const tagStyles = {
+    'fragments': 'border-red-400 text-red-400',
+    'passages': 'border-red-500 text-red-500', 
+    'sections': 'border-red-600 text-red-600',
+    'sketches': 'border-red-700 text-red-700 bg-red-900/20',
+    'characters': 'border-purple-500 text-purple-400',    // Updated
+    'dialogue': 'border-blue-500 text-blue-400',         // New
+    'scenes': 'border-green-500 text-green-400',         // New
+    'settings': 'border-yellow-500 text-yellow-400'      // New
+  };
+  
   entryInfo.innerHTML = `
     <div class="flex flex-col gap-1">
       <div>
@@ -484,20 +586,13 @@ function showEntry(entryId) {
       <div class="text-xs text-gray-400 flex items-center gap-2 flex-wrap">
         ${isSearching ? `Result ${idx + 1}/${searchResults.length}` : `Entry ${idx + 1}/${pool.length}`}
         <span>•</span>${words} words
-        <span class="ml-2 flex gap-1 flex-wrap">
+        ${e.tags.length > 0 ? `<span class="ml-2 flex gap-1 flex-wrap">
           ${e.tags.map(t => {
-            const tagStyles = {
-              'fragments': 'border-red-400 text-red-400',
-              'passages': 'border-red-500 text-red-500', 
-              'sections': 'border-red-600 text-red-600',
-              'sketches': 'border-red-700 text-red-700 bg-red-900/20',
-              'vignettes': 'border-red-300 text-red-300'
-            };
             const style = tagStyles[t] || 'border-gray-600 text-gray-600';
             const icon = t === 'sketches' && e.images?.length ? ` (${e.images.length}📷)` : '';
             return `<span class="px-2 py-1 border text-[10px] uppercase ${style}">${t}${icon}</span>`;
           }).join('')}
-        </span>
+        </span>` : ''}
       </div>
     </div>`;
   
@@ -506,16 +601,9 @@ function showEntry(entryId) {
   
   contentDiv.scrollTop = 0;
   if (isIndexVisible) buildIndex();
-  
-  // Show images sidebar if we have images for this entry
-  showImagesSidebar(e);
 }
 
 function updateNavigationButtons(pool, currentIndex) {
-  // Get fresh button references
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
-  
   if (prevBtn) {
     prevBtn.disabled = currentIndex <= 0;
     prevBtn.style.opacity = currentIndex <= 0 ? '0.5' : '1';
@@ -548,79 +636,73 @@ function navigateEntries(dir) {
   const idx = pool.findIndex(x => x.id === window.readerCurrentIndex);
   const newIdx = dir === 'next' ? idx + 1 : idx - 1;
   
-  console.log(`Navigate ${dir}: idx=${idx}, newIdx=${newIdx}, pool.length=${pool.length}`);
-  
   if (newIdx >= 0 && newIdx < pool.length) {
     showEntry(pool[newIdx].id);
   }
 }
 
-function showImagesSidebar(entry) {
-  // Create or update images sidebar if needed
-  if (!entry.images || entry.images.length === 0) {
-    if (imagesSidebar) {
-      imagesSidebar.innerHTML = '';
-      imagesSidebar.style.display = 'none';
+/* ==========  SEARCH FUNCTIONS - FIXED ========== */
+function performSearch(q) {
+  console.log('Performing search for:', q);
+  searchQuery = q.trim();
+  
+  if (!searchQuery) {
+    console.log('Clearing search');
+    isSearching = false;
+    searchResults = [];
+    updateUIState();
+    
+    // Show current entry or first entry
+    if (window.readerCurrentIndex > 0) {
+      showEntry(window.readerCurrentIndex);
+    } else if (window.readerEntries.length > 0) {
+      showEntry(window.readerEntries[0].id);
     }
     return;
   }
   
-  if (!imagesSidebar) {
-    // Create sidebar if it doesn't exist
-    const sidebar = document.createElement('div');
-    sidebar.id = 'imagesSidebar';
-    sidebar.className = 'fixed right-0 top-0 h-full w-64 bg-black border-l border-gray-800 overflow-y-auto p-4 z-40';
-    sidebar.style.display = 'block';
-    
-    sidebar.innerHTML = `
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-sm font-bold text-gray-300">Associated Images</h3>
-        <button onclick="document.getElementById('imagesSidebar').style.display='none'" 
-                class="text-gray-500 hover:text-white">×</button>
-      </div>
-      <div id="sidebarImages"></div>
-    `;
-    
-    document.body.appendChild(sidebar);
-  }
+  isSearching = true;
+  const pool = getFilteredEntries();
+  const terms = parseSearchQuery(searchQuery);
   
-  const sidebarImages = document.getElementById('sidebarImages') || imagesSidebar;
-  sidebarImages.innerHTML = entry.images.map(img => `
-    <div class="mb-4">
-      <img src="${img.url}" 
-           alt="${img.description}"
-           class="w-full h-48 object-cover rounded-lg mb-2 cursor-pointer hover:opacity-90"
-           onclick="openImageModal('${img.url}', '${img.description.replace(/'/g, "\\'")}')">
-      <div class="text-xs text-gray-400">
-        <div class="font-semibold truncate">${img.title || 'Untitled'}</div>
-        ${img.description ? `<div class="truncate">${img.description}</div>` : ''}
-      </div>
-    </div>
-  `).join('');
+  console.log('Search terms:', terms);
+  console.log('Pool size:', pool.length);
   
-  if (imagesSidebar) {
-    imagesSidebar.style.display = 'block';
+  searchResults = pool.filter(e => matchesSearch(e, terms));
+  console.log('Search results:', searchResults.length);
+  
+  updateUIState();
+  
+  if (searchResults.length > 0) {
+    showEntry(searchResults[0].id);
+  } else {
+    contentDiv.innerHTML = '<div class="text-center mt-10 text-gray-500">No matches found for "' + searchQuery + '".</div>';
+    entryInfo.innerHTML = '<div class="text-xs text-gray-500">No matches found</div>';
   }
 }
 
-function openImageModal(url, description) {
-  // Simple modal for viewing images
-  const modal = document.createElement('div');
-  modal.className = 'fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4';
-  modal.innerHTML = `
-    <div class="relative max-w-4xl max-h-full">
-      <button onclick="this.parentElement.parentElement.remove()" 
-              class="absolute -top-10 right-0 text-white text-2xl hover:text-red-400">×</button>
-      <img src="${url}" alt="${description}" class="max-w-full max-h-screen object-contain">
-      <div class="text-white text-sm mt-2 text-center">${description}</div>
-    </div>
-  `;
-  document.body.appendChild(modal);
+/* ==========  UI FUNCTIONS  ========== */
+function updateUIState() {
+  if (isSearching) {
+    searchStats.textContent = `${searchResults.length} match${searchResults.length !== 1 ? 'es' : ''}`;
+  } else {
+    const count = getFilteredEntries().length;
+    searchStats.textContent = currentFilter !== 'all' ? `${count} ${currentFilter}` : `${count} total`;
+  }
+  
+  if (isIndexVisible) {
+    buildIndex();
+  }
 }
 
 function buildIndex() {
   const pool = isSearching ? searchResults : getFilteredEntries();
   dateNav.innerHTML = '';
+  
+  if (pool.length === 0) {
+    dateNav.innerHTML = '<div class="p-3 text-gray-500 text-sm">No entries to display</div>';
+    return;
+  }
   
   pool.forEach(e => {
     const div = document.createElement('div');
@@ -633,10 +715,15 @@ function buildIndex() {
     
     const preview = e.content.replace(/<[^>]*>/g, '').substring(0, 60).replace(/\n/g, ' ') + '...';
     const imageCount = e.images?.length ? ` 📷${e.images.length}` : '';
+    const tagsPreview = e.tags.length > 0 ? 
+      e.tags.slice(0, 2).map(t => `<span class="text-[9px] text-gray-500">${t}</span>`).join(' ') : '';
     
     div.innerHTML = `
-      <div class="text-sm font-bold text-gray-300 mb-1 truncate special-elite">${e.title}${imageCount}</div>
+      <div class="text-sm font-bold text-gray-300 mb-1 truncate special-elite">
+        ${e.title}${imageCount}
+      </div>
       <div class="text-xs text-gray-600 font-mono truncate">${preview}</div>
+      ${tagsPreview ? `<div class="mt-1 flex gap-1">${tagsPreview}</div>` : ''}
     `;
     
     div.addEventListener('click', () => {
@@ -662,72 +749,8 @@ function styleActiveFilter(btn) {
   btn.style.borderColor = 'var(--red)';
 }
 
-/* ==========  SEARCH FUNCTIONS  ========== */
-function performSearch(q) {
-  searchQuery = q;
-  
-  if (!q.trim()) {
-    isSearching = false;
-    searchResults = [];
-    updateUIState();
-    showEntry(window.readerCurrentIndex);
-    return;
-  }
-  
-  isSearching = true;
-  const pool = getFilteredEntries();
-  const terms = parseSearchQuery(q);
-  searchResults = pool.filter(e => matchesSearch(e, terms));
-  
-  updateUIState();
-  
-  if (searchResults.length > 0) {
-    showEntry(searchResults[0].id);
-  } else {
-    contentDiv.innerHTML = '<div class="text-center mt-10 text-gray-500">No matches found.</div>';
-    entryInfo.innerHTML = '';
-  }
-}
-
-function updateUIState() {
-  if (isSearching) {
-    searchStats.textContent = `${searchResults.length} matches`;
-  } else {
-    const count = getFilteredEntries().length;
-    searchStats.textContent = currentFilter !== 'all' ? `${count} items` : `${count} total`;
-  }
-  buildIndex();
-}
-
-/* ==========  EVENT HANDLERS  ========== */
+/* ==========  INITIALIZE  ========== */
 document.addEventListener('DOMContentLoaded', loadText);
-
-searchBox.addEventListener('input', debounce(e => performSearch(e.target.value), 300));
-
-// Filter buttons
-document.getElementById('filterBtns').addEventListener('click', e => {
-  if (!e.target.classList.contains('filter-btn')) return;
-  
-  styleActiveFilter(e.target);
-  currentFilter = e.target.dataset.filter;
-  
-  // Clear search when switching filters
-  searchBox.value = '';
-  isSearching = false;
-  updateUIState();
-  
-  const filtered = getFilteredEntries();
-  if (filtered.length > 0) {
-    showEntry(filtered[0].id);
-  }
-});
-
-// Index toggle
-indexBtn.addEventListener('click', () => {
-  isIndexVisible = !isIndexVisible;
-  dateNav.classList.toggle('hidden');
-  if (isIndexVisible) buildIndex();
-});
 </script>
 
 <script id="ai-script">
