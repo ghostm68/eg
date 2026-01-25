@@ -1058,6 +1058,15 @@ window.addEventListener('load', initTTS);
             }
         };
     }
+      const input = document.getElementById('chat-input');
+        if (input) {
+            input.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault(); // Stop mobile keyboard from making a new line
+                    window.sendMessage();
+                }
+            });
+        }
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
