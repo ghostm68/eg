@@ -105,11 +105,6 @@
         <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="fragments">Fragments</button>
         <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="passages">Passages</button>
        <button class="filter-btn px-3 py-1 border text-xs uppercase" data-filter="sections">Sections</button>
-  <button class="filter-btn px-3 py-1 border text-xs uppercase" data-filter="sketches">Sketches</button>
-  <button class="filter-btn px-3 py-1 border text-xs uppercase" data-filter="characters">Characters</button>
-  <button class="filter-btn px-3 py-1 border text-xs uppercase" data-filter="dialogue">Dialogue</button>
-  <button class="filter-btn px-3 py-1 border text-xs uppercase" data-filter="scenes">Scenes</button>
-  <button class="filter-btn px-3 py-1 border text-xs uppercase" data-filter="settings">Settings</button>
       </div>
 
       <!-- INDEX -->
@@ -139,29 +134,22 @@
 <!-- ============  READER SCRIPT  ============ -->
 <!-- ============  READER SCRIPT  ============ -->
 <!-- ============  READER SCRIPT  ============ -->
+
+<!-- ============  READER SCRIPT  ============ -->
 <script id="reader-script">
 /* ==========  CONFIG  ========== */
 const TXT_FILE_URL = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/horse.txt';
-const IMAGES_JSON_URL = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/your-images.json';
 
 // Markdown pattern
 const ENTRY_PATTERN = /^(#{1,3})\s+(.+)$/;
 
-// LET'S TRY CATCHING DIFFERENT TAG PATTERNS
-// Based on your console output, entries might use [sketch], [image], [img], etc.
+// SIMPLE TAG PATTERNS - only what was working before
 const TAG_PATTERNS = {
   all: /.*/,
   fragments: /\bfragment(s)?\b|\[fragment\]/i,
   passages: /\bpassage(s)?\b|\[passage\]/i,
-  sections: /\bsection(s)?\b|\[section\]/i,
-  sketches: /\b(sketch(es)?|image(s)?|img(s)?|picture(s)?|photo(s)?)\b|\[(sketch|image|img|picture|photo)\]/i,
-  characters: /\b(character(s)?|char(s)?|person(s)?|people)\b|\[(character|char|person)\]/i,
-  dialogue: /\b(dialogue|dialog|conversation|speech|talk(ing)?)\b|\[(dialogue|dialog|speech)\]/i,
-  scenes: /\b(scene(s)?|moment(s)?|sequence(s)?|part(s)?)\b|\[(scene|moment|sequence)\]/i,
-  settings: /\b(setting(s)?|location(s)?|place(s)?|where|environment)\b|\[(setting|location|place)\]/i,
-  chapters: /\b(chapter(s)?|part(s)?|section(s)?)\b|\[(chapter|part)\]/i,
-  notes: /\b(note(s)?|comment(s)?|annotation(s)?)\b|\[(note|comment|annotation)\]/i,
-  quotes: /\b(quote(s)?|saying(s)?|citation(s)?)\b|\[(quote|saying|citation)\]/i
+  sections: /\bsection(s)?\b|\[section\]/i
+  // Removed sketches, dialogue, characters, etc.
 };
 
 /* ==========  STATE  ========== */
@@ -173,27 +161,6 @@ let searchResults = [];
 let isSearching = false;
 let isIndexVisible = false;
 let searchTimeout = null;
-let imagesData = [];
-
-/* ==========  DEBUG FUNCTIONS  ========== */
-function debugLog(message, data = null) {
-  console.log(`[DEBUG] ${message}`, data || '');
-}
-
-function showAllTagsInContent() {
-  debugLog('=== ALL TAGS FOUND IN CONTENT ===');
-  const allTagsFound = new Set();
-  
-  window.readerEntries.forEach((entry, index) => {
-    if (entry.tags && entry.tags.length > 0) {
-      debugLog(`Entry ${index} ("${entry.title.substring(0, 40)}..."):`, entry.tags);
-      entry.tags.forEach(tag => allTagsFound.add(tag));
-    }
-  });
-  
-  debugLog('=== UNIQUE TAGS FOUND ===', Array.from(allTagsFound));
-  return Array.from(allTagsFound);
-}
 
 /* ==========  DOM  ========== */
 const searchBox = document.getElementById('searchBox');
@@ -210,60 +177,35 @@ const contentDiv = document.getElementById('content');
 /* ==========  LOAD DATA  ========== */
 async function loadText() {
   try {
-    debugLog('Starting load...');
+    console.log('Loading text from:', TXT_FILE_URL);
     
-    // Load text
     const textRes = await fetch(TXT_FILE_URL);
     if (!textRes.ok) throw new Error('Text file not found');
     
     let text = await textRes.text();
-    debugLog('Text loaded, length:', text.length);
+    console.log('Text loaded, length:', text.length);
     
     text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
     parseEntries(text);
     
-    // Try to load images
-    try {
-      const imagesRes = await fetch(IMAGES_JSON_URL);
-      if (imagesRes.ok) {
-        imagesData = await imagesRes.json();
-        debugLog('Images JSON loaded, type:', typeof imagesData);
-        if (Array.isArray(imagesData)) {
-          debugLog('Images array length:', imagesData.length);
-          debugLog('First image:', imagesData[0]);
-        } else if (imagesData && typeof imagesData === 'object') {
-          debugLog('Images object keys:', Object.keys(imagesData).slice(0, 5));
-          debugLog('First image value:', Object.values(imagesData)[0]);
-        }
-      } else {
-        debugLog('Images JSON not found or error:', imagesRes.status);
-      }
-    } catch (imageError) {
-      debugLog('Image load error:', imageError.message);
-    }
-    
     loadingDiv.style.display = 'none';
     contentDiv.style.display = 'block';
     
-    debugLog(`Parsed ${window.readerEntries.length} entries`);
-    
-    // Show what tags were actually found
-    const foundTags = showAllTagsInContent();
-    
-    // DYNAMICALLY CREATE FILTER BUTTONS based on found tags
-    createFilterButtons(foundTags);
+    console.log(`Parsed ${window.readerEntries.length} entries`);
     
     if (window.readerEntries.length > 0) {
       showEntry(window.readerEntries[0].id);
     }
     
-    // Setup UI
-    styleActiveFilter(document.querySelector('.filter-btn[data-filter="all"]'));
+    // Set "All" button active
+    const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
+    if (allBtn) styleActiveFilter(allBtn);
+    
     buildIndex();
     updateUIState();
     
-    // Setup event listeners
-    setupEventListeners();
+    // Log what tags were found for debugging
+    logFoundTags();
     
   } catch (err) {
     console.error('Load error:', err);
@@ -271,56 +213,24 @@ async function loadText() {
   }
 }
 
-/* ==========  DYNAMIC FILTER BUTTONS ========== */
-function createFilterButtons(foundTags) {
-  const filterContainer = document.getElementById('filterBtns');
-  if (!filterContainer) return;
-  
-  // Clear existing buttons (keep All)
-  const allBtn = filterContainer.querySelector('.filter-btn[data-filter="all"]');
-  filterContainer.innerHTML = '';
-  
-  // Add All button back
-  if (allBtn) {
-    filterContainer.appendChild(allBtn);
-  } else {
-    const allButton = document.createElement('button');
-    allButton.className = 'filter-btn px-3 py-1 border text-xs uppercase';
-    allButton.dataset.filter = 'all';
-    allButton.textContent = 'All';
-    filterContainer.appendChild(allButton);
-  }
-  
-  // Add buttons for each found tag
-  foundTags.forEach(tag => {
-    const button = document.createElement('button');
-    button.className = 'filter-btn px-3 py-1 border text-xs uppercase';
-    button.dataset.filter = tag;
-    button.textContent = tag;
-    filterContainer.appendChild(button);
+function logFoundTags() {
+  const tagCounts = {};
+  window.readerEntries.forEach(entry => {
+    entry.tags.forEach(tag => {
+      tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+    });
   });
-  
-  debugLog('Created filter buttons for tags:', foundTags);
+  console.log('Tags found in content:', tagCounts);
 }
 
-/* ==========  SEARCH - WORKING VERSION ========== */
-function setupEventListeners() {
-  // Search with better handling
-  searchBox.addEventListener('input', function(e) {
-    performSearch(e.target.value);
-  });
-  
-  // Add enter key support
-  searchBox.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-      performSearch(this.value);
-    }
-  });
-}
+/* ==========  SEARCH - KEEP WORKING VERSION ========== */
+searchBox.addEventListener('input', function(e) {
+  performSearch(e.target.value);
+});
 
 function performSearch(query) {
   const trimmedQuery = query.trim();
-  debugLog('Searching for:', trimmedQuery);
+  console.log('Searching for:', trimmedQuery);
   
   if (!trimmedQuery) {
     isSearching = false;
@@ -340,7 +250,7 @@ function performSearch(query) {
   isSearching = true;
   searchQuery = trimmedQuery;
   
-  // Simple but effective search
+  // Simple search that works
   const pool = getFilteredEntries();
   const queryLower = trimmedQuery.toLowerCase();
   
@@ -349,7 +259,7 @@ function performSearch(query) {
     return searchText.includes(queryLower);
   });
   
-  debugLog(`Search results: ${searchResults.length} of ${pool.length} entries`);
+  console.log(`Search results: ${searchResults.length} of ${pool.length} entries`);
   
   updateUIState();
   
@@ -357,14 +267,10 @@ function performSearch(query) {
     showEntry(searchResults[0].id);
   } else {
     contentDiv.innerHTML = `
-      <div class="text-center mt-10 p-6 border border-gray-800 rounded-lg">
-        <div class="text-gray-500 text-lg mb-2">No matches found for "${trimmedQuery}"</div>
-        <div class="text-sm text-gray-600">
-          Searched ${pool.length} entries<br>
-          Try different keywords or check spelling
-        </div>
+      <div class="text-center mt-10 p-4">
+        <div class="text-gray-500">No matches found for "${trimmedQuery}"</div>
       </div>`;
-    entryInfo.innerHTML = `<div class="text-xs text-gray-500">Search: "${trimmedQuery}" - 0 results</div>`;
+    entryInfo.innerHTML = `<div class="text-xs text-gray-500">Search: "${trimmedQuery}"</div>`;
   }
 }
 
@@ -376,7 +282,7 @@ function highlightText(text, query) {
     const regex = new RegExp(`(${escapedQuery})`, 'gi');
     return text.replace(regex, '<span class="highlight" style="background:var(--red); color:black; padding:0 2px;">$1</span>');
   } catch (e) {
-    debugLog('Highlight error:', e);
+    console.log('Highlight error:', e);
     return text;
   }
 }
@@ -387,9 +293,7 @@ function parseEntries(text) {
   let current = null;
   let id = 0;
   
-  debugLog('Parsing lines:', lines.length);
-  
-  lines.forEach((line, lineNum) => {
+  lines.forEach((line) => {
     const m = line.match(ENTRY_PATTERN);
     if (m) {
       // Save previous entry if exists
@@ -404,8 +308,7 @@ function parseEntries(text) {
         title: m[2].trim(),
         headingLevel: m[1].length,
         content: line + '\n',
-        tags: [],
-        images: []
+        tags: []
       };
     } else if (current) {
       // Continue current entry
@@ -418,8 +321,6 @@ function parseEntries(text) {
     detectTags(current);
     window.readerEntries.push(current);
   }
-  
-  debugLog(`Total entries parsed: ${window.readerEntries.length}`);
 }
 
 function detectTags(entry) {
@@ -427,91 +328,19 @@ function detectTags(entry) {
   
   // Check each tag pattern
   for (const [tag, pattern] of Object.entries(TAG_PATTERNS)) {
-    if (tag !== 'all') {
-      const matches = pattern.test(entry.content);
-      if (matches) {
-        detectedTags.push(tag);
-        // Debug specific tags
-        if (['sketches', 'dialogue', 'characters', 'chapters'].includes(tag)) {
-          debugLog(`Tag "${tag}" matched in: "${entry.title.substring(0, 30)}..."`);
-        }
-      }
+    if (tag !== 'all' && pattern.test(entry.content)) {
+      detectedTags.push(tag);
     }
   }
   
   entry.tags = detectedTags;
-  
-  // Find images for ANY entry (not just sketches)
-  if (imagesData && (detectedTags.includes('sketches') || entry.content.toLowerCase().includes('image') || entry.content.toLowerCase().includes('img'))) {
-    entry.images = findImagesForEntry(entry);
-    if (entry.images.length > 0) {
-      debugLog(`Found ${entry.images.length} images for: "${entry.title}"`);
-    }
-  }
-}
-
-function findImagesForEntry(entry) {
-  if (!imagesData) return [];
-  
-  const foundImages = [];
-  const entryText = entry.title.toLowerCase() + ' ' + entry.content.toLowerCase();
-  
-  // Function to add image
-  const addImage = (img, source, index) => {
-    const imageUrl = img.url || img.src || img.path || img.filename || img.link || source;
-    if (imageUrl && (imageUrl.includes('http') || imageUrl.includes('.jpg') || imageUrl.includes('.png') || imageUrl.includes('.gif'))) {
-      foundImages.push({
-        url: imageUrl,
-        title: img.title || img.caption || img.description || `Image ${index + 1}`,
-        description: img.description || img.alt || img.caption || ''
-      });
-      return true;
-    }
-    return false;
-  };
-  
-  // Handle array format
-  if (Array.isArray(imagesData)) {
-    debugLog('Searching in images array, length:', imagesData.length);
-    
-    // Try to match by keywords in entry text
-    imagesData.forEach((img, index) => {
-      const imgKeywords = (img.title || img.description || img.tags || '').toLowerCase();
-      if (imgKeywords && entryText.includes(imgKeywords.substring(0, 20))) {
-        addImage(img, `array[${index}]`, index);
-      }
-    });
-    
-    // If no matches, assign by index
-    if (foundImages.length === 0 && imagesData.length > 0) {
-      const allSketches = window.readerEntries.filter(e => 
-        e.tags.includes('sketches') || e.content.toLowerCase().includes('sketch') || e.content.toLowerCase().includes('image')
-      );
-      const sketchIndex = allSketches.findIndex(e => e.id === entry.id);
-      
-      if (sketchIndex >= 0 && sketchIndex < imagesData.length) {
-        addImage(imagesData[sketchIndex], `array[${sketchIndex}]`, sketchIndex);
-      }
-    }
-  }
-  // Handle object format
-  else if (typeof imagesData === 'object') {
-    debugLog('Searching in images object, keys:', Object.keys(imagesData).length);
-    
-    Object.entries(imagesData).forEach(([key, img], index) => {
-      addImage(img, key, index);
-    });
-  }
-  
-  return foundImages;
 }
 
 function getFilteredEntries() {
   let entries = window.readerEntries;
   
   if (currentFilter !== 'all') {
-    const filtered = entries.filter(e => e.tags.includes(currentFilter));
-    return filtered;
+    return entries.filter(e => e.tags.includes(currentFilter));
   }
   
   return entries;
@@ -523,11 +352,6 @@ function showEntry(entryId) {
   if (!entry) return;
   
   window.readerCurrentIndex = entryId;
-  
-  debugLog(`Showing entry ${entryId}: "${entry.title}"`, {
-    tags: entry.tags,
-    images: entry.images?.length || 0
-  });
   
   let displayContent = entry.content;
   
@@ -554,50 +378,17 @@ function showEntry(entryId) {
     return `<p class="mb-4 leading-relaxed">${trimmed}</p>`;
   }).join('');
   
-  // Add images if available
-  let imagesHtml = '';
-  if (entry.images && entry.images.length > 0) {
-    debugLog(`Displaying ${entry.images.length} images for entry`);
-    imagesHtml = '<div class="my-8 p-4 border-2 border-gray-700 rounded-xl bg-gray-900">';
-    imagesHtml += '<h3 class="text-lg font-bold mb-4 text-gray-300 border-b border-gray-700 pb-2">📷 Associated Images</h3>';
-    imagesHtml += '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
-    
-    imagesHtml += entry.images.map(img => `
-      <div class="border border-gray-700 rounded-lg overflow-hidden bg-black hover:bg-gray-900 transition-colors">
-        <img src="${img.url}" 
-             alt="${img.description || img.title}" 
-             class="w-full h-48 object-cover hover:scale-105 transition-transform duration-300"
-             loading="lazy"
-             onerror="console.error('Image failed:', this.src); this.onerror=null; this.src='https://placehold.co/400x300/111/666?text=Image+Error'; this.className='w-full h-48 object-contain bg-gray-900';">
-        <div class="p-3">
-          <div class="font-semibold text-gray-300 text-sm mb-1 truncate">${img.title || 'Untitled'}</div>
-          ${img.description ? `<div class="text-xs text-gray-500 truncate">${img.description}</div>` : ''}
-        </div>
-      </div>
-    `).join('');
-    
-    imagesHtml += '</div></div>';
-  }
-  
-  contentDiv.innerHTML = html + imagesHtml;
+  contentDiv.innerHTML = html;
   
   const pool = isSearching ? searchResults : getFilteredEntries();
   const idx = pool.findIndex(x => x.id === entryId);
   const words = entry.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
   
-  // Tag styling with fallback
+  // Tag styling
   const tagStyles = {
     'fragments': 'border-red-400 text-red-400',
     'passages': 'border-red-500 text-red-500', 
-    'sections': 'border-red-600 text-red-600',
-    'sketches': 'border-red-700 text-red-700 bg-red-900/20',
-    'characters': 'border-purple-500 text-purple-400',
-    'dialogue': 'border-blue-500 text-blue-400',
-    'scenes': 'border-green-500 text-green-400',
-    'settings': 'border-yellow-500 text-yellow-400',
-    'chapters': 'border-indigo-500 text-indigo-400',
-    'notes': 'border-gray-500 text-gray-400',
-    'quotes': 'border-pink-500 text-pink-400'
+    'sections': 'border-red-600 text-red-600'
   };
   
   entryInfo.innerHTML = `
@@ -609,7 +400,6 @@ function showEntry(entryId) {
       <div class="text-xs text-gray-400 flex items-center gap-2 flex-wrap">
         ${isSearching ? `Search result ${idx + 1}/${searchResults.length}` : `Entry ${idx + 1}/${pool.length}`}
         <span>•</span>${words} words
-        ${entry.images?.length > 0 ? `<span class="text-red-400">📷${entry.images.length}</span>` : ''}
         ${entry.tags.length > 0 ? `<span class="ml-2 flex gap-1 flex-wrap">
           ${entry.tags.map(t => {
             const style = tagStyles[t] || 'border-gray-600 text-gray-600';
@@ -637,22 +427,38 @@ function updateNavigationButtons(pool, currentIndex) {
   }
 }
 
-/* ==========  FILTER HANDLING  ========== */
-function setupFilterListeners() {
-  const filterContainer = document.getElementById('filterBtns');
-  if (!filterContainer) {
-    console.error('Filter container not found!');
-    return;
-  }
+function showRandomEntry() {
+  const pool = isSearching ? searchResults : getFilteredEntries();
+  if (!pool.length) return;
   
-  filterContainer.addEventListener('click', function(e) {
-    if (e.target.classList.contains('filter-btn')) {
-      const filter = e.target.dataset.filter;
-      debugLog(`Filter clicked: ${filter}`);
-      handleFilterChange(filter, e.target);
-    }
-  });
+  let randomIdx;
+  do {
+    randomIdx = Math.floor(Math.random() * pool.length);
+  } while (pool[randomIdx].id === window.readerCurrentIndex && pool.length > 1);
+  
+  showEntry(pool[randomIdx].id);
 }
+
+function navigateEntries(dir) {
+  const pool = isSearching ? searchResults : getFilteredEntries();
+  if (pool.length === 0) return;
+  
+  const idx = pool.findIndex(x => x.id === window.readerCurrentIndex);
+  const newIdx = dir === 'next' ? idx + 1 : idx - 1;
+  
+  if (newIdx >= 0 && newIdx < pool.length) {
+    showEntry(pool[newIdx].id);
+  }
+}
+
+/* ==========  FILTER HANDLING  ========== */
+document.getElementById('filterBtns').addEventListener('click', function(e) {
+  if (e.target.classList.contains('filter-btn')) {
+    const filter = e.target.dataset.filter;
+    console.log('Filter clicked:', filter);
+    handleFilterChange(filter, e.target);
+  }
+});
 
 function handleFilterChange(filter, button) {
   currentFilter = filter;
@@ -674,7 +480,7 @@ function handleFilterChange(filter, button) {
   searchQuery = '';
   
   const filtered = getFilteredEntries();
-  debugLog(`Filter "${filter}" applied: ${filtered.length} entries`);
+  console.log(`Filter "${filter}" applied: ${filtered.length} entries`);
   
   updateUIState();
   
@@ -682,14 +488,10 @@ function handleFilterChange(filter, button) {
     showEntry(filtered[0].id);
   } else {
     contentDiv.innerHTML = `
-      <div class="text-center mt-10 p-6 border border-gray-800 rounded-lg">
-        <div class="text-gray-500 text-lg mb-2">No entries tagged as "${filter}"</div>
-        <div class="text-sm text-gray-600">
-          ${window.readerEntries.length} total entries available<br>
-          Try the "All" filter to see everything
-        </div>
+      <div class="text-center mt-10 p-4">
+        <div class="text-gray-500">No entries tagged as "${filter}"</div>
       </div>`;
-    entryInfo.innerHTML = `<div class="text-xs text-gray-500">Filter: ${filter} - 0 entries</div>`;
+    entryInfo.innerHTML = `<div class="text-xs text-gray-500">Filter: ${filter}</div>`;
   }
 }
 
@@ -726,22 +528,27 @@ function buildIndex() {
     }
     
     const preview = entry.content.replace(/<[^>]*>/g, '').substring(0, 60).replace(/\n/g, ' ') + '...';
-    const imageCount = entry.images?.length ? ` 📷${entry.images.length}` : '';
     
     div.innerHTML = `
       <div class="text-sm font-bold text-gray-300 mb-1 truncate special-elite">
-        ${entry.title}${imageCount}
+        ${entry.title}
       </div>
       <div class="text-xs text-gray-600 font-mono truncate">${preview}</div>
       ${entry.tags.length > 0 ? 
         `<div class="mt-1 flex gap-1 flex-wrap">
-          ${entry.tags.slice(0, 3).map(t => 
+          ${entry.tags.slice(0, 2).map(t => 
             `<span class="text-[9px] px-1 py-0.5 border border-gray-700 text-gray-500">${t}</span>`
           ).join('')}
         </div>` : ''}
     `;
     
-    div.addEventListener('click', () => showEntry(entry.id));
+    div.addEventListener('click', () => {
+      showEntry(entry.id);
+      if (window.innerWidth < 768) {
+        dateNav.classList.add('hidden');
+        isIndexVisible = false;
+      }
+    });
     dateNav.appendChild(div);
   });
 }
@@ -759,46 +566,16 @@ function styleActiveFilter(btn) {
   btn.style.borderColor = 'var(--red)';
 }
 
-/* ==========  NAVIGATION  ========== */
-function showRandomEntry() {
-  const pool = isSearching ? searchResults : getFilteredEntries();
-  if (!pool.length) return;
-  
-  let randomIdx;
-  do {
-    randomIdx = Math.floor(Math.random() * pool.length);
-  } while (pool[randomIdx].id === window.readerCurrentIndex && pool.length > 1);
-  
-  showEntry(pool[randomIdx].id);
-}
-
-function navigateEntries(dir) {
-  const pool = isSearching ? searchResults : getFilteredEntries();
-  if (pool.length === 0) return;
-  
-  const idx = pool.findIndex(x => x.id === window.readerCurrentIndex);
-  const newIdx = dir === 'next' ? idx + 1 : idx - 1;
-  
-  if (newIdx >= 0 && newIdx < pool.length) {
-    showEntry(pool[newIdx].id);
-  }
-}
-
 /* ==========  INITIALIZATION  ========== */
 document.addEventListener('DOMContentLoaded', function() {
-  debugLog('DOM loaded, starting...');
+  console.log('DOM loaded, starting horse reader...');
   loadText();
   
-  // Setup filter listeners after a delay (dynamic buttons might not be ready)
-  setTimeout(() => {
-    setupFilterListeners();
-  }, 500);
-  
   // Navigation buttons
-  if (prevBtn) prevBtn.addEventListener('click', () => navigateEntries('prev'));
-  if (nextBtn) nextBtn.addEventListener('click', () => navigateEntries('next'));
-  if (randomBtn) randomBtn.addEventListener('click', showRandomEntry);
-  if (indexBtn) indexBtn.addEventListener('click', () => {
+  prevBtn.addEventListener('click', () => navigateEntries('prev'));
+  nextBtn.addEventListener('click', () => navigateEntries('next'));
+  randomBtn.addEventListener('click', showRandomEntry);
+  indexBtn.addEventListener('click', () => {
     isIndexVisible = !isIndexVisible;
     dateNav.classList.toggle('hidden');
     if (isIndexVisible) buildIndex();
@@ -817,49 +594,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 });
-
-// Quick test to see file content
-async function quickTest() {
-  try {
-    const res = await fetch(TXT_FILE_URL);
-    const text = await res.text();
-    const lines = text.split('\n');
-    
-    // Find lines with common tags
-    const tagLines = [];
-    lines.forEach((line, i) => {
-      const lowerLine = line.toLowerCase();
-      if (lowerLine.includes('[sketch]') || lowerLine.includes('[image]') || 
-          lowerLine.includes('[dialogue]') || lowerLine.includes('[character]')) {
-        tagLines.push(`Line ${i}: ${line.substring(0, 80)}`);
-      }
-    });
-    
-    if (tagLines.length > 0) {
-      debugLog('Found tagged lines:', tagLines.slice(0, 5));
-    } else {
-      debugLog('No [tag] notation found in file');
-      
-      // Look for other patterns
-      const sketchLines = lines.filter(l => l.toLowerCase().includes('sketch'));
-      const dialogueLines = lines.filter(l => l.toLowerCase().includes('dialogue'));
-      
-      debugLog('Lines with "sketch":', sketchLines.length);
-      debugLog('Lines with "dialogue":', dialogueLines.length);
-      
-      if (sketchLines.length > 0) {
-        debugLog('Example sketch line:', sketchLines[0].substring(0, 100));
-      }
-    }
-  } catch (err) {
-    console.error('Quick test failed:', err);
-  }
-}
-
-// Run quick test
-setTimeout(quickTest, 1000);
 </script>
-
 <script id="ai-script">
 /* ==========  AI CONFIG  ========== */
 const NVIDIA_MODELS={
