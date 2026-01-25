@@ -136,6 +136,7 @@
 <!-- ============  READER SCRIPT  ============ -->
 
 <!-- ============  READER SCRIPT  ============ -->
+<!-- ============  READER SCRIPT  ============ -->
 <script id="reader-script">
 /* ==========  CONFIG  ========== */
 const TXT_FILE_URL = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/horse.txt';
@@ -143,13 +144,12 @@ const TXT_FILE_URL = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/m
 // Markdown pattern
 const ENTRY_PATTERN = /^(#{1,3})\s+(.+)$/;
 
-// SIMPLE TAG PATTERNS - only what was working before
+// SIMPLE TAG PATTERNS
 const TAG_PATTERNS = {
   all: /.*/,
   fragments: /\bfragment(s)?\b|\[fragment\]/i,
   passages: /\bpassage(s)?\b|\[passage\]/i,
   sections: /\bsection(s)?\b|\[section\]/i
-  // Removed sketches, dialogue, characters, etc.
 };
 
 /* ==========  STATE  ========== */
@@ -223,7 +223,7 @@ function logFoundTags() {
   console.log('Tags found in content:', tagCounts);
 }
 
-/* ==========  SEARCH - KEEP WORKING VERSION ========== */
+/* ==========  SEARCH ========== */
 searchBox.addEventListener('input', function(e) {
   performSearch(e.target.value);
 });
@@ -238,7 +238,7 @@ function performSearch(query) {
     updateUIState();
     
     // Show current or first entry
-    const pool = getFilteredEntries();
+    const pool = getCurrentViewEntries();
     if (pool.length > 0) {
       const entryToShow = window.readerCurrentIndex > 0 ? 
         window.readerCurrentIndex : pool[0].id;
@@ -250,7 +250,7 @@ function performSearch(query) {
   isSearching = true;
   searchQuery = trimmedQuery;
   
-  // Simple search that works
+  // Simple search
   const pool = getFilteredEntries();
   const queryLower = trimmedQuery.toLowerCase();
   
@@ -336,6 +336,14 @@ function detectTags(entry) {
   entry.tags = detectedTags;
 }
 
+/* ==========  GET CURRENT VIEW ENTRIES - FIXED ========== */
+function getCurrentViewEntries() {
+  if (isSearching) {
+    return searchResults;
+  }
+  return getFilteredEntries();
+}
+
 function getFilteredEntries() {
   let entries = window.readerEntries;
   
@@ -380,9 +388,11 @@ function showEntry(entryId) {
   
   contentDiv.innerHTML = html;
   
-  const pool = isSearching ? searchResults : getFilteredEntries();
+  const pool = getCurrentViewEntries();
   const idx = pool.findIndex(x => x.id === entryId);
   const words = entry.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
+  
+  console.log(`Showing entry ${entryId} ("${entry.title}"), position ${idx + 1}/${pool.length} in current view`);
   
   // Tag styling
   const tagStyles = {
@@ -417,18 +427,27 @@ function showEntry(entryId) {
 }
 
 function updateNavigationButtons(pool, currentIndex) {
+  console.log(`Updating nav buttons: index ${currentIndex}, pool size ${pool.length}`);
+  
   if (prevBtn) {
-    prevBtn.disabled = currentIndex <= 0;
-    prevBtn.style.opacity = currentIndex <= 0 ? '0.5' : '1';
+    const isDisabled = currentIndex <= 0;
+    prevBtn.disabled = isDisabled;
+    prevBtn.style.opacity = isDisabled ? '0.5' : '1';
+    prevBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
   }
+  
   if (nextBtn) {
-    nextBtn.disabled = currentIndex >= pool.length - 1;
-    nextBtn.style.opacity = currentIndex >= pool.length - 1 ? '0.5' : '1';
+    const isDisabled = currentIndex >= pool.length - 1;
+    nextBtn.disabled = isDisabled;
+    nextBtn.style.opacity = isDisabled ? '0.5' : '1';
+    nextBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
   }
 }
 
 function showRandomEntry() {
-  const pool = isSearching ? searchResults : getFilteredEntries();
+  const pool = getCurrentViewEntries();
+  console.log(`Random from pool of ${pool.length} entries`);
+  
   if (!pool.length) return;
   
   let randomIdx;
@@ -440,14 +459,21 @@ function showRandomEntry() {
 }
 
 function navigateEntries(dir) {
-  const pool = isSearching ? searchResults : getFilteredEntries();
+  const pool = getCurrentViewEntries();
+  console.log(`Navigate ${dir}, pool size: ${pool.length}`);
+  
   if (pool.length === 0) return;
   
   const idx = pool.findIndex(x => x.id === window.readerCurrentIndex);
+  console.log(`Current index in pool: ${idx}`);
+  
   const newIdx = dir === 'next' ? idx + 1 : idx - 1;
+  console.log(`New index: ${newIdx}`);
   
   if (newIdx >= 0 && newIdx < pool.length) {
     showEntry(pool[newIdx].id);
+  } else {
+    console.log(`Cannot navigate ${dir}: ${newIdx} out of bounds (0-${pool.length-1})`);
   }
 }
 
@@ -485,7 +511,13 @@ function handleFilterChange(filter, button) {
   updateUIState();
   
   if (filtered.length > 0) {
-    showEntry(filtered[0].id);
+    // Find the current entry in the filtered list, or show first
+    const currentInFiltered = filtered.find(e => e.id === window.readerCurrentIndex);
+    if (currentInFiltered) {
+      showEntry(currentInFiltered.id);
+    } else {
+      showEntry(filtered[0].id);
+    }
   } else {
     contentDiv.innerHTML = `
       <div class="text-center mt-10 p-4">
@@ -510,7 +542,9 @@ function updateUIState() {
 }
 
 function buildIndex() {
-  const pool = isSearching ? searchResults : getFilteredEntries();
+  const pool = getCurrentViewEntries();
+  console.log(`Building index with ${pool.length} entries`);
+  
   dateNav.innerHTML = '';
   
   if (pool.length === 0) {
@@ -585,9 +619,18 @@ document.addEventListener('DOMContentLoaded', function() {
   document.addEventListener('keydown', function(e) {
     if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
     
-    if (e.key === 'ArrowLeft') navigateEntries('prev');
-    if (e.key === 'ArrowRight') navigateEntries('next');
-    if (e.key.toLowerCase() === 'r') showRandomEntry();
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      navigateEntries('prev');
+    }
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      navigateEntries('next');
+    }
+    if (e.key.toLowerCase() === 'r') {
+      e.preventDefault();
+      showRandomEntry();
+    }
     if (e.key === 'Escape' && isIndexVisible) {
       dateNav.classList.add('hidden');
       isIndexVisible = false;
