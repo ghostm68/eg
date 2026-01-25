@@ -94,19 +94,25 @@
 
 <!-- ============  READER SCRIPT  ============ -->
 <!-- ============  READER SCRIPT  ============ -->
+<!-- ============  READER SCRIPT (FIXED)  ============ -->
 <script id="reader-script">
 /* ----------  CONFIG  ---------- */
 
 const TXT_FILE_URL = 'dreamweaver.txt';
-// More flexible date pattern to match various formats
+
+// REGEX: Matches dates like:
+// 12.12.23 | 2024-01-01 | Jan 12, 2024 | 12 Jan 2024
 const ENTRY_PATTERN = /^(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4}|\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4}|\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4})/i;
 
+// KEYWORDS: This is how the code knows which tab a text belongs to.
 const TAG_PATTERNS = {
   all: /.*/,
-  poem: /\bpoem(s)?\b|\[poem\]/i,
-  film: /\bfilm(s)?|movie(s)?\b|\[film\]/i,
-  book: /\bbook(s)?|reading\b|\[book\]/i,
-  dream: /\bdream(s)?|dreamt\b|\[dream\]/i
+  // FIXED: Added the missing 'lyric' category
+  lyric: /\b(lyric|lyrics|song|verse|chorus|track|audio)\b|\[lyric\]/i, 
+  poem: /\b(poem|poems|poetry|stanza|haiku)\b|\[poem\]/i,
+  film: /\b(film|films|movie|movies|cinema|watch|screen)\b|\[film\]/i,
+  book: /\b(book|books|novel|reading|read|author|page)\b|\[book\]/i,
+  dream: /\b(dream|dreams|dreamt|nightmare|sleep|awake)\b|\[dream\]/i
 };
 
 /* ----------  STATE  ---------- */
@@ -134,7 +140,6 @@ const contentDiv = document.getElementById('content');
 /* ----------  SEARCH UTILS  ---------- */
 function parseSearchQuery(q) {
   const terms = { and: [], or: [], not: [], exact: [] };
-  // Extract exact matches "like this"
   const exactMatches = q.match(/"[^"]+"/g);
   if (exactMatches) {
     exactMatches.forEach(match => {
@@ -168,6 +173,7 @@ function highlightText(text, query) {
     .filter((v, i, a) => a.indexOf(v) === i);
   
   let result = text;
+  // Sort by length to highlight longest phrases first
   allTerms.sort((a, b) => b.length - a.length).forEach(t => {
     const safe = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     result = result.replace(new RegExp(`(${safe})`, 'gi'), '<span class="highlight" style="background:var(--red); color:black; padding:0 2px;">$1</span>');
@@ -198,6 +204,7 @@ async function loadText() {
     contentDiv.style.display = 'block';
 
     if (window.readerEntries.length > 0) {
+      // If we are refreshing, try to stay on the same entry, otherwise go to first
       showEntry(window.readerEntries[0].id);
     }
     
@@ -218,7 +225,11 @@ function parseEntries(text) {
   let id = 0;
 
   lines.forEach(line => {
-    const m = line.match(ENTRY_PATTERN);
+    // TRIM line before checking regex. 
+    // This allows dates to have accidental spaces before them.
+    const cleanLine = line.trim(); 
+    const m = cleanLine.match(ENTRY_PATTERN);
+    
     if (m) {
       // Save previous entry if exists
       if (current && current.content.trim()) {
@@ -229,7 +240,7 @@ function parseEntries(text) {
       // Start new entry
       current = {
         id: ++id,
-        title: m[0].trim(),
+        title: m[0].trim(), // Use the regex match as the title
         content: line + '\n',
         tags: []
       };
@@ -249,8 +260,9 @@ function parseEntries(text) {
 }
 
 function detectTags(e) {
+  const text = e.content.toLowerCase();
   for (const [tag, re] of Object.entries(TAG_PATTERNS)) {
-    if (tag !== 'all' && re.test(e.content)) {
+    if (tag !== 'all' && re.test(text)) {
       e.tags.push(tag);
     }
   }
@@ -289,6 +301,11 @@ function showEntry(entryId) {
   const idx = pool.findIndex(x => x.id === entryId);
   const words = e.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
   
+  // Generate Tags HTML
+  const tagsHtml = e.tags.length > 0 
+    ? e.tags.map(t => `<span class="px-2 py-1 border text-[10px] uppercase border-gray-600 text-gray-400">${t}</span>`).join('')
+    : '<span class="px-2 py-1 border text-[10px] uppercase border-gray-800 text-gray-700">Unclassified</span>';
+
   entryInfo.innerHTML = `
     <div class="flex flex-col gap-1">
       <div>
@@ -298,23 +315,18 @@ function showEntry(entryId) {
       <div class="text-xs text-gray-400 flex items-center gap-2 flex-wrap">
         ${isSearching ? `Result ${idx + 1}/${searchResults.length}` : `Entry ${idx + 1}/${pool.length}`}
         <span>•</span>${words} words
-        <span class="ml-2 flex gap-1 flex-wrap">
-          ${e.tags.map(t => 
-            `<span class="px-2 py-1 border text-[10px] uppercase ${
-              t === 'poem' ? 'border-red-400 text-red-400' :
-              t === 'film' ? 'border-red-500 text-red-500' :
-              t === 'book' ? 'border-red-600 text-red-600' :
-              t === 'dream' ? 'border-red-700 text-red-700' :
-              'border-gray-600 text-gray-600'
-            }">${t}</span>`
-          ).join('')}
-        </span>
+        <span class="ml-2 flex gap-1 flex-wrap">${tagsHtml}</span>
       </div>
     </div>`;
   
+  // Smart button disabling
   prevBtn.disabled = idx <= 0;
   nextBtn.disabled = idx >= pool.length - 1;
   
+  // Visual feedback for disabled buttons
+  prevBtn.style.opacity = prevBtn.disabled ? '0.3' : '1';
+  nextBtn.style.opacity = nextBtn.disabled ? '0.3' : '1';
+
   contentDiv.scrollTop = 0;
   if (isIndexVisible) buildIndex();
 }
@@ -324,9 +336,12 @@ function showRandomEntry() {
   if (!pool.length) return;
   
   let randomIdx;
+  // Try to find a new one, but don't loop forever if only 1 exists
+  let attempts = 0;
   do {
     randomIdx = Math.floor(Math.random() * pool.length);
-  } while (pool[randomIdx].id === window.readerCurrentIndex && pool.length > 1);
+    attempts++;
+  } while (pool[randomIdx].id === window.readerCurrentIndex && pool.length > 1 && attempts < 10);
   
   showEntry(pool[randomIdx].id);
 }
@@ -345,6 +360,11 @@ function buildIndex() {
   const pool = isSearching ? searchResults : getFilteredEntries();
   dateNav.innerHTML = '';
   
+  if (pool.length === 0) {
+    dateNav.innerHTML = '<div class="p-4 text-xs text-gray-600">No entries found for this filter.</div>';
+    return;
+  }
+
   pool.forEach(e => {
     const div = document.createElement('div');
     div.className = 'p-3 border-b border-gray-700 cursor-pointer hover:bg-gray-900 transition-colors';
@@ -354,7 +374,7 @@ function buildIndex() {
       div.style.borderLeft = '3px solid var(--red)';
     }
     
-    const preview = e.content.replace(/<[^>]*>/g, '').substring(0, 60).replace(/\n/g, ' ') + '...';
+    const preview = e.content.replace(/<[^>]*>/g, '').substring(0, 50).replace(/\n/g, ' ') + '...';
     
     div.innerHTML = `
       <div class="text-sm font-bold text-gray-300 mb-1 truncate voodoo">${e.title}</div>
@@ -386,12 +406,15 @@ function performSearch(q) {
     isSearching = false;
     searchResults = [];
     updateUIState();
+    // Return to current entry if possible, else random
     showEntry(window.readerCurrentIndex);
     return;
   }
   
   isSearching = true;
-  const pool = getFilteredEntries();
+  // Search runs against current filter OR all? Usually better to search ALL.
+  // But here we search within the current filter for specificity.
+  const pool = getFilteredEntries(); 
   const terms = parseSearchQuery(q);
   searchResults = pool.filter(e => matchesSearch(e, terms));
   
@@ -400,8 +423,10 @@ function performSearch(q) {
   if (searchResults.length > 0) {
     showEntry(searchResults[0].id);
   } else {
-    contentDiv.innerHTML = '<div class="text-center mt-10 text-gray-500">No matches found.</div>';
+    contentDiv.innerHTML = '<div class="text-center mt-10 text-gray-500 font-mono">No matches found in this timeline.</div>';
     entryInfo.innerHTML = '';
+    prevBtn.disabled = true;
+    nextBtn.disabled = true;
   }
 }
 
@@ -410,17 +435,20 @@ function updateUIState() {
     searchStats.textContent = `${searchResults.length} matches`;
   } else {
     const count = getFilteredEntries().length;
-    searchStats.textContent = currentFilter !== 'all' ? `${count} items` : `${count} total`;
+    searchStats.textContent = currentFilter !== 'all' ? `${count} ${currentFilter}s` : `${count} entries`;
   }
   buildIndex();
 }
 
 /* ----------  EVENTS  ---------- */
 document.addEventListener('DOMContentLoaded', loadText);
+
 searchBox.addEventListener('input', debounce(e => performSearch(e.target.value), 300));
+
 prevBtn.addEventListener('click', () => navigateEntries('prev'));
 nextBtn.addEventListener('click', () => navigateEntries('next'));
 randomBtn.addEventListener('click', showRandomEntry);
+
 indexBtn.addEventListener('click', () => {
   isIndexVisible = !isIndexVisible;
   dateNav.classList.toggle('hidden');
@@ -433,14 +461,19 @@ document.getElementById('filterBtns').addEventListener('click', e => {
   styleActiveFilter(e.target);
   currentFilter = e.target.dataset.filter;
   
-  // Clear search when switching filters
+  // Clear search when switching filters to avoid confusion
   searchBox.value = '';
   isSearching = false;
+  
   updateUIState();
   
+  // Show first entry of new filter, or random if that feels more "Dreamweaver"
   const filtered = getFilteredEntries();
   if (filtered.length > 0) {
     showEntry(filtered[0].id);
+  } else {
+    contentDiv.innerHTML = `<div class="text-center mt-20 text-gray-600">No entries found tagged as <span style="color:var(--red)">${currentFilter}</span>.</div>`;
+    entryInfo.innerHTML = '';
   }
 });
 
