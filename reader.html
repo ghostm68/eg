@@ -93,179 +93,367 @@
 </div>
 
 <!-- ============  READER SCRIPT  ============ -->
+<!-- ============  READER SCRIPT  ============ -->
 <script id="reader-script">
 /* ----------  CONFIG  ---------- */
 
-const TXT_FILE_URL ='dreamweaver.txt';
-const ENTRY_PATTERN = /^(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4}|\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2},? \d{4})/i;
+const TXT_FILE_URL = 'dreamweaver.txt';
+// More flexible date pattern to match various formats
+const ENTRY_PATTERN = /^(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4}|\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4}|\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4})/i;
+
 const TAG_PATTERNS = {
   all: /.*/,
-  poem:  /\b poem s?  \b | \[poem\]  /xi,
-  film:  /\b film s? | movie s? \b | \[film\] /xi,
-  book:  /\b book s? | reading \b | \[book\] /xi,
-  dream: /\b dream s? | dreamt \b | \[dream\] /xi
+  poem: /\bpoem(s)?\b|\[poem\]/i,
+  film: /\bfilm(s)?|movie(s)?\b|\[film\]/i,
+  book: /\bbook(s)?|reading\b|\[book\]/i,
+  dream: /\bdream(s)?|dreamt\b|\[dream\]/i
 };
 
 /* ----------  STATE  ---------- */
 window.readerEntries = [];
 window.readerCurrentIndex = 0;
-let currentFilter = 'all', searchQuery = '', searchResults = [], isSearching = false, isIndexVisible = false, searchTimeout = null;
+let currentFilter = 'all';
+let searchQuery = '';
+let searchResults = [];
+let isSearching = false;
+let isIndexVisible = false;
+let searchTimeout = null;
 
 /* ----------  DOM  ---------- */
-const searchBox  = document.getElementById('searchBox');
-const searchStats= document.getElementById('searchStats');
-const prevBtn    = document.getElementById('prevBtn');
-const nextBtn    = document.getElementById('nextBtn');
-const randomBtn  = document.getElementById('randomBtn');
-const indexBtn   = document.getElementById('indexBtn');
-const dateNav    = document.getElementById('dateNav');
-const entryInfo  = document.getElementById('entryInfo');
+const searchBox = document.getElementById('searchBox');
+const searchStats = document.getElementById('searchStats');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const randomBtn = document.getElementById('randomBtn');
+const indexBtn = document.getElementById('indexBtn');
+const dateNav = document.getElementById('dateNav');
+const entryInfo = document.getElementById('entryInfo');
 const loadingDiv = document.getElementById('loading');
 const contentDiv = document.getElementById('content');
 
 /* ----------  SEARCH UTILS  ---------- */
-function parseSearchQuery(q){
-  const t={and:[],or:[],not:[],exact:[]};
-  (q.match(/"[^"]+"/g)||[]).forEach(m=>{t.exact.push(m.replace(/"/g,'').toLowerCase());q=q.replace(m,'');});
-  let op='and'; q.toLowerCase().split(/\s+/).filter(Boolean).forEach(w=>{
-    if(w==='and')op='and';else if(w==='or')op='or';else if(w.startsWith('-'))t.not.push(w.slice(1));else t[op].push(w);
-  });return t;
+function parseSearchQuery(q) {
+  const terms = { and: [], or: [], not: [], exact: [] };
+  // Extract exact matches "like this"
+  const exactMatches = q.match(/"[^"]+"/g);
+  if (exactMatches) {
+    exactMatches.forEach(match => {
+      terms.exact.push(match.replace(/"/g, '').toLowerCase());
+      q = q.replace(match, '');
+    });
+  }
+  let op = 'and';
+  q.toLowerCase().split(/\s+/).filter(Boolean).forEach(w => {
+    if (w === 'and') op = 'and';
+    else if (w === 'or') op = 'or';
+    else if (w.startsWith('-')) terms.not.push(w.slice(1));
+    else terms[op].push(w);
+  });
+  return terms;
 }
-function matchesSearch(e,terms){
-  const txt=(e.content+' '+e.title).toLowerCase();
-  if(terms.not.some(x=>txt.includes(x)))return false;
-  if(terms.exact.length&&!terms.exact.every(x=>txt.includes(x)))return false;
-  if(terms.and.length&&!terms.and.every(x=>txt.includes(x)))return false;
-  if(terms.or.length&&!terms.or.some(x=>txt.includes(x)))return false;
+
+function matchesSearch(e, terms) {
+  const txt = (e.content + ' ' + e.title).toLowerCase();
+  if (terms.not.some(x => txt.includes(x))) return false;
+  if (terms.exact.length && !terms.exact.every(x => txt.includes(x))) return false;
+  if (terms.and.length && !terms.and.every(x => txt.includes(x))) return false;
+  if (terms.or.length && !terms.or.some(x => txt.includes(x))) return false;
   return true;
 }
-function highlightText(text,query){
-  if(!query.trim())return text;
-  const terms=[...parseSearchQuery(query).exact,...parseSearchQuery(query).and,...parseSearchQuery(query).or]
-        .filter((v,i,a)=>a.indexOf(v)===i);
-  let result=text;
-  terms.sort((a,b)=>b.length-a.length).forEach(t=>{
-    const safe=t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-    result=result.replace(new RegExp(`(${safe})`,'gi'),'<span class="highlight">$1</span>');
-  });return result;
+
+function highlightText(text, query) {
+  if (!query.trim()) return text;
+  const terms = parseSearchQuery(query);
+  const allTerms = [...terms.exact, ...terms.and, ...terms.or]
+    .filter((v, i, a) => a.indexOf(v) === i);
+  
+  let result = text;
+  allTerms.sort((a, b) => b.length - a.length).forEach(t => {
+    const safe = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    result = result.replace(new RegExp(`(${safe})`, 'gi'), '<span class="highlight" style="background:var(--red); color:black; padding:0 2px;">$1</span>');
+  });
+  return result;
+}
+
+function debounce(func, delay) {
+  return function(...args) {
+    if (searchTimeout) clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => func.apply(this, args), delay);
+  };
 }
 
 /* ----------  LOAD & PARSE  ---------- */
-async function loadText(){
-  try{
-    const res=await fetch(TXT_FILE_URL);
-    if(!res.ok)throw new Error('File not found');
-    let text=await res.text();
-    text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+async function loadText() {
+  try {
+    const res = await fetch(TXT_FILE_URL);
+    if (!res.ok) throw new Error('File not found');
+    let text = await res.text();
+    
+    // Normalize line endings
+    text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    
     parseEntries(text);
-    loadingDiv.style.display='none';
-    contentDiv.style.display='block';
-    if(window.readerEntries.length){showEntry(window.readerEntries[0].id);}
-    styleActiveFilter(document.querySelector('.filter-btn[data-filter="all"]'));
-    buildIndex();updateUIState();
-  }catch(err){loadingDiv.innerHTML=`<p style="color:var(--red)">Error: ${err.message}</p>`;}
+    
+    loadingDiv.style.display = 'none';
+    contentDiv.style.display = 'block';
+
+    if (window.readerEntries.length > 0) {
+      showEntry(window.readerEntries[0].id);
+    }
+    
+    // Set "All" button active
+    const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
+    if (allBtn) styleActiveFilter(allBtn);
+    
+    buildIndex();
+    updateUIState();
+  } catch (err) {
+    loadingDiv.innerHTML = `<p style="color:var(--red)">Error: ${err.message}</p>`;
+  }
 }
-function parseEntries(text){
-  const lines=text.split('\n');
-  let current=null,id=0;
-  lines.forEach(l=>{
-    const m=l.match(ENTRY_PATTERN);
-    if(m){
-      if(current&&current.content.trim()){detectTags(current);window.readerEntries.push(current);}
-      current={id:++id,title:m[0].trim(),content:l+'\n',tags:[]};
-    }else if(current){current.content+=l+'\n';}
+
+function parseEntries(text) {
+  const lines = text.split('\n');
+  let current = null;
+  let id = 0;
+
+  lines.forEach(line => {
+    const m = line.match(ENTRY_PATTERN);
+    if (m) {
+      // Save previous entry if exists
+      if (current && current.content.trim()) {
+        detectTags(current);
+        window.readerEntries.push(current);
+      }
+      
+      // Start new entry
+      current = {
+        id: ++id,
+        title: m[0].trim(),
+        content: line + '\n',
+        tags: []
+      };
+    } else if (current) {
+      // Continue current entry
+      current.content += line + '\n';
+    }
   });
-  if(current&&current.content.trim()){detectTags(current);window.readerEntries.push(current);}
+
+  // Don't forget the last entry
+  if (current && current.content.trim()) {
+    detectTags(current);
+    window.readerEntries.push(current);
+  }
+  
+  console.log(`Parsed ${window.readerEntries.length} entries`);
 }
-function detectTags(e){
-  Object.entries(TAG_PATTERNS).forEach(([tag,re])=>{if(tag!=='all'&&re.test(e.content))e.tags.push(tag);});
+
+function detectTags(e) {
+  for (const [tag, re] of Object.entries(TAG_PATTERNS)) {
+    if (tag !== 'all' && re.test(e.content)) {
+      e.tags.push(tag);
+    }
+  }
 }
-function getFilteredEntries(){return currentFilter==='all'?window.readerEntries:window.readerEntries.filter(e=>e.tags.includes(currentFilter));}
+
+function getFilteredEntries() {
+  return currentFilter === 'all' 
+    ? window.readerEntries 
+    : window.readerEntries.filter(e => e.tags.includes(currentFilter));
+}
 
 /* ----------  DISPLAY  ---------- */
-function showEntry(entryId){
-  const e=window.readerEntries.find(x=>x.id===entryId);
-  if(!e)return;
-  window.readerCurrentIndex=entryId;
-  let html=(isSearching&&searchQuery)?highlightText(e.content,searchQuery):e.content;
-  html=html.split('\n').map(l=>l.trim()?`<p class="mb-4 leading-relaxed">${l}</p>`:'<br>').join('');
-  contentDiv.innerHTML=html;
-  const pool=isSearching?searchResults:getFilteredEntries();
-  const idx=pool.findIndex(x=>x.id===entryId);
-  const words=e.content.replace(/<[^>]*>/g,'').trim().split(/\s+/).length;
-  entryInfo.innerHTML=`
+function showEntry(entryId) {
+  const e = window.readerEntries.find(x => x.id === entryId);
+  if (!e) return;
+  
+  window.readerCurrentIndex = entryId;
+  
+  let displayContent = e.content;
+  
+  // Apply highlighting if searching
+  if (isSearching && searchQuery) {
+    displayContent = highlightText(displayContent, searchQuery);
+  }
+  
+  // Format paragraphs
+  displayContent = displayContent.split('\n').map(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return '<br>';
+    return `<p class="mb-4 leading-relaxed">${trimmed}</p>`;
+  }).join('');
+  
+  contentDiv.innerHTML = displayContent;
+  
+  const pool = isSearching ? searchResults : getFilteredEntries();
+  const idx = pool.findIndex(x => x.id === entryId);
+  const words = e.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
+  
+  entryInfo.innerHTML = `
     <div class="flex flex-col gap-1">
-      <div><span class="text-xs text-gray-500 uppercase tracking-widest">DREAMWEAVER ARCHIVE</span>
-      <span class="ml-2 font-bold text-xl voodoo" style="color:var(--red)">${e.title}</span></div>
+      <div>
+        <span class="text-xs text-gray-500 uppercase tracking-widest">DREAMWEAVER ARCHIVE</span>
+        <span class="ml-2 font-bold text-xl voodoo" style="color:var(--red)">${e.title}</span>
+      </div>
       <div class="text-xs text-gray-400 flex items-center gap-2 flex-wrap">
-        ${isSearching?`Result ${idx+1}/${searchResults.length}`:`Entry ${idx+1}/${pool.length}`}
+        ${isSearching ? `Result ${idx + 1}/${searchResults.length}` : `Entry ${idx + 1}/${pool.length}`}
         <span>•</span>${words} words
-        <span class="ml-2 flex gap-1 flex-wrap">${e.tags.map(t=>`<span class="px-2 py-1 border text-[10px] uppercase ${t==='lyric'?'border-red-300 text-red-300':t==='poem'?'border-red-400 text-red-400':t==='film'?'border-red-500 text-red-500':t==='book'?'border-red-600 text-red-600':t==='dream'?'border-red-700 text-red-700':'border-gray-600 text-gray-600'}">${t}</span>`).join('')}</span>
+        <span class="ml-2 flex gap-1 flex-wrap">
+          ${e.tags.map(t => 
+            `<span class="px-2 py-1 border text-[10px] uppercase ${
+              t === 'poem' ? 'border-red-400 text-red-400' :
+              t === 'film' ? 'border-red-500 text-red-500' :
+              t === 'book' ? 'border-red-600 text-red-600' :
+              t === 'dream' ? 'border-red-700 text-red-700' :
+              'border-gray-600 text-gray-600'
+            }">${t}</span>`
+          ).join('')}
+        </span>
       </div>
     </div>`;
-  prevBtn.disabled=idx<=0;nextBtn.disabled=idx>=pool.length-1;
-  contentDiv.scrollTop=0;if(isIndexVisible)buildIndex();
+  
+  prevBtn.disabled = idx <= 0;
+  nextBtn.disabled = idx >= pool.length - 1;
+  
+  contentDiv.scrollTop = 0;
+  if (isIndexVisible) buildIndex();
 }
-function showRandomEntry(){
-  const pool=isSearching?searchResults:getFilteredEntries();
-  if(!pool.length)return;let r;do{r=Math.floor(Math.random()*pool.length);}while(pool[r].id===window.readerCurrentIndex&&pool.length>1);showEntry(pool[r].id);
+
+function showRandomEntry() {
+  const pool = isSearching ? searchResults : getFilteredEntries();
+  if (!pool.length) return;
+  
+  let randomIdx;
+  do {
+    randomIdx = Math.floor(Math.random() * pool.length);
+  } while (pool[randomIdx].id === window.readerCurrentIndex && pool.length > 1);
+  
+  showEntry(pool[randomIdx].id);
 }
-function navigateEntries(dir){
-  const pool=isSearching?searchResults:getFilteredEntries();
-  const idx=pool.findIndex(x=>x.id===window.readerCurrentIndex);
-  const n=dir==='next'?idx+1:idx-1;if(n>=0&&n<pool.length)showEntry(pool[n].id);
+
+function navigateEntries(dir) {
+  const pool = isSearching ? searchResults : getFilteredEntries();
+  const idx = pool.findIndex(x => x.id === window.readerCurrentIndex);
+  const newIdx = dir === 'next' ? idx + 1 : idx - 1;
+  
+  if (newIdx >= 0 && newIdx < pool.length) {
+    showEntry(pool[newIdx].id);
+  }
 }
-function buildIndex(){
-  const pool=isSearching?searchResults:getFilteredEntries();
-  dateNav.innerHTML='';
-  pool.forEach(e=>{
-    const div=document.createElement('div');
-    div.className='p-3 border-b border-gray-700 cursor-pointer hover:bg-gray-900 transition-colors';
-    if(e.id===window.readerCurrentIndex){div.style.background='#1a1a1a';div.style.borderLeft='3px solid var(--red)';}
-    div.innerHTML=`<div class="text-sm font-bold text-gray-300 mb-1 truncate voodoo">${e.title}</div><div class="text-xs text-gray-600 font-mono truncate">${e.content.replace(/<[^>]*>/g,'').substring(0,60).replace(/\n/g,' ')}...</div>`;
-    div.addEventListener('click',()=>showEntry(e.id));
+
+function buildIndex() {
+  const pool = isSearching ? searchResults : getFilteredEntries();
+  dateNav.innerHTML = '';
+  
+  pool.forEach(e => {
+    const div = document.createElement('div');
+    div.className = 'p-3 border-b border-gray-700 cursor-pointer hover:bg-gray-900 transition-colors';
+    
+    if (e.id === window.readerCurrentIndex) {
+      div.style.background = '#1a1a1a';
+      div.style.borderLeft = '3px solid var(--red)';
+    }
+    
+    const preview = e.content.replace(/<[^>]*>/g, '').substring(0, 60).replace(/\n/g, ' ') + '...';
+    
+    div.innerHTML = `
+      <div class="text-sm font-bold text-gray-300 mb-1 truncate voodoo">${e.title}</div>
+      <div class="text-xs text-gray-600 font-mono truncate">${preview}</div>
+    `;
+    
+    div.addEventListener('click', () => showEntry(e.id));
     dateNav.appendChild(div);
   });
 }
-function styleActiveFilter(btn){
-  document.querySelectorAll('.filter-btn').forEach(b=>{b.style.background='transparent';b.style.borderColor='#333';b.style.color='#666';});
-  btn.style.background='var(--red)';btn.style.color='black';btn.style.borderColor='var(--red)';
+
+function styleActiveFilter(btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.style.background = 'transparent';
+    b.style.borderColor = '#333';
+    b.style.color = '#666';
+  });
+  
+  btn.style.background = 'var(--red)';
+  btn.style.color = 'black';
+  btn.style.borderColor = 'var(--red)';
 }
 
 /* ----------  SEARCH  ---------- */
-function performSearch(q){
-  searchQuery=q;if(!q.trim()){isSearching=false;searchResults=[];updateUIState();showEntry(window.readerCurrentIndex);return;}
-  isSearching=true;const pool=getFilteredEntries();const terms=parseSearchQuery(q);
-  searchResults=pool.filter(e=>matchesSearch(e,terms));updateUIState();
-  if(searchResults.length){showEntry(searchResults[0].id);}else{
-    contentDiv.innerHTML='<div class="text-center mt-10 text-gray-500">No matches found.</div>';entryInfo.innerHTML='';
+function performSearch(q) {
+  searchQuery = q;
+  
+  if (!q.trim()) {
+    isSearching = false;
+    searchResults = [];
+    updateUIState();
+    showEntry(window.readerCurrentIndex);
+    return;
+  }
+  
+  isSearching = true;
+  const pool = getFilteredEntries();
+  const terms = parseSearchQuery(q);
+  searchResults = pool.filter(e => matchesSearch(e, terms));
+  
+  updateUIState();
+  
+  if (searchResults.length > 0) {
+    showEntry(searchResults[0].id);
+  } else {
+    contentDiv.innerHTML = '<div class="text-center mt-10 text-gray-500">No matches found.</div>';
+    entryInfo.innerHTML = '';
   }
 }
-function updateUIState(){
-  searchStats.textContent=isSearching?`${searchResults.length} matches`:
-    `${getFilteredEntries().length}${currentFilter==='all'?' total':` ${currentFilter}`}`;
+
+function updateUIState() {
+  if (isSearching) {
+    searchStats.textContent = `${searchResults.length} matches`;
+  } else {
+    const count = getFilteredEntries().length;
+    searchStats.textContent = currentFilter !== 'all' ? `${count} items` : `${count} total`;
+  }
   buildIndex();
 }
 
 /* ----------  EVENTS  ---------- */
-document.addEventListener('DOMContentLoaded',loadText);
-searchBox.addEventListener('input',debounce(e=>performSearch(e.target.value),300));
-prevBtn.addEventListener('click',()=>navigateEntries('prev'));
-nextBtn.addEventListener('click',()=>navigateEntries('next'));
-randomBtn.addEventListener('click',showRandomEntry);
-indexBtn.addEventListener('click',()=>{isIndexVisible=!isIndexVisible;dateNav.classList.toggle('hidden');if(isIndexVisible)buildIndex();});
-document.getElementById('filterBtns').addEventListener('click',e=>{
-  if(!e.target.classList.contains('filter-btn'))return;
-  styleActiveFilter(e.target);currentFilter=e.target.dataset.filter;
-  searchBox.value='';isSearching=false;updateUIState();
-  const fe=getFilteredEntries();if(fe.length)showEntry(fe[0].id);
+document.addEventListener('DOMContentLoaded', loadText);
+searchBox.addEventListener('input', debounce(e => performSearch(e.target.value), 300));
+prevBtn.addEventListener('click', () => navigateEntries('prev'));
+nextBtn.addEventListener('click', () => navigateEntries('next'));
+randomBtn.addEventListener('click', showRandomEntry);
+indexBtn.addEventListener('click', () => {
+  isIndexVisible = !isIndexVisible;
+  dateNav.classList.toggle('hidden');
+  if (isIndexVisible) buildIndex();
 });
-document.addEventListener('keydown',e=>{
-  if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;
-  if(e.key==='ArrowLeft')navigateEntries('prev');
-  if(e.key==='ArrowRight')navigateEntries('next');
-  if(e.key.toLowerCase()==='r')showRandomEntry();
-  if(e.key==='Escape'&&isIndexVisible){dateNav.classList.add('hidden');isIndexVisible=false;}
+
+document.getElementById('filterBtns').addEventListener('click', e => {
+  if (!e.target.classList.contains('filter-btn')) return;
+  
+  styleActiveFilter(e.target);
+  currentFilter = e.target.dataset.filter;
+  
+  // Clear search when switching filters
+  searchBox.value = '';
+  isSearching = false;
+  updateUIState();
+  
+  const filtered = getFilteredEntries();
+  if (filtered.length > 0) {
+    showEntry(filtered[0].id);
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+  
+  if (e.key === 'ArrowLeft') navigateEntries('prev');
+  if (e.key === 'ArrowRight') navigateEntries('next');
+  if (e.key.toLowerCase() === 'r') showRandomEntry();
+  if (e.key === 'Escape' && isIndexVisible) {
+    dateNav.classList.add('hidden');
+    isIndexVisible = false;
+  }
 });
 </script>
 
