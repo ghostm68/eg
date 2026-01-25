@@ -973,7 +973,7 @@ window.addEventListener('load', initTTS);
     const vid = document.querySelector('.splash-video');
     if(vid) vid.onended = dismissSplash;
 
-/**
+/* 
  * INK REALM NEURAL INTERFACE: PROTOCOL 5.0
  * RESOLUTION: WORKER RECURSION ELIMINATED
  */
@@ -982,7 +982,6 @@ window.addEventListener('load', initTTS);
     const cloudAI = window.sendMessage; 
     let engine = null;
 
-    // PREVENT UI BLOCKING
     const init = () => {
         const trigger = document.getElementById('activate-core');
         if (!trigger) return;
@@ -1000,7 +999,6 @@ window.addEventListener('load', initTTS);
             if (ui.box) ui.box.style.display = 'block';
 
             try {
-                // DYNAMIC IMPORT + INTERNAL WORKER PREVENTS PAGE LOOP
                 const webLLM = await import("https://esm.run/@mlc-ai/web-llm");
                 
                 engine = await webLLM.CreateMLCEngine("Qwen2.5-0.5B-Instruct-q4f16_1-MLC", {
@@ -1012,7 +1010,7 @@ window.addEventListener('load', initTTS);
                         
                         if (p.progress === 1) {
                             trigger.innerText = "CORE_ONLINE";
-                            hijack();
+                            hijack(); // This enables the chat input
                         }
                     }
                 });
@@ -1024,6 +1022,7 @@ window.addEventListener('load', initTTS);
     };
 
     function hijack() {
+        // 1. Define the send function
         window.sendMessage = async function() {
             const input = document.getElementById('chat-input');
             const history = document.getElementById('ai-chat-history') || document.getElementById('chat-container');
@@ -1037,13 +1036,13 @@ window.addEventListener('load', initTTS);
             history.appendChild(line);
 
             try {
-               const chunks = await engine.chat.completions.create({
-  messages: [
-    { role: "system", content: "INK-NEUROID // QWEN-0.6B-ON-WIRE  MODE: laconic | DATA: live | VOICE: cold haiku  Answer in ≤2 sentences; cite [source n] inline; no hellos, no goodbyes." },
-    { role: "user", content: prompt }
-  ],
-  stream: true
-});
+                const chunks = await engine.chat.completions.create({
+                    messages: [
+                        { role: "system", content: "INK-NEUROID // QWEN-0.6B-ON-WIRE  MODE: laconic | DATA: live | VOICE: cold haiku  Answer in ≤2 sentences; cite [source n] inline; no hellos, no goodbyes." },
+                        { role: "user", content: prompt }
+                    ],
+                    stream: true
+                });
 
                 let reply = "";
                 for await (const chunk of chunks) {
@@ -1057,16 +1056,18 @@ window.addEventListener('load', initTTS);
                 line.innerText = "CORE_STUTTER: SIGNAL_LOST";
             }
         };
-    }
-      const input = document.getElementById('chat-input');
+
+        // 2. Attach the "Enter" listener (Reliable for Android)
+        const input = document.getElementById('chat-input');
         if (input) {
             input.addEventListener("keydown", (e) => {
                 if (e.key === "Enter") {
-                    e.preventDefault(); // Stop mobile keyboard from making a new line
+                    e.preventDefault(); // Prevents new line on mobile
                     window.sendMessage();
                 }
             });
         }
+    } // <--- Fixed this (removed the stray /)
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
