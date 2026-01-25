@@ -137,25 +137,26 @@
 <!-- ============  READER SCRIPT  ============ -->
 <!-- ============  READER SCRIPT  ============ -->
 <!-- ============  READER SCRIPT  ============ -->
+<!-- ============  READER SCRIPT  ============ -->
 <script id="reader-script">
 /* ==========  CONFIG  ========== */
 const TXT_FILE_URL = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/horse.txt';
 const IMAGES_JSON_URL = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/your-images.json';
 
-// Markdown pattern - captures headings (#, ##, ###) and their content
+// Markdown pattern
 const ENTRY_PATTERN = /^(#{1,3})\s+(.+)$/;
 
-// Updated for novel structure - with better regex patterns
+// SIMPLIFIED TAG PATTERNS for testing - let's start with basics
 const TAG_PATTERNS = {
   all: /.*/,
   fragments: /\bfragment(s)?\b|\[fragment\]/i,
   passages: /\bpassage(s)?\b|\[passage\]/i,
   sections: /\bsection(s)?\b|\[section\]/i,
-  sketches: /\bsketch(es)?\b|\[sketch\]|\[image\]/i,
-  characters: /\bcharacter(s)?\b|\[character\]|\[char\]/i,    // Changed vignettes to characters
-  dialogue: /\bdialogue\b|\[dialogue\]|\[dialog\]|\[speech\]/i, // New novel tag
-  scenes: /\bscene(s)?\b|\[scene\]/i,                         // New novel tag
-  settings: /\bsetting(s)?\b|\[setting\]|\[location\]/i        // New novel tag
+  sketches: /\bsketch(es)?\b|\[sketch\]/i,
+  characters: /\bcharacter(s)?\b/i,
+  dialogue: /\bdialogue\b/i,
+  scenes: /\bscene(s)?\b/i,
+  settings: /\bsetting(s)?\b/i
 };
 
 /* ==========  STATE  ========== */
@@ -169,6 +170,26 @@ let isIndexVisible = false;
 let searchTimeout = null;
 let imagesData = [];
 
+/* ==========  DEBUG FUNCTIONS  ========== */
+function debugLog(message, data = null) {
+  console.log(`[DEBUG] ${message}`, data || '');
+}
+
+function showAllTagsInContent() {
+  debugLog('=== CONTENT TAGS ANALYSIS ===');
+  window.readerEntries.forEach((entry, index) => {
+    const foundTags = [];
+    for (const [tag, pattern] of Object.entries(TAG_PATTERNS)) {
+      if (tag !== 'all' && pattern.test(entry.content)) {
+        foundTags.push(tag);
+      }
+    }
+    if (foundTags.length > 0) {
+      debugLog(`Entry ${index}: "${entry.title.substring(0, 30)}..."`, foundTags);
+    }
+  });
+}
+
 /* ==========  DOM  ========== */
 const searchBox = document.getElementById('searchBox');
 const searchStats = document.getElementById('searchStats');
@@ -181,133 +202,56 @@ const entryInfo = document.getElementById('entryInfo');
 const loadingDiv = document.getElementById('loading');
 const contentDiv = document.getElementById('content');
 
-/* ==========  INITIALIZATION  ========== */
-function initializeDOMReferences() {
-  // Ensure all DOM elements are properly referenced
-  window.searchBox = document.getElementById('searchBox') || searchBox;
-  window.searchStats = document.getElementById('searchStats') || searchStats;
-  window.prevBtn = document.getElementById('prevBtn') || prevBtn;
-  window.nextBtn = document.getElementById('nextBtn') || nextBtn;
-  window.randomBtn = document.getElementById('randomBtn') || randomBtn;
-  window.indexBtn = document.getElementById('indexBtn') || indexBtn;
-  window.dateNav = document.getElementById('dateNav') || dateNav;
-  window.entryInfo = document.getElementById('entryInfo') || entryInfo;
-  window.loadingDiv = document.getElementById('loading') || loadingDiv;
-  window.contentDiv = document.getElementById('content') || contentDiv;
-}
-
-/* ==========  SEARCH UTILITIES - FIXED ========== */
-function parseSearchQuery(q) {
-  const terms = { and: [], or: [], not: [], exact: [] };
-  if (!q) return terms;
-  
-  // Extract exact matches "like this"
-  const exactMatches = q.match(/"[^"]+"/g);
-  if (exactMatches) {
-    exactMatches.forEach(m => {
-      terms.exact.push(m.replace(/"/g, '').toLowerCase());
-      q = q.replace(m, '');
-    });
-  }
-  
-  let op = 'and';
-  const words = q.toLowerCase().split(/\s+/).filter(w => w.trim() && w !== 'and' && w !== 'or');
-  
-  words.forEach(w => {
-    if (w === 'and') op = 'and';
-    else if (w === 'or') op = 'or';
-    else if (w.startsWith('-')) terms.not.push(w.slice(1));
-    else terms[op].push(w);
-  });
-  
-  return terms;
-}
-
-function matchesSearch(e, terms) {
-  const txt = (e.content + ' ' + e.title).toLowerCase();
-  
-  // NOT terms - if any NOT term is found, exclude
-  if (terms.not.some(x => txt.includes(x))) return false;
-  
-  // EXACT phrases - all must be present
-  if (terms.exact.length > 0 && !terms.exact.every(x => txt.includes(x))) return false;
-  
-  // AND terms - all must be present
-  if (terms.and.length > 0 && !terms.and.every(x => txt.includes(x))) return false;
-  
-  // OR terms - at least one must be present (if OR terms exist)
-  if (terms.or.length > 0 && !terms.or.some(x => txt.includes(x))) return false;
-  
-  // If no search terms (after filtering), return true
-  return !(terms.exact.length === 0 && terms.and.length === 0 && terms.or.length === 0);
-}
-
-function highlightText(text, query) {
-  if (!query || !query.trim()) return text;
-  
-  const terms = parseSearchQuery(query);
-  const allTerms = [...terms.exact, ...terms.and, ...terms.or]
-    .filter((v, i, a) => a.indexOf(v) === i && v.length > 0);
-  
-  if (allTerms.length === 0) return text;
-  
-  let result = text;
-  allTerms.sort((a, b) => b.length - a.length).forEach(t => {
-    const safe = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(`(${safe})`, 'gi');
-    result = result.replace(regex, '<span class="highlight" style="background:var(--red); color:black; padding:0 2px;">$1</span>');
-  });
-  
-  return result;
-}
-
-function debounce(func, delay) {
-  return function(...args) {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => func.apply(this, args), delay);
-  };
-}
-
 /* ==========  LOAD DATA  ========== */
 async function loadText() {
   try {
-    initializeDOMReferences();
+    debugLog('Starting load...');
     
-    // Load text first, then images
+    // Load text
     const textRes = await fetch(TXT_FILE_URL);
     if (!textRes.ok) throw new Error('Text file not found');
     
     let text = await textRes.text();
+    debugLog('Text loaded, length:', text.length);
+    
     text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
     parseEntries(text);
     
-    // Try to load images, but don't fail if it doesn't work
+    // Try to load images
     try {
       const imagesRes = await fetch(IMAGES_JSON_URL);
       if (imagesRes.ok) {
         imagesData = await imagesRes.json();
-        console.log('Images data loaded:', imagesData);
+        debugLog('Images JSON loaded:', typeof imagesData);
+        debugLog('Images data sample:', Array.isArray(imagesData) ? 
+          imagesData.slice(0, 3) : 
+          Object.keys(imagesData).slice(0, 3));
+      } else {
+        debugLog('Images JSON not found or error:', imagesRes.status);
       }
     } catch (imageError) {
-      console.warn('Could not load images:', imageError);
+      debugLog('Image load error:', imageError.message);
     }
     
     loadingDiv.style.display = 'none';
     contentDiv.style.display = 'block';
     
+    debugLog(`Parsed ${window.readerEntries.length} entries`);
+    
     if (window.readerEntries.length > 0) {
       showEntry(window.readerEntries[0].id);
     }
     
-    // Set "All" button active
-    const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
-    if (allBtn) styleActiveFilter(allBtn);
+    // Show debug info about tags
+    showAllTagsInContent();
     
-    // Setup event listeners
-    setupEventListeners();
-    
+    // Setup UI
+    styleActiveFilter(document.querySelector('.filter-btn[data-filter="all"]'));
     buildIndex();
     updateUIState();
+    
+    // Setup search listener
+    setupSearchListener();
     
   } catch (err) {
     console.error('Load error:', err);
@@ -315,85 +259,49 @@ async function loadText() {
   }
 }
 
-/* ==========  EVENT LISTENERS SETUP ========== */
-function setupEventListeners() {
-  // Remove any existing listeners first
-  const newSearchBox = searchBox.cloneNode(true);
-  searchBox.parentNode.replaceChild(newSearchBox, searchBox);
-  window.searchBox = newSearchBox;
-  
-  // Setup search with debounce
-  searchBox.addEventListener('input', debounce(function(e) {
-    console.log('Search input:', e.target.value);
-    performSearch(e.target.value);
-  }, 300));
-  
-  // Setup filter buttons
-  const filterContainer = document.getElementById('filterBtns');
-  if (filterContainer) {
-    filterContainer.addEventListener('click', function(e) {
-      if (e.target.classList.contains('filter-btn')) {
-        console.log('Filter clicked:', e.target.dataset.filter);
-        handleFilterClick(e.target);
+/* ==========  SEARCH - SIMPLIFIED ========== */
+function setupSearchListener() {
+  searchBox.addEventListener('input', function(e) {
+    const query = e.target.value.trim();
+    debugLog('Search input:', query);
+    
+    if (!query) {
+      isSearching = false;
+      searchResults = [];
+      updateUIState();
+      if (window.readerEntries.length > 0) {
+        showEntry(window.readerEntries[0].id);
       }
+      return;
+    }
+    
+    isSearching = true;
+    
+    // SIMPLE SEARCH - just check if text contains query
+    const pool = getFilteredEntries();
+    searchResults = pool.filter(entry => {
+      const searchText = (entry.content + ' ' + entry.title).toLowerCase();
+      return searchText.includes(query.toLowerCase());
     });
-  }
-  
-  // Setup navigation buttons (already working)
-  if (prevBtn) prevBtn.addEventListener('click', () => navigateEntries('prev'));
-  if (nextBtn) nextBtn.addEventListener('click', () => navigateEntries('next'));
-  if (randomBtn) randomBtn.addEventListener('click', showRandomEntry);
-  if (indexBtn) indexBtn.addEventListener('click', toggleIndex);
-  
-  // Keyboard navigation
-  document.addEventListener('keydown', handleKeyboardNavigation);
+    
+    debugLog(`Simple search for "${query}": ${searchResults.length} results`);
+    
+    updateUIState();
+    
+    if (searchResults.length > 0) {
+      showEntry(searchResults[0].id);
+    } else {
+      contentDiv.innerHTML = `<div class="text-center mt-10 text-gray-500">No matches found for "${query}"</div>`;
+      entryInfo.innerHTML = `<div class="text-xs text-gray-500">Search: "${query}" - 0 results</div>`;
+    }
+  });
 }
 
-function handleFilterClick(button) {
-  styleActiveFilter(button);
-  currentFilter = button.dataset.filter;
+function highlightText(text, query) {
+  if (!query) return text;
   
-  // Clear search when switching filters
-  searchBox.value = '';
-  isSearching = false;
-  updateUIState();
-  
-  const filtered = getFilteredEntries();
-  console.log(`${currentFilter} filter: ${filtered.length} entries`);
-  
-  if (filtered.length > 0) {
-    showEntry(filtered[0].id);
-  } else {
-    contentDiv.innerHTML = '<div class="text-center mt-10 text-gray-500">No entries with this tag.</div>';
-    entryInfo.innerHTML = '';
-  }
-}
-
-function toggleIndex() {
-  isIndexVisible = !isIndexVisible;
-  dateNav.classList.toggle('hidden');
-  if (isIndexVisible) buildIndex();
-}
-
-function handleKeyboardNavigation(e) {
-  if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-  
-  if (e.key === 'ArrowLeft') {
-    e.preventDefault();
-    navigateEntries('prev');
-  }
-  if (e.key === 'ArrowRight') {
-    e.preventDefault();
-    navigateEntries('next');
-  }
-  if (e.key.toLowerCase() === 'r') {
-    e.preventDefault();
-    showRandomEntry();
-  }
-  if (e.key === 'Escape' && isIndexVisible) {
-    dateNav.classList.add('hidden');
-    isIndexVisible = false;
-  }
+  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  return text.replace(regex, '<span class="highlight" style="background:var(--red); color:black; padding:0 2px;">$1</span>');
 }
 
 /* ==========  PARSE ENTRIES  ========== */
@@ -402,7 +310,9 @@ function parseEntries(text) {
   let current = null;
   let id = 0;
   
-  lines.forEach((line) => {
+  debugLog('Parsing lines:', lines.length);
+  
+  lines.forEach((line, lineNum) => {
     const m = line.match(ENTRY_PATTERN);
     if (m) {
       // Save previous entry if exists
@@ -420,6 +330,8 @@ function parseEntries(text) {
         tags: [],
         images: []
       };
+      
+      debugLog(`New entry at line ${lineNum}: "${current.title}"`);
     } else if (current) {
       // Continue current entry
       current.content += line + '\n';
@@ -432,62 +344,83 @@ function parseEntries(text) {
     window.readerEntries.push(current);
   }
   
-  console.log(`Parsed ${window.readerEntries.length} entries with tags:`, 
-    window.readerEntries.map(e => ({ title: e.title, tags: e.tags })));
+  debugLog(`Total entries parsed: ${window.readerEntries.length}`);
 }
 
-function detectTags(e) {
+function detectTags(entry) {
   const detectedTags = [];
+  const contentLower = entry.content.toLowerCase();
   
+  // DEBUG: Check what's actually in the content
+  if (contentLower.includes('sketch')) {
+    debugLog(`Found "sketch" in entry: "${entry.title.substring(0, 30)}..."`);
+  }
+  if (contentLower.includes('dialogue')) {
+    debugLog(`Found "dialogue" in entry: "${entry.title.substring(0, 30)}..."`);
+  }
+  if (contentLower.includes('fragment')) {
+    debugLog(`Found "fragment" in entry: "${entry.title.substring(0, 30)}..."`);
+  }
+  
+  // Check each tag pattern
   for (const [tag, pattern] of Object.entries(TAG_PATTERNS)) {
-    if (tag !== 'all' && pattern.test(e.content)) {
-      detectedTags.push(tag);
+    if (tag !== 'all') {
+      // Test the pattern
+      const matches = pattern.test(entry.content);
+      if (matches) {
+        detectedTags.push(tag);
+        debugLog(`Tag "${tag}" matched for entry: "${entry.title.substring(0, 30)}..."`);
+      }
     }
   }
   
-  e.tags = detectedTags;
+  entry.tags = detectedTags;
   
-  // Special handling for sketches - find associated images
-  if (detectedTags.includes('sketches') && imagesData.length > 0) {
-    e.images = findImagesForEntry(e);
-    if (e.images.length > 0) {
-      console.log(`Found ${e.images.length} images for sketch: ${e.title}`);
+  // Find images for sketches
+  if (detectedTags.includes('sketches') && imagesData) {
+    entry.images = findImagesForEntry(entry);
+    if (entry.images.length > 0) {
+      debugLog(`Found ${entry.images.length} images for sketch: "${entry.title}"`);
     }
   }
 }
 
 function findImagesForEntry(entry) {
-  if (!imagesData || imagesData.length === 0) return [];
+  if (!imagesData || (Array.isArray(imagesData) && imagesData.length === 0)) {
+    return [];
+  }
   
   const foundImages = [];
-  const entryText = (entry.title + ' ' + entry.content).toLowerCase();
   
-  // Try different matching strategies
-  imagesData.forEach((img, index) => {
-    // Check if image has a title/description that matches entry
-    const imgText = (img.title || img.description || img.filename || '').toLowerCase();
+  // Try different JSON structures
+  if (Array.isArray(imagesData)) {
+    // Array structure: [{url: "...", title: "...", description: "..."}]
+    debugLog('Images data is an array, length:', imagesData.length);
     
-    // Simple keyword matching
-    if (imgText && entryText.includes(imgText.substring(0, 20))) {
+    // Simple assignment: first sketch gets first image, etc.
+    const sketchEntries = window.readerEntries.filter(e => e.tags.includes('sketches'));
+    const sketchIndex = sketchEntries.findIndex(e => e.id === entry.id);
+    
+    if (sketchIndex < imagesData.length) {
+      const img = imagesData[sketchIndex];
       foundImages.push({
-        url: img.url || img.path || `image_${index}.jpg`,
-        title: img.title || `Image ${index + 1}`,
-        description: img.description || ''
+        url: img.url || img.src || img.path || img.filename || `image_${sketchIndex}.jpg`,
+        title: img.title || img.caption || `Sketch ${sketchIndex + 1}`,
+        description: img.description || img.alt || `Associated with: ${entry.title}`
       });
     }
-  });
-  
-  // If no matches found, you might want to associate images by index
-  // For example, first sketch gets first image, etc.
-  const sketchEntries = window.readerEntries.filter(e => e.tags.includes('sketches'));
-  const sketchIndex = sketchEntries.findIndex(e => e.id === entry.id);
-  
-  if (foundImages.length === 0 && sketchIndex < imagesData.length) {
-    const img = imagesData[sketchIndex];
-    foundImages.push({
-      url: img.url || img.path || `image_${sketchIndex}.jpg`,
-      title: img.title || `Sketch Image ${sketchIndex + 1}`,
-      description: img.description || `Associated with: ${entry.title}`
+  } else if (typeof imagesData === 'object') {
+    // Object structure: {"key": {url: "...", ...}}
+    debugLog('Images data is an object, keys:', Object.keys(imagesData).slice(0, 3));
+    
+    Object.entries(imagesData).forEach(([key, img], index) => {
+      if (index < 5) { // Limit to first 5 for testing
+        foundImages.push({
+          url: img.url || img.src || img.path || key,
+          title: img.title || img.caption || key,
+          description: img.description || img.alt || ''
+        });
+      }
     });
   }
   
@@ -498,7 +431,9 @@ function getFilteredEntries() {
   let entries = window.readerEntries;
   
   if (currentFilter !== 'all') {
-    entries = entries.filter(e => e.tags.includes(currentFilter));
+    const filtered = entries.filter(e => e.tags.includes(currentFilter));
+    debugLog(`Filter "${currentFilter}": ${filtered.length} of ${entries.length} entries`);
+    return filtered;
   }
   
   return entries;
@@ -506,27 +441,28 @@ function getFilteredEntries() {
 
 /* ==========  DISPLAY FUNCTIONS  ========== */
 function showEntry(entryId) {
-  const e = window.readerEntries.find(x => x.id === entryId);
-  if (!e) {
-    console.error('Entry not found:', entryId);
-    return;
-  }
+  const entry = window.readerEntries.find(x => x.id === entryId);
+  if (!entry) return;
   
   window.readerCurrentIndex = entryId;
   
-  let displayContent = e.content;
+  debugLog(`Showing entry ${entryId}: "${entry.title}"`, {
+    tags: entry.tags,
+    hasImages: entry.images?.length || 0
+  });
+  
+  let displayContent = entry.content;
   
   // Apply highlighting if searching
   if (isSearching && searchQuery) {
     displayContent = highlightText(displayContent, searchQuery);
   }
   
-  // Process markdown formatting for display
+  // Process markdown formatting
   const html = displayContent.split('\n').map(line => {
     const trimmed = line.trim();
     if (!trimmed) return '<br>';
     
-    // Check if this line is a markdown heading
     const headingMatch = line.match(/^(#{1,3})\s+(.+)$/);
     if (headingMatch) {
       const level = headingMatch[1].length;
@@ -537,20 +473,19 @@ function showEntry(entryId) {
       return `<h${level} class="${headingClass} special-elite" style="color:var(--red)">${headingText}</h${level}>`;
     }
     
-    // Regular paragraph
     return `<p class="mb-4 leading-relaxed">${trimmed}</p>`;
   }).join('');
   
-  // Add images if this entry has them
+  // Add images if available
   let imagesHtml = '';
-  if (e.images && e.images.length > 0) {
-    imagesHtml = e.images.map(img => `
+  if (entry.images && entry.images.length > 0) {
+    imagesHtml = entry.images.map(img => `
       <div class="my-6 p-4 border border-gray-700 rounded-lg bg-gray-900">
         <img src="${img.url}" 
              alt="${img.description || img.title}" 
              class="w-full h-64 object-cover rounded mb-2"
              loading="lazy"
-             onerror="this.onerror=null; this.src='https://placehold.co/600x400/111/666?text=Image+Not+Found';">
+             onerror="console.error('Image failed to load:', this.src); this.src='https://placehold.co/600x400/111/666?text=Image+Error';">
         <div class="text-xs text-gray-400 mt-2">
           <strong class="text-gray-300">${img.title || 'Untitled'}</strong>
           ${img.description ? `<br>${img.description}` : ''}
@@ -563,121 +498,101 @@ function showEntry(entryId) {
   
   const pool = isSearching ? searchResults : getFilteredEntries();
   const idx = pool.findIndex(x => x.id === entryId);
-  const words = e.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
+  const words = entry.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
   
-  // Tag color mapping - updated for new tags
+  // Tag styling
   const tagStyles = {
     'fragments': 'border-red-400 text-red-400',
     'passages': 'border-red-500 text-red-500', 
     'sections': 'border-red-600 text-red-600',
     'sketches': 'border-red-700 text-red-700 bg-red-900/20',
-    'characters': 'border-purple-500 text-purple-400',    // Updated
-    'dialogue': 'border-blue-500 text-blue-400',         // New
-    'scenes': 'border-green-500 text-green-400',         // New
-    'settings': 'border-yellow-500 text-yellow-400'      // New
+    'characters': 'border-purple-500 text-purple-400',
+    'dialogue': 'border-blue-500 text-blue-400',
+    'scenes': 'border-green-500 text-green-400',
+    'settings': 'border-yellow-500 text-yellow-400'
   };
   
   entryInfo.innerHTML = `
     <div class="flex flex-col gap-1">
       <div>
         <span class="text-xs text-gray-500 uppercase tracking-widest">HORSE ARCHIVE</span>
-        <span class="ml-2 font-bold text-xl special-elite" style="color:var(--red)">${e.title}</span>
+        <span class="ml-2 font-bold text-xl special-elite" style="color:var(--red)">${entry.title}</span>
       </div>
       <div class="text-xs text-gray-400 flex items-center gap-2 flex-wrap">
-        ${isSearching ? `Result ${idx + 1}/${searchResults.length}` : `Entry ${idx + 1}/${pool.length}`}
+        ${isSearching ? `Search result ${idx + 1}/${searchResults.length}` : `Entry ${idx + 1}/${pool.length}`}
         <span>•</span>${words} words
-        ${e.tags.length > 0 ? `<span class="ml-2 flex gap-1 flex-wrap">
-          ${e.tags.map(t => {
+        ${entry.tags.length > 0 ? `<span class="ml-2 flex gap-1 flex-wrap">
+          ${entry.tags.map(t => {
             const style = tagStyles[t] || 'border-gray-600 text-gray-600';
-            const icon = t === 'sketches' && e.images?.length ? ` (${e.images.length}📷)` : '';
+            const icon = t === 'sketches' && entry.images?.length ? ` (${entry.images.length}📷)` : '';
             return `<span class="px-2 py-1 border text-[10px] uppercase ${style}">${t}${icon}</span>`;
           }).join('')}
         </span>` : ''}
       </div>
     </div>`;
   
-  // Update button states
-  updateNavigationButtons(pool, idx);
+  // Update navigation buttons
+  if (prevBtn) {
+    prevBtn.disabled = idx <= 0;
+    prevBtn.style.opacity = idx <= 0 ? '0.5' : '1';
+  }
+  if (nextBtn) {
+    nextBtn.disabled = idx >= pool.length - 1;
+    nextBtn.style.opacity = idx >= pool.length - 1 ? '0.5' : '1';
+  }
   
   contentDiv.scrollTop = 0;
   if (isIndexVisible) buildIndex();
 }
 
-function updateNavigationButtons(pool, currentIndex) {
-  if (prevBtn) {
-    prevBtn.disabled = currentIndex <= 0;
-    prevBtn.style.opacity = currentIndex <= 0 ? '0.5' : '1';
-    prevBtn.style.cursor = currentIndex <= 0 ? 'not-allowed' : 'pointer';
-  }
-  
-  if (nextBtn) {
-    nextBtn.disabled = currentIndex >= pool.length - 1;
-    nextBtn.style.opacity = currentIndex >= pool.length - 1 ? '0.5' : '1';
-    nextBtn.style.cursor = currentIndex >= pool.length - 1 ? 'not-allowed' : 'pointer';
-  }
-}
-
-function showRandomEntry() {
-  const pool = isSearching ? searchResults : getFilteredEntries();
-  if (!pool.length) return;
-  
-  let randomIdx;
-  do {
-    randomIdx = Math.floor(Math.random() * pool.length);
-  } while (pool[randomIdx].id === window.readerCurrentIndex && pool.length > 1);
-  
-  showEntry(pool[randomIdx].id);
-}
-
-function navigateEntries(dir) {
-  const pool = isSearching ? searchResults : getFilteredEntries();
-  if (pool.length === 0) return;
-  
-  const idx = pool.findIndex(x => x.id === window.readerCurrentIndex);
-  const newIdx = dir === 'next' ? idx + 1 : idx - 1;
-  
-  if (newIdx >= 0 && newIdx < pool.length) {
-    showEntry(pool[newIdx].id);
-  }
-}
-
-/* ==========  SEARCH FUNCTIONS - FIXED ========== */
-function performSearch(q) {
-  console.log('Performing search for:', q);
-  searchQuery = q.trim();
-  
-  if (!searchQuery) {
-    console.log('Clearing search');
-    isSearching = false;
-    searchResults = [];
-    updateUIState();
-    
-    // Show current entry or first entry
-    if (window.readerCurrentIndex > 0) {
-      showEntry(window.readerCurrentIndex);
-    } else if (window.readerEntries.length > 0) {
-      showEntry(window.readerEntries[0].id);
-    }
+/* ==========  FILTER HANDLING  ========== */
+function setupFilterListeners() {
+  const filterContainer = document.getElementById('filterBtns');
+  if (!filterContainer) {
+    console.error('Filter container not found!');
     return;
   }
   
-  isSearching = true;
-  const pool = getFilteredEntries();
-  const terms = parseSearchQuery(searchQuery);
+  filterContainer.addEventListener('click', function(e) {
+    if (e.target.classList.contains('filter-btn')) {
+      const filter = e.target.dataset.filter;
+      debugLog(`Filter clicked: ${filter}`);
+      handleFilterChange(filter, e.target);
+    }
+  });
+}
+
+function handleFilterChange(filter, button) {
+  currentFilter = filter;
   
-  console.log('Search terms:', terms);
-  console.log('Pool size:', pool.length);
+  // Style the active button
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.style.background = 'transparent';
+    btn.style.borderColor = '#333';
+    btn.style.color = '#666';
+  });
   
-  searchResults = pool.filter(e => matchesSearch(e, terms));
-  console.log('Search results:', searchResults.length);
+  button.style.background = 'var(--red)';
+  button.style.color = 'black';
+  button.style.borderColor = 'var(--red)';
+  
+  // Clear search
+  searchBox.value = '';
+  isSearching = false;
+  
+  const filtered = getFilteredEntries();
+  debugLog(`Filter "${filter}" applied: ${filtered.length} entries`);
   
   updateUIState();
   
-  if (searchResults.length > 0) {
-    showEntry(searchResults[0].id);
+  if (filtered.length > 0) {
+    showEntry(filtered[0].id);
   } else {
-    contentDiv.innerHTML = '<div class="text-center mt-10 text-gray-500">No matches found for "' + searchQuery + '".</div>';
-    entryInfo.innerHTML = '<div class="text-xs text-gray-500">No matches found</div>';
+    contentDiv.innerHTML = `<div class="text-center mt-10 text-gray-500">
+      No entries tagged as "${filter}".<br>
+      <span class="text-sm text-gray-600">Try another filter or check if entries contain "${filter}" in their content.</span>
+    </div>`;
+    entryInfo.innerHTML = `<div class="text-xs text-gray-500">Filter: ${filter} - 0 entries</div>`;
   }
 }
 
@@ -704,40 +619,38 @@ function buildIndex() {
     return;
   }
   
-  pool.forEach(e => {
+  pool.forEach(entry => {
     const div = document.createElement('div');
     div.className = 'p-3 border-b border-gray-700 cursor-pointer hover:bg-gray-900 transition-colors';
     
-    if (e.id === window.readerCurrentIndex) {
+    if (entry.id === window.readerCurrentIndex) {
       div.style.background = '#1a1a1a';
       div.style.borderLeft = '3px solid var(--red)';
     }
     
-    const preview = e.content.replace(/<[^>]*>/g, '').substring(0, 60).replace(/\n/g, ' ') + '...';
-    const imageCount = e.images?.length ? ` 📷${e.images.length}` : '';
-    const tagsPreview = e.tags.length > 0 ? 
-      e.tags.slice(0, 2).map(t => `<span class="text-[9px] text-gray-500">${t}</span>`).join(' ') : '';
+    const preview = entry.content.replace(/<[^>]*>/g, '').substring(0, 60).replace(/\n/g, ' ') + '...';
+    const imageCount = entry.images?.length ? ` 📷${entry.images.length}` : '';
     
     div.innerHTML = `
       <div class="text-sm font-bold text-gray-300 mb-1 truncate special-elite">
-        ${e.title}${imageCount}
+        ${entry.title}${imageCount}
       </div>
       <div class="text-xs text-gray-600 font-mono truncate">${preview}</div>
-      ${tagsPreview ? `<div class="mt-1 flex gap-1">${tagsPreview}</div>` : ''}
+      ${entry.tags.length > 0 ? 
+        `<div class="mt-1 flex gap-1 flex-wrap">
+          ${entry.tags.slice(0, 3).map(t => 
+            `<span class="text-[9px] px-1 py-0.5 border border-gray-700 text-gray-500">${t}</span>`
+          ).join('')}
+        </div>` : ''}
     `;
     
-    div.addEventListener('click', () => {
-      showEntry(e.id);
-      if (window.innerWidth < 768) {
-        dateNav.classList.add('hidden');
-        isIndexVisible = false;
-      }
-    });
+    div.addEventListener('click', () => showEntry(entry.id));
     dateNav.appendChild(div);
   });
 }
 
 function styleActiveFilter(btn) {
+  if (!btn) return;
   document.querySelectorAll('.filter-btn').forEach(b => {
     b.style.background = 'transparent';
     b.style.borderColor = '#333';
@@ -749,8 +662,83 @@ function styleActiveFilter(btn) {
   btn.style.borderColor = 'var(--red)';
 }
 
-/* ==========  INITIALIZE  ========== */
-document.addEventListener('DOMContentLoaded', loadText);
+/* ==========  NAVIGATION  ========== */
+function showRandomEntry() {
+  const pool = isSearching ? searchResults : getFilteredEntries();
+  if (!pool.length) return;
+  
+  let randomIdx;
+  do {
+    randomIdx = Math.floor(Math.random() * pool.length);
+  } while (pool[randomIdx].id === window.readerCurrentIndex && pool.length > 1);
+  
+  showEntry(pool[randomIdx].id);
+}
+
+function navigateEntries(dir) {
+  const pool = isSearching ? searchResults : getFilteredEntries();
+  if (pool.length === 0) return;
+  
+  const idx = pool.findIndex(x => x.id === window.readerCurrentIndex);
+  const newIdx = dir === 'next' ? idx + 1 : idx - 1;
+  
+  if (newIdx >= 0 && newIdx < pool.length) {
+    showEntry(pool[newIdx].id);
+  }
+}
+
+/* ==========  INITIALIZATION  ========== */
+document.addEventListener('DOMContentLoaded', function() {
+  debugLog('DOM loaded, starting...');
+  loadText();
+  setupFilterListeners();
+  
+  // Navigation buttons
+  if (prevBtn) prevBtn.addEventListener('click', () => navigateEntries('prev'));
+  if (nextBtn) nextBtn.addEventListener('click', () => navigateEntries('next'));
+  if (randomBtn) randomBtn.addEventListener('click', showRandomEntry);
+  if (indexBtn) indexBtn.addEventListener('click', () => {
+    isIndexVisible = !isIndexVisible;
+    dateNav.classList.toggle('hidden');
+    if (isIndexVisible) buildIndex();
+  });
+  
+  // Keyboard shortcuts
+  document.addEventListener('keydown', function(e) {
+    if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+    
+    if (e.key === 'ArrowLeft') navigateEntries('prev');
+    if (e.key === 'ArrowRight') navigateEntries('next');
+    if (e.key.toLowerCase() === 'r') showRandomEntry();
+    if (e.key === 'Escape' && isIndexVisible) {
+      dateNav.classList.add('hidden');
+      isIndexVisible = false;
+    }
+  });
+});
+
+// Test function to check your text file content
+async function testFileContent() {
+  try {
+    const res = await fetch(TXT_FILE_URL);
+    const text = await res.text();
+    const first1000 = text.substring(0, 1000);
+    debugLog('First 1000 chars of file:', first1000);
+    
+    // Look for sketch/dialogue mentions
+    const lines = text.split('\n');
+    lines.forEach((line, i) => {
+      if (line.toLowerCase().includes('sketch') || line.toLowerCase().includes('dialogue')) {
+        debugLog(`Line ${i}: "${line.substring(0, 50)}..."`);
+      }
+    });
+  } catch (err) {
+    console.error('Test failed:', err);
+  }
+}
+
+// Uncomment to run test
+// testFileContent();
 </script>
 
 <script id="ai-script">
