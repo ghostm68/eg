@@ -239,7 +239,7 @@
 </head>
 <body>
     <h1>🚀 GROK 4.1 FAST</h1>
-    <p class="subtitle">Free testing via OpenRouter  • Bring Your Own Key</p>
+    <p class="subtitle"> • Bring Your Own Key</p>
 
     <div class="container">
         <!-- Column 1: Chat History -->
@@ -249,7 +249,7 @@
             <div class="chat-display" id="chatDisplay">
                 <div class="message assistant-message">
                     <div class="message-role">GROK</div>
-                    Hello! I'm Grok 4.1 Fast. Enter your OpenRouter API key in the middle panel to start chatting.
+                    Hello! I'm Grok 4.1 Fast. Enter your X.ai API key in the middle panel to start.
                 </div>
             </div>
 
@@ -264,13 +264,14 @@
             <h2>Controls</h2>
             
             <div class="api-key-section">
-                <h3>OpenRouter API Key:</h3>
+                <h3>X.ai API Key:</h3>
                 <div class="key-input-group">
-                    <input type="password" id="apiKey" placeholder="sk-or-v1-...">
+                    <input type="password" id="apiKey" placeholder="xai-...">
                     <button class="toggle-key" id="toggleKey">👁️</button>
                 </div>
                 <div class="api-help">
-                    Get free key at: <a href="https://openrouter.ai/settings/keys" target="_blank" style="color: #4a7c7c;">openrouter.ai/settings/keys</a>
+                    <!-- 🟡 IMPROVEMENT 1: Updated link to official console -->
+                    Get key at: <a href="https://console.x.ai/" target="_blank" style="color: #4a7c7c;">xAI Console</a>
                 </div>
             </div>
 
@@ -281,6 +282,10 @@
 
             <div class="send-section">
                 <button id="sendButton">Send Message</button>
+                <!-- 🟡 IMPROVEMENT 2 (Optional): Simple loading indicator -->
+                <div id="loadingIndicator" style="display: none; margin-top: 10px; color: #888;">
+                    ⏳ Grok is thinking...
+                </div>
             </div>
         </div>
 
@@ -290,173 +295,184 @@
             <div class="status-display" id="statusDisplay">
 Ready to connect.
 
-Enter your OpenRouter API key and start chatting with Grok 4.1 Fast.
+Enter your x.ai API key and start chatting with Grok 4.1 Fast.
 
-⚡ Free until December 3, 2025
+⚡ 
 🔒 Your key stays in your browser
-💬 Full conversation history maintained
+
             </div>
         </div>
     </div>
 
     <div class="api-status">
-        Powered by xAI Grok via OpenRouter • No credit card required for free models
+        Powered by xAI Grok 
     </div>
 
-    <script>
-        let apiKey = '';
-        let conversationHistory = [];
+    <!-- Place your updated <script> code here -->
+</body>
 
-        // Load saved API key
-        window.addEventListener('load', () => {
-            const saved = localStorage.getItem('openrouter_api_key');
-            if (saved) {
-                apiKey = saved;
-                document.getElementById('apiKey').value = saved;
-                updateStatus('API key loaded from storage', 'ok');
-            }
-        });
+  <script>
+    let apiKey = '';
+    let conversationHistory = [];
 
-        // Toggle key visibility
-        document.getElementById('toggleKey').addEventListener('click', () => {
-            const input = document.getElementById('apiKey');
-            input.type = input.type === 'password' ? 'text' : 'password';
-        });
+    // Load saved API key
+    window.addEventListener('load', () => {
+        // 🟡 CHANGE: Use a consistent key name (e.g., 'xai_api_key')
+        const saved = localStorage.getItem('xai_api_key'); // Was 'x.ai_api_key'
+        if (saved) {
+            apiKey = saved;
+            document.getElementById('apiKey').value = saved;
+            updateStatus('API key loaded from storage', 'ok');
+        }
+    });
 
-        // Save key on change
-        document.getElementById('apiKey').addEventListener('change', (e) => {
-            const key = e.target.value.trim();
-            if (key) {
-                apiKey = key;
-                localStorage.setItem('openrouter_api_key', key);
-                updateStatus('API key saved', 'ok');
-            }
-        });
+    // Toggle key visibility
+    document.getElementById('toggleKey').addEventListener('click', () => {
+        const input = document.getElementById('apiKey');
+        input.type = input.type === 'password' ? 'text' : 'password';
+    });
 
-        function updateStatus(message, type = 'info') {
-            const status = document.getElementById('statusDisplay');
-            const timestamp = new Date().toLocaleTimeString();
-            const prefix = type === 'ok' ? '✓' : type === 'error' ? '✗' : 'ℹ';
-            status.textContent = `[${timestamp}] ${prefix} ${message}\n\n${status.textContent}`;
-            status.className = `status-display ${type === 'ok' ? 'status-ok' : type === 'error' ? 'status-error' : ''}`;
+    // Save key on change
+    document.getElementById('apiKey').addEventListener('change', (e) => {
+        const key = e.target.value.trim();
+        if (key) {
+            apiKey = key;
+            // 🟡 CHANGE: Save with the consistent key name
+            localStorage.setItem('xai_api_key', key); // Was 'x.ai'
+            updateStatus('API key saved', 'ok');
+        }
+    });
+
+    function updateStatus(message, type = 'info') {
+        const status = document.getElementById('statusDisplay');
+        const timestamp = new Date().toLocaleTimeString();
+        const prefix = type === 'ok' ? '✓' : type === 'error' ? '✗' : 'ℹ';
+        status.textContent = `[${timestamp}] ${prefix} ${message}\n\n${status.textContent}`;
+        status.className = `status-display ${type === 'ok' ? 'status-ok' : type === 'error' ? 'status-error' : ''}`;
+    }
+
+    function addMessage(role, content) {
+        const chat = document.getElementById('chatDisplay');
+        const div = document.createElement('div');
+        div.className = `message ${role === 'user' ? 'user-message' : 'assistant-message'}`;
+        
+        const roleDiv = document.createElement('div');
+        roleDiv.className = 'message-role';
+        roleDiv.textContent = role === 'user' ? 'YOU' : 'GROK';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.textContent = content;
+        
+        div.appendChild(roleDiv);
+        div.appendChild(contentDiv);
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function sendMessage() {
+        if (!apiKey) {
+            updateStatus('Please enter and save your API key first', 'error');
+            return;
         }
 
-        function addMessage(role, content) {
+        const input = document.getElementById('userInput');
+        const message = input.value.trim();
+        
+        if (!message) {
+            updateStatus('Please enter a message', 'error');
+            return;
+        }
+
+        addMessage('user', message);
+        conversationHistory.push({ role: 'user', content: message });
+        input.value = '';
+
+        const sendBtn = document.getElementById('sendButton');
+        sendBtn.disabled = true;
+        sendBtn.textContent = 'Thinking...';
+        updateStatus('Waiting for Grok response...');
+
+        try {
+            // 🔴 FIX 1: Use the correct xAI chat completions endpoint
+            const response = await fetch('https://api.x.ai/v1/chat/completions', { // Was 'https://api.x.ai/v1'
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`,
+                    // 🔴 FIX 2: REMOVE non-standard headers
+                    // 'HTTP-Referer': window.location.href,
+                    // 'X-Title': 'Grok 4.1 Fast Test'
+                },
+                body: JSON.stringify({
+                    // 🔴 FIX 3: Use the official xAI model name
+                    model: 'grok-4-1-fast-reasoning', // Was 'x-ai/grok-4.1-fast'
+                    messages: conversationHistory,
+                    // Optional: Add parameters for better control
+                    // temperature: 0.7,
+                    // max_tokens: 1000
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error?.message || `HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+            const reply = data.choices[0].message.content;
+            
+            addMessage('assistant', reply);
+            conversationHistory.push({ role: 'assistant', content: reply });
+            updateStatus('Response received', 'ok');
+            
+        } catch (error) {
+            updateStatus(`Error: ${error.message}`, 'error');
+            addMessage('assistant', `❌ Error: ${error.message}`);
+        } finally {
+            sendBtn.disabled = false;
+            sendBtn.textContent = 'Send Message';
+        }
+    }
+
+    document.getElementById('sendButton').addEventListener('click', sendMessage);
+
+    document.getElementById('userInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    document.getElementById('clearChat').addEventListener('click', () => {
+        if (confirm('Clear conversation history?')) {
             const chat = document.getElementById('chatDisplay');
-            const div = document.createElement('div');
-            div.className = `message ${role === 'user' ? 'user-message' : 'assistant-message'}`;
-            
-            const roleDiv = document.createElement('div');
-            roleDiv.className = 'message-role';
-            roleDiv.textContent = role === 'user' ? 'YOU' : 'GROK';
-            
-            const contentDiv = document.createElement('div');
-            contentDiv.textContent = content;
-            
-            div.appendChild(roleDiv);
-            div.appendChild(contentDiv);
-            chat.appendChild(div);
-            chat.scrollTop = chat.scrollHeight;
+            chat.innerHTML = '<div class="message assistant-message"><div class="message-role">GROK</div>Chat cleared. Ready for a fresh start!</div>';
+            conversationHistory = [];
+            updateStatus('Chat history cleared', 'ok');
         }
+    });
 
-        async function sendMessage() {
-            if (!apiKey) {
-                updateStatus('Please enter and save your API key first', 'error');
-                return;
-            }
-
-            const input = document.getElementById('userInput');
-            const message = input.value.trim();
-            
-            if (!message) {
-                updateStatus('Please enter a message', 'error');
-                return;
-            }
-
-            addMessage('user', message);
-            conversationHistory.push({ role: 'user', content: message });
-            input.value = '';
-
-            const sendBtn = document.getElementById('sendButton');
-            sendBtn.disabled = true;
-            sendBtn.textContent = 'Thinking...';
-            updateStatus('Waiting for Grok response...');
-
-            try {
-                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`,
-                        'HTTP-Referer': window.location.href,
-                        'X-Title': 'Grok 4.1 Fast Test'
-                    },
-                    body: JSON.stringify({
-                        model: 'x-ai/grok-4.1-fast',
-                        messages: conversationHistory
-                    })
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error?.message || `HTTP ${response.status}`);
-                }
-
-                const data = await response.json();
-                const reply = data.choices[0].message.content;
-                
-                addMessage('assistant', reply);
-                conversationHistory.push({ role: 'assistant', content: reply });
-                updateStatus('Response received', 'ok');
-                
-            } catch (error) {
-                updateStatus(`Error: ${error.message}`, 'error');
-                addMessage('assistant', `❌ Error: ${error.message}`);
-            } finally {
-                sendBtn.disabled = false;
-                sendBtn.textContent = 'Send Message';
-            }
+    document.getElementById('exportChat').addEventListener('click', () => {
+        if (conversationHistory.length === 0) {
+            updateStatus('No conversation to export', 'error');
+            return;
         }
-
-        document.getElementById('sendButton').addEventListener('click', sendMessage);
-
-        document.getElementById('userInput').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-
-        document.getElementById('clearChat').addEventListener('click', () => {
-            if (confirm('Clear conversation history?')) {
-                const chat = document.getElementById('chatDisplay');
-                chat.innerHTML = '<div class="message assistant-message"><div class="message-role">GROK</div>Chat cleared. Ready for a fresh start!</div>';
-                conversationHistory = [];
-                updateStatus('Chat history cleared', 'ok');
-            }
-        });
-
-        document.getElementById('exportChat').addEventListener('click', () => {
-            if (conversationHistory.length === 0) {
-                updateStatus('No conversation to export', 'error');
-                return;
-            }
-            
-            const content = conversationHistory
-                .map(msg => `${msg.role.toUpperCase()}:\n${msg.content}\n`)
-                .join('\n');
-            
-            const blob = new Blob([content], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'grok-conversation.txt';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            updateStatus('Conversation exported', 'ok');
-        });
-    </script>
+        
+        const content = conversationHistory
+            .map(msg => `${msg.role.toUpperCase()}:\n${msg.content}\n`)
+            .join('\n');
+        
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'grok-conversation.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        updateStatus('Conversation exported', 'ok');
+    });
+</script>
 </body>
 </html>
