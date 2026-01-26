@@ -675,7 +675,6 @@ async function loadText() {
     contentDiv.style.display = 'block';
 
     if (window.readerEntries.length > 0) {
-      // If we are refreshing, try to stay on the same entry, otherwise go to first
       showEntry(window.readerEntries[0].id);
     }
     
@@ -683,8 +682,10 @@ async function loadText() {
     const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
     if (allBtn) styleActiveFilter(allBtn);
     
+    // Initial UI build
     buildIndex();
     updateUIState();
+    
   } catch (err) {
     loadingDiv.innerHTML = `<p style="color:var(--red)">Error: ${err.message}</p>`;
   }
@@ -696,32 +697,26 @@ function parseEntries(text) {
   let id = 0;
 
   lines.forEach(line => {
-    // TRIM line before checking regex. 
-    // This allows dates to have accidental spaces before them.
     const cleanLine = line.trim(); 
     const m = cleanLine.match(ENTRY_PATTERN);
     
     if (m) {
-      // Save previous entry if exists
       if (current && current.content.trim()) {
         detectTags(current);
         window.readerEntries.push(current);
       }
       
-      // Start new entry
       current = {
         id: ++id,
-        title: m[0].trim(), // Use the regex match as the title
+        title: m[0].trim(),
         content: line + '\n',
         tags: []
       };
     } else if (current) {
-      // Continue current entry
       current.content += line + '\n';
     }
   });
 
-  // Don't forget the last entry
   if (current && current.content.trim()) {
     detectTags(current);
     window.readerEntries.push(current);
@@ -731,9 +726,8 @@ function parseEntries(text) {
 }
 
 function detectTags(e) {
-  // combine title and content for better detection
+  // Combine title and content for better detection
   const text = (e.title + ' ' + e.content).toLowerCase();
-  
   for (const [tag, re] of Object.entries(TAG_PATTERNS)) {
     if (tag !== 'all' && re.test(text)) {
       e.tags.push(tag);
@@ -748,6 +742,15 @@ function getFilteredEntries() {
 }
 
 /* ----------  DISPLAY  ---------- */
+
+// Helper: Gets the list we are currently looking at (Search Results OR Filtered List)
+function getCurrentViewEntries() {
+  if (isSearching) {
+    return searchResults;
+  }
+  return getFilteredEntries();
+}
+
 function showEntry(entryId) {
   const e = window.readerEntries.find(x => x.id === entryId);
   if (!e) return;
@@ -777,7 +780,7 @@ function showEntry(entryId) {
   contentDiv.innerHTML = displayContent;
   
   // 4. Calculate Stats for the Header
-  const pool = isSearching ? searchResults : getFilteredEntries();
+  const pool = getCurrentViewEntries();
   const idx = pool.findIndex(x => x.id === entryId);
   const words = e.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
   
@@ -806,7 +809,7 @@ function showEntry(entryId) {
       </div>
     </div>`;
   
-  // 8. Handle Button States (Grey out if start/end)
+  // 8. Handle Button States
   prevBtn.disabled = idx <= 0;
   nextBtn.disabled = idx >= pool.length - 1;
   prevBtn.style.opacity = prevBtn.disabled ? '0.3' : '1';
@@ -820,11 +823,10 @@ function showEntry(entryId) {
 }
 
 function showRandomEntry() {
-  const pool = isSearching ? searchResults : getFilteredEntries();
+  const pool = getCurrentViewEntries();
   if (!pool.length) return;
   
   let randomIdx;
-  // Try to find a new one, but don't loop forever if only 1 exists
   do {
     randomIdx = Math.floor(Math.random() * pool.length);
   } while (pool[randomIdx].id === window.readerCurrentIndex && pool.length > 1);
@@ -833,7 +835,7 @@ function showRandomEntry() {
 }
 
 function navigateEntries(dir) {
-  const pool = isSearching ? searchResults : getFilteredEntries();
+  const pool = getCurrentViewEntries();
   const idx = pool.findIndex(x => x.id === window.readerCurrentIndex);
   const newIdx = dir === 'next' ? idx + 1 : idx - 1;
   
@@ -843,36 +845,62 @@ function navigateEntries(dir) {
 }
 
 function buildIndex() {
-  const pool = isSearching ? searchResults : getFilteredEntries();
+  const pool = getCurrentViewEntries();
+  
   dateNav.innerHTML = '';
   
   if (pool.length === 0) {
-    dateNav.innerHTML = '<div class="p-4 text-xs text-gray-600">No entries found for this filter.</div>';
+    dateNav.innerHTML = '<div class="p-4 text-gray-500 text-sm font-mono text-center">No entries found.</div>';
     return;
   }
-
-  pool.forEach(e => {
+  
+  pool.forEach(entry => {
     const div = document.createElement('div');
-    div.className = 'p-3 border-b border-gray-700 cursor-pointer hover:bg-gray-900 transition-colors';
+    div.className = 'p-3 border-b border-gray-700 cursor-pointer hover:bg-gray-900 transition-colors group';
     
-    if (e.id === window.readerCurrentIndex) {
+    // Highlight active entry
+    if (entry.id === window.readerCurrentIndex) {
       div.style.background = '#1a1a1a';
       div.style.borderLeft = '3px solid var(--red)';
+    } else {
+      div.style.borderLeft = '3px solid transparent';
     }
     
-    const preview = e.content.replace(/<[^>]*>/g, '').substring(0, 50).replace(/\n/g, ' ') + '...';
+    // Create Preview Text
+    const preview = entry.content.replace(/<[^>]*>/g, '').substring(0, 60).replace(/\n/g, ' ') + '...';
     
+    // Create Tag Pills for Sidebar
+    const tagsHtml = entry.tags.length > 0 
+      ? `<div class="mt-2 flex gap-1 flex-wrap opacity-60 group-hover:opacity-100 transition-opacity">
+          ${entry.tags.slice(0, 3).map(t => 
+            `<span class="text-[9px] px-1 py-0.5 border border-gray-600 text-gray-400 uppercase tracking-wider">${t}</span>`
+          ).join('')}
+        </div>` 
+      : '';
+
     div.innerHTML = `
-      <div class="text-sm font-bold text-gray-300 mb-1 truncate voodoo">${e.title}</div>
+      <div class="text-sm font-bold text-gray-300 mb-1 truncate voodoo" style="${entry.id === window.readerCurrentIndex ? 'color:var(--red)' : ''}">
+        ${entry.title}
+      </div>
       <div class="text-xs text-gray-600 font-mono truncate">${preview}</div>
+      ${tagsHtml}
     `;
     
-    div.addEventListener('click', () => showEntry(e.id));
+    div.addEventListener('click', () => {
+      showEntry(entry.id);
+      // Mobile: Close menu on click
+      if (window.innerWidth < 768) {
+        dateNav.classList.add('hidden');
+        isIndexVisible = false;
+      }
+    });
+    
     dateNav.appendChild(div);
   });
 }
 
 function styleActiveFilter(btn) {
+  if (!btn) return;
   document.querySelectorAll('.filter-btn').forEach(b => {
     b.style.background = 'transparent';
     b.style.borderColor = '#333';
@@ -884,6 +912,23 @@ function styleActiveFilter(btn) {
   btn.style.borderColor = 'var(--red)';
 }
 
+function updateUIState() {
+  // 1. Update Footer Stats
+  if (isSearching) {
+    searchStats.textContent = `${searchResults.length} match${searchResults.length !== 1 ? 'es' : ''}`;
+  } else {
+    const count = getFilteredEntries().length;
+    // Capitalize first letter
+    const filterName = currentFilter.charAt(0).toUpperCase() + currentFilter.slice(1);
+    searchStats.textContent = currentFilter !== 'all' ? `${count} ${filterName}` : `${count} total`;
+  }
+  
+  // 2. Rebuild Index (Only if the menu is actually open)
+  if (isIndexVisible) {
+    buildIndex();
+  }
+}
+
 /* ----------  SEARCH  ---------- */
 function performSearch(q) {
   searchQuery = q;
@@ -892,31 +937,29 @@ function performSearch(q) {
     isSearching = false;
     searchResults = [];
     updateUIState();
-    // Return to current entry if possible, else stay where we are
     showEntry(window.readerCurrentIndex);
     return;
   }
   
   isSearching = true;
   
-  // FIX: Always search 'readerEntries' (All) instead of 'getFilteredEntries()'
-  // This ensures you find results even if they aren't in the current tab.
+  // Search runs on ALL entries
   const pool = window.readerEntries; 
-  
   const terms = parseSearchQuery(q);
   searchResults = pool.filter(e => matchesSearch(e, terms));
   
   updateUIState();
   
   if (searchResults.length > 0) {
-    // Go to the first result automatically
     showEntry(searchResults[0].id);
   } else {
-    // Keep the structure but show message
     contentDiv.innerHTML = '<div class="text-center mt-10 text-gray-500 font-mono">No matches found in archive.</div>';
     entryInfo.innerHTML = '';
     prevBtn.disabled = true;
     nextBtn.disabled = true;
+    
+    // Ensure index shows "No entries found"
+    if (isIndexVisible) buildIndex();
   }
 }
 
