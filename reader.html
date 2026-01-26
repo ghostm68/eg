@@ -717,7 +717,9 @@ function parseEntries(text) {
 }
 
 function detectTags(e) {
-  const text = e.content.toLowerCase();
+  // combine title and content for better detection
+  const text = (e.title + ' ' + e.content).toLowerCase();
+  
   for (const [tag, re] of Object.entries(TAG_PATTERNS)) {
     if (tag !== 'all' && re.test(text)) {
       e.tags.push(tag);
@@ -759,14 +761,21 @@ function showEntry(entryId) {
   const words = e.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
   
   // Generate Tags HTML
+// Generate Tags HTML
   const tagsHtml = e.tags.length > 0 
-    ? e.tags.map(t => `<span class="px-2 py-1 border text-[10px] uppercase border-gray-600 text-gray-400">${t}</span>`).join('')
+    ? e.tags.map(t => `<span class="px-2 py-1 border text-[10px] uppercase border-gray-600 ${t === currentFilter ? 'text-red-500 border-red-500' : 'text-gray-400'}">${t}</span>`).join('')
     : '<span class="px-2 py-1 border text-[10px] uppercase border-gray-800 text-gray-700">Unclassified</span>';
+
+  // Add a filter indicator if we aren't viewing "All"
+  const filterIndicator = currentFilter !== 'all' 
+    ? `<span class="text-[10px] uppercase tracking-wider text-red-500 border border-red-900 bg-red-900/20 px-2 py-1 rounded ml-2">FILTER: ${currentFilter}</span>` 
+    : '';
 
   entryInfo.innerHTML = `
     <div class="flex flex-col gap-1">
-      <div>
+      <div class="flex items-center flex-wrap">
         <span class="text-xs text-gray-500 uppercase tracking-widest">DREAMWEAVER ARCHIVE</span>
+        ${filterIndicator}
         <span class="ml-2 font-bold text-xl voodoo" style="color:var(--red)">${e.title}</span>
       </div>
       <div class="text-xs text-gray-400 flex items-center gap-2 flex-wrap">
@@ -920,12 +929,20 @@ document.getElementById('filterBtns').addEventListener('click', e => {
   searchBox.value = '';
   isSearching = false;
   
+  // UX IMPROVEMENT: 
+  // 1. Force the index to open so we see the list of filtered items
+  isIndexVisible = true;
+  dateNav.classList.remove('hidden');
+  
+  // 2. Update the UI
   updateUIState();
   
-  // Show first entry of new filter, or random if that feels more "Dreamweaver"
+  // 3. Show first entry of new filter, or random if that feels more "Dreamweaver"
   const filtered = getFilteredEntries();
   if (filtered.length > 0) {
     showEntry(filtered[0].id);
+    // Scroll the index to the top so we see the new results
+    dateNav.scrollTop = 0;
   } else {
     contentDiv.innerHTML = `<div class="text-center mt-20 text-gray-600">No entries found tagged as <span style="color:var(--red)">${currentFilter}</span>.</div>`;
     entryInfo.innerHTML = '';
