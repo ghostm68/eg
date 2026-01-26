@@ -21,6 +21,29 @@
     button{user-select:none;cursor:pointer;}
     /* headings in voodoo */
     .voodoo{font-family:'Voodoo',sans-serif;}
+    
+    /* Analytics modal */
+    .analytics-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--dark-grey);
+      border: 2px solid var(--red);
+      padding: 20px;
+      z-index: 1000;
+      max-width: 80vw;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 0 30px rgba(255, 0, 51, 0.3);
+    }
+    
+    .analytics-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 999;
+    }
   </style>
 </head>
 
@@ -61,6 +84,17 @@
         </div>
       </div>
 
+      <!-- ANALYTICS TOOLBAR (NEW) -->
+      <div class="mb-6 pb-6 border-b border-gray-800">
+        <div class="flex flex-wrap gap-2 mb-2">
+          <button onclick="analyzeWordCount()" class="text-xs px-3 py-1 border border-gray-700 hover:border-red-500 hover:text-red-500 transition-colors">📊 Word Count</button>
+          <button onclick="checkCharacterNames()" class="text-xs px-3 py-1 border border-gray-700 hover:border-red-500 hover:text-red-500 transition-colors">👤 Characters</button>
+          <button onclick="findRepetitions()" class="text-xs px-3 py-1 border border-gray-700 hover:border-red-500 hover:text-red-500 transition-colors">🔁 Repetitions</button>
+          <button onclick="checkTimeline()" class="text-xs px-3 py-1 border border-gray-700 hover:border-red-500 hover:text-red-500 transition-colors">⏰ Timeline</button>
+        </div>
+        <div id="analyticsStatus" class="text-[10px] text-gray-600 h-4"></div>
+      </div>
+
       <!-- FILTERS -->
       <div id="filterBtns" class="flex flex-wrap gap-2 mb-6 pb-6 border-b border-gray-800">
         <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="all">All</button>
@@ -68,7 +102,7 @@
         <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="poem">Poem</button>
         <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="film">Film</button>
         <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="book">Book</button>
-        <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="dream">Dream</button>
+        <button class="filter-btn px-3py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="dream">Dream</button>
       </div>
 
       <!-- INDEX -->
@@ -93,8 +127,6 @@
 </div>
 
 <!-- ============  READER SCRIPT  ============ -->
-<!-- ============  READER SCRIPT  ============ -->
-<!-- ============  READER SCRIPT (FIXED)  ============ -->
 <script id="reader-script">
 /* ----------  CONFIG  ---------- */
 
@@ -135,6 +167,434 @@ const dateNav = document.getElementById('dateNav');
 const entryInfo = document.getElementById('entryInfo');
 const loadingDiv = document.getElementById('loading');
 const contentDiv = document.getElementById('content');
+const analyticsStatus = document.getElementById('analyticsStatus');
+
+/* ----------  ANALYTICS FUNCTIONS (OPTIMIZED FOR LARGE FILES) ---------- */
+
+function showAnalyticsModal(content) {
+  // Remove any existing modal
+  const existingModal = document.querySelector('.analytics-modal');
+  const existingOverlay = document.querySelector('.analytics-overlay');
+  if (existingModal) existingModal.remove();
+  if (existingOverlay) existingOverlay.remove();
+  
+  // Create overlay
+  const overlay = document.createElement('div');
+  overlay.className = 'analytics-overlay';
+  overlay.onclick = () => {
+    overlay.remove();
+    modal.remove();
+  };
+  
+  // Create modal
+  const modal = document.createElement('div');
+  modal.className = 'analytics-modal custom-scrollbar';
+  modal.innerHTML = `
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xl voodoo" style="color:var(--red)">ANALYTICS</h3>
+      <button onclick="this.closest('.analytics-modal').remove(); this.closest('.analytics-overlay').remove();" class="text-xs border border-gray-700 px-2 py-1 hover:border-red-500">CLOSE</button>
+    </div>
+    <div class="text-sm font-mono whitespace-pre-wrap max-h-[60vh] overflow-y-auto">${content}</div>
+  `;
+  
+  document.body.appendChild(overlay);
+  document.body.appendChild(modal);
+}
+
+function setAnalyticsStatus(text, isError = false) {
+  analyticsStatus.textContent = text;
+  analyticsStatus.style.color = isError ? 'var(--red)' : 'var(--white)';
+}
+
+// Memory-efficient word count analysis
+function analyzeWordCount() {
+  setAnalyticsStatus('Analyzing word count...');
+  
+  setTimeout(() => {
+    try {
+      if (!window.readerEntries.length) {
+        setAnalyticsStatus('No entries loaded', true);
+        return;
+      }
+      
+      const stats = {
+        totalEntries: window.readerEntries.length,
+        totalWords: 0,
+        totalCharacters: 0,
+        averageWords: 0,
+        longestEntry: { title: '', words: 0 },
+        shortestEntry: { title: '', words: Infinity }
+      };
+      
+      const wordCountsByTag = {};
+      const monthlyWords = {};
+      
+      // Process entries in chunks to avoid blocking
+      let processed = 0;
+      const processChunk = (start, end) => {
+        for (let i = start; i < end && i < window.readerEntries.length; i++) {
+          const entry = window.readerEntries[i];
+          const words = entry.content.trim().split(/\s+/).length;
+          const chars = entry.content.length;
+          
+          stats.totalWords += words;
+          stats.totalCharacters += chars;
+          
+          // Track longest/shortest
+          if (words > stats.longestEntry.words) {
+            stats.longestEntry = { title: entry.title, words };
+          }
+          if (words < stats.shortestEntry.words) {
+            stats.shortestEntry = { title: entry.title, words };
+          }
+          
+          // Count by tag
+          entry.tags.forEach(tag => {
+            wordCountsByTag[tag] = (wordCountsByTag[tag] || 0) + words;
+          });
+          if (entry.tags.length === 0) {
+            wordCountsByTag['untagged'] = (wordCountsByTag['untagged'] || 0) + words;
+          }
+          
+          // Extract month from title for monthly stats
+          const monthMatch = entry.title.match(/(\d{4})[-\/](\d{1,2})/);
+          if (monthMatch) {
+            const key = `${monthMatch[1]}-${monthMatch[2].padStart(2, '0')}`;
+            monthlyWords[key] = (monthlyWords[key] || 0) + words;
+          }
+          
+          processed++;
+        }
+      };
+      
+      // Process in chunks of 500 entries
+      const chunkSize = 500;
+      for (let i = 0; i < window.readerEntries.length; i += chunkSize) {
+        processChunk(i, i + chunkSize);
+      }
+      
+      stats.averageWords = Math.round(stats.totalWords / stats.totalEntries);
+      
+      // Sort tags by word count
+      const sortedTags = Object.entries(wordCountsByTag)
+        .sort((a, b) => b[1] - a[1])
+        .map(([tag, count]) => `${tag}: ${count.toLocaleString()} words`);
+      
+      // Sort months chronologically
+      const sortedMonths = Object.entries(monthlyWords)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .slice(-12) // Last 12 months
+        .map(([month, count]) => `${month}: ${count.toLocaleString()} words`);
+      
+      const report = `
+TOTAL ENTRIES: ${stats.totalEntries.toLocaleString()}
+TOTAL WORDS: ${stats.totalWords.toLocaleString()}
+TOTAL CHARACTERS: ${stats.totalCharacters.toLocaleString()}
+AVERAGE WORDS PER ENTRY: ${stats.averageWords.toLocaleString()}
+
+LONGEST ENTRY: "${stats.longestEntry.title}" (${stats.longestEntry.words.toLocaleString()} words)
+SHORTEST ENTRY: "${stats.shortestEntry.title}" (${stats.shortestEntry.words.toLocaleString()} words)
+
+WORD COUNT BY TAG:
+${sortedTags.join('\n')}
+
+RECENT MONTHLY ACTIVITY (Last 12 months):
+${sortedMonths.join('\n')}
+
+ENTRIES WITH 1000+ WORDS: ${window.readerEntries.filter(e => e.content.trim().split(/\s+/).length >= 1000).length}
+ENTRIES WITH < 100 WORDS: ${window.readerEntries.filter(e => e.content.trim().split(/\s+/).length < 100).length}
+
+Last updated: ${new Date().toLocaleString()}
+      `.trim();
+      
+      showAnalyticsModal(report);
+      setAnalyticsStatus('Word count analysis complete');
+    } catch (error) {
+      console.error('Word count error:', error);
+      setAnalyticsStatus('Analysis failed: ' + error.message, true);
+    }
+  }, 50);
+}
+
+// Optimized character name detection
+function checkCharacterNames() {
+  setAnalyticsStatus('Scanning for characters...');
+  
+  setTimeout(() => {
+    try {
+      const commonNames = [
+        'alice', 'bob', 'charlie', 'david', 'eve', 'frank', 'grace', 'henry', 'isabel', 'jack',
+        'kate', 'leo', 'mia', 'nathan', 'olivia', 'paul', 'quinn', 'rachel', 'sam', 'tara',
+        'lotta', 'wendy', 'xavier', 'yvonne', 'zack',
+        'john', 'jane', 'mary', 'james', 'emilee', 'michael', 'william', 'david', 'richard', 'joseph',
+        'thomas', 'charles', 'christopher', 'daniel', 'matthew', 'tim', 'donald', 'mark', 'inky'
+      ];
+      
+      const characterMap = new Map();
+      const characterMentions = new Map();
+      const nameRegex = /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g;
+      
+      // Sample entries to avoid processing everything (for performance)
+      const sampleSize = Math.min(500, window.readerEntries.length);
+      const sampleEntries = window.readerEntries
+        .sort(() => Math.random() - 0.5)
+        .slice(0, sampleSize);
+      
+      sampleEntries.forEach(entry => {
+        const matches = entry.content.match(nameRegex);
+        if (matches) {
+          matches.forEach(name => {
+            const normalized = name.toLowerCase();
+            // Filter out common words that aren't names
+            if (name.length > 2 && 
+                !['The', 'And', 'But', 'For', 'Not', 'You', 'She', 'He', 'They', 'This', 'That'].includes(name) &&
+                !normalized.endsWith('\'s')) {
+              
+              characterMap.set(name, (characterMap.get(name) || 0) + 1);
+              
+              // Track which entries mention this character
+              if (!characterMentions.has(name)) {
+                characterMentions.set(name, new Set());
+              }
+              characterMentions.get(name).add(entry.title);
+            }
+          });
+        }
+      });
+      
+      // Convert to array and sort by frequency
+      const sortedCharacters = Array.from(characterMap.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 50); // Top 50 characters
+      
+      let report = `CHARACTER ANALYSIS (sampled ${sampleSize} entries)\n\n`;
+      report += `Total unique potential characters: ${characterMap.size}\n\n`;
+      
+      if (sortedCharacters.length > 0) {
+        report += 'MOST FREQUENT CHARACTERS:\n';
+        sortedCharacters.forEach(([name, count], index) => {
+          const mentions = Array.from(characterMentions.get(name) || []).slice(0, 3);
+          report += `${index + 1}. ${name}: ${count} mentions`;
+          if (mentions.length > 0) {
+            report += ` (in: ${mentions.join(', ')})`;
+          }
+          report += '\n';
+        });
+      } else {
+        report += 'No character names detected. Try a larger sample.';
+      }
+      
+      report += `\n\nCommon names detected: ${commonNames.filter(name => characterMap.has(name)).join(', ')}`;
+      report += `\n\nAnalysis completed at: ${new Date().toLocaleTimeString()}`;
+      
+      showAnalyticsModal(report);
+      setAnalyticsStatus(`Found ${characterMap.size} potential characters`);
+    } catch (error) {
+      console.error('Character analysis error:', error);
+      setAnalyticsStatus('Character scan failed', true);
+    }
+  }, 50);
+}
+
+// Find repeated phrases (optimized for large text)
+function findRepetitions() {
+  setAnalyticsStatus('Finding repetitions...');
+  
+  setTimeout(() => {
+    try {
+      // Use a sampling approach for large files
+      const sampleText = window.readerEntries
+        .slice(0, 100) // First 100 entries
+        .map(e => e.content.toLowerCase())
+        .join('\n')
+        .replace(/[^\w\s]/g, ' ');
+      
+      const words = sampleText.split(/\s+/).filter(w => w.length > 3);
+      const phraseLength = 3; // Look for 3-word phrases
+      const phraseCounts = new Map();
+      
+      // Count phrases
+      for (let i = 0; i <= words.length - phraseLength; i++) {
+        const phrase = words.slice(i, i + phraseLength).join(' ');
+        phraseCounts.set(phrase, (phraseCounts.get(phrase) || 0) + 1);
+      }
+      
+      // Filter for repetitions (appear at least 3 times)
+      const repetitions = Array.from(phraseCounts.entries())
+        .filter(([_, count]) => count >= 3)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 20); // Top 20 repetitions
+      
+      let report = 'REPETITION ANALYSIS (3-word phrases)\n\n';
+      report += `Analyzed ${words.length.toLocaleString()} words from first 100 entries\n\n`;
+      
+      if (repetitions.length > 0) {
+        report += 'MOST REPEATED PHRASES:\n';
+        repetitions.forEach(([phrase, count], index) => {
+          report += `${index + 1}. "${phrase}": ${count} times\n`;
+        });
+        
+        // Find example entries containing the top repetition
+        if (repetitions.length > 0) {
+          const topPhrase = repetitions[0][0];
+          const exampleEntries = window.readerEntries
+            .filter(e => e.content.toLowerCase().includes(topPhrase))
+            .slice(0, 3)
+            .map(e => `• ${e.title}`)
+            .join('\n');
+          
+          if (exampleEntries) {
+            report += `\n"${topPhrase}" appears in:\n${exampleEntries}`;
+          }
+        }
+      } else {
+        report += 'No significant repetitions found (3+ occurrences).';
+      }
+      
+      report += `\n\nAnalysis completed: ${new Date().toLocaleString()}`;
+      
+      showAnalyticsModal(report);
+      setAnalyticsStatus(`Found ${repetitions.length} repeated phrases`);
+    } catch (error) {
+      console.error('Repetition analysis error:', error);
+      setAnalyticsStatus('Repetition search failed', true);
+    }
+  }, 50);
+}
+
+// Timeline analysis
+function checkTimeline() {
+  setAnalyticsStatus('Building timeline...');
+  
+  setTimeout(() => {
+    try {
+      // Extract dates from titles
+      const datePatterns = [
+        /(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/, // YYYY-MM-DD
+        /(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/, // DD-MM-YYYY
+        /(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{4})/i, // DD Month YYYY
+        /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2}),?\s+(\d{4})/i // Month DD, YYYY
+      ];
+      
+      const monthMap = {
+        jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+        jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
+      };
+      
+      const entriesWithDates = [];
+      
+      window.readerEntries.forEach(entry => {
+        let dateStr = null;
+        let year, month, day;
+        
+        for (const pattern of datePatterns) {
+          const match = entry.title.match(pattern);
+          if (match) {
+            if (pattern === datePatterns[0]) { // YYYY-MM-DD
+              [, year, month, day] = match;
+            } else if (pattern === datePatterns[1]) { // DD-MM-YYYY
+              [, day, month, year] = match;
+            } else if (pattern === datePatterns[2]) { // DD Month YYYY
+              [, day, month, year] = match;
+              month = monthMap[month.toLowerCase().substring(0, 3)];
+            } else if (pattern === datePatterns[3]) { // Month DD, YYYY
+              [, month, day, year] = match;
+              month = monthMap[month.toLowerCase().substring(0, 3)];
+            }
+            
+            if (year && month && day) {
+              month = month.padStart(2, '0');
+              day = day.padStart(2, '0');
+              dateStr = `${year}-${month}-${day}`;
+              break;
+            }
+          }
+        }
+        
+        if (dateStr) {
+          entriesWithDates.push({
+            title: entry.title,
+            date: dateStr,
+            timestamp: new Date(dateStr).getTime(),
+            words: entry.content.trim().split(/\s+/).length,
+            tags: entry.tags
+          });
+        }
+      });
+      
+      // Sort by date
+      entriesWithDates.sort((a, b) => a.timestamp - b.timestamp);
+      
+      // Group by year and month
+      const byYear = {};
+      const byMonth = {};
+      
+      entriesWithDates.forEach(entry => {
+        const year = entry.date.substring(0, 4);
+        const month = entry.date.substring(0, 7);
+        
+        byYear[year] = (byYear[year] || 0) + 1;
+        byMonth[month] = (byMonth[month] || 0) + 1;
+      });
+      
+      // Calculate statistics
+      const totalWithDates = entriesWithDates.length;
+      const firstDate = entriesWithDates[0]?.date;
+      const lastDate = entriesWithDates[entriesWithDates.length - 1]?.date;
+      
+      // Most productive months
+      const productiveMonths = Object.entries(byMonth)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
+      
+      let report = 'TIMELINE ANALYSIS\n\n';
+      report += `Entries with detectable dates: ${totalWithDates}/${window.readerEntries.length} (${Math.round(totalWithDates/window.readerEntries.length*100)}%)\n`;
+      report += `Timespan: ${firstDate || 'N/A'} to ${lastDate || 'N/A'}\n\n`;
+      
+      report += 'ENTRIES BY YEAR:\n';
+      Object.entries(byYear)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .forEach(([year, count]) => {
+          report += `${year}: ${count} entries\n`;
+        });
+      
+      report += '\nMOST PRODUCTIVE MONTHS:\n';
+      productiveMonths.forEach(([month, count], index) => {
+        report += `${index + 1}. ${month}: ${count} entries\n`;
+      });
+      
+      // Find gaps in timeline
+      if (entriesWithDates.length > 1) {
+        const gaps = [];
+        for (let i = 1; i < entriesWithDates.length; i++) {
+          const gapDays = Math.round((entriesWithDates[i].timestamp - entriesWithDates[i-1].timestamp) / (1000 * 60 * 60 * 24));
+          if (gapDays > 30) { // Gaps longer than a month
+            gaps.push({
+              from: entriesWithDates[i-1].date,
+              to: entriesWithDates[i].date,
+              days: gapDays
+            });
+          }
+        }
+        
+        if (gaps.length > 0) {
+          report += '\nSIGNIFICANT GAPS (>30 days):\n';
+          gaps.slice(0, 5).forEach(gap => {
+            report += `${gap.from} → ${gap.to}: ${gap.days} days\n`;
+          });
+        }
+      }
+      
+      report += `\nAnalysis completed: ${new Date().toLocaleString()}`;
+      
+      showAnalyticsModal(report);
+      setAnalyticsStatus(`Timeline built with ${totalWithDates} dated entries`);
+    } catch (error) {
+      console.error('Timeline analysis error:', error);
+      setAnalyticsStatus('Timeline analysis failed', true);
+    }
+  }, 50);
+}
 
 /* ----------  SEARCH UTILS  ---------- */
 function parseSearchQuery(q) {
@@ -336,11 +796,9 @@ function showRandomEntry() {
   
   let randomIdx;
   // Try to find a new one, but don't loop forever if only 1 exists
-  let attempts = 0;
   do {
     randomIdx = Math.floor(Math.random() * pool.length);
-    attempts++;
-  } while (pool[randomIdx].id === window.readerCurrentIndex && pool.length > 1 && attempts < 10);
+  } while (pool[randomIdx].id === window.readerCurrentIndex && pool.length > 1);
   
   showEntry(pool[randomIdx].id);
 }
