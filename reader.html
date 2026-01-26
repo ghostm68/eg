@@ -740,37 +740,42 @@ function showEntry(entryId) {
   
   window.readerCurrentIndex = entryId;
   
+  // 1. Prepare Content
   let displayContent = e.content;
   
-  // Apply highlighting if searching
+  // 2. Apply Highlighting (This matches 'searchQuery' to text)
   if (isSearching && searchQuery) {
     displayContent = highlightText(displayContent, searchQuery);
   }
   
-  // Format paragraphs
+  // 3. Format Paragraphs
   displayContent = displayContent.split('\n').map(line => {
     const trimmed = line.trim();
     if (!trimmed) return '<br>';
     return `<p class="mb-4 leading-relaxed">${trimmed}</p>`;
   }).join('');
   
+  // 4. Render to Screen (Crucial for highlighting to show)
   contentDiv.innerHTML = displayContent;
   
+  // 5. Calculate Stats for the Header
+  // Note: We check 'isSearching' to decide which pool of numbers to show
   const pool = isSearching ? searchResults : getFilteredEntries();
   const idx = pool.findIndex(x => x.id === entryId);
   const words = e.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
   
-  // Generate Tags HTML
-// Generate Tags HTML
+  // 6. Generate Tags HTML
+  // Highlights the tag if it matches the current filter
   const tagsHtml = e.tags.length > 0 
     ? e.tags.map(t => `<span class="px-2 py-1 border text-[10px] uppercase border-gray-600 ${t === currentFilter ? 'text-red-500 border-red-500' : 'text-gray-400'}">${t}</span>`).join('')
     : '<span class="px-2 py-1 border text-[10px] uppercase border-gray-800 text-gray-700">Unclassified</span>';
 
-  // Add a filter indicator if we aren't viewing "All"
-  const filterIndicator = currentFilter !== 'all' 
+  // 7. Filter Indicator
+  const filterIndicator = (currentFilter !== 'all' && !isSearching)
     ? `<span class="text-[10px] uppercase tracking-wider text-red-500 border border-red-900 bg-red-900/20 px-2 py-1 rounded ml-2">FILTER: ${currentFilter}</span>` 
     : '';
 
+  // 8. Update Header Info
   entryInfo.innerHTML = `
     <div class="flex flex-col gap-1">
       <div class="flex items-center flex-wrap">
@@ -785,15 +790,16 @@ function showEntry(entryId) {
       </div>
     </div>`;
   
-  // Smart button disabling
+  // 9. Button States
   prevBtn.disabled = idx <= 0;
   nextBtn.disabled = idx >= pool.length - 1;
   
-  // Visual feedback for disabled buttons
   prevBtn.style.opacity = prevBtn.disabled ? '0.3' : '1';
   nextBtn.style.opacity = nextBtn.disabled ? '0.3' : '1';
 
   contentDiv.scrollTop = 0;
+  
+  // 10. Refresh Index to show active state
   if (isIndexVisible) buildIndex();
 }
 
@@ -870,38 +876,32 @@ function performSearch(q) {
     isSearching = false;
     searchResults = [];
     updateUIState();
-    // Return to current entry if possible, else random
+    // Return to current entry if possible, else stay where we are
     showEntry(window.readerCurrentIndex);
     return;
   }
   
   isSearching = true;
-  // Search runs against current filter OR all? Usually better to search ALL.
-  // But here we search within the current filter for specificity.
-  const pool = getFilteredEntries(); 
+  
+  // FIX: Always search 'readerEntries' (All) instead of 'getFilteredEntries()'
+  // This ensures you find results even if they aren't in the current tab.
+  const pool = window.readerEntries; 
+  
   const terms = parseSearchQuery(q);
   searchResults = pool.filter(e => matchesSearch(e, terms));
   
   updateUIState();
   
   if (searchResults.length > 0) {
+    // Go to the first result automatically
     showEntry(searchResults[0].id);
   } else {
-    contentDiv.innerHTML = '<div class="text-center mt-10 text-gray-500 font-mono">No matches found in this timeline.</div>';
+    // Keep the structure but show message
+    contentDiv.innerHTML = '<div class="text-center mt-10 text-gray-500 font-mono">No matches found in archive.</div>';
     entryInfo.innerHTML = '';
     prevBtn.disabled = true;
     nextBtn.disabled = true;
   }
-}
-
-function updateUIState() {
-  if (isSearching) {
-    searchStats.textContent = `${searchResults.length} matches`;
-  } else {
-    const count = getFilteredEntries().length;
-    searchStats.textContent = currentFilter !== 'all' ? `${count} ${currentFilter}s` : `${count} entries`;
-  }
-  buildIndex();
 }
 
 /* ----------  EVENTS  ---------- */
