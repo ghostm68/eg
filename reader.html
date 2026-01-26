@@ -622,20 +622,6 @@ function matchesSearch(e, terms) {
   if (terms.or.length && !terms.or.some(x => txt.includes(x))) return false;
   return true;
 }
-  function highlightRegex(text, regex) {
-  try {
-    const flags = regex.flags + (regex.flags.includes('g') ? '' : 'g');
-    const globalRe = new RegExp(regex.source, flags);
-    
-    return text.replace(globalRe, (match) => {
-      if (match.startsWith('<') || match.includes('>')) return match;
-      return `<span class="highlight" style="background:var(--red); color:black; padding:0 2px; border-radius:2px;">${match}</span>`;
-    });
-  } catch (e) {
-    return text;
-  }
-}
-// ------------------------------------
 
 function highlightText(text, query) {
   if (!query.trim()) return text;
@@ -644,6 +630,7 @@ function highlightText(text, query) {
     .filter((v, i, a) => a.indexOf(v) === i);
   
   let result = text;
+  // Sort by length to highlight longest phrases first
   allTerms.sort((a, b) => b.length - a.length).forEach(t => {
     const safe = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     result = result.replace(new RegExp(`(${safe})`, 'gi'), '<span class="highlight" style="background:var(--red); color:black; padding:0 2px;">$1</span>');
@@ -657,7 +644,6 @@ function debounce(func, delay) {
     searchTimeout = setTimeout(() => func.apply(this, args), delay);
   };
 }
-
 
 /* ----------  LOAD & PARSE  ---------- */
 async function loadText() {
@@ -675,6 +661,7 @@ async function loadText() {
     contentDiv.style.display = 'block';
 
     if (window.readerEntries.length > 0) {
+      // If we are refreshing, try to stay on the same entry, otherwise go to first
       showEntry(window.readerEntries[0].id);
     }
     
@@ -682,10 +669,8 @@ async function loadText() {
     const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
     if (allBtn) styleActiveFilter(allBtn);
     
-    // Initial UI build
     buildIndex();
     updateUIState();
-    
   } catch (err) {
     loadingDiv.innerHTML = `<p style="color:var(--red)">Error: ${err.message}</p>`;
   }
@@ -697,26 +682,32 @@ function parseEntries(text) {
   let id = 0;
 
   lines.forEach(line => {
+    // TRIM line before checking regex. 
+    // This allows dates to have accidental spaces before them.
     const cleanLine = line.trim(); 
     const m = cleanLine.match(ENTRY_PATTERN);
     
     if (m) {
+      // Save previous entry if exists
       if (current && current.content.trim()) {
         detectTags(current);
         window.readerEntries.push(current);
       }
       
+      // Start new entry
       current = {
         id: ++id,
-        title: m[0].trim(),
+        title: m[0].trim(), // Use the regex match as the title
         content: line + '\n',
         tags: []
       };
     } else if (current) {
+      // Continue current entry
       current.content += line + '\n';
     }
   });
 
+  // Don't forget the last entry
   if (current && current.content.trim()) {
     detectTags(current);
     window.readerEntries.push(current);
@@ -726,8 +717,9 @@ function parseEntries(text) {
 }
 
 function detectTags(e) {
-  // Combine title and content for better detection
+  // combine title and content for better detection
   const text = (e.title + ' ' + e.content).toLowerCase();
+  
   for (const [tag, re] of Object.entries(TAG_PATTERNS)) {
     if (tag !== 'all' && re.test(text)) {
       e.tags.push(tag);
@@ -742,35 +734,20 @@ function getFilteredEntries() {
 }
 
 /* ----------  DISPLAY  ---------- */
-
-// Helper: Gets the list we are currently looking at (Search Results OR Filtered List)
-function getCurrentViewEntries() {
-  if (isSearching) {
-    return searchResults;
-  }
-  return getFilteredEntries();
-}
-
 function showEntry(entryId) {
   const e = window.readerEntries.find(x => x.id === entryId);
   if (!e) return;
   
   window.readerCurrentIndex = entryId;
   
-  // 1. Prepare Content
   let displayContent = e.content;
   
-  // 2. HIGHLIGHT LOGIC (Search OR Filter Tags)
+  // Apply highlighting if searching
   if (isSearching && searchQuery) {
-    // If searching -> Highlight search terms
     displayContent = highlightText(displayContent, searchQuery);
-  } 
-  else if (currentFilter !== 'all' && TAG_PATTERNS[currentFilter]) {
-    // If filtering (Dream, Book, etc) -> Highlight those keywords in the text
-    displayContent = highlightRegex(displayContent, TAG_PATTERNS[currentFilter]);
   }
   
-  // 3. Format Paragraphs
+  // Format paragraphs
   displayContent = displayContent.split('\n').map(line => {
     const trimmed = line.trim();
     if (!trimmed) return '<br>';
@@ -779,22 +756,21 @@ function showEntry(entryId) {
   
   contentDiv.innerHTML = displayContent;
   
-  // 4. Calculate Stats for the Header
-  const pool = getCurrentViewEntries();
+  const pool = isSearching ? searchResults : getFilteredEntries();
   const idx = pool.findIndex(x => x.id === entryId);
   const words = e.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
   
-  // 5. Generate Tag Pills for Header
+  // Generate Tags HTML
+// Generate Tags HTML
   const tagsHtml = e.tags.length > 0 
     ? e.tags.map(t => `<span class="px-2 py-1 border text-[10px] uppercase border-gray-600 ${t === currentFilter ? 'text-red-500 border-red-500' : 'text-gray-400'}">${t}</span>`).join('')
     : '<span class="px-2 py-1 border text-[10px] uppercase border-gray-800 text-gray-700">Unclassified</span>';
 
-  // 6. Filter Indicator (Visual "FILTER: DREAM" badge)
-  const filterIndicator = (currentFilter !== 'all' && !isSearching)
+  // Add a filter indicator if we aren't viewing "All"
+  const filterIndicator = currentFilter !== 'all' 
     ? `<span class="text-[10px] uppercase tracking-wider text-red-500 border border-red-900 bg-red-900/20 px-2 py-1 rounded ml-2">FILTER: ${currentFilter}</span>` 
     : '';
 
-  // 7. Render Header Info
   entryInfo.innerHTML = `
     <div class="flex flex-col gap-1">
       <div class="flex items-center flex-wrap">
@@ -809,24 +785,24 @@ function showEntry(entryId) {
       </div>
     </div>`;
   
-  // 8. Handle Button States
+  // Smart button disabling
   prevBtn.disabled = idx <= 0;
   nextBtn.disabled = idx >= pool.length - 1;
+  
+  // Visual feedback for disabled buttons
   prevBtn.style.opacity = prevBtn.disabled ? '0.3' : '1';
   nextBtn.style.opacity = nextBtn.disabled ? '0.3' : '1';
 
-  // 9. Reset scroll
   contentDiv.scrollTop = 0;
-  
-  // 10. Update Index List (only if it is currently visible)
   if (isIndexVisible) buildIndex();
 }
 
 function showRandomEntry() {
-  const pool = getCurrentViewEntries();
+  const pool = isSearching ? searchResults : getFilteredEntries();
   if (!pool.length) return;
   
   let randomIdx;
+  // Try to find a new one, but don't loop forever if only 1 exists
   do {
     randomIdx = Math.floor(Math.random() * pool.length);
   } while (pool[randomIdx].id === window.readerCurrentIndex && pool.length > 1);
@@ -835,7 +811,7 @@ function showRandomEntry() {
 }
 
 function navigateEntries(dir) {
-  const pool = getCurrentViewEntries();
+  const pool = isSearching ? searchResults : getFilteredEntries();
   const idx = pool.findIndex(x => x.id === window.readerCurrentIndex);
   const newIdx = dir === 'next' ? idx + 1 : idx - 1;
   
@@ -845,62 +821,36 @@ function navigateEntries(dir) {
 }
 
 function buildIndex() {
-  const pool = getCurrentViewEntries();
-  
+  const pool = isSearching ? searchResults : getFilteredEntries();
   dateNav.innerHTML = '';
   
   if (pool.length === 0) {
-    dateNav.innerHTML = '<div class="p-4 text-gray-500 text-sm font-mono text-center">No entries found.</div>';
+    dateNav.innerHTML = '<div class="p-4 text-xs text-gray-600">No entries found for this filter.</div>';
     return;
   }
-  
-  pool.forEach(entry => {
+
+  pool.forEach(e => {
     const div = document.createElement('div');
-    div.className = 'p-3 border-b border-gray-700 cursor-pointer hover:bg-gray-900 transition-colors group';
+    div.className = 'p-3 border-b border-gray-700 cursor-pointer hover:bg-gray-900 transition-colors';
     
-    // Highlight active entry
-    if (entry.id === window.readerCurrentIndex) {
+    if (e.id === window.readerCurrentIndex) {
       div.style.background = '#1a1a1a';
       div.style.borderLeft = '3px solid var(--red)';
-    } else {
-      div.style.borderLeft = '3px solid transparent';
     }
     
-    // Create Preview Text
-    const preview = entry.content.replace(/<[^>]*>/g, '').substring(0, 60).replace(/\n/g, ' ') + '...';
+    const preview = e.content.replace(/<[^>]*>/g, '').substring(0, 50).replace(/\n/g, ' ') + '...';
     
-    // Create Tag Pills for Sidebar
-    const tagsHtml = entry.tags.length > 0 
-      ? `<div class="mt-2 flex gap-1 flex-wrap opacity-60 group-hover:opacity-100 transition-opacity">
-          ${entry.tags.slice(0, 3).map(t => 
-            `<span class="text-[9px] px-1 py-0.5 border border-gray-600 text-gray-400 uppercase tracking-wider">${t}</span>`
-          ).join('')}
-        </div>` 
-      : '';
-
     div.innerHTML = `
-      <div class="text-sm font-bold text-gray-300 mb-1 truncate voodoo" style="${entry.id === window.readerCurrentIndex ? 'color:var(--red)' : ''}">
-        ${entry.title}
-      </div>
+      <div class="text-sm font-bold text-gray-300 mb-1 truncate voodoo">${e.title}</div>
       <div class="text-xs text-gray-600 font-mono truncate">${preview}</div>
-      ${tagsHtml}
     `;
     
-    div.addEventListener('click', () => {
-      showEntry(entry.id);
-      // Mobile: Close menu on click
-      if (window.innerWidth < 768) {
-        dateNav.classList.add('hidden');
-        isIndexVisible = false;
-      }
-    });
-    
+    div.addEventListener('click', () => showEntry(e.id));
     dateNav.appendChild(div);
   });
 }
 
 function styleActiveFilter(btn) {
-  if (!btn) return;
   document.querySelectorAll('.filter-btn').forEach(b => {
     b.style.background = 'transparent';
     b.style.borderColor = '#333';
@@ -912,23 +862,6 @@ function styleActiveFilter(btn) {
   btn.style.borderColor = 'var(--red)';
 }
 
-function updateUIState() {
-  // 1. Update Footer Stats
-  if (isSearching) {
-    searchStats.textContent = `${searchResults.length} match${searchResults.length !== 1 ? 'es' : ''}`;
-  } else {
-    const count = getFilteredEntries().length;
-    // Capitalize first letter
-    const filterName = currentFilter.charAt(0).toUpperCase() + currentFilter.slice(1);
-    searchStats.textContent = currentFilter !== 'all' ? `${count} ${filterName}` : `${count} total`;
-  }
-  
-  // 2. Rebuild Index (Only if the menu is actually open)
-  if (isIndexVisible) {
-    buildIndex();
-  }
-}
-
 /* ----------  SEARCH  ---------- */
 function performSearch(q) {
   searchQuery = q;
@@ -937,14 +870,15 @@ function performSearch(q) {
     isSearching = false;
     searchResults = [];
     updateUIState();
+    // Return to current entry if possible, else random
     showEntry(window.readerCurrentIndex);
     return;
   }
   
   isSearching = true;
-  
-  // Search runs on ALL entries
-  const pool = window.readerEntries; 
+  // Search runs against current filter OR all? Usually better to search ALL.
+  // But here we search within the current filter for specificity.
+  const pool = getFilteredEntries(); 
   const terms = parseSearchQuery(q);
   searchResults = pool.filter(e => matchesSearch(e, terms));
   
@@ -953,14 +887,21 @@ function performSearch(q) {
   if (searchResults.length > 0) {
     showEntry(searchResults[0].id);
   } else {
-    contentDiv.innerHTML = '<div class="text-center mt-10 text-gray-500 font-mono">No matches found in archive.</div>';
+    contentDiv.innerHTML = '<div class="text-center mt-10 text-gray-500 font-mono">No matches found in this timeline.</div>';
     entryInfo.innerHTML = '';
     prevBtn.disabled = true;
     nextBtn.disabled = true;
-    
-    // Ensure index shows "No entries found"
-    if (isIndexVisible) buildIndex();
   }
+}
+
+function updateUIState() {
+  if (isSearching) {
+    searchStats.textContent = `${searchResults.length} matches`;
+  } else {
+    const count = getFilteredEntries().length;
+    searchStats.textContent = currentFilter !== 'all' ? `${count} ${currentFilter}s` : `${count} entries`;
+  }
+  buildIndex();
 }
 
 /* ----------  EVENTS  ---------- */
@@ -984,16 +925,24 @@ document.getElementById('filterBtns').addEventListener('click', e => {
   styleActiveFilter(e.target);
   currentFilter = e.target.dataset.filter;
   
-  // Clear search logic so we are in "Filter Mode"
+  // Clear search when switching filters to avoid confusion
   searchBox.value = '';
   isSearching = false;
   
+  // UX IMPROVEMENT: 
+  // 1. Force the index to open so we see the list of filtered items
+  isIndexVisible = true;
+  dateNav.classList.remove('hidden');
+  
+  // 2. Update the UI
   updateUIState();
   
-  // Go to the first found entry
+  // 3. Show first entry of new filter, or random if that feels more "Dreamweaver"
   const filtered = getFilteredEntries();
   if (filtered.length > 0) {
     showEntry(filtered[0].id);
+    // Scroll the index to the top so we see the new results
+    dateNav.scrollTop = 0;
   } else {
     contentDiv.innerHTML = `<div class="text-center mt-20 text-gray-600">No entries found tagged as <span style="color:var(--red)">${currentFilter}</span>.</div>`;
     entryInfo.innerHTML = '';
