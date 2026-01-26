@@ -686,18 +686,16 @@ function matchesSearch(e, terms) {
 }
 
 function highlightText(text, query) {
-  if (!query.trim()) return text;
-  const terms = parseSearchQuery(query);
-  const allTerms = [...terms.exact, ...terms.and, ...terms.or]
-    .filter((v, i, a) => a.indexOf(v) === i);
+  if (!query) return text;
   
-  let result = text;
-  // Sort by length to highlight longest phrases first
-  allTerms.sort((a, b) => b.length - a.length).forEach(t => {
-    const safe = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    result = result.replace(new RegExp(`(${safe})`, 'gi'), '<span class="highlight" style="background:var(--red); color:black; padding:0 2px;">$1</span>');
-  });
-  return result;
+  try {
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escapedQuery})`, 'gi');
+    return text.replace(regex, '<span class="highlight" style="background:var(--red); color:black; padding:0 2px;">$1</span>');
+  } catch (e) {
+    console.log('Highlight error:', e);
+    return text;
+  }
 }
 
 function debounce(func, delay) {
@@ -925,34 +923,54 @@ function styleActiveFilter(btn) {
 }
 
 /* ----------  SEARCH  ---------- */
-function performSearch(q) {
-  searchQuery = q;
+function performSearch(query) {
+  const trimmedQuery = query.trim();
+  console.log('Searching for:', trimmedQuery);
   
-  if (!q.trim()) {
+  if (!trimmedQuery) {
     isSearching = false;
     searchResults = [];
     updateUIState();
-    // Return to current entry if possible, else random
-    showEntry(window.readerCurrentIndex);
+    
+    // Show current or first entry
+    const pool = getFilteredEntries();
+    if (pool.length > 0) {
+      const entryToShow = window.readerCurrentIndex > 0 ? 
+        window.readerCurrentIndex : pool[0].id;
+      showEntry(entryToShow);
+    }
     return;
   }
   
   isSearching = true;
-  // Search runs against current filter OR all? Usually better to search ALL.
-  // But here we search within the current filter for specificity.
-  const pool = window.readerEntries;  // Search ALL entries
-  const terms = parseSearchQuery(q);
-  searchResults = pool.filter(e => matchesSearch(e, terms));
+  searchQuery = trimmedQuery;
+  
+  // SIMPLE SEARCH - Change this line to decide scope:
+  // Option A: Search within current filter (like horse reader)
+  const pool = getFilteredEntries();
+  
+  // Option B: Search ALL entries (old behavior you wanted)
+  // const pool = window.readerEntries;
+  
+  const queryLower = trimmedQuery.toLowerCase();
+  
+  searchResults = pool.filter(entry => {
+    const searchText = (entry.content + ' ' + entry.title).toLowerCase();
+    return searchText.includes(queryLower);
+  });
+  
+  console.log(`Found ${searchResults.length} of ${pool.length} entries`);
   
   updateUIState();
   
   if (searchResults.length > 0) {
     showEntry(searchResults[0].id);
   } else {
-    contentDiv.innerHTML = '<div class="text-center mt-10 text-gray-500 font-mono">No matches found in this timeline.</div>';
-    entryInfo.innerHTML = '';
-    prevBtn.disabled = true;
-    nextBtn.disabled = true;
+    contentDiv.innerHTML = `
+      <div class="text-center mt-10 p-4">
+        <div class="text-gray-500">No matches found for "${trimmedQuery}"</div>
+      </div>`;
+    entryInfo.innerHTML = `<div class="text-xs text-gray-500">Search: "${trimmedQuery}"</div>`;
   }
 }
 
