@@ -107,95 +107,12 @@ const ENTRY_PATTERN = /^(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4}|\d{4}[-\/]\d{1,2}[-
 // KEYWORDS: This is how the code knows which tab a text belongs to.
 const TAG_PATTERNS = {
   all: /.*/,
-  
-  lyric: new RegExp([
-    // Direct music indicators
-    /\b(?:lyrics?|song|track|release|chords|verse|chorus|hook|bridge|outro|intro)\b/i,
-    // Music production terms
-    /\b(?:key of [a-g][#b]?(?: minor| major)?|in [a-g][#b]?|tempo|beat|rhythm|melody)\b/i,
-    // Band/artist references
-    /\b(?:two skinny girls|ain'?t no wifey records|special thanks|entitled)\b/i,
-    // Lyrics formatting
-    /-{3,}[\s\S]*?chords?[\s\S]*?-{3,}/i,
-    // Repetitive lyrical patterns
-    /\b(?:yeah{2,}|nah|oh{2,}|vanish|breakdown)\b.*\b(?:yeah{2,}|nah|oh{2,}|vanish|breakdown)\b/i
-  ].map(r => r.source).join('|'), 'i'),
-  
-  poem: new RegExp([
-    // Poetic structure
-    /\b(?:stanza|line break|enjambment|caesura|meter|rhyme|rhythm)\b/i,
-    // Poetic forms
-    /\b(?:haiku|sonnet|villanelle|ode|elegy|free verse|blank verse)\b/i,
-    // Poetic devices
-    /\b(?:metaphor|simile|imagery|symbolism|alliteration|assonance)\b/i,
-    // Visual poetry indicators
-    /\n\n\s*\S+\s*\n\n\s*\S+\s*\n\n/i,  // Short lines with breaks
-    // Lowercase poetic style
-    /^[a-z][^\.\!\?]*\n[a-z][^\.\!\?]*$/m  // Multiple lowercase lines
-  ].map(r => r.source).join('|'), 'i'),
-  
-  film: new RegExp([
-    // Film production
-    /\b(?:film|movie|cinema|screenplay|script|scene|shot|frame|director|producer)\b/i,
-    // Viewing actions
-    /\b(?:watch(?:ing|ed)?|view(?:ing|ed)?|screen(?:ing|ed)?)\b/i,
-    // Visual media
-    /\b(?:visual|camera|lens|focus|zoom|pan|cut|edit(?:ing)?)\b/i,
-    // TV/media
-    /\b(?:tv|television|broadcast|channel|station|network)\b/i,
-    // Specific film refs
-    /\b(?:rick and morty|spongebob|trump|kennedy|jfk|debate)\b/i
-  ].map(r => r.source).join('|'), 'i'),
-  
-  book: new RegExp([
-    // Reading/writing
-    /\b(?:book|novel|story|narrative|text|page|chapter|author|writer|writing|wrote|reading|read)\b/i,
-    // Literary terms
-    /\b(?:literature|prose|essay|journal|diary|memoir|biography)\b/i,
-    // Publication
-    /\b(?:publish(?:ed|ing)?|print(?:ed|ing)?|edition|volume|issue)\b/i,
-    // Art references (from your content)
-    /\b(?:burne jones|painting|the depths of the sea)\b/i
-  ].map(r => r.source).join('|'), 'i'),
-  
-  dream: new RegExp([
-    // Sleep/dream states
-    /\b(?:dream(?:t|ing|ed)?|nightmare|sleep(?:ing|ed)?|slumber|awake|waking|woke|unconscious)\b/i,
-    // Dream characteristics
-    /\b(?:surreal|subconscious|vision|hallucination|trance|hypnotic)\b/i,
-    // Time confusion (common in dreams)
-    /\b(?:everyday.*felt.*sunday|sunday.*week|midnight.*hour)\b/i,
-    // Underwater/submerged (common dream theme)
-    /\b(?:underwater|submerged|depths|drowning|swimming)\b/i
-  ].map(r => r.source).join('|'), 'i')
+  lyric: /\b(lyrics?|song|track|release|chords|verse|chorus|hook|beat|tempo|melody|harmony|vocals|singing|performer|band|album|single|studio|recording|entitled|special thanks)\b|\[lyric\]/i,
+  poem: /\b(poem|poetry|stanza|lime|sonnet|verse|couplet|line break|girl|meter|rhyme|rhythm|metaphor|simile|imagery|symbolism|alliteration|assonance|free verse|blank verse)\b|\[poem\]/i,
+  film: /\b(film|movie|cinema|screenplay|script|scene|shot|frame|director|producer|camera|lens|visual|screening|broadcast|tv|drama|watching|viewing|credits|studio|scene)\b|\[film\]/i,
+  book: /\b(book|novel|story|narrative|text|page|chapter|author|writer|writing|wrote|reading|read|literature|prose|essay|journal|diary|memoir|biography|publish|edition|volume)\b|\[book\]/i,
+  dream: /\b(dream|dreamt|dreaming|nightmare|sleep|slumber|awake|waking|woke|unconscious|surreal|subconscious|her|me|trance|i|nocturnal|midnight|twilight)\b|\[dream\]/i
 };
-
-// Enhanced classification function
-function classifyEntry(entry) {
-  const content = (entry.content + ' ' + (entry.title || '')).toLowerCase();
-  const tags = [];
-  
-  // Check each pattern
-  Object.entries(TAG_PATTERNS).forEach(([tag, pattern]) => {
-    if (tag !== 'all' && pattern.test(content)) {
-      tags.push(tag);
-    }
-  });
-  
-  // Additional heuristics
-  if (content.includes('----') && content.includes('chords')) {
-    if (!tags.includes('lyric')) tags.push('lyric');
-  }
-  
-  if (content.match(/\([^\)]*dream[^\)]*\)/i)) {
-    if (!tags.includes('dream')) tags.push('dream');
-  }
-  
-  return tags.length ? tags : ['uncategorized'];
-}
-
-// Usage example:
-// const entryTags = classifyEntry(entry);
 
 /* ----------  STATE  ---------- */
 window.readerEntries = [];
