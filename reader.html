@@ -622,6 +622,20 @@ function matchesSearch(e, terms) {
   if (terms.or.length && !terms.or.some(x => txt.includes(x))) return false;
   return true;
 }
+  function highlightRegex(text, regex) {
+  try {
+    const flags = regex.flags + (regex.flags.includes('g') ? '' : 'g');
+    const globalRe = new RegExp(regex.source, flags);
+    
+    return text.replace(globalRe, (match) => {
+      if (match.startsWith('<') || match.includes('>')) return match;
+      return `<span class="highlight" style="background:var(--red); color:black; padding:0 2px; border-radius:2px;">${match}</span>`;
+    });
+  } catch (e) {
+    return text;
+  }
+}
+// ------------------------------------
 
 function highlightText(text, query) {
   if (!query.trim()) return text;
@@ -630,7 +644,6 @@ function highlightText(text, query) {
     .filter((v, i, a) => a.indexOf(v) === i);
   
   let result = text;
-  // Sort by length to highlight longest phrases first
   allTerms.sort((a, b) => b.length - a.length).forEach(t => {
     const safe = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     result = result.replace(new RegExp(`(${safe})`, 'gi'), '<span class="highlight" style="background:var(--red); color:black; padding:0 2px;">$1</span>');
@@ -644,6 +657,7 @@ function debounce(func, delay) {
     searchTimeout = setTimeout(() => func.apply(this, args), delay);
   };
 }
+
 
 /* ----------  LOAD & PARSE  ---------- */
 async function loadText() {
@@ -743,9 +757,14 @@ function showEntry(entryId) {
   // 1. Prepare Content
   let displayContent = e.content;
   
-  // 2. Apply Highlighting (This matches 'searchQuery' to text)
+  // 2. HIGHLIGHT LOGIC (Search OR Filter Tags)
   if (isSearching && searchQuery) {
+    // If searching -> Highlight search terms
     displayContent = highlightText(displayContent, searchQuery);
+  } 
+  else if (currentFilter !== 'all' && TAG_PATTERNS[currentFilter]) {
+    // If filtering (Dream, Book, etc) -> Highlight those keywords in the text
+    displayContent = highlightRegex(displayContent, TAG_PATTERNS[currentFilter]);
   }
   
   // 3. Format Paragraphs
@@ -755,27 +774,24 @@ function showEntry(entryId) {
     return `<p class="mb-4 leading-relaxed">${trimmed}</p>`;
   }).join('');
   
-  // 4. Render to Screen (Crucial for highlighting to show)
   contentDiv.innerHTML = displayContent;
   
-  // 5. Calculate Stats for the Header
-  // Note: We check 'isSearching' to decide which pool of numbers to show
+  // 4. Calculate Stats for the Header
   const pool = isSearching ? searchResults : getFilteredEntries();
   const idx = pool.findIndex(x => x.id === entryId);
   const words = e.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
   
-  // 6. Generate Tags HTML
-  // Highlights the tag if it matches the current filter
+  // 5. Generate Tag Pills for Header
   const tagsHtml = e.tags.length > 0 
     ? e.tags.map(t => `<span class="px-2 py-1 border text-[10px] uppercase border-gray-600 ${t === currentFilter ? 'text-red-500 border-red-500' : 'text-gray-400'}">${t}</span>`).join('')
     : '<span class="px-2 py-1 border text-[10px] uppercase border-gray-800 text-gray-700">Unclassified</span>';
 
-  // 7. Filter Indicator
+  // 6. Filter Indicator (Visual "FILTER: DREAM" badge)
   const filterIndicator = (currentFilter !== 'all' && !isSearching)
     ? `<span class="text-[10px] uppercase tracking-wider text-red-500 border border-red-900 bg-red-900/20 px-2 py-1 rounded ml-2">FILTER: ${currentFilter}</span>` 
     : '';
 
-  // 8. Update Header Info
+  // 7. Render Header Info
   entryInfo.innerHTML = `
     <div class="flex flex-col gap-1">
       <div class="flex items-center flex-wrap">
@@ -790,16 +806,16 @@ function showEntry(entryId) {
       </div>
     </div>`;
   
-  // 9. Button States
+  // 8. Handle Button States (Grey out if start/end)
   prevBtn.disabled = idx <= 0;
   nextBtn.disabled = idx >= pool.length - 1;
-  
   prevBtn.style.opacity = prevBtn.disabled ? '0.3' : '1';
   nextBtn.style.opacity = nextBtn.disabled ? '0.3' : '1';
 
+  // 9. Reset scroll
   contentDiv.scrollTop = 0;
   
-  // 10. Refresh Index to show active state
+  // 10. Update Index List (only if it is currently visible)
   if (isIndexVisible) buildIndex();
 }
 
@@ -925,24 +941,16 @@ document.getElementById('filterBtns').addEventListener('click', e => {
   styleActiveFilter(e.target);
   currentFilter = e.target.dataset.filter;
   
-  // Clear search when switching filters to avoid confusion
+  // Clear search logic so we are in "Filter Mode"
   searchBox.value = '';
   isSearching = false;
   
-  // UX IMPROVEMENT: 
-  // 1. Force the index to open so we see the list of filtered items
-  isIndexVisible = true;
-  dateNav.classList.remove('hidden');
-  
-  // 2. Update the UI
   updateUIState();
   
-  // 3. Show first entry of new filter, or random if that feels more "Dreamweaver"
+  // Go to the first found entry
   const filtered = getFilteredEntries();
   if (filtered.length > 0) {
     showEntry(filtered[0].id);
-    // Scroll the index to the top so we see the new results
-    dateNav.scrollTop = 0;
   } else {
     contentDiv.innerHTML = `<div class="text-center mt-20 text-gray-600">No entries found tagged as <span style="color:var(--red)">${currentFilter}</span>.</div>`;
     entryInfo.innerHTML = '';
