@@ -8,15 +8,11 @@
   <!-- MapLibre GL CSS -->
   <link href='https://unpkg.com/maplibre-gl@5.0.1/dist/maplibre-gl.css' rel='stylesheet' />
   
-  <!-- ADDED: Deck.gl Script (Required for the slide-out map) -->
+  <!-- Deck.gl Script -->
   <script src="https://unpkg.com/deck.gl@8.9.33/dist.min.js"></script>
   
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: 'Olivetti', 'Courier New', monospace;
@@ -26,103 +22,28 @@
       color: #e0e0e0;
     }
 
-    /* Import ONLY Olivetti fonts */
-    @font-face {
-      font-family: 'Olivetti';
-      src: url('https://cdn.jsdelivr.net/gh/ghostm68/inktwo/fonts/olivetti/olivetti-typewriter-regular.otf') format('opentype');
-      font-weight: normal;
-      font-style: normal;
-    }
+    /* Import Fonts */
+    @font-face { font-family: 'Olivetti'; src: url('https://cdn.jsdelivr.net/gh/ghostm68/inktwo/fonts/olivetti/olivetti-typewriter-regular.otf') format('opentype'); font-weight: normal; }
+    @font-face { font-family: 'Olivetti'; src: url('https://cdn.jsdelivr.net/gh/ghostm68/inktwo/fonts/olivetti/olivetti-typewriter-bold.otf') format('opentype'); font-weight: bold; }
+
+    .app-container { display: flex; flex-direction: column; height: 100vh; }
+    .app-header { background: #2a2a2a; color: #e0e0e0; padding: 10px 15px; text-align: center; border-bottom: 1px solid #444; z-index: 1000; flex-shrink: 0; }
+    .main-title { font-family: 'Olivetti', 'Courier New', monospace; font-size: 1.8em; margin: 0; }
+    .subtitle { font-family: 'Olivetti', 'Courier New', monospace; font-size: 0.9em; opacity: 0.9; }
+
+    /* Main Content */
+    .main-content { display: flex; flex: 1; overflow: hidden; flex-direction: row-reverse; }
+    .map-section { flex: 1; position: relative; border-left: 1px solid #444; }
+    #map { width: 100%; height: 100%; background: #1a1a1a; }
+    .maplibregl-ctrl-attrib, .maplibregl-ctrl-logo { display: none !important; }
     
-    @font-face {
-      font-family: 'Olivetti';
-      src: url('https://cdn.jsdelivr.net/gh/ghostm68/inktwo/fonts/olivetti/olivetti-typewriter-bold.otf') format('opentype');
-      font-weight: bold;
-      font-style: normal;
-    }
-
-    .app-container {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-
-    /* Header - Monochrome */
-    .app-header {
-      background: #2a2a2a;
-      color: #e0e0e0;
-      padding: 10px 15px;
-      text-align: center;
-      border-bottom: 1px solid #444;
-      z-index: 1000;
-      flex-shrink: 0;
-    }
-
-    .main-title {
-      font-family: 'Olivetti', 'Courier New', monospace;
-      font-size: 1.8em;
-      margin: 0;
-    }
-
-    .subtitle {
-      font-family: 'Olivetti', 'Courier New', monospace;
-      font-size: 0.9em;
-      opacity: 0.9;
-    }
-
-    /* Main Content - Split Screen */
-    .main-content {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-      flex-direction: row-reverse; /* Map on right for desktop */
-    }
-
-    /* Map Section */
-    .map-section {
-      flex: 1;
-      position: relative;
-      border-left: 1px solid #444;
-    }
-
-    #map {
-      width: 100%;
-      height: 100%;
-      background: #1a1a1a; /* Dark background while loading */
-    }
-
-    /* HIDE MAP BRANDING / ATTRIBUTION */
-    .maplibregl-ctrl-attrib { display: none !important; }
-    .maplibregl-ctrl-logo { display: none !important; }
-
-    .map-controls {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 500;
-      display: flex;
-      gap: 5px;
-    }
-
-    .map-btn {
-      background: rgba(42, 42, 42, 0.9);
-      border: 1px solid #00aaff; /* Neon blue */
-      border-radius: 5px;
-      padding: 8px 12px;
-      cursor: pointer;
-      font-family: 'Olivetti', 'Courier New', monospace;
-      font-size: 0.8em;
-      color: #e0e0e0;
-    }
+    .map-controls { position: absolute; top: 10px; right: 10px; z-index: 500; display: flex; gap: 5px; }
+    .map-btn { background: rgba(42, 42, 42, 0.9); border: 1px solid #00aaff; border-radius: 5px; padding: 8px 12px; cursor: pointer; font-family: 'Olivetti', 'Courier New', monospace; font-size: 0.8em; color: #e0e0e0; }
 
     /* Writing Section */
-    .writing-section {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background: #2a2a2a;
-    }
+    .writing-section { flex: 1; display: flex; flex-direction: column; background: #2a2a2a; }
 
+    /* STEALTH MODE HEADER: No cursor: pointer, no hover effects */
     .writing-header {
       background: #1a1a1a;
       color: #e0e0e0;
@@ -131,265 +52,58 @@
       font-weight: bold;
       flex-shrink: 0;
       border-bottom: 1px solid #444;
-      /* ADDED: Interaction styles */
-      transition: color 0.3s, text-shadow 0.3s;
-    }
-    
-    .writing-header:hover {
-        color: #00aaff;
-        text-shadow: 0 0 8px rgba(0, 170, 255, 0.4);
+      cursor: text; /* Looks like normal text */
     }
 
-    #writing-area {
-      flex: 1;
-      width: 100%;
-      border: none;
-      padding: 15px;
-      background: #1a1a1a;
-      resize: none;
-      outline: none;
-      font-family: 'Olivetti', 'Courier New', monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      color: #e0e0e0;
-    }
+    #writing-area { flex: 1; width: 100%; border: none; padding: 15px; background: #1a1a1a; resize: none; outline: none; font-family: 'Olivetti', 'Courier New', monospace; font-size: 14px; line-height: 1.6; color: #e0e0e0; }
+    .writing-tools { background: #1a1a1a; padding: 10px; display: flex; gap: 8px; flex-wrap: wrap; flex-shrink: 0; border-top: 1px solid #444; }
+    .writing-tools button { padding: 8px 12px; background: #2a2a2a; border: 1px solid #00aaff; border-radius: 4px; cursor: pointer; font-family: 'Olivetti', 'Courier New', monospace; font-size: 0.8em; color: #e0e0e0; flex: 1; min-width: 120px; }
 
-    .writing-tools {
-      background: #1a1a1a;
-      padding: 10px;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      flex-shrink: 0;
-      border-top: 1px solid #444;
-    }
-
-    .writing-tools button {
-      padding: 8px 12px;
-      background: #2a2a2a;
-      border: 1px solid #00aaff;
-      border-radius: 4px;
-      cursor: pointer;
-      font-family: 'Olivetti', 'Courier New', monospace;
-      font-size: 0.8em;
-      color: #e0e0e0;
-      flex: 1;
-      min-width: 120px;
-    }
-
-    /* Location Inspiration - Monochrome */
-    #location-inspiration {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 90%;
-      max-width: 400px;
-      background: #2a2a2a;
-      border: 2px solid #00aaff;
-      border-radius: 8px;
-      padding: 20px;
-      z-index: 1001;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      display: none;
-    }
-
-    #location-info {
-      margin: 15px 0;
-      line-height: 1.5;
-      color: #e0e0e0;
-    }
-
-    #use-inspiration {
-      width: 100%;
-      padding: 10px;
-      background: #00aaff;
-      color: #1a1a1a;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-family: 'Olivetti', 'Courier New', monospace;
-      font-weight: bold;
-    }
-
-    /* Settings Panel */
-    #settings-panel {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 90%;
-      max-width: 400px;
-      max-height: 80vh;
-      background: #2a2a2a;
-      border: 2px solid #00aaff;
-      border-radius: 8px;
-      padding: 20px;
-      z-index: 1001;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      overflow-y: auto;
-      display: none;
-    }
-
+    /* Modals */
+    #location-inspiration, #settings-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 400px; background: #2a2a2a; border: 2px solid #00aaff; border-radius: 8px; padding: 20px; z-index: 1001; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); display: none; }
+    #settings-panel { max-height: 80vh; overflow-y: auto; }
     .settings-group { margin-bottom: 15px; }
     .settings-group label { display: block; margin-bottom: 5px; color: #e0e0e0; font-family: 'Olivetti', 'Courier New', monospace; }
-    .settings-group select, .settings-group input {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #444;
-      border-radius: 4px;
-      background: #1a1a1a;
-      color: #e0e0e0;
-      font-family: 'Olivetti', 'Courier New', monospace;
-    }
+    .settings-group select, .settings-group input { width: 100%; padding: 8px; border: 1px solid #444; border-radius: 4px; background: #1a1a1a; color: #e0e0e0; font-family: 'Olivetti', 'Courier New', monospace; }
     input[type="range"] { accent-color: #00aaff; }
+    .close-btn, #use-inspiration { background: #00aaff; color: #1a1a1a; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-top: 10px; font-family: 'Olivetti', 'Courier New', monospace; font-weight: bold; width: 100%; }
 
-    .close-btn {
-      background: #00aaff;
-      color: #1a1a1a;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-top: 10px;
-      font-family: 'Olivetti', 'Courier New', monospace;
-      font-weight: bold;
-      width: 100%;
-    }
-
-    /* Mobile Responsive */
-    @media (max-width: 768px) {
-      .main-content { flex-direction: column; }
-      .writing-section { order: 1; flex: 0.6; border-bottom: 1px solid #444; }
-      .map-section { order: 2; flex: 0.4; border-left: none; }
-      .writing-tools { flex-direction: column; }
-      .writing-tools button { min-width: auto; }
-      .main-title { font-size: 1.5em; }
-      .subtitle { font-size: 0.8em; }
-    }
-
-    .location-pin {
-      background: rgba(42, 42, 42, 0.9);
-      color: #e0e0e0;
-      padding: 5px 10px;
-      border-radius: 15px;
-      font-family: 'Olivetti', 'Courier New', monospace;
-      font-size: 12px;
-      border: 2px solid #00aaff;
-    }
-
-    /* =========================================
-       ADDED: SLIDE-OUT MENU & DECK.GL STYLES 
-       ========================================= */
-    .slide-menu {
-        position: fixed;
-        top: 0;
-        right: -100%;
-        width: 100%;
-        height: 100vh;
-        z-index: 9999;
-        transition: right 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        background: #000;
-        overflow: hidden;
-    }
-
+    /* Slide Menu & Deck.gl Styles */
+    .slide-menu { position: fixed; top: 0; right: -100%; width: 100%; height: 100vh; z-index: 9999; transition: right 0.6s cubic-bezier(0.16, 1, 0.3, 1); background: #000; overflow: hidden; }
     .slide-menu.active { right: 0; }
-
-    #deck-map-container {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 1;
-    }
-
-    .menu-overlay {
-        position: relative;
-        z-index: 2;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0) 100%);
-        color: white;
-        pointer-events: none;
-    }
-
-    .menu-inner-text {
-        pointer-events: auto;
-        padding: 80px 60px;
-        max-width: 600px;
-    }
-
-    .menu-inner-text h2 {
-        font-size: 2.5rem;
-        margin-bottom: 10px;
-        color: #00aaff;
-        font-family: 'Olivetti', 'Courier New', monospace;
-    }
-
-    .menu-close-btn {
-        position: absolute;
-        top: 30px;
-        right: 40px;
-        font-size: 3rem;
-        background: none;
-        border: none;
-        color: #00aaff;
-        cursor: pointer;
-        pointer-events: auto;
-        opacity: 0.8;
-        font-family: 'Olivetti', 'Courier New', monospace;
-        transition: opacity 0.2s;
-    }
+    #deck-map-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+    
+    .menu-overlay { position: relative; z-index: 2; width: 100%; height: 100%; background: linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0) 100%); color: white; pointer-events: none; }
+    .menu-inner-text { pointer-events: auto; padding: 80px 60px; max-width: 600px; }
+    .menu-inner-text h2 { font-size: 2.5rem; margin-bottom: 10px; color: #00aaff; font-family: 'Olivetti', 'Courier New', monospace; }
+    
+    .menu-close-btn { position: absolute; top: 30px; right: 40px; font-size: 3rem; background: none; border: none; color: #00aaff; cursor: pointer; pointer-events: auto; opacity: 0.8; font-family: 'Olivetti', 'Courier New', monospace; transition: opacity 0.2s; }
     .menu-close-btn:hover { opacity: 1; text-shadow: 0 0 10px #00aaff; }
 
-    /* Toggle Switch specific to slide menu */
-    .slide-toggle {
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-        margin-top: 30px;
-        pointer-events: auto;
-        font-family: 'Olivetti', 'Courier New', monospace;
-    }
+    /* Custom Slider Toggle */
+    .slide-toggle { display: flex; align-items: center; cursor: pointer; pointer-events: auto; font-family: 'Olivetti', 'Courier New', monospace; }
     .slide-toggle input { display: none; }
-    .slider {
-        width: 50px;
-        height: 26px;
-        background-color: #333;
-        border-radius: 34px;
-        position: relative;
-        transition: .4s;
-        margin-right: 15px;
-        border: 1px solid #555;
-    }
-    .slider:before {
-        content: "";
-        position: absolute;
-        height: 18px;
-        width: 18px;
-        left: 3px;
-        bottom: 3px;
-        background-color: #888;
-        border-radius: 50%;
-        transition: .4s;
-    }
+    .slider { width: 50px; height: 26px; background-color: #333; border-radius: 34px; position: relative; transition: .4s; margin-right: 15px; border: 1px solid #555; }
+    .slider:before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: #888; border-radius: 50%; transition: .4s; }
     input:checked + .slider { background-color: #00aaff; border-color: #00aaff; }
     input:checked + .slider:before { transform: translateX(24px); background-color: white; }
 
+    @media (max-width: 768px) {
+      .main-content { flex-direction: column; }
+      .writing-section { order: 1; flex: 0.6; }
+      .map-section { order: 2; flex: 0.4; }
+    }
+    .location-pin { background: rgba(42, 42, 42, 0.9); color: #e0e0e0; padding: 5px 10px; border-radius: 15px; font-family: 'Olivetti', 'Courier New', monospace; font-size: 12px; border: 2px solid #00aaff; }
   </style>
 </head>
 <body>
   <div class="app-container">
-    <!-- Header -->
     <div class="app-header">
       <div class="main-title">Ataraxia</div>
       <div class="subtitle">World Building Sanctuary</div>
     </div>
 
-    <!-- Main Split Screen Content -->
     <div class="main-content">
-      <!-- Map Section - Right on Desktop -->
       <div class="map-section">
         <div id="map"></div>
         <div class="map-controls">
@@ -398,13 +112,12 @@
         </div>
       </div>
 
-      <!-- Writing Section - Left on Desktop -->
       <div class="writing-section">
-        <!-- This is the trigger header -->
+        <!-- STEALTH HEADER: Looks inert, is actually the trigger -->
         <div class="writing-header">
           📝 Your World Awaits...
         </div>
-        <textarea id="writing-area" placeholder="Begin your world-building journey here...&#10;&#10;Click 'Get Inspired' for location prompts, or create your own stories.&#10;&#10;Click 'Your World Awaits' above to see the data map."></textarea>
+        <textarea id="writing-area" placeholder="Begin your world-building journey here...&#10;&#10;Click 'Get Inspired' for location prompts, or create your own stories."></textarea>
         <div class="writing-tools">
           <button id="generate-poem">Generate Poem</button>
           <button id="save-location">Pin to Map</button>
@@ -414,7 +127,7 @@
       </div>
     </div>
 
-    <!-- Location Inspiration Modal -->
+    <!-- Modals -->
     <div id="location-inspiration">
       <h3 style="color: #e0e0e0; font-family: 'Olivetti', 'Courier New', monospace;">📍 Location Inspiration</h3>
       <p id="location-info"></p>
@@ -422,10 +135,8 @@
       <button class="close-btn" id="close-inspiration">Close</button>
     </div>
 
-    <!-- Settings Modal -->
     <div id="settings-panel">
       <h3 style="color: #e0e0e0; font-family: 'Olivetti', 'Courier New', monospace;">Ataraxia Settings</h3>
-      
       <div class="settings-group">
         <label for="map-theme">Map Theme:</label>
         <select id="map-theme">
@@ -435,80 +146,64 @@
           <option value="terrain">Terrain</option>
         </select>
       </div>
-      
-    <div class="settings-group">
-      <label for="font-family">Font:</label>
-      <select id="font-family">
-        <option value="olivetti-typewriter-regular.otf" selected>Olivetti Typewriter</option>
-        <option value="olivetti-typewriter-bold.otf">Olivetti Typewriter Bold</option>
-        <option value="olivetti-typewriter-italic.otf">Olivetti Typewriter Italic</option>
-        <option value="olivetti-underwood-regular.otf">Olivetti Underwood</option>
-        <option value="olivetti-underwood-bold.otf">Olivetti Underwood Bold</option>
-      </select>
-    </div>
+      <div class="settings-group">
+        <label for="font-family">Font:</label>
+        <select id="font-family">
+          <option value="olivetti-typewriter-regular.otf" selected>Olivetti Typewriter</option>
+          <option value="olivetti-typewriter-bold.otf">Olivetti Typewriter Bold</option>
+        </select>
+      </div>
       <div class="settings-group">
         <label for="font-size">Font Size: <span id="font-size-value" style="color: #00aaff;">14px</span></label>
         <input type="range" id="font-size" min="12" max="24" value="14">
       </div>
-
-      <div class="settings-group">
-        <label for="writing-mode">Writing Mode:</label>
-        <select id="writing-mode">
-          <option value="world-building">World Building</option>
-          <option value="poetry">Poetry Generation</option>
-          <option value="free-write">Free Writing</option>
-        </select>
-      </div>
-
       <button class="close-btn" id="close-settings">Apply & Close</button>
     </div>
   </div>
 
-  <!-- ADDED: SLIDE OUT MENU HTML STRUCTURE -->
+  <!-- SLIDE OUT MENU (The Sprawl / Vancouver) -->
   <div id="world-menu" class="slide-menu">
-    <!-- Native Map Container (Background) -->
     <div id="deck-map-container"></div>
-    
-    <!-- Menu Content Overlay -->
     <div class="menu-overlay">
         <button class="menu-close-btn" id="close-slide-menu">&times;</button>
-     <div class="menu-inner-text">
-    <h2>The Sprawl</h2>
-    <p style="font-size: 1.1em; line-height: 1.6;">
-        Vancouver City Blocks. <br>
-        <span style="font-size:0.8em; opacity:0.7;">Navigate: Left Click to Pan, Right Click to Rotate, Scroll to Zoom.</span>
-    </p>
-    
-    <!-- CONTROLS -->
-    <div style="margin-top: 30px; border-top: 1px solid #333; padding-top: 20px;">
-        <!-- Toggle Map -->
-        <label class="slide-toggle">
-            <input type="checkbox" id="deck-map-toggle" checked>
-            <span class="slider"></span>
-            <span class="label-text">Visualization Active</span>
-        </label>
+        
+        <div class="menu-inner-text">
+            <h2>The Sprawl</h2>
+            <p style="font-size: 1.1em; line-height: 1.6;">
+                Vancouver City Blocks. <br>
+                <span style="font-size:0.8em; opacity:0.7;">Navigate: Left Click to Pan, Right Click to Rotate, Scroll to Zoom.</span>
+            </p>
+            
+            <!-- MAP CONTROLS -->
+            <div style="margin-top: 30px; border-top: 1px solid #333; padding-top: 20px;">
+                <!-- Toggle Map -->
+                <label class="slide-toggle">
+                    <input type="checkbox" id="deck-map-toggle" checked>
+                    <span class="slider"></span>
+                    <span class="label-text">Visualization Active</span>
+                </label>
 
-        <!-- Height Slider -->
-        <div class="settings-group" style="margin-top: 20px;">
-            <label>Building Height Exaggeration</label>
-            <input type="range" id="height-slider" min="0" max="100" value="4" step="1">
-        </div>
+                <!-- Height Slider -->
+                <div class="settings-group" style="margin-top: 20px;">
+                    <label>Building Height Exaggeration</label>
+                    <input type="range" id="height-slider" min="0" max="100" value="4" step="1">
+                </div>
 
-        <!-- Opacity Slider -->
-        <div class="settings-group">
-            <label>Opacity</label>
-            <input type="range" id="opacity-slider" min="0.1" max="1" value="0.8" step="0.1">
+                <!-- Opacity Slider -->
+                <div class="settings-group">
+                    <label>Opacity</label>
+                    <input type="range" id="opacity-slider" min="0.1" max="1" value="0.8" step="0.1">
+                </div>
+            </div>
         </div>
     </div>
-</div>
+  </div>
 
-  <!-- MapLibre GL JS -->
   <script src='https://unpkg.com/maplibre-gl@5.0.1/dist/maplibre-gl.js'></script>
   
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      // 1. ORIGINAL MAP LOGIC
-      // ---------------------
+      // --- ORIGINAL APP LOGIC ---
       const freeMapStyles = {
         dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
         light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
@@ -523,105 +218,59 @@
         zoom: 4,
         attributionControl: false 
       });
-
       map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
-      // UI Elements
       const writingArea = document.getElementById('writing-area');
-      const settingsBtn = document.getElementById('settings-btn');
-      const inspirationBtn = document.getElementById('inspiration-btn');
       const settingsPanel = document.getElementById('settings-panel');
       const locationInspiration = document.getElementById('location-inspiration');
       const locationInfo = document.getElementById('location-info');
-      const closeSettings = document.getElementById('close-settings');
-      const closeInspiration = document.getElementById('close-inspiration');
-      const useInspiration = document.getElementById('use-inspiration');
-
-      // Writing Header Trigger for Slide Menu
-      const writingHeader = document.querySelector('.writing-header');
-
-      // Event Listeners for original UI
-      settingsBtn.addEventListener('click', () => { settingsPanel.style.display = 'block'; });
-      inspirationBtn.addEventListener('click', () => { getRandomLocationInspiration(); });
-      closeSettings.addEventListener('click', () => { settingsPanel.style.display = 'none'; applySettings(); });
-      closeInspiration.addEventListener('click', () => { locationInspiration.style.display = 'none'; });
       
-      useInspiration.addEventListener('click', () => {
-        writingArea.value += '\n\n' + locationInfo.textContent;
-        locationInspiration.style.display = 'none';
+      document.getElementById('settings-btn').addEventListener('click', () => { settingsPanel.style.display = 'block'; });
+      document.getElementById('inspiration-btn').addEventListener('click', () => { 
+          const prompts = ["Describe a hidden civilization", "What magical creatures live here?", "Who built the ruins beneath the city?"];
+          const prompt = prompts[Math.floor(Math.random() * prompts.length)];
+          locationInfo.innerHTML = `<strong>A mysterious landscape</strong><br><br><em>Writing Prompt:</em><br>${prompt}`;
+          locationInspiration.style.display = 'block'; 
       });
+      document.getElementById('close-settings').addEventListener('click', () => { settingsPanel.style.display = 'none'; applySettings(); });
+      document.getElementById('close-inspiration').addEventListener('click', () => { locationInspiration.style.display = 'none'; });
+      document.getElementById('use-inspiration').addEventListener('click', () => { writingArea.value += '\n\n' + locationInfo.textContent; locationInspiration.style.display = 'none'; });
 
-      // Writing Tools Logic
       document.getElementById('generate-poem').addEventListener('click', () => {
-        const poems = [
-          "The mountains stand in silent grace,\nTheir shadows fall on time and space.",
-          "Where ocean meets the waiting shore,\nAnd waves crash with their endless roar."
-        ];
+        const poems = ["The mountains stand in silent grace...", "Where ocean meets the waiting shore..."];
         writingArea.value += '\n\n' + poems[Math.floor(Math.random() * poems.length)];
       });
 
       document.getElementById('save-location').addEventListener('click', () => {
         const center = map.getCenter();
         if (writingArea.value.trim()) {
-          const el = document.createElement('div');
-          el.className = 'location-pin';
-          el.innerHTML = '📌';
-          el.style.width = '30px'; el.style.height = '30px'; el.style.display = 'flex'; el.style.alignItems = 'center'; el.style.justifyContent = 'center'; el.style.fontSize = '20px';
-          new maplibregl.Marker(el)
-            .setLngLat([center.lng, center.lat])
-            .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML(`<strong>Saved Note:</strong><br>${writingArea.value.substring(0, 100)}...`))
-            .addTo(map);
+          const el = document.createElement('div'); el.className = 'location-pin'; el.innerHTML = '📌'; el.style.width = '30px'; el.style.height = '30px'; el.style.display = 'flex'; el.style.alignItems = 'center'; el.style.justifyContent = 'center'; el.style.fontSize = '20px';
+          new maplibregl.Marker(el).setLngLat([center.lng, center.lat]).setPopup(new maplibregl.Popup({ offset: 25 }).setHTML(`<strong>Saved Note:</strong><br>${writingArea.value.substring(0, 100)}...`)).addTo(map);
           alert('Note pinned to map!');
-        } else {
-          alert('Please write something first!');
-        }
+        } else { alert('Please write something first!'); }
       });
 
-      document.getElementById('clear-text').addEventListener('click', () => {
-        if (confirm('Clear all text?')) writingArea.value = '';
-      });
-
+      document.getElementById('clear-text').addEventListener('click', () => { if (confirm('Clear all text?')) writingArea.value = ''; });
       document.getElementById('export-text').addEventListener('click', () => {
-        const text = writingArea.value;
-        const blob = new Blob([text], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'ataraxia-notes.txt'; a.click(); URL.revokeObjectURL(url);
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([writingArea.value], { type: 'text/plain' })); a.download = 'ataraxia-notes.txt'; a.click();
       });
 
-      // Settings Logic
       const fontSizeSlider = document.getElementById('font-size');
-      const fontSizeValue = document.getElementById('font-size-value');
+      fontSizeSlider.addEventListener('input', () => { document.getElementById('font-size-value').textContent = fontSizeSlider.value + 'px'; });
+      document.getElementById('font-family').addEventListener('change', (e) => applyFont(e.target.value));
 
       function applySettings() {
         const theme = document.getElementById('map-theme').value;
-        const fontSize = fontSizeSlider.value;
         if (freeMapStyles[theme]) map.setStyle(freeMapStyles[theme]);
-        writingArea.style.fontSize = fontSize + 'px';
-        fontSizeValue.textContent = fontSize + 'px';
+        writingArea.style.fontSize = fontSizeSlider.value + 'px';
       }
-
-      fontSizeSlider.addEventListener('input', () => { fontSizeValue.textContent = fontSizeSlider.value + 'px'; });
-      
-      const fontSelector = document.getElementById('font-family');
-      fontSelector.addEventListener('change', (e) => applyFont(e.target.value));
-
       function applyFont(fontFile) {
-        const fontFace = `@font-face { font-family: 'SelectedFont'; src: url('https://cdn.jsdelivr.net/gh/ghostm68/inktwo/fonts/olivetti/${fontFile}') format('opentype'); }`;
-        let styleElement = document.getElementById('dynamic-font');
-        if (!styleElement) { styleElement = document.createElement('style'); styleElement.id = 'dynamic-font'; document.head.appendChild(styleElement); }
-        styleElement.textContent = fontFace;
+        let styleElement = document.getElementById('dynamic-font') || document.createElement('style');
+        styleElement.id = 'dynamic-font'; document.head.appendChild(styleElement);
+        styleElement.textContent = `@font-face { font-family: 'SelectedFont'; src: url('https://cdn.jsdelivr.net/gh/ghostm68/inktwo/fonts/olivetti/${fontFile}') format('opentype'); }`;
         writingArea.style.fontFamily = 'SelectedFont, "Courier New", monospace';
       }
       applyFont('olivetti-typewriter-regular.otf');
-
-      function getRandomLocationInspiration() {
-        // ... (Existing inspiration logic logic kept short for brevity)
-        const prompts = ["Describe a hidden civilization", "What magical creatures live here?"];
-        const prompt = prompts[Math.floor(Math.random() * prompts.length)];
-        locationInfo.innerHTML = `<strong>A mysterious landscape</strong><br><br><em>Writing Prompt:</em><br>${prompt}`;
-        locationInspiration.style.display = 'block';
-      }
 
       window.addEventListener('click', (e) => {
         if (e.target === settingsPanel) settingsPanel.style.display = 'none';
@@ -629,26 +278,27 @@
       });
 
 
-      // 2. ADDED: SLIDE OUT MENU & DECK.GL LOGIC
-      // ----------------------------------------
+      // --- DECK.GL "THE SPRAWL" LOGIC ---
       let deckInstance = null;
       let mapInitialized = false;
       const slideMenu = document.getElementById('world-menu');
       const closeSlideMenuBtn = document.getElementById('close-slide-menu');
       const deckToggle = document.getElementById('deck-map-toggle');
+      const writingHeader = document.querySelector('.writing-header');
+      const heightSlider = document.getElementById('height-slider');
+      const opacitySlider = document.getElementById('opacity-slider');
 
-      // Make the "Your World Awaits" header clickable
+      // STEALTH TRIGGER: No cursor cues, just click
       if (writingHeader) {
-          writingHeader.style.cursor = "pointer";
-          writingHeader.title = "Click to open 3D Map Visualization";
           writingHeader.addEventListener('click', toggleMenu);
       }
 
       closeSlideMenuBtn.addEventListener('click', toggleMenu);
 
-      deckToggle.addEventListener('change', () => {
-          if (deckInstance) updateDeckLayer();
-      });
+      // Event listeners for sliders
+      deckToggle.addEventListener('change', updateDeckLayer);
+      heightSlider.addEventListener('input', updateDeckLayer);
+      opacitySlider.addEventListener('input', updateDeckLayer);
 
       function toggleMenu() {
           slideMenu.classList.toggle('active');
@@ -658,67 +308,52 @@
           }
       }
 
-            // Event Listeners for the new sliders
-      const heightSlider = document.getElementById('height-slider');
-      const opacitySlider = document.getElementById('opacity-slider');
-
-      // Update map when sliders move
-      heightSlider.addEventListener('input', updateDeckLayer);
-      opacitySlider.addEventListener('input', updateDeckLayer);
-
       function initDeckMap() {
-          const {DeckGL} = deck; // We don't need ContourLayer anymore, we need PolygonLayer
+          const {DeckGL} = deck;
 
           deckInstance = new DeckGL({
               container: 'deck-map-container',
               map: window.maplibregl, 
               mapStyle: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-              // VANCOUVER COORDINATES
+              // VANCOUVER VIEW STATE
               initialViewState: {
                   longitude: -123.13,
                   latitude: 49.254,
                   zoom: 11,
-                  pitch: 45, // Tilted to see 3D buildings
+                  pitch: 45,
                   bearing: 0
               },
-              controller: true, // THIS ENABLES ZOOM (Scroll Wheel)
+              controller: true, // Enables zoom/pan
               layers: getLayers()
           });
       }
 
       function getLayers() {
           const { PolygonLayer } = deck;
-          
-          // Get values from UI
           const isVisible = document.getElementById('deck-map-toggle').checked;
-          const heightScale = parseFloat(document.getElementById('height-slider').value);
-          const opacityVal = parseFloat(document.getElementById('opacity-slider').value);
+          const heightScale = parseFloat(heightSlider.value);
+          const opacityVal = parseFloat(opacitySlider.value);
 
           return [
               new PolygonLayer({
                   id: 'city-sprawl',
                   data: 'https://raw.githubusercontent.com/visgl/deck.gl-data/master/examples/geojson/vancouver-blocks.json',
                   
-                  // Data Accessors
                   getPolygon: d => d.geometry.coordinates,
                   getElevation: d => d.properties.valuePerSqm,
-                  
-                  // Visuals
-                  getFillColor: [42, 42, 42],      // Dark Grey Buildings
-                  getLineColor: [0, 170, 255, 150],// Neon Blue Edges
+                  getFillColor: [42, 42, 42],
+                  getLineColor: [0, 170, 255, 150],
                   getLineWidth: 1,
                   
-                  // 3D Settings
                   extruded: true,
-                  wireframe: true,                 // "Blueprint" style
-                  elevationScale: heightScale,     // Controlled by Slider
+                  wireframe: true,
+                  elevationScale: heightScale,
                   
-                  // Interaction
                   opacity: opacityVal,
                   visible: isVisible,
                   pickable: true,
                   autoHighlight: true,
-                  highlightColor: [0, 255, 200, 100] // Bright highlight on hover
+                  highlightColor: [0, 255, 200, 100]
               })
           ];
       }
@@ -728,6 +363,8 @@
               deckInstance.setProps({ layers: getLayers() });
           }
       }
+
+    });
   </script>
 </body>
 </html>
