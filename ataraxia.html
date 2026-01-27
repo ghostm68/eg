@@ -472,24 +472,35 @@
     <!-- Menu Content Overlay -->
     <div class="menu-overlay">
         <button class="menu-close-btn" id="close-slide-menu">&times;</button>
-        
-        <div class="menu-inner-text">
-            <h2>Data Topology</h2>
-            <p style="font-size: 1.1em; line-height: 1.6;">
-                Beneath the narrative lies the raw data of the world. 
-                Visualize the elevation contours of the landscape in real-time.
-            </p>
-            
-            <div style="margin-top: 30px; border-top: 1px solid #333; padding-top: 20px;">
-                <label class="slide-toggle">
-                    <input type="checkbox" id="deck-map-toggle" checked>
-                    <span class="slider"></span>
-                    <span class="label-text">Visualization Active</span>
-                </label>
-            </div>
+     <div class="menu-inner-text">
+    <h2>The Sprawl</h2>
+    <p style="font-size: 1.1em; line-height: 1.6;">
+        Vancouver City Blocks. <br>
+        <span style="font-size:0.8em; opacity:0.7;">Navigate: Left Click to Pan, Right Click to Rotate, Scroll to Zoom.</span>
+    </p>
+    
+    <!-- CONTROLS -->
+    <div style="margin-top: 30px; border-top: 1px solid #333; padding-top: 20px;">
+        <!-- Toggle Map -->
+        <label class="slide-toggle">
+            <input type="checkbox" id="deck-map-toggle" checked>
+            <span class="slider"></span>
+            <span class="label-text">Visualization Active</span>
+        </label>
+
+        <!-- Height Slider -->
+        <div class="settings-group" style="margin-top: 20px;">
+            <label>Building Height Exaggeration</label>
+            <input type="range" id="height-slider" min="0" max="100" value="4" step="1">
+        </div>
+
+        <!-- Opacity Slider -->
+        <div class="settings-group">
+            <label>Opacity</label>
+            <input type="range" id="opacity-slider" min="0.1" max="1" value="0.8" step="0.1">
         </div>
     </div>
-  </div>
+</div>
 
   <!-- MapLibre GL JS -->
   <script src='https://unpkg.com/maplibre-gl@5.0.1/dist/maplibre-gl.js'></script>
@@ -647,62 +658,76 @@
           }
       }
 
+            // Event Listeners for the new sliders
+      const heightSlider = document.getElementById('height-slider');
+      const opacitySlider = document.getElementById('opacity-slider');
+
+      // Update map when sliders move
+      heightSlider.addEventListener('input', updateDeckLayer);
+      opacitySlider.addEventListener('input', updateDeckLayer);
+
       function initDeckMap() {
-          const {DeckGL, ContourLayer} = deck;
+          const {DeckGL} = deck; // We don't need ContourLayer anymore, we need PolygonLayer
 
           deckInstance = new DeckGL({
               container: 'deck-map-container',
-              // Use global MapLibre instance (version 5 is compatible via this method)
               map: window.maplibregl, 
               mapStyle: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+              // VANCOUVER COORDINATES
               initialViewState: {
-                  longitude: -122.44,
-                  latitude: 37.75,
-                  zoom: 11.5,
-                  maxZoom: 20,
-                  pitch: 45,
+                  longitude: -123.13,
+                  latitude: 49.254,
+                  zoom: 11,
+                  pitch: 45, // Tilted to see 3D buildings
                   bearing: 0
               },
-              controller: true,
+              controller: true, // THIS ENABLES ZOOM (Scroll Wheel)
               layers: getLayers()
           });
       }
 
-      // 1. Update initialViewState in initDeckMap()
-// longitude: -123.1, latitude: 49.254, zoom: 11, pitch: 45
+      function getLayers() {
+          const { PolygonLayer } = deck;
+          
+          // Get values from UI
+          const isVisible = document.getElementById('deck-map-toggle').checked;
+          const heightScale = parseFloat(document.getElementById('height-slider').value);
+          const opacityVal = parseFloat(document.getElementById('opacity-slider').value);
 
-function getLayers() {
-    const { PolygonLayer } = deck;
-    const isVisible = document.getElementById('deck-map-toggle').checked;
-
-    return [
-        new PolygonLayer({
-            id: 'city-sprawl',
-            data: 'https://raw.githubusercontent.com/visgl/deck.gl-data/master/examples/geojson/vancouver-blocks.json',
-            getPolygon: d => d.geometry.coordinates,
-            getElevation: d => d.properties.valuePerSqm,
-            getFillColor: d => [42, 42, 42], // Dark Grey buildings
-            getLineColor: [0, 170, 255, 150], // Neon Blue edges
-            getLineWidth: 1,
-            extruded: true,
-            wireframe: true, // Gives it that "blueprint" look
-            elevationScale: 4,
-            opacity: 0.8,
-            visible: isVisible,
-            pickable: true,
-            autoHighlight: true,
-            highlightColor: [0, 255, 200, 100]
-        })
-    ];
-}
+          return [
+              new PolygonLayer({
+                  id: 'city-sprawl',
+                  data: 'https://raw.githubusercontent.com/visgl/deck.gl-data/master/examples/geojson/vancouver-blocks.json',
+                  
+                  // Data Accessors
+                  getPolygon: d => d.geometry.coordinates,
+                  getElevation: d => d.properties.valuePerSqm,
+                  
+                  // Visuals
+                  getFillColor: [42, 42, 42],      // Dark Grey Buildings
+                  getLineColor: [0, 170, 255, 150],// Neon Blue Edges
+                  getLineWidth: 1,
+                  
+                  // 3D Settings
+                  extruded: true,
+                  wireframe: true,                 // "Blueprint" style
+                  elevationScale: heightScale,     // Controlled by Slider
+                  
+                  // Interaction
+                  opacity: opacityVal,
+                  visible: isVisible,
+                  pickable: true,
+                  autoHighlight: true,
+                  highlightColor: [0, 255, 200, 100] // Bright highlight on hover
+              })
+          ];
+      }
 
       function updateDeckLayer() {
           if(deckInstance) {
               deckInstance.setProps({ layers: getLayers() });
           }
       }
-
-    });
   </script>
 </body>
 </html>
