@@ -606,30 +606,30 @@
         </section>
         
         <!-- JUXTAPOSE SECTION (RIGHT) -->
-        <aside class="comms-console">
-            <div class="bg-zinc-900 text-[9px] p-2 text-zinc-500 uppercase flex justify-between border-b border-red-900">
-                <span>Cut-Up Engine // F&W 1906</span>
-               <span id="juxt-status" style="color: #d4af37; font-weight: bold;">VOL I READY</span>
-            </div>
-            
-            <div id="juxt-container">
-                <div class="chat-message chat-system">
-                    <div class="text-[9px] text-zinc-700 mb-1">SYSTEM</div>
-                    <div>JUXTAPOSE splices random entries from Funk & Wagnalls Volume I (A–K). Volume II (L–Z) unavailable.</div>
-                </div>
-            </div>
-            
-            <div class="p-2 bg-black border-t border-red-900">
-                <div class="flex gap-1">
-                    <input type="text" id="juxt-input" placeholder="Enter term (A-K) to splice..." class="flex-grow text-[11px] p-2" onkeypress="if(event.key==='Enter') generateJuxtaposition()">
-                    <button onclick="generateJuxtaposition()" class="text-[9px] bg-red-900 px-3 font-bold" style="background: #FF0000; color: black;">JUXTAPOSE</button>
-                </div>
-                <div class="flex justify-between mt-2 text-[8px] text-zinc-600 uppercase">
-                    <button onclick="randomCutUp()" class="hover:text-red-500" style="background: transparent; border: none; padding: 0; font-size: 8px;">[RANDOM]</button>
-                    <button onclick="clearJuxt()" class="hover:text-red-500" style="background: transparent; border: none; padding: 0; font-size: 8px;">[CLEAR]</button>
-                </div>
-            </div>
-        </aside>
+       <aside class="comms-console">
+    <div class="bg-zinc-900 text-[9px] p-2 text-zinc-500 uppercase flex justify-between border-b border-red-900">
+        <span>Cut-Up Engine // F&W 1906</span>
+        <span id="juxt-status" style="color: #d4af37; font-weight: bold;">VOL I READY</span>
+    </div>
+    
+    <div id="juxt-container" style="flex: 1; overflow-y: scroll; padding: 15px; font-size: 12px; background: #080808; font-family: 'Courier Prime', monospace;">
+        <div class="chat-message chat-system">
+            <div class="text-[9px] text-zinc-700 mb-1">SYSTEM</div>
+            <div>JUXTAPOSE splices random entries from Funk & Wagnalls Volume I (A–K). Volume II (L–Z) unavailable.</div>
+        </div>
+    </div>
+    
+    <div class="p-2 bg-black border-t border-red-900">
+        <div class="flex gap-1">
+            <input type="text" id="juxt-input" placeholder="Enter term (A-K) to splice..." class="flex-grow text-[11px] p-2" onkeypress="if(event.key==='Enter') generateJuxtaposition()">
+            <button onclick="generateJuxtaposition()" class="text-[9px] bg-red-900 px-3 font-bold hover:bg-red-700 transition-colors" style="background: #FF0000; color: black; cursor: pointer;">JUXTAPOSE</button>
+        </div>
+        <div class="flex justify-between mt-2 text-[8px] text-zinc-600 uppercase">
+            <button onclick="randomCutUp()" class="hover:text-red-500 hover:underline transition-colors" style="background: transparent; border: none; padding: 0; font-size: 8px; cursor: pointer;">[RANDOM]</button>
+            <button onclick="clearJuxt()" class="hover:text-red-500 hover:underline transition-colors" style="background: transparent; border: none; padding: 0; font-size: 8px; cursor: pointer;">[CLEAR]</button>
+        </div>
+    </div>
+</aside>
     </div>
     
     <footer class="col-span-2 bg-black flex justify-between items-center px-4 text-[9px] text-zinc-800 uppercase">
@@ -1067,6 +1067,9 @@ async function loadFunkWagnalls() {
    // ==============================
 // JUXTAPOSE FUNCTIONS - FIXED VERSION
 // ==============================
+// ==============================
+// JUXTAPOSE FUNCTIONS - COMPLETELY FIXED
+// ==============================
 function generateJuxtaposition() {
     const input = document.getElementById('juxt-input').value.trim().toLowerCase();
     const container = document.getElementById('juxt-container');
@@ -1082,12 +1085,14 @@ function generateJuxtaposition() {
         entries.push(fawCache[input]);
     } else if (input && input.charAt(0) >= 'l') {
         // Volume II check
-        container.innerHTML += `
+        const html = `
             <div class="chat-message" style="border-left: 2px solid #333; opacity: 0.6;">
                 <div class="text-[9px] text-zinc-500 mb-1">[${input.toUpperCase()}]</div>
                 <div>Volume II (L-Z) required. Physical archive only.</div>
             </div>
         `;
+        container.innerHTML += html;
+        container.scrollTop = container.scrollHeight;
         document.getElementById('juxt-input').value = '';
         return;
     }
@@ -1112,19 +1117,23 @@ function generateJuxtaposition() {
         };
     });
     
-    // Create the combined text for insertion (with proper escaping)
+    // Create the combined text for insertion
     const combinedText = fragments.map(f => f.text).join(' ');
     
-    // Display - FIXED: Use a data attribute instead of inline onclick
+    // Create unique ID for this juxtaposition
+    const juxtaposeId = 'juxt-' + Date.now();
+    
+    // Display - using event delegation instead of inline onclick
     const html = `
-        <div class="chat-message" style="background: rgba(255,0,0,0.05); border-left: 3px solid #FF0000;">
+        <div class="chat-message juxtaposition-item" id="${juxtaposeId}" style="background: rgba(255,0,0,0.05); border-left: 3px solid #FF0000;">
             <div class="text-[9px] text-red-500 mb-1 uppercase tracking-wider">
                 ${input ? `SEED: ${input} // ` : ''}JUXTAPOSITION ${new Date().toLocaleTimeString()}
             </div>
             <div style="color: #ccc; line-height: 1.4; font-size: 11px;">
-                ${fragments.map(f => `<span style="color:#ff6666">[${f.title}]</span> ${f.text}`).join(' <span style="color:#444">//</span> ')}
+                ${fragments.map(f => `<span style="color:#ff6666">[${f.title}]</span> ${escapeHtml(f.text)}`).join(' <span style="color:#444">//</span> ')}
             </div>
-            <button onclick="insertToEditor(${JSON.stringify(combinedText)})" 
+            <button class="insert-juxt-btn" 
+                    data-text="${escapeHtml(combinedText)}"
                     style="margin-top:8px; font-size:8px; border:1px solid #333; padding:2px 6px; background:transparent; color:#666; cursor:pointer;">
                 INSERT TO MANUSCRIPT →
             </button>
@@ -1137,7 +1146,16 @@ function generateJuxtaposition() {
 }
 
 // ==============================
-// INSERT TO EDITOR - IMPROVED VERSION
+// ESCAPE HTML FUNCTION (to prevent issues)
+// ==============================
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ==============================
+// INSERT TO EDITOR - FIXED
 // ==============================
 function insertToEditor(text) {
     const editor = document.getElementById('editor');
@@ -1146,30 +1164,150 @@ function insertToEditor(text) {
         return;
     }
     
+    // Focus the editor
     editor.focus();
     
-    // Create the HTML to insert
-    const insertion = `
-        <div style="border-left:2px solid #ff0000; padding-left:10px; margin:10px 0; color:#ccc; font-family:'Courier Prime',monospace;">
-            ${text.replace(/\n/g, '<br>')}
+    // Create a unique ID for the insertion marker
+    const markerId = 'insert-' + Date.now();
+    
+    // Create HTML for the inserted text with proper styling
+    const insertionHtml = `
+        <div class="juxtaposition-insertion" style="
+            border-left: 2px solid #ff0000; 
+            padding-left: 10px; 
+            margin: 10px 0; 
+            color: #ccc; 
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.9em;
+            background: rgba(255,0,0,0.02);
+        ">
+            ${text}
         </div>
-        <p></p>
     `;
     
-    // Use insertHTML for better compatibility
+    // Try to insert at cursor position
     try {
-        document.execCommand('insertHTML', false, insertion);
-    } catch (e) {
-        // Fallback method
-        const range = window.getSelection().getRangeAt(0);
-        const div = document.createElement('div');
-        div.innerHTML = insertion;
-        range.insertNode(div);
+        // Modern method using Range and Selection
+        const selection = window.getSelection();
+        
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = insertionHtml;
+            
+            // Insert the fragment
+            const fragment = document.createDocumentFragment();
+            while (tempDiv.firstChild) {
+                fragment.appendChild(tempDiv.firstChild);
+            }
+            
+            range.insertNode(fragment);
+            
+            // Move cursor after the inserted content
+            range.setStartAfter(fragment.lastChild);
+            range.setEndAfter(fragment.lastChild);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        } else {
+            // Fallback: append to the end
+            editor.innerHTML += insertionHtml;
+        }
+    } catch (error) {
+        console.error('Error inserting text:', error);
+        // Fallback: use innerHTML
+        editor.innerHTML += insertionHtml;
     }
     
-    // Optional: Scroll to the insertion point
+    // Scroll to show the insertion
     editor.scrollTop = editor.scrollHeight;
+    
+    // Save to localStorage
+    saveAll();
 }
+
+// ==============================
+// RANDOM CUT-UP - FIXED
+// ==============================
+function randomCutUp() {
+    // Clear the input
+    document.getElementById('juxt-input').value = '';
+    
+    // Generate a random letter A-K
+    const randomLetter = String.fromCharCode(65 + Math.floor(Math.random() * 11)); // A-K
+    document.getElementById('juxt-input').value = randomLetter;
+    
+    // Generate juxtaposition
+    generateJuxtaposition();
+}
+
+// ==============================
+// CLEAR JUXT - FIXED
+// ==============================
+function clearJuxt() {
+    const container = document.getElementById('juxt-container');
+    container.innerHTML = `
+        <div class="chat-message chat-system">
+            <div class="text-[9px] text-zinc-700 mb-1">SYSTEM</div>
+            <div>Buffer cleared. Ready for juxtaposition.</div>
+        </div>
+    `;
+}
+
+// ==============================
+// EVENT DELEGATION FOR INSERT BUTTONS
+// ==============================
+document.addEventListener('click', function(event) {
+    // Handle INSERT TO MANUSCRIPT buttons
+    if (event.target.classList.contains('insert-juxt-btn')) {
+        const text = event.target.getAttribute('data-text');
+        if (text) {
+            insertToEditor(text);
+            
+            // Visual feedback
+            event.target.style.background = '#ff0000';
+            event.target.style.color = '#000';
+            event.target.textContent = 'INSERTED ✓';
+            
+            setTimeout(() => {
+                event.target.style.background = 'transparent';
+                event.target.style.color = '#666';
+                event.target.textContent = 'INSERT TO MANUSCRIPT →';
+            }, 1500);
+        }
+    }
+    
+    // Handle RANDOM button (if it's in the juxtapose section)
+    if (event.target.closest && event.target.closest('[onclick*="randomCutUp"]')) {
+        randomCutUp();
+    }
+    
+    // Handle CLEAR button (if it's in the juxtapose section)
+    if (event.target.closest && event.target.closest('[onclick*="clearJuxt"]')) {
+        clearJuxt();
+    }
+});
 </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+    loadFunkWagnalls();
+    loadData();
+    updateHistoryDisplay();
+    loadEditor();
+    typeStatus();
+    setInterval(saveAll, 5000);
+    
+    // Get the search query from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchQuery = urlParams.get('q');
+    
+    if (searchQuery) {
+        document.getElementById('word-search').value = searchQuery;
+        // Wait for dictionaries to load
+        setTimeout(() => searchWord(searchQuery), 1500);
+    } else {
+        document.getElementById('word-search').focus();
+    }
+});
+    </script>
 </body>
 </html>
