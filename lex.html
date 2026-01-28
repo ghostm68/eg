@@ -151,18 +151,14 @@
 <body>
 <!-- FUNK & WAGNALLS HEADER -->
 <!-- HEADER - INLINE JAVASCRIPT, NO FUNCTION CALLS -->
-<h1 style="cursor: pointer;" onclick="
-    var p = document.getElementById('fw-panel');
-    p.style.display = 'block';
-    setTimeout(function(){p.style.right='0px'}, 50);
-">
+<h1 style="cursor: pointer;" onclick="togglePanel()">
     Funk &amp; Wagnallism<br>
     <small style="font-size: 0.4em; color: #ff4444; text-decoration: underline;">
         [Volume I: A–K (1906) ↓]
     </small>
 </h1>
 
-<!-- THE PANEL - MAKE SURE THIS EXISTS IN YOUR HTML -->
+<!-- PANEL -->
 <div id="fw-panel" style="
     display: none;
     position: fixed;
@@ -176,13 +172,9 @@
     padding: 40px 20px 20px 20px;
     overflow-y: auto;
     transition: right 0.3s;
+    font-family: monospace;
 ">
-    <!-- CLOSE BUTTON - ALSO INLINE -->
-    <button onclick="
-        var p = document.getElementById('fw-panel');
-        p.style.right = '-400px';
-        setTimeout(function(){p.style.display='none'}, 300);
-    " style="
+    <button onclick="togglePanel()" style="
         position: absolute;
         top: 10px;
         right: 10px;
@@ -198,20 +190,20 @@
     ">×</button>
     
     <h3 style="color: #FF0000;">Funk & Wagnalls<br>
-        <span style="font-size: 0.7em; color: #ff4444;">Volume I (A–K) • 1906</span>
+        <small style="color: #ff4444;">Vol I (A–K) • 1906</small>
     </h3>
     
-    <input type="text" id="fwInput" placeholder="Type A-K term..." style="
+    <input type="text" id="fw-search" placeholder="Search A-K..." style="
         width: 100%;
         padding: 8px;
-        margin: 15px 0;
+        margin: 10px 0;
         background: rgba(255,0,0,0.1);
         border: 1px solid #FF0000;
         color: white;
     ">
     
-    <div id="fwOutput" style="color: #ccc;">
-        Type a term and press Enter...
+    <div id="fw-result" style="color: #ccc; font-size: 0.9em;">
+        Loading encyclopedia...
     </div>
 </div>
     </div>
@@ -600,39 +592,98 @@ snowCtx.fillStyle = 'rgba(255, 0, 0, 0.8)'; // Bright red instead of white
 	</script>
 	<!-- Your existing dictionary script above -->
 
-	<script>
-// Load F&W data
+<script>
+// Global data
 window.fwData = {};
+
+// Toggle function
+function togglePanel() {
+    var p = document.getElementById('fw-panel');
+    if (p.style.display === 'none' || p.style.display === '' || p.style.right === '0px') {
+        if (p.style.display === 'none' || p.style.display === '') {
+            p.style.display = 'block';
+            setTimeout(function() { p.style.right = '0px'; }, 10);
+        } else {
+            p.style.right = '-400px';
+            setTimeout(function() { p.style.display = 'none'; }, 300);
+        }
+    } else {
+        p.style.right = '-400px';
+        setTimeout(function() { p.style.display = 'none'; }, 300);
+    }
+}
+
+// Load the data
 fetch('Funk-And-Wagnalls-New-Encyclopedia-Volume-1_djvu.txt')
-    .then(r => r.text())
-    .then(text => {
-        let entry = null, content = [];
-        text.split('\n').forEach(line => {
-            const t = line.trim();
-            if (/^[A-Z][A-Z\s\-]{2,40}$/.test(t) && t.length < 50 && !t.includes('.')) {
-                if (entry) window.fwData[entry.toLowerCase()] = {title: entry, text: content.join(' ').slice(0,1000)};
-                entry = t; 
-                content = [];
-            } else if (entry && t) {
-                content.push(t);
+    .then(function(response) { return response.text(); })
+    .then(function(text) {
+        var lines = text.split('\n');
+        var currentEntry = null;
+        var currentText = [];
+        
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i].trim();
+            if (/^[A-Z][A-Z\s\-]{2,40}$/.test(line) && line.length < 50 && line.indexOf('.') === -1) {
+                if (currentEntry) {
+                    window.fwData[currentEntry.toLowerCase()] = {
+                        title: currentEntry,
+                        text: currentText.join(' ').substring(0, 1000)
+                    };
+                }
+                currentEntry = line;
+                currentText = [];
+            } else if (currentEntry && line) {
+                currentText.push(line);
             }
-        });
-        console.log('F&W Loaded:', Object.keys(window.fwData).length);
+        }
+        // Don't forget the last one
+        if (currentEntry) {
+            window.fwData[currentEntry.toLowerCase()] = {
+                title: currentEntry,
+                text: currentText.join(' ').substring(0, 1000)
+            };
+        }
+        
+        console.log('F&W Loaded:', Object.keys(window.fwData).length, 'entries');
+        document.getElementById('fw-result').innerText = 'Enter a term A-K and press Enter';
+    })
+    .catch(function(err) {
+        console.error('F&W Error:', err);
+        document.getElementById('fw-result').innerText = 'Error loading encyclopedia';
     });
 
-// Search handler (separate from toggle)
-document.getElementById('fwInput').addEventListener('keypress', function(e) {
+// Search handler
+document.getElementById('fw-search').addEventListener('keypress', function(e) {
     if (e.key !== 'Enter') return;
-    const q = this.value.toLowerCase();
-    const found = window.fwData[q];
-    const out = document.getElementById('fwOutput');
+    
+    var query = this.value.toLowerCase().trim();
+    var output = document.getElementById('fw-result');
+    
+    if (!query) {
+        output.innerHTML = 'Enter a search term';
+        return;
+    }
+    
+    var found = window.fwData[query];
+    
+    // Try partial match
+    if (!found) {
+        for (var key in window.fwData) {
+            if (key.indexOf(query) !== -1 || window.fwData[key].title.toLowerCase().indexOf(query) !== -1) {
+                found = window.fwData[key];
+                break;
+            }
+        }
+    }
     
     if (found) {
-        out.innerHTML = '<b style="color:#FF0000">' + found.title + '</b><p style="border-left:2px solid red;padding-left:10px">' + found.text.substring(0,400) + '...</p>';
-    } else if (q[0] >= 'l') {
-        out.innerHTML = '<span style="color:#ff6666">Volume II only (L-Z)</span>';
+        var txt = found.text.length > 500 ? found.text.substring(0, 500) + '...' : found.text;
+        output.innerHTML = '<h4 style="color:#FF0000;margin:0 0 8px 0">' + found.title + '</h4>' +
+                          '<p style="border-left:2px solid #FF0000;padding-left:8px;margin:0">' + txt + '</p>';
+    } else if (query.charCodeAt(0) >= 108) { // 'l' or higher
+        output.innerHTML = '<span style="color:#ff6666">"' + query + '" is in Volume II (L-Z)<br><small>Physical copy only</small></span>';
     } else {
-        out.innerHTML = '<span style="color:#ff6666">Not found in A-K</span>';
+        output.innerHTML = '<span style="color:#ff6666">"' + query + '" not found in Volume I</span>';
     }
 });
 </script>
