@@ -225,7 +225,64 @@
         }, 300);
     }
 }
+// F&W Encyclopedia Module
+let fawEncyclopedia = {};
+let fawLoaded = false;
 
+async function loadFunkWagnalls() {
+    try {
+        const response = await fetch('Funk-And-Wagnalls-New-Encyclopedia-Volume-1_djvu.txt');
+        const text = await response.text();
+        
+        // Simple parser: Look for ALL CAPS titles followed by text
+        const lines = text.split('\n');
+        let currentEntry = null;
+        let currentText = [];
+        
+        lines.forEach(line => {
+            const trimmed = line.trim();
+            // Detect entry header (ALL CAPS, 2-40 chars, no lowercase)
+            if (/^[A-Z][A-Z\s\-\(\)]{1,40}$/.test(trimmed) && trimmed.length > 2 && !trimmed.includes('.')) {
+                if (currentEntry) {
+                    fawEncyclopedia[currentEntry.toLowerCase()] = {
+                        title: currentEntry,
+                        text: currentText.join(' ').replace(/\s+/g, ' ').trim()
+                    };
+                }
+                currentEntry = trimmed;
+                currentText = [];
+            } else if (currentEntry && trimmed) {
+                currentText.push(trimmed);
+            }
+        });
+        
+        fawLoaded = true;
+        console.log(`F&W Volume I Loaded: ${Object.keys(fawEncyclopedia).length} entries (A-K)`);
+    } catch (error) {
+        console.error('F&W Load Error:', error);
+    }
+}
+
+// Load it silently in background
+loadFunkWagnalls();
+
+function searchFunkWagnalls(query) {
+    if (!fawLoaded) return null;
+    
+    const key = query.toLowerCase();
+    
+    // Direct match
+    if (fawEncyclopedia[key]) {
+        return fawEncyclopedia[key];
+    }
+    
+    // Partial match (search within text)
+    const matches = Object.entries(fawEncyclopedia).filter(([k, v]) => 
+        v.title.toLowerCase().includes(key) || v.text.toLowerCase().includes(key)
+    );
+    
+    return matches.length > 0 ? matches[0][1] : null;
+}
 // F&W Search handler
 document.getElementById('fawSearch').addEventListener('input', (e) => {
     const query = e.target.value.trim();
@@ -656,65 +713,6 @@ snowCtx.fillStyle = 'rgba(255, 0, 0, 0.8)'; // Bright red instead of white
 	</script>
 	<!-- Your existing dictionary script above -->
 
-<script>
-// F&W Encyclopedia Module
-let fawEncyclopedia = {};
-let fawLoaded = false;
 
-async function loadFunkWagnalls() {
-    try {
-        const response = await fetch('Funk-And-Wagnalls-New-Encyclopedia-Volume-1_djvu.txt');
-        const text = await response.text();
-        
-        // Simple parser: Look for ALL CAPS titles followed by text
-        const lines = text.split('\n');
-        let currentEntry = null;
-        let currentText = [];
-        
-        lines.forEach(line => {
-            const trimmed = line.trim();
-            // Detect entry header (ALL CAPS, 2-40 chars, no lowercase)
-            if (/^[A-Z][A-Z\s\-\(\)]{1,40}$/.test(trimmed) && trimmed.length > 2 && !trimmed.includes('.')) {
-                if (currentEntry) {
-                    fawEncyclopedia[currentEntry.toLowerCase()] = {
-                        title: currentEntry,
-                        text: currentText.join(' ').replace(/\s+/g, ' ').trim()
-                    };
-                }
-                currentEntry = trimmed;
-                currentText = [];
-            } else if (currentEntry && trimmed) {
-                currentText.push(trimmed);
-            }
-        });
-        
-        fawLoaded = true;
-        console.log(`F&W Volume I Loaded: ${Object.keys(fawEncyclopedia).length} entries (A-K)`);
-    } catch (error) {
-        console.error('F&W Load Error:', error);
-    }
-}
-
-// Load it silently in background
-loadFunkWagnalls();
-
-function searchFunkWagnalls(query) {
-    if (!fawLoaded) return null;
-    
-    const key = query.toLowerCase();
-    
-    // Direct match
-    if (fawEncyclopedia[key]) {
-        return fawEncyclopedia[key];
-    }
-    
-    // Partial match (search within text)
-    const matches = Object.entries(fawEncyclopedia).filter(([k, v]) => 
-        v.title.toLowerCase().includes(key) || v.text.toLowerCase().includes(key)
-    );
-    
-    return matches.length > 0 ? matches[0][1] : null;
-}
-</script>
 </body>
 </html>
