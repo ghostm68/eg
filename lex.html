@@ -645,10 +645,11 @@
     const SOURCES = {
         webster: "https://raw.githubusercontent.com/adambom/dictionary/master/dictionary.json",
         german: "https://raw.githubusercontent.com/hathibelagal/German-English-JSON-Dictionary/master/german_english.json",
-        webster2: "https://raw.githubusercontent.com/matthewreagan/WebstersEnglishDictionary/master/dictionary.json"
+        webster2: "https://raw.githubusercontent.com/matthewreagan/WebstersEnglishDictionary/master/dictionary.json",
+        webster3: "https://gist.githubusercontent.com/BideoWego/60fbd40d5d1f0f1beca11ba95221dd38/raw/58fb4cce910fbf5fa67a2f0f1f619c09d7b1b373/dictionary.json"
     };
 
-    let cache = { webster: null, german: null, webster2: null };
+    let cache = { webster: null, german: null, webster2: null, webster3: null };
     let fawCache = null;
     let currentWord = '';
     let wordHistory = JSON.parse(localStorage.getItem('faw_history') || '[]');
@@ -719,50 +720,22 @@
         }
     }
 
-    function getFunkWagnallsEntry(word) {
-        if (!fawCache) return { loading: true };
-        
-        const key = word.toLowerCase();
-        const firstLetter = key.charAt(0);
-        
-        // Check if Volume II range
-        if (firstLetter >= 'l') {
-            return {
-                isVolumeII: true,
-                title: word.toUpperCase(),
-                text: `Entry "${word}" appears in Volume II (L–Z) of the Funk & Wagnalls New Encyclopedia.\n\nOnly Volume I (A–K) was digitized by the Internet Archive in 2015. The complete encyclopedia requires the physical 1980s edition.`
-            };
-        }
-        
-        // Direct match
-        if (fawCache[key]) {
-            return { isVolumeII: false, ...fawCache[key] };
-        }
-        
-        // Partial match search in titles
-        for (const [k, v] of Object.entries(fawCache)) {
-            if (k.includes(key) || v.title.toLowerCase().includes(key)) {
-                return { isVolumeII: false, ...v };
-            }
-        }
-        
-        return null;
-    }
-
     // ==============================
-    // DICTIONARY FUNCTIONS (Preserved from your working code)
+    // DICTIONARY FUNCTIONS
     // ==============================
     async function loadData() {
         if (cache.webster) return true;
         try {
-            const [w1, g, w2] = await Promise.all([
+            const [w1, g, w2, w3] = await Promise.all([
                 fetch(SOURCES.webster).then(r => r.json()),
                 fetch(SOURCES.german).then(r => r.json()),
-                fetch(SOURCES.webster2).then(r => r.json())
+                fetch(SOURCES.webster2).then(r => r.json()),
+                fetch(SOURCES.webster3).then(r => r.json())
             ]);
             cache.webster = w1;
             cache.german = g;
             cache.webster2 = w2;
+            cache.webster3 = w3;
             return true;
         } catch (e) {
             console.error('Dictionary load failed:', e);
@@ -808,157 +781,146 @@
     }
 
     // ==============================
-    // WEBSTER DEFINITION FIX
+    // WEBSTER DEFINITION - FIXED TO SHOW ALL SOURCES
     // ==============================
-// ==============================
-// WEBSTER DEFINITION - FIXED TO SHOW ALL SOURCES
-// ==============================
-function getWebsterHtml(word) { 
-    let definitions = [];
-    const wordLower = word.toLowerCase();
-    const wordUpper = word.toUpperCase();
-    const wordTitle = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    
-    // Check all sources like your old code did
-    if (cache.webster) {
-        // Try different key formats
-        if (cache.webster[wordUpper]) definitions.push({source: "Webster 1913 (Source 1)", def: cache.webster[wordUpper]});
-        if (cache.webster[wordLower]) definitions.push({source: "Webster 1913 (Source 1)", def: cache.webster[wordLower]});
-        if (cache.webster[wordTitle]) definitions.push({source: "Webster 1913 (Source 1)", def: cache.webster[wordTitle]});
-    }
-    
-    if (cache.webster2) {
-        // Second source
-        if (cache.webster2[wordUpper]) definitions.push({source: "Webster's Dictionary (Source 2)", def: cache.webster2[wordUpper]});
-        if (cache.webster2[wordLower]) definitions.push({source: "Webster's Dictionary (Source 2)", def: cache.webster2[wordLower]});
-        if (cache.webster2[wordTitle]) definitions.push({source: "Webster's Dictionary (Source 2)", def: cache.webster2[wordTitle]});
-    }
-    
-    // Also try adding/removing 's' for plurals
-    if (definitions.length === 0) {
-        const tryPlural = wordLower.endsWith('s') ? wordLower.slice(0, -1) : wordLower + 's';
-        if (cache.webster && cache.webster[tryPlural.toUpperCase()]) {
-            definitions.push({source: "Webster 1913 (plural)", def: cache.webster[tryPlural.toUpperCase()]});
+    function getWebsterHtml(word) { 
+        let definitions = [];
+        const wordLower = word.toLowerCase();
+        const wordUpper = word.toUpperCase();
+        const wordTitle = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        
+        // Check all sources like your old code did
+        if (cache.webster) {
+            // Try different key formats
+            if (cache.webster[wordUpper]) definitions.push({source: "Webster 1913 (Source 1)", def: cache.webster[wordUpper]});
+            if (cache.webster[wordLower]) definitions.push({source: "Webster 1913 (Source 1)", def: cache.webster[wordLower]});
+            if (cache.webster[wordTitle]) definitions.push({source: "Webster 1913 (Source 1)", def: cache.webster[wordTitle]});
         }
-        if (cache.webster2 && cache.webster2[tryPlural]) {
-            definitions.push({source: "Webster's Dictionary (plural)", def: cache.webster2[tryPlural]});
+        
+        if (cache.webster2) {
+            // Second source
+            if (cache.webster2[wordUpper]) definitions.push({source: "Webster's Dictionary (Source 2)", def: cache.webster2[wordUpper]});
+            if (cache.webster2[wordLower]) definitions.push({source: "Webster's Dictionary (Source 2)", def: cache.webster2[wordLower]});
+            if (cache.webster2[wordTitle]) definitions.push({source: "Webster's Dictionary (Source 2)", def: cache.webster2[wordTitle]});
         }
-    }
-    
-    // Format the display - show ALL definitions found
-    if (definitions.length > 0) {
-        let html = '';
-        definitions.forEach((defObj, index) => {
-            // Clean up the definition
-            let cleanDef = defObj.def;
-            if (typeof cleanDef === 'string') {
-                // Replace HTML line breaks with actual breaks
-                cleanDef = cleanDef
-                    .replace(/<br\s*\/?>/gi, '\n')
-                    .replace(/\\n/g, '\n')
-                    .replace(/\\r/g, '')
-                    .replace(/\\"/g, '"')
-                    .replace(/\s+/g, ' ')
-                    .trim();
-                
-                // If it's still long, show only first 1000 chars with "Show More"
-                if (cleanDef.length > 1000) {
-                    const shortDef = cleanDef.substring(0, 1000) + '...';
-                    const fullDef = cleanDef;
-                    const id = `webster-${word}-${index}`;
-                    
-                    html += `
-                        <div class="path-item">
-                            <div class="path-word">${defObj.source}</div>
-                            <div class="path-definition" id="${id}-short">${shortDef}</div>
-                            <div class="path-definition" id="${id}-full" style="display:none;">${fullDef}</div>
-                            <button onclick="toggleFullDefinition('${id}')" 
-                                    class="action-btn mt-2" 
-                                    style="font-size: 9px; padding: 2px 8px;">
-                                Show Full Definition
-                            </button>
-                        </div>
-                    `;
-                } else {
-                    html += `
-                        <div class="path-item">
-                            <div class="path-word">${defObj.source}</div>
-                            <div class="path-definition">${cleanDef}</div>
-                        </div>
-                    `;
-                }
+        
+        if (cache.webster3) {
+            // Third source
+            if (cache.webster3[wordLower]) definitions.push({source: "Comprehensive Dictionary (Source 3)", def: cache.webster3[wordLower]});
+            if (cache.webster3[wordUpper]) definitions.push({source: "Comprehensive Dictionary (Source 3)", def: cache.webster3[wordUpper]});
+        }
+        
+        // Also try adding/removing 's' for plurals
+        if (definitions.length === 0) {
+            const tryPlural = wordLower.endsWith('s') ? wordLower.slice(0, -1) : wordLower + 's';
+            if (cache.webster && cache.webster[tryPlural.toUpperCase()]) {
+                definitions.push({source: "Webster 1913 (plural)", def: cache.webster[tryPlural.toUpperCase()]});
             }
-        });
-        return html;
+            if (cache.webster2 && cache.webster2[tryPlural]) {
+                definitions.push({source: "Webster's Dictionary (plural)", def: cache.webster2[tryPlural]});
+            }
+            if (cache.webster3 && cache.webster3[tryPlural]) {
+                definitions.push({source: "Comprehensive Dictionary (plural)", def: cache.webster3[tryPlural]});
+            }
+        }
+        
+        // Format the display - show ALL definitions found
+        if (definitions.length > 0) {
+            let html = '';
+            definitions.forEach((defObj, index) => {
+                // Clean up the definition
+                let cleanDef = defObj.def;
+                if (typeof cleanDef === 'string') {
+                    // Replace HTML line breaks with actual breaks
+                    cleanDef = cleanDef
+                        .replace(/<br\s*\/?>/gi, '\n')
+                        .replace(/\\n/g, '\n')
+                        .replace(/\\r/g, '')
+                        .replace(/\\"/g, '"')
+                        .replace(/\s+/g, ' ')
+                        .trim();
+                    
+                    // If it's still long, show only first 1000 chars with "Show More"
+                    if (cleanDef.length > 1000) {
+                        const shortDef = cleanDef.substring(0, 1000) + '...';
+                        const fullDef = cleanDef;
+                        const id = `webster-${word.replace(/\s+/g, '-')}-${index}`;
+                        
+                        html += `
+                            <div class="path-item">
+                                <div class="path-word">${defObj.source}</div>
+                                <div class="path-definition" id="${id}-short">${shortDef}</div>
+                                <div class="path-definition" id="${id}-full" style="display:none;">${fullDef}</div>
+                                <button onclick="toggleFullDefinition('${id}')" 
+                                        class="action-btn mt-2" 
+                                        style="font-size: 9px; padding: 2px 8px; cursor: pointer;">
+                                    Show Full Definition
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        html += `
+                            <div class="path-item">
+                                <div class="path-word">${defObj.source}</div>
+                                <div class="path-definition">${cleanDef}</div>
+                            </div>
+                        `;
+                    }
+                }
+            });
+            return html;
+        }
+        
+        // Fallback to API if no definitions found locally
+        return fetchWebsterFromAPI(word);
     }
-    
-    // Fallback to API if no definitions found locally
-    return fetchWebsterFromAPI(word);
-}
 
-// ==============================
-// TOGGLE FULL DEFINITION FUNCTION
-// ==============================
-function toggleFullDefinition(id) {
-    const shortEl = document.getElementById(`${id}-short`);
-    const fullEl = document.getElementById(`${id}-full`);
-    const button = shortEl.nextElementSibling.nextElementSibling;
-    
-    if (fullEl.style.display === 'none') {
-        shortEl.style.display = 'none';
-        fullEl.style.display = 'block';
-        button.textContent = 'Show Less';
-    } else {
-        shortEl.style.display = 'block';
-        fullEl.style.display = 'none';
-        button.textContent = 'Show Full Definition';
-    }
-}
-
-// ==============================
-// LOAD THE THIRD DICTIONARY SOURCE
-// ==============================
-// Update your SOURCES configuration:
-const SOURCES = {
-    webster: "https://raw.githubusercontent.com/adambom/dictionary/master/dictionary.json",
-    german: "https://raw.githubusercontent.com/hathibelagal/German-English-JSON-Dictionary/master/german_english.json",
-    webster2: "https://raw.githubusercontent.com/matthewreagan/WebstersEnglishDictionary/master/dictionary.json",
-    webster3: "https://gist.githubusercontent.com/BideoWego/60fbd40d5d1f0f1beca11ba95221dd38/raw/58fb4cce910fbf5fa67a2f0f1f619c09d7b1b373/dictionary.json"  // Add this!
-};
-
-// Update your cache initialization:
-let cache = { webster: null, german: null, webster2: null, webster3: null };
-
-// Update loadData() function:
-async function loadData() {
-    if (cache.webster) return true;
-    try {
-        const [w1, g, w2, w3] = await Promise.all([
-            fetch(SOURCES.webster).then(r => r.json()),
-            fetch(SOURCES.german).then(r => r.json()),
-            fetch(SOURCES.webster2).then(r => r.json()),
-            fetch(SOURCES.webster3).then(r => r.json())
-        ]);
-        cache.webster = w1;
-        cache.german = g;
-        cache.webster2 = w2;
-        cache.webster3 = w3;  // Add this
-        return true;
-    } catch (e) {
-        console.error('Dictionary load failed:', e);
-        return false;
-    }
-}
-
-// Update getWebsterHtml to check webster3 as well:
-// Add this in the definitions collection section:
-if (cache.webster3) {
-    // Third source
-    if (cache.webster3[wordLower]) definitions.push({source: "Comprehensive Dictionary (Source 3)", def: cache.webster3[wordLower]});
-    if (cache.webster3[wordUpper]) definitions.push({source: "Comprehensive Dictionary (Source 3)", def: cache.webster3[wordUpper]});
-}
     // ==============================
-    // F&W RENDERER (FIXED)
+    // TOGGLE FULL DEFINITION FUNCTION
+    // ==============================
+    function toggleFullDefinition(id) {
+        const shortEl = document.getElementById(`${id}-short`);
+        const fullEl = document.getElementById(`${id}-full`);
+        const button = shortEl.nextElementSibling.nextElementSibling;
+        
+        if (fullEl.style.display === 'none') {
+            shortEl.style.display = 'none';
+            fullEl.style.display = 'block';
+            button.textContent = 'Show Less';
+        } else {
+            shortEl.style.display = 'block';
+            fullEl.style.display = 'none';
+            button.textContent = 'Show Full Definition';
+        }
+    }
+
+    // ==============================
+    // FALLBACK API FETCH
+    // ==============================
+    async function fetchWebsterFromAPI(word) {
+        try {
+            const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+            if (!response.ok) throw new Error('Not found');
+            
+            const data = await response.json();
+            if (data && data[0] && data[0].meanings) {
+                let definition = '';
+                data[0].meanings.forEach((meaning, index) => {
+                    definition += `<strong>${meaning.partOfSpeech}</strong><br>`;
+                    meaning.definitions.slice(0, 3).forEach((def, i) => {
+                        definition += `${i + 1}. ${def.definition}<br>`;
+                    });
+                    definition += '<br>';
+                });
+                return `<div class="path-item"><div class="path-word">Webster 1913 (via API)</div><div class="path-definition">${definition}</div></div>`;
+            }
+        } catch (error) {
+            return `<div class="path-item"><div class="path-definition"><i>No definition found. Try common words like "apple", "knowledge", "example", etc.</i></div></div>`;
+        }
+    }
+
+    // ==============================
+    // F&W RENDERER
     // ==============================
     function getFawHtml(word) {
         if (!fawCache) return '<div class="path-item"><div class="path-definition">Loading encyclopedia...</div></div>';
@@ -1096,10 +1058,9 @@ if (cache.webster3) {
         localStorage.setItem('faw_history', JSON.stringify(wordHistory));
     }
 
-    // Initialize
-    setInterval(saveAll, 5000);
-</script>
-<script>
+    // ==============================
+    // JUXTAPOSE FUNCTIONS
+    // ==============================
     function generateJuxtaposition() {
         const input = document.getElementById('juxt-input').value.trim().toLowerCase();
         const container = document.getElementById('juxt-container');
