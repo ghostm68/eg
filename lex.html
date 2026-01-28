@@ -606,45 +606,32 @@
         </section>
         
         <!-- JUXTAPOSE SECTION (RIGHT) -->
-      <aside class="comms-console">
-    <div class="bg-zinc-900 text-[9px] p-2 text-zinc-500 uppercase flex justify-between border-b border-red-900">
-        <span>Cut-Up Engine // F&W 1906</span>
-        <span id="juxt-status" style="color: #d4af37; font-weight: bold;">VOL I READY</span>
+        <aside class="comms-console">
+            <div class="bg-zinc-900 text-[9px] p-2 text-zinc-500 uppercase flex justify-between border-b border-red-900">
+                <span>Cut-Up Engine // F&W 1906</span>
+                <span id="juxt-status" class="text-red-500 font-bold">VOL I READY</span>
+            </div>
+            
+            <div id="juxt-container">
+                <div class="chat-message chat-system">
+                    <div class="text-[9px] text-zinc-700 mb-1">SYSTEM</div>
+                    <div>JUXTAPOSE splices random entries from Funk & Wagnalls Volume I (A–K). Volume II (L–Z) unavailable.</div>
+                </div>
+            </div>
+            
+            <div class="p-2 bg-black border-t border-red-900">
+                <div class="flex gap-1">
+                    <input type="text" id="juxt-input" placeholder="Enter term (A-K) to splice..." class="flex-grow text-[11px] p-2" onkeypress="if(event.key==='Enter') generateJuxtaposition()">
+                    <button onclick="generateJuxtaposition()" class="text-[9px] bg-red-900 px-3 font-bold" style="background: #FF0000; color: black;">JUXTAPOSE</button>
+                </div>
+                <div class="flex justify-between mt-2 text-[8px] text-zinc-600 uppercase">
+                    <button onclick="randomCutUp()" class="hover:text-red-500" style="background: transparent; border: none; padding: 0; font-size: 8px;">[RANDOM]</button>
+                    <button onclick="clearJuxt()" class="hover:text-red-500" style="background: transparent; border: none; padding: 0; font-size: 8px;">[CLEAR]</button>
+                </div>
+            </div>
+        </aside>
     </div>
     
-    <div id="juxt-container" style="flex: 1; overflow-y: scroll; padding: 15px; font-size: 12px; background: #080808; font-family: 'Courier Prime', monospace;">
-        <div class="chat-message chat-system">
-            <div class="text-[9px] text-zinc-700 mb-1">SYSTEM</div>
-            <div>JUXTAPOSE splices random entries from Funk & Wagnalls Volume I (A–K). Volume II (L–Z) unavailable.</div>
-        </div>
-    </div>
-    
-    <div class="p-2 bg-black border-t border-red-900">
-        <div class="flex gap-1">
-            <input type="text" id="juxt-input" placeholder="Enter term (A-K) to splice..." 
-                   class="flex-grow text-[11px] p-2 bg-transparent border border-zinc-800 focus:border-red-500 outline-none"
-                   onkeypress="if(event.key==='Enter') generateJuxtaposition()">
-            <button onclick="generateJuxtaposition()" 
-                    class="text-[9px] px-3 font-bold hover:opacity-90 transition-opacity" 
-                    style="background: #FF0000; color: black; cursor: pointer; border: none;">
-                JUXTAPOSE
-            </button>
-        </div>
-        <div class="flex justify-between mt-2 text-[8px] text-zinc-600 uppercase">
-            <button onclick="randomCutUp()" 
-                    class="hover:text-red-500 transition-colors" 
-                    style="background: transparent; border: none; padding: 0; cursor: pointer;">
-                [RANDOM]
-            </button>
-            <button onclick="clearJuxt()" 
-                    class="hover:text-red-500 transition-colors" 
-                    style="background: transparent; border: none; padding: 0; cursor: pointer;">
-                [CLEAR]
-            </button>
-        </div>
-    </div>
-</aside>
-        </div>    
     <footer class="col-span-2 bg-black flex justify-between items-center px-4 text-[9px] text-zinc-800 uppercase">
         <div>Funk & Wagnalls Station // [Webster 1913] [German-Logic] [Datamuse] [F&W 1906 Vol I]</div>
         <div id="footer-status">ARCHIVE_INCOMPLETE // VOL II ANALOG ONLY</div>
@@ -683,58 +670,55 @@
     // ==============================
     // FUNK & WAGNALLS MODULE
     // ==============================
-async function loadFunkWagnalls() {
-    try {
-        const response = await fetch('Funk-And-Wagnalls-New-Encyclopedia-Volume-1_djvu.txt');
-        const text = await response.text();
-        
-        fawCache = {};
-        const lines = text.split('\n');
-        let currentEntry = null;
-        let currentText = [];
-        let count = 0;
-        
-        lines.forEach(line => {
-            const trimmed = line.trim();
-            // Headers are ALL CAPS, 2-40 chars, no periods
-            if (/^[A-Z][A-Z\s\-\(\)]{1,40}$/.test(trimmed) && trimmed.length > 2 && !trimmed.includes('.')) {
-                if (currentEntry) {
-                    fawCache[currentEntry.toLowerCase()] = {
-                        title: currentEntry,
-                        text: currentText.join(' ').replace(/\s+/g, ' ').trim()
-                    };
-                    count++;
+    async function loadFunkWagnalls() {
+        try {
+            const response = await fetch('Funk-And-Wagnalls-New-Encyclopedia-Volume-1_djvu.txt');
+            const text = await response.text();
+            
+            fawCache = {};
+            const lines = text.split('\n');
+            let currentEntry = null;
+            let currentText = [];
+            let count = 0;
+            
+            lines.forEach(line => {
+                const trimmed = line.trim();
+                // Headers are ALL CAPS, 2-40 chars, no periods
+                if (/^[A-Z][A-Z\s\-\(\)]{1,40}$/.test(trimmed) && trimmed.length > 2 && !trimmed.includes('.')) {
+                    if (currentEntry) {
+                        fawCache[currentEntry.toLowerCase()] = {
+                            title: currentEntry,
+                            text: currentText.join(' ').replace(/\s+/g, ' ').trim()
+                        };
+                        count++;
+                    }
+                    currentEntry = trimmed;
+                    currentText = [];
+                } else if (currentEntry && trimmed) {
+                    currentText.push(trimmed);
                 }
-                currentEntry = trimmed;
-                currentText = [];
-            } else if (currentEntry && trimmed) {
-                currentText.push(trimmed);
+            });
+            
+            // Final entry
+            if (currentEntry) {
+                fawCache[currentEntry.toLowerCase()] = {
+                    title: currentEntry,
+                    text: currentText.join(' ').replace(/\s+/g, ' ').trim()
+                };
+                count++;
             }
-        });
-        
-        // Final entry
-        if (currentEntry) {
-            fawCache[currentEntry.toLowerCase()] = {
-                title: currentEntry,
-                text: currentText.join(' ').replace(/\s+/g, ' ').trim()
-            };
-            count++;
+            
+            document.getElementById('faw-status').textContent = `VOL I LOADED: ${count}`;
+            document.getElementById('faw-status').className = 'text-green-600 font-bold';
+            document.getElementById('status-text').textContent = 'CORE: ONLINE';
+            console.log(`F&W Volume I: ${count} entries`);
+            
+        } catch (error) {
+            console.error('F&W Error:', error);
+            document.getElementById('faw-status').textContent = 'MOUNT FAILED';
+            document.getElementById('status-text').textContent = 'CORE: DEGRADED';
         }
-        
-        // UPDATED: Changed from green to yellow
-        document.getElementById('faw-status').textContent = `VOL I LOADED: ${count}`;
-        document.getElementById('faw-status').style.color = '#d4af37'; // Yellow/gold color
-        document.getElementById('faw-status').style.fontWeight = 'bold';
-        
-        document.getElementById('status-text').textContent = 'CORE: ONLINE';
-        console.log(`F&W Volume I: ${count} entries`);
-        
-    } catch (error) {
-        console.error('F&W Error:', error);
-        document.getElementById('faw-status').textContent = 'MOUNT FAILED';
-        document.getElementById('status-text').textContent = 'CORE: DEGRADED';
     }
-}
 
     // ==============================
     // DICTIONARY FUNCTIONS
@@ -1077,344 +1061,93 @@ async function loadFunkWagnalls() {
     // ==============================
     // JUXTAPOSE FUNCTIONS
     // ==============================
-   // ==============================
-// JUXTAPOSE FUNCTIONS - FIXED VERSION
-// ==============================
-// ==============================
-// JUXTAPOSE FUNCTIONS - COMPLETELY FIXED
-// ==============================
-// ==============================
-// JUXTAPOSE FUNCTIONS - FIXED
-// ==============================
-
-function generateJuxtaposition() {
-    const input = document.getElementById('juxt-input').value.trim().toLowerCase();
-    const container = document.getElementById('juxt-container');
-    
-    if (!fawCache) {
-        const errorMsg = document.createElement('div');
-        errorMsg.className = 'chat-message chat-system';
-        errorMsg.innerHTML = '<span style="color:#ff0000">ERROR: F&W not loaded</span>';
-        container.appendChild(errorMsg);
-        container.scrollTop = container.scrollHeight;
-        return;
-    }
-    
-    // If user entered a word, try to start with that entry
-    let entries = [];
-    if (input && fawCache[input]) {
-        entries.push(fawCache[input]);
-    } else if (input && input.charAt(0) >= 'l') {
-        // Volume II check
-        const volumeIIMsg = document.createElement('div');
-        volumeIIMsg.className = 'chat-message';
-        volumeIIMsg.style.cssText = 'border-left: 2px solid #333; opacity: 0.6;';
-        volumeIIMsg.innerHTML = `
-            <div class="text-[9px] text-zinc-500 mb-1">[${input.toUpperCase()}]</div>
-            <div>Volume II (L-Z) required. Physical archive only.</div>
-        `;
-        container.appendChild(volumeIIMsg);
-        container.scrollTop = container.scrollHeight;
-        document.getElementById('juxt-input').value = '';
-        return;
-    }
-    
-    // Fill remaining slots with random A-K entries (total 3)
-    const allEntries = Object.values(fawCache);
-    while (entries.length < 3) {
-        const random = allEntries[Math.floor(Math.random() * allEntries.length)];
-        if (!entries.includes(random)) entries.push(random);
-    }
-    
-    // Cut them up
-    const fragments = entries.map(e => {
-        const text = e.text;
-        // Take middle chunk or first sentence
-        const mid = Math.floor(text.length / 3);
-        const end = text.indexOf('.', mid) || text.indexOf(' ', mid + 50);
-        const fragment = end > mid ? text.substring(mid, end) : text.substring(0, 100);
-        return {
-            title: e.title,
-            text: fragment.trim()
-        };
-    });
-    
-    // Create the combined text for insertion
-    const combinedText = fragments.map(f => f.text).join(' ');
-    
-    // Create the juxtaposition element
-    const juxtaposeDiv = document.createElement('div');
-    juxtaposeDiv.className = 'chat-message juxtaposition-item';
-    juxtaposeDiv.style.cssText = 'background: rgba(255,0,0,0.05); border-left: 3px solid #FF0000;';
-    
-    juxtaposeDiv.innerHTML = `
-        <div class="text-[9px] text-red-500 mb-1 uppercase tracking-wider">
-            ${input ? `SEED: ${input} // ` : ''}JUXTAPOSITION ${new Date().toLocaleTimeString()}
-        </div>
-        <div style="color: #ccc; line-height: 1.4; font-size: 11px;">
-            ${fragments.map(f => `<span style="color:#ff6666">[${f.title}]</span> ${escapeHtml(f.text)}`).join(' <span style="color:#444">//</span> ')}
-        </div>
-        <button class="insert-juxt-btn" 
-                data-text="${escapeHtml(combinedText)}"
-                style="margin-top:8px; font-size:8px; border:1px solid #333; padding:2px 6px; background:transparent; color:#666; cursor:pointer;">
-            INSERT TO MANUSCRIPT →
-        </button>
-    `;
-    
-    container.appendChild(juxtaposeDiv);
-    container.scrollTop = container.scrollHeight;
-    document.getElementById('juxt-input').value = '';
-}
-
-// ==============================
-// CLEAR JUXT - FIXED (Preserves welcome message)
-// ==============================
-function clearJuxt() {
-    const container = document.getElementById('juxt-container');
-    // Clear only juxtaposition items, keep the system message
-    const items = container.querySelectorAll('.juxtaposition-item');
-    items.forEach(item => item.remove());
-    
-    // Show confirmation
-    const clearMsg = document.createElement('div');
-    clearMsg.className = 'chat-message chat-system';
-    clearMsg.innerHTML = `
-        <div class="text-[9px] text-zinc-700 mb-1">SYSTEM</div>
-        <div>Juxtaposition buffer cleared. Ready for new juxtapositions.</div>
-    `;
-    container.appendChild(clearMsg);
-    container.scrollTop = container.scrollHeight;
-}
-
-// ==============================
-// CLEAR SESSION DATA FUNCTION
-// ==============================
-function clearSessionData() {
-    if (confirm("Clear all session data? This will reset:\n• Search history\n• Editor content\n• Juxtaposition log\n\nThis cannot be undone.")) {
-        // Clear localStorage
-        localStorage.removeItem('faw_history');
-        localStorage.removeItem('faw_editor');
+    function generateJuxtaposition() {
+        const input = document.getElementById('juxt-input').value.trim().toLowerCase();
+        const container = document.getElementById('juxt-container');
         
-        // Clear current session data
-        wordHistory = [];
-        currentWord = '';
+        if (!fawCache) {
+            container.innerHTML += '<div class="chat-message chat-system"><span style="color:#ff0000">ERROR: F&W not loaded</span></div>';
+            return;
+        }
         
-        // Reset UI
-        document.getElementById('path-history').innerHTML = '';
-        document.getElementById('editor').innerHTML = 'Start your manuscript here...';
-        document.getElementById('intro-msg').classList.remove('hidden');
-        document.getElementById('results-area').classList.add('hidden');
-        document.getElementById('word-search').value = '';
+        // If user entered a word, try to start with that entry
+        let entries = [];
+        if (input && fawCache[input]) {
+            entries.push(fawCache[input]);
+        } else if (input && input.charAt(0) >= 'l') {
+            // Volume II check
+            container.innerHTML += `
+                <div class="chat-message" style="border-left: 2px solid #333; opacity: 0.6;">
+                    <div class="text-[9px] text-zinc-500 mb-1">[${input.toUpperCase()}]</div>
+                    <div>Volume II (L-Z) required. Physical archive only.</div>
+                </div>
+            `;
+            document.getElementById('juxt-input').value = '';
+            return;
+        }
         
-        // Clear juxtaposition container but keep welcome message
-        const juxtContainer = document.getElementById('juxt-container');
-        juxtContainer.innerHTML = `
-            <div class="chat-message chat-system">
-                <div class="text-[9px] text-zinc-700 mb-1">SYSTEM</div>
-                <div>JUXTAPOSE splices random entries from Funk & Wagnalls Volume I (A–K). Volume II (L–Z) unavailable.</div>
+        // Fill remaining slots with random A-K entries (total 3)
+        const allEntries = Object.values(fawCache);
+        while (entries.length < 3) {
+            const random = allEntries[Math.floor(Math.random() * allEntries.length)];
+            if (!entries.includes(random)) entries.push(random);
+        }
+        
+        // Cut them up
+        const fragments = entries.map(e => {
+            const text = e.text;
+            // Take middle chunk or first sentence
+            const mid = Math.floor(text.length / 3);
+            const end = text.indexOf('.', mid) || text.indexOf(' ', mid + 50);
+            const fragment = end > mid ? text.substring(mid, end) : text.substring(0, 100);
+            return {
+                title: e.title,
+                text: fragment.trim()
+            };
+        });
+        
+        // Display
+        const html = `
+            <div class="chat-message" style="background: rgba(255,0,0,0.05); border-left: 3px solid #FF0000;">
+                <div class="text-[9px] text-red-500 mb-1 uppercase tracking-wider">
+                    ${input ? `SEED: ${input} // ` : ''}JUXTAPOSITION ${new Date().toLocaleTimeString()}
+                </div>
+                <div style="color: #ccc; line-height: 1.4; font-size: 11px;">
+                    ${fragments.map(f => `<span style="color:#ff6666">[${f.title}]</span> ${f.text}`).join(' <span style="color:#444">//</span> ')}
+                </div>
+                <button onclick="insertToEditor('${fragments.map(f => f.text).join(' ').replace(/'/g, "\\'")}')" 
+                        style="margin-top:8px; font-size:8px; border:1px solid #333; padding:2px 6px; background:transparent; color:#666; cursor:pointer;">
+                    INSERT TO MANUSCRIPT →
+                </button>
             </div>
         `;
         
-        // Show confirmation
-        const statusEl = document.getElementById('status-text');
-        const originalText = statusEl.textContent;
-        statusEl.textContent = 'SESSION CLEARED';
-        statusEl.style.color = '#d4af37';
-        
-        setTimeout(() => {
-            statusEl.textContent = originalText;
-            statusEl.style.color = '';
-        }, 2000);
-        
-        console.log('Session data cleared');
+        container.innerHTML += html;
+        container.scrollTop = container.scrollHeight;
+        document.getElementById('juxt-input').value = '';
     }
-}
 
-// ==============================
-// ADD CLEAR SESSION BUTTON TO HEADER
-// ==============================
-// Add this to your DOMContentLoaded or initialization:
-function addClearSessionButton() {
-    const header = document.querySelector('header');
-    const buttonGroup = header.querySelector('.flex.gap-4.items-center');
-    
-    if (buttonGroup && !document.getElementById('clear-session-btn')) {
-        const clearBtn = document.createElement('button');
-        clearBtn.id = 'clear-session-btn';
-        clearBtn.className = 'text-[9px] px-4 py-1 border-zinc-800 text-yellow-500 font-bold hover:bg-yellow-500 hover:text-black transition-colors';
-        clearBtn.textContent = 'CLEAR_SESSION';
-        clearBtn.onclick = clearSessionData;
-        
-        // Insert before EXTRACT_LOG button
-        const extractBtn = buttonGroup.querySelector('[onclick="exportText()"]');
-        if (extractBtn) {
-            buttonGroup.insertBefore(clearBtn, extractBtn);
-        } else {
-            buttonGroup.appendChild(clearBtn);
-        }
+    function randomCutUp() {
+        document.getElementById('juxt-input').value = '';
+        generateJuxtaposition();
     }
-}
 
-// Update your DOMContentLoaded to include:
-document.addEventListener('DOMContentLoaded', () => {
-    loadFunkWagnalls();
-    loadData();
-    updateHistoryDisplay();
-    loadEditor();
-    typeStatus();
-    addClearSessionButton(); // Add this line
-    setInterval(saveAll, 5000);
-    
-    // Check for URL parameter and auto-search
-    const urlParams = new URLSearchParams(window.location.search);
-    const searchQuery = urlParams.get('q') || urlParams.get('s');
-    
-    if (searchQuery) {
-        document.getElementById('word-search').value = searchQuery;
-        setTimeout(() => searchWord(searchQuery), 1500);
-    } else {
-        document.getElementById('word-search').focus();
+    function clearJuxt() {
+        document.getElementById('juxt-container').innerHTML = `
+            <div class="chat-message chat-system">
+                <div class="text-[9px] text-zinc-700 mb-1">SYSTEM</div>
+                <div>Buffer cleared. Ready for juxtaposition.</div>
+            </div>
+        `;
     }
-});
 
-// ==============================
-// ENHANCED INSERT TO EDITOR (with visual feedback)
-// ==============================
-function insertToEditor(text) {
-    const editor = document.getElementById('editor');
-    if (!editor) {
-        console.error('Editor element not found');
-        return;
+    function insertToEditor(text) {
+        const editor = document.getElementById('editor');
+        editor.focus();
+        document.execCommand('insertHTML', false, 
+            `<div style="border-left:2px solid #ff0000; padding-left:10px; margin:10px 0; color:#ccc; font-family:'Courier Prime',monospace;">${text}</div><p></p>`
+        );
     }
-    
-    // Focus the editor
-    editor.focus();
-    
-    // Create the insertion
-    const insertion = document.createElement('div');
-    insertion.className = 'juxtaposition-insertion';
-    insertion.style.cssText = `
-        border-left: 2px solid #ff0000; 
-        padding-left: 10px; 
-        margin: 10px 0; 
-        color: #ccc; 
-        font-family: 'Courier Prime', monospace;
-        font-size: 0.9em;
-        background: rgba(255,0,0,0.02);
-    `;
-    insertion.textContent = text;
-    
-    // Insert at cursor position or at the end
-    try {
-        const selection = window.getSelection();
-        if (selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            range.insertNode(insertion);
-            
-            // Add a paragraph break after
-            const br = document.createElement('p');
-            br.innerHTML = '&nbsp;';
-            range.insertNode(br);
-            
-            // Move cursor after insertion
-            range.setStartAfter(br);
-            range.setEndAfter(br);
-            selection.removeAllRanges();
-            selection.addRange(range);
-        } else {
-            editor.appendChild(insertion);
-            editor.appendChild(document.createElement('p'));
-        }
-    } catch (e) {
-        // Fallback
-        editor.appendChild(insertion);
-        editor.appendChild(document.createElement('p'));
-    }
-    
-    // Visual feedback animation
-    insertion.style.animation = 'highlightInsertion 1.5s ease';
-    
-    // Scroll to show insertion
-    editor.scrollTop = editor.scrollHeight;
-    
-    // Save to localStorage
-    saveAll();
-    
-    // Show notification in status
-    const statusEl = document.getElementById('status-text');
-    const originalText = statusEl.textContent;
-    statusEl.textContent = 'INSERTED TO MANUSCRIPT';
-    statusEl.style.color = '#ff0000';
-    
-    setTimeout(() => {
-        statusEl.textContent = originalText;
-        statusEl.style.color = '';
-    }, 1500);
-}
-
-// ==============================
-// ADD CSS ANIMATION FOR INSERTION FEEDBACK
-// ==============================
-// Add this to your CSS section:
-const insertionAnimation = `
-@keyframes highlightInsertion {
-    0% { background: rgba(255, 0, 0, 0.2); }
-    100% { background: rgba(255, 0, 0, 0.02); }
-}
-`;
-
-// Add the animation to the page
-const style = document.createElement('style');
-style.textContent = insertionAnimation;
-document.head.appendChild(style);
-
-// ==============================
-// EVENT DELEGATION (simplified)
-// ==============================
-document.addEventListener('click', function(event) {
-    // Handle INSERT TO MANUSCRIPT buttons
-    if (event.target.classList.contains('insert-juxt-btn')) {
-        const text = event.target.getAttribute('data-text');
-        if (text) {
-            insertToEditor(text);
-            
-            // Button feedback
-            const btn = event.target;
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '✓ INSERTED';
-            btn.style.background = '#ff0000';
-            btn.style.color = '#000';
-            
-            setTimeout(() => {
-                btn.innerHTML = originalHTML;
-                btn.style.background = '';
-                btn.style.color = '';
-            }, 1500);
-        }
-    }
-});
 </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-    loadFunkWagnalls();
-    loadData();
-    updateHistoryDisplay();
-    loadEditor();
-    typeStatus();
-    setInterval(saveAll, 5000);
-    
-    // Get the search query from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const searchQuery = urlParams.get('q');
-    
-    if (searchQuery) {
-        document.getElementById('word-search').value = searchQuery;
-        // Wait for dictionaries to load
-        setTimeout(() => searchWord(searchQuery), 1500);
-    } else {
-        document.getElementById('word-search').focus();
-    }
-});
-    </script>
 </body>
 </html>
