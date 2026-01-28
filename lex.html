@@ -149,13 +149,11 @@
     </style>
 </head>
 <body>
-   <h1 onclick="toggleEncyclopedia()" style="cursor: pointer;">Funk &amp; Wagnallism <br>
-    <small style="font-size: 0.4em; color: #ff4444; text-decoration: underline;">
-        [Volume I: A–K (1906) ↓]
-    </small>
-</h1>
-
-<!-- F&W Panel -->
+	    <!-- TEST: Does JavaScript work at all? -->
+    <button onclick="alert('JS is working')" style="position:fixed; top:5px; left:5px; z-index:9999; background:red; color:white;">
+        Test Click
+    </button>
+  <!-- Put this EXACTLY where you have the panel HTML now -->
 <div id="fawPanel" style="
     display: none;
     position: fixed;
@@ -166,57 +164,54 @@
     background: rgba(20, 0, 0, 0.95);
     border-left: 3px solid #FF0000;
     box-shadow: -5px 0 20px rgba(255, 0, 0, 0.3);
-    z-index: 2000;
+    z-index: 9999;
     padding: 20px;
     overflow-y: auto;
     transition: right 0.3s ease;
     font-family: 'Courier New', monospace;
 ">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="margin: 0; color: #FF0000; font-size: 1.2em; flex: 1;">
-            Funk & Wagnalls<br>
-            <span style="font-size: 0.7em; color: #ff4444;">New Encyclopedia • Volume I (A–K) • 1906</span>
-        </h2>
-        <button onclick="toggleEncyclopedia()" style="
-            background: rgba(255, 0, 0, 0.2);
-            border: 2px solid #FF0000;
-            color: #FF0000;
-            width: 36px;
-            height: 36px;
-            cursor: pointer;
+    <!-- X Button: Simple, no flex, guaranteed visible -->
+    <div style="text-align: right; margin-bottom: 10px;">
+        <button onclick="window.toggleFW()" style="
+            background: #FF0000;
+            color: #000;
+            border: none;
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
-            font-size: 24px;
             font-weight: bold;
-            line-height: 1;
-            flex-shrink: 0;
-            margin-left: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
         ">×</button>
     </div>
     
-    <input type="text" id="fawSearch" placeholder="Search A–K..." style="
+    <h2 style="margin: 0 0 15px 0; color: #FF0000; font-size: 1.2em;">
+        Funk & Wagnalls<br>
+        <span style="font-size: 0.7em; color: #ff4444;">Volume I (A–K) • 1906</span>
+    </h2>
+    
+    <input type="text" id="fawInput" placeholder="Search A–K..." style="
         width: 100%;
         padding: 10px;
         background: rgba(255, 0, 0, 0.1);
         border: 1px solid #FF0000;
         color: #fff;
         margin-bottom: 15px;
-        font-family: inherit;
         box-sizing: border-box;
     ">
     
-    <div id="fawResult" style="
-        color: #ffcccc;
-        line-height: 1.6;
-        font-size: 0.9em;
-    ">
-        <p style="color: #ff4444; font-style: italic;">
-            Enter a term beginning with A through K to explore the 1906 edition...
-        </p>
+    <div id="fawOutput" style="color: #ffcccc; font-size: 0.9em;">
+        <p style="color: #ff4444; font-style: italic;">Type to search...</p>
     </div>
 </div>
+
+<!-- Header: Use window.toggleFW to ensure global access -->
+<h1 style="cursor: pointer;" onclick="window.toggleFW()">
+    Funk &amp; Wagnallism<br>
+    <small style="font-size: 0.4em; color: #ff4444; text-decoration: underline;">
+        [Volume I: A–K (1906) ↓]
+    </small>
+</h1>
     <div id="search-container">
         <input type="text" id="search-input" placeholder="Enter a word to look up">
         <button id="search-button">Search Dictionary (w/German)</button>
@@ -716,6 +711,109 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+	// Global F&W controller (avoids conflicts)
+window.toggleFW = function() {
+    const panel = document.getElementById('fawPanel');
+    if (!panel) {
+        console.error('Panel not found!');
+        return;
+    }
+    
+    console.log('Toggling panel. Current display:', panel.style.display, 'Right:', panel.style.right);
+    
+    if (panel.style.display === 'none' || panel.style.display === '' || panel.style.right === '-400px') {
+        panel.style.display = 'block';
+        // Force reflow
+        void panel.offsetWidth;
+        panel.style.right = '0';
+        setTimeout(() => {
+            const input = document.getElementById('fawInput');
+            if (input) input.focus();
+        }, 100);
+    } else {
+        panel.style.right = '-400px';
+        setTimeout(() => {
+            panel.style.display = 'none';
+        }, 300);
+    }
+};
+
+// Ensure it loads after everything
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFW);
+} else {
+    initFW();
+}
+
+function initFW() {
+    console.log('F&W Init started');
+    
+    // Load the text file
+    fetch('Funk-And-Wagnalls-New-Encyclopedia-Volume-1_djvu.txt')
+        .then(r => r.text())
+        .then(text => {
+            console.log('F&W file loaded, size:', text.length);
+            window.fawData = {};
+            
+            const lines = text.split('\n');
+            let entry = null;
+            let content = [];
+            
+            lines.forEach(line => {
+                const t = line.trim();
+                if (/^[A-Z][A-Z\s\-]{2,40}$/.test(t) && !t.includes('.') && t.length < 50) {
+                    if (entry) {
+                        window.fawData[entry.toLowerCase()] = {
+                            title: entry,
+                            text: content.join(' ').substring(0, 2000) // Limit length
+                        };
+                    }
+                    entry = t;
+                    content = [];
+                } else if (entry && t) {
+                    content.push(t);
+                }
+            });
+            
+            console.log('Parsed entries:', Object.keys(window.fawData).length);
+        })
+        .catch(e => console.error('Failed to load F&W:', e));
+    
+    // Search handler
+    const input = document.getElementById('fawInput');
+    if (input) {
+        input.addEventListener('input', (e) => {
+            const q = e.target.value.trim().toLowerCase();
+            const out = document.getElementById('fawOutput');
+            
+            if (!q) {
+                out.innerHTML = '<p style="color: #ff4444;">Type to search...</p>';
+                return;
+            }
+            
+            if (!window.fawData) {
+                out.innerHTML = '<p style="color: #ff4444;">Loading encyclopedia...</p>';
+                return;
+            }
+            
+            const found = window.fawData[q] || 
+                Object.values(window.fawData).find(v => 
+                    v.title.toLowerCase().includes(q) || v.text.toLowerCase().includes(q)
+                );
+            
+            if (found) {
+                out.innerHTML = `
+                    <h3 style="color: #FF0000; margin-bottom: 10px;">${found.title}</h3>
+                    <p style="border-left: 2px solid #FF0000; padding-left: 10px;">${found.text.substring(0, 500)}...</p>
+                `;
+            } else if (q.match(/^[l-z]/)) {
+                out.innerHTML = `<p style="color: #ff6666;">"${q}" is in Volume II (L–Z)<br><small>Not digitized. Check your physical copy.</small></p>`;
+            } else {
+                out.innerHTML = `<p style="color: #ff6666;">"${q}" not found in Volume I.</p>`;
+            }
+        });
+    }
+}
 </script>
 </body>
 </html>
