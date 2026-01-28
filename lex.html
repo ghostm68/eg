@@ -59,14 +59,15 @@
         opacity: 0.3;
     }
     
-    .app-grid {
+
+	 .app-grid {
         display: grid;
         grid-template-columns: 320px 1fr;
-        grid-template-rows: 50px 1fr 380px 30px;
+       grid-template-rows: 50px 1fr 200px 30px; /
         height: 100vh;
         gap: 1px;
         background: var(--red);
-    }
+    }   
     
     header {
         grid-column: span 2;
@@ -751,28 +752,43 @@
         updateWordHistory(word);
     }
 
-    function getFawHtml(word) {
-        const entry = getFunkWagnallsEntry(word);
-        
-        if (!entry) {
-            return `<div class="path-item" style="border-left-color: #333;"><div class="path-definition" style="color: #555;">No entry in Volume I (A–K)</div></div>`;
-        }
-        
-        if (entry.loading) {
-            return `<div class="path-item"><div class="path-definition">Loading encyclopedia...</div></div>`;
-        }
-        
-        if (entry.isVolumeII) {
-            return `
-                <div class="path-item" style="border-left: 3px solid #333; background: rgba(50,50,50,0.1);">
-                    <div class="path-word" style="color: #666; text-transform: uppercase;">${entry.title}</div>
-                    <div class="path-definition" style="color: #888; font-style: italic; font-size: 12px;">
-                        ${entry.text.replace(/\n/g, '<br>')}
-                    </div>
-                    <div class="mt-2 text-[9px] tracking-wider" style="color: #FF0000;">ANALOG ARCHIVE REQUIRED</div>
-                </div>
-            `;
-        }
+    function getFunkWagnallsEntry(word) {
+    if (!fawCache) return { loading: true };
+    
+    const key = word.toLowerCase().trim();
+    const firstLetter = key.charAt(0);
+    
+    // Volume II check (L-Z)
+    if (firstLetter >= 'l' && firstLetter <= 'z') {
+        return {
+            isVolumeII: true,
+            title: word.toUpperCase(),
+            text: `Entry "${word}" appears in Volume II (L–Z).\n\nOnly Volume I (A–K) was digitized (1906). Physical copy required for L–Z.`
+        };
+    }
+    
+    // Exact match first
+    if (fawCache[key]) {
+        console.log('F&W Exact match:', key);
+        return { isVolumeII: false, ...fawCache[key] };
+    }
+    
+    // Partial match (search in titles only, faster)
+    const matchKey = Object.keys(fawCache).find(k => k.includes(key) || key.includes(k));
+    if (matchKey) {
+        console.log('F&W Partial match:', matchKey);
+        return { isVolumeII: false, ...fawCache[matchKey] };
+    }
+    
+    // Try matching start of string (e.g., "afghan" matches "afghanistan")
+    const startsWithMatch = Object.keys(fawCache).find(k => k.startsWith(key));
+    if (startsWithMatch) {
+        return { isVolumeII: false, ...fawCache[startsWithMatch] };
+    }
+    
+    console.log('F&W No match for:', key, 'Available samples:', Object.keys(fawCache).slice(0,5));
+    return null;
+}
         
         // Format F&W text (truncate if encyclopedia-length)
         const displayText = entry.text.length > 600 ? entry.text.substring(0, 600) + '... [truncated]' : entry.text;
@@ -795,10 +811,24 @@
     
     // Placeholder for supporting functions you already have:
     function getWebsterHtml(word) { 
-        let def = cache.webster && (cache.webster[word.toUpperCase()] || cache.webster[word]);
-        if (!def && cache.webster2) def = cache.webster2[word.toUpperCase()] || cache.webster2[word];
-        return def ? `<div class="path-item"><div class="path-word">Webster 1913</div><div class="path-definition">${def}</div></div>` : '<div class="path-item"><div class="path-definition">No definition found</div></div>';
+    let defs = [];
+    
+    // Source 1
+    if (cache.webster) {
+        const d1 = cache.webster[word.toUpperCase()] || cache.webster[word];
+        if (d1) defs.push(`<div class="mb-2"><span class="text-[9px] text-red-500">SOURCE I</span><p>${d1}</p></div>`);
     }
+    
+    // Source 2  
+    if (cache.webster2) {
+        const d2 = cache.webster2[word.toUpperCase()] || cache.webster2[word];
+        if (d2) defs.push(`<div class="mb-2"><span class="text-[9px] text-red-500">SOURCE II</span><p>${d2}</p></div>`);
+    }
+    
+    if (defs.length === 0) return '<div class="path-item"><div class="path-definition">No Webster definition found</div></div>';
+    
+    return `<div class="path-item">${defs.join('')}</div>`;
+}
     
     function getGermanHtml(word) {
         if (!cache.german) return '<div class="path-item"><div class="path-definition">German data not loaded</div></div>';
