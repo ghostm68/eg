@@ -606,7 +606,7 @@
         </section>
         
         <!-- JUXTAPOSE SECTION (RIGHT) -->
-<aside class="comms-console">
+      <aside class="comms-console">
     <div class="bg-zinc-900 text-[9px] p-2 text-zinc-500 uppercase flex justify-between border-b border-red-900">
         <span>Cut-Up Engine // F&W 1906</span>
         <span id="juxt-status" style="color: #d4af37; font-weight: bold;">VOL I READY</span>
@@ -624,21 +624,26 @@
             <input type="text" id="juxt-input" placeholder="Enter term (A-K) to splice..." 
                    class="flex-grow text-[11px] p-2 bg-transparent border border-zinc-800 focus:border-red-500 outline-none"
                    onkeypress="if(event.key==='Enter') generateJuxtaposition()">
-            <button id="juxt-button" class="text-[9px] bg-red-900 px-3 font-bold" style="background: #FF0000; color: black; cursor: pointer;">JUXTAPOSE</button>
+            <button onclick="generateJuxtaposition()" 
+                    class="text-[9px] px-3 font-bold hover:opacity-90 transition-opacity" 
+                    style="background: #FF0000; color: black; cursor: pointer; border: none;">
+                JUXTAPOSE
+            </button>
         </div>
         <div class="flex justify-between mt-2 text-[8px] text-zinc-600 uppercase">
-            <button onclick="document.getElementById('juxt-input').value=String.fromCharCode(65+Math.floor(Math.random()*11));generateJuxtaposition()" 
+            <button onclick="randomCutUp()" 
+                    class="hover:text-red-500 transition-colors" 
                     style="background: transparent; border: none; padding: 0; cursor: pointer;">
                 [RANDOM]
             </button>
             <button onclick="clearJuxt()" 
+                    class="hover:text-red-500 transition-colors" 
                     style="background: transparent; border: none; padding: 0; cursor: pointer;">
                 [CLEAR]
             </button>
         </div>
     </div>
 </aside>
-<!-- NO extra </div> tags here -->
     <footer class="col-span-2 bg-black flex justify-between items-center px-4 text-[9px] text-zinc-800 uppercase">
         <div>Funk & Wagnalls Station // [Webster 1913] [German-Logic] [Datamuse] [F&W 1906 Vol I]</div>
         <div id="footer-status">ARCHIVE_INCOMPLETE // VOL II ANALOG ONLY</div>
@@ -660,10 +665,6 @@
     let fawCache = null;
     let currentWord = '';
     let wordHistory = JSON.parse(localStorage.getItem('faw_history') || '[]');
-
-    // ==============================
-// UTILITY FUNCTIONS
-// ==============================
 
     // ==============================
     // INITIALIZATION (No Splash)
@@ -1136,29 +1137,6 @@ function generateJuxtaposition() {
             text: fragment.trim()
         };
     });
-
-    // ==============================
-// FIX JUXTAPOSE BUTTON EVENT LISTENER
-// ==============================
-document.addEventListener('DOMContentLoaded', function() {
-    // Wait a bit to ensure everything is loaded
-    setTimeout(function() {
-        const juxtButton = document.getElementById('juxt-button');
-        if (juxtButton) {
-            console.log("Setting up Juxt button listener");
-            juxtButton.addEventListener('click', function() {
-                console.log("Juxt button clicked");
-                if (typeof generateJuxtaposition === 'function') {
-                    generateJuxtaposition();
-                } else {
-                    console.error("generateJuxtaposition not found!");
-                }
-            });
-        } else {
-            console.error("Juxt button not found!");
-        }
-    }, 500);
-});
     
     // Create the combined text for insertion
     const combinedText = fragments.map(f => f.text).join(' ');
@@ -1172,7 +1150,8 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="text-[9px] text-red-500 mb-1 uppercase tracking-wider">
             ${input ? `SEED: ${input} // ` : ''}JUXTAPOSITION ${new Date().toLocaleTimeString()}
         </div>
-        <div style="color: #ccc; line-height: 1.4; font-size: 11px;">${fragments.map(f => `<span style="color:#ff6666">[${f.title}]</span> ${f.text}`).join(' <span style="color:#444">//</span> ')}
+        <div style="color: #ccc; line-height: 1.4; font-size: 11px;">
+            ${fragments.map(f => `<span style="color:#ff6666">[${f.title}]</span> ${escapeHtml(f.text)}`).join(' <span style="color:#444">//</span> ')}
         </div>
         <button class="insert-juxt-btn" 
                 data-text="${escapeHtml(combinedText)}"
@@ -1414,64 +1393,6 @@ document.addEventListener('click', function(event) {
     }
 });
 </script>
-    <script>
-        // ==============================
-// FIX ALL JUXTAPOSE ISSUES
-// ==============================
-
-// 1. Fix the escapeHtml issue by removing it from generateJuxtaposition
-//    (Edit line 1151 as shown above)
-
-// 2. Hook up the Juxt button
-function setupJuxtButton() {
-    const juxtButton = document.getElementById('juxt-button');
-    if (juxtButton && typeof generateJuxtaposition === 'function') {
-        // Remove any existing listeners
-        juxtButton.replaceWith(juxtButton.cloneNode(true));
-        const newButton = document.getElementById('juxt-button');
-        
-        // Add new listener
-        newButton.addEventListener('click', generateJuxtaposition);
-        console.log("Juxt button fixed");
-        return true;
-    }
-    return false;
-}
-
-// 3. Fix Enter key in input
-function setupJuxtInput() {
-    const juxtInput = document.getElementById('juxt-input');
-    if (juxtInput && typeof generateJuxtaposition === 'function') {
-        juxtInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                generateJuxtaposition();
-            }
-        });
-        console.log("Juxt input Enter key fixed");
-        return true;
-    }
-    return false;
-}
-
-// 4. Run fixes when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    // Try immediately
-    setupJuxtButton();
-    setupJuxtInput();
-    
-    // Try again after a delay (in case functions load later)
-    setTimeout(function() {
-        if (!setupJuxtButton()) {
-            console.error("Failed to setup Juxt button");
-        }
-        setupJuxtInput();
-    }, 1000);
-});
-
-// 5. Also expose generateJuxtaposition globally if needed
-window.generateJuxtaposition = generateJuxtaposition;
-    </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
     loadFunkWagnalls();
