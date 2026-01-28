@@ -502,6 +502,16 @@
         .webster-definition::-webkit-scrollbar-thumb {
             background: #444;
         }
+        
+        /* Insertion animation */
+        @keyframes highlightInsertion {
+            0% { background: rgba(255, 0, 0, 0.2); }
+            100% { background: rgba(255, 0, 0, 0.02); }
+        }
+        
+        .juxtaposition-insertion {
+            animation: highlightInsertion 1.5s ease;
+        }
     </style>
 </head>
 <body>
@@ -515,6 +525,7 @@
         </div>
         <div class="flex gap-4 items-center">
             <span id="word-count" class="text-[10px] text-zinc-500">0 WORDS</span>
+            <button onclick="clearSessionData()" class="text-[9px] px-3 py-1 border-zinc-800 text-yellow-500 font-bold hover:bg-yellow-500 hover:text-black transition-colors">CLEAR_SESSION</button>
             <button onclick="exportText()" class="text-[9px] px-4 py-1 border-zinc-800 text-red-600 font-bold hover:bg-red-600 hover:text-white">EXTRACT_LOG</button>
         </div>
     </header>
@@ -609,7 +620,7 @@
         <aside class="comms-console">
             <div class="bg-zinc-900 text-[9px] p-2 text-zinc-500 uppercase flex justify-between border-b border-red-900">
                 <span>Cut-Up Engine // F&W 1906</span>
-                <span id="juxt-status" class="text-red-500 font-bold">VOL I READY</span>
+                <span id="juxt-status" style="color: #d4af37; font-weight: bold;">VOL I READY</span>
             </div>
             
             <div id="juxt-container">
@@ -621,12 +632,12 @@
             
             <div class="p-2 bg-black border-t border-red-900">
                 <div class="flex gap-1">
-                    <input type="text" id="juxt-input" placeholder="Enter term (A-K) to splice..." class="flex-grow text-[11px] p-2" onkeypress="if(event.key==='Enter') generateJuxtaposition()">
-                    <button onclick="generateJuxtaposition()" class="text-[9px] bg-red-900 px-3 font-bold" style="background: #FF0000; color: black;">JUXTAPOSE</button>
+                    <input type="text" id="juxt-input" placeholder="Enter term (A-K) to splice..." class="flex-grow text-[11px] p-2 bg-transparent border border-zinc-800 focus:border-red-500 outline-none" onkeypress="if(event.key==='Enter') generateJuxtaposition()">
+                    <button onclick="generateJuxtaposition()" class="text-[9px] px-3 font-bold hover:opacity-90 transition-opacity" style="background: #FF0000; color: black; cursor: pointer; border: none;">JUXTAPOSE</button>
                 </div>
                 <div class="flex justify-between mt-2 text-[8px] text-zinc-600 uppercase">
-                    <button onclick="randomCutUp()" class="hover:text-red-500" style="background: transparent; border: none; padding: 0; font-size: 8px;">[RANDOM]</button>
-                    <button onclick="clearJuxt()" class="hover:text-red-500" style="background: transparent; border: none; padding: 0; font-size: 8px;">[CLEAR]</button>
+                    <button onclick="randomCutUp()" class="hover:text-red-500 transition-colors" style="background: transparent; border: none; padding: 0; cursor: pointer;">[RANDOM]</button>
+                    <button onclick="clearJuxt()" class="hover:text-red-500 transition-colors" style="background: transparent; border: none; padding: 0; cursor: pointer;">[CLEAR]</button>
                 </div>
             </div>
         </aside>
@@ -653,6 +664,7 @@
     let fawCache = null;
     let currentWord = '';
     let wordHistory = JSON.parse(localStorage.getItem('faw_history') || '[]');
+    let sessionWordCount = 0;
 
     // ==============================
     // INITIALIZATION (No Splash)
@@ -663,8 +675,19 @@
         updateHistoryDisplay();
         loadEditor();
         typeStatus();
+        updateWordCount();
         setInterval(saveAll, 5000);
-        document.getElementById('word-search').focus();
+        
+        // Check for URL parameter and auto-search
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchQuery = urlParams.get('q') || urlParams.get('s');
+        
+        if (searchQuery) {
+            document.getElementById('word-search').value = searchQuery;
+            setTimeout(() => searchWord(searchQuery), 1500);
+        } else {
+            document.getElementById('word-search').focus();
+        }
     });
 
     // ==============================
@@ -708,8 +731,11 @@
                 count++;
             }
             
+            // YELLOW STATUS
             document.getElementById('faw-status').textContent = `VOL I LOADED: ${count}`;
-            document.getElementById('faw-status').className = 'text-green-600 font-bold';
+            document.getElementById('faw-status').style.color = '#d4af37';
+            document.getElementById('faw-status').style.fontWeight = 'bold';
+            
             document.getElementById('status-text').textContent = 'CORE: ONLINE';
             console.log(`F&W Volume I: ${count} entries`);
             
@@ -759,6 +785,10 @@
         document.getElementById('current-word').textContent = word.toUpperCase();
         document.getElementById('word-length').textContent = `LENGTH: ${word.length}`;
         
+        // Update word count
+        sessionWordCount++;
+        updateWordCount();
+        
         // Show loading
         document.getElementById('faw-target').innerHTML = '<div class="path-item"><div class="path-definition">Loading...</div></div>';
         
@@ -778,6 +808,59 @@
         
         document.getElementById('word-type').textContent = guessEtymology(word);
         updateWordHistory(word);
+    }
+
+    // ==============================
+    // WORD COUNT FUNCTION
+    // ==============================
+    function updateWordCount() {
+        document.getElementById('word-count').textContent = `${sessionWordCount} WORDS`;
+    }
+
+    // ==============================
+    // CLEAR SESSION FUNCTION
+    // ==============================
+    function clearSessionData() {
+        if (confirm("Clear all session data? This will reset:\n• Search history\n• Editor content\n• Juxtaposition log\n• Word count\n\nThis cannot be undone.")) {
+            // Clear localStorage
+            localStorage.removeItem('faw_history');
+            localStorage.removeItem('faw_editor');
+            
+            // Clear current session data
+            wordHistory = [];
+            currentWord = '';
+            sessionWordCount = 0;
+            
+            // Reset UI
+            document.getElementById('path-history').innerHTML = '';
+            document.getElementById('editor').innerHTML = 'Start your manuscript here...';
+            document.getElementById('intro-msg').classList.remove('hidden');
+            document.getElementById('results-area').classList.add('hidden');
+            document.getElementById('word-search').value = '';
+            updateWordCount();
+            
+            // Clear juxtaposition container but keep welcome message
+            const juxtContainer = document.getElementById('juxt-container');
+            juxtContainer.innerHTML = `
+                <div class="chat-message chat-system">
+                    <div class="text-[9px] text-zinc-700 mb-1">SYSTEM</div>
+                    <div>JUXTAPOSE splices random entries from Funk & Wagnalls Volume I (A–K). Volume II (L–Z) unavailable.</div>
+                </div>
+            `;
+            
+            // Show confirmation
+            const statusEl = document.getElementById('status-text');
+            const originalText = statusEl.textContent;
+            statusEl.textContent = 'SESSION CLEARED';
+            statusEl.style.color = '#d4af37';
+            
+            setTimeout(() => {
+                statusEl.textContent = originalText;
+                statusEl.style.color = '';
+            }, 2000);
+            
+            console.log('Session data cleared');
+        }
     }
 
     // ==============================
@@ -1106,16 +1189,20 @@
             };
         });
         
+        // Escape HTML for safe insertion
+        const escapedText = fragments.map(f => f.text.replace(/'/g, "\\'").replace(/"/g, '&quot;')).join(' ');
+        
         // Display
         const html = `
-            <div class="chat-message" style="background: rgba(255,0,0,0.05); border-left: 3px solid #FF0000;">
+            <div class="chat-message juxtaposition-item" style="background: rgba(255,0,0,0.05); border-left: 3px solid #FF0000;">
                 <div class="text-[9px] text-red-500 mb-1 uppercase tracking-wider">
                     ${input ? `SEED: ${input} // ` : ''}JUXTAPOSITION ${new Date().toLocaleTimeString()}
                 </div>
                 <div style="color: #ccc; line-height: 1.4; font-size: 11px;">
                     ${fragments.map(f => `<span style="color:#ff6666">[${f.title}]</span> ${f.text}`).join(' <span style="color:#444">//</span> ')}
                 </div>
-                <button onclick="insertToEditor('${fragments.map(f => f.text).join(' ').replace(/'/g, "\\'")}')" 
+                <button class="insert-juxt-btn" 
+                        data-text="${escapedText}"
                         style="margin-top:8px; font-size:8px; border:1px solid #333; padding:2px 6px; background:transparent; color:#666; cursor:pointer;">
                     INSERT TO MANUSCRIPT →
                 </button>
@@ -1133,21 +1220,117 @@
     }
 
     function clearJuxt() {
-        document.getElementById('juxt-container').innerHTML = `
-            <div class="chat-message chat-system">
-                <div class="text-[9px] text-zinc-700 mb-1">SYSTEM</div>
-                <div>Buffer cleared. Ready for juxtaposition.</div>
-            </div>
+        const container = document.getElementById('juxt-container');
+        // Clear only juxtaposition items, keep the system message
+        const items = container.querySelectorAll('.juxtaposition-item');
+        items.forEach(item => item.remove());
+        
+        // Show confirmation
+        const clearMsg = document.createElement('div');
+        clearMsg.className = 'chat-message chat-system';
+        clearMsg.innerHTML = `
+            <div class="text-[9px] text-zinc-700 mb-1">SYSTEM</div>
+            <div>Juxtaposition buffer cleared. Ready for new juxtapositions.</div>
         `;
+        container.appendChild(clearMsg);
+        container.scrollTop = container.scrollHeight;
     }
 
+    // ==============================
+    // INSERT TO EDITOR FUNCTION (FIXED)
+    // ==============================
     function insertToEditor(text) {
         const editor = document.getElementById('editor');
+        if (!editor) return;
+        
+        // Focus the editor
         editor.focus();
-        document.execCommand('insertHTML', false, 
-            `<div style="border-left:2px solid #ff0000; padding-left:10px; margin:10px 0; color:#ccc; font-family:'Courier Prime',monospace;">${text}</div><p></p>`
-        );
+        
+        // Create the insertion element
+        const insertion = document.createElement('div');
+        insertion.className = 'juxtaposition-insertion';
+        insertion.style.cssText = `
+            border-left: 2px solid #ff0000; 
+            padding-left: 10px; 
+            margin: 10px 0; 
+            color: #ccc; 
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.9em;
+            background: rgba(255,0,0,0.02);
+        `;
+        insertion.textContent = text;
+        
+        try {
+            // Try to insert at cursor position
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                range.insertNode(insertion);
+                
+                // Add a paragraph break after
+                const br = document.createElement('p');
+                br.innerHTML = '&nbsp;';
+                range.insertNode(br);
+                
+                // Move cursor after insertion
+                range.setStartAfter(br);
+                range.setEndAfter(br);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            } else {
+                // Fallback: append to end
+                editor.appendChild(insertion);
+                editor.appendChild(document.createElement('p'));
+            }
+        } catch (e) {
+            // Final fallback
+            editor.appendChild(insertion);
+            editor.appendChild(document.createElement('p'));
+        }
+        
+        // Scroll to show insertion
+        editor.scrollTop = editor.scrollHeight;
+        
+        // Save to localStorage
+        saveAll();
+        
+        // Show notification
+        const statusEl = document.getElementById('status-text');
+        const originalText = statusEl.textContent;
+        statusEl.textContent = 'INSERTED TO MANUSCRIPT';
+        statusEl.style.color = '#ff0000';
+        
+        setTimeout(() => {
+            statusEl.textContent = originalText;
+            statusEl.style.color = '';
+        }, 1500);
     }
+
+    // ==============================
+    // EVENT DELEGATION FOR INSERT BUTTONS
+    // ==============================
+    document.addEventListener('click', function(event) {
+        // Handle INSERT TO MANUSCRIPT buttons
+        if (event.target.classList.contains('insert-juxt-btn')) {
+            const text = event.target.getAttribute('data-text');
+            if (text) {
+                insertToEditor(text);
+                
+                // Button feedback
+                const btn = event.target;
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '✓ INSERTED';
+                btn.style.background = '#ff0000';
+                btn.style.color = '#000';
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.style.background = '';
+                    btn.style.color = '';
+                }, 1500);
+            }
+        }
+    });
 </script>
 </body>
 </html>
