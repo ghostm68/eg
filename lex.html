@@ -149,7 +149,127 @@
     </style>
 </head>
 <body>
-    <h1>Funk &amp; Wagnallism <br></h1>
+   <h1>Funk &amp; Wagnallism <br>
+    <small style="font-size: 0.4em; color: #ff4444; cursor: pointer; text-decoration: underline;" onclick="toggleEncyclopedia()">
+        [Volume I: A–K (1906) ↓]
+    </small>
+</h1>
+
+<!-- F&W Encyclopedia Slide-Out Panel -->
+<div id="fawPanel" style="
+    display: none;
+    position: fixed;
+    top: 80px;
+    right: -400px;
+    width: 380px;
+    height: 70vh;
+    background: rgba(20, 0, 0, 0.95);
+    border-left: 3px solid #FF0000;
+    box-shadow: -5px 0 20px rgba(255, 0, 0, 0.3);
+    z-index: 2000;
+    padding: 20px;
+    overflow-y: auto;
+    transition: right 0.3s ease;
+    font-family: 'Courier New', monospace;
+">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; color: #FF0000; font-size: 1.2em;">
+            Funk & Wagnalls<br>
+            <span style="font-size: 0.7em; color: #ff4444;">New Encyclopedia • Volume I (A–K) • 1906</span>
+        </h2>
+        <button onclick="toggleEncyclopedia()" style="
+            background: transparent;
+            border: 1px solid #FF0000;
+            color: #FF0000;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            border-radius: 50%;
+        ">×</button>
+    </div>
+    
+    <input type="text" id="fawSearch" placeholder="Search A–K..." style="
+        width: 100%;
+        padding: 10px;
+        background: rgba(255, 0, 0, 0.1);
+        border: 1px solid #FF0000;
+        color: #fff;
+        margin-bottom: 15px;
+        font-family: inherit;
+    ">
+    
+    <div id="fawResult" style="
+        color: #ffcccc;
+        line-height: 1.6;
+        font-size: 0.9em;
+    ">
+        <p style="color: #ff4444; font-style: italic;">
+            Enter a term beginning with A through K to explore the 1906 edition...
+        </p>
+    </div>
+</div>
+	<script>
+		function toggleEncyclopedia() {
+    const panel = document.getElementById('fawPanel');
+    if (panel.style.display === 'none' || panel.style.right === '-400px') {
+        panel.style.display = 'block';
+        // Small delay to allow display:block to apply before animation
+        setTimeout(() => {
+            panel.style.right = '0';
+        }, 10);
+        document.getElementById('fawSearch').focus();
+    } else {
+        panel.style.right = '-400px';
+        setTimeout(() => {
+            panel.style.display = 'none';
+        }, 300);
+    }
+}
+
+// F&W Search handler
+document.getElementById('fawSearch').addEventListener('input', (e) => {
+    const query = e.target.value.trim();
+    const resultDiv = document.getElementById('fawResult');
+    
+    if (!query) {
+        resultDiv.innerHTML = '<p style="color: #ff4444; font-style: italic;">Enter a term beginning with A through K...</p>';
+        return;
+    }
+    
+    const entry = searchFunkWagnalls(query);
+    
+    if (entry) {
+        // Truncate long entries (some are pages long)
+        const text = entry.text.length > 1000 
+            ? entry.text.substring(0, 1000) + '... <span style="color: #ff4444; cursor: pointer;" onclick="alert(\'Full text available in raw file\')">[more]</span>' 
+            : entry.text;
+            
+        resultDiv.innerHTML = `
+            <h3 style="color: #FF0000; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px;">${entry.title}</h3>
+            <p style="text-align: justify; border-left: 2px solid rgba(255,0,0,0.3); padding-left: 15px;">${text}</p>
+            <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,0,0,0.2); font-size: 0.8em; color: #ff4444;">
+                Source: Funk & Wagnalls New Encyclopedia (1906), Vol. I
+            </div>
+        `;
+    } else {
+        // Check if they searched L-Z
+        const firstLetter = query.charAt(0).toUpperCase();
+        if (firstLetter.match(/[L-Z]/i)) {
+            resultDiv.innerHTML = `
+                <p style="color: #ff6666;">
+                    "<strong>${query}</strong>" would appear in <strong>Volume II</strong> (L–Z).<br><br>
+                    <span style="font-size: 0.9em; color: #ff4444;">
+                        Only Volume I (A–K) was digitized by the Internet Archive team (2015). 
+                        Your physical copy remains the only access to L–Z.
+                    </span>
+                </p>
+            `;
+        } else {
+            resultDiv.innerHTML = `<p style="color: #ff6666;">No entry found for "<strong>${query}</strong>" in Volume I.</p>`;
+        }
+    }
+});
+	</script>
     <div id="search-container">
         <input type="text" id="search-input" placeholder="Enter a word to look up">
         <button id="search-button">Search Dictionary (w/German)</button>
@@ -534,5 +654,67 @@ snowCtx.fillStyle = 'rgba(255, 0, 0, 0.8)'; // Bright red instead of white
     }
 });
 	</script>
+	<!-- Your existing dictionary script above -->
+
+<script>
+// F&W Encyclopedia Module
+let fawEncyclopedia = {};
+let fawLoaded = false;
+
+async function loadFunkWagnalls() {
+    try {
+        const response = await fetch('Funk-And-Wagnalls-New-Encyclopedia-Volume-1_djvu.txt');
+        const text = await response.text();
+        
+        // Simple parser: Look for ALL CAPS titles followed by text
+        const lines = text.split('\n');
+        let currentEntry = null;
+        let currentText = [];
+        
+        lines.forEach(line => {
+            const trimmed = line.trim();
+            // Detect entry header (ALL CAPS, 2-40 chars, no lowercase)
+            if (/^[A-Z][A-Z\s\-\(\)]{1,40}$/.test(trimmed) && trimmed.length > 2 && !trimmed.includes('.')) {
+                if (currentEntry) {
+                    fawEncyclopedia[currentEntry.toLowerCase()] = {
+                        title: currentEntry,
+                        text: currentText.join(' ').replace(/\s+/g, ' ').trim()
+                    };
+                }
+                currentEntry = trimmed;
+                currentText = [];
+            } else if (currentEntry && trimmed) {
+                currentText.push(trimmed);
+            }
+        });
+        
+        fawLoaded = true;
+        console.log(`F&W Volume I Loaded: ${Object.keys(fawEncyclopedia).length} entries (A-K)`);
+    } catch (error) {
+        console.error('F&W Load Error:', error);
+    }
+}
+
+// Load it silently in background
+loadFunkWagnalls();
+
+function searchFunkWagnalls(query) {
+    if (!fawLoaded) return null;
+    
+    const key = query.toLowerCase();
+    
+    // Direct match
+    if (fawEncyclopedia[key]) {
+        return fawEncyclopedia[key];
+    }
+    
+    // Partial match (search within text)
+    const matches = Object.entries(fawEncyclopedia).filter(([k, v]) => 
+        v.title.toLowerCase().includes(key) || v.text.toLowerCase().includes(key)
+    );
+    
+    return matches.length > 0 ? matches[0][1] : null;
+}
+</script>
 </body>
 </html>
