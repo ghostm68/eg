@@ -721,201 +721,192 @@
         }
     }
 
-    async function searchWord(overrideWord = null) {
-        const wordInput = document.getElementById('word-search');
-        const word = (overrideWord || wordInput.value).trim().toLowerCase();
-        
-        if (!word) return;
-        
-        currentWord = word;
-        wordInput.value = word;
-        document.getElementById('intro-msg').classList.add('hidden');
-        document.getElementById('results-area').classList.remove('hidden');
-        document.getElementById('current-word').textContent = word.toUpperCase();
-        document.getElementById('word-length').textContent = `LENGTH: ${word.length}`;
-        
-        await loadData();
-        
-        // Get all results
-        const webster = getWebsterHtml(word);
-        const german = getGermanHtml(word);
-        const synonyms = await getSynonymsHtml(word);
-        const faw = getFawHtml(word);
-        
-        // Display
-        document.getElementById('webster-target').innerHTML = webster;
-        document.getElementById('german-target').innerHTML = german;
-        document.getElementById('synonym-target').innerHTML = synonyms;
-        document.getElementById('faw-target').innerHTML = faw;
-        
-        document.getElementById('word-type').textContent = guessEtymology(word);
-        updateWordHistory(word);
-    }
+// ==============================
+// SEARCH WORD (GLOBAL FUNCTION)
+// ==============================
+async function searchWord(overrideWord = null) {
+    const wordInput = document.getElementById('word-search');
+    const word = (overrideWord || wordInput.value).trim().toLowerCase();
+    
+    if (!word) return;
+    
+    currentWord = word;
+    wordInput.value = word;
+    document.getElementById('intro-msg').classList.add('hidden');
+    document.getElementById('results-area').classList.remove('hidden');
+    document.getElementById('current-word').textContent = word.toUpperCase();
+    document.getElementById('word-length').textContent = `LENGTH: ${word.length}`;
+    
+    // Show loading
+    document.getElementById('faw-target').innerHTML = '<div class="path-item"><div class="path-definition">Loading...</div></div>';
+    
+    await loadData();
+    
+    // Build results
+    const webster = getWebsterHtml(word);
+    const german = getGermanHtml(word);
+    const synonyms = await getSynonymsHtml(word);
+    const faw = getFawHtml(word);
+    
+    // Render
+    document.getElementById('webster-target').innerHTML = webster;
+    document.getElementById('german-target').innerHTML = german;
+    document.getElementById('synonym-target').innerHTML = synonyms;
+    
+    // THE CRITICAL LINE - Check this has capital B
+    document.getElementById('faw-target').innerHTML = faw;
+    
+    document.getElementById('word-type').textContent = guessEtymology(word);
+    updateWordHistory(word);
+}
 
-    function getFunkWagnallsEntry(word) {
-    if (!fawCache) return { loading: true };
+// ==============================
+// F&W RENDERER (FIXED)
+// ==============================
+function getFawHtml(word) {
+    if (!fawCache) return '<div class="path-item"><div class="path-definition">Loading encyclopedia...</div></div>';
     
     const key = word.toLowerCase().trim();
-    const firstLetter = key.charAt(0);
     
     // Volume II check (L-Z)
-    if (firstLetter >= 'l' && firstLetter <= 'z') {
-        return {
-            isVolumeII: true,
-            title: word.toUpperCase(),
-            text: `Entry "${word}" appears in Volume II (L–Z).\n\nOnly Volume I (A–K) was digitized (1906). Physical copy required for L–Z.`
-        };
-    }
-    
-    // Exact match first
-    if (fawCache[key]) {
-        console.log('F&W Exact match:', key);
-        return { isVolumeII: false, ...fawCache[key] };
-    }
-    
-    // Partial match (search in titles only, faster)
-    const matchKey = Object.keys(fawCache).find(k => k.includes(key) || key.includes(k));
-    if (matchKey) {
-        console.log('F&W Partial match:', matchKey);
-        return { isVolumeII: false, ...fawCache[matchKey] };
-    }
-    
-    // Try matching start of string (e.g., "afghan" matches "afghanistan")
-    const startsWithMatch = Object.keys(fawCache).find(k => k.startsWith(key));
-    if (startsWithMatch) {
-        return { isVolumeII: false, ...fawCache[startsWithMatch] };
-    }
-    
-    console.log('F&W No match for:', key, 'Available samples:', Object.keys(fawCache).slice(0,5));
-    return null;
-}
-        
-        // Format F&W text (truncate if encyclopedia-length)
-        const displayText = entry.text.length > 600 ? entry.text.substring(0, 600) + '... [truncated]' : entry.text;
-        
+    if (key.charAt(0) >= 'l') {
         return `
-            <div class="path-item" style="border-left: 3px solid #FF0000; background: linear-gradient(90deg, rgba(255,0,0,0.03) 0%, transparent 10%);">
-                <div class="path-word" style="color: #FF0000; font-size: 12px;">${entry.title}</div>
-                <div class="path-definition" style="font-family: 'Times New Roman', serif; font-size: 13px; line-height: 1.5; color: #ccc;">
-                    ${displayText}
+            <div class="path-item" style="border-left: 3px solid #333; background: rgba(50,50,50,0.1);">
+                <div class="path-word" style="color: #666;">${word.toUpperCase()}</div>
+                <div class="path-definition" style="color: #888; font-style: italic;">
+                    Entry appears in Volume II (L–Z).<br>
+                    Digitized copy covers A–K only (1906).
                 </div>
-                <div class="mt-2 text-[8px] uppercase tracking-widest" style="color: #aa4444;">
-                    Funk & Wagnalls New Encyclopedia • 1906 • Vol I
-                </div>
+                <div class="mt-2 text-[9px] tracking-wider" style="color: #FF0000;">ANALOG ARCHIVE REQUIRED</div>
             </div>
         `;
     }
-
-    // [Include your existing getWebsterHtml, getGermanHtml, getSynonymsHtml functions here]
-    // [Include speakWord, copyToClipboard, exportText, saveEditor, loadEditor, typeStatus, etc.]
     
-    // Placeholder for supporting functions you already have:
-    function getWebsterHtml(word) { 
-    let defs = [];
-    
-    // Source 1
-    if (cache.webster) {
-        const d1 = cache.webster[word.toUpperCase()] || cache.webster[word];
-        if (d1) defs.push(`<div class="mb-2"><span class="text-[9px] text-red-500">SOURCE I</span><p>${d1}</p></div>`);
+    // Exact match
+    if (fawCache[key]) {
+        const entry = fawCache[key];
+        const text = entry.text.length > 600 ? entry.text.substring(0, 600) + '...' : entry.text;
+        return `
+            <div class="path-item" style="border-left: 3px solid #FF0000; background: linear-gradient(90deg, rgba(255,0,0,0.03) 0%, transparent 10%);">
+                <div class="path-word" style="color: #FF0000; font-size: 12px; text-transform: uppercase;">${entry.title}</div>
+                <div class="path-definition" style="font-family: 'Times New Roman', serif; font-size: 13px; line-height: 1.5; color: #ccc;">${text}</div>
+                <div class="mt-2 text-[8px] uppercase tracking-widest" style="color: #aa4444;">Funk & Wagnalls • 1906 • Vol I</div>
+            </div>
+        `;
     }
     
-    // Source 2  
-    if (cache.webster2) {
-        const d2 = cache.webster2[word.toUpperCase()] || cache.webster2[word];
-        if (d2) defs.push(`<div class="mb-2"><span class="text-[9px] text-red-500">SOURCE II</span><p>${d2}</p></div>`);
+    // Try partial starts-with match (AFGHANISTAN for afghan)
+    const partialMatch = Object.keys(fawCache).find(k => k.startsWith(key));
+    if (partialMatch) {
+        const entry = fawCache[partialMatch];
+        const text = entry.text.length > 600 ? entry.text.substring(0, 600) + '...' : entry.text;
+        return `
+            <div class="path-item" style="border-left: 3px solid #FF0000; background: linear-gradient(90deg, rgba(255,0,0,0.03) 0%, transparent 10%);">
+                <div class="path-word" style="color: #FF0000; font-size: 12px; text-transform: uppercase;">${entry.title}</div>
+                <div class="path-definition" style="font-family: 'Times New Roman', serif; font-size: 13px; line-height: 1.5; color: #ccc;">${text}</div>
+                <div class="mt-2 text-[8px] uppercase tracking-widest" style="color: #aa4444;">Matched from "${key}" • Funk & Wagnalls 1906</div>
+            </div>
+        `;
     }
     
-    if (defs.length === 0) return '<div class="path-item"><div class="path-definition">No Webster definition found</div></div>';
-    
-    return `<div class="path-item">${defs.join('')}</div>`;
+    return '<div class="path-item" style="border-left-color: #333;"><div class="path-definition" style="color: #555;">No entry in Volume I (A–K)</div></div>';
 }
-    
-    function getGermanHtml(word) {
-        if (!cache.german) return '<div class="path-item"><div class="path-definition">German data not loaded</div></div>';
-        const hits = Object.entries(cache.german).filter(([k,v]) => v.toLowerCase().includes(word)).slice(0,3);
-        if (hits.length === 0) return '<div class="path-item"><div class="path-definition">No German connections</div></div>';
-        return hits.map(([g, e]) => `<div class="path-item german-logic"><div class="path-word">${g}</div><div class="path-definition">${e}</div></div>`).join('');
+
+// ==============================
+// SUPPORTING FUNCTIONS (Ensure these exist)
+// ==============================
+function getWebsterHtml(word) { 
+    let def = cache.webster && (cache.webster[word.toUpperCase()] || cache.webster[word]);
+    if (!def && cache.webster2) def = cache.webster2[word.toUpperCase()] || cache.webster2[word];
+    return def ? `<div class="path-item"><div class="path-word">Webster 1913</div><div class="path-definition">${def}</div></div>` : '<div class="path-item"><div class="path-definition">Not found</div></div>';
+}
+
+function getGermanHtml(word) {
+    if (!cache.german) return '<div class="path-item"><div class="path-definition">German data unavailable</div></div>';
+    const hits = Object.entries(cache.german).filter(([k,v]) => v.toLowerCase().includes(word)).slice(0,3);
+    if (hits.length === 0) return '<div class="path-item"><div class="path-definition">No German connections</div></div>';
+    return hits.map(([g, e]) => `<div class="path-item german-logic"><div class="path-word">${g}</div><div class="path-definition">${e}</div></div>`).join('');
+}
+
+async function getSynonymsHtml(word) {
+    try {
+        const res = await fetch(`https://api.datamuse.com/words?rel_syn=${word}&max=10`);
+        const data = await res.json();
+        return data.map(w => `<span class="synonym-chip" onclick="searchWord('${w.word}')">${w.word}</span>`).join('') || '<span class="text-zinc-700 italic">None found</span>';
+    } catch {
+        return '<span class="text-zinc-700">Error</span>';
     }
-    
-    async function getSynonymsHtml(word) {
-        try {
-            const res = await fetch(`https://api.datamuse.com/words?rel_syn=${word}&max=10`);
-            const data = await res.json();
-            return data.map(w => `<span class="synonym-chip" onclick="searchWord('${w.word}')">${w.word}</span>`).join('') || '<span class="text-zinc-700">None found</span>';
-        } catch {
-            return '<span class="text-zinc-700">Error fetching synonyms</span>';
-        }
-    }
-    
-    function guessEtymology(word) {
-        if (word.endsWith('tion') || word.endsWith('sion')) return 'Latin/Francic';
-        if (word.endsWith('heit') || word.endsWith('keit')) return 'Germanic';
-        if (word.endsWith('ology')) return 'Greek';
-        if (word.match(/^[aeiou]/)) return 'Anglo-Saxon';
-        return 'Indo-European';
-    }
-    
-    function updateWordHistory(word) {
-        if (!wordHistory.includes(word)) {
-            wordHistory.unshift(word);
-            if (wordHistory.length > 10) wordHistory.pop();
-            localStorage.setItem('faw_history', JSON.stringify(wordHistory));
-            updateHistoryDisplay();
-        }
-    }
-    
-    function updateHistoryDisplay() {
-        const container = document.getElementById('path-history');
-        container.innerHTML = wordHistory.map(w => 
-            `<div class="cursor-pointer hover:text-red-500" onclick="searchWord('${w}')">${w}</div>`
-        ).join('');
-    }
-    
-    function speakWord() {
-        if (!currentWord) return;
-        const utterance = new SpeechSynthesisUtterance(currentWord);
-        utterance.rate = 0.8;
-        window.speechSynthesis.speak(utterance);
-    }
-    
-    function copyToClipboard() {
-        if (!currentWord) return;
-        navigator.clipboard.writeText(currentWord).then(() => {
-            const btn = document.querySelector('[onclick="copyToClipboard()"]');
-            const original = btn.textContent;
-            btn.textContent = 'COPIED';
-            setTimeout(() => btn.textContent = original, 1000);
-        });
-    }
-    
-    function exportText() {
-        const editor = document.getElementById('editor').innerText;
-        const blob = new Blob([editor], {type: 'text/plain'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `faw_log_${new Date().toISOString().slice(0,10)}.txt`;
-        a.click();
-    }
-    
-    function typeStatus() {
-        const msgs = [">> System Online", ">> F&W Vol I Mounted", ">> Awaiting Query", ">> Archive Active"];
-        let i = 0;
-        setInterval(() => {
-            document.getElementById('teletype').textContent = msgs[i];
-            i = (i + 1) % msgs.length;
-        }, 4000);
-    }
-    
-    function saveAll() {
-        localStorage.setItem('faw_editor', document.getElementById('editor').innerHTML);
+}
+
+function guessEtymology(word) {
+    if (word.endsWith('tion') || word.endsWith('sion')) return 'Latin';
+    if (word.endsWith('heit') || word.endsWith('keit')) return 'Germanic';
+    if (word.endsWith('ology')) return 'Greek';
+    return 'Anglo-Saxon';
+}
+
+function updateWordHistory(word) {
+    if (!wordHistory.includes(word)) {
+        wordHistory.unshift(word);
+        if (wordHistory.length > 10) wordHistory.pop();
         localStorage.setItem('faw_history', JSON.stringify(wordHistory));
+        updateHistoryDisplay();
     }
-    
-    function loadEditor() {
-        const saved = localStorage.getItem('faw_editor');
-        if (saved) document.getElementById('editor').innerHTML = saved;
-    }
+}
+
+function updateHistoryDisplay() {
+    const container = document.getElementById('path-history');
+    container.innerHTML = wordHistory.map(w => `<div class="cursor-pointer hover:text-red-500" onclick="searchWord('${w}')">${w}</div>`).join('');
+}
+
+function loadEditor() {
+    const saved = localStorage.getItem('faw_editor');
+    if (saved) document.getElementById('editor').innerHTML = saved;
+}
+
+function typeStatus() {
+    const msgs = [">> System Online", ">> F&W Vol I Active", ">> Awaiting Query"];
+    let i = 0;
+    setInterval(() => {
+        document.getElementById('teletype').textContent = msgs[i];
+        i = (i + 1) % msgs.length;
+    }, 4000);
+}
+
+function speakWord() {
+    if (!currentWord) return;
+    const u = new SpeechSynthesisUtterance(currentWord);
+    u.rate = 0.8;
+    window.speechSynthesis.speak(u);
+}
+
+function copyToClipboard() {
+    if (!currentWord) return;
+    navigator.clipboard.writeText(currentWord).then(() => {
+        const btn = document.querySelector('[onclick="copyToClipboard()"]');
+        const orig = btn.textContent;
+        btn.textContent = 'COPIED';
+        setTimeout(() => btn.textContent = orig, 1000);
+    });
+}
+
+function exportText() {
+    const text = document.getElementById('editor').innerText;
+    const blob = new Blob([text], {type: 'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `faw_log_${new Date().toISOString().slice(0,10)}.txt`;
+    a.click();
+}
+
+function saveAll() {
+    localStorage.setItem('faw_editor', document.getElementById('editor').innerHTML);
+    localStorage.setItem('faw_history', JSON.stringify(wordHistory));
+}
+
+// Initialize
+setInterval(saveAll, 5000);
 </script>
 
 </body>
