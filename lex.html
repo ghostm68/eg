@@ -150,101 +150,125 @@
 </head>
 <body>
 <!-- FUNK & WAGNALLS HEADER -->
-<h1 style="cursor: pointer; position: relative; z-index: 100;" onclick="document.getElementById('fw-panel').style.display='block'; setTimeout(function(){document.getElementById('fw-panel').style.right='0px'}, 50);">
+<h1 style="cursor: pointer;" onclick="openFW()">
     Funk &amp; Wagnallism<br>
-    <small style="font-size: 0.4em; color: #ff4444; text-decoration: underline; pointer-events: none;">
+    <small style="font-size: 0.4em; color: #ff4444; text-decoration: underline;">
         [Volume I: A–K (1906) ↓]
     </small>
 </h1>
-
-<!-- F&W PANEL - FORCE VISIBLE FOR TESTING -->
+<!-- F&W PANEL -->
 <div id="fw-panel" style="
     display: none;
     position: fixed;
     top: 50px;
     right: -400px;
     width: 350px;
-    height: 80vh;
+    max-height: 80vh;
     background: #1a0000;
-    border: 2px solid #FF0000;
+    border: 3px solid #FF0000;
     z-index: 99999;
-    padding: 15px;
+    padding: 40px 15px 15px 15px;
     overflow-y: auto;
     transition: right 0.3s;
     font-family: monospace;
+    box-shadow: -5px 0 25px rgba(255,0,0,0.4);
 ">
-    <!-- CLOSE BUTTON - CAN'T MISS IT -->
-    <div onclick="document.getElementById('fw-panel').style.right='-400px'; setTimeout(function(){document.getElementById('fw-panel').style.display='none'}, 300);" style="
+    <!-- CLOSE X -->
+    <button onclick="closeFW()" style="
         position: absolute;
-        top: 5px;
-        right: 5px;
+        top: 10px;
+        right: 10px;
         background: #FF0000;
         color: black;
-        width: 30px;
-        height: 30px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
-        text-align: center;
-        line-height: 30px;
+        border: 2px solid white;
+        font-size: 20px;
         font-weight: bold;
         cursor: pointer;
-        font-size: 20px;
-        border: 2px solid white;
-    ">×</div>
+        line-height: 1;
+        padding: 0;
+    ">×</button>
     
-    <h3 style="color: #FF0000; margin-top: 10px;">F&W Encyclopedia<br><small style="color:#ff4444">Vol I (A-K) 1906</small></h3>
+    <h3 style="color: #FF0000; margin: 0 0 15px 0; font-size: 1.1em;">
+        F&W Encyclopedia<br>
+        <span style="color: #ff4444; font-size: 0.7em;">Vol I (A–K) • 1906</span>
+    </h3>
     
-    <input type="text" id="fw-search" placeholder="Type A-K term..." style="
+    <input type="text" id="fwInput" placeholder="Type term (A-K) and press Enter..." style="
         width: 100%;
-        padding: 8px;
-        margin: 10px 0;
+        padding: 10px;
+        margin-bottom: 15px;
         background: rgba(255,0,0,0.1);
         border: 1px solid #FF0000;
         color: white;
-    " onkeyup="
-        var q = this.value.toLowerCase();
-        var out = document.getElementById('fw-result');
-        if(!q){out.innerHTML='Type to search...'; return;}
-        if(!window.fwData){out.innerHTML='Loading...'; return;}
-        var found = window.fwData[q];
-        if(!found){
-            for(var k in window.fwData){
-                if(window.fwData[k].t.toLowerCase().indexOf(q)>-1 || window.fwData[k].x.toLowerCase().indexOf(q)>-1){
-                    found=window.fwData[k]; break;
-                }
-            }
-        }
-        if(found){
-            out.innerHTML = '<b style=color:red>'+found.t+'</b><p style=border-left:2px solid red;padding-left:10px;font-size:0.9em>'+found.x.substring(0,600)+'...</p>';
-        } else if(q[0]>='l') {
-            out.innerHTML = '<span style=color:#ff6666>\"'+q+'\" is in Volume II (L-Z)<br><small>Physical copy only</small></span>';
-        } else {
-            out.innerHTML = 'Not found in Volume I';
-        }
+        font-family: monospace;
+        box-sizing: border-box;
     ">
     
-    <div id="fw-result" style="color: #ffcccc; font-size: 0.9em;">
-        Type to search Volume I (A-K)...
+    <div id="fwOutput" style="color: #ffcccc; font-size: 0.9em; line-height: 1.5;">
+        Enter a term above to search the 1906 edition...
     </div>
 </div>
 
-<!-- LOAD THE DATA -->
+<!-- Activate it -->
 <script>
-(function(){
-    window.fwData = {};
-    fetch('Funk-And-Wagnalls-New-Encyclopedia-Volume-1_djvu.txt')
-        .then(r => r.text())
-        .then(t => {
-            var lines = t.split('\n'), entry=null, txt=[];
-            lines.forEach(function(line){
-                var tr = line.trim();
-                if(/^[A-Z][A-Z\s\-]{2,35}$/.test(tr) && tr.length<40 && !tr.match(/[a-z\.]/)){
-                    if(entry){window.fwData[entry.toLowerCase()]={t:entry,x:txt.join(' ').substring(0,2000)};}
-                    entry=tr; txt=[];
-                } else if(entry && tr){txt.push(tr);}
-            });
-            console.log('F&W Loaded:', Object.keys(window.fwData).length);
-        });
-})();
+// Toggle functions
+function openFW() {
+    var p = document.getElementById('fw-panel');
+    p.style.display = 'block';
+    setTimeout(function() { p.style.right = '0'; }, 50);
+    document.getElementById('fwInput').focus();
+}
+
+function closeFW() {
+    var p = document.getElementById('fw-panel');
+    p.style.right = '-400px';
+    setTimeout(function() { p.style.display = 'none'; }, 300);
+}
+
+// Search handler (fixed!)
+document.getElementById('fwInput').addEventListener('keypress', function(e) {
+    if (e.key !== 'Enter') return;
+    
+    var q = this.value.trim().toLowerCase();
+    var out = document.getElementById('fwOutput');
+    
+    if (!q) {
+        out.innerHTML = 'Enter a search term';
+        return;
+    }
+    
+    if (!window.fwData) {
+        out.innerHTML = 'Encyclopedia still loading...';
+        return;
+    }
+    
+    var found = window.fwData[q];
+    
+    // Look for partial matches if exact fails
+    if (!found) {
+        for (var k in window.fwData) {
+            if (k.indexOf(q) > -1 || window.fwData[k].t.toLowerCase().indexOf(q) > -1) {
+                found = window.fwData[k];
+                break;
+            }
+        }
+    }
+    
+    if (found) {
+        var txt = found.x.length > 600 ? found.x.substring(0, 600) + '...' : found.x;
+        out.innerHTML = '<h4 style="color: #FF0000; margin: 0 0 10px 0; text-transform: uppercase;">' + found.t + '</h4>' +
+                       '<p style="border-left: 3px solid #FF0000; padding-left: 10px; margin: 0;">' + txt + '</p>';
+    } else if (q[0] >= 'l') {
+        out.innerHTML = '<span style="color: #ff6666;">"' + q + '" appears in <strong>Volume II (L–Z)</strong><br><small>Not digitized. Your physical copy is the only access.</small></span>';
+    } else {
+        out.innerHTML = '<span style="color: #ff6666;">"' + q + '" not found in Volume I (A–K).</span>';
+    }
+});
+
+console.log('F&W Panel activated');
 </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
     <script>
