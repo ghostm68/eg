@@ -149,90 +149,103 @@
     </style>
 </head>
 <body>
-	    <!-- TEST: Does JavaScript work at all? -->
-    <button onclick="alert('JS is working')" style="position:fixed; top:5px; left:5px; z-index:9999; background:red; color:white;">
-        Test Click
-    </button>
-  <!-- Put this EXACTLY where you have the panel HTML now -->
-<div id="fawPanel" style="
-    display: none;
-    position: fixed;
-    top: 80px;
-    right: -400px;
-    width: 380px;
-    height: 70vh;
-    background: rgba(20, 0, 0, 0.95);
-    border-left: 3px solid #FF0000;
-    box-shadow: -5px 0 20px rgba(255, 0, 0, 0.3);
-    z-index: 9999;
-    padding: 20px;
-    overflow-y: auto;
-    transition: right 0.3s ease;
-    font-family: 'Courier New', monospace;
-">
-    <!-- X Button: Simple, no flex, guaranteed visible -->
-    <div style="text-align: right; margin-bottom: 10px;">
-        <button onclick="window.toggleFW()" style="
-            background: #FF0000;
-            color: #000;
-            border: none;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 18px;
-        ">×</button>
-    </div>
-    
-    <h2 style="margin: 0 0 15px 0; color: #FF0000; font-size: 1.2em;">
-        Funk & Wagnalls<br>
-        <span style="font-size: 0.7em; color: #ff4444;">Volume I (A–K) • 1906</span>
-    </h2>
-    
-    <input type="text" id="fawInput" placeholder="Search A–K..." style="
-        width: 100%;
-        padding: 10px;
-        background: rgba(255, 0, 0, 0.1);
-        border: 1px solid #FF0000;
-        color: #fff;
-        margin-bottom: 15px;
-        box-sizing: border-box;
-    ">
-    
-    <div id="fawOutput" style="color: #ffcccc; font-size: 0.9em;">
-        <p style="color: #ff4444; font-style: italic;">Type to search...</p>
-    </div>
-</div>
-
-<!-- Header: Use window.toggleFW to ensure global access -->
-<h1 style="cursor: pointer;" onclick="window.toggleFW()">
+<!-- FUNK & WAGNALLS HEADER -->
+<h1 style="cursor: pointer; position: relative; z-index: 100;" onclick="document.getElementById('fw-panel').style.display='block'; setTimeout(function(){document.getElementById('fw-panel').style.right='0px'}, 50);">
     Funk &amp; Wagnallism<br>
-    <small style="font-size: 0.4em; color: #ff4444; text-decoration: underline;">
+    <small style="font-size: 0.4em; color: #ff4444; text-decoration: underline; pointer-events: none;">
         [Volume I: A–K (1906) ↓]
     </small>
 </h1>
-    <div id="search-container">
-        <input type="text" id="search-input" placeholder="Enter a word to look up">
-        <button id="search-button">Search Dictionary (w/German)</button>
-    </div>
-    <div id="result"></div>
-<div id="fawPanel" style="
-    display: block;        /* Changed from none to block */
-    right: 0;              /* Changed from -400px to 0 */
+
+<!-- F&W PANEL - FORCE VISIBLE FOR TESTING -->
+<div id="fw-panel" style="
+    display: none;
     position: fixed;
-    top: 80px;
-    right: 0;              /* Force it visible for testing */
-    width: 380px;
-    height: 70vh;
-    background: rgba(20, 0, 0, 0.95);
-    border-left: 3px solid #FF0000;
-    box-shadow: -5px 0 20px rgba(255, 0, 0, 0.3);
-    z-index: 10000;        /* Higher than everything */
-    padding: 20px;
+    top: 50px;
+    right: -400px;
+    width: 350px;
+    height: 80vh;
+    background: #1a0000;
+    border: 2px solid #FF0000;
+    z-index: 99999;
+    padding: 15px;
     overflow-y: auto;
-    font-family: 'Courier New', monospace;
+    transition: right 0.3s;
+    font-family: monospace;
 ">
+    <!-- CLOSE BUTTON - CAN'T MISS IT -->
+    <div onclick="document.getElementById('fw-panel').style.right='-400px'; setTimeout(function(){document.getElementById('fw-panel').style.display='none'}, 300);" style="
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: #FF0000;
+        color: black;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 30px;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 20px;
+        border: 2px solid white;
+    ">×</div>
+    
+    <h3 style="color: #FF0000; margin-top: 10px;">F&W Encyclopedia<br><small style="color:#ff4444">Vol I (A-K) 1906</small></h3>
+    
+    <input type="text" id="fw-search" placeholder="Type A-K term..." style="
+        width: 100%;
+        padding: 8px;
+        margin: 10px 0;
+        background: rgba(255,0,0,0.1);
+        border: 1px solid #FF0000;
+        color: white;
+    " onkeyup="
+        var q = this.value.toLowerCase();
+        var out = document.getElementById('fw-result');
+        if(!q){out.innerHTML='Type to search...'; return;}
+        if(!window.fwData){out.innerHTML='Loading...'; return;}
+        var found = window.fwData[q];
+        if(!found){
+            for(var k in window.fwData){
+                if(window.fwData[k].t.toLowerCase().indexOf(q)>-1 || window.fwData[k].x.toLowerCase().indexOf(q)>-1){
+                    found=window.fwData[k]; break;
+                }
+            }
+        }
+        if(found){
+            out.innerHTML = '<b style=color:red>'+found.t+'</b><p style=border-left:2px solid red;padding-left:10px;font-size:0.9em>'+found.x.substring(0,600)+'...</p>';
+        } else if(q[0]>='l') {
+            out.innerHTML = '<span style=color:#ff6666>\"'+q+'\" is in Volume II (L-Z)<br><small>Physical copy only</small></span>';
+        } else {
+            out.innerHTML = 'Not found in Volume I';
+        }
+    ">
+    
+    <div id="fw-result" style="color: #ffcccc; font-size: 0.9em;">
+        Type to search Volume I (A-K)...
+    </div>
+</div>
+
+<!-- LOAD THE DATA -->
+<script>
+(function(){
+    window.fwData = {};
+    fetch('Funk-And-Wagnalls-New-Encyclopedia-Volume-1_djvu.txt')
+        .then(r => r.text())
+        .then(t => {
+            var lines = t.split('\n'), entry=null, txt=[];
+            lines.forEach(function(line){
+                var tr = line.trim();
+                if(/^[A-Z][A-Z\s\-]{2,35}$/.test(tr) && tr.length<40 && !tr.match(/[a-z\.]/)){
+                    if(entry){window.fwData[entry.toLowerCase()]={t:entry,x:txt.join(' ').substring(0,2000)};}
+                    entry=tr; txt=[];
+                } else if(entry && tr){txt.push(tr);}
+            });
+            console.log('F&W Loaded:', Object.keys(window.fwData).length);
+        });
+})();
+</script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
     <script>
         const searchInput = document.getElementById('search-input');
@@ -613,222 +626,5 @@ snowCtx.fillStyle = 'rgba(255, 0, 0, 0.8)'; // Bright red instead of white
 	</script>
 	<!-- Your existing dictionary script above -->
 
-<script>
-// F&W Encyclopedia Module
-let fawEncyclopedia = {};
-let fawLoaded = false;
-
-function toggleEncyclopedia() {
-    const panel = document.getElementById('fawPanel');
-    if (panel.style.display === 'none' || panel.style.right === '-400px' || panel.style.right === '') {
-        panel.style.display = 'block';
-        setTimeout(() => {
-            panel.style.right = '0';
-        }, 10);
-        document.getElementById('fawSearch').focus();
-    } else {
-        panel.style.right = '-400px';
-        setTimeout(() => {
-            panel.style.display = 'none';
-        }, 300);
-    }
-}
-
-async function loadFunkWagnalls() {
-    try {
-        const response = await fetch('Funk-And-Wagnalls-New-Encyclopedia-Volume-1_djvu.txt');
-        const text = await response.text();
-        
-        const lines = text.split('\n');
-        let currentEntry = null;
-        let currentText = [];
-        
-        lines.forEach(line => {
-            const trimmed = line.trim();
-            if (/^[A-Z][A-Z\s\-\(\)]{1,40}$/.test(trimmed) && trimmed.length > 2 && !trimmed.includes('.')) {
-                if (currentEntry) {
-                    fawEncyclopedia[currentEntry.toLowerCase()] = {
-                        title: currentEntry,
-                        text: currentText.join(' ').replace(/\s+/g, ' ').trim()
-                    };
-                }
-                currentEntry = trimmed;
-                currentText = [];
-            } else if (currentEntry && trimmed) {
-                currentText.push(trimmed);
-            }
-        });
-        
-        fawLoaded = true;
-        console.log(`F&W Volume I Loaded: ${Object.keys(fawEncyclopedia).length} entries`);
-    } catch (error) {
-        console.error('F&W Load Error:', error);
-    }
-}
-
-function searchFunkWagnalls(query) {
-    if (!fawLoaded) return null;
-    const key = query.toLowerCase();
-    if (fawEncyclopedia[key]) return fawEncyclopedia[key];
-    
-    const matches = Object.entries(fawEncyclopedia).filter(([k, v]) => 
-        v.title.toLowerCase().includes(key) || v.text.toLowerCase().includes(key)
-    );
-    return matches.length > 0 ? matches[0][1] : null;
-}
-
-// Load F&W data
-loadFunkWagnalls();
-
-// Attach search listener after DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    const fawSearch = document.getElementById('fawSearch');
-    if (fawSearch) {
-        fawSearch.addEventListener('input', (e) => {
-            const query = e.target.value.trim();
-            const resultDiv = document.getElementById('fawResult');
-            
-            if (!query) {
-                resultDiv.innerHTML = '<p style="color: #ff4444; font-style: italic;">Enter a term beginning with A through K...</p>';
-                return;
-            }
-            
-            const entry = searchFunkWagnalls(query);
-            
-            if (entry) {
-                const text = entry.text.length > 1000 
-                    ? entry.text.substring(0, 1000) + '...' 
-                    : entry.text;
-                    
-                resultDiv.innerHTML = `
-                    <h3 style="color: #FF0000; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px;">${entry.title}</h3>
-                    <p style="text-align: justify; border-left: 2px solid rgba(255,0,0,0.3); padding-left: 15px;">${text}</p>
-                    <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,0,0,0.2); font-size: 0.8em; color: #ff4444;">
-                        Source: Funk & Wagnalls New Encyclopedia (1906), Vol. I
-                    </div>
-                `;
-            } else {
-                const firstLetter = query.charAt(0).toUpperCase();
-                if (firstLetter.match(/[L-Z]/i)) {
-                    resultDiv.innerHTML = `
-                        <p style="color: #ff6666;">
-                            "<strong>${query}</strong>" would appear in <strong>Volume II</strong> (L–Z).<br><br>
-                            <span style="font-size: 0.9em; color: #ff4444;">
-                                Only Volume I (A–K) was digitized by the Internet Archive team (2015). 
-                                Your physical copy remains the only access to L–Z.
-                            </span>
-                        </p>
-                    `;
-                } else {
-                    resultDiv.innerHTML = `<p style="color: #ff6666;">No entry found for "<strong>${query}</strong>" in Volume I.</p>`;
-                }
-            }
-        });
-    }
-});
-	// Global F&W controller (avoids conflicts)
-window.toggleFW = function() {
-    const panel = document.getElementById('fawPanel');
-    if (!panel) {
-        console.error('Panel not found!');
-        return;
-    }
-    
-    console.log('Toggling panel. Current display:', panel.style.display, 'Right:', panel.style.right);
-    
-    if (panel.style.display === 'none' || panel.style.display === '' || panel.style.right === '-400px') {
-        panel.style.display = 'block';
-        // Force reflow
-        void panel.offsetWidth;
-        panel.style.right = '0';
-        setTimeout(() => {
-            const input = document.getElementById('fawInput');
-            if (input) input.focus();
-        }, 100);
-    } else {
-        panel.style.right = '-400px';
-        setTimeout(() => {
-            panel.style.display = 'none';
-        }, 300);
-    }
-};
-
-// Ensure it loads after everything
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initFW);
-} else {
-    initFW();
-}
-
-function initFW() {
-    console.log('F&W Init started');
-    
-    // Load the text file
-    fetch('Funk-And-Wagnalls-New-Encyclopedia-Volume-1_djvu.txt')
-        .then(r => r.text())
-        .then(text => {
-            console.log('F&W file loaded, size:', text.length);
-            window.fawData = {};
-            
-            const lines = text.split('\n');
-            let entry = null;
-            let content = [];
-            
-            lines.forEach(line => {
-                const t = line.trim();
-                if (/^[A-Z][A-Z\s\-]{2,40}$/.test(t) && !t.includes('.') && t.length < 50) {
-                    if (entry) {
-                        window.fawData[entry.toLowerCase()] = {
-                            title: entry,
-                            text: content.join(' ').substring(0, 2000) // Limit length
-                        };
-                    }
-                    entry = t;
-                    content = [];
-                } else if (entry && t) {
-                    content.push(t);
-                }
-            });
-            
-            console.log('Parsed entries:', Object.keys(window.fawData).length);
-        })
-        .catch(e => console.error('Failed to load F&W:', e));
-    
-    // Search handler
-    const input = document.getElementById('fawInput');
-    if (input) {
-        input.addEventListener('input', (e) => {
-            const q = e.target.value.trim().toLowerCase();
-            const out = document.getElementById('fawOutput');
-            
-            if (!q) {
-                out.innerHTML = '<p style="color: #ff4444;">Type to search...</p>';
-                return;
-            }
-            
-            if (!window.fawData) {
-                out.innerHTML = '<p style="color: #ff4444;">Loading encyclopedia...</p>';
-                return;
-            }
-            
-            const found = window.fawData[q] || 
-                Object.values(window.fawData).find(v => 
-                    v.title.toLowerCase().includes(q) || v.text.toLowerCase().includes(q)
-                );
-            
-            if (found) {
-                out.innerHTML = `
-                    <h3 style="color: #FF0000; margin-bottom: 10px;">${found.title}</h3>
-                    <p style="border-left: 2px solid #FF0000; padding-left: 10px;">${found.text.substring(0, 500)}...</p>
-                `;
-            } else if (q.match(/^[l-z]/)) {
-                out.innerHTML = `<p style="color: #ff6666;">"${q}" is in Volume II (L–Z)<br><small>Not digitized. Check your physical copy.</small></p>`;
-            } else {
-                out.innerHTML = `<p style="color: #ff6666;">"${q}" not found in Volume I.</p>`;
-            }
-        });
-    }
-}
-</script>
 </body>
 </html>
