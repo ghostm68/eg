@@ -11,7 +11,7 @@
   <!-- Deck.gl Script -->
   <script src="https://unpkg.com/deck.gl@8.9.33/dist.min.js"></script>
   
-<style>
+  <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
@@ -157,7 +157,7 @@
         </select>
       </div>
       <div class="settings-group">
-        <label for="font-size">Font Size: <span id="font-size-value" style="color: #00aaff;">14px</span></label>
+        <label for="font-size">Font Size: <span id="font-size-value">14px</span></label>
         <input type="range" id="font-size" min="12" max="24" value="14">
       </div>
       <button class="close-btn" id="close-settings">Apply & Close</button>
@@ -239,7 +239,10 @@ To Zoom: Just press + or - on the keyboard...</span>
       });
       document.getElementById('close-settings').addEventListener('click', () => { settingsPanel.style.display = 'none'; applySettings(); });
       document.getElementById('close-inspiration').addEventListener('click', () => { locationInspiration.style.display = 'none'; });
-      document.getElementById('use-inspiration').addEventListener('click', () => { writingArea.value += '\n\n' + locationInfo.textContent; locationInspiration.style.display = 'none'; });
+      document.getElementById('use-inspiration').addEventListener('click', () => { 
+        writingArea.value += '\n\n' + locationInfo.innerText; 
+        locationInspiration.style.display = 'none'; 
+      });
 
       document.getElementById('generate-poem').addEventListener('click', () => {
         const poems = ["The mountains stand in silent grace...", "Where ocean meets the waiting shore..."];
@@ -249,19 +252,45 @@ To Zoom: Just press + or - on the keyboard...</span>
       document.getElementById('save-location').addEventListener('click', () => {
         const center = map.getCenter();
         if (writingArea.value.trim()) {
-          const el = document.createElement('div'); el.className = 'location-pin'; el.innerHTML = '📌'; el.style.width = '30px'; el.style.height = '30px'; el.style.display = 'flex'; el.style.alignItems = 'center'; el.style.justifyContent = 'center'; el.style.fontSize = '20px';
-          new maplibregl.Marker(el).setLngLat([center.lng, center.lat]).setPopup(new maplibregl.Popup({ offset: 25 }).setHTML(`<strong>Saved Note:</strong><br>${writingArea.value.substring(0, 100)}...`)).addTo(map);
+          const el = document.createElement('div'); 
+          el.className = 'location-pin'; 
+          el.innerHTML = '📌'; 
+          el.style.width = '30px'; 
+          el.style.height = '30px'; 
+          el.style.display = 'flex'; 
+          el.style.alignItems = 'center'; 
+          el.style.justifyContent = 'center'; 
+          el.style.fontSize = '20px';
+          
+          new maplibregl.Marker(el)
+            .setLngLat([center.lng, center.lat])
+            .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML(`<strong>Saved Note:</strong><br>${writingArea.value.substring(0, 100)}...`))
+            .addTo(map);
+          
           alert('Note pinned to map!');
-        } else { alert('Please write something first!'); }
+        } else { 
+          alert('Please write something first!'); 
+        }
       });
 
-      document.getElementById('clear-text').addEventListener('click', () => { if (confirm('Clear all text?')) writingArea.value = ''; });
+      document.getElementById('clear-text').addEventListener('click', () => { 
+        if (confirm('Clear all text?')) writingArea.value = ''; 
+      });
+      
       document.getElementById('export-text').addEventListener('click', () => {
-        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([writingArea.value], { type: 'text/plain' })); a.download = 'ataraxia-notes.txt'; a.click();
+        const a = document.createElement('a'); 
+        a.href = URL.createObjectURL(new Blob([writingArea.value], { type: 'text/plain' })); 
+        a.download = 'ataraxia-notes.txt'; 
+        a.click();
       });
 
       const fontSizeSlider = document.getElementById('font-size');
-      fontSizeSlider.addEventListener('input', () => { document.getElementById('font-size-value').textContent = fontSizeSlider.value + 'px'; });
+      const fontSizeValue = document.getElementById('font-size-value');
+      
+      fontSizeSlider.addEventListener('input', () => { 
+        fontSizeValue.textContent = fontSizeSlider.value + 'px'; 
+      });
+      
       document.getElementById('font-family').addEventListener('change', (e) => applyFont(e.target.value));
 
       function applySettings() {
@@ -269,12 +298,15 @@ To Zoom: Just press + or - on the keyboard...</span>
         if (freeMapStyles[theme]) map.setStyle(freeMapStyles[theme]);
         writingArea.style.fontSize = fontSizeSlider.value + 'px';
       }
+      
       function applyFont(fontFile) {
         let styleElement = document.getElementById('dynamic-font') || document.createElement('style');
-        styleElement.id = 'dynamic-font'; document.head.appendChild(styleElement);
+        styleElement.id = 'dynamic-font'; 
+        document.head.appendChild(styleElement);
         styleElement.textContent = `@font-face { font-family: 'SelectedFont'; src: url('https://cdn.jsdelivr.net/gh/ghostm68/inktwo/fonts/olivetti/${fontFile}') format('opentype'); }`;
         writingArea.style.fontFamily = 'SelectedFont, "Courier New", monospace';
       }
+      
       applyFont('olivetti-typewriter-regular.otf');
 
       window.addEventListener('click', (e) => {
@@ -286,7 +318,7 @@ To Zoom: Just press + or - on the keyboard...</span>
       // --- DECK.GL "THE SPRAWL" LOGIC ---
       let deckInstance = null;
       let mapInitialized = false;
-      let vancouverData = null; // Cache the data
+      let vancouverData = null;
       const slideMenu = document.getElementById('world-menu');
       const closeSlideMenuBtn = document.getElementById('close-slide-menu');
       const deckToggle = document.getElementById('deck-map-toggle');
@@ -321,11 +353,11 @@ To Zoom: Just press + or - on the keyboard...</span>
           const initialLayer = new PolygonLayer({
               id: 'city-sprawl',
               data: 'https://raw.githubusercontent.com/visgl/deck.gl-data/master/examples/geojson/vancouver-blocks.json',
-              onDataLoad: (data) => { vancouverData = data; }, // Cache for updates
+              onDataLoad: (data) => { vancouverData = data; },
               getPolygon: d => d.geometry.coordinates,
-              getElevation: d => d.properties.valuePerSqm * 0.1, // Scale down raw values
+              getElevation: d => d.properties.valuePerSqm * 0.1,
               getFillColor: [42, 42, 42],
-              getLineColor: [0, 170, 255, 150],
+              getLineColor: [255, 0, 0, 150], // Changed to red accent
               getLineWidth: 1,
               extruded: true,
               wireframe: true,
@@ -334,7 +366,7 @@ To Zoom: Just press + or - on the keyboard...</span>
               visible: deckToggle.checked,
               pickable: true,
               autoHighlight: true,
-              highlightColor: [0, 255, 200, 100]
+              highlightColor: [255, 0, 0, 100] // Changed to red accent
           });
 
           deckInstance = new DeckGL({
@@ -361,14 +393,14 @@ To Zoom: Just press + or - on the keyboard...</span>
           const heightScale = parseFloat(heightSlider.value) || 4;
           const opacityVal = parseFloat(opacitySlider.value) || 0.8;
 
-          // Create new layer with updated props - same ID triggers diff update
+          // Create new layer with updated props
           const updatedLayer = new PolygonLayer({
               id: 'city-sprawl',
               data: vancouverData || 'https://raw.githubusercontent.com/visgl/deck.gl-data/master/examples/geojson/vancouver-blocks.json',
               getPolygon: d => d.geometry.coordinates,
               getElevation: d => d.properties.valuePerSqm * 0.1,
               getFillColor: [42, 42, 42],
-              getLineColor: [0, 170, 255, 150],
+              getLineColor: [255, 0, 0, 150], // Changed to red accent
               getLineWidth: 1,
               extruded: true,
               wireframe: true,
@@ -377,11 +409,12 @@ To Zoom: Just press + or - on the keyboard...</span>
               visible: isVisible,
               pickable: true,
               autoHighlight: true,
-              highlightColor: [0, 255, 200, 100]
+              highlightColor: [255, 0, 0, 100] // Changed to red accent
           });
 
           deckInstance.setProps({layers: [updatedLayer]});
       }
+  });
   </script>
 </body>
 </html>
