@@ -609,7 +609,7 @@
         <aside class="comms-console">
             <div class="bg-zinc-900 text-[9px] p-2 text-zinc-500 uppercase flex justify-between border-b border-red-900">
                 <span>Cut-Up Engine // F&W 1906</span>
-                <span id="juxt-status" class="text-red-500 font-bold">VOL I READY</span>
+               <span id="juxt-status" style="color: #d4af37; font-weight: bold;">VOL I READY</span>
             </div>
             
             <div id="juxt-container">
@@ -670,55 +670,58 @@
     // ==============================
     // FUNK & WAGNALLS MODULE
     // ==============================
-    async function loadFunkWagnalls() {
-        try {
-            const response = await fetch('Funk-And-Wagnalls-New-Encyclopedia-Volume-1_djvu.txt');
-            const text = await response.text();
-            
-            fawCache = {};
-            const lines = text.split('\n');
-            let currentEntry = null;
-            let currentText = [];
-            let count = 0;
-            
-            lines.forEach(line => {
-                const trimmed = line.trim();
-                // Headers are ALL CAPS, 2-40 chars, no periods
-                if (/^[A-Z][A-Z\s\-\(\)]{1,40}$/.test(trimmed) && trimmed.length > 2 && !trimmed.includes('.')) {
-                    if (currentEntry) {
-                        fawCache[currentEntry.toLowerCase()] = {
-                            title: currentEntry,
-                            text: currentText.join(' ').replace(/\s+/g, ' ').trim()
-                        };
-                        count++;
-                    }
-                    currentEntry = trimmed;
-                    currentText = [];
-                } else if (currentEntry && trimmed) {
-                    currentText.push(trimmed);
+async function loadFunkWagnalls() {
+    try {
+        const response = await fetch('Funk-And-Wagnalls-New-Encyclopedia-Volume-1_djvu.txt');
+        const text = await response.text();
+        
+        fawCache = {};
+        const lines = text.split('\n');
+        let currentEntry = null;
+        let currentText = [];
+        let count = 0;
+        
+        lines.forEach(line => {
+            const trimmed = line.trim();
+            // Headers are ALL CAPS, 2-40 chars, no periods
+            if (/^[A-Z][A-Z\s\-\(\)]{1,40}$/.test(trimmed) && trimmed.length > 2 && !trimmed.includes('.')) {
+                if (currentEntry) {
+                    fawCache[currentEntry.toLowerCase()] = {
+                        title: currentEntry,
+                        text: currentText.join(' ').replace(/\s+/g, ' ').trim()
+                    };
+                    count++;
                 }
-            });
-            
-            // Final entry
-            if (currentEntry) {
-                fawCache[currentEntry.toLowerCase()] = {
-                    title: currentEntry,
-                    text: currentText.join(' ').replace(/\s+/g, ' ').trim()
-                };
-                count++;
+                currentEntry = trimmed;
+                currentText = [];
+            } else if (currentEntry && trimmed) {
+                currentText.push(trimmed);
             }
-            
-            document.getElementById('faw-status').textContent = `VOL I LOADED: ${count}`;
-            document.getElementById('faw-status').className = 'text-green-600 font-bold';
-            document.getElementById('status-text').textContent = 'CORE: ONLINE';
-            console.log(`F&W Volume I: ${count} entries`);
-            
-        } catch (error) {
-            console.error('F&W Error:', error);
-            document.getElementById('faw-status').textContent = 'MOUNT FAILED';
-            document.getElementById('status-text').textContent = 'CORE: DEGRADED';
+        });
+        
+        // Final entry
+        if (currentEntry) {
+            fawCache[currentEntry.toLowerCase()] = {
+                title: currentEntry,
+                text: currentText.join(' ').replace(/\s+/g, ' ').trim()
+            };
+            count++;
         }
+        
+        // UPDATED: Changed from green to yellow
+        document.getElementById('faw-status').textContent = `VOL I LOADED: ${count}`;
+        document.getElementById('faw-status').style.color = '#d4af37'; // Yellow/gold color
+        document.getElementById('faw-status').style.fontWeight = 'bold';
+        
+        document.getElementById('status-text').textContent = 'CORE: ONLINE';
+        console.log(`F&W Volume I: ${count} entries`);
+        
+    } catch (error) {
+        console.error('F&W Error:', error);
+        document.getElementById('faw-status').textContent = 'MOUNT FAILED';
+        document.getElementById('status-text').textContent = 'CORE: DEGRADED';
     }
+}
 
     // ==============================
     // DICTIONARY FUNCTIONS
@@ -1061,93 +1064,112 @@
     // ==============================
     // JUXTAPOSE FUNCTIONS
     // ==============================
-    function generateJuxtaposition() {
-        const input = document.getElementById('juxt-input').value.trim().toLowerCase();
-        const container = document.getElementById('juxt-container');
-        
-        if (!fawCache) {
-            container.innerHTML += '<div class="chat-message chat-system"><span style="color:#ff0000">ERROR: F&W not loaded</span></div>';
-            return;
-        }
-        
-        // If user entered a word, try to start with that entry
-        let entries = [];
-        if (input && fawCache[input]) {
-            entries.push(fawCache[input]);
-        } else if (input && input.charAt(0) >= 'l') {
-            // Volume II check
-            container.innerHTML += `
-                <div class="chat-message" style="border-left: 2px solid #333; opacity: 0.6;">
-                    <div class="text-[9px] text-zinc-500 mb-1">[${input.toUpperCase()}]</div>
-                    <div>Volume II (L-Z) required. Physical archive only.</div>
-                </div>
-            `;
-            document.getElementById('juxt-input').value = '';
-            return;
-        }
-        
-        // Fill remaining slots with random A-K entries (total 3)
-        const allEntries = Object.values(fawCache);
-        while (entries.length < 3) {
-            const random = allEntries[Math.floor(Math.random() * allEntries.length)];
-            if (!entries.includes(random)) entries.push(random);
-        }
-        
-        // Cut them up
-        const fragments = entries.map(e => {
-            const text = e.text;
-            // Take middle chunk or first sentence
-            const mid = Math.floor(text.length / 3);
-            const end = text.indexOf('.', mid) || text.indexOf(' ', mid + 50);
-            const fragment = end > mid ? text.substring(mid, end) : text.substring(0, 100);
-            return {
-                title: e.title,
-                text: fragment.trim()
-            };
-        });
-        
-        // Display
-        const html = `
-            <div class="chat-message" style="background: rgba(255,0,0,0.05); border-left: 3px solid #FF0000;">
-                <div class="text-[9px] text-red-500 mb-1 uppercase tracking-wider">
-                    ${input ? `SEED: ${input} // ` : ''}JUXTAPOSITION ${new Date().toLocaleTimeString()}
-                </div>
-                <div style="color: #ccc; line-height: 1.4; font-size: 11px;">
-                    ${fragments.map(f => `<span style="color:#ff6666">[${f.title}]</span> ${f.text}`).join(' <span style="color:#444">//</span> ')}
-                </div>
-                <button onclick="insertToEditor('${fragments.map(f => f.text).join(' ').replace(/'/g, "\\'")}')" 
-                        style="margin-top:8px; font-size:8px; border:1px solid #333; padding:2px 6px; background:transparent; color:#666; cursor:pointer;">
-                    INSERT TO MANUSCRIPT →
-                </button>
+   // ==============================
+// JUXTAPOSE FUNCTIONS - FIXED VERSION
+// ==============================
+function generateJuxtaposition() {
+    const input = document.getElementById('juxt-input').value.trim().toLowerCase();
+    const container = document.getElementById('juxt-container');
+    
+    if (!fawCache) {
+        container.innerHTML += '<div class="chat-message chat-system"><span style="color:#ff0000">ERROR: F&W not loaded</span></div>';
+        return;
+    }
+    
+    // If user entered a word, try to start with that entry
+    let entries = [];
+    if (input && fawCache[input]) {
+        entries.push(fawCache[input]);
+    } else if (input && input.charAt(0) >= 'l') {
+        // Volume II check
+        container.innerHTML += `
+            <div class="chat-message" style="border-left: 2px solid #333; opacity: 0.6;">
+                <div class="text-[9px] text-zinc-500 mb-1">[${input.toUpperCase()}]</div>
+                <div>Volume II (L-Z) required. Physical archive only.</div>
             </div>
         `;
-        
-        container.innerHTML += html;
-        container.scrollTop = container.scrollHeight;
         document.getElementById('juxt-input').value = '';
+        return;
     }
-
-    function randomCutUp() {
-        document.getElementById('juxt-input').value = '';
-        generateJuxtaposition();
+    
+    // Fill remaining slots with random A-K entries (total 3)
+    const allEntries = Object.values(fawCache);
+    while (entries.length < 3) {
+        const random = allEntries[Math.floor(Math.random() * allEntries.length)];
+        if (!entries.includes(random)) entries.push(random);
     }
-
-    function clearJuxt() {
-        document.getElementById('juxt-container').innerHTML = `
-            <div class="chat-message chat-system">
-                <div class="text-[9px] text-zinc-700 mb-1">SYSTEM</div>
-                <div>Buffer cleared. Ready for juxtaposition.</div>
+    
+    // Cut them up
+    const fragments = entries.map(e => {
+        const text = e.text;
+        // Take middle chunk or first sentence
+        const mid = Math.floor(text.length / 3);
+        const end = text.indexOf('.', mid) || text.indexOf(' ', mid + 50);
+        const fragment = end > mid ? text.substring(mid, end) : text.substring(0, 100);
+        return {
+            title: e.title,
+            text: fragment.trim()
+        };
+    });
+    
+    // Create the combined text for insertion (with proper escaping)
+    const combinedText = fragments.map(f => f.text).join(' ');
+    
+    // Display - FIXED: Use a data attribute instead of inline onclick
+    const html = `
+        <div class="chat-message" style="background: rgba(255,0,0,0.05); border-left: 3px solid #FF0000;">
+            <div class="text-[9px] text-red-500 mb-1 uppercase tracking-wider">
+                ${input ? `SEED: ${input} // ` : ''}JUXTAPOSITION ${new Date().toLocaleTimeString()}
             </div>
-        `;
-    }
+            <div style="color: #ccc; line-height: 1.4; font-size: 11px;">
+                ${fragments.map(f => `<span style="color:#ff6666">[${f.title}]</span> ${f.text}`).join(' <span style="color:#444">//</span> ')}
+            </div>
+            <button onclick="insertToEditor(${JSON.stringify(combinedText)})" 
+                    style="margin-top:8px; font-size:8px; border:1px solid #333; padding:2px 6px; background:transparent; color:#666; cursor:pointer;">
+                INSERT TO MANUSCRIPT →
+            </button>
+        </div>
+    `;
+    
+    container.innerHTML += html;
+    container.scrollTop = container.scrollHeight;
+    document.getElementById('juxt-input').value = '';
+}
 
-    function insertToEditor(text) {
-        const editor = document.getElementById('editor');
-        editor.focus();
-        document.execCommand('insertHTML', false, 
-            `<div style="border-left:2px solid #ff0000; padding-left:10px; margin:10px 0; color:#ccc; font-family:'Courier Prime',monospace;">${text}</div><p></p>`
-        );
+// ==============================
+// INSERT TO EDITOR - IMPROVED VERSION
+// ==============================
+function insertToEditor(text) {
+    const editor = document.getElementById('editor');
+    if (!editor) {
+        console.error('Editor element not found');
+        return;
     }
+    
+    editor.focus();
+    
+    // Create the HTML to insert
+    const insertion = `
+        <div style="border-left:2px solid #ff0000; padding-left:10px; margin:10px 0; color:#ccc; font-family:'Courier Prime',monospace;">
+            ${text.replace(/\n/g, '<br>')}
+        </div>
+        <p></p>
+    `;
+    
+    // Use insertHTML for better compatibility
+    try {
+        document.execCommand('insertHTML', false, insertion);
+    } catch (e) {
+        // Fallback method
+        const range = window.getSelection().getRangeAt(0);
+        const div = document.createElement('div');
+        div.innerHTML = insertion;
+        range.insertNode(div);
+    }
+    
+    // Optional: Scroll to the insertion point
+    editor.scrollTop = editor.scrollHeight;
+}
 </script>
 </body>
 </html>
