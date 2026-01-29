@@ -187,45 +187,54 @@ function forgeSigil() {
   }
 
   // --- LOGS ---
-const logFragments = [
-  "SIGILLUM authenticated",
-  "Cube navigation loaded",
-  "SIGNUM protocol active",
-  "Link geometry stable",
-  "2026 impression verified",
-  "Current reader healed of stress",
-  "Typography matrices aligned",
-  "DIMINUTIVE suffix applied",
-  "Wordstar nexus online",
-  "Download paths verified",
-  "Intent compression: 87%",
-  "Your mind is clear and focused",
-  "Navigation runes encoded",
-  "Featured apps indexed",
-  "Medieval markers found",
-  "Cube faces rendered",
-  "Etymology trace complete",
-  "Anxiety dissolves into code",
-  "Small sign detected",
-  "APK verification complete",
-  "PDF bindings secure",
-  "Creative flow restored",
-  "AUTHENTICARE timestamp",
-  "Wax seal emulator online",
-  "You are exactly where you need to be",
-  "Chaos magic subroutine",
-  "Typecast link active",
-  "Symbol charge: nominal",
-  "Grimoire index updated",
-  "Rest is productive work",
-  "Old French parser engaged",
-  "Displaywriter mounted",
-  "Token verification loop",
-  "Breath deepens, tension releases",
-  "Ceremonial binding active",
-  "Citadelle routes mapped",
-  "Latin parse buffer full",
-  "Your path forward is illuminated"
+const newLogFragments = [
+  // --- The "Digital Scribe" Vibe ---
+  "Green phosphor pulse: Steady",
+  "Scribe logic initialized",
+  "Marginalia buffers cleared",
+  "Scriptorium gateway open",
+  "Syntax highlighted in gold",
+  "Digital vellum unrolled",
+  "Ink density: 100%",
+  "Narrative arc calculated",
+  "Control-Key sequences engaged",
+  "Lorem ipsum decrypting",
+  
+  // --- The "Cyber-Mystic" Vibe ---
+  "Aether connection established",
+  "Alchemical font rendering",
+  "Constellation map overlay",
+  "Sacred geometry compiled",
+  "Rune cache refreshed",
+  "Talisman subroutines running",
+  "Ethereal packet transfer",
+  "Orbit parameters fixed",
+  "Mercurial communications active",
+  "Zodiac alignment: True",
+
+  // --- The "Inner Peace/Affirmation" Vibe ---
+  "Self-doubt purged from cache",
+  "Dopamine receptivity: High",
+  "Overthinking process terminated",
+  "Your potential is uncompressed",
+  "Serotonin upload complete",
+  "Panic converted to perspective",
+  "Breathing loop synchronized",
+  "You are capable of difficult things",
+  "Internal noise filtering: Active",
+  "Kindness protocols engaged",
+
+  // --- The "Wordstar/Nexus" Specifics ---
+  "NEXUS core temperature: Cool",
+  "Dot command interpreted",
+  "Vector paths illuminated",
+  "Hypertext lattice weaving",
+  "Block move successful",
+  "Dictionary binding glued",
+  "Scroll weighting balanced",
+  "Memory resonance verified",
+  "Interface harmony restored",
+  "You have permission to create"
 ];
   
   function updateLogs() {
