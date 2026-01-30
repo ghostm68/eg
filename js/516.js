@@ -187,7 +187,7 @@ function forgeSigil() {
   }
 
   // --- LOGS ---
-const newLogFragments = [
+const logFragments = [
   "Green phosphor pulse: Steady",
   "Scribe logic initialized",
   "Marginalia buffers cleared",
