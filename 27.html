@@ -1,50 +1,16 @@
-
-
-<!--[if IE 6]>
-<html id="ie6" lang="en-US">
-<![endif]-->
-<!--[if IE 7]>
-<html id="ie7" lang="en-US">
-<![endif]-->
-<!--[if IE 8]>
-<html id="ie8" lang="en-US">
-<![endif]-->
-<!--[if !(IE 6) | !(IE 7) | !(IE 8) ]><!-->
 <!DOCTYPE html>
 <html lang="en">
-<html lang="en" prefix="og: http://ogp.me/ns#">	
-		<!-- anti-cache insurance -->
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-	<meta itemprop="name" content="wordstar nexus/27"/>	
-
-<meta property="og:url" content="https://www.wordstar.nexus/27"/>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="icon" type="image/svg+xml" href="https://cdn.jsdelivr.net/gh/ghostm68/inktwo@main/svg/inky.svg">
 	
     <link rel="apple-touch-icon" type="image/png" href="https://github.com/ghostm68/pantheon/raw/main/inkto.png" />
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-	    <meta data-rh="true" name="description" content="A writer's website, featuring an unedited manuscript and original art as well as videos. Video and audio downloads. The writer often places notes and even new stories on the homepage. Wordstar includes a rotating typewriter. A sigil maker and other apps A unique place for creative souls. A Portal to escape the ordinary. Eclectic and frequently updated."/>
-    <meta data-rh="true" property="og:url" content="https://www.wordstar.nexus/27"/>
-    <meta data-rh="true" property="og:type" content="website"/>
-    <meta data-rh="true" property="og:title" content="WORDSTAR - writing, music, and the visual arts"/>
-    <meta http-equiv="onion-location" content="http://yd3r4tdjgg7you3tuq7uyy5hl7tbwzowmd4pcgf6gpgk24hyawcvsjqd.onion" />
-    <meta property="tiktok:app_id" content="@twoskinnygirls" />
-    <meta name="twitter:site" content="@inkrealm" />
-    <meta name="slack-app-id" content="f060RUD44R3" />
-	<meta name="msvalidate.01" content="67F1E9D68BBC837C803D756EE2977B67" />
-	<meta property="vk:image" content="https://vk.com/authorwave?z=photo707345788_457239017%2Falbum707345788_0">
-	<meta name="p:domain_verify" content="3b55be68eb5ca93c0411d8779e1fa6c2"/>
-	<meta property="og:title" content="Two Skinny Girls on Apple Music">
-<meta property="og:description" content="Listen to Two Skinny Girls on Apple Music.">
-<meta property="og:url" content="https://music.apple.com/us/artist/two-skinny-girls/1466240185">
-<meta property="og:image" content="https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/1b/cc/4b/1bcc4bbd-e9f6-fd2e-5bdf-2f347046fb94/5063845083831_cover.jpg/592x592bf.webp">
-<meta property="og:type" content="music.musician">
-<meta property="og:site_name" content="Apple Music">
- 
-    <title>ink realm</title>
+    <title> | 27</title>
+    <!-- Load Three.js from a Global CDN (Works locally without server) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'>  
 	       <style>
 /* === DEFINE VARIABLES FIRST === */
 :root {
@@ -59,92 +25,339 @@
     text-shadow: none;
 }
 </style>
-	<style>
-	/* width */
-::-webkit-scrollbar {
-  width: 20px;
+    <style>
+        /* --- 1. DEFAULT THEME (CITADELLE RED) --- */
+        :root {
+            --bg-color: #000000;
+            --text-main: #E0E0E0;
+            --text-dim: #666666;
+            --accent-primary: #FF0000; /* Red */
+            --accent-secondary: #550000; /* Dark Red */
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        /* --- 2. CLASSIC THEME (WORDSTAR BLUE) --- */
+        body.classic-mode {
+            --bg-color: #0000AA;         /* Blue */
+            --text-main: #FFFFFF;        /* White */
+            --text-dim: #00FFFF;         /* Cyan */
+            --accent-primary: #FFFF00;   /* Yellow */
+            --accent-secondary: #AA5500; /* Amber */
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.5s ease;
+        }
+
+        /* --- 3D BACKGROUND --- */
+        #canvas-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0;
+            opacity: 0.6;
+            transition: opacity 0.5s;
+        }
+
+        /* --- UI LAYER --- */
+        #ui-layer {
+            position: relative;
+            z-index: 10;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        /* --- HEADER --- */
+        header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 10px;
+            height: 60px;
+        }
+
+        .menu-toggle {
+            position: absolute;
+            left: 20px;
+            width: 40px; height: 40px;
+            background: black;
+            border: 1px solid var(--accent-primary);
+            color: var(--accent-primary);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            z-index: 50;
+            transition: all 0.3s;
+        }
+        .menu-toggle:hover {
+            background: var(--accent-primary);
+            color: black;
+            box-shadow: 0 0 10px var(--accent-primary);
+        }
+
+        .header-typing-wrapper {
+            margin-left: 60px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--accent-primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+
+        .header-typing-wrapper a {
+            color: var(--text-dim);
+            text-decoration: none;
+            margin-right: 25px;
+            position: relative;
+            transition: color 0.3s;
+        }
+        .header-typing-wrapper a:hover {
+            color: var(--text-main);
+            text-shadow: 0 0 5px var(--text-main);
+        }
+        .header-typing-wrapper a::before { content: '['; margin-right: 5px; color: var(--accent-secondary); opacity: 0; }
+        .header-typing-wrapper a::after { content: ']'; margin-left: 5px; color: var(--accent-secondary); opacity: 0; }
+        .header-typing-wrapper a:hover::before, .header-typing-wrapper a:hover::after { opacity: 1; }
+
+        /* LOGO */
+        .ws-logo {
+            height: 55px; width: auto;
+            filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
+        }
+        .logo-text path { fill: var(--text-main); transition: fill 0.5s; }
+        .logo-x path { fill: var(--accent-primary); cursor: pointer; transition: 0.3s; }
+        .logo-x:hover path { fill: #FFF; filter: drop-shadow(0 0 8px var(--accent-primary)); }
+
+        /* --- CONTENT AREA --- */
+      .content-area {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 60px;
+    width: 100%;
+    max-width: 1300px;
+    margin: 20px auto 0 auto;
+    /* Added lines below for mobile fix */
+    overflow-y: auto; 
+    min-height: 0; 
+    padding-bottom: 20px; /* Space for scrolling */
 }
 
-/* Track */
-::-webkit-scrollbar-track {
-  box-shadow: inset 0 0 5px tan; 
-  border-radius: 10px;
-}
- 
-/* Handle */
-::-webkit-scrollbar-thumb {
-  background: red; 
-  border-radius: 10px;
+/* Custom Scrollbar for the main page area too */
+.content-area::-webkit-scrollbar { width: 6px; }
+.content-area::-webkit-scrollbar-track { background: transparent; }
+.content-area::-webkit-scrollbar-thumb { background: var(--text-dim); }
+
+        .vertical-nav {
+            display: flex; flex-direction: column; gap: 15px; width: 280px;
+        }
+
+        /* BOX STYLES */
+        .nav-box {
+            background: rgba(10, 10, 10, 0.85);
+            border: 1px solid var(--text-dim);
+            border-left: 3px solid var(--text-dim);
+            color: var(--text-main);
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .nav-header { 
+            padding: 15px; 
+            font-weight: bold; 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-header::after { content: '+'; color: var(--accent-primary); }
+        
+        .nav-content {
+            max-height: 0; overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+            transition: max-height 0.4s ease, padding 0.4s ease;
+            font-size: 0.9rem; color: var(--text-dim);
+        }
+
+        /* Active Box */
+        .nav-box.active { border-color: var(--accent-primary); border-left: 6px solid var(--accent-primary); }
+        .nav-box.active .nav-header { color: var(--accent-primary); }
+        .nav-box.active .nav-header::after { content: '-'; }
+        /* REPLACEMENT BLOCK */
+.nav-box.active .nav-content { 
+    max-height: 250px;       /* Increased height slightly */
+    overflow-y: auto;        /* This creates the scrollbar */
+    padding: 15px; 
+    border-top: 1px solid var(--accent-secondary); 
 }
 
-/* Handle on hover */
-::-webkit-scrollbar-thumb:hover {
-  background: #afa9b0; 
+/* Optional: Styles the scrollbar to look high-tech (works in Chrome/Safari/Edge) */
+.nav-content::-webkit-scrollbar { width: 5px; }
+.nav-content::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+.nav-content::-webkit-scrollbar-thumb { background: var(--accent-primary); }
+
+        /* RIGHT COLUMN */
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .triangle-wrapper {
+            position: relative;
+            width: 450px; height: 400px;
+            display: flex; justify-content: center; align-items: center;
+            margin-top: 20px;
+        }
+        .triangle-shape {
+            width: 100%; height: 100%;
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+            background: #000;
+            position: relative; z-index: 2;
+        }
+        .triangle-border {
+            position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background: var(--accent-primary);
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+            z-index: 1; opacity: 0.7;
+            transition: background 0.5s;
+        }
+        .triangle-shape video {
+            width: 100%; height: 100%;
+            object-fit: cover; opacity: 0.6;
+            filter: grayscale(100%) contrast(1.2);
+            transform: scale(1.1);
+        }
+
+        .video-caption {
+            margin-top: 20px;
+            font-size: 1rem;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            text-align: center;
+            min-height: 1.5rem;
+        }
+        .cursor-blink {
+            display: inline-block; width: 8px; height: 1rem;
+            background-color: var(--text-dim);
+            animation: blink 1s step-end infinite;
+            vertical-align: sub;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        .status-footer {
+            margin-top: auto;
+            border-top: 1px solid var(--text-dim);
+            background: #000; color: var(--text-dim);
+            padding: 8px 20px; font-size: 0.75rem;
+            display: flex; justify-content: space-between;
+        }
+
+        @media (max-width: 900px) {
+            .content-area { flex-direction: column-reverse; align-items: center; }
+            .triangle-wrapper { width: 300px; height: 260px; }
+        }
+	/* ----- mini upside-down triangle ----- */
+.triangle-wrapper.small-down {
+    position: absolute;
+    bottom: 66px;/* footer (30 px) + 2 px breathing room */
+    right: 0;
+    width: 336px;
+    height: 336px;
+    transform: rotate(180deg);
+    margin: 0;
 }
-</style>
-	 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+.triangle-wrapper.small-down .triangle-border,
+.triangle-wrapper.small-down .triangle-shape{
+    width: 100%;
+    height: 100%;
+}
+		/* Styling for links inside the accordion */
+.manifest-link {
+    color: var(--text-main); /* Uses current theme color (White or Grey) */
+    text-decoration: none;
+    border-bottom: 1px dotted var(--accent-primary);
+    transition: 0.2s;
+}
+.manifest-link:hover {
+    background: var(--accent-primary);
+    color: #000;
+}
+    </style>
 </head>
 <body>
-    <section class="showcase">
+
+    <div id="canvas-container"></div>
+
+    <div id="ui-layer">
+        
         <header>
-            <h2 class="logo"> writer </h2><br>
+            <div class="menu-toggle" id="menuBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </div>
 
-<video src="https://github.com/ghostm68/pantheon/raw/main/minarony.promotion.inkrealm.mp4" muted loop playsinline autoplay class="video"></video>
-        
-		<div class="alignleft">
-     
-            <div class="toggle"></div>
+            <div class="header-typing-wrapper" id="header-type-target"></div>
+            
+            <svg class="ws-logo" viewBox="0 0 600 90" xmlns="http://www.w3.org/2000/svg">
+                <g class="logo-text">
+                    <path d="M 25 25 L 32 25 L 39 60 L 46 25 L 52 25 L 59 60 L 66 25 L 73 25 L 63 68 L 57 68 L 50 35 L 43 68 L 37 68 Z"/>
+                    <path d="M 90 23 Q 105 23 105 45.5 Q 105 68 90 68 Q 75 68 75 45.5 Q 75 23 90 23 Z M 90 28 Q 82 28 82 45.5 Q 82 63 90 63 Q 98 63 98 45.5 Q 98 28 90 28 Z"/>
+                    <path d="M 120 25 L 127 25 L 127 33 Q 130 25 138 25 L 140 25 L 140 31 L 136 31 Q 127 31 127 40 L 127 68 L 120 68 Z"/>
+                    <path d="M 155 25 L 172 25 Q 187 25 187 46.5 Q 187 68 172 68 L 155 68 Z M 162 30 L 162 63 L 171 63 Q 180 63 180 46.5 Q 180 30 171 30 Z"/>
+                    <path d="M 202 25 Q 217 25 217 35 L 210 35 Q 210 30 202 30 Q 197 30 197 33.5 Q 197 37 202 38 L 210 40 Q 219 42 219 51 Q 219 68 205 68 Q 190 68 190 57 L 197 57 Q 197 63 205 63 Q 211 63 211 59 Q 211 56 206 54.5 L 198 52.5 Q 190 50.5 190 42 Q 190 25 202 25 Z"/>
+                    <path d="M 232 18 L 239 18 L 239 25 L 247 25 L 247 30 L 239 30 L 239 58 Q 239 63 243 63 L 247 63 L 247 68 L 241 68 Q 232 68 232 58 L 232 30 L 226 30 L 226 25 L 232 25 Z"/>
+                    <path d="M 265 25 Q 279 25 279 42 L 279 68 L 272 68 L 272 63 Q 268 68 260 68 Q 248 68 248 58 Q 248 48 260 48 L 272 48 L 272 42 Q 272 30 264 30 Q 257 30 256 36 L 249 36 Q 250 25 265 25 Z M 272 53 L 261 53 Q 255 53 255 58 Q 255 63 261 63 Q 272 63 272 53 Z"/>
+                    <path d="M 294 25 L 301 25 L 301 33 Q 304 25 312 25 L 314 25 L 314 31 L 310 31 Q 301 31 301 40 L 301 68 L 294 68 Z"/>
+                    <circle cx="330" cy="63" r="3"/>
+                    <path d="M 350 25 L 357 25 L 357 31 Q 361 25 370 25 Q 382 25 382 37 L 382 68 L 375 68 L 375 38 Q 375 30 368 30 Q 357 30 357 42 L 357 68 L 350 68 Z"/>
+                    <path d="M 397 25 Q 412 25 412 42 L 398 42 Q 398 50 398 52 Q 398 63 406 63 Q 411 63 412 58 L 419 58 Q 418 68 406 68 Q 391 68 391 46.5 Q 391 25 406 25 Z M 398 37 L 405 37 Q 405 30 406 30 Q 412 30 412 37 Z"/>
+                </g>
+                <g class="logo-x" style="cursor: pointer;">
+                    <path d="M 435 18 L 449 18 L 465 40 L 481 18 L 495 18 L 473 46.5 L 497 75 L 483 75 L 465 51 L 447 75 L 433 75 L 457 46.5 Z"/>
+                </g>
+                <g class="logo-text">
+                    <path d="M 512 25 L 519 25 L 519 55 Q 519 63 526 63 Q 537 63 537 51 L 537 25 L 544 25 L 544 68 L 537 68 L 537 62 Q 533 68 524 68 Q 512 68 512 56 Z"/>
+                    <path d="M 559 25 Q 574 25 574 35 L 567 35 Q 567 30 559 30 Q 554 30 554 33.5 Q 554 37 559 38 L 567 40 Q 576 42 576 51 Q 576 68 562 68 Q 547 68 547 57 L 554 57 Q 554 63 562 63 Q 568 63 568 59 Q 568 56 563 54.5 L 555 52.5 Q 547 50.5 547 42 Q 547 25 559 25 Z"/>
+                </g>
+            </svg>
         </header>
-  <video src="https://github.com/ghostm68/pantheon/raw/main/minaro_20240116_1946065extra.mp4" muted loop playsinline autoplay class="video"></video>
-        
-	
-        <div class="overlay"></div>
-        <div class="text">
-            <h2>musician</h2>  <a href="https://www.artbreeder.com/inkrealm"><font color="brown"> تحيا قطر </font color="brown"></a> <br>
-	
-            <h3>visual artist</h3>
-		<img width="188" height="266" src="https://raw.githubusercontent.com/ghostm68/pantheon/main/minaro.wordstar.1701231387619.gif"><br>
- 
-        	
-	  
-       </div>
-		<br>
-		
-        
 
-        <ul class="social">
-            <li>></li>
-	
-	</ul>
-    </section>
- 
-	    <div class="menu">
-        <ul>
-		
-
-
-<li>updated january 16 </li>
-<video width="188" src="https://github.com/ghostm68/pantheon/raw/main/minarony.promotion.inkrealm.mp4" muted loop playsinline autoplay class="video"></video>
+        <div class="content-area">
+            
+            <div class="vertical-nav">
+              <div class="nav-box" onclick="toggleBox(this)">
+    <div class="nav-header">MINARO_MANIFEST</div>
+    <div class="nav-content scroll-box">
+       a series of mind breaths, <br>  <span style="color: #ff0000;">&copy; 2024</span>
+        <br><br>
+    <video width="188" src="https://github.com/ghostm68/pantheon/raw/main/minaro_20240116_1946065extra.mp4" muted loop playsinline autoplay class="video"></video>
   		
-<div style="color: #ffffff; text-align: center; margin-bottom: 10px;">
-    a series of mind breaths, <br>  <span style="color: #ff0000;">&copy; 2024</span>
-</div>
-			<div style="
-    height:488px;
-    width:288px;
-    border:2px solid #ff0000;  /* Red border */
-    background: #ffffff;        /* White background */
-    color: #000000;            /* Black text */
-    font:16px/26px Georgia, Garamond, Serif;
-    overflow:auto;
-    padding: 15px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-">
    by inky, inkrealm -www.inkrealm.info
-<video  width="188" src="https://github.com/ghostm68/pantheon/raw/main/minaro.promotion.inkrealm.mp4" muted loop playsinline autoplay class="video"></video>
+<video  width="188" src="https://github.com/ghostm68/pantheon/raw/main/minarony.promotion.inkrealm.mp4" muted loop playsinline autoplay class="video"></video>
 <br>
- ...iran script draft out now@wordstar.nexus/wip<br>
+
 
 winter dream notes
 & musings brought to you
@@ -2328,14 +2541,236 @@ site sponsored by MINAЯO, NEW YORK.<br>
   <source src="https://github.com/ghostm68/pantheon/raw/main/minaro_20240116_1946065extra.ogg" type="video/ogg">
 Your browser does not support the video tag.
 </video>
- 	
+    </div>
 </div>
-</ul>
 
-    <link rel="stylesheet" href="cld-styles.css">
- 
-    <script src="cld-index.js"></script>
+                <!-- THE TOGGLE SWITCH -->
+                <div class="nav-box" onclick="toggleBox(this)">
+                    <div class="nav-header">SYSTEM_STATUS [SWITCH]</div>
+                    <div class="nav-content">
+                        CLICK TO TOGGLE VISUAL THEME.<br>
+                        CURRENT: <span id="theme-name">CITADELLE_RED</span>
+                    </div>
+                </div>
+
+                <div class="nav-box" onclick="toggleBox(this)">
+                    <div class="nav-header">ENCRYPTED_FILES</div>
+                    <div class="nav-content">
+                        <img width="188" height="188" src="https://raw.githubusercontent.com/ghostm68/pantheon/main/minaro.wordstar.1701231387619.gif">
+                        ACCESS DENIED.<br>PLEASE INSERT DISK 2.
+                        <a href="tel:+16468019713" class="menu-link"> <font color="white"> ☎</a> </font color="white"> 
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-column">
+                <div class="triangle-wrapper">
+                    <div class="triangle-border"></div>
+                    <div class="triangle-shape">
+                        <video autoplay muted loop playsinline>
+                            <source src="https://github.com/ghostm68/pantheon/raw/main/minarony.promotion.inkrealm.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                </div>
+                <div class="video-caption">
+                    <span id="caption-target"></span><span class="cursor-blink"></span>
+                </div>
+            </div>
+<!--  small upside-down triangle  -->
+<div class="triangle-wrapper small-down">
+    <div class="triangle-border"></div>
+    <div class="triangle-shape">
+        <video autoplay muted loop playsinline>
+            <source src="https://github.com/ghostm68/pantheon/raw/main/minaro_20240116_1946065extra.mp4" type="video/mp4">
+        </video>
+    </div>
+</div>
+        </div>
+
+        <div class="status-footer">
+            <span>DRIVE A: READY</span>
+			 <span>MODE: OVERTYPE</span>
+            					<span> "quiet, piggy!"
+-an inky-kid book,AVAILABLE NOW <a href="https://github.com/ghostm68/pantheon/raw/main/Quiet_Piggy_a wordstar child's book.pdf">  <font color="red"><i class='fa fa-file-pdf-o ash-color'></i></span> </font color="red">  
+
+         
+        </div>
+    </div>
+
+    <!-- MAIN SCRIPT (NO MODULE, WORKS GLOBALLY) -->
+    <script>
+        // Define global variables so functions can access them
+        let scene, camera, renderer, cube, innerCube, fog;
+        
+        function initThreeJS() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000000, 0.04); 
+            
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 25;
+
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            const group = new THREE.Group();
+            
+            // Outer Grid
+            const geometry = new THREE.BoxGeometry(16, 16, 16);
+            const edges = new THREE.EdgesGeometry(geometry);
+            const material = new THREE.LineBasicMaterial({ color: 0x666666, transparent: true, opacity: 0.2 });
+            cube = new THREE.LineSegments(edges, material);
+            group.add(cube);
+            
+            // Inner Core
+            const innerGeo = new THREE.BoxGeometry(7, 7, 7);
+            const innerEdges = new THREE.EdgesGeometry(innerGeo);
+            const innerMat = new THREE.LineBasicMaterial({ color: 0xFF0000, transparent: true, opacity: 0.5 });
+            innerCube = new THREE.LineSegments(innerEdges, innerMat);
+            group.add(innerCube);
+            
+            scene.add(group);
+
+            const clock = new THREE.Clock();
+            function animate() {
+                requestAnimationFrame(animate);
+                const delta = clock.getDelta();
+                group.rotation.x += delta * 0.15;
+                group.rotation.y += delta * 0.25;
+                innerCube.material.opacity = 0.5 + Math.sin(clock.elapsedTime * 2) * 0.2; 
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        // --- THEME SWITCHER LOGIC ---
+        function toggleTheme() {
+            document.body.classList.toggle('classic-mode');
+            const isBlue = document.body.classList.contains('classic-mode');
+            const themeLabel = document.getElementById('theme-name');
+            
+            if(isBlue) {
+                // Blue Theme
+                scene.fog.color.setHex(0x0000AA); 
+                innerCube.material.color.setHex(0xFFFF00); 
+                cube.material.color.setHex(0x00FFFF);      
+                document.getElementById('canvas-container').style.opacity = "0.4";
+                if(themeLabel) themeLabel.innerText = "WORDSTAR_BLUE";
+            } else {
+                // Red Theme
+                scene.fog.color.setHex(0x000000); 
+                innerCube.material.color.setHex(0xFF0000); 
+                cube.material.color.setHex(0x666666);      
+                document.getElementById('canvas-container').style.opacity = "0.6";
+                if(themeLabel) themeLabel.innerText = "CITADELLE_RED";
+            }
+        }
+
+        // --- UI INTERACTION (Boxes) ---
+        // Attached to window so onclick works
+        window.toggleBox = function(element) {
+            const headerText = element.querySelector('.nav-header').innerText;
+
+            if(headerText.includes('SYSTEM_STATUS')) {
+                toggleTheme();
+                return;
+            }
+
+            const allBoxes = document.querySelectorAll('.nav-box');
+            allBoxes.forEach(box => {
+                if (box !== element) box.classList.remove('active');
+            });
+            element.classList.toggle('active');
+        }
+
+        // --- MENU TYPING LOGIC ---
+        const menuBtn = document.getElementById('menuBtn');
+        const headerTarget = document.getElementById('header-type-target');
+        const menuLinks = [
+            { text: "ARCHIVES", href: "https://inkrealm.mintlify.app/" },
+            { text: "SYSTEMS", href: "https://inkrealm.info/runway" },
+            { text: "ABOUT", href: "https://inkrealm.info/about" },
+            { text: "CONTACT", href: "https://wordstar.nexus/contact" }
+        ];
+        let isMenuOpen = false;
+        let isTyping = false;
+
+        function typeHeaderLinks() {
+            headerTarget.innerHTML = "";
+            isTyping = true;
+            let linkIndex = 0;
+            let charIndex = 0;
+            
+            // Create first link container
+            let currentLink = document.createElement('a');
+            currentLink.href = menuLinks[0].href;
+            headerTarget.appendChild(currentLink);
+
+            function step() {
+                if (linkIndex >= menuLinks.length) { 
+                    isTyping = false; 
+                    return; 
+                }
+
+                const linkData = menuLinks[linkIndex];
+
+                if (charIndex < linkData.text.length) {
+                    currentLink.textContent += linkData.text.charAt(charIndex);
+                    charIndex++;
+                    setTimeout(step, 40);
+                } else {
+                    linkIndex++;
+                    charIndex = 0;
+                    if (linkIndex < menuLinks.length) {
+                        currentLink = document.createElement('a');
+                        currentLink.href = menuLinks[linkIndex].href;
+                        headerTarget.appendChild(currentLink);
+                        setTimeout(step, 80);
+                    } else {
+                        isTyping = false;
+                    }
+                }
+            }
+            step();
+        }
+
+        menuBtn.addEventListener('click', () => {
+            if (isTyping) return; 
+            if (!isMenuOpen) {
+                typeHeaderLinks();
+                isMenuOpen = true;
+            } else {
+                headerTarget.innerHTML = ""; 
+                isMenuOpen = false;
+            }
+        });
+
+        // --- VIDEO CAPTION TYPING ---
+        const textToType = "CITADELLE_INIT... STATUS: ONLINE"; 
+        const typeSpeed = 100;
+        let captionIndex = 0;
+        const captionTarget = document.getElementById('caption-target');
+
+        function typeVideoCaption() {
+            if (captionIndex < textToType.length) {
+                captionTarget.innerHTML += textToType.charAt(captionIndex);
+                captionIndex++;
+                setTimeout(typeVideoCaption, typeSpeed);
+            }
+        }
+
+        // --- INITIALIZATION ---
+        // Run everything once DOM is ready
+        initThreeJS();
+        setTimeout(typeVideoCaption, 500);
+
+    </script>
 </body>
-	</html>
-
-   
+</html>
