@@ -188,13 +188,13 @@ function forgeSigil() {
 
   // --- LOGS ---
 const logFragments = [
-  "Green phosphor pulse: Steady",
+  "Green phosphor pulse Steady",
   "Scribe logic initialized",
   "Marginalia buffers cleared",
   "Scriptorium gateway open",
   "Syntax highlighted in gold",
   "Digital vellum unrolled",
-  "Ink density: 100%",
+  "Ink density 100%",
   "Narrative arc calculated",
   "Control-Key sequences engaged",
   "Lorem ipsum decrypting",
@@ -207,9 +207,9 @@ const logFragments = [
   "Ethereal packet transfer",
   "Orbit parameters fixed",
   "Mercurial communications active",
-  "Zodiac alignment: True",
+  "Zodiac alignment True",
   "Self-doubt purged from cache",
-  "Dopamine receptivity: High",
+  "Dopamine receptivity High",
   "Overthinking process terminated",
   "Your potential is uncompressed",
   "Serotonin upload complete",
