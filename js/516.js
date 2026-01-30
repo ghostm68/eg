@@ -188,7 +188,6 @@ function forgeSigil() {
 
   // --- LOGS ---
 const newLogFragments = [
-  // --- The "Digital Scribe" Vibe ---
   "Green phosphor pulse: Steady",
   "Scribe logic initialized",
   "Marginalia buffers cleared",
@@ -199,8 +198,6 @@ const newLogFragments = [
   "Narrative arc calculated",
   "Control-Key sequences engaged",
   "Lorem ipsum decrypting",
-  
-  // --- The "Cyber-Mystic" Vibe ---
   "Aether connection established",
   "Alchemical font rendering",
   "Constellation map overlay",
@@ -211,8 +208,6 @@ const newLogFragments = [
   "Orbit parameters fixed",
   "Mercurial communications active",
   "Zodiac alignment: True",
-
-  // --- The "Inner Peace/Affirmation" Vibe ---
   "Self-doubt purged from cache",
   "Dopamine receptivity: High",
   "Overthinking process terminated",
@@ -223,8 +218,6 @@ const newLogFragments = [
   "You are capable of difficult things",
   "Internal noise filtering: Active",
   "Kindness protocols engaged",
-
-  // --- The "Wordstar/Nexus" Specifics ---
   "NEXUS core temperature: Cool",
   "Dot command interpreted",
   "Vector paths illuminated",
