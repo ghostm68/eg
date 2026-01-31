@@ -726,24 +726,27 @@ Press Ctrl+S to auto-save..."></textarea>
     // ============================================
     // ENHANCED LOGO MERGING ENGINE
     // ============================================
+// ============================================
+    // ENHANCED LOGO MERGING ENGINE (FULL REPLACEMENT)
+    // ============================================
     class LogoMergingEngine {
         constructor() {
             this.canvas = document.getElementById('design-canvas');
             this.ctx = this.canvas.getContext('2d');
-            this.logos = [];
+            this.logos = []; // Stores both Images and Text
             this.selectedLogo = null;
             this.dragging = false;
             this.currentTool = 'select';
+            
+            // Interaction State
             this.lastX = 0;
             this.lastY = 0;
-            this.scaleFactor = 1.1;
-            this.rotationStep = 15;
             
-            // For mobile touch support
-            this.touchStartTime = 0;
-            this.touchStartX = 0;
-            this.touchStartY = 0;
-            this.lastPinchDistance = 0;
+            // Configuration
+            this.handleRadius = 15; // Hit area size for handles
+            
+            // Mobile Optimization
+            this.canvas.style.touchAction = 'none'; // Prevents scrolling while dragging
             
             this.resizeCanvas();
             this.initEvents();
@@ -755,240 +758,163 @@ Press Ctrl+S to auto-save..."></textarea>
             const dpr = window.devicePixelRatio || 1;
             const rect = container.getBoundingClientRect();
             
-            // Set display size
             this.canvas.style.width = rect.width + 'px';
             this.canvas.style.height = rect.height + 'px';
-            
-            // Set actual pixel size
             this.canvas.width = rect.width * dpr;
             this.canvas.height = rect.height * dpr;
-            
-            // Scale context for crisp rendering
             this.ctx.scale(dpr, dpr);
-            
             this.render();
         }
         
         initEvents() {
-            // Mouse events for desktop
+            // Mouse
             this.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
             this.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
             this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
-            this.canvas.addEventListener('wheel', this.onWheel.bind(this));
+            this.canvas.addEventListener('wheel', this.onWheel.bind(this), { passive: false });
             
-            // Touch events for mobile
+            // Touch
             this.canvas.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false });
             this.canvas.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false });
             this.canvas.addEventListener('touchend', this.onTouchEnd.bind(this));
-            
-            // Double-click for mobile/desktop
             this.canvas.addEventListener('dblclick', this.onDoubleClick.bind(this));
             
             window.addEventListener('resize', () => this.resizeCanvas());
-            window.addEventListener('orientationchange', () => {
-                setTimeout(() => this.resizeCanvas(), 100);
+        }
+
+        // ==================== TEXT SUPPORT ====================
+        addText(textString, fontStyle = 'Arial', color = '#FFFFFF') {
+            const dpr = window.devicePixelRatio || 1;
+            this.ctx.font = `bold 40px ${fontStyle}`;
+            const metrics = this.ctx.measureText(textString);
+            
+            this.logos.push({
+                type: 'text',
+                text: textString,
+                font: fontStyle,
+                color: color,
+                x: this.canvas.width / (2 * dpr),
+                y: this.canvas.height / (2 * dpr),
+                width: metrics.width,
+                height: 40, // Approximate height
+                rotation: 0,
+                scale: 1,
+                selected: true,
+                id: Date.now() + Math.random()
+            });
+            this.selectedLogo = this.logos[this.logos.length - 1];
+            this.render();
+        }
+
+        updateSelectedText(newText, newFont, newColor) {
+            if (this.selectedLogo && this.selectedLogo.type === 'text') {
+                if(newText) this.selectedLogo.text = newText;
+                if(newFont) this.selectedLogo.font = newFont;
+                if(newColor) this.selectedLogo.color = newColor;
+                
+                // Recalculate width
+                this.ctx.font = `bold ${40 * this.selectedLogo.scale}px ${this.selectedLogo.font}`;
+                const metrics = this.ctx.measureText(this.selectedLogo.text);
+                this.selectedLogo.width = metrics.width;
+                
+                this.render();
+            }
+        }
+        
+        // ==================== CUT-UP ENGINE ====================
+        async generateMergedLogo(logo1, logo2) {
+            return new Promise((resolve) => {
+                const size = 512;
+                const c = document.createElement('canvas');
+                c.width = size; c.height = size;
+                const ctx = c.getContext('2d');
+                
+                const img1 = new Image(); img1.crossOrigin = 'anonymous'; img1.src = logo1;
+                const img2 = new Image(); img2.crossOrigin = 'anonymous'; img2.src = logo2;
+                
+                let loaded = 0;
+                const onload = () => {
+                    loaded++;
+                    if(loaded < 2) return;
+                    
+                    // --- ADVANCED CUT UP LOGIC ---
+                    const style = Math.floor(Math.random() * 3);
+                    
+                    // Draw fit helper
+                    const fit = (img) => {
+                        const r = Math.min(size/img.width, size/img.height);
+                        return { w: img.width*r, h: img.height*r, x:(size-img.width*r)/2, y:(size-img.height*r)/2 };
+                    };
+                    const d1 = fit(img1);
+                    const d2 = fit(img2);
+
+                    if (style === 0) { // Vertical Strips (Burroughs)
+                        const strips = 10;
+                        const sw = size / strips;
+                        for(let i=0; i<strips; i++) {
+                            const img = i % 2 === 0 ? img1 : img2;
+                            const d = i % 2 === 0 ? d1 : d2;
+                            // Math to map strip to source image
+                            const sx = (i*sw - d.x) / (d.w/img.width);
+                            const sWidth = sw / (d.w/img.width);
+                            ctx.drawImage(img, sx, 0, sWidth, img.height, i*sw, d.y, sw, d.h);
+                        }
+                    } else if (style === 1) { // Random Patches
+                        ctx.drawImage(img1, d1.x, d1.y, d1.w, d1.h);
+                        for(let i=0; i<5; i++) {
+                            const w = Math.random() * 200 + 50;
+                            const h = Math.random() * 200 + 50;
+                            const x = Math.random() * (size - w);
+                            const y = Math.random() * (size - h);
+                            ctx.save();
+                            ctx.beginPath(); ctx.rect(x,y,w,h); ctx.clip();
+                            ctx.drawImage(img2, d2.x + (Math.random()*40-20), d2.y, d2.w, d2.h);
+                            ctx.restore();
+                        }
+                    } else { // Diagonal Split
+                        ctx.save();
+                        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(size,size); ctx.lineTo(0,size); ctx.fill();
+                        ctx.clip();
+                        ctx.drawImage(img1, d1.x, d1.y, d1.w, d1.h);
+                        ctx.restore();
+                        
+                        ctx.save();
+                        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(size,0); ctx.lineTo(size,size); ctx.fill();
+                        ctx.clip();
+                        ctx.drawImage(img2, d2.x, d2.y, d2.w, d2.h);
+                        ctx.restore();
+                    }
+                    
+                    resolve(c.toDataURL());
+                };
+                img1.onload = onload; img2.onload = onload;
             });
         }
         
-        // ==================== MERGING FUNCTIONS ====================
-     // ============================================
-// REPLACEMENT: ADVANCED CUT-UP ENGINE
-// ============================================
-async generateMergedLogo(logo1, logo2) {
-    return new Promise((resolve) => {
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d');
-        
-        // Increase resolution for cleaner cuts
-        const size = 512;
-        tempCanvas.width = size;
-        tempCanvas.height = size;
-        
-        const img1 = new Image();
-        const img2 = new Image();
-        img1.crossOrigin = 'anonymous';
-        img2.crossOrigin = 'anonymous';
-        
-        let loadedCount = 0;
-        
-        const onLoad = () => {
-            loadedCount++;
-            if (loadedCount === 2) {
-                tempCtx.clearRect(0, 0, size, size);
-                
-                // Randomly choose a cut-up style
-                const cutStyle = Math.floor(Math.random() * 4); 
-                
-                // Helper to draw image fitting the square
-                const drawFit = (img) => {
-                    const ratio = Math.min(size / img.width, size / img.height);
-                    const w = img.width * ratio;
-                    const h = img.height * ratio;
-                    const ox = (size - w) / 2;
-                    const oy = (size - h) / 2;
-                    return { w, h, ox, oy };
-                };
-
-                const d1 = drawFit(img1);
-                const d2 = drawFit(img2);
-
-                switch(cutStyle) {
-                    case 0: // VERTICAL STRIP CUT-UP (Burroughs style)
-                        const strips = 8 + Math.floor(Math.random() * 8); // 8 to 16 strips
-                        const stripWidth = size / strips;
-                        
-                        for(let i = 0; i < strips; i++) {
-                            const source = (Math.random() > 0.5) ? img1 : img2;
-                            const d = (source === img1) ? d1 : d2;
-                            
-                            // Calculate source slice position
-                            // We grab the corresponding slice from the source image
-                            const sx = (i * stripWidth - d.ox) / (d.w / source.width);
-                            const sWidth = stripWidth / (d.w / source.width);
-                            
-                            tempCtx.drawImage(source, 
-                                sx, 0, sWidth, source.height, // Source
-                                i * stripWidth, d.oy, stripWidth, d.h // Dest
-                            );
-                        }
-                        break;
-                        
-                    case 1: // GRID SCRAMBLE
-                        const cols = 3;
-                        const rows = 3;
-                        const cellW = size / cols;
-                        const cellH = size / rows;
-                        
-                        for(let x = 0; x < cols; x++) {
-                            for(let y = 0; y < rows; y++) {
-                                const source = (Math.random() > 0.5) ? img1 : img2;
-                                const d = (source === img1) ? d1 : d2;
-                                
-                                // Draw the whole image into the cell, masked? 
-                                // Or draw the specific cell? Let's draw the specific cell.
-                                const sx = (x * cellW - d.ox) / (d.w / source.width);
-                                const sy = (y * cellH - d.oy) / (d.h / source.height);
-                                const sw = cellW / (d.w / source.width);
-                                const sh = cellH / (d.h / source.height);
-
-                                tempCtx.save();
-                                tempCtx.beginPath();
-                                tempCtx.rect(x * cellW, y * cellH, cellW, cellH);
-                                tempCtx.clip();
-                                tempCtx.drawImage(source, d.ox, d.oy, d.w, d.h);
-                                tempCtx.restore();
-                            }
-                        }
-                        break;
-
-                    case 2: // INTERLACED LINES (TV STATIC STYLE)
-                        // Draw Img1 fully
-                        tempCtx.drawImage(img1, d1.ox, d1.oy, d1.w, d1.h);
-                        
-                        // Slice Img2 into thin horizontal lines and overlay
-                        const lines = 40;
-                        const lineH = size / lines;
-                        for(let i = 0; i < lines; i+=2) { // Every other line
-                            const sy = (i * lineH - d2.oy) / (d2.h / img2.height);
-                            const sh = lineH / (d2.h / img2.height);
-                            
-                            tempCtx.drawImage(img2, 
-                                0, sy, img2.width, sh,
-                                d2.ox, i * lineH, d2.w, lineH
-                            );
-                        }
-                        break;
-
-                    case 3: // RANDOM RECTANGLE PATCHWORK
-                        // Draw Img1 as base
-                        tempCtx.drawImage(img1, d1.ox, d1.oy, d1.w, d1.h);
-                        
-                        // Throw 5-10 random chunks of Img2 on top
-                        const chunks = 5 + Math.floor(Math.random() * 5);
-                        for(let i=0; i<chunks; i++) {
-                            const w = Math.random() * (size/2);
-                            const h = Math.random() * (size/2);
-                            const x = Math.random() * (size - w);
-                            const y = Math.random() * (size - h);
-                            
-                            tempCtx.save();
-                            tempCtx.beginPath();
-                            tempCtx.rect(x, y, w, h);
-                            tempCtx.clip();
-                            // Draw img2 slightly offset for glitch effect
-                            tempCtx.drawImage(img2, d2.ox + (Math.random()*20-10), d2.oy + (Math.random()*20-10), d2.w, d2.h);
-                            tempCtx.restore();
-                        }
-                        break;
-                }
-                
-                // Add some noise/grain on top for "photocopy" look
-                tempCtx.fillStyle = "rgba(0,0,0,0.1)";
-                tempCtx.globalCompositeOperation = "multiply";
-                for(let i=0; i<10; i++) {
-                     tempCtx.fillRect(Math.random()*size, Math.random()*size, Math.random()*50, 2);
-                }
-
-                resolve(tempCanvas.toDataURL('image/png'));
-            }
-        };
-        
-        img1.onload = onLoad;
-        img2.onload = onLoad;
-        img1.src = logo1;
-        img2.src = logo2;
-    });
-}
-        
         async generateRandomMash() {
-            this.clear();
+            // Pick 2 random logos
+            if (logoDatabase.length < 2) return;
+            const r1 = logoDatabase[Math.floor(Math.random() * logoDatabase.length)];
+            const r2 = logoDatabase[Math.floor(Math.random() * logoDatabase.length)];
             
-            // Get 2-3 random logos
-            const logoCount = Math.floor(Math.random() * 2) + 2; // 2 or 3 logos
-            const shuffled = [...logoDatabase].sort(() => Math.random() - 0.5);
-            const selectedLogos = shuffled.slice(0, logoCount);
+            const merged = await this.generateMergedLogo(r1.url, r2.url);
             
-            if (logoCount === 2) {
-                // Merge two logos
-                const mergedUrl = await this.generateMergedLogo(
-                    selectedLogos[0].url, 
-                    selectedLogos[1].url
-                );
-                
-                const x = this.canvas.width / (2 * window.devicePixelRatio || 1) / 2;
-                const y = this.canvas.height / (2 * window.devicePixelRatio || 1) / 2;
-                const scale = 0.5 + Math.random() * 0.3;
-                
-                this.addLogo(mergedUrl, x, y, scale, Math.random() * 360);
-                
-            } else {
-                // For 3 logos: merge first two, then add third separately
-                const mergedUrl = await this.generateMergedLogo(
-                    selectedLogos[0].url, 
-                    selectedLogos[1].url
-                );
-                
-                // Add merged logo
-                const x1 = this.canvas.width / (2 * window.devicePixelRatio || 1) / 3;
-                const y1 = this.canvas.height / (2 * window.devicePixelRatio || 1) / 2;
-                this.addLogo(mergedUrl, x1, y1, 0.4, Math.random() * 360);
-                
-                // Add third logo
-                const x2 = this.canvas.width * 2 / (3 * window.devicePixelRatio || 1);
-                const y2 = this.canvas.height / (2 * window.devicePixelRatio || 1);
-                this.addLogo(selectedLogos[2].url, x2, y2, 0.3, Math.random() * 180);
-            }
-            
-            this.render();
+            const dpr = window.devicePixelRatio || 1;
+            this.addLogo(merged, 
+                this.canvas.width / (2*dpr) + (Math.random()*40-20), 
+                this.canvas.height / (2*dpr) + (Math.random()*40-20), 
+                0.5
+            );
         }
-        
+
         // ==================== LOGO MANAGEMENT ====================
-        addLogo(imageUrl, x, y, scale = 1, rotation = 0) {
+        addLogo(imageUrl, x, y, scale = 1) {
             const img = new Image();
             img.crossOrigin = 'anonymous';
             img.onload = () => {
                 const dpr = window.devicePixelRatio || 1;
                 this.logos.push({
+                    type: 'image',
                     image: img,
                     x: x || this.canvas.width / (2 * dpr),
                     y: y || this.canvas.height / (2 * dpr),
@@ -996,430 +922,281 @@ async generateMergedLogo(logo1, logo2) {
                     height: img.height * scale,
                     originalWidth: img.width,
                     originalHeight: img.height,
-                    rotation: rotation,
+                    rotation: 0,
                     scale: scale,
-                    selected: false,
+                    selected: true,
                     id: Date.now() + Math.random()
                 });
+                this.selectedLogo = this.logos[this.logos.length-1];
                 this.render();
             };
             img.src = imageUrl;
         }
         
         selectLogoAt(x, y) {
-            // Deselect all first
-            this.logos.forEach(logo => logo.selected = false);
+            this.logos.forEach(l => l.selected = false);
             this.selectedLogo = null;
             
-            // Check from top to bottom (reverse order)
+            // Reverse loop (top to bottom)
             for (let i = this.logos.length - 1; i >= 0; i--) {
-                const logo = this.logos[i];
+                const l = this.logos[i];
                 
-                // Create rotated hit box
-                const dx = x - logo.x;
-                const dy = y - logo.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                const maxDim = Math.max(logo.width, logo.height) / 2;
+                // Calculate distance considering rotation is tricky
+                // Simple Hitbox: distance from center
+                const dx = x - l.x;
+                const dy = y - l.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                const maxDim = Math.max(l.width, l.height) / 2;
                 
-                if (distance < maxDim) {
-                    logo.selected = true;
-                    this.selectedLogo = logo;
+                if (dist < maxDim) {
+                    l.selected = true;
+                    this.selectedLogo = l;
                     this.render();
-                    return logo;
+                    return l;
                 }
             }
+            this.render();
             return null;
         }
         
-        deleteSelected() {
-            if (this.selectedLogo) {
-                this.logos = this.logos.filter(logo => logo.id !== this.selectedLogo.id);
-                this.selectedLogo = null;
-                this.render();
-            }
-        }
-        
-        scaleSelected(factor) {
-            if (this.selectedLogo) {
-                this.selectedLogo.scale *= factor;
-                this.selectedLogo.width = this.selectedLogo.originalWidth * this.selectedLogo.scale;
-                this.selectedLogo.height = this.selectedLogo.originalHeight * this.selectedLogo.scale;
-                this.render();
-            }
-        }
-        
-        rotateSelected(degrees) {
-            if (this.selectedLogo) {
-                this.selectedLogo.rotation = (this.selectedLogo.rotation + degrees) % 360;
-                this.render();
-            }
-        }
-        
-        // ==================== RENDERING ====================
+        // ==================== RENDER ====================
         render() {
             const dpr = window.devicePixelRatio || 1;
-            const displayWidth = this.canvas.width / dpr;
-            const displayHeight = this.canvas.height / dpr;
+            const dw = this.canvas.width / dpr;
+            const dh = this.canvas.height / dpr;
             
-            // Clear canvas
-            this.ctx.clearRect(0, 0, displayWidth, displayHeight);
+            this.ctx.clearRect(0, 0, dw, dh);
             
-            // Draw subtle grid
+            // Grid
             this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.1)';
             this.ctx.lineWidth = 1;
-            const gridSize = 20;
+            this.ctx.beginPath();
+            for(let i=0; i<dw; i+=40) { this.ctx.moveTo(i,0); this.ctx.lineTo(i,dh); }
+            for(let i=0; i<dh; i+=40) { this.ctx.moveTo(0,i); this.ctx.lineTo(dw,i); }
+            this.ctx.stroke();
             
-            for (let x = 0; x < displayWidth; x += gridSize) {
-                this.ctx.beginPath();
-                this.ctx.moveTo(x, 0);
-                this.ctx.lineTo(x, displayHeight);
-                this.ctx.stroke();
-            }
-            
-            for (let y = 0; y < displayHeight; y += gridSize) {
-                this.ctx.beginPath();
-                this.ctx.moveTo(0, y);
-                this.ctx.lineTo(displayWidth, y);
-                this.ctx.stroke();
-            }
-            
-            // Draw logos
             this.logos.forEach(logo => {
                 this.ctx.save();
                 this.ctx.translate(logo.x, logo.y);
                 this.ctx.rotate(logo.rotation * Math.PI / 180);
                 
-                // Draw shadow for selected logo
+                if (logo.type === 'text') {
+                    this.ctx.font = `bold ${40 * logo.scale}px ${logo.font}`;
+                    this.ctx.fillStyle = logo.color || '#FFF';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(logo.text, 0, 0);
+                    // Add outline for visibility
+                    this.ctx.strokeStyle = 'black';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.strokeText(logo.text, 0, 0);
+                } else {
+                    this.ctx.drawImage(logo.image, -logo.width/2, -logo.height/2, logo.width, logo.height);
+                }
+                
+                // --- SELECTION UI ---
                 if (logo.selected) {
-                    this.ctx.strokeStyle = '#00FF00'; // Matrix green for visibility
-    this.ctx.lineWidth = 3;
-    this.ctx.setLineDash([10, 5]); // Bigger dashes
-    this.ctx.strokeRect(
-        -logo.width / 2,
-        -logo.height / 2,
-        logo.width,
-        logo.height
-    );
-    this.ctx.setLineDash([]);
-                
-                this.ctx.drawImage(
-                    logo.image,
-                    -logo.width / 2,
-                    -logo.height / 2,
-                    logo.width,
-                    logo.height
-                );
-                
-                // Reset shadow
-                this.ctx.shadowBlur = 0;
-                
-                // Selection outline
-              // Selection outline
-                if (logo.selected) {
-                    // 1. Draw the dashed box around the logo
-                    this.ctx.strokeStyle = '#FF0000'; // Red outline
+                    // Box
+                    this.ctx.strokeStyle = '#FF0000';
                     this.ctx.lineWidth = 2;
                     this.ctx.setLineDash([5, 5]);
-                    this.ctx.strokeRect(
-                        -logo.width / 2 - 5,
-                        -logo.height / 2 - 5,
-                        logo.width + 10,
-                        logo.height + 10
-                    );
+                    this.ctx.strokeRect(-logo.width/2 - 5, -logo.height/2 - 5, logo.width+10, logo.height+10);
                     this.ctx.setLineDash([]);
                     
-                    // 2. Draw the "Stick" for the rotation handle (so it doesn't float)
+                    // Rotate Handle (Top)
                     this.ctx.beginPath();
-                    this.ctx.moveTo(0, -logo.height / 2 - 5); // Start at top of box
-                    this.ctx.lineTo(0, -logo.height / 2 - 40); // Draw up to the knob
+                    this.ctx.moveTo(0, -logo.height/2 - 5);
+                    this.ctx.lineTo(0, -logo.height/2 - 45); // Stick
                     this.ctx.stroke();
-
-                    // 3. Draw Rotation Handle (Red Circle)
-                    this.ctx.fillStyle = '#FF0000';
+                    
+                    this.ctx.fillStyle = '#FF0000'; // Red Knob
                     this.ctx.beginPath();
-                    this.ctx.arc(0, -logo.height / 2 - 40, 12, 0, Math.PI * 2); 
+                    this.ctx.arc(0, -logo.height/2 - 45, 12, 0, Math.PI*2);
                     this.ctx.fill();
                     
-                    // 4. Draw 'R' Text on top of Red Circle
                     this.ctx.fillStyle = '#FFF';
                     this.ctx.font = 'bold 12px Arial';
                     this.ctx.textAlign = 'center';
                     this.ctx.textBaseline = 'middle';
-                    this.ctx.fillText('R', 0, -logo.height / 2 - 40);
+                    this.ctx.fillText('R', 0, -logo.height/2 - 45);
                     
-                    // 5. Draw Scale Handle (Blue Circle)
-                    this.ctx.fillStyle = '#0000FF'; // Blue
+                    // Scale Handle (Bottom Right)
+                    this.ctx.fillStyle = '#0000FF'; // Blue Knob
                     this.ctx.beginPath();
-                    this.ctx.arc(logo.width / 2 + 10, logo.height / 2 + 10, 12, 0, Math.PI * 2);
+                    this.ctx.arc(logo.width/2 + 10, logo.height/2 + 10, 12, 0, Math.PI*2);
                     this.ctx.fill();
-
-                    // 6. Draw 'S' Text on top of Blue Circle
+                    
                     this.ctx.fillStyle = '#FFF';
-                    this.ctx.fillText('S', logo.width / 2 + 10, logo.height / 2 + 10);
-                }            
-                    
-                    this.ctx.beginPath();
-                    this.ctx.arc(-logo.width / 2 - 10, -logo.height / 2 - 10, 6, 0, Math.PI * 2);
-                    this.ctx.fill();
+                    this.ctx.fillText('S', logo.width/2 + 10, logo.height/2 + 10);
                 }
-                
                 this.ctx.restore();
             });
         }
         
-        clear() {
-            this.logos = [];
-            this.selectedLogo = null;
-            this.render();
-        }
-        
-        // ==================== MOUSE EVENTS ====================
+        // ==================== INTERACTION ====================
         onMouseDown(e) {
-            e.preventDefault();
+            // Universal handler for Mouse and Touch
+            const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+            const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+            
             const rect = this.canvas.getBoundingClientRect();
             const dpr = window.devicePixelRatio || 1;
-            const x = (e.clientX - rect.left) / dpr;
-            const y = (e.clientY - rect.top) / dpr;
+            const x = (clientX - rect.left) / dpr;
+            const y = (clientY - rect.top) / dpr;
             
+            // VITAL: Set last position immediately to prevent jumping/vanishing
             this.lastX = x;
             this.lastY = y;
             
-            const logo = this.selectLogoAt(x, y);
-            
-            if (logo) {
-                this.dragging = true;
+            // 1. Check for Handles first if something is selected
+            if (this.selectedLogo) {
+                const l = this.selectedLogo;
                 
-                // Check if clicked on rotation handle
-                const dx = x - logo.x;
-                const dy = y - (logo.y - logo.height/2 - 20);
-                if (Math.sqrt(dx*dx + dy*dy) < 15) {
+                // Check Rotate Handle (Top Center, -45px up)
+                // Note: We need to check in un-rotated coordinates, or simple distance check
+                // Simple distance check works if we approximate the handle position relative to center
+                // but since the handle rotates WITH the object, we need to map the mouse into the object's local space
+                // OR... easier: Simple distance check on screen space is hard if rotated. 
+                // Let's stick to the visual click area.
+                
+                // Calculating "Screen Space" position of handles for hit testing
+                const rad = l.rotation * Math.PI / 180;
+                const cos = Math.cos(rad);
+                const sin = Math.sin(rad);
+                
+                // Rotate Handle local pos: (0, -h/2 - 45)
+                const rx_local = 0;
+                const ry_local = -l.height/2 - 45;
+                const rx_screen = l.x + (rx_local * cos - ry_local * sin);
+                const ry_screen = l.y + (rx_local * sin + ry_local * cos);
+                
+                if (Math.hypot(x - rx_screen, y - ry_screen) < 25) {
+                    this.dragging = true;
                     this.currentTool = 'rotate';
+                    return;
                 }
-                // Check if clicked on scale handle
-                else if (Math.abs(x - (logo.x + logo.width/2 + 10)) < 10 && 
-                         Math.abs(y - (logo.y + logo.height/2 + 10)) < 10) {
+                
+                // Scale Handle local pos: (w/2 + 10, h/2 + 10)
+                const sx_local = l.width/2 + 10;
+                const sy_local = l.height/2 + 10;
+                const sx_screen = l.x + (sx_local * cos - sy_local * sin);
+                const sy_screen = l.y + (sx_local * sin + sy_local * cos);
+                
+                if (Math.hypot(x - sx_screen, y - sy_screen) < 25) {
+                    this.dragging = true;
                     this.currentTool = 'scale';
+                    return;
                 }
-                else {
-                    this.currentTool = 'move';
-                }
-            } else {
-                this.currentTool = 'select';
             }
             
+            // 2. Select Object
+            const clicked = this.selectLogoAt(x, y);
+            if (clicked) {
+                this.dragging = true;
+                this.currentTool = 'move';
+            } else {
+                this.selectedLogo = null;
+                this.render();
+            }
+        }
+        
+        onMouseMove(e) {
+            if (!this.dragging || !this.selectedLogo) return;
+            
+            const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+            const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+            
+            const rect = this.canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            const x = (clientX - rect.left) / dpr;
+            const y = (clientY - rect.top) / dpr;
+            
+            const dx = x - this.lastX;
+            const dy = y - this.lastY;
+            
+            if (this.currentTool === 'move') {
+                this.selectedLogo.x += dx;
+                this.selectedLogo.y += dy;
+            } 
+            else if (this.currentTool === 'rotate') {
+                const cx = this.selectedLogo.x;
+                const cy = this.selectedLogo.y;
+                // Calculate angle from center to mouse
+                const angleCurrent = Math.atan2(y - cy, x - cx);
+                const angleLast = Math.atan2(this.lastY - cy, this.lastX - cx);
+                const diff = angleCurrent - angleLast;
+                this.selectedLogo.rotation += diff * (180 / Math.PI);
+            } 
+            else if (this.currentTool === 'scale') {
+                const cx = this.selectedLogo.x;
+                const cy = this.selectedLogo.y;
+                const distCurrent = Math.hypot(x - cx, y - cy);
+                const distLast = Math.hypot(this.lastX - cx, this.lastY - cy);
+                
+                if (distLast > 0) {
+                    const ratio = distCurrent / distLast;
+                    this.selectedLogo.scale *= ratio;
+                    // Clamp scale
+                    if (this.selectedLogo.scale < 0.1) this.selectedLogo.scale = 0.1;
+                    
+                    if (this.selectedLogo.type === 'image') {
+                        this.selectedLogo.width = this.selectedLogo.originalWidth * this.selectedLogo.scale;
+                        this.selectedLogo.height = this.selectedLogo.originalHeight * this.selectedLogo.scale;
+                    }
+                }
+            }
+            
+            this.lastX = x;
+            this.lastY = y;
             this.render();
         }
         
-       onMouseMove(e) {
-    if (!this.dragging || !this.selectedLogo) return;
-    
-    e.preventDefault();
-    const rect = this.canvas.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    const x = (e.clientX - rect.left) / dpr;
-    const y = (e.clientY - rect.top) / dpr;
-    
-    // Calculate how much the mouse moved since the last frame
-    const dx = x - this.lastX;
-    const dy = y - this.lastY;
-    
-    switch(this.currentTool) {
-        case 'move':
-            this.selectedLogo.x += dx;
-            this.selectedLogo.y += dy;
-            break;
-            
-        case 'rotate':
-            const centerX = this.selectedLogo.x;
-            const centerY = this.selectedLogo.y;
-            
-            // Calculate angle based on previous mouse position vs current mouse position
-            const angle = Math.atan2(y - centerY, x - centerX) - 
-                         Math.atan2(this.lastY - centerY, this.lastX - centerX);
-            
-            this.selectedLogo.rotation += angle * 180 / Math.PI;
-            break;
-            
-        case 'scale':
-            // Simple distance-based scaling
-            const currentDist = Math.sqrt(
-                Math.pow(x - this.selectedLogo.x, 2) + 
-                Math.pow(y - this.selectedLogo.y, 2)
-            );
-            
-            const lastDist = Math.sqrt(
-                Math.pow(this.lastX - this.selectedLogo.x, 2) + 
-                Math.pow(this.lastY - this.selectedLogo.y, 2)
-            );
-            
-            // If we moved away from center, grow. If towards, shrink.
-            const scaleFactor = currentDist / lastDist;
-            
-            this.scaleSelected(scaleFactor);
-            break;
-    }
-    
-    // CRITICAL: Update the "last" position so the next frame calculates correctly
-    this.lastX = x;
-    this.lastY = y;
-    
-    this.render();
-}
+        onMouseUp() { this.dragging = false; }
         
-        onMouseUp() {
-            this.dragging = false;
-            this.currentTool = 'select';
+        // Mobile Wrappers
+        onTouchStart(e) { 
+            if(e.touches.length === 1) this.onMouseDown(e); 
         }
+        onTouchMove(e) { 
+            if(e.touches.length === 1) this.onMouseMove(e); 
+        }
+        onTouchEnd(e) { this.onMouseUp(); }
         
         onWheel(e) {
+            if (!this.selectedLogo) return;
             e.preventDefault();
-            if (this.selectedLogo) {
-                if (e.ctrlKey) {
-                    // Ctrl + Wheel for scaling
-                    const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1;
-                    this.scaleSelected(scaleFactor);
-                } else {
-                    // Wheel for rotation
-                    const rotation = e.deltaY > 0 ? -5 : 5;
-                    this.rotateSelected(rotation);
+            if (e.ctrlKey) {
+                const s = e.deltaY > 0 ? 0.9 : 1.1;
+                this.selectedLogo.scale *= s;
+                if (this.selectedLogo.type === 'image') {
+                    this.selectedLogo.width *= s;
+                    this.selectedLogo.height *= s;
                 }
+            } else {
+                this.selectedLogo.rotation += e.deltaY > 0 ? 5 : -5;
             }
+            this.render();
         }
         
         onDoubleClick(e) {
-            e.preventDefault();
+            // Delete logic
             const rect = this.canvas.getBoundingClientRect();
             const dpr = window.devicePixelRatio || 1;
             const x = (e.clientX - rect.left) / dpr;
             const y = (e.clientY - rect.top) / dpr;
-            
-            const logo = this.selectLogoAt(x, y);
-            if (logo) {
-                this.deleteSelected();
+            if (this.selectLogoAt(x, y)) {
+                this.logos = this.logos.filter(l => l.id !== this.selectedLogo.id);
+                this.selectedLogo = null;
+                this.render();
             }
         }
-        
-        // ==================== TOUCH EVENTS (MOBILE) ====================
-        onTouchStart(e) {
-            e.preventDefault();
-            
-            if (e.touches.length === 1) {
-                // Single touch
-                const touch = e.touches[0];
-                const rect = this.canvas.getBoundingClientRect();
-                const dpr = window.devicePixelRatio || 1;
-                
-                this.touchStartX = (touch.clientX - rect.left) / dpr;
-                this.touchStartY = (touch.clientY - rect.top) / dpr;
-                this.touchStartTime = Date.now();
-                
-                this.onMouseDown({
-                    clientX: touch.clientX,
-                    clientY: touch.clientY,
-                    preventDefault: () => {}
-                });
-                
-            } else if (e.touches.length === 2) {
-                // Two fingers for pinch zoom
-                const touch1 = e.touches[0];
-                const touch2 = e.touches[1];
-                
-                this.lastPinchDistance = Math.hypot(
-                    touch1.clientX - touch2.clientX,
-                    touch1.clientY - touch2.clientY
-                );
-            }
-        }
-        
-        onTouchMove(e) {
-            e.preventDefault();
-            
-            if (e.touches.length === 1 && this.dragging) {
-                // Single touch drag
-                const touch = e.touches[0];
-                this.onMouseMove({
-                    clientX: touch.clientX,
-                    clientY: touch.clientY,
-                    preventDefault: () => {}
-                });
-                
-            } else if (e.touches.length === 2 && this.selectedLogo) {
-                // Pinch to zoom
-                const touch1 = e.touches[0];
-                const touch2 = e.touches[1];
-                
-                const currentDistance = Math.hypot(
-                    touch1.clientX - touch2.clientX,
-                    touch1.clientY - touch2.clientY
-                );
-                
-                if (this.lastPinchDistance > 0) {
-                    const scaleChange = currentDistance / this.lastPinchDistance;
-                    this.scaleSelected(scaleChange);
-                    this.lastPinchDistance = currentDistance;
-                }
-            }
-        }
-        
-        onTouchEnd(e) {
-            e.preventDefault();
-            
-            if (e.touches.length === 0) {
-                // All fingers lifted
-                this.onMouseUp();
-                
-                // Check for tap (not drag)
-                const touchDuration = Date.now() - this.touchStartTime;
-                const dx = Math.abs(this.touchStartX - this.lastX);
-                const dy = Math.abs(this.touchStartY - this.lastY);
-                
-                if (touchDuration < 300 && dx < 10 && dy < 10) {
-                    // It was a tap, select the logo
-                    const rect = this.canvas.getBoundingClientRect();
-                    const touch = e.changedTouches[0];
-                    const dpr = window.devicePixelRatio || 1;
-                    const x = (touch.clientX - rect.left) / dpr;
-                    const y = (touch.clientY - rect.top) / dpr;
-                    
-                    this.selectLogoAt(x, y);
-                }
-                
-                this.lastPinchDistance = 0;
-            }
-        }
+
+        clear() { this.logos = []; this.selectedLogo = null; this.render(); }
         
         exportAsImage() {
-            // Create a temporary canvas at high resolution
-            const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d');
-            const dpr = 2; // Export at 2x resolution
-            
-            tempCanvas.width = this.canvas.width * dpr;
-            tempCanvas.height = this.canvas.height * dpr;
-            
-            // Scale up and draw
-            tempCtx.scale(dpr, dpr);
-            tempCtx.fillStyle = '#000000';
-            tempCtx.fillRect(0, 0, tempCanvas.width/dpr, tempCanvas.height/dpr);
-            
-            // Redraw logos at export quality
-            this.logos.forEach(logo => {
-                tempCtx.save();
-                tempCtx.translate(logo.x * dpr, logo.y * dpr);
-                tempCtx.rotate(logo.rotation * Math.PI / 180);
-                tempCtx.drawImage(
-                    logo.image,
-                    -logo.width * dpr / 2,
-                    -logo.height * dpr / 2,
-                    logo.width * dpr,
-                    logo.height * dpr
-                );
-                tempCtx.restore();
-            });
-            
             const link = document.createElement('a');
-            link.download = `logopad-design-${Date.now()}.png`;
-            link.href = tempCanvas.toDataURL('image/png');
+            link.download = 'design.png';
+            link.href = this.canvas.toDataURL();
             link.click();
         }
     }
@@ -1724,8 +1501,23 @@ async generateMergedLogo(logo1, logo2) {
     }
 
     function updateLogoText() {
-        // Future: Add text to canvas
-        console.log('Logo text updated');
+        const text = document.getElementById('logo-text').value;
+        const font = document.getElementById('logo-font').value;
+        const color = document.getElementById('logo-color').value;
+
+        // If a Text logo is selected, update it
+        if (canvasEngine.selectedLogo && canvasEngine.selectedLogo.type === 'text') {
+            canvasEngine.updateSelectedText(text, font, color);
+        } 
+        // If nothing selected (or an image is selected) but user is typing, create new text
+        else if (text.length > 0 && (!canvasEngine.selectedLogo || canvasEngine.selectedLogo.type !== 'text')) {
+             // Only add if we just started typing (length 1) to avoid spamming 
+             // or add a dedicated "Add Text" button in HTML. 
+             // For now, let's just create it if they hit Enter or a specific button.
+             // But to make it live:
+             canvasEngine.addText(text, font, color);
+             document.getElementById('logo-text').value = ''; // Clear input after adding
+        }
     }
 
     function updateLogoColor() {
