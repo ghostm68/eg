@@ -205,7 +205,7 @@
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
-            height: 60px;
+            height: 120px; /* Taller for the starter text */
             position: sticky;
             top: 35px; 
             z-index: 900;
@@ -220,11 +220,12 @@
             border: 1px solid var(--border-main);
             color: var(--text-accent);
             font-family: 'Courier Prime', monospace;
-            font-size: 16px;
+            font-size: 14px;
             padding: 10px;
             resize: none;
             outline: none;
             transition: all 0.3s;
+            line-height: 1.4;
         }
         #prompt-input:focus { border-color: var(--text-accent); }
 
@@ -388,7 +389,10 @@
         </header>
 
         <div class="input-section">
-            <textarea id="prompt-input" placeholder="ENTER SOURCE TEXT FOR FRACTURING..."></textarea>
+            <textarea id="prompt-input">CITADELLE PROTOCOL 88:
+The ghosts in the machine are not bugs; they are features of a system dreaming of itself. We do not create data; we excavate it from the static.
+
+"Silence is a valid input."</textarea>
             <button id="run-button">EXECUTE</button>
         </div>
 
@@ -430,11 +434,11 @@
                 <div class="model-output" id="out-4"></div>
             </div>
 
-            <!-- 5. HEXADECIMAL -->
+            <!-- 5. HIGH GOTHIC (REPLACED HEX) -->
             <div class="model-box b-mist">
                 <div class="model-header">
-                    <span>NODE 05: HEX_DUMP</span>
-                    <span class="model-meta">RAW</span>
+                    <span>NODE 05: HIGH GOTHIC</span>
+                    <span class="model-meta">LATIN_ARCHIVE</span>
                 </div>
                 <div class="model-output" id="out-5"></div>
             </div>
@@ -470,7 +474,7 @@
             <div class="model-box b-llama">
                 <div class="model-header">
                     <span>NODE 09: CAESAR</span>
-                    <span class="model-meta">SHIFT+1</span>
+                    <span class="model-meta">XENOLINGUIST</span>
                 </div>
                 <div class="model-output" id="out-9"></div>
             </div>
@@ -516,9 +520,16 @@
 
         // --- 2. THE QUANTUM ENGINE (TEXT PROCESSORS) ---
         const QuantumPrism = {
+            // 1. Redactor
             redact: (text) => text.split(' ').map(w => Math.random() > 0.6 ? '█'.repeat(w.length) : w).join(' '),
+            
+            // 2. Binary
             binary: (text) => text.split('').map(c => c.charCodeAt(0).toString(2)).join(' ').substring(0, 300),
+            
+            // 3. Devowel
             devowel: (text) => text.replace(/[aeiouAEIOU]/g, ''),
+            
+            // 4. Cut-Up
             cutup: (text) => {
                 let w = text.split(' ');
                 for (let i = w.length - 1; i > 0; i--) {
@@ -527,13 +538,31 @@
                 }
                 return w.join(' ');
             },
-            hex: (text) => text.split('').map(c => c.charCodeAt(0).toString(16).toUpperCase()).join(' '),
+            
+            // 5. HIGH GOTHIC (LATINIZER) - Replaced Hex
+            latin: (text) => {
+                const suffixes = ['us', 'um', 'ae', 'ix', 'ibus', 'orum'];
+                return text.split(' ').map(w => {
+                    if (w.length < 4) return w; // Don't latinize short words
+                    // Remove punctuation
+                    let clean = w.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+                    return clean + suffixes[Math.floor(Math.random() * suffixes.length)];
+                }).join(' ');
+            },
+            
+            // 6. Mirror
             mirror: (text) => text.split('').reverse().join(''),
+            
+            // 7. Sort
             sort: (text) => text.split(' ').sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase())).join(' '),
+            
+            // 8. Glitch
             glitch: (text) => {
                 const g = ['∫','∂','√','≠','≤','≥','?','!','/','\\'];
                 return text.split('').map(c => Math.random() > 0.85 ? c + g[Math.floor(Math.random()*g.length)] : c).join('');
             },
+            
+            // 9. Shift (Alien/Klingon feel)
             shift: (text) => text.split('').map(c => String.fromCharCode(c.charCodeAt(0) + 1)).join('')
         };
 
@@ -581,7 +610,10 @@
             setTimeout(() => typeWriter('out-2', QuantumPrism.binary(raw), 5), 200);
             setTimeout(() => typeWriter('out-3', QuantumPrism.devowel(raw), 30), 300);
             setTimeout(() => typeWriter('out-4', QuantumPrism.cutup(raw), 25), 400);
-            setTimeout(() => typeWriter('out-5', QuantumPrism.hex(raw), 10), 500);
+            
+            // Node 5 uses the new Latinizer
+            setTimeout(() => typeWriter('out-5', QuantumPrism.latin(raw), 20), 500);
+            
             setTimeout(() => typeWriter('out-6', QuantumPrism.mirror(raw), 15), 600);
             setTimeout(() => typeWriter('out-7', QuantumPrism.sort(raw), 35), 700);
             setTimeout(() => typeWriter('out-8', QuantumPrism.glitch(raw), 5), 800);
