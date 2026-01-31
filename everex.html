@@ -562,485 +562,1093 @@ Press Ctrl+S to auto-save..."></textarea>
         </div>
     </div>
 
-    <script>
-        // ============================================
-        // THREE.JS BACKGROUND
-        // ============================================
-        let scene, camera, renderer, cube, innerCube;
+<script>
+    // ============================================
+    // THREE.JS BACKGROUND
+    // ============================================
+    let scene, camera, renderer, cube, innerCube;
 
-        function initThreeJS() {
-            scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x000000, 0.04);
-            
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 25;
+    function initThreeJS() {
+        scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.04);
+        
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 25;
 
-            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit for mobile
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const group = new THREE.Group();
+        
+        // Outer Grid
+        const geometry = new THREE.BoxGeometry(16, 16, 16);
+        const edges = new THREE.EdgesGeometry(geometry);
+        const material = new THREE.LineBasicMaterial({ 
+            color: 0x666666, 
+            transparent: true, 
+            opacity: 0.2 
+        });
+        cube = new THREE.LineSegments(edges, material);
+        group.add(cube);
+        
+        // Inner Core
+        const innerGeo = new THREE.BoxGeometry(7, 7, 7);
+        const innerEdges = new THREE.EdgesGeometry(innerGeo);
+        const innerMat = new THREE.LineBasicMaterial({ 
+            color: 0xFF0000, 
+            transparent: true, 
+            opacity: 0.5 
+        });
+        innerCube = new THREE.LineSegments(innerEdges, innerMat);
+        group.add(innerCube);
+        
+        scene.add(group);
+
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            group.rotation.x += delta * 0.15;
+            group.rotation.y += delta * 0.25;
+            innerCube.material.opacity = 0.5 + Math.sin(clock.elapsedTime * 2) * 0.2;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Responsive resize
+        function handleResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            document.getElementById('canvas-container').appendChild(renderer.domElement);
-
-            const group = new THREE.Group();
             
-            // Outer Grid
-            const geometry = new THREE.BoxGeometry(16, 16, 16);
-            const edges = new THREE.EdgesGeometry(geometry);
-            const material = new THREE.LineBasicMaterial({ 
-                color: 0x666666, 
-                transparent: true, 
-                opacity: 0.2 
-            });
-            cube = new THREE.LineSegments(edges, material);
-            group.add(cube);
-            
-            // Inner Core
-            const innerGeo = new THREE.BoxGeometry(7, 7, 7);
-            const innerEdges = new THREE.EdgesGeometry(innerGeo);
-            const innerMat = new THREE.LineBasicMaterial({ 
-                color: 0xFF0000, 
-                transparent: true, 
-                opacity: 0.5 
-            });
-            innerCube = new THREE.LineSegments(innerEdges, innerMat);
-            group.add(innerCube);
-            
-            scene.add(group);
-
-            const clock = new THREE.Clock();
-            function animate() {
-                requestAnimationFrame(animate);
-                const delta = clock.getDelta();
-                group.rotation.x += delta * 0.15;
-                group.rotation.y += delta * 0.25;
-                innerCube.material.opacity = 0.5 + Math.sin(clock.elapsedTime * 2) * 0.2;
-                renderer.render(scene, camera);
-            }
-            animate();
-
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
-        }
-
-        // ============================================
-        // THEME MANAGEMENT
-        // ============================================
-        function toggleTheme() {
-            document.body.classList.toggle('classic-mode');
-            const isBlue = document.body.classList.contains('classic-mode');
-            
-            if(isBlue) {
-                scene.fog.color.setHex(0x0000AA);
-                innerCube.material.color.setHex(0xFFFF00);
-                cube.material.color.setHex(0x00FFFF);
-                document.getElementById('canvas-container').style.opacity = "0.4";
-            } else {
-                scene.fog.color.setHex(0x000000);
-                innerCube.material.color.setHex(0xFF0000);
-                cube.material.color.setHex(0x666666);
-                document.getElementById('canvas-container').style.opacity = "0.6";
+            // Update canvas engine if it exists
+            if (window.canvasEngine) {
+                canvasEngine.resizeCanvas();
             }
         }
+        
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', handleResize);
+    }
 
-        // ============================================
-        // LOGO DATABASE (40+ Logos)
-        // ============================================
-        const logoDatabase = [
-            // Tech Brands
-            { name: "Android", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Android_robot.svg/320px-Android_robot.svg.png" },
-            { name: "Apple", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Apple_logo_black.svg/320px-Apple_logo_black.svg.png" },
-            { name: "Windows", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Microsoft_Windows_3.1_logo.svg/320px-Microsoft_Windows_3.1_logo.svg.png" },
-            { name: "Linux", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Tux.svg/320px-Tux.svg.png" },
-            
-            // Social Media
-            { name: "Twitter", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Logo_of_Twitter.svg/320px-Logo_of_Twitter.svg.png" },
-            { name: "Facebook", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Facebook_Logo_%282019%29.svg/320px-Facebook_Logo_%282019%29.svg.png" },
-            { name: "Instagram", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Instagram_logo_2016.svg/320px-Instagram_logo_2016.svg.png" },
-            { name: "YouTube", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/YouTube_full-color_icon_%282017%29.svg/320px-YouTube_full-color_icon_%282017%29.svg.png" },
-            
-            // Automotive
-            { name: "Mercedes", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Mercedes-Logo.svg/320px-Mercedes-Logo.svg.png" },
-            { name: "BMW", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/BMW.svg/320px-BMW.svg.png" },
-            { name: "Audi", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Audi-Logo_2016.svg/320px-Audi-Logo_2016.svg.png" },
-            { name: "Tesla", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Tesla_Motors.svg/320px-Tesla_Motors.svg.png" },
-            
-            // Food & Beverage
-            { name: "Coca-Cola", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Coca-Cola_logo.svg/320px-Coca-Cola_logo.svg.png" },
-            { name: "Pepsi", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Pepsi_logo_2014.svg/320px-Pepsi_logo_2014.svg.png" },
-            { name: "McDonalds", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/McDonald%27s_Golden_Arches.svg/320px-McDonald%27s_Golden_Arches.svg.png" },
-            { name: "Starbucks", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Starbucks_Coffee_Logo.svg/320px-Starbucks_Coffee_Logo.svg.png" },
-            
-            // Gaming
-            { name: "Nintendo", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Nintendo.svg/320px-Nintendo.svg.png" },
-            { name: "PlayStation", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Playstation_logo_colour.svg/320px-Playstation_logo_colour.svg.png" },
-            { name: "Xbox", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Xbox_one_logo.svg/320px-Xbox_one_logo.svg.png" },
-            { name: "Steam", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Steam_icon_logo.svg/320px-Steam_icon_logo.svg.png" },
-            
-            // Add more categories...
-            { name: "Nike", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Logo_NIKE.svg/320px-Logo_NIKE.svg.png" },
-            { name: "Adidas", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Adidas_Logo.svg/320px-Adidas_Logo.svg.png" },
-            { name: "Google", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/320px-Google_2015_logo.svg.png" },
-            { name: "Amazon", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/320px-Amazon_logo.svg.png" },
-            { name: "Netflix", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Netflix_2015_logo.svg/320px-Netflix_2015_logo.svg.png" },
-            { name: "Spotify", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Spotify_logo_without_text.svg/320px-Spotify_logo_without_text.svg.png" },
-            { name: "Adobe", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Adobe_Corporate_logo.svg/320px-Adobe_Corporate_logo.svg.png" },
-            { name: "Intel", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Intel_logo_%282006-2020%29.svg/320px-Intel_logo_%282006-2020%29.svg.png" },
-            { name: "AMD", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/AMD_Logo.svg/320px-AMD_Logo.svg.png" },
-            { name: "NVIDIA", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Nvidia_logo.svg/320px-Nvidia_logo.svg.png" },
-            { name: "IBM", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/IBM_logo.svg/320px-IBM_logo.svg.png" },
-            { name: "HP", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/HP_New_Logo_2D.svg/320px-HP_New_Logo_2D.svg.png" },
-            { name: "Dell", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Dell_Logo.svg/320px-Dell_Logo.svg.png" },
-            { name: "Lenovo", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Lenovo_logo_2015.svg/320px-Lenovo_logo_2015.svg.png" },
-            { name: "Sony", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Sony_logo.svg/320px-Sony_logo.svg.png" },
-            { name: "Panasonic", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Panasonic_logo_%28Blue%29.svg/320px-Panasonic_logo_%28Blue%29.svg.png" },
-            { name: "LG", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/LG_symbol.svg/320px-LG_symbol.svg.png" },
-            { name: "Samsung", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Samsung_Logo.svg/320px-Samsung_Logo.svg.png" },
-            { name: "Xiaomi", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Xiaomi_logo_%282021-%29.svg/320px-Xiaomi_logo_%282021-%29.svg.png" }
-        ];
+    // ============================================
+    // THEME MANAGEMENT
+    // ============================================
+    function toggleTheme() {
+        document.body.classList.toggle('classic-mode');
+        const isBlue = document.body.classList.contains('classic-mode');
+        
+        if(isBlue) {
+            scene.fog.color.setHex(0x0000AA);
+            innerCube.material.color.setHex(0xFFFF00);
+            cube.material.color.setHex(0x00FFFF);
+            document.getElementById('canvas-container').style.opacity = "0.4";
+        } else {
+            scene.fog.color.setHex(0x000000);
+            innerCube.material.color.setHex(0xFF0000);
+            cube.material.color.setHex(0x666666);
+            document.getElementById('canvas-container').style.opacity = "0.6";
+        }
+    }
 
-        // ============================================
-        // CANVAS ENGINE
-        // ============================================
-        class LogoCanvas {
-            constructor() {
-                this.canvas = document.getElementById('design-canvas');
-                this.ctx = this.canvas.getContext('2d');
-                this.logos = [];
-                this.selectedLogo = null;
-                this.dragging = false;
-                this.currentTool = 'select';
+    // ============================================
+    // LOGO DATABASE
+    // ============================================
+    const logoDatabase = [
+        // Tech Brands
+        { name: "Android", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Android_robot.svg/320px-Android_robot.svg.png" },
+        { name: "Apple", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Apple_logo_black.svg/320px-Apple_logo_black.svg.png" },
+        { name: "Windows", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Microsoft_Windows_3.1_logo.svg/320px-Microsoft_Windows_3.1_logo.svg.png" },
+        { name: "Linux", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Tux.svg/320px-Tux.svg.png" },
+        
+        // Social Media
+        { name: "Twitter", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Logo_of_Twitter.svg/320px-Logo_of_Twitter.svg.png" },
+        { name: "Facebook", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Facebook_Logo_%282019%29.svg/320px-Facebook_Logo_%282019%29.svg.png" },
+        { name: "Instagram", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Instagram_logo_2016.svg/320px-Instagram_logo_2016.svg.png" },
+        { name: "YouTube", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/YouTube_full-color_icon_%282017%29.svg/320px-YouTube_full-color_icon_%282017%29.svg.png" },
+        
+        // Automotive
+        { name: "Mercedes", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Mercedes-Logo.svg/320px-Mercedes-Logo.svg.png" },
+        { name: "BMW", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/BMW.svg/320px-BMW.svg.png" },
+        { name: "Audi", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Audi-Logo_2016.svg/320px-Audi-Logo_2016.svg.png" },
+        { name: "Tesla", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Tesla_Motors.svg/320px-Tesla_Motors.svg.png" },
+        
+        // Food & Beverage
+        { name: "Coca-Cola", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Coca-Cola_logo.svg/320px-Coca-Cola_logo.svg.png" },
+        { name: "Pepsi", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Pepsi_logo_2014.svg/320px-Pepsi_logo_2014.svg.png" },
+        { name: "McDonalds", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/McDonald%27s_Golden_Arches.svg/320px-McDonald%27s_Golden_Arches.svg.png" },
+        { name: "Starbucks", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Starbucks_Coffee_Logo.svg/320px-Starbucks_Coffee_Logo.svg.png" },
+        
+        // Gaming
+        { name: "Nintendo", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Nintendo.svg/320px-Nintendo.svg.png" },
+        { name: "PlayStation", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Playstation_logo_colour.svg/320px-Playstation_logo_colour.svg.png" },
+        { name: "Xbox", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Xbox_one_logo.svg/320px-Xbox_one_logo.svg.png" },
+        { name: "Steam", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Steam_icon_logo.svg/320px-Steam_icon_logo.svg.png" },
+        
+        // Fashion
+        { name: "Nike", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Logo_NIKE.svg/320px-Logo_NIKE.svg.png" },
+        { name: "Adidas", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Adidas_Logo.svg/320px-Adidas_Logo.svg.png" },
+        { name: "Google", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/320px-Google_2015_logo.svg.png" },
+        { name: "Amazon", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/320px-Amazon_logo.svg.png" }
+    ];
+
+    // ============================================
+    // ENHANCED LOGO MERGING ENGINE
+    // ============================================
+    class LogoMergingEngine {
+        constructor() {
+            this.canvas = document.getElementById('design-canvas');
+            this.ctx = this.canvas.getContext('2d');
+            this.logos = [];
+            this.selectedLogo = null;
+            this.dragging = false;
+            this.currentTool = 'select';
+            this.lastX = 0;
+            this.lastY = 0;
+            this.scaleFactor = 1.1;
+            this.rotationStep = 15;
+            
+            // For mobile touch support
+            this.touchStartTime = 0;
+            this.touchStartX = 0;
+            this.touchStartY = 0;
+            this.lastPinchDistance = 0;
+            
+            this.resizeCanvas();
+            this.initEvents();
+            this.render();
+        }
+        
+        resizeCanvas() {
+            const container = this.canvas.parentElement;
+            const dpr = window.devicePixelRatio || 1;
+            const rect = container.getBoundingClientRect();
+            
+            // Set display size
+            this.canvas.style.width = rect.width + 'px';
+            this.canvas.style.height = rect.height + 'px';
+            
+            // Set actual pixel size
+            this.canvas.width = rect.width * dpr;
+            this.canvas.height = rect.height * dpr;
+            
+            // Scale context for crisp rendering
+            this.ctx.scale(dpr, dpr);
+            
+            this.render();
+        }
+        
+        initEvents() {
+            // Mouse events for desktop
+            this.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
+            this.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
+            this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
+            this.canvas.addEventListener('wheel', this.onWheel.bind(this));
+            
+            // Touch events for mobile
+            this.canvas.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false });
+            this.canvas.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false });
+            this.canvas.addEventListener('touchend', this.onTouchEnd.bind(this));
+            
+            // Double-click for mobile/desktop
+            this.canvas.addEventListener('dblclick', this.onDoubleClick.bind(this));
+            
+            window.addEventListener('resize', () => this.resizeCanvas());
+            window.addEventListener('orientationchange', () => {
+                setTimeout(() => this.resizeCanvas(), 100);
+            });
+        }
+        
+        // ==================== MERGING FUNCTIONS ====================
+        async generateMergedLogo(logo1, logo2) {
+            return new Promise((resolve) => {
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
                 
-                this.resizeCanvas();
-                this.initEvents();
-                this.render();
-            }
-            
-            resizeCanvas() {
-                const container = this.canvas.parentElement;
-                this.canvas.width = container.clientWidth;
-                this.canvas.height = container.clientHeight;
-            }
-            
-            initEvents() {
-                this.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
-                this.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
-                this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
-                window.addEventListener('resize', () => this.resizeCanvas());
-            }
-            
-            addLogo(imageUrl, x, y, scale = 1, rotation = 0) {
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                img.onload = () => {
-                    this.logos.push({
-                        image: img,
-                        x: x || this.canvas.width / 2,
-                        y: y || this.canvas.height / 2,
-                        width: img.width * scale,
-                        height: img.height * scale,
-                        rotation: rotation,
-                        scale: scale,
-                        selected: false
-                    });
-                    this.render();
+                // Set canvas size
+                const size = 300;
+                tempCanvas.width = size;
+                tempCanvas.height = size;
+                
+                const img1 = new Image();
+                const img2 = new Image();
+                
+                img1.crossOrigin = 'anonymous';
+                img2.crossOrigin = 'anonymous';
+                
+                let loadedCount = 0;
+                
+                const onLoad = () => {
+                    loadedCount++;
+                    if (loadedCount === 2) {
+                        // Clear canvas
+                        tempCtx.clearRect(0, 0, size, size);
+                        
+                        // Get random merge type
+                        const mergeType = Math.floor(Math.random() * 4);
+                        
+                        switch(mergeType) {
+                            case 0: // Half-half vertical split
+                                tempCtx.drawImage(img1, 0, 0, size/2, size);
+                                tempCtx.drawImage(img2, size/2, 0, size/2, size);
+                                break;
+                                
+                            case 1: // Half-half horizontal split
+                                tempCtx.drawImage(img1, 0, 0, size, size/2);
+                                tempCtx.drawImage(img2, 0, size/2, size, size/2);
+                                break;
+                                
+                            case 2: // Circular merge
+                                tempCtx.save();
+                                tempCtx.beginPath();
+                                tempCtx.arc(size/2, size/2, size/2, 0, Math.PI * 2);
+                                tempCtx.clip();
+                                tempCtx.drawImage(img1, 0, 0, size, size);
+                                
+                                tempCtx.beginPath();
+                                tempCtx.arc(size/2, size/2, size/4, 0, Math.PI * 2);
+                                tempCtx.clip();
+                                tempCtx.drawImage(img2, 0, 0, size, size);
+                                tempCtx.restore();
+                                break;
+                                
+                            case 3: // Diagonal merge
+                                tempCtx.save();
+                                tempCtx.beginPath();
+                                tempCtx.moveTo(0, 0);
+                                tempCtx.lineTo(size, 0);
+                                tempCtx.lineTo(0, size);
+                                tempCtx.closePath();
+                                tempCtx.clip();
+                                tempCtx.drawImage(img1, 0, 0, size, size);
+                                tempCtx.restore();
+                                
+                                tempCtx.save();
+                                tempCtx.beginPath();
+                                tempCtx.moveTo(size, size);
+                                tempCtx.lineTo(0, size);
+                                tempCtx.lineTo(size, 0);
+                                tempCtx.closePath();
+                                tempCtx.clip();
+                                tempCtx.drawImage(img2, 0, 0, size, size);
+                                tempCtx.restore();
+                                break;
+                        }
+                        
+                        // Convert to data URL and resolve
+                        resolve(tempCanvas.toDataURL('image/png'));
+                    }
                 };
-                img.src = imageUrl;
+                
+                img1.onload = onLoad;
+                img2.onload = onLoad;
+                img1.src = logo1;
+                img2.src = logo2;
+            });
+        }
+        
+        async generateRandomMash() {
+            this.clear();
+            
+            // Get 2-3 random logos
+            const logoCount = Math.floor(Math.random() * 2) + 2; // 2 or 3 logos
+            const shuffled = [...logoDatabase].sort(() => Math.random() - 0.5);
+            const selectedLogos = shuffled.slice(0, logoCount);
+            
+            if (logoCount === 2) {
+                // Merge two logos
+                const mergedUrl = await this.generateMergedLogo(
+                    selectedLogos[0].url, 
+                    selectedLogos[1].url
+                );
+                
+                const x = this.canvas.width / (2 * window.devicePixelRatio || 1) / 2;
+                const y = this.canvas.height / (2 * window.devicePixelRatio || 1) / 2;
+                const scale = 0.5 + Math.random() * 0.3;
+                
+                this.addLogo(mergedUrl, x, y, scale, Math.random() * 360);
+                
+            } else {
+                // For 3 logos: merge first two, then add third separately
+                const mergedUrl = await this.generateMergedLogo(
+                    selectedLogos[0].url, 
+                    selectedLogos[1].url
+                );
+                
+                // Add merged logo
+                const x1 = this.canvas.width / (2 * window.devicePixelRatio || 1) / 3;
+                const y1 = this.canvas.height / (2 * window.devicePixelRatio || 1) / 2;
+                this.addLogo(mergedUrl, x1, y1, 0.4, Math.random() * 360);
+                
+                // Add third logo
+                const x2 = this.canvas.width * 2 / (3 * window.devicePixelRatio || 1);
+                const y2 = this.canvas.height / (2 * window.devicePixelRatio || 1);
+                this.addLogo(selectedLogos[2].url, x2, y2, 0.3, Math.random() * 180);
             }
             
-            render() {
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                
-                // Draw grid
-                this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.1)';
-                this.ctx.lineWidth = 1;
-                const gridSize = 20;
-                
-                for (let x = 0; x < this.canvas.width; x += gridSize) {
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(x, 0);
-                    this.ctx.lineTo(x, this.canvas.height);
-                    this.ctx.stroke();
-                }
-                
-                for (let y = 0; y < this.canvas.height; y += gridSize) {
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(0, y);
-                    this.ctx.lineTo(this.canvas.width, y);
-                    this.ctx.stroke();
-                }
-                
-                // Draw logos
-                this.logos.forEach(logo => {
-                    this.ctx.save();
-                    this.ctx.translate(logo.x, logo.y);
-                    this.ctx.rotate(logo.rotation * Math.PI / 180);
-                    
-                    this.ctx.drawImage(
-                        logo.image,
-                        -logo.width / 2,
-                        -logo.height / 2,
-                        logo.width,
-                        logo.height
-                    );
-                    
-                    // Selection outline
-                    if (logo.selected) {
-                        this.ctx.strokeStyle = '#FF0000';
-                        this.ctx.lineWidth = 2;
-                        this.ctx.strokeRect(
-                            -logo.width / 2 - 5,
-                            -logo.height / 2 - 5,
-                            logo.width + 10,
-                            logo.height + 10
-                        );
-                    }
-                    
-                    this.ctx.restore();
+            this.render();
+        }
+        
+        // ==================== LOGO MANAGEMENT ====================
+        addLogo(imageUrl, x, y, scale = 1, rotation = 0) {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                const dpr = window.devicePixelRatio || 1;
+                this.logos.push({
+                    image: img,
+                    x: x || this.canvas.width / (2 * dpr),
+                    y: y || this.canvas.height / (2 * dpr),
+                    width: img.width * scale,
+                    height: img.height * scale,
+                    originalWidth: img.width,
+                    originalHeight: img.height,
+                    rotation: rotation,
+                    scale: scale,
+                    selected: false,
+                    id: Date.now() + Math.random()
                 });
-            }
-            
-            onMouseDown(e) {
-                const rect = this.canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                
-                // Check if clicked on a logo
-                for (let i = this.logos.length - 1; i >= 0; i--) {
-                    const logo = this.logos[i];
-                    const dx = x - logo.x;
-                    const dy = y - logo.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (distance < Math.max(logo.width, logo.height) / 2) {
-                        this.selectedLogo = logo;
-                        logo.selected = true;
-                        this.dragging = true;
-                        this.render();
-                        return;
-                    }
-                }
-                
-                // Deselect all
-                this.logos.forEach(logo => logo.selected = false);
-                this.selectedLogo = null;
                 this.render();
-            }
+            };
+            img.src = imageUrl;
+        }
+        
+        selectLogoAt(x, y) {
+            // Deselect all first
+            this.logos.forEach(logo => logo.selected = false);
+            this.selectedLogo = null;
             
-            onMouseMove(e) {
-                if (this.dragging && this.selectedLogo) {
-                    const rect = this.canvas.getBoundingClientRect();
-                    this.selectedLogo.x = e.clientX - rect.left;
-                    this.selectedLogo.y = e.clientY - rect.top;
+            // Check from top to bottom (reverse order)
+            for (let i = this.logos.length - 1; i >= 0; i--) {
+                const logo = this.logos[i];
+                
+                // Create rotated hit box
+                const dx = x - logo.x;
+                const dy = y - logo.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const maxDim = Math.max(logo.width, logo.height) / 2;
+                
+                if (distance < maxDim) {
+                    logo.selected = true;
+                    this.selectedLogo = logo;
                     this.render();
+                    return logo;
                 }
             }
-            
-            onMouseUp() {
-                this.dragging = false;
-            }
-            
-            clear() {
-                this.logos = [];
+            return null;
+        }
+        
+        deleteSelected() {
+            if (this.selectedLogo) {
+                this.logos = this.logos.filter(logo => logo.id !== this.selectedLogo.id);
                 this.selectedLogo = null;
                 this.render();
             }
+        }
+        
+        scaleSelected(factor) {
+            if (this.selectedLogo) {
+                this.selectedLogo.scale *= factor;
+                this.selectedLogo.width = this.selectedLogo.originalWidth * this.selectedLogo.scale;
+                this.selectedLogo.height = this.selectedLogo.originalHeight * this.selectedLogo.scale;
+                this.render();
+            }
+        }
+        
+        rotateSelected(degrees) {
+            if (this.selectedLogo) {
+                this.selectedLogo.rotation = (this.selectedLogo.rotation + degrees) % 360;
+                this.render();
+            }
+        }
+        
+        // ==================== RENDERING ====================
+        render() {
+            const dpr = window.devicePixelRatio || 1;
+            const displayWidth = this.canvas.width / dpr;
+            const displayHeight = this.canvas.height / dpr;
             
-            generateRandomMash() {
-                this.clear();
+            // Clear canvas
+            this.ctx.clearRect(0, 0, displayWidth, displayHeight);
+            
+            // Draw subtle grid
+            this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.1)';
+            this.ctx.lineWidth = 1;
+            const gridSize = 20;
+            
+            for (let x = 0; x < displayWidth; x += gridSize) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(x, 0);
+                this.ctx.lineTo(x, displayHeight);
+                this.ctx.stroke();
+            }
+            
+            for (let y = 0; y < displayHeight; y += gridSize) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, y);
+                this.ctx.lineTo(displayWidth, y);
+                this.ctx.stroke();
+            }
+            
+            // Draw logos
+            this.logos.forEach(logo => {
+                this.ctx.save();
+                this.ctx.translate(logo.x, logo.y);
+                this.ctx.rotate(logo.rotation * Math.PI / 180);
                 
-                const count = Math.floor(Math.random() * 5) + 2;
-                const shuffled = [...logoDatabase].sort(() => Math.random() - 0.5);
+                // Draw shadow for selected logo
+                if (logo.selected) {
+                    this.ctx.shadowColor = '#FF0000';
+                    this.ctx.shadowBlur = 10;
+                    this.ctx.shadowOffsetX = 0;
+                    this.ctx.shadowOffsetY = 0;
+                }
                 
-                for (let i = 0; i < Math.min(count, shuffled.length); i++) {
-                    const x = Math.random() * (this.canvas.width - 100) + 50;
-                    const y = Math.random() * (this.canvas.height - 100) + 50;
-                    const scale = 0.3 + Math.random() * 0.5;
-                    const rotation = Math.random() * 360;
+                this.ctx.drawImage(
+                    logo.image,
+                    -logo.width / 2,
+                    -logo.height / 2,
+                    logo.width,
+                    logo.height
+                );
+                
+                // Reset shadow
+                this.ctx.shadowBlur = 0;
+                
+                // Selection outline
+                if (logo.selected) {
+                    this.ctx.strokeStyle = '#FF0000';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.setLineDash([5, 5]);
+                    this.ctx.strokeRect(
+                        -logo.width / 2 - 5,
+                        -logo.height / 2 - 5,
+                        logo.width + 10,
+                        logo.height + 10
+                    );
+                    this.ctx.setLineDash([]);
                     
-                    this.addLogo(shuffled[i].url, x, y, scale, rotation);
+                    // Draw rotation handle
+                    this.ctx.fillStyle = '#FF0000';
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, -logo.height / 2 - 20, 8, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // Draw scale handles
+                    this.ctx.fillStyle = '#00FF00';
+                    this.ctx.beginPath();
+                    this.ctx.arc(logo.width / 2 + 10, logo.height / 2 + 10, 6, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    this.ctx.beginPath();
+                    this.ctx.arc(-logo.width / 2 - 10, -logo.height / 2 - 10, 6, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+                
+                this.ctx.restore();
+            });
+        }
+        
+        clear() {
+            this.logos = [];
+            this.selectedLogo = null;
+            this.render();
+        }
+        
+        // ==================== MOUSE EVENTS ====================
+        onMouseDown(e) {
+            e.preventDefault();
+            const rect = this.canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            const x = (e.clientX - rect.left) / dpr;
+            const y = (e.clientY - rect.top) / dpr;
+            
+            this.lastX = x;
+            this.lastY = y;
+            
+            const logo = this.selectLogoAt(x, y);
+            
+            if (logo) {
+                this.dragging = true;
+                
+                // Check if clicked on rotation handle
+                const dx = x - logo.x;
+                const dy = y - (logo.y - logo.height/2 - 20);
+                if (Math.sqrt(dx*dx + dy*dy) < 15) {
+                    this.currentTool = 'rotate';
+                }
+                // Check if clicked on scale handle
+                else if (Math.abs(x - (logo.x + logo.width/2 + 10)) < 10 && 
+                         Math.abs(y - (logo.y + logo.height/2 + 10)) < 10) {
+                    this.currentTool = 'scale';
+                }
+                else {
+                    this.currentTool = 'move';
+                }
+            } else {
+                this.currentTool = 'select';
+            }
+            
+            this.render();
+        }
+        
+        onMouseMove(e) {
+            if (!this.dragging || !this.selectedLogo) return;
+            
+            e.preventDefault();
+            const rect = this.canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            const x = (e.clientX - rect.left) / dpr;
+            const y = (e.clientY - rect.top) / dpr;
+            
+            const dx = x - this.lastX;
+            const dy = y - this.lastY;
+            
+            switch(this.currentTool) {
+                case 'move':
+                    this.selectedLogo.x += dx;
+                    this.selectedLogo.y += dy;
+                    break;
+                    
+                case 'rotate':
+                    const centerX = this.selectedLogo.x;
+                    const centerY = this.selectedLogo.y;
+                    const angle = Math.atan2(y - centerY, x - centerX) - 
+                                 Math.atan2(this.lastY - centerY, this.lastX - centerX);
+                    this.selectedLogo.rotation += angle * 180 / Math.PI;
+                    break;
+                    
+                case 'scale':
+                    const distance = Math.sqrt(dx*dx + dy*dy);
+                    const scaleChange = 1 + (dx > 0 ? 0.01 : -0.01) * distance;
+                    this.scaleSelected(scaleChange);
+                    break;
+            }
+            
+            this.lastX = x;
+            this.lastY = y;
+            this.render();
+        }
+        
+        onMouseUp() {
+            this.dragging = false;
+            this.currentTool = 'select';
+        }
+        
+        onWheel(e) {
+            e.preventDefault();
+            if (this.selectedLogo) {
+                if (e.ctrlKey) {
+                    // Ctrl + Wheel for scaling
+                    const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1;
+                    this.scaleSelected(scaleFactor);
+                } else {
+                    // Wheel for rotation
+                    const rotation = e.deltaY > 0 ? -5 : 5;
+                    this.rotateSelected(rotation);
                 }
             }
+        }
+        
+        onDoubleClick(e) {
+            e.preventDefault();
+            const rect = this.canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            const x = (e.clientX - rect.left) / dpr;
+            const y = (e.clientY - rect.top) / dpr;
             
-            exportAsImage() {
-                const link = document.createElement('a');
-                link.download = 'logo-design.png';
-                link.href = this.canvas.toDataURL('image/png');
-                link.click();
+            const logo = this.selectLogoAt(x, y);
+            if (logo) {
+                this.deleteSelected();
             }
         }
-
-        // ============================================
-        // NOTEPAD ENGINE
-        // ============================================
-        class NotepadEngine {
-            constructor() {
-                this.textarea = document.getElementById('design-notepad');
-                this.init();
-            }
+        
+        // ==================== TOUCH EVENTS (MOBILE) ====================
+        onTouchStart(e) {
+            e.preventDefault();
             
-            init() {
-                // Auto-save
-                this.textarea.addEventListener('input', () => {
-                    localStorage.setItem('logopad-notes', this.textarea.value);
+            if (e.touches.length === 1) {
+                // Single touch
+                const touch = e.touches[0];
+                const rect = this.canvas.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                
+                this.touchStartX = (touch.clientX - rect.left) / dpr;
+                this.touchStartY = (touch.clientY - rect.top) / dpr;
+                this.touchStartTime = Date.now();
+                
+                this.onMouseDown({
+                    clientX: touch.clientX,
+                    clientY: touch.clientY,
+                    preventDefault: () => {}
                 });
                 
-                // Load saved notes
-                const saved = localStorage.getItem('logopad-notes');
-                if (saved) {
-                    this.textarea.value = saved;
-                }
+            } else if (e.touches.length === 2) {
+                // Two fingers for pinch zoom
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
                 
-                // Keyboard shortcuts
-                this.textarea.addEventListener('keydown', (e) => {
-                    if (e.ctrlKey && e.key === 's') {
-                        e.preventDefault();
-                        this.exportAsTXT();
-                    }
+                this.lastPinchDistance = Math.hypot(
+                    touch1.clientX - touch2.clientX,
+                    touch1.clientY - touch2.clientY
+                );
+            }
+        }
+        
+        onTouchMove(e) {
+            e.preventDefault();
+            
+            if (e.touches.length === 1 && this.dragging) {
+                // Single touch drag
+                const touch = e.touches[0];
+                this.onMouseMove({
+                    clientX: touch.clientX,
+                    clientY: touch.clientY,
+                    preventDefault: () => {}
                 });
-            }
-            
-            exportAsTXT() {
-                const blob = new Blob([this.textarea.value], { type: 'text/plain' });
-                const link = document.createElement('a');
-                link.download = 'design-notes.txt';
-                link.href = URL.createObjectURL(blob);
-                link.click();
-            }
-            
-            exportAsPDF() {
-                // Simple PDF export using window.print()
-                const printWindow = window.open('', '_blank');
-                printWindow.document.write(`
-                    <html>
-                        <head>
-                            <title>Design Notes</title>
-                            <style>
-                                body { font-family: monospace; padding: 20px; }
-                                pre { white-space: pre-wrap; }
-                            </style>
-                        </head>
-                        <body>
-                            <pre>${this.textarea.value}</pre>
-                        </body>
-                    </html>
-                `);
-                printWindow.document.close();
-                printWindow.print();
-            }
-            
-            clear() {
-                if (confirm('Clear all notes?')) {
-                    this.textarea.value = '';
-                    localStorage.removeItem('logopad-notes');
+                
+            } else if (e.touches.length === 2 && this.selectedLogo) {
+                // Pinch to zoom
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                
+                const currentDistance = Math.hypot(
+                    touch1.clientX - touch2.clientX,
+                    touch1.clientY - touch2.clientY
+                );
+                
+                if (this.lastPinchDistance > 0) {
+                    const scaleChange = currentDistance / this.lastPinchDistance;
+                    this.scaleSelected(scaleChange);
+                    this.lastPinchDistance = currentDistance;
                 }
             }
         }
-
-        // ============================================
-        // INITIALIZATION
-        // ============================================
-        let canvasEngine, notepadEngine;
-
-        function init() {
-            // Initialize Three.js background
-            initThreeJS();
+        
+        onTouchEnd(e) {
+            e.preventDefault();
             
-            // Initialize canvas engine
-            canvasEngine = new LogoCanvas();
-            
-            // Initialize notepad engine
-            notepadEngine = new NotepadEngine();
-            
-            // Load logo library
-            loadLogoLibrary();
-            
-            // Setup event listeners
-            setupEventListeners();
-            
-            // Add sample logos
-            setTimeout(() => {
-                canvasEngine.addLogo(logoDatabase[0].url, 200, 150, 0.5);
-                canvasEngine.addLogo(logoDatabase[1].url, 400, 250, 0.4, 45);
-            }, 500);
-        }
-
-        function loadLogoLibrary() {
-            const grid = document.getElementById('logoGrid');
-            logoDatabase.forEach((logo, index) => {
-                const item = document.createElement('div');
-                item.className = 'logo-item';
-                item.title = logo.name;
-                item.innerHTML = `<img src="${logo.url}" alt="${logo.name}">`;
+            if (e.touches.length === 0) {
+                // All fingers lifted
+                this.onMouseUp();
                 
-                item.addEventListener('click', () => {
+                // Check for tap (not drag)
+                const touchDuration = Date.now() - this.touchStartTime;
+                const dx = Math.abs(this.touchStartX - this.lastX);
+                const dy = Math.abs(this.touchStartY - this.lastY);
+                
+                if (touchDuration < 300 && dx < 10 && dy < 10) {
+                    // It was a tap, select the logo
+                    const rect = this.canvas.getBoundingClientRect();
+                    const touch = e.changedTouches[0];
+                    const dpr = window.devicePixelRatio || 1;
+                    const x = (touch.clientX - rect.left) / dpr;
+                    const y = (touch.clientY - rect.top) / dpr;
+                    
+                    this.selectLogoAt(x, y);
+                }
+                
+                this.lastPinchDistance = 0;
+            }
+        }
+        
+        exportAsImage() {
+            // Create a temporary canvas at high resolution
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            const dpr = 2; // Export at 2x resolution
+            
+            tempCanvas.width = this.canvas.width * dpr;
+            tempCanvas.height = this.canvas.height * dpr;
+            
+            // Scale up and draw
+            tempCtx.scale(dpr, dpr);
+            tempCtx.fillStyle = '#000000';
+            tempCtx.fillRect(0, 0, tempCanvas.width/dpr, tempCanvas.height/dpr);
+            
+            // Redraw logos at export quality
+            this.logos.forEach(logo => {
+                tempCtx.save();
+                tempCtx.translate(logo.x * dpr, logo.y * dpr);
+                tempCtx.rotate(logo.rotation * Math.PI / 180);
+                tempCtx.drawImage(
+                    logo.image,
+                    -logo.width * dpr / 2,
+                    -logo.height * dpr / 2,
+                    logo.width * dpr,
+                    logo.height * dpr
+                );
+                tempCtx.restore();
+            });
+            
+            const link = document.createElement('a');
+            link.download = `logopad-design-${Date.now()}.png`;
+            link.href = tempCanvas.toDataURL('image/png');
+            link.click();
+        }
+    }
+
+    // ============================================
+    // NOTEPAD ENGINE
+    // ============================================
+    class NotepadEngine {
+        constructor() {
+            this.textarea = document.getElementById('design-notepad');
+            this.init();
+        }
+        
+        init() {
+            // Auto-save
+            this.textarea.addEventListener('input', () => {
+                localStorage.setItem('logopad-notes', this.textarea.value);
+            });
+            
+            // Load saved notes
+            const saved = localStorage.getItem('logopad-notes');
+            if (saved) {
+                this.textarea.value = saved;
+            }
+            
+            // Keyboard shortcuts
+            this.textarea.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && e.key === 's') {
+                    e.preventDefault();
+                    this.exportAsTXT();
+                }
+            });
+            
+            // Mobile keyboard optimization
+            this.textarea.addEventListener('focus', () => {
+                setTimeout(() => {
+                    this.textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            });
+        }
+        
+        exportAsTXT() {
+            const blob = new Blob([this.textarea.value], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.download = `design-notes-${Date.now()}.txt`;
+            link.href = URL.createObjectURL(blob);
+            link.click();
+        }
+        
+        exportAsPDF() {
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>LogoPad Design Notes</title>
+                        <style>
+                            body { 
+                                font-family: 'Courier New', monospace; 
+                                padding: 20px; 
+                                background: #000;
+                                color: #E0E0E0;
+                            }
+                            pre { 
+                                white-space: pre-wrap;
+                                font-size: 12px;
+                                line-height: 1.4;
+                            }
+                            @media print {
+                                body { background: white; color: black; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>LogoPad Design Notes</h1>
+                        <pre>${this.textarea.value}</pre>
+                        <p>Generated: ${new Date().toLocaleString()}</p>
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+        
+        clear() {
+            if (confirm('Clear all notes?')) {
+                this.textarea.value = '';
+                localStorage.removeItem('logopad-notes');
+            }
+        }
+    }
+
+    // ============================================
+    // INITIALIZATION
+    // ============================================
+    let canvasEngine, notepadEngine;
+
+    function init() {
+        // Initialize Three.js background
+        initThreeJS();
+        
+        // Initialize canvas engine (make it globally accessible)
+        window.canvasEngine = new LogoMergingEngine();
+        canvasEngine = window.canvasEngine;
+        
+        // Initialize notepad engine
+        notepadEngine = new NotepadEngine();
+        
+        // Load logo library
+        loadLogoLibrary();
+        
+        // Setup event listeners
+        setupEventListeners();
+        
+        // Add initial sample
+        setTimeout(() => {
+            canvasEngine.addLogo(logoDatabase[0].url, 150, 150, 0.4);
+        }, 500);
+        
+        // Update status footer
+        updateStatusFooter();
+    }
+
+    function loadLogoLibrary() {
+        const grid = document.getElementById('logoGrid');
+        grid.innerHTML = ''; // Clear existing
+        
+        // Mobile optimization: show 12 logos initially
+        const initialLogos = logoDatabase.slice(0, 12);
+        
+        initialLogos.forEach((logo, index) => {
+            const item = document.createElement('div');
+            item.className = 'logo-item';
+            item.title = logo.name;
+            item.innerHTML = `<img src="${logo.url}" alt="${logo.name}" loading="lazy">`;
+            
+            // Single tap for mobile
+            let tapTimer;
+            item.addEventListener('click', (e) => {
+                clearTimeout(tapTimer);
+                tapTimer = setTimeout(() => {
+                    // Single tap action
                     document.querySelectorAll('.logo-item').forEach(el => el.classList.remove('selected'));
                     item.classList.add('selected');
                     
-                    const x = canvasEngine.canvas.width / 2;
-                    const y = canvasEngine.canvas.height / 2;
-                    canvasEngine.addLogo(logo.url, x, y, 0.5);
-                });
+                    const x = canvasEngine.canvas.width / (2 * window.devicePixelRatio || 1) / 2;
+                    const y = canvasEngine.canvas.height / (2 * window.devicePixelRatio || 1) / 2;
+                    canvasEngine.addLogo(logo.url, x, y, 0.4);
+                }, 200);
+            });
+            
+            // Double tap for mobile (delete all and add just this one)
+            let lastTap = 0;
+            item.addEventListener('touchend', (e) => {
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTap;
+                if (tapLength < 300 && tapLength > 0) {
+                    // Double tap
+                    e.preventDefault();
+                    canvasEngine.clear();
+                    const x = canvasEngine.canvas.width / (2 * window.devicePixelRatio || 1) / 2;
+                    const y = canvasEngine.canvas.height / (2 * window.devicePixelRatio || 1) / 2;
+                    canvasEngine.addLogo(logo.url, x, y, 0.6);
+                }
+                lastTap = currentTime;
+            });
+            
+            grid.appendChild(item);
+        });
+        
+        // Add "Load More" button for mobile
+        if (logoDatabase.length > 12) {
+            const loadMoreBtn = document.createElement('button');
+            loadMoreBtn.className = 'tool-btn';
+            loadMoreBtn.style.gridColumn = '1 / span 3';
+            loadMoreBtn.style.marginTop = '10px';
+            loadMoreBtn.innerHTML = '<i class="fa fa-refresh"></i> Load More Logos';
+            loadMoreBtn.addEventListener('click', loadMoreLogos);
+            grid.appendChild(loadMoreBtn);
+        }
+    }
+    
+    function loadMoreLogos() {
+        const grid = document.getElementById('logoGrid');
+        const currentCount = grid.children.length - 1; // Subtract load more button
+        
+        // Load next 12 logos
+        const nextLogos = logoDatabase.slice(currentCount, currentCount + 12);
+        
+        nextLogos.forEach(logo => {
+            const item = document.createElement('div');
+            item.className = 'logo-item';
+            item.title = logo.name;
+            item.innerHTML = `<img src="${logo.url}" alt="${logo.name}" loading="lazy">`;
+            
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.logo-item').forEach(el => el.classList.remove('selected'));
+                item.classList.add('selected');
                 
-                grid.appendChild(item);
-            });
-        }
-
-        function setupEventListeners() {
-            // Theme toggle
-            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-            
-            // Menu toggle
-            document.getElementById('menuBtn').addEventListener('click', () => {
-                alert('Settings menu coming soon...');
+                const x = canvasEngine.canvas.width / (2 * window.devicePixelRatio || 1) / 2;
+                const y = canvasEngine.canvas.height / (2 * window.devicePixelRatio || 1) / 2;
+                canvasEngine.addLogo(logo.url, x, y, 0.4);
             });
             
-            // Tool buttons
-            document.querySelectorAll('.tool-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    if (this.id === 'clearCanvas') {
-                        canvasEngine.clear();
-                    } else if (this.id === 'randomMash') {
-                        canvasEngine.generateRandomMash();
-                    } else {
-                        canvasEngine.currentTool = this.dataset.tool;
-                    }
-                });
+            grid.insertBefore(item, grid.lastChild);
+        });
+        
+        // Update or remove load more button
+        if (currentCount + nextLogos.length >= logoDatabase.length) {
+            grid.removeChild(grid.lastChild);
+        }
+    }
+
+    function setupEventListeners() {
+        // Theme toggle
+        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+        
+        // Menu toggle
+        document.getElementById('menuBtn').addEventListener('click', () => {
+            alert('LogoPad Nexus v1.0\n\n' +
+                  '• Tap logos to add\n' +
+                  '• Drag to move\n' +
+                  '• Pinch to zoom\n' +
+                  '• Double-tap to delete\n' +
+                  '• Use handles to rotate/scale');
+        });
+        
+        // Tool buttons with mobile touch support
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                if (this.id === 'clearCanvas') {
+                    canvasEngine.clear();
+                } else if (this.id === 'randomMash') {
+                    // Show loading state
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Merging...';
+                    this.disabled = true;
+                    
+                    canvasEngine.generateRandomMash().then(() => {
+                        this.innerHTML = originalText;
+                        this.disabled = false;
+                    });
+                } else {
+                    canvasEngine.currentTool = this.dataset.tool;
+                    
+                    // Visual feedback
+                    document.querySelectorAll('.tool-btn').forEach(b => 
+                        b.style.backgroundColor = '');
+                    this.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+                }
             });
             
-            // Notepad controls
-            document.getElementById('export-pdf').addEventListener('click', () => notepadEngine.exportAsPDF());
-            document.getElementById('export-txt').addEventListener('click', () => notepadEngine.exportAsTXT());
-            document.getElementById('clear-notes').addEventListener('click', () => notepadEngine.clear());
+            // Add touch feedback for mobile
+            btn.addEventListener('touchstart', function() {
+                this.style.transform = 'scale(0.95)';
+            });
             
-            // Save logo
-            document.getElementById('save-logo').addEventListener('click', () => canvasEngine.exportAsImage());
+            btn.addEventListener('touchend', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+        
+        // Notepad controls
+        document.getElementById('export-pdf').addEventListener('click', () => notepadEngine.exportAsPDF());
+        document.getElementById('export-txt').addEventListener('click', () => notepadEngine.exportAsTXT());
+        document.getElementById('clear-notes').addEventListener('click', () => notepadEngine.clear());
+        
+        // Save logo
+        document.getElementById('save-logo').addEventListener('click', () => {
+            // Show saving animation
+            const btn = document.getElementById('save-logo');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Exporting...';
+            btn.disabled = true;
             
-            // Logo controls
-            document.getElementById('logo-text').addEventListener('input', updateLogoText);
-            document.getElementById('logo-font').addEventListener('change', updateLogoText);
-            document.getElementById('logo-color').addEventListener('input', updateLogoColor);
-            document.getElementById('logo-size').addEventListener('input', updateLogoSize);
-        }
+            setTimeout(() => {
+                canvasEngine.exportAsImage();
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                
+                // Show success message
+                const status = document.querySelector('.status-footer');
+                const originalStatus = status.innerHTML;
+                status.innerHTML = '<span style="color:#0F0">✓ Design exported!</span>';
+                setTimeout(() => status.innerHTML = originalStatus, 2000);
+            }, 500);
+        });
+        
+        // Logo controls
+        document.getElementById('logo-text').addEventListener('input', updateLogoText);
+        document.getElementById('logo-font').addEventListener('change', updateLogoText);
+        document.getElementById('logo-color').addEventListener('input', updateLogoColor);
+        document.getElementById('logo-size').addEventListener('input', updateLogoSize);
+        
+        // Mobile keyboard dismissal
+        document.addEventListener('touchstart', (e) => {
+            if (!e.target.matches('textarea, input')) {
+                document.activeElement.blur();
+            }
+        });
+    }
 
-        function updateLogoText() {
-            // Add text functionality here
-            console.log('Update logo text');
-        }
+    function updateLogoText() {
+        // Future: Add text to canvas
+        console.log('Logo text updated');
+    }
 
-        function updateLogoColor() {
-            const color = document.getElementById('logo-color').value;
-            document.getElementById('color-value').textContent = color.toUpperCase();
-        }
+    function updateLogoColor() {
+        const color = document.getElementById('logo-color').value;
+        document.getElementById('color-value').textContent = color.toUpperCase();
+        
+        // Update theme accent if desired
+        document.documentElement.style.setProperty('--accent-primary', color);
+    }
 
-        function updateLogoSize() {
-            const size = document.getElementById('logo-size').value;
-            document.getElementById('size-value').textContent = `${size}px`;
+    function updateLogoSize() {
+        const size = document.getElementById('logo-size').value;
+        document.getElementById('size-value').textContent = `${size}px`;
+        
+        if (canvasEngine.selectedLogo) {
+            canvasEngine.selectedLogo.scale = size / 32; // 32 is default
+            canvasEngine.selectedLogo.width = canvasEngine.selectedLogo.originalWidth * canvasEngine.selectedLogo.scale;
+            canvasEngine.selectedLogo.height = canvasEngine.selectedLogo.originalHeight * canvasEngine.selectedLogo.scale;
+            canvasEngine.render();
         }
+    }
 
-        // Initialize when page loads
-        window.addEventListener('DOMContentLoaded', init);
-    </script>
+    function updateStatusFooter() {
+        const footer = document.querySelector('.status-footer');
+        const updateInfo = () => {
+            const memory = Math.round(performance.memory ? performance.memory.usedJSHeapSize / 1048576 : 64);
+            const fps = Math.round(1000 / (canvasEngine ? 16.67 : 16));
+            
+            footer.innerHTML = `
+                <span>LOGOS: ${canvasEngine.logos.length}</span>
+                <span>TOOL: ${canvasEngine.currentTool.toUpperCase()}</span>
+                <span>MEM: ${memory}MB</span>
+                <span>FPS: ${fps}</span>
+                <span>READY</span>
+            `;
+        };
+        
+        setInterval(updateInfo, 2000);
+        updateInfo();
+    }
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', init);
+    
+    // Prevent pinch zoom on document (except canvas)
+    document.addEventListener('wheel', (e) => {
+        if (e.ctrlKey) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    // Prevent context menu on mobile
+    document.addEventListener('contextmenu', (e) => {
+        if ('ontouchstart' in window) {
+            e.preventDefault();
+        }
+    });
+</script>
 </body>
 </html>
