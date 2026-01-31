@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CITADELLE.CORE // QUANTUM</title>
+    <meta name="description" content="CITADELLE.CORE. 9-Node Local Quantum Array.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        /* === 1. DEFINITIONS (DEFAULT = CITADELLE RED) === */
+        :root {
+            /* CORE PALETTE - RED (DEFAULT) */
+            --bg-main: #050505;
+            --bg-panel: #0a0a0a;
+            --bg-input: #0f0f0f;
+            
+            --text-main: #e0e0e0;       /* Off-White */
+            --text-dim: #666666;        /* Grey */
+            --text-accent: #ff0033;     /* Citadelle Red */
+            
+            --border-main: #333333;
+            --border-highlight: #ff0033;
+            
+            --btn-bg: #ff0033;
+            --btn-text: #000000;
+
+            /* MODEL SPECIFIC COLORS (Muted in Red Mode) */
+            --c-mistral: #ff0033;
+            --c-google: #ff0033;
+            --c-llama: #ff0033;
+            --c-purple: #ff0033;
+            --c-deep: #ff0033;
+        }
+
+        /* === 2. THEME OVERRIDE (WORDSTAR BLUE) === */
+        body.theme-blue {
+            --bg-main: #001030;
+            --bg-panel: #000510;
+            --bg-input: #000810;
+            
+            --text-main: #ffffff;
+            --text-dim: #556677;
+            --text-accent: #00FFFF;     /* Cyan */
+            
+            --border-main: #556677;
+            --border-highlight: #00FFFF;
+            
+            --btn-bg: #00FFFF;
+            --btn-text: #000000;
+
+            /* NEON BRAND COLORS (Active in Blue Mode) */
+            --c-mistral: #FFFF00;       /* Yellow */
+            --c-google: #4285F4;        /* Blue */
+            --c-llama: #3b82f6;         /* Llama Blue */
+            --c-purple: #DDA0DD;        /* Qwen Purple */
+            --c-deep: #4e9aff;          /* Deep Blue */
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Courier Prime', monospace;
+            background: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-y: scroll;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 40px;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+
+        /* 1. STATUS LINE */
+        .status-line {
+            background: var(--text-main);
+            color: var(--bg-main);
+            padding: 4px 15px;
+            font-weight: bold;
+            font-size: 13px;
+            border-bottom: 2px solid var(--text-dim);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .theme-toggle-btn {
+            background: transparent;
+            border: 1px solid var(--bg-main);
+            color: var(--bg-main);
+            padding: 2px 8px;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 11px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .theme-toggle-btn:hover {
+            background: var(--bg-main);
+            color: var(--text-main);
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        /* 2. GLITCH DECK */
+        .glitch-deck {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-main);
+            padding: 10px;
+            margin-bottom: 20px;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+            transition: border 0.5s;
+        }
+
+        .deck-left, .deck-right { flex: 1; font-size: 11px; letter-spacing: 1px; }
+        .deck-right { text-align: right; }
+        .deck-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .sys-text { color: var(--text-accent); font-weight: bold; margin-bottom: 5px; }
+        .sys-sub { color: var(--text-dim); }
+        
+        .monitor-video {
+            width: 180px;
+            height: auto;
+            border: 2px solid var(--text-accent);
+            filter: contrast(1.2) brightness(0.9) grayscale(100%); /* Default Grayscale for Red */
+            mix-blend-mode: screen; 
+            transition: all 0.5s;
+        }
+        
+        /* Video changes in Blue Mode */
+        body.theme-blue .monitor-video {
+            filter: contrast(1.2) brightness(0.9) grayscale(0%);
+            border-color: var(--text-accent);
+            box-shadow: 0 0 10px var(--text-accent);
+        }
+
+        .maika-status {
+            font-size: 9px;
+            color: var(--text-dim);
+            font-style: italic;
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .glitch-link {
+            color: var(--text-accent);
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2px 5px;
+            border: 1px solid var(--border-main);
+            display: inline-block;
+            transition: all 0.2s;
+            margin-top: 4px;
+        }
+        .glitch-link:hover { background: var(--text-accent); color: var(--bg-main); }
+
+        /* 3. HEADER */
+        header {
+            border-bottom: 2px double var(--text-accent);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: var(--text-accent);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            line-height: 1;
+        }
+        .subtitle { color: var(--text-dim); font-size: 12px; font-weight: bold; margin-top: 5px; }
+
+        /* 4. INPUT */
+        .input-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            height: 60px;
+            position: sticky;
+            top: 35px; 
+            z-index: 900;
+            background: var(--bg-main);
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-main);
+        }
+
+        #prompt-input {
+            flex: 1;
+            background: var(--bg-input);
+            border: 1px solid var(--border-main);
+            color: var(--text-accent);
+            font-family: 'Courier Prime', monospace;
+            font-size: 16px;
+            padding: 10px;
+            resize: none;
+            outline: none;
+            transition: all 0.3s;
+        }
+        #prompt-input:focus { border-color: var(--text-accent); }
+
+        #run-button {
+            width: 150px;
+            background: var(--btn-bg);
+            color: var(--btn-text);
+            border: 2px solid var(--text-main);
+            font-family: 'Courier Prime', monospace;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.5);
+            transition: all 0.3s;
+        }
+        #run-button:hover { filter: brightness(1.2); }
+        #run-button:disabled { background: var(--text-dim); cursor: not-allowed; }
+
+        /* 5. GRID (3x3) */
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            flex: 1;
+        }
+
+        .model-box {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-main);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            height: 350px;
+            transition: border-color 0.5s;
+        }
+
+        .model-header {
+            background: rgba(255,255,255,0.05);
+            border-bottom: 1px solid var(--border-main);
+            color: var(--text-accent);
+            padding: 8px 10px;
+            font-size: 11px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .model-output {
+            padding: 10px;
+            font-size: 12px;
+            color: var(--text-main);
+            flex: 1;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            line-height: 1.4;
+        }
+        
+        /* SCROLLBAR */
+        .model-output::-webkit-scrollbar { width: 5px; }
+        .model-output::-webkit-scrollbar-thumb { background: var(--text-dim); }
+        .model-output::-webkit-scrollbar-track { background: var(--bg-panel); }
+
+        /* CUSTOM BORDERS (Active in Blue Mode) */
+        .b-llama { border-color: var(--c-llama); }
+        .b-mist { border-color: var(--c-mistral); }
+        .b-goog { border-color: var(--c-google); }
+        .b-deep { border-color: var(--c-deep); }
+        .b-purple { border-color: var(--c-purple); }
+
+        /* 6. DAEMON */
+        .daemon-box {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 280px;
+            background: var(--bg-main);
+            border: 2px solid var(--text-main);
+            box-shadow: 8px 8px 0px #000;
+            z-index: 999;
+            font-size: 12px;
+        }
+
+        .daemon-header { background: var(--text-main); color: var(--bg-main); padding: 4px; font-weight: bold; text-align: center; }
+        .daemon-content { padding: 10px; height: 100px; overflow-y: auto; border-bottom: 1px solid var(--border-main); color: var(--text-dim); }
+        .daemon-actions { display: flex; }
+        .daemon-btn {
+            flex: 1;
+            background: var(--bg-main);
+            color: var(--text-accent);
+            border: none;
+            border-right: 1px solid var(--border-main);
+            padding: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            text-transform: uppercase;
+            font-size: 11px;
+        }
+        .daemon-btn:hover { background: rgba(255,255,255,0.1); }
+
+        @media (max-width: 800px) {
+            .models-grid { grid-template-columns: 1fr; }
+            .model-box { min-height: 350px; }
+            .glitch-deck { flex-direction: column; gap: 10px; text-align: center; }
+            .deck-right { text-align: center; }
+            .daemon-box { position: relative; width: 100%; bottom: auto; right: auto; margin-top: 20px; }
+            .input-section { position: static; }
+        }
+    </style>
+</head>
+<body id="main-body">
+
+    <div class="status-line">
+        <div class="status-left">
+            <span id="sys-name">C:NEXUS.CITADELLE</span>
+            <span id="sys-mode" style="margin-left: 10px; color: var(--text-dim);">[ MODE: RED ]</span>
+        </div>
+        <div class="status-right">
+            <button class="theme-toggle-btn" onclick="toggleTheme()">[ SWITCH THEME ]</button>
+        </div>
+    </div>
+
+    <div class="container">
+        
+        <div class="glitch-deck">
+            <div class="deck-left">
+                <div class="sys-text">CITADELLE.CORE // LOCAL_ARRAY</div>
+                <div class="sys-sub">LATENCY: 0ms // COST: 0.00</div>
+            </div>
+            
+            <div class="deck-center">
+                <video src="https://raw.githubusercontent.com/ghostm68/pantheon/main/citadelle_20251216_185307209.mp4" 
+                       muted loop playsinline autoplay 
+                       class="monitor-video"></video>
+                <div style="margin-top: 4px; font-size: 10px; color: var(--text-dim);">
+                    C●NNECTED SINCE 16.12.2025
+                </div>
+                <div class="maika-status">
+                    QUANTUM CIRCUIT: ACTIVE
+                </div>
+            </div>
+            
+            <div class="deck-right">
+                <div class="sys-text">STATUS: ONLINE</div>
+                <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">
+                    <a href="#" class="glitch-link" onclick="clearAll()">[ flush buffers ]</a>
+                    <a href="https://wordstar.nexus/" class="glitch-link">[ native page ]</a>
+                </div>
+            </div>
+        </div>
+
+        <header>
+            <div>
+                <h1>CITADELLE<span style="color:var(--text-main);">.CORE</span></h1>
+                <div class="subtitle">QUANTUM TEXT PROCESSING ARRAY // NO-API</div>
+            </div>
+            <div style="text-align:right; font-size:10px; color:var(--text-dim);">
+                <span style="color:var(--text-accent)">●</span> LOCAL HOST<br>
+                9-NODE FRACTURE
+            </div>
+        </header>
+
+        <div class="input-section">
+            <textarea id="prompt-input" placeholder="ENTER SOURCE TEXT FOR FRACTURING..."></textarea>
+            <button id="run-button">EXECUTE</button>
+        </div>
+
+        <!-- THE QUANTUM GRID -->
+        <div class="models-grid">
+            <!-- 1. REDACTOR -->
+            <div class="model-box b-mist">
+                <div class="model-header">
+                    <span>NODE 01: REDACTOR</span>
+                    <span class="model-meta">CENSOR</span>
+                </div>
+                <div class="model-output" id="out-1"></div>
+            </div>
+
+            <!-- 2. BINARY GHOST -->
+            <div class="model-box b-mist">
+                <div class="model-header">
+                    <span>NODE 02: GHOST</span>
+                    <span class="model-meta">BINARY</span>
+                </div>
+                <div class="model-output" id="out-2"></div>
+            </div>
+
+            <!-- 3. DEVOWEL -->
+            <div class="model-box b-mist">
+                <div class="model-header">
+                    <span>NODE 03: PHOENICIAN</span>
+                    <span class="model-meta">NO_VOWELS</span>
+                </div>
+                <div class="model-output" id="out-3"></div>
+            </div>
+
+            <!-- 4. CUT-UP -->
+            <div class="model-box b-mist">
+                <div class="model-header">
+                    <span>NODE 04: BURROUGHS</span>
+                    <span class="model-meta">CUT_UP</span>
+                </div>
+                <div class="model-output" id="out-4"></div>
+            </div>
+
+            <!-- 5. HEXADECIMAL -->
+            <div class="model-box b-mist">
+                <div class="model-header">
+                    <span>NODE 05: HEX_DUMP</span>
+                    <span class="model-meta">RAW</span>
+                </div>
+                <div class="model-output" id="out-5"></div>
+            </div>
+
+            <!-- 6. MIRROR -->
+            <div class="model-box b-mist">
+                <div class="model-header">
+                    <span>NODE 06: MIRROR</span>
+                    <span class="model-meta">REVERSE</span>
+                </div>
+                <div class="model-output" id="out-6"></div>
+            </div>
+
+            <!-- 7. SORTER -->
+            <div class="model-box b-goog">
+                <div class="model-header">
+                    <span>NODE 07: LIBRARIAN</span>
+                    <span class="model-meta">A-Z</span>
+                </div>
+                <div class="model-output" id="out-7"></div>
+            </div>
+
+            <!-- 8. GLITCH -->
+            <div class="model-box b-purple">
+                <div class="model-header">
+                    <span>NODE 08: CORRUPTION</span>
+                    <span class="model-meta">ZALGO</span>
+                </div>
+                <div class="model-output" id="out-8"></div>
+            </div>
+
+            <!-- 9. SHIFT -->
+            <div class="model-box b-llama">
+                <div class="model-header">
+                    <span>NODE 09: CAESAR</span>
+                    <span class="model-meta">SHIFT+1</span>
+                </div>
+                <div class="model-output" id="out-9"></div>
+            </div>
+        </div>
+  </div>
+
+    <!-- DAEMON -->
+    <div class="daemon-box">
+        <div class="daemon-header">SYSTEM DAEMON</div>
+        <div class="daemon-content" id="daemon-log">
+            > SYSTEM BOOT...<br>
+            > THEME: CITADELLE_RED (DEFAULT)<br>
+            > API CONNECTIONS: DISABLED<br>
+            > LOCAL ENGINES: READY<br>
+            > WAITING FOR INPUT_
+        </div>
+        <div class="daemon-actions">
+            <button class="daemon-btn" onclick="log('LOG SAVED (SIMULATED)')">SAVE.LOG</button>
+            <button class="daemon-btn" onclick="clearAll()">CLR.SCR</button>
+        </div>
+    </div>
+
+    <!-- QUANTUM ENGINE & UI SCRIPT -->
+    <script>
+        // --- 1. THEME TOGGLE LOGIC ---
+        function toggleTheme() {
+            const body = document.getElementById('main-body');
+            const sysName = document.getElementById('sys-name');
+            const sysMode = document.getElementById('sys-mode');
+            
+            body.classList.toggle('theme-blue');
+            
+            if(body.classList.contains('theme-blue')) {
+                sysName.innerText = "C:NEXUS.FEDERATION";
+                sysMode.innerText = "[ MODE: BLUE ]";
+                log("THEME SWITCH: FEDERATION PROTOCOL");
+            } else {
+                sysName.innerText = "C:NEXUS.CITADELLE";
+                sysMode.innerText = "[ MODE: RED ]";
+                log("THEME SWITCH: CITADELLE PROTOCOL");
+            }
+        }
+
+        // --- 2. THE QUANTUM ENGINE (TEXT PROCESSORS) ---
+        const QuantumPrism = {
+            redact: (text) => text.split(' ').map(w => Math.random() > 0.6 ? '█'.repeat(w.length) : w).join(' '),
+            binary: (text) => text.split('').map(c => c.charCodeAt(0).toString(2)).join(' ').substring(0, 300),
+            devowel: (text) => text.replace(/[aeiouAEIOU]/g, ''),
+            cutup: (text) => {
+                let w = text.split(' ');
+                for (let i = w.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [w[i], w[j]] = [w[j], w[i]];
+                }
+                return w.join(' ');
+            },
+            hex: (text) => text.split('').map(c => c.charCodeAt(0).toString(16).toUpperCase()).join(' '),
+            mirror: (text) => text.split('').reverse().join(''),
+            sort: (text) => text.split(' ').sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase())).join(' '),
+            glitch: (text) => {
+                const g = ['∫','∂','√','≠','≤','≥','?','!','/','\\'];
+                return text.split('').map(c => Math.random() > 0.85 ? c + g[Math.floor(Math.random()*g.length)] : c).join('');
+            },
+            shift: (text) => text.split('').map(c => String.fromCharCode(c.charCodeAt(0) + 1)).join('')
+        };
+
+        // --- 3. UI CONTROLLER ---
+        const runBtn = document.getElementById('run-button');
+        const input = document.getElementById('prompt-input');
+        const daemonLog = document.getElementById('daemon-log');
+
+        function log(msg) {
+            daemonLog.innerHTML += `> ${msg}<br>`;
+            daemonLog.scrollTop = daemonLog.scrollHeight;
+        }
+
+        function typeWriter(elementId, text, speed = 10) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = "";
+            let i = 0;
+            function type() {
+                if (i < text.length) {
+                    el.innerHTML += text.charAt(i);
+                    el.scrollTop = el.scrollHeight;
+                    i++;
+                    setTimeout(type, speed);
+                }
+            }
+            type();
+        }
+
+        function clearAll() {
+            for(let i=1; i<=9; i++) document.getElementById(`out-${i}`).innerHTML = "";
+            input.value = "";
+            log("BUFFERS CLEARED.");
+        }
+
+        runBtn.addEventListener('click', () => {
+            const raw = input.value;
+            if(!raw) return;
+
+            log("EXECUTING FRACTURE SEQUENCE...");
+            runBtn.disabled = true;
+            runBtn.innerText = "PROCESSING...";
+
+            // Trigger Engines with staggered timings
+            setTimeout(() => typeWriter('out-1', QuantumPrism.redact(raw), 20), 100);
+            setTimeout(() => typeWriter('out-2', QuantumPrism.binary(raw), 5), 200);
+            setTimeout(() => typeWriter('out-3', QuantumPrism.devowel(raw), 30), 300);
+            setTimeout(() => typeWriter('out-4', QuantumPrism.cutup(raw), 25), 400);
+            setTimeout(() => typeWriter('out-5', QuantumPrism.hex(raw), 10), 500);
+            setTimeout(() => typeWriter('out-6', QuantumPrism.mirror(raw), 15), 600);
+            setTimeout(() => typeWriter('out-7', QuantumPrism.sort(raw), 35), 700);
+            setTimeout(() => typeWriter('out-8', QuantumPrism.glitch(raw), 5), 800);
+            setTimeout(() => typeWriter('out-9', QuantumPrism.shift(raw), 20), 900);
+
+            setTimeout(() => {
+                runBtn.disabled = false;
+                runBtn.innerText = "EXECUTE";
+                log("SEQUENCE COMPLETE.");
+            }, 1500);
+        });
+    </script>
+</body>
+</html>
