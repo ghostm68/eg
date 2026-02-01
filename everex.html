@@ -222,9 +222,20 @@
 }
 
 /* Make buttons full width within their grid cell */
+/* Add this to your CSS section (around line 140) */
 .tool-btn {
-    width: 100%;
-    min-height: 40px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--text-dim);
+    color: var(--text-main);
+    padding: 8px;
+    cursor: pointer;
+    font-family: var(--font-main);
+    font-size: 0.8rem;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
 }
         .tool-btn:hover {
             border-color: var(--accent-primary);
@@ -523,9 +534,9 @@
         <button class="tool-btn" id="send-backward" title="Send Backward">
             <i class="fa fa-arrow-down"></i> Back
         </button>
-        <button class="tool-btn" id="save-logo">
-            <i class="fa fa-download"></i> Save
-        </button>
+        <button class="tool-btn" id="export-btn" title="Export as PNG">
+    <i class="fa fa-download"></i> Export
+</button>
     </div>
 </div>
 
@@ -919,6 +930,124 @@ function setupEventListeners() {
     // Prevent context menu
     document.addEventListener('contextmenu', (e) => e.preventDefault());
 }
+    // ============================================
+// INITIALIZATION
+// ============================================
+
+// Logo Text Functions
+function updateLogoText() {
+    const text = document.getElementById('logo-text').value;
+    const font = document.getElementById('logo-font').value;
+    
+    if (canvasEngine && text.trim()) {
+        canvasEngine.addTextLogo(text, font);
+    }
+}
+
+function updateLogoColor() {
+    const color = document.getElementById('logo-color').value;
+    document.getElementById('color-value').textContent = color.toUpperCase();
+    
+    // Update CSS variable for accent color
+    document.documentElement.style.setProperty('--accent-color', color);
+}
+
+function updateLogoSize() {
+    const size = document.getElementById('logo-size').value;
+    document.getElementById('size-value').textContent = `${size}px`;
+    
+    if (canvasEngine.selectedLogo) {
+        const scale = parseInt(size) / 100;
+        canvasEngine.selectedLogo.scale = scale;
+        canvasEngine.selectedLogo.width = canvasEngine.selectedLogo.originalWidth * scale;
+        canvasEngine.selectedLogo.height = canvasEngine.selectedLogo.originalHeight * scale;
+        canvasEngine.render();
+    }
+}
+
+// Status Footer
+function updateStatusFooter() {
+    const footer = document.querySelector('.status-footer');
+    if (!footer) return;
+    
+    const updateInfo = () => {
+        const memory = Math.round(performance.memory ? performance.memory.usedJSHeapSize / 1048576 : 0);
+        const logos = canvasEngine ? canvasEngine.logos.length : 0;
+        const tool = canvasEngine ? canvasEngine.currentTool : 'select';
+        
+        footer.innerHTML = `
+            <span>LOGOS: ${logos}</span>
+            <span>TOOL: ${tool.toUpperCase()}</span>
+            <span>MEM: ${memory}MB</span>
+            <span>READY</span>
+        `;
+    };
+    
+    setInterval(updateInfo, 2000);
+    updateInfo();
+}
+
+// Notepad export functions
+function exportNotesAsPDF() {
+    const content = document.getElementById('design-notepad').value;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head><title>LogoPad Notes</title></head>
+            <body>
+                <h1>Logo Design Notes</h1>
+                <pre>${content}</pre>
+                <p>Generated: ${new Date().toLocaleString()}</p>
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+function exportNotesAsTXT() {
+    const content = document.getElementById('design-notepad').value;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const link = document.createElement('a');
+    link.download = `design-notes-${Date.now()}.txt`;
+    link.href = URL.createObjectURL(blob);
+    link.click();
+}
+
+// Main Initialization
+function init() {
+    console.log('Initializing LogoPad...');
+    
+    try {
+        // Initialize Three.js background
+        threeScene = initThreeJSScene();
+        
+        // Initialize canvas engine
+        canvasEngine = new LogoMergingEngine();
+        window.canvasEngine = canvasEngine;
+        
+        // Initialize notepad
+        notepadEngine = new NotepadEngine();
+        
+        // Load logo library
+        loadLogoLibrary();
+        
+        // Setup event listeners
+        setupEventListeners();
+        
+        // Update status footer
+        updateStatusFooter();
+        
+        console.log('LogoPad ready!');
+        
+    } catch (error) {
+        console.error('Initialization error:', error);
+        alert('Failed to initialize LogoPad. Please refresh the page.');
+    }
+}
+
+// Start when DOM is loaded
+document.addEventListener('DOMContentLoaded', init);
 </script>
     <script>
         // ============================================
