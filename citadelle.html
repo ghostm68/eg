@@ -791,16 +791,35 @@ function randomPrompt() {
             }, 1500);
         });
     </script>
-    <script>
-        // Add this function alongside your other functions (after saveLog)
-function saveStyledLog() {
+<script>
+  function saveStyledLog() {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     
-    // ASCII Art Header
-  // In your saveStyledLog function, replace the ASCII art with this corrected version:
-let content = `
-██████╗ ██╗████████╗ █████╗ ██████╗ ███████╗██╗     ███████╗    ██████╗ *
-██╔══██╗██║╚══██╔══╝██╔══██╗██╔══██╗██╔════╝██║     ██╔════╝    █
+    // Define the helper function FIRST
+    function getCleanUserAgent() {
+        const ua = navigator.userAgent;
+        if (/edg/i.test(ua)) return 'Microsoft Edge';
+        if (/opr/i.test(ua) || /opera/i.test(ua)) return 'Opera';
+        if (/chrome/i.test(ua) && !/edg/i.test(ua)) return 'Google Chrome';
+        if (/firefox/i.test(ua)) return 'Mozilla Firefox';
+        if (/safari/i.test(ua) && !/chrome/i.test(ua)) return 'Apple Safari';
+        return 'Unknown Browser';
+    }
+    
+    // Get DOM elements
+    const input = document.getElementById('prompt-input'); // Make sure this exists
+    const daemonLog = document.getElementById('daemon-log'); // Make sure this exists
+    
+    // Correct ASCII Art Header
+    let content = `
+██████╗ ██╗████████╗ █████╗ ██████╗ ███████╗██╗     ███████╗    ██████╗ ██████╗ ██████╗ ███████╗
+██╔══██╗██║╚══██╔══╝██╔══██╗██╔══██╗██╔════╝██║     ██╔════╝    ██╔══██╗██╔══██╗██╔══██╗██╔════╝
+██║  ██║██║   ██║   ███████║██║  ██║█████╗  ██║     █████╗      ██║  ██║██████╔╝██████╔╝█████╗  
+██║  ██║██║   ██║   ██╔══██║██║  ██║██╔══╝  ██║     ██╔══╝      ██║  ██║██╔═══╝ ██╔═══╝ ██╔══╝  
+██████╔╝██║   ██║   ██║  ██║██████╔╝███████╗███████╗███████╗    ██████╔╝██║     ██║     ███████╗
+╚═════╝ ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═════╝ ╚══════╝╚══════╝╚══════╝    ╚═════╝ ╚═╝     ╚═╝     ╚══════╝
+
+╔═══════════════════════════════════════════════════════════════════════╗
 ║                      CITADELLE.CORE SESSION LOG                       ║
 ║                    QUANTUM TEXT PROCESSING ARRAY                      ║
 ╚═══════════════════════════════════════════════════════════════════════╝
@@ -814,19 +833,27 @@ LOCALE     : ${navigator.language}
 ONLINE     : ${navigator.onLine ? 'Yes' : 'No'}
 `;
 
-// Optional: Add session metrics
-const wordCount = input.value.split(/\s+/).filter(w => w.length > 0).length;
-const activeNodes = Array.from({length: 9}, (_, i) => i + 1)
-    .filter(i => document.getElementById(`out-${i}`).innerText.trim()).length;
-
-content += `WORDS IN   : ${wordCount}\n`;
-content += `NODES ACTIVE: ${activeNodes}/9\n`;
+    // Optional: Add session metrics (only if input exists)
+    if (input && input.value) {
+        const wordCount = input.value.split(/\s+/).filter(w => w.length > 0).length;
+        content += `WORDS IN   : ${wordCount}\n`;
+    }
+    
+    // Count active nodes
+    let activeNodes = 0;
+    for(let i = 1; i <= 9; i++) {
+        const outputEl = document.getElementById(`out-${i}`);
+        if(outputEl && outputEl.innerText.trim()) {
+            activeNodes++;
+        }
+    }
+    content += `NODES ACTIVE: ${activeNodes}/9\n`;
 
     // Prompt Section
     content += "\n" + "═".repeat(80) + "\n";
     content += "【 INPUT PROMPT 】\n";
     content += "─".repeat(40) + "\n\n";
-    content += input.value + "\n\n";
+    content += (input ? input.value : "No input") + "\n\n";
 
     // Node Outputs
     content += "═".repeat(80) + "\n";
@@ -846,7 +873,8 @@ content += `NODES ACTIVE: ${activeNodes}/9\n`;
     ];
 
     for(let i = 1; i <= 9; i++) {
-        const output = document.getElementById(`out-${i}`).innerText;
+        const outputEl = document.getElementById(`out-${i}`);
+        const output = outputEl ? outputEl.innerText : "";
         if(output.trim()) {
             content += `◈ ${nodeNames[i-1]}\n`;
             content += "•".repeat(30) + "\n";
@@ -858,7 +886,7 @@ content += `NODES ACTIVE: ${activeNodes}/9\n`;
     content += "═".repeat(70) + "\n";
     content += "【 SYSTEM DAEMON ACTIVITY LOG 】\n";
     content += "─".repeat(36) + "\n\n";
-    content += daemonLog.innerText + "\n";
+    content += (daemonLog ? daemonLog.innerText : "No daemon log available") + "\n";
 
     // Footer
     content += "\n" + "═".repeat(69) + "\n";
@@ -882,8 +910,11 @@ content += `NODES ACTIVE: ${activeNodes}/9\n`;
         URL.revokeObjectURL(url);
     }, 100);
     
-    log(`SESSION ARCHIVED WITH STYLE: ${timestamp}.txt`);
+    // Log the action (if log function exists)
+    if (typeof log === 'function') {
+        log(`SESSION ARCHIVED WITH STYLE: ${timestamp}.txt`);
+    }
 }
-    </script>
+	</script>
 </body>
 </html>
