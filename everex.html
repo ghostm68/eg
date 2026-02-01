@@ -628,14 +628,413 @@ Press Ctrl+S to auto-save..."></textarea>
 <script>
     // ============================================
 // MAIN SCRIPT - Initialization & Event Handling
+// =====================================
+
+// ============================================
+// LOGO MERGING ENGINE
 // ============================================
 
-// Global instances
-let canvasEngine, notepadEngine, threeScene;
+class LogoMergingEngine {
+    constructor() {
+        this.canvas = document.getElementById('design-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.logos = [];
+        this.selectedLogo = null;
+        this.dragging = false;
+        this.currentTool = 'select';
+        this.lastX = 0;
+        this.lastY = 0;
+        
+        this.resizeCanvas();
+        this.initEvents();
+        this.render();
+    }
+    
+    resizeCanvas() {
+        const container = this.canvas.parentElement;
+        const dpr = window.devicePixelRatio || 1;
+        const rect = container.getBoundingClientRect();
+        
+        this.canvas.style.width = rect.width + 'px';
+        this.canvas.style.height = rect.height + 'px';
+        this.canvas.width = rect.width * dpr;
+        this.canvas.height = rect.height * dpr;
+        this.ctx.scale(dpr, dpr);
+        
+        this.render();
+    }
+    
+    initEvents() {
+        this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+        this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
+        this.canvas.addEventListener('mouseup', () => this.onMouseUp());
+        this.canvas.addEventListener('dblclick', (e) => this.onDoubleClick(e));
+        window.addEventListener('resize', () => this.resizeCanvas());
+    }
+    
+    addLogo(imageUrl, x, y, scale = 0.4) {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        
+        img.onload = () => {
+            const logo = {
+                image: img,
+                x: x || this.canvas.width/2,
+                y: y || this.canvas.height/2,
+                width: img.width * scale,
+                height: img.height * scale,
+                originalWidth: img.width,
+                originalHeight: img.height,
+                rotation: 0,
+                scale: scale,
+                selected: true,
+                id: Date.now()
+            };
+            
+            this.logos.push(logo);
+            this.selectedLogo = logo;
+            this.render();
+        };
+        
+        img.src = imageUrl;
+    }
+    
+    addTextLogo(text, font = 'Arial') {
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        const fontSize = 48;
+        
+        tempCtx.font = `${fontSize}px ${font}`;
+        const metrics = tempCtx.measureText(text);
+        
+        tempCanvas.width = metrics.width + 40;
+        tempCanvas.height = fontSize + 40;
+        
+        const color = document.getElementById('logo-color').value || '#FF0000';
+        tempCtx.fillStyle = color;
+        tempCtx.font = `${fontSize}px ${font}`;
+        tempCtx.textAlign = 'center';
+        tempCtx.textBaseline = 'middle';
+        tempCtx.fillText(text, tempCanvas.width/2, tempCanvas.height/2);
+        
+        const dataUrl = tempCanvas.toDataURL();
+        this.addLogo(dataUrl, this.canvas.width/2, this.canvas.height/2, 1);
+    }
+    
+    selectLogo(logo) {
+        this.logos.forEach(l => l.selected = false);
+        logo.selected = true;
+        this.selectedLogo = logo;
+        this.render();
+    }
+    
+    deleteSelected() {
+        if (this.selectedLogo) {
+            this.logos = this.logos.filter(logo => logo !== this.selectedLogo);
+            this.selectedLogo = null;
+            this.render();
+        }
+    }
+    
+    scaleSelected(factor) {
+        if (this.selectedLogo) {
+            this.selectedLogo.scale *= factor;
+            this.selectedLogo.width = this.selectedLogo.originalWidth * this.selectedLogo.scale;
+            this.selectedLogo.height = this.selectedLogo.originalHeight * this.selectedLogo.scale;
+            this.render();
+        }
+    }
+    
+    rotateSelected(degrees) {
+        if (this.selectedLogo) {
+            this.selectedLogo.rotation = (this.selectedLogo.rotation + degrees) % 360;
+            this.render();
+        }
+    }
+    
+    clear() {
+        this.logos = [];
+        this.selectedLogo = null;
+        this.render();
+    }
+    
+    async generateRandomMash() {
+        this.clear();
+        
+        const shuffled = [...logoDatabase].sort(() => Math.random() - 0.5);
+        const logo1 = shuffled[0];
+        const logo2 = shuffled[1];
+        
+        const mergedUrl = await this.mergeTwoLogos(logo1.url, logo2.url);
+        this.addLogo(mergedUrl, this.canvas.width/2, this.canvas.height/2, 0.6);
+    }
+    
+    async mergeTwoLogos(url1, url2) {
+        return new Promise((resolve) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 400;
+            canvas.height = 400;
+            
+            const img1 = new Image();
+            const img2 = new Image();
+            img1.crossOrigin = 'anonymous';
+            img2.crossOrigin = 'anonymous';
+            
+            let loaded = 0;
+            const onLoad = () => {
+                loaded++;
+                if (loaded === 2) {
+                    const style = Math.floor(Math.random() * 3);
+                    
+                    switch(style) {
+                        case 0:
+                            ctx.drawImage(img1, 0, 0, 200, 400);
+                            ctx.drawImage(img2, 200, 0, 200, 400);
+                            break;
+                        case 1:
+                            ctx.drawImage(img1, 0, 0, 400, 200);
+                            ctx.drawImage(img2, 0, 200, 400, 200);
+                            break;
+                        case 2:
+                            ctx.drawImage(img1, 0, 0, 400, 400);
+                            ctx.globalAlpha = 0.5;
+                            ctx.drawImage(img2, 0, 0, 400, 400);
+                            break;
+                    }
+                    
+                    resolve(canvas.toDataURL());
+                }
+            };
+            
+            img1.onload = onLoad;
+            img2.onload = onLoad;
+            img1.src = url1;
+            img2.src = url2;
+        });
+    }
+    
+    exportAsImage() {
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        tempCanvas.width = this.canvas.width;
+        tempCanvas.height = this.canvas.height;
+        
+        tempCtx.fillStyle = '#FFFFFF';
+        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+        
+        this.logos.forEach(logo => {
+            tempCtx.save();
+            tempCtx.translate(logo.x, logo.y);
+            tempCtx.rotate(logo.rotation * Math.PI / 180);
+            tempCtx.drawImage(
+                logo.image,
+                -logo.width / 2,
+                -logo.height / 2,
+                logo.width,
+                logo.height
+            );
+            tempCtx.restore();
+        });
+        
+        const link = document.createElement('a');
+        link.download = `logo-${Date.now()}.png`;
+        link.href = tempCanvas.toDataURL('image/png');
+        link.click();
+    }
+    
+    render() {
+        const dpr = window.devicePixelRatio || 1;
+        const width = this.canvas.width / dpr;
+        const height = this.canvas.height / dpr;
+        
+        this.ctx.fillStyle = 'rgba(10, 10, 20, 0.8)';
+        this.ctx.fillRect(0, 0, width, height);
+        
+        this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.1)';
+        this.ctx.lineWidth = 1;
+        
+        for (let x = 0; x <= width; x += 20) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(x, 0);
+            this.ctx.lineTo(x, height);
+            this.ctx.stroke();
+        }
+        
+        for (let y = 0; y <= height; y += 20) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, y);
+            this.ctx.lineTo(width, y);
+            this.ctx.stroke();
+        }
+        
+        this.logos.forEach(logo => {
+            this.ctx.save();
+            this.ctx.translate(logo.x, logo.y);
+            this.ctx.rotate(logo.rotation * Math.PI / 180);
+            
+            if (logo.selected) {
+                this.ctx.shadowColor = '#FF0000';
+                this.ctx.shadowBlur = 10;
+            }
+            
+            this.ctx.drawImage(
+                logo.image,
+                -logo.width / 2,
+                -logo.height / 2,
+                logo.width,
+                logo.height
+            );
+            
+            this.ctx.shadowBlur = 0;
+            
+            if (logo.selected) {
+                this.ctx.strokeStyle = '#FF0000';
+                this.ctx.lineWidth = 2;
+                this.ctx.setLineDash([5, 5]);
+                this.ctx.strokeRect(
+                    -logo.width / 2 - 5,
+                    -logo.height / 2 - 5,
+                    logo.width + 10,
+                    logo.height + 10
+                );
+                this.ctx.setLineDash([]);
+            }
+            
+            this.ctx.restore();
+        });
+    }
+    
+    onMouseDown(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const x = (e.clientX - rect.left) / dpr;
+        const y = (e.clientY - rect.top) / dpr;
+        
+        this.lastX = x;
+        this.lastY = y;
+        
+        for (let i = this.logos.length - 1; i >= 0; i--) {
+            const logo = this.logos[i];
+            const dx = x - logo.x;
+            const dy = y - logo.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const maxDim = Math.max(logo.width, logo.height) / 2;
+            
+            if (distance < maxDim) {
+                this.selectLogo(logo);
+                this.dragging = true;
+                return;
+            }
+        }
+        
+        this.selectedLogo = null;
+        this.render();
+    }
+    
+    onMouseMove(e) {
+        if (!this.dragging || !this.selectedLogo) return;
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const x = (e.clientX - rect.left) / dpr;
+        const y = (e.clientY - rect.top) / dpr;
+        
+        const dx = x - this.lastX;
+        const dy = y - this.lastY;
+        
+        this.selectedLogo.x += dx;
+        this.selectedLogo.y += dy;
+        
+        this.lastX = x;
+        this.lastY = y;
+        this.render();
+    }
+    
+    onMouseUp() {
+        this.dragging = false;
+    }
+    
+    onDoubleClick(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const x = (e.clientX - rect.left) / dpr;
+        const y = (e.clientY - rect.top) / dpr;
+        
+        for (let i = this.logos.length - 1; i >= 0; i--) {
+            const logo = this.logos[i];
+            const dx = x - logo.x;
+            const dy = y - logo.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const maxDim = Math.max(logo.width, logo.height) / 2;
+            
+            if (distance < maxDim) {
+                this.deleteSelected();
+                return;
+            }
+        }
+    }
+}
 
-// Logo Database (expanded)
+// ============================================
+// NOTEPAD ENGINE
+// ============================================
+
+class NotepadEngine {
+    constructor() {
+        this.textarea = document.getElementById('design-notepad');
+        this.init();
+    }
+    
+    init() {
+        const saved = localStorage.getItem('logopad-notes');
+        if (saved) this.textarea.value = saved;
+        
+        this.textarea.addEventListener('input', () => {
+            localStorage.setItem('logopad-notes', this.textarea.value);
+        });
+    }
+    
+    exportAsTXT() {
+        const blob = new Blob([this.textarea.value], { type: 'text/plain' });
+        const link = document.createElement('a');
+        link.download = `design-notes-${Date.now()}.txt`;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+    }
+    
+    exportAsPDF() {
+        const content = this.textarea.value;
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head><title>LogoPad Notes</title></head>
+                <body>
+                    <h1>Logo Design Notes</h1>
+                    <pre>${content}</pre>
+                    <p>Generated: ${new Date().toLocaleString()}</p>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    }
+    
+    clear() {
+        if (confirm('Clear all notes?')) {
+            this.textarea.value = '';
+            localStorage.removeItem('logopad-notes');
+        }
+    }
+}
+
+// ============================================
+// LOGO DATABASE
+// ============================================
+
 const logoDatabase = [
-           // Tech Brands
+  // Tech Brands
             { name: "Android", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Android_robot.svg/320px-Android_robot.svg.png" },
             { name: "Apple", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Apple_logo_black.svg/320px-Apple_logo_black.svg.png" },
             { name: "Windows", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Microsoft_Windows_3.1_logo.svg/320px-Microsoft_Windows_3.1_logo.svg.png" },
@@ -687,1005 +1086,8 @@ const logoDatabase = [
             { name: "Xiaomi", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Xiaomi_logo_%282021-%29.svg/320px-Xiaomi_logo_%282021-%29.svg.png" }
 ];
 
-// Theme Management
-function toggleTheme() {
-    document.body.classList.toggle('classic-mode');
-    const isBlue = document.body.classList.contains('classic-mode');
-    
-    // Update Three.js scene colors
-    if (window.threeScene && threeScene.scene && threeScene.innerCube) {
-        if (isBlue) {
-            threeScene.scene.fog.color.setHex(0x0000AA);
-            threeScene.innerCube.material.color.setHex(0xFFFF00);
-            threeScene.cube.material.color.setHex(0x00FFFF);
-            document.getElementById('canvas-container').style.opacity = "0.4";
-        } else {
-            threeScene.scene.fog.color.setHex(0x000000);
-            threeScene.innerCube.material.color.setHex(0xFF0000);
-            threeScene.cube.material.color.setHex(0x666666);
-            document.getElementById('canvas-container').style.opacity = "0.6";
-        }
-    }
-}
-
-// Logo Library Management
-function loadLogoLibrary() {
-    const grid = document.getElementById('logoGrid');
-    grid.innerHTML = '';
-    
-    // Create logo items
-    logoDatabase.forEach((logo, index) => {
-        const item = document.createElement('div');
-        item.className = 'logo-item';
-        item.title = logo.name;
-        item.innerHTML = `<img src="${logo.url}" alt="${logo.name}" loading="lazy">`;
-        
-        // Click to add logo
-        item.addEventListener('click', () => {
-            document.querySelectorAll('.logo-item').forEach(el => el.classList.remove('selected'));
-            item.classList.add('selected');
-            
-            const x = canvasEngine.canvas.width / (2 * window.devicePixelRatio || 1) / 2;
-            const y = canvasEngine.canvas.height / (2 * window.devicePixelRatio || 1) / 2;
-            canvasEngine.addLogo(logo.url, x, y, 0.4);
-        });
-        
-        grid.appendChild(item);
-    });
-}
-
-// Setup Event Listeners - FIXED VERSION
-function setupEventListeners() {
-    // Theme toggle
-    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-    
-    // Menu toggle
-    document.getElementById('menuBtn').addEventListener('click', () => {
-        alert('LogoPad Nexus v2.0\n\n' +
-              'HOW TO USE:\n' +
-              '1. Click logos on left to add\n' +
-              '2. Click a logo to select it\n' +
-              '3. Drag RED circle to rotate\n' +
-              '4. Drag GREEN circle to scale\n' +
-              '5. Use buttons below for quick actions\n' +
-              '6. Delete: Double-click or press Delete key\n' +
-              '7. Text: Type in box then press Enter');
-    });
-    
-    // Tool buttons - FIXED!
-    document.querySelectorAll('.tool-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Get button ID or use data-tool as fallback
-            const btnId = this.id || this.dataset.tool;
-            
-            switch(btnId) {
-                case 'clearCanvas':
-                    if (confirm('Clear all logos from canvas?')) {
-                        canvasEngine.clear();
-                    }
-                    break;
-                    
-                case 'randomMash':
-                    const originalText = this.innerHTML;
-                    this.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Creating...';
-                    this.disabled = true;
-                    
-                    canvasEngine.generateRandomMash().then(() => {
-                        this.innerHTML = originalText;
-                        this.disabled = false;
-                    });
-                    break;
-                    
-                // Rotation buttons - FIXED: Now they work!
-                case 'rotate-left':
-                    if (canvasEngine.selectedLogo) {
-                        canvasEngine.rotateSelected(-15);
-                    } else {
-                        alert('Please select a logo first');
-                    }
-                    break;
-                    
-                case 'rotate-right':
-                    if (canvasEngine.selectedLogo) {
-                        canvasEngine.rotateSelected(15);
-                    } else {
-                        alert('Please select a logo first');
-                    }
-                    break;
-                    
-                // Scale buttons - FIXED: Now they work!
-                case 'scale-up':
-                    if (canvasEngine.selectedLogo) {
-                        canvasEngine.scaleSelected(1.2);
-                    } else {
-                        alert('Please select a logo first');
-                    }
-                    break;
-                    
-                case 'scale-down':
-                    if (canvasEngine.selectedLogo) {
-                        canvasEngine.scaleSelected(0.8);
-                    } else {
-                        alert('Please select a logo first');
-                    }
-                    break;
-                    
-                // Delete button - FIXED: Now it works!
-                case 'delete-logo':
-                    if (canvasEngine.selectedLogo) {
-                        if (confirm('Delete selected logo?')) {
-                            canvasEngine.deleteSelected();
-                        }
-                    } else {
-                        alert('Please select a logo to delete');
-                    }
-                    break;
-                    
-                // Text button - FIXED: Now it works properly!
-                case 'text-btn':
-                    const textInput = document.getElementById('logo-text');
-                    const text = textInput.value.trim() || 'LOGO';
-                    const font = document.getElementById('logo-font').value;
-                    
-                    if (text) {
-                        canvasEngine.addTextLogo(text, font);
-                        textInput.value = ''; // Clear input
-                    }
-                    
-                    // Set as active tool
-                    canvasEngine.currentTool = 'text';
-                    document.querySelectorAll('.tool-btn').forEach(b => 
-                        b.classList.remove('active'));
-                    this.classList.add('active');
-                    break;
-                    
-                // Save/Export button - FIXED: Now it works!
-                case 'save-logo':
-                    canvasEngine.exportAsImage();
-                    break;
-                    
-                // Tool mode buttons (select, move, scale, rotate, shape)
-                case 'select-btn':
-                case 'move-btn':
-                case 'scale-btn':
-                case 'rotate-btn':
-                case 'shape-btn':
-                    canvasEngine.currentTool = this.dataset.tool;
-                    // Update active state
-                    document.querySelectorAll('.tool-btn').forEach(b => 
-                        b.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // Special handling for shape tool
-                    if (this.dataset.tool === 'shape') {
-                        alert('Shape tool - coming soon!');
-                    }
-                    break;
-                    
-                default:
-                    // If button has data-tool but no specific case
-                    if (this.dataset.tool) {
-                        canvasEngine.currentTool = this.dataset.tool;
-                        document.querySelectorAll('.tool-btn').forEach(b => 
-                            b.classList.remove('active'));
-                        this.classList.add('active');
-                    }
-            }
-        });
-    });
-    
-    // Notepad controls - Keep as is
-    document.getElementById('export-pdf').addEventListener('click', () => notepadEngine.exportAsPDF());
-    document.getElementById('export-txt').addEventListener('click', () => notepadEngine.exportAsTXT());
-    document.getElementById('clear-notes').addEventListener('click', () => notepadEngine.clear());
-    
-    // Logo text controls - FIXED: Use Enter key to add text
-    document.getElementById('logo-text').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            const text = document.getElementById('logo-text').value.trim();
-            const font = document.getElementById('logo-font').value;
-            
-            if (text) {
-                canvasEngine.addTextLogo(text, font);
-                document.getElementById('logo-text').value = ''; // Clear input
-            }
-            e.preventDefault();
-        }
-    });
-    
-    // Logo controls - Keep as is
-    document.getElementById('logo-font').addEventListener('change', updateLogoText);
-    document.getElementById('logo-color').addEventListener('input', updateLogoColor);
-    document.getElementById('logo-size').addEventListener('input', updateLogoSize);
-    
-    // Keyboard shortcuts - Keep as is
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Delete' || e.key === 'Backspace') {
-            canvasEngine.deleteSelected();
-        } else if (e.ctrlKey && e.key === 'z') {
-            canvasEngine.undo();
-        } else if (e.ctrlKey && e.key === 'y') {
-            canvasEngine.redo();
-        } else if (e.ctrlKey && e.key === 's') {
-            e.preventDefault();
-            canvasEngine.exportAsImage();
-        }
-    });
-    
-    // Mouse wheel controls - Keep as is
-    document.addEventListener('wheel', (e) => {
-        if (e.ctrlKey && canvasEngine.selectedLogo) {
-            e.preventDefault();
-            const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1;
-            canvasEngine.scaleSelected(scaleFactor);
-        } else if (e.shiftKey && canvasEngine.selectedLogo) {
-            e.preventDefault();
-            const rotation = e.deltaY > 0 ? -5 : 5;
-            canvasEngine.rotateSelected(rotation);
-        }
-    }, { passive: false });
-    
-    // Prevent context menu
-    document.addEventListener('contextmenu', (e) => e.preventDefault());
-}
-    // ============================================
-// INITIALIZATION
 // ============================================
-
-// Logo Text Functions
-function updateLogoText() {
-    const text = document.getElementById('logo-text').value;
-    const font = document.getElementById('logo-font').value;
-    
-    if (canvasEngine && text.trim()) {
-        canvasEngine.addTextLogo(text, font);
-    }
-}
-
-function updateLogoColor() {
-    const color = document.getElementById('logo-color').value;
-    document.getElementById('color-value').textContent = color.toUpperCase();
-    
-    // Update CSS variable for accent color
-    document.documentElement.style.setProperty('--accent-color', color);
-}
-
-function updateLogoSize() {
-    const size = document.getElementById('logo-size').value;
-    document.getElementById('size-value').textContent = `${size}px`;
-    
-    if (canvasEngine.selectedLogo) {
-        const scale = parseInt(size) / 100;
-        canvasEngine.selectedLogo.scale = scale;
-        canvasEngine.selectedLogo.width = canvasEngine.selectedLogo.originalWidth * scale;
-        canvasEngine.selectedLogo.height = canvasEngine.selectedLogo.originalHeight * scale;
-        canvasEngine.render();
-    }
-}
-
-// Status Footer
-function updateStatusFooter() {
-    const footer = document.querySelector('.status-footer');
-    if (!footer) return;
-    
-    const updateInfo = () => {
-        const memory = Math.round(performance.memory ? performance.memory.usedJSHeapSize / 1048576 : 0);
-        const logos = canvasEngine ? canvasEngine.logos.length : 0;
-        const tool = canvasEngine ? canvasEngine.currentTool : 'select';
-        
-        footer.innerHTML = `
-            <span>LOGOS: ${logos}</span>
-            <span>TOOL: ${tool.toUpperCase()}</span>
-            <span>MEM: ${memory}MB</span>
-            <span>READY</span>
-        `;
-    };
-    
-    setInterval(updateInfo, 2000);
-    updateInfo();
-}
-
-// Notepad export functions
-function exportNotesAsPDF() {
-    const content = document.getElementById('design-notepad').value;
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-        <html>
-            <head><title>LogoPad Notes</title></head>
-            <body>
-                <h1>Logo Design Notes</h1>
-                <pre>${content}</pre>
-                <p>Generated: ${new Date().toLocaleString()}</p>
-            </body>
-        </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
-}
-
-function exportNotesAsTXT() {
-    const content = document.getElementById('design-notepad').value;
-    const blob = new Blob([content], { type: 'text/plain' });
-    const link = document.createElement('a');
-    link.download = `design-notes-${Date.now()}.txt`;
-    link.href = URL.createObjectURL(blob);
-    link.click();
-}
-
-// Main Initialization
-function init() {
-    console.log('Initializing LogoPad...');
-    
-    try {
-        // Initialize Three.js background
-        threeScene = initThreeJSScene();
-        
-        // Initialize canvas engine
-        canvasEngine = new LogoMergingEngine();
-        window.canvasEngine = canvasEngine;
-        
-        // Initialize notepad
-        notepadEngine = new NotepadEngine();
-        
-        // Load logo library
-        loadLogoLibrary();
-        
-        // Setup event listeners
-        setupEventListeners();
-        
-        // Update status footer
-        updateStatusFooter();
-        
-        console.log('LogoPad ready!');
-        
-    } catch (error) {
-        console.error('Initialization error:', error);
-        alert('Failed to initialize LogoPad. Please refresh the page.');
-    }
-}
-
-// Start when DOM is loaded
-document.addEventListener('DOMContentLoaded', init);
-</script>
-    <script>
-        // ============================================
-// LOGO MERGING ENGINE
-// ============================================
-
-// ============================================
-// SIMPLIFIED LOGO ENGINE
-// ============================================
-
-class LogoMergingEngine {
-    constructor() {
-        this.canvas = document.getElementById('design-canvas');
-        this.ctx = this.canvas.getContext('2d');
-        this.logos = [];
-        this.selectedLogo = null;
-        this.dragging = false;
-        this.currentTool = 'select';
-        this.lastX = 0;
-        this.lastY = 0;
-        
-        // Initialize
-        this.resizeCanvas();
-        this.initEvents();
-        this.render();
-    }
-    
-    resizeCanvas() {
-        const container = this.canvas.parentElement;
-        const dpr = window.devicePixelRatio || 1;
-        const rect = container.getBoundingClientRect();
-        
-        this.canvas.style.width = rect.width + 'px';
-        this.canvas.style.height = rect.height + 'px';
-        this.canvas.width = rect.width * dpr;
-        this.canvas.height = rect.height * dpr;
-        this.ctx.scale(dpr, dpr);
-        
-        this.render();
-    }
-    
-    initEvents() {
-        // Mouse events
-        this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
-        this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
-        this.canvas.addEventListener('mouseup', () => this.onMouseUp());
-        this.canvas.addEventListener('wheel', (e) => this.onWheel(e));
-        this.canvas.addEventListener('dblclick', (e) => this.onDoubleClick(e));
-        
-        // Touch events
-        this.canvas.addEventListener('touchstart', (e) => this.onTouchStart(e), { passive: false });
-        this.canvas.addEventListener('touchmove', (e) => this.onTouchMove(e), { passive: false });
-        this.canvas.addEventListener('touchend', (e) => this.onTouchEnd(e));
-        
-        // Window resize
-        window.addEventListener('resize', () => this.resizeCanvas());
-    }
-
-    // ==================== LOGO MANAGEMENT ====================
-    
-    addLogo(imageUrl, x, y, scale = 1, rotation = 0) {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        
-        img.onload = () => {
-            const dpr = window.devicePixelRatio || 1;
-            const logo = {
-                image: img,
-                x: x || this.canvas.width / (2 * dpr) / 2,
-                y: y || this.canvas.height / (2 * dpr) / 2,
-                width: img.width * scale,
-                height: img.height * scale,
-                originalWidth: img.width,
-                originalHeight: img.height,
-                rotation: rotation,
-                scale: scale,
-                selected: false,
-                id: Date.now() + Math.random(),
-                type: 'image'
-            };
-            
-            this.logos.push(logo);
-            this.selectLogo(logo);
-            this.render();
-        };
-        
-        img.src = imageUrl;
-    }
-    
-    // TEXT LOGO METHOD - KEEP ONLY THIS ONE (REMOVE THE DUPLICATE!)
-    addTextLogo(text, font = 'Arial') {
-        // Create text canvas
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d');
-        const fontSize = 48;
-        
-        // Set font and measure text
-        tempCtx.font = `${fontSize}px ${font}`;
-        const metrics = tempCtx.measureText(text);
-        
-        // Create canvas with padding
-        tempCanvas.width = metrics.width + 40;
-        tempCanvas.height = fontSize + 40;
-        
-        // Get color from color picker
-        const color = document.getElementById('logo-color').value || '#FF0000';
-        
-        // Draw text
-        tempCtx.fillStyle = color;
-        tempCtx.font = `${fontSize}px ${font}`;
-        tempCtx.textAlign = 'center';
-        tempCtx.textBaseline = 'middle';
-        tempCtx.fillText(text, tempCanvas.width/2, tempCanvas.height/2);
-        
-        // Add border for visibility
-        tempCtx.strokeStyle = '#FFFFFF';
-        tempCtx.lineWidth = 2;
-        tempCtx.strokeRect(10, 10, tempCanvas.width - 20, tempCanvas.height - 20);
-        
-        // Add as logo
-        const dataUrl = tempCanvas.toDataURL();
-        const x = this.canvas.width / (2 * window.devicePixelRatio || 1) / 2;
-        const y = this.canvas.height / (2 * window.devicePixelRatio || 1) / 2;
-        
-        this.addLogo(dataUrl, x, y, 1, 0);
-    }
-    
-    selectLogo(logo) {
-        // Deselect all
-        this.logos.forEach(l => l.selected = false);
-        
-        // Select this one
-        logo.selected = true;
-        this.selectedLogo = logo;
-        this.render();
-        
-        // Update UI controls
-        this.updateUIControls();
-    }
-    
-    updateUIControls() {
-        if (!this.selectedLogo) return;
-        
-        // Update size slider
-        const sizeInput = document.getElementById('logo-size');
-        const sizeValue = document.getElementById('size-value');
-        if (sizeInput && sizeValue) {
-            const scalePercent = Math.round(this.selectedLogo.scale * 100);
-            sizeInput.value = scalePercent;
-            sizeValue.textContent = `${scalePercent}px`;
-        }
-    }
-    
-    deleteSelected() {
-        if (this.selectedLogo) {
-            const index = this.logos.indexOf(this.selectedLogo);
-            if (index > -1) {
-                this.logos.splice(index, 1);
-                this.selectedLogo = null;
-                this.render();
-            }
-        }
-    }
-    
-    scaleSelected(factor) {
-        if (this.selectedLogo) {
-            this.selectedLogo.scale *= factor;
-            this.selectedLogo.width = this.selectedLogo.originalWidth * this.selectedLogo.scale;
-            this.selectedLogo.height = this.selectedLogo.originalHeight * this.selectedLogo.scale;
-            this.render();
-            this.updateUIControls();
-        }
-    }
-    
-    rotateSelected(degrees) {
-        if (this.selectedLogo) {
-            this.selectedLogo.rotation = (this.selectedLogo.rotation + degrees) % 360;
-            this.render();
-        }
-    }
-    
-    clear() {
-        this.logos = [];
-        this.selectedLogo = null;
-        this.render();
-    }
-    
-    // ==================== RANDOM MASHUP ====================
-    
-    async generateRandomMash() {
-        this.clear();
-        
-        // Get 2 random logos
-        const shuffled = [...logoDatabase].sort(() => Math.random() - 0.5);
-        const logo1 = shuffled[0];
-        const logo2 = shuffled[1];
-        
-        try {
-            // Create merged logo
-            const mergedUrl = await this.mergeTwoLogos(logo1.url, logo2.url);
-            
-            // Add to canvas
-            const x = this.canvas.width / (2 * window.devicePixelRatio || 1) / 2;
-            const y = this.canvas.height / (2 * window.devicePixelRatio || 1) / 2;
-            this.addLogo(mergedUrl, x, y, 0.6);
-        } catch (error) {
-            console.error('Error generating mash:', error);
-            // Fallback: add both logos separately
-            this.addLogo(logo1.url, 150, 150, 0.4);
-            this.addLogo(logo2.url, 250, 150, 0.4);
-        }
-    }
-    
-    async mergeTwoLogos(url1, url2) {
-        return new Promise((resolve) => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 400;
-            canvas.height = 400;
-            
-            const img1 = new Image();
-            const img2 = new Image();
-            img1.crossOrigin = 'anonymous';
-            img2.crossOrigin = 'anonymous';
-            
-            let loaded = 0;
-            const onLoad = () => {
-                loaded++;
-                if (loaded === 2) {
-                    // Choose random merge style
-                    const style = Math.floor(Math.random() * 3);
-                    
-                    switch(style) {
-                        case 0: // Left/Right split
-                            ctx.drawImage(img1, 0, 0, 200, 400);
-                            ctx.drawImage(img2, 200, 0, 200, 400);
-                            break;
-                        case 1: // Top/Bottom split
-                            ctx.drawImage(img1, 0, 0, 400, 200);
-                            ctx.drawImage(img2, 0, 200, 400, 200);
-                            break;
-                        case 2: // Overlay
-                            ctx.drawImage(img1, 0, 0, 400, 400);
-                            ctx.globalAlpha = 0.5;
-                            ctx.drawImage(img2, 0, 0, 400, 400);
-                            break;
-                    }
-                    
-                    resolve(canvas.toDataURL());
-                }
-            };
-            
-            img1.onload = onLoad;
-            img2.onload = onLoad;
-            img1.src = url1;
-            img2.src = url2;
-        });
-    }
-    
-    // ==================== EXPORT ====================
-    
-    exportAsImage() {
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d');
-        const dpr = 2; // High resolution
-        
-        tempCanvas.width = this.canvas.width * dpr;
-        tempCanvas.height = this.canvas.height * dpr;
-        
-        // White background for export
-        tempCtx.fillStyle = '#FFFFFF';
-        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-        
-        // Draw all logos
-        this.logos.forEach(logo => {
-            tempCtx.save();
-            tempCtx.translate(logo.x * dpr, logo.y * dpr);
-            tempCtx.rotate(logo.rotation * Math.PI / 180);
-            tempCtx.drawImage(
-                logo.image,
-                -logo.width * dpr / 2,
-                -logo.height * dpr / 2,
-                logo.width * dpr,
-                logo.height * dpr
-            );
-            tempCtx.restore();
-        });
-        
-        // Create download
-        const link = document.createElement('a');
-        link.download = `logo-design-${Date.now()}.png`;
-        link.href = tempCanvas.toDataURL('image/png');
-        link.click();
-    }
-    
-    // ==================== RENDERING ====================
-    
-    render() {
-        const dpr = window.devicePixelRatio || 1;
-        const width = this.canvas.width / dpr;
-        const height = this.canvas.height / dpr;
-        
-        // Clear canvas
-        this.ctx.fillStyle = 'rgba(10, 10, 20, 0.8)';
-        this.ctx.fillRect(0, 0, width, height);
-        
-        // Draw grid
-        this.drawGrid();
-        
-        // Draw all logos
-        this.logos.forEach(logo => {
-            this.drawLogo(logo);
-        });
-        
-        // Draw selection controls
-        if (this.selectedLogo) {
-            this.drawSelectionControls(this.selectedLogo);
-        }
-    }
-    
-    drawGrid() {
-        const width = this.canvas.width / (window.devicePixelRatio || 1);
-        const height = this.canvas.height / (window.devicePixelRatio || 1);
-        
-        this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.1)';
-        this.ctx.lineWidth = 1;
-        
-        // Vertical lines
-        for (let x = 0; x <= width; x += 20) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(x, 0);
-            this.ctx.lineTo(x, height);
-            this.ctx.stroke();
-        }
-        
-        // Horizontal lines
-        for (let y = 0; y <= height; y += 20) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(0, y);
-            this.ctx.lineTo(width, y);
-            this.ctx.stroke();
-        }
-    }
-    
-    drawLogo(logo) {
-        this.ctx.save();
-        
-        // Move to center and rotate
-        this.ctx.translate(logo.x, logo.y);
-        this.ctx.rotate(logo.rotation * Math.PI / 180);
-        
-        // Draw shadow if selected
-        if (logo.selected) {
-            this.ctx.shadowColor = '#FF0000';
-            this.ctx.shadowBlur = 15;
-        }
-        
-        // Draw logo/image
-        this.ctx.drawImage(
-            logo.image,
-            -logo.width / 2,
-            -logo.height / 2,
-            logo.width,
-            logo.height
-        );
-        
-        // Reset shadow
-        this.ctx.shadowBlur = 0;
-        
-        this.ctx.restore();
-    }
-    
-    drawSelectionControls(logo) {
-        this.ctx.save();
-        this.ctx.translate(logo.x, logo.y);
-        this.ctx.rotate(logo.rotation * Math.PI / 180);
-        
-        // Selection outline
-        this.ctx.strokeStyle = '#FF0000';
-        this.ctx.lineWidth = 2;
-        this.ctx.setLineDash([5, 5]);
-        this.ctx.strokeRect(
-            -logo.width / 2 - 5,
-            -logo.height / 2 - 5,
-            logo.width + 10,
-            logo.height + 10
-        );
-        this.ctx.setLineDash([]);
-        
-        // ROTATION HANDLE (Red circle - TOP)
-        this.ctx.fillStyle = '#FF0000';
-        this.ctx.beginPath();
-        this.ctx.arc(0, -logo.height / 2 - 25, 10, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        // SCALE HANDLE (Green circle - BOTTOM RIGHT)
-        this.ctx.fillStyle = '#00FF00';
-        this.ctx.beginPath();
-        this.ctx.arc(logo.width / 2 + 15, logo.height / 2 + 15, 8, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        this.ctx.restore();
-    }
-    
-    // ==================== EVENT HANDLERS ====================
-    
-    onMouseDown(e) {
-        e.preventDefault();
-        const rect = this.canvas.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        const x = (e.clientX - rect.left) / dpr;
-        const y = (e.clientY - rect.top) / dpr;
-        
-        this.lastX = x;
-        this.lastY = y;
-        
-        // Find clicked logo
-        for (let i = this.logos.length - 1; i >= 0; i--) {
-            const logo = this.logos[i];
-            const dx = x - logo.x;
-            const dy = y - logo.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            const maxDim = Math.max(logo.width, logo.height) / 2;
-            
-            if (distance < maxDim) {
-                this.selectLogo(logo);
-                this.dragging = true;
-                return;
-            }
-        }
-        
-        // Clicked empty space
-        this.selectedLogo = null;
-        this.render();
-    }
-    
-    onMouseMove(e) {
-        if (!this.dragging || !this.selectedLogo) return;
-        
-        const rect = this.canvas.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        const x = (e.clientX - rect.left) / dpr;
-        const y = (e.clientY - rect.top) / dpr;
-        
-        const dx = x - this.lastX;
-        const dy = y - this.lastY;
-        
-        this.selectedLogo.x += dx;
-        this.selectedLogo.y += dy;
-        
-        this.lastX = x;
-        this.lastY = y;
-        this.render();
-    }
-    
-    onMouseUp() {
-        this.dragging = false;
-    }
-    
-    onWheel(e) {
-        e.preventDefault();
-        if (this.selectedLogo) {
-            if (e.ctrlKey) {
-                // Ctrl + Wheel for scaling
-                const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1;
-                this.scaleSelected(scaleFactor);
-            } else if (e.shiftKey) {
-                // Shift + Wheel for rotation
-                const degrees = e.deltaY > 0 ? -5 : 5;
-                this.rotateSelected(degrees);
-            }
-        }
-    }
-    
-    onDoubleClick(e) {
-        e.preventDefault();
-        const rect = this.canvas.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        const x = (e.clientX - rect.left) / dpr;
-        const y = (e.clientY - rect.top) / dpr;
-        
-        // Find double-clicked logo
-        for (let i = this.logos.length - 1; i >= 0; i--) {
-            const logo = this.logos[i];
-            const dx = x - logo.x;
-            const dy = y - logo.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            const maxDim = Math.max(logo.width, logo.height) / 2;
-            
-            if (distance < maxDim) {
-                this.deleteSelected();
-                return;
-            }
-        }
-    }
-    
-    // Touch handlers (simplified)
-    onTouchStart(e) {
-        if (e.touches.length === 1) {
-            const touch = e.touches[0];
-            this.onMouseDown({
-                clientX: touch.clientX,
-                clientY: touch.clientY,
-                preventDefault: () => e.preventDefault()
-            });
-        }
-    }
-    
-    onTouchMove(e) {
-        if (e.touches.length === 1) {
-            const touch = e.touches[0];
-            this.onMouseMove({
-                clientX: touch.clientX,
-                clientY: touch.clientY,
-                preventDefault: () => e.preventDefault()
-            });
-        }
-    }
-    
-    onTouchEnd(e) {
-        this.onMouseUp();
-    }
-}
-    
-    // ==================== UTILITY FUNCTIONS ====================
-    
-    findLogoAt(x, y) {
-        for (let i = this.logos.length - 1; i >= 0; i--) {
-            const logo = this.logos[i];
-            const dx = x - logo.x;
-            const dy = y - logo.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            const maxDim = Math.max(logo.width, logo.height) / 2;
-            
-            if (distance < maxDim) {
-                return logo;
-            }
-        }
-        return null;
-    }
-    
-    isOnRotationHandle(x, y, logo) {
-        // Calculate rotation handle position
-        const angle = -logo.rotation * Math.PI / 180;
-        const handleX = logo.x + Math.sin(angle) * (-logo.height/2 - 25);
-        const handleY = logo.y + Math.cos(angle) * (-logo.height/2 - 25);
-        
-        const distance = Math.sqrt((x - handleX)**2 + (y - handleY)**2);
-        return distance < 15;
-    }
-    
-    isOnScaleHandle(x, y, logo) {
-        // Calculate scale handle position (bottom right)
-        const angle = -logo.rotation * Math.PI / 180;
-        const handleX = logo.x + Math.cos(angle) * (logo.width/2 + 15) - Math.sin(angle) * (logo.height/2 + 15);
-        const handleY = logo.y + Math.sin(angle) * (logo.width/2 + 15) + Math.cos(angle) * (logo.height/2 + 15);
-        
-        const distance = Math.sqrt((x - handleX)**2 + (y - handleY)**2);
-        return distance < 15;
-    }
-    
-    deselectAll() {
-        this.logos.forEach(logo => logo.selected = false);
-        this.selectedLogo = null;
-        this.render();
-    }
-    
-    clear() {
-        this.logos = [];
-        this.selectedLogo = null;
-        this.render();
-    }
-    
-    exportAsImage() {
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d');
-        const dpr = 2; // High resolution
-        
-        tempCanvas.width = this.canvas.width * dpr;
-        tempCanvas.height = this.canvas.height * dpr;
-        
-        // White background
-        tempCtx.fillStyle = '#FFFFFF';
-        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-        
-        // Draw all logos
-        this.logos.forEach(logo => {
-            tempCtx.save();
-            tempCtx.translate(logo.x * dpr, logo.y * dpr);
-            tempCtx.rotate(logo.rotation * Math.PI / 180);
-            tempCtx.drawImage(
-                logo.image,
-                -logo.width * dpr / 2,
-                -logo.height * dpr / 2,
-                logo.width * dpr,
-                logo.height * dpr
-            );
-            tempCtx.restore();
-        });
-        
-        // Create download
-        const link = document.createElement('a');
-        link.download = `logo-design-${Date.now()}.png`;
-        link.href = tempCanvas.toDataURL('image/png');
-        link.click();
-    }
-    
-    // Touch events (simplified)
-    onTouchStart(e) {
-        if (e.touches.length === 1) {
-            const touch = e.touches[0];
-            this.onMouseDown({
-                clientX: touch.clientX,
-                clientY: touch.clientY,
-                preventDefault: () => e.preventDefault()
-            });
-        }
-    }
-    
-    onTouchMove(e) {
-        if (e.touches.length === 1) {
-            const touch = e.touches[0];
-            this.onMouseMove({
-                clientX: touch.clientX,
-                clientY: touch.clientY,
-                preventDefault: () => e.preventDefault()
-            });
-        }
-    }
-    
-    onTouchEnd(e) {
-        this.onMouseUp();
-    }
-}
-    </script>
-<script>
-    // ============================================
-// THREE.JS BACKGROUND SCENE
+// THREE.JS BACKGROUND
 // ============================================
 
 function initThreeJSScene() {
@@ -1695,211 +1097,196 @@ function initThreeJSScene() {
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.z = 25;
     
-    const renderer = new THREE.WebGLRenderer({ 
-        alpha: true, 
-        antialias: true,
-        powerPreference: "high-performance"
-    });
-    
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 0);
     
-    const container = document.getElementById('canvas-container');
-    if (container) {
-        container.appendChild(renderer.domElement);
-    }
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
     
-    // Create cube group
     const group = new THREE.Group();
     
-    // Outer cube (grid)
     const outerGeometry = new THREE.BoxGeometry(16, 16, 16);
     const outerEdges = new THREE.EdgesGeometry(outerGeometry);
-    const outerMaterial = new THREE.LineBasicMaterial({ 
-        color: 0x666666, 
-        transparent: true, 
-        opacity: 0.2 
-    });
+    const outerMaterial = new THREE.LineBasicMaterial({ color: 0x666666, transparent: true, opacity: 0.2 });
     const outerCube = new THREE.LineSegments(outerEdges, outerMaterial);
     group.add(outerCube);
     
-    // Inner cube (core)
     const innerGeometry = new THREE.BoxGeometry(7, 7, 7);
     const innerEdges = new THREE.EdgesGeometry(innerGeometry);
-    const innerMaterial = new THREE.LineBasicMaterial({ 
-        color: 0xFF0000, 
-        transparent: true, 
-        opacity: 0.5 
-    });
+    const innerMaterial = new THREE.LineBasicMaterial({ color: 0xFF0000, transparent: true, opacity: 0.5 });
     const innerCube = new THREE.LineSegments(innerEdges, innerMaterial);
     group.add(innerCube);
     
     scene.add(group);
     
-    // Add floating particles
-    const particles = createParticles();
-    scene.add(particles);
-    
-    // Animation
-    const clock = new THREE.Clock();
-    
     function animate() {
         requestAnimationFrame(animate);
-        
-        const delta = clock.getDelta();
-        const elapsed = clock.elapsedTime;
-        
-        // Rotate cubes
-        group.rotation.x += delta * 0.15;
-        group.rotation.y += delta * 0.25;
-        
-        // Pulsing inner cube
-        innerCube.material.opacity = 0.5 + Math.sin(elapsed * 2) * 0.2;
-        
-        // Animate particles
-        particles.rotation.y += delta * 0.1;
-        
+        group.rotation.x += 0.005;
+        group.rotation.y += 0.008;
+        innerCube.material.opacity = 0.5 + Math.sin(Date.now() * 0.002) * 0.2;
         renderer.render(scene, camera);
     }
-    
     animate();
     
-    // Handle resize
-    function handleResize() {
+    window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-    
-    window.addEventListener('resize', handleResize);
-    
-    // Return scene objects for external control
-    return {
-        scene,
-        camera,
-        renderer,
-        outerCube,
-        innerCube,
-        group
-    };
-}
-
-function createParticles() {
-    const particleCount = 200;
-    const particles = new THREE.Group();
-    
-    const geometry = new THREE.SphereGeometry(0.1, 8, 8);
-    const material = new THREE.MeshBasicMaterial({ 
-        color: 0xFF0000,
-        transparent: true,
-        opacity: 0.3
     });
     
-    for (let i = 0; i < particleCount; i++) {
-        const particle = new THREE.Mesh(geometry, material);
-        
-        // Random position in a sphere
-        const radius = 20 + Math.random() * 10;
-        const theta = Math.random() * Math.PI * 2;
-        const phi = Math.acos((Math.random() * 2) - 1);
-        
-        particle.position.x = radius * Math.sin(phi) * Math.cos(theta);
-        particle.position.y = radius * Math.sin(phi) * Math.sin(theta);
-        particle.position.z = radius * Math.cos(phi);
-        
-        particle.userData = {
-            speed: 0.1 + Math.random() * 0.2,
-            angle: Math.random() * Math.PI * 2
-        };
-        
-        particles.add(particle);
-    }
-    
-    return particles;
+    return { scene, innerCube, outerCube };
 }
-</script>
-    <script>
-        // ============================================
-// NOTEPAD ENGINE
+
+// ============================================
+// EVENT HANDLERS
 // ============================================
 
-class NotepadEngine {
-    constructor() {
-        this.textarea = document.getElementById('design-notepad');
-        this.init();
-    }
+function loadLogoLibrary() {
+    const grid = document.getElementById('logoGrid');
+    grid.innerHTML = '';
     
-    init() {
-        // Load saved notes
-        const saved = localStorage.getItem('logopad-notes');
-        if (saved) {
-            this.textarea.value = saved;
-        }
+    logoDatabase.forEach(logo => {
+        const item = document.createElement('div');
+        item.className = 'logo-item';
+        item.title = logo.name;
+        item.innerHTML = `<img src="${logo.url}" alt="${logo.name}" loading="lazy">`;
         
-        // Auto-save on input
-        this.textarea.addEventListener('input', () => {
-            localStorage.setItem('logopad-notes', this.textarea.value);
+        item.addEventListener('click', () => {
+            const x = 150 + Math.random() * 100;
+            const y = 150 + Math.random() * 100;
+            canvasEngine.addLogo(logo.url, x, y, 0.4);
         });
         
-        // Keyboard shortcuts
-        this.textarea.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.key === 's') {
-                e.preventDefault();
-                this.exportAsTXT();
+        grid.appendChild(item);
+    });
+}
+
+function setupEventListeners() {
+    // Theme toggle
+    document.getElementById('themeToggle').addEventListener('click', () => {
+        document.body.classList.toggle('classic-mode');
+    });
+    
+    // Menu button
+    document.getElementById('menuBtn').addEventListener('click', () => {
+        alert('LogoPad v1.0\n\nHOW TO USE:\n1. Click logos on left to add\n2. Click logo on canvas to select\n3. Drag to move\n4. Use buttons for actions');
+    });
+    
+    // Tool buttons
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const btnId = this.id;
+            
+            if (btnId === 'clearCanvas') {
+                if (confirm('Clear all logos?')) canvasEngine.clear();
+                return;
+            }
+            
+            if (btnId === 'randomMash') {
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+                this.disabled = true;
+                
+                canvasEngine.generateRandomMash().then(() => {
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                });
+                return;
+            }
+            
+            if (btnId === 'rotate-left') {
+                if (canvasEngine.selectedLogo) canvasEngine.rotateSelected(-15);
+                return;
+            }
+            
+            if (btnId === 'rotate-right') {
+                if (canvasEngine.selectedLogo) canvasEngine.rotateSelected(15);
+                return;
+            }
+            
+            if (btnId === 'scale-up') {
+                if (canvasEngine.selectedLogo) canvasEngine.scaleSelected(1.2);
+                return;
+            }
+            
+            if (btnId === 'scale-down') {
+                if (canvasEngine.selectedLogo) canvasEngine.scaleSelected(0.8);
+                return;
+            }
+            
+            if (btnId === 'delete-logo') {
+                if (canvasEngine.selectedLogo) {
+                    if (confirm('Delete selected logo?')) canvasEngine.deleteSelected();
+                }
+                return;
+            }
+            
+            if (btnId === 'text-btn') {
+                const text = document.getElementById('logo-text').value.trim() || 'LOGO';
+                const font = document.getElementById('logo-font').value;
+                canvasEngine.addTextLogo(text, font);
+                document.getElementById('logo-text').value = '';
+                return;
+            }
+            
+            if (btnId === 'export-btn') {
+                canvasEngine.exportAsImage();
+                return;
             }
         });
-    }
+    });
     
-    exportAsTXT() {
-        const blob = new Blob([this.textarea.value], { type: 'text/plain' });
-        const link = document.createElement('a');
-        link.download = `design-notes-${Date.now()}.txt`;
-        link.href = URL.createObjectURL(blob);
-        link.click();
-    }
+    // Notepad controls
+    document.getElementById('export-pdf').addEventListener('click', () => notepadEngine.exportAsPDF());
+    document.getElementById('export-txt').addEventListener('click', () => notepadEngine.exportAsTXT());
+    document.getElementById('clear-notes').addEventListener('click', () => notepadEngine.clear());
     
-    exportAsPDF() {
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-            <html>
-                <head>
-                    <title>LogoPad Design Notes</title>
-                    <style>
-                        body { 
-                            font-family: 'Courier New', monospace; 
-                            padding: 20px; 
-                            background: #000;
-                            color: #E0E0E0;
-                        }
-                        pre { 
-                            white-space: pre-wrap;
-                            font-size: 12px;
-                            line-height: 1.4;
-                        }
-                        @media print {
-                            body { background: white; color: black; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <h1>LogoPad Design Notes</h1>
-                    <pre>${this.textarea.value}</pre>
-                    <p>Generated: ${new Date().toLocaleString()}</p>
-                </body>
-            </html>
-        `);
-        printWindow.document.close();
-        printWindow.print();
-    }
-    
-    clear() {
-        if (confirm('Clear all notes?')) {
-            this.textarea.value = '';
-            localStorage.removeItem('logopad-notes');
+    // Text input
+    document.getElementById('logo-text').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const text = document.getElementById('logo-text').value.trim();
+            const font = document.getElementById('logo-font').value;
+            if (text) {
+                canvasEngine.addTextLogo(text, font);
+                document.getElementById('logo-text').value = '';
+            }
+            e.preventDefault();
         }
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Delete' && canvasEngine.selectedLogo) {
+            canvasEngine.deleteSelected();
+        }
+    });
+}
+
+// ============================================
+// INITIALIZATION
+// ============================================
+
+let canvasEngine, notepadEngine, threeScene;
+
+function init() {
+    console.log('Initializing LogoPad...');
+    
+    try {
+        threeScene = initThreeJSScene();
+        canvasEngine = new LogoMergingEngine();
+        notepadEngine = new NotepadEngine();
+        loadLogoLibrary();
+        setupEventListeners();
+        console.log('✅ LogoPad ready!');
+    } catch (error) {
+        console.error('❌ Initialization failed:', error);
+        alert('Failed to initialize. Check console.');
     }
 }
-    </script>
+
+// Start the app
+document.addEventListener('DOMContentLoaded', init);
+</script>
 </body>
 </html>
