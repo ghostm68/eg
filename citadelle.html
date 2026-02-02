@@ -684,61 +684,103 @@ function randomPrompt() {
         }
 
         // --- 2. THE QUANTUM ENGINE (TEXT PROCESSORS) ---
-        const QuantumPrism = {
-            // 1. Redactor
-            redact: (text) => text.split(' ').map(w => Math.random() > 0.6 ? '█'.repeat(w.length) : w).join(' '),
-            
-            // 2. Binary
-            binary: (text) => text.split('').map(c => c.charCodeAt(0).toString(2)).join(' ').substring(0, 300),
-            
-            // 3. Devowel
-            devowel: (text) => text.replace(/[aeiouAEIOU]/g, ''),
-            
-            // 4. Cut-Up
-            cutup: (text) => {
-                let w = text.split(' ');
-                for (let i = w.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [w[i], w[j]] = [w[j], w[i]];
-                }
-                return w.join(' ');
-            },
-            
-            // 5. HIGH GOTHIC (LATINIZER) - Replaced Hex
-            latin: (text) => {
-                const suffixes = ['us', 'um', 'ae', 'ix', 'ibus', 'orum'];
-                return text.split(' ').map(w => {
-                    if (w.length < 4) return w; // Don't latinize short words
-                    // Remove punctuation
-                    let clean = w.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
-                    return clean + suffixes[Math.floor(Math.random() * suffixes.length)];
-                }).join(' ');
-            },
-            
-            // 6. Mirror
-            mirror: (text) => text.split('').reverse().join(''),
-            
-            // 7. Sort
-            sort: (text) => text.split(' ').sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase())).join(' '),
-            
-            // 8. Glitch
-            glitch: (text) => {
-                const g = ['∫','∂','√','≠','≤','≥','?','!','/','\\'];
-                return text.split('').map(c => Math.random() > 0.85 ? c + g[Math.floor(Math.random()*g.length)] : c).join('');
-            },
-            
-            // 9. Shift (Alien/Klingon feel)
-            // 9. De Bello Gallico (The Imperial Overwrite)
-gallic: (text) => {
-    // The raw text from Caesar's Commentaries, Book 1, Chapter 1
-    const ancientData = "Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam Aquitani, tertiam qui ipsorum lingua Celtae, nostra Galli appellantur. Hi omnes lingua, institutis, legibus inter se differunt. Gallos ab Aquitanis Garumna flumen, a Belgis Matrona et Sequana dividit.";
+// --- 2. THE QUANTUM ENGINE (TEXT PROCESSORS) ---
+const QuantumPrism = {
+    // 1. Redactor
+    redact: (text) => text.split(' ').map(w => Math.random() > 0.6 ? '█'.repeat(w.length) : w).join(' '),
     
-    // Repeat the ancient text if the user's input is longer than the snippet
-    const stream = ancientData.repeat(Math.ceil(text.length / ancientData.length) + 1);
+    // 2. Binary + Anagram hybrid
+    binary: (text) => {
+        // First, anagram each word
+        const anagrammed = text.split(' ').map(word => {
+            const chars = word.split('');
+            for (let i = chars.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [chars[i], chars[j]] = [chars[j], chars[i]];
+            }
+            return chars.join('');
+        });
+        
+        // Insert binary between words
+        const result = [];
+        anagrammed.forEach((word, index) => {
+            result.push(word);
+            // Add binary of a random character between words (except after last word)
+            if (index < anagrammed.length - 1) {
+                const randomChar = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+                result.push(randomChar.charCodeAt(0).toString(2));
+            }
+        });
+        
+        return result.join(' ');
+    },
     
-    // Return the ancient text cut to the exact length of the user's input
-    return stream.slice(0, text.length);
-  };
+    // 3. Devowel
+    devowel: (text) => text.replace(/[aeiouAEIOU]/g, ''),
+    
+    // 4. Cut-Up
+    cutup: (text) => {
+        let w = text.split(' ');
+        for (let i = w.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [w[i], w[j]] = [w[j], w[i]];
+        }
+        return w.join(' ');
+    },
+    
+    // 5. HIGH GOTHIC (LATINIZER) - Replaced Hex
+    latin: (text) => {
+        const suffixes = ['us', 'um', 'ae', 'ix', 'ibus', 'orum'];
+        return text.split(' ').map(w => {
+            if (w.length < 4) return w; // Don't latinize short words
+            // Remove punctuation
+            let clean = w.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+            return clean + suffixes[Math.floor(Math.random() * suffixes.length)];
+        }).join(' ');
+    },
+    
+    // 6. Mirror
+    mirror: (text) => text.split('').reverse().join(''),
+    
+    // 7. Sort
+    sort: (text) => text.split(' ').sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase())).join(' '),
+    
+    // 8. Glitch
+    glitch: (text) => {
+        const g = ['∫','∂','√','≠','≤','≥','?','!','/','\\'];
+        return text.split('').map(c => Math.random() > 0.85 ? c + g[Math.floor(Math.random()*g.length)] : c).join('');
+    },
+    
+    // 9. De Bello Gallico (The Imperial Overwrite)
+    shift: (text) => {
+        // The raw text from Caesar's Commentaries
+        const ancientData = "Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam Aquitani, tertiam qui ipsorum lingua Celtae, nostra Galli appellantur. Hi omnes lingua, institutis, legibus inter se differunt. Gallos ab Aquitanis Garumna flumen, a Belgis Matrona et Sequana dividit.";
+        const latinWords = ancientData.split(' ');
+        const userWords = text.split(' ');
+        const result = [];
+        
+        // Alternate between user text and Latin in a random mix
+        const totalLength = Math.max(userWords.length, latinWords.length);
+        
+        for (let i = 0; i < totalLength; i++) {
+            // 40% chance to add user word (if available)
+            if (i < userWords.length && Math.random() > 0.6) {
+                result.push(userWords[i]);
+            }
+            // 60% chance to add Latin word (if available)
+            if (i < latinWords.length && Math.random() > 0.4) {
+                result.push(latinWords[i]);
+            }
+        }
+        
+        // If result is empty or too short, ensure we get some text
+        if (result.length === 0) {
+            return text.length > 20 ? latinWords.slice(0, 10).join(' ') : ancientData.substring(0, text.length);
+        }
+        
+        return result.join(' ');
+    }
+};  
 
         // --- 3. UI CONTROLLER ---
         const runBtn = document.getElementById('run-button');
