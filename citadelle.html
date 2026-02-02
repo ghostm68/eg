@@ -9,7 +9,6 @@
     <meta data-rh="true" property="og:url" content="https://www.wordstar.nexus/citadelle"/>
     <meta data-rh="true" property="og:type" content="website"/>
     <meta data-rh="true" property="og:title" content="WORDSTAR - writing, music, and the visual arts"/>
-    <meta http-equiv="onion-location" content="http://yd3r4tdjgg7you3tuq7uyy5hl7tbwzowmd4pcgf6gpgk24hyawcvsjqd.onion" />
     <meta property="tiktok:app_id" content="@twoskinnygirls" />
     <meta name="twitter:site" content="@inkrealm" />
     <meta name="slack-app-id" content="f060RUD44R3" />
@@ -745,11 +744,186 @@ const QuantumPrism = {
     // 7. Sort
     sort: (text) => text.split(' ').sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase())).join(' '),
     
-    // 8. Glitch
-    glitch: (text) => {
-        const g = ['∫','∂','√','≠','≤','≥','?','!','/','\\'];
-        return text.split('').map(c => Math.random() > 0.85 ? c + g[Math.floor(Math.random()*g.length)] : c).join('');
-    },
+   glitch: (text) => {
+    const poeticForms = [
+        {
+            name: 'HAIKU',
+            lines: 3,
+            wordsPerLine: [2, 3, 2],  // Much more reasonable!
+            corruption: 0.4,
+            style: 'minimal'
+        },
+        {
+            name: 'TANKA', 
+            lines: 5,
+            wordsPerLine: [2, 3, 2, 3, 3],  // 5-line Japanese form
+            corruption: 0.3,
+            style: 'elegant'
+        },
+        {
+            name: 'COUPLET',
+            lines: 2,
+            wordsPerLine: [4, 4],  // Simple paired lines
+            corruption: 0.25,
+            style: 'balanced'
+        },
+        {
+            name: 'TRIOLET',
+            lines: 8,
+            wordsPerLine: [3, 3, 3, 3, 3, 3, 3, 3],  // French form, but shorter
+            corruption: 0.35,
+            style: 'repetitive'
+        },
+        {
+            name: 'FREE VERSE',
+            lines: Math.min(8, Math.ceil(text.split(' ').length / 3)),  // Dynamic
+            wordsPerLine: 'random',
+            corruption: 0.6,
+            style: 'chaotic'
+        }
+    ];
+
+    // Select random form (but avoid triplet if text is too short)
+    const wordCount = text.split(' ').length;
+    let availableForms = poeticForms.filter(form => {
+        if (form.name === 'TRIOLET' && wordCount < 12) return false;
+        if (form.name === 'TANKA' && wordCount < 8) return false;
+        return true;
+    });
+    
+    if (availableForms.length === 0) availableForms = [poeticForms[0]]; // Fallback to haiku
+    
+    const form = availableForms[Math.floor(Math.random() * availableForms.length)];
+    const words = text.split(' ');
+    let poemLines = [];
+    
+    // --- CORRUPTED HEADER ---
+    const corruptHeader = Math.random() < form.corruption;
+    let header = `[${form.name}]`;
+    
+    if (corruptHeader) {
+        const glitchChars = ['∫', '∂', '√', '∆', '∇', '∮', '∬'];
+        const glitch = glitchChars[Math.floor(Math.random() * glitchChars.length)];
+        header = header.replace(/[AEIOU]/g, char => 
+            Math.random() < 0.5 ? glitch : char
+        );
+        header += ` [${Math.floor(Math.random() * 100)}%]`;
+    }
+    poemLines.push(header);
+    
+    // --- BUILD THE POEM ---
+    if (form.name === 'FREE VERSE') {
+        // Free verse with random line breaks
+        let remainingWords = [...words];
+        for (let i = 0; i < form.lines && remainingWords.length > 0; i++) {
+            const lineLength = Math.floor(Math.random() * 4) + 1; // 1-4 words per line
+            const lineWords = remainingWords.splice(0, lineLength);
+            let line = lineWords.join(' ');
+            
+            // Corrupt some lines
+            if (Math.random() < form.corruption) {
+                line = applyLineCorruption(line, i);
+            }
+            
+            poemLines.push(line);
+        }
+    } else {
+        // Structured form
+        let wordIndex = 0;
+        for (let lineNum = 0; lineNum < form.lines && wordIndex < words.length; lineNum++) {
+            const targetWords = form.wordsPerLine[lineNum] || 3;
+            const lineWords = [];
+            
+            for (let w = 0; w < targetWords && wordIndex < words.length; w++) {
+                lineWords.push(words[wordIndex]);
+                wordIndex++;
+            }
+            
+            let line = lineWords.join(' ');
+            
+            // Apply corruption with increasing probability
+            const lineCorruptionChance = form.corruption * (0.8 + (lineNum * 0.1));
+            if (Math.random() < lineCorruptionChance) {
+                line = applyLineCorruption(line, lineNum);
+            }
+            
+            poemLines.push(line);
+        }
+    }
+    
+    // --- ADD FINAL GLITCH EFFECTS ---
+    if (Math.random() < 0.3) {
+        const glitches = [
+            `\n[END TRANSMISSION]`,
+            `\n[POEM LOST: ${Math.floor(Math.random() * 30)}%]`,
+            `\n${'~'.repeat(Math.floor(Math.random() * 5) + 3)}`,
+            `\n< ${'0101'.repeat(Math.floor(Math.random() * 3) + 1)} >`
+        ];
+        poemLines.push(glitches[Math.floor(Math.random() * glitches.length)]);
+    }
+    
+    return poemLines.join('\n');
+}
+
+// Line corruption functions
+function applyLineCorruption(line, lineNumber) {
+    const corruptions = [
+        // Missing words
+        () => {
+            const words = line.split(' ');
+            if (words.length > 1) {
+                const removeAt = Math.floor(Math.random() * words.length);
+                words[removeAt] = '[...]';
+            }
+            return words.join(' ');
+        },
+        
+        // Binary annotation
+        () => {
+            return line.split(' ').map((word, i) => {
+                if (i === lineNumber % 2) {
+                    const binary = word.charCodeAt(0)?.toString(2).substring(0, 4) || '1010';
+                    return `${word}(${binary})`;
+                }
+                return word;
+            }).join(' ');
+        },
+        
+        // Character glitch
+        () => {
+            const glitchChars = ['∫', '∂', '√', '∆', '∇'];
+            return line.split('').map((char, i) => {
+                if (i % (lineNumber + 3) === 0 && Math.random() < 0.3) {
+                    return char + glitchChars[Math.floor(Math.random() * glitchChars.length)];
+                }
+                return char;
+            }).join('');
+        },
+        
+        // Reversal
+        () => {
+            if (line.length > 8) {
+                const mid = Math.floor(line.length / 2);
+                const firstHalf = line.substring(0, mid);
+                const secondHalf = line.substring(mid).split('').reverse().join('');
+                return firstHalf + secondHalf;
+            }
+            return line;
+        },
+        
+        // Data loss
+        () => {
+            if (line.length > 10) {
+                const lossStart = Math.floor(Math.random() * (line.length - 4));
+                const lossLength = Math.floor(Math.random() * 3) + 1;
+                return line.substring(0, lossStart) + '�'.repeat(lossLength) + line.substring(lossStart + lossLength);
+            }
+            return line;
+        }
+    ];
+    
+    return corruptions[lineNumber % corruptions.length]();
+}
     
     // 9. De Bello Gallico (The Imperial Overwrite)
     shift: (text) => {
