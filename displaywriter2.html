@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>displayWRITERtwo</title>
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-         <style>
+<style>
 /* === DEFINE VARIABLES FIRST === */
 :root {
     --red: #ff0033;
@@ -36,7 +36,6 @@
 
 body{
   margin:0;
-  /* dvh ensures the mobile address bar doesn't cut off the footer */
   height:100vh;
   height:100dvh;
   display:flex;
@@ -59,6 +58,70 @@ body::after{
   pointer-events:none;
   z-index:100;
   mix-blend-mode:multiply;
+}
+
+/* === SPLASH OVERLAY === */
+#splash-overlay{
+  position:fixed;
+  inset:0;
+  background:#000;
+  z-index:9999;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  transition:opacity 0.8s ease-out, visibility 0.8s;
+}
+
+#splash-overlay.hidden{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+}
+
+#splash-canvas{
+  position:absolute;
+  inset:0;
+  z-index:1;
+}
+
+#splash-text{
+  position:relative;
+  z-index:10;
+  text-align:center;
+  mix-blend-mode:difference;
+  animation:pulse 2s ease-in-out infinite;
+}
+
+#splash-text h1{
+  font-size:clamp(2rem, 8vw, 5rem);
+  letter-spacing:0.3em;
+  text-transform:uppercase;
+  margin:0;
+  text-shadow:0 0 30px var(--blood);
+}
+
+#splash-text p{
+  font-size:clamp(1rem, 2vw, 1.5rem);
+  color:var(--dim);
+  letter-spacing:0.5em;
+  margin-top:10px;
+}
+
+#splash-timer{
+  position:absolute;
+  bottom:30px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:10;
+  color:var(--blood);
+  font-size:14px;
+  letter-spacing:0.2em;
+}
+
+@keyframes pulse{
+  0%,100%{text-shadow:0 0 20px var(--blood);}
+  50%{text-shadow:0 0 40px var(--blood),0 0 60px var(--blood);}
 }
 
 #header-band{
@@ -196,10 +259,21 @@ body::after{
   #ruler { display: none; }
   #f-key-strip { height: 60px; padding-bottom: env(safe-area-inset-bottom); }
   .f-key { min-width: 65px; font-size: 16px; }
+  #splash-text h1 { font-size: 1.5rem; }
 }
 </style>
 </head>
 <body>
+
+<!-- SPLASH SCREEN -->
+<div id="splash-overlay">
+    <canvas id="splash-canvas"></canvas>
+    <div id="splash-text">
+        <h1>QUANTUM</h1>
+        <p>WRITER</p>
+    </div>
+    <div id="splash-timer">INITIALIZING...</div>
+</div>
 
 <!-- AI MODAL -->
 <div id="ai-overlay"></div>
@@ -270,6 +344,150 @@ body::after{
 <div id="info-line">
   Quantum DisplayWriter 370 | Mem: 640K | <span id="entropy-source">INIT...</span>
 </div>
+
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    // === SPLASH SCREEN THREE.JS ===
+    const splashCanvas = document.getElementById('splash-canvas');
+    const splashOverlay = document.getElementById('splash-overlay');
+    const splashTimer = document.getElementById('splash-timer');
+    
+    let camera, scene, renderer;
+    let mesh, mixer;
+    let prevTime = Date.now();
+    const radius = 600;
+    let theta = 0;
+    let splashActive = true;
+
+    function initSplash() {
+        // Camera
+        camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
+        camera.position.y = 300;
+
+        // Scene - pure black
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+
+        // Dramatic lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
+        scene.add(ambientLight);
+
+        const light1 = new THREE.DirectionalLight(0xffcccc, 2);
+        light1.position.set(1, 1, 1).normalize();
+        scene.add(light1);
+
+        const light2 = new THREE.DirectionalLight(0xff4444, 1.5);
+        light2.position.set(-1, 0.5, -1).normalize();
+        scene.add(light2);
+
+        const light3 = new THREE.DirectionalLight(0x4444ff, 1);
+        light3.position.set(0, -1, -1).normalize();
+        scene.add(light3);
+
+        // Load horse
+        const loader = new GLTFLoader();
+        loader.load(
+            'https://threejs.org/examples/models/gltf/Horse.glb',
+            function (gltf) {
+                mesh = gltf.scene.children[0];
+                mesh.scale.set(1.8, 1.8, 1.8);
+                scene.add(mesh);
+
+                mixer = new THREE.AnimationMixer(mesh);
+                mixer.clipAction(gltf.animations[0]).setDuration(1).play();
+                
+                // Start countdown once loaded
+                startCountdown();
+            },
+            undefined,
+            function (error) {
+                console.error('Splash load error:', error);
+                splashTimer.textContent = 'SKIP >>';
+                splashTimer.style.cursor = 'pointer';
+                splashTimer.onclick = hideSplash;
+                startCountdown();
+            }
+        );
+
+        // Renderer
+        renderer = new THREE.WebGLRenderer({ canvas: splashCanvas, antialias: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        // Resize
+        window.addEventListener('resize', onWindowResize);
+        
+        // Start animation loop
+        animateSplash();
+    }
+
+    function onWindowResize() {
+        if (!splashActive) return;
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animateSplash() {
+        if (!splashActive) return;
+        requestAnimationFrame(animateSplash);
+
+        theta += 0.1;
+        camera.position.x = radius * Math.sin(THREE.MathUtils.degToRad(theta));
+        camera.position.z = radius * Math.cos(THREE.MathUtils.degToRad(theta));
+        camera.lookAt(0, 150, 0);
+
+        if (mixer) {
+            const time = Date.now();
+            mixer.update((time - prevTime) * 0.001);
+            prevTime = time;
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    let countdown = 3;
+    function startCountdown() {
+        splashTimer.textContent = `BOOTING... ${countdown}`;
+        const interval = setInterval(() => {
+            countdown--;
+            if (countdown > 0) {
+                splashTimer.textContent = `BOOTING... ${countdown}`;
+            } else {
+                clearInterval(interval);
+                hideSplash();
+            }
+        }, 1000);
+    }
+
+    function hideSplash() {
+        splashActive = false;
+        splashOverlay.classList.add('hidden');
+        // Focus editor after splash
+        setTimeout(() => {
+            document.getElementById('viewport').focus();
+        }, 800);
+    }
+
+    // Click to skip
+    splashOverlay.addEventListener('click', () => {
+        if (countdown > 0) hideSplash();
+    });
+
+    // Initialize splash
+    initSplash();
+</script>
 
 <script>
 /* ---------- AUDIO ---------- */
@@ -365,7 +583,7 @@ genBtn.addEventListener('click', async () => {
     aiOut.textContent = ">>> UPLINKING TO NEMOTRON-NANO...";
     
     try {
-        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
+        const proxyUrl = 'https://lively-limitless.inkrealm.workers.dev/?url=' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
         const res = await fetch(proxyUrl, {
             method: 'POST',
             headers: { 'Authorization': 'Bearer '+key, 'Content-Type': 'application/json' },
@@ -410,7 +628,6 @@ function generate() {
 }
 function collapse() {
   const entropyTypes = [
-    // 1. HEX Format (Original)
     () => {
       const hex = [...Array(6)].map(() => 
         Math.floor(Math.random() * 255).toString(16).padStart(2, '0')
@@ -418,7 +635,6 @@ function collapse() {
       return `[ENTROPY:${hex.toUpperCase()}]`;
     },
     
-    // 2. Binary String
     () => {
       const binary = [...Array(24)].map(() => 
         Math.random() > 0.5 ? '1' : '0'
@@ -426,14 +642,12 @@ function collapse() {
       return `[BITSTREAM:${binary.match(/.{1,8}/g).join(' ')}]`;
     },
     
-    // 3. Quantum State Notation
     () => {
       const amps = ['α','β','γ','δ','ε','ζ','η','θ'];
       const state = `|ψ⟩ = ${(Math.random()*0.9+0.1).toFixed(3)}|0⟩ + ${(Math.random()*0.9+0.1).toFixed(3)}|1⟩`;
       return `[QSTATE:${state}]`;
     },
     
-    // 4. DNA-like Sequence
     () => {
       const bases = ['A','T','C','G','X','Ψ','Ω','Φ'];
       const seq = [...Array(12)].map(() => 
@@ -442,7 +656,6 @@ function collapse() {
       return `[SEQUENCE:${seq}]`;
     },
     
-    // 5. Timestamp Entropy
     () => {
       const now = new Date();
       const ms = now.getMilliseconds().toString().padStart(3, '0');
@@ -450,7 +663,6 @@ function collapse() {
       return `[TIMESTAMP:${now.getHours().toString().padStart(2,'0')}:${now.getMinutes()}:${ms} Δ=${entropy}]`;
     },
     
-    // 6. Symbolic Entropy
     () => {
       const symbols = ['§','¶','†','‡','◊','⌘','⌀','⌂','⌥','⌫','⎋','⏎'];
       const sym = [...Array(8)].map(() => 
@@ -459,18 +671,16 @@ function collapse() {
       return `[SYMBOLS:${sym}]`;
     },
     
-    // 7. Word-based Entropy (using your word lists!)
     () => {
       const nouns = liveLex || FB.nouns;
       const verbs = FB.verbs;
       const adjs = FB.adjs;
-      const n = quantumChoice(nouns);
-      const v = quantumChoice(verbs);
-      const a = quantumChoice(adjs);
+      const n = nouns[Math.floor(Math.random() * nouns.length)];
+      const v = verbs[Math.floor(Math.random() * verbs.length)];
+      const a = adjs[Math.floor(Math.random() * adjs.length)];
       return `[LEXICAL:${n}:${v}:${a}]`;
     },
     
-    // 8. Pi-based Entropy
     () => {
       const pi = Math.PI.toString().replace('.','');
       const start = Math.floor(Math.random() * (pi.length - 6));
@@ -478,11 +688,9 @@ function collapse() {
     }
   ];
   
-  // Choose a random entropy type
   const type = Math.floor(Math.random() * entropyTypes.length);
   const entropy = entropyTypes[type]();
   
-  // Insert with styling
   VIEWPORT.focus();
   document.execCommand('insertHTML', false, 
     `<br><span style="background:var(--blood);color:var(--bg);font-family:monospace">${entropy}</span><br>`
@@ -499,15 +707,13 @@ function updateUI() {
 }
 
 /* ---------- BOOT ---------- */
-VIEWPORT.addEventListener('input', updateUI);
-VIEWPORT.addEventListener('click', updateUI);
+// Don't auto-focus on load anymore - splash handles it
 document.addEventListener('keydown', e => {
     initAudio();
     if(e.key.match(/^F([1-9]|10)$/)) { e.preventDefault(); triggerFKey(e.key); }
 });
 
 (async()=>{
-  VIEWPORT.focus();
   try {
     const r = await fetch('https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/horse.txt');
     if(r.ok) {
@@ -519,5 +725,6 @@ document.addEventListener('keydown', e => {
   } catch(e) { document.getElementById('entropy-source').textContent = 'OFFLINE'; }
 })();
 </script>
+
 </body>
 </html>
