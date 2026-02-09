@@ -377,17 +377,15 @@ body::after{
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0x000000);
 
+        // Lighting
         const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
         scene.add(ambientLight);
-
         const light1 = new THREE.DirectionalLight(0xffcccc, 2);
         light1.position.set(1, 1, 1).normalize();
         scene.add(light1);
-
         const light2 = new THREE.DirectionalLight(0xff4444, 1.5);
         light2.position.set(-1, 0.5, -1).normalize();
         scene.add(light2);
-
         const light3 = new THREE.DirectionalLight(0x4444ff, 1);
         light3.position.set(0, -1, -1).normalize();
         scene.add(light3);
@@ -408,14 +406,15 @@ body::after{
             undefined,
             function (error) {
                 console.error('Splash load error:', error);
-                splashTimer.textContent = 'SKIP >>';
+                splashTimer.textContent = 'SYSTEM BYPASS >>';
                 splashTimer.style.cursor = 'pointer';
                 splashTimer.onclick = hideSplash;
-                startCountdown();
+                // Force start if model fails
+                setTimeout(hideSplash, 1000);
             }
         );
 
-        renderer = new THREE.WebGLRenderer({ canvas: splashCanvas, antialias: true });
+        renderer = new THREE.WebGLRenderer({ canvas: splashCanvas, antialias: true, alpha: false });
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -431,7 +430,9 @@ body::after{
     }
 
     function animateSplash() {
-        if (!splashActive) return;
+        // If splash is done, stop the loop to save battery/CPU
+        if (!splashActive) return; 
+        
         requestAnimationFrame(animateSplash);
 
         theta += 0.1;
@@ -463,15 +464,25 @@ body::after{
     }
 
     function hideSplash() {
+        if(!splashActive) return; // Prevent double firing
         splashActive = false;
         splashOverlay.classList.add('hidden');
+        
+        // FOCUS THE EDITOR
         setTimeout(() => {
             document.getElementById('viewport').focus();
+            
+            // CLEANUP THREE.JS TO FREE MEMORY
+            // This is crucial for mobile performance
+            if(renderer) {
+                renderer.dispose();
+                scene.clear();
+            }
         }, 800);
     }
 
     splashOverlay.addEventListener('click', () => {
-        if (countdown > 0) hideSplash();
+        hideSplash();
     });
 
     initSplash();
@@ -568,13 +579,12 @@ genBtn.addEventListener('click', async () => {
     localStorage.setItem('quantum_nvidia_key', key);
     genBtn.disabled = true; genBtn.textContent = "PROCESSING...";
     aiOut.textContent = ">>> UPLINKING TO NEMOTRON-NANO...";
-    
-    try {
-        
-        const proxyUrl = 'https://lively-limitless.inkrealm.workers.dev/?url=' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
+
+      try {
+      const proxyUrl = 'https://lively-limitless.inkrealm.workers.dev/?url=' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
         const res = await fetch(proxyUrl, {
             method: 'POST',
-             : { 'Authorization': 'Bearer '+key, 'Content-Type': 'application/json' },
+            headers: { 'Authorization': 'Bearer '+key, 'Content-Type': 'application/json' }, // FIXED
             body: JSON.stringify({
                 model: "nvidia/nvidia-nemotron-nano-9b-v2",
                 messages: [{role: "system", content: "You are a creative writing assistant."}, {role: "user", content: prompt}],
