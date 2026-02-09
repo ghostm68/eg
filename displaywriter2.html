@@ -371,15 +371,12 @@ body::after{
     let splashActive = true;
 
     function initSplash() {
-        // Camera
         camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
         camera.position.y = 300;
 
-        // Scene - pure black
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0x000000);
 
-        // Dramatic lighting
         const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
         scene.add(ambientLight);
 
@@ -395,7 +392,6 @@ body::after{
         light3.position.set(0, -1, -1).normalize();
         scene.add(light3);
 
-        // Load horse
         const loader = new GLTFLoader();
         loader.load(
             'https://threejs.org/examples/models/gltf/Horse.glb',
@@ -407,7 +403,6 @@ body::after{
                 mixer = new THREE.AnimationMixer(mesh);
                 mixer.clipAction(gltf.animations[0]).setDuration(1).play();
                 
-                // Start countdown once loaded
                 startCountdown();
             },
             undefined,
@@ -420,15 +415,11 @@ body::after{
             }
         );
 
-        // Renderer
         renderer = new THREE.WebGLRenderer({ canvas: splashCanvas, antialias: true });
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(window.innerWidth, window.innerHeight);
 
-        // Resize
         window.addEventListener('resize', onWindowResize);
-        
-        // Start animation loop
         animateSplash();
     }
 
@@ -474,18 +465,15 @@ body::after{
     function hideSplash() {
         splashActive = false;
         splashOverlay.classList.add('hidden');
-        // Focus editor after splash
         setTimeout(() => {
             document.getElementById('viewport').focus();
         }, 800);
     }
 
-    // Click to skip
     splashOverlay.addEventListener('click', () => {
         if (countdown > 0) hideSplash();
     });
 
-    // Initialize splash
     initSplash();
 </script>
 
@@ -515,7 +503,6 @@ const VIEWPORT = document.getElementById('viewport');
 const STATUS = document.getElementById('status-readout');
 let liveLex = null;
 
-// The "Prevent Focus" logic - CRITICAL for Bold/Underline buttons
 document.querySelectorAll('.prevent-focus').forEach(el => {
     const handleStart = (e) => {
         e.preventDefault(); 
@@ -583,10 +570,11 @@ genBtn.addEventListener('click', async () => {
     aiOut.textContent = ">>> UPLINKING TO NEMOTRON-NANO...";
     
     try {
+        
         const proxyUrl = 'https://lively-limitless.inkrealm.workers.dev/?url=' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
         const res = await fetch(proxyUrl, {
             method: 'POST',
-            headers: { 'Authorization': 'Bearer '+key, 'Content-Type': 'application/json' },
+             : { 'Authorization': 'Bearer '+key, 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 model: "nvidia/nvidia-nemotron-nano-9b-v2",
                 messages: [{role: "system", content: "You are a creative writing assistant."}, {role: "user", content: prompt}],
@@ -626,6 +614,12 @@ function generate() {
   document.execCommand('insertHTML', false, ` The <b>${a}</b> ${n} <u>${v}</u>. `);
   updateUI();
 }
+
+// FIXED: Added quantumChoice helper function that was missing
+function quantumChoice(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 function collapse() {
   const entropyTypes = [
     () => {
@@ -643,7 +637,6 @@ function collapse() {
     },
     
     () => {
-      const amps = ['α','β','γ','δ','ε','ζ','η','θ'];
       const state = `|ψ⟩ = ${(Math.random()*0.9+0.1).toFixed(3)}|0⟩ + ${(Math.random()*0.9+0.1).toFixed(3)}|1⟩`;
       return `[QSTATE:${state}]`;
     },
@@ -671,13 +664,12 @@ function collapse() {
       return `[SYMBOLS:${sym}]`;
     },
     
+    // FIXED: Now uses quantumChoice function
     () => {
       const nouns = liveLex || FB.nouns;
-      const verbs = FB.verbs;
-      const adjs = FB.adjs;
-      const n = nouns[Math.floor(Math.random() * nouns.length)];
-      const v = verbs[Math.floor(Math.random() * verbs.length)];
-      const a = adjs[Math.floor(Math.random() * adjs.length)];
+      const n = quantumChoice(nouns);
+      const v = quantumChoice(FB.verbs);
+      const a = quantumChoice(FB.adjs);
       return `[LEXICAL:${n}:${v}:${a}]`;
     },
     
@@ -696,18 +688,19 @@ function collapse() {
     `<br><span style="background:var(--blood);color:var(--bg);font-family:monospace">${entropy}</span><br>`
   );
 }
+
 function saveFile() {
   const html = `<!DOCTYPE html><html><body style="background:#000;color:#fcc;font-family:monospace;white-space:pre-wrap;">${VIEWPORT.innerHTML}</body></html>`;
   const blob = new Blob([html], {type: 'text/html'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'quantum_doc.html'; a.click();
 }
+
 function updateUI() {
     const t = VIEWPORT.innerText||"";
     STATUS.textContent = `L:${String(t.split('\n').length).padStart(2,'0')} C:${String(t.length).padStart(4,'0')}`;
 }
 
 /* ---------- BOOT ---------- */
-// Don't auto-focus on load anymore - splash handles it
 document.addEventListener('keydown', e => {
     initAudio();
     if(e.key.match(/^F([1-9]|10)$/)) { e.preventDefault(); triggerFKey(e.key); }
