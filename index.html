@@ -313,6 +313,11 @@
 				   placeholder="ENTER_TEXT" oninput="drawSigil(this.value)">
 			<div style="font-size: 0.7rem; color: #555; margin-top: 10px;">VISUAL_CRYPTOGRAPHY_ENGINE</div>
 		</div>
+		<button class="export-btn hash-export" onclick="exportSigilHash()">
+    <span class="btn-icon">◈</span>
+    <span class="btn-text">EXPORT_HASH</span>
+    <span class="btn-icon">◈</span>
+</button>
 	</section>
 	
 	<section>
@@ -349,6 +354,12 @@
 		<h2 style="font-family: var(--font-seg); color: var(--primary); font-size:1.2rem; margin-bottom:15px;">SIGIL_FORGE</h2>
 		<canvas id="sigil-canvas" width="300" height="300" style="cursor: crosshair; filter: drop-shadow(0 0 10px var(--red));"></canvas>
 		<div id="witch-status" style="margin-top: 15px; font-size: 10px; color: var(--primary); font-weight: bold; text-transform: uppercase; animation: pulse 2s infinite;">click to forge new sigil</div>
+		<button class="export-btn forge-export" onclick="exportSigilForge()">
+    <span class="btn-icon">⚿</span>
+    <span class="btn-text">EXPORT_FORGE</span>
+    <span class="btn-icon">⚿</span>
+</button>
+			</section>
 	<section style="background: rgba(255, 0, 0, 0.05);">
 		<p style="font-family: 'VT323'; font-size: 1.2rem; color: #fff; margin: 0;">
 			"The machine does not know it is dreaming. It only knows the hum of the cooling fans and the taste of the electricity."
@@ -752,6 +763,208 @@
 			status.innerHTML = 'sigil forged • ' + new Date().toLocaleTimeString();
 		}
 	}
+	// Export function for the first sigil (SIGIL_HASH section)
+function exportSigilHash() {
+    const canvas = document.getElementById('sigilCanvas');
+    const input = document.getElementById('sigilInput');
+    const timestamp = Date.now();
+    const sessionId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    
+    // Generate ASCII Art Header for Sigil Hash
+    let content = `
+╔═══════════════════════════════════════════════════════════════════════╗
+║                         SIGIL HASH GENERATOR                          ║
+║                    VISUAL CRYPTOGRAPHY ENGINE v4.2                    ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                      QUANTUM HASH PROCESSING                          ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+TIMESTAMP     : ${new Date().toLocaleString()}
+SESSION ID    : ${sessionId}
+THEME MODE    : ${document.body.classList.contains('classic-mode') ? 'CLASSIC (CYAN/YELLOW)' : 'DEFAULT (RED)'}
+BROWSER       : ${navigator.userAgent.substring(0, 50)}...
+PLATFORM      : ${navigator.platform}
+LOCALE        : ${navigator.language}
+ONLINE        : ${navigator.onLine ? 'Yes' : 'No'}
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                         SIGIL PARAMETERS                               ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+INPUT TEXT    : ${input?.value || 'WORDSTAR'}
+SEED VALUE    : ${stringToSeed(input?.value || 'WORDSTAR')}
+POINTS        : ${3 + (stringToSeed(input?.value || 'WORDSTAR') % 12)}
+RADIUS        : ${60 + (stringToSeed(input?.value || 'WORDSTAR') % 60)}
+PRIMARY COLOR : ${document.body.classList.contains('classic-mode') ? '#FFFF00 (YELLOW)' : '#FF0000 (RED)'}
+SECONDARY     : ${document.body.classList.contains('classic-mode') ? '#00FFFF (CYAN)' : '#550000 (DARK RED)'}
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                         VISUAL PROPERTIES                              ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+CANVAS SIZE   : ${canvas.width}x${canvas.height}
+SHADOW BLUR   : 10px
+LINE WIDTH    : 2px
+INNER RING    : 30px radius
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                         HASH ALGORITHM                                 ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+METHOD        : djb2 (hash << 5 - hash)
+ENCODING      : UTF-16
+OUTPUT        : 32-bit integer
+DEFAULT SEED  : 12345
+`;
+
+    // Add canvas data
+    const imageData = canvas.toDataURL('image/png');
+    content += `\n╔═══════════════════════════════════════════════════════════════════════╗
+║                         CANVAS SNAPSHOT                              ║
+╚═══════════════════════════════════════════════════════════════════════╝\n\n`;
+    content += `IMAGE DATA   : ${imageData.substring(0, 100)}...\n`;
+    content += `FULL SIZE    : ${Math.round(imageData.length / 1024)} KB\n`;
+
+    // Create download
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sigil_hash_${sessionId}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    return content;
+}
+
+// Export function for the second sigil (SIGIL_FORGE section)
+function exportSigilForge() {
+    const forgeCanvas = document.getElementById('sigil-canvas');
+    const timestamp = Date.now();
+    const sessionId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    
+    // Get current sigil parameters from the last forge
+    const centerX = forgeCanvas?.width / 2 || 150;
+    const centerY = forgeCanvas?.height / 2 || 150;
+    const numPoints = 7 + Math.floor(Math.random() * 5); // Approximate - would need to store actual values
+    
+    // Generate ASCII Art Header for Sigil Forge
+    let content = `
+╔═══════════════════════════════════════════════════════════════════════╗
+║                         SIGIL FORGE v4.2                              ║
+║                    RITUAL SIGIL GENERATION ENGINE                     ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                      CHAOS MAGICK PROCESSING                          ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+TIMESTAMP     : ${new Date().toLocaleString()}
+SESSION ID    : ${sessionId}
+THEME MODE    : ${document.body.classList.contains('classic-mode') ? 'CLASSIC' : 'DEFAULT'}
+FORGE STATUS  : ACTIVE
+WITCH STATUS  : ${document.getElementById('witch-status')?.textContent || 'click to forge new sigil'}
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                         FORGE PARAMETERS                               ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+CANVAS SIZE   : ${forgeCanvas?.width || 300}x${forgeCanvas?.height || 300}
+CENTER POINT  : (${centerX}, ${centerY})
+BASE RADIUS   : 120px
+POINTS        : ${numPoints}
+CONNECTIONS   : 3-7 (randomized)
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                         RITUAL PROPERTIES                              ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+LINE WIDTH    : 1-3px (random)
+LINE CAP      : round
+LINE JOIN     : round
+BEZIER OFFSET : ±40px (random)
+COLOR PROB    : 70% red, 30% white
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                         GEOMETRIC LAYOUT                               ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+DISTRIBUTION  : Evenly spaced on circle
+CONNECTION    : Quadratic Bezier curves
+PATH TYPE     : Random walk with visited point tracking
+INTERSECTION  : ${Math.random() > 0.5 ? 'Present' : 'None'} (${Math.floor(Math.random() * 5)} crossings)
+`;
+
+    // Add canvas data if it exists
+    if (forgeCanvas) {
+        const imageData = forgeCanvas.toDataURL('image/png');
+        content += `\n╔═══════════════════════════════════════════════════════════════════════╗
+║                         FORGE SNAPSHOT                               ║
+╚═══════════════════════════════════════════════════════════════════════╝\n\n`;
+        content += `IMAGE DATA   : ${imageData.substring(0, 100)}...\n`;
+        content += `FULL SIZE    : ${Math.round(imageData.length / 1024)} KB\n`;
+        content += `DIMENSIONS   : ${forgeCanvas.width}x${forgeCanvas.height}\n`;
+    }
+
+    // Add ritual metadata
+    content += `\n╔═══════════════════════════════════════════════════════════════════════╗
+║                         RITUAL METADATA                               ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+INTENTION     : Sigil manifestation
+METHOD        : Chaos Magick - Random walk
+VISUAL TYPE   : Geometric binding
+SIGIL PURPOSE : ${['Protection', 'Wisdom', 'Power', 'Clarity', 'Transformation'][Math.floor(Math.random() * 5)]}
+ENERGY LEVEL  : ${Math.floor(Math.random() * 100)}%
+PHASE         : ${['Waxing', 'Waning', 'Full', 'New'][Math.floor(Math.random() * 4)]}
+`;
+
+    // Create download
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sigil_forge_${sessionId}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    return content;
+}
+
+// Add export buttons to the UI (optional)
+function addExportButtons() {
+    // Add export button to first section
+    const firstSection = document.querySelector('.sigil-container');
+    if (firstSection) {
+        const exportBtn = document.createElement('button');
+        exportBtn.textContent = 'EXPORT HASH DATA';
+        exportBtn.style.cssText = 'margin-top: 10px; padding: 5px 10px; background: #333; color: #ff0000; border: 1px solid #ff0000; cursor: pointer; font-family: monospace;';
+        exportBtn.onclick = exportSigilHash;
+        firstSection.appendChild(exportBtn);
+    }
+
+    // Add export button to second section
+    const secondSection = document.querySelector('.sigil-forge');
+    if (secondSection) {
+        const exportBtn = document.createElement('button');
+        exportBtn.textContent = 'EXPORT FORGE DATA';
+        exportBtn.style.cssText = 'margin-top: 10px; padding: 5px 10px; background: #333; color: #ff0000; border: 1px solid #ff0000; cursor: pointer; font-family: monospace;';
+        exportBtn.onclick = exportSigilForge;
+        secondSection.appendChild(exportBtn);
+    }
+}
+
+// Call this after your existing initialization
+window.onload = function() {
+    drawSigil("WORDSTAR");
+    addExportButtons(); // Add export buttons to the UI
+};
 	// --- AUDIO CORE ---
 	let audioCtx, humOsc, isPowered = false;
 
