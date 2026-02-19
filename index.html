@@ -754,12 +754,23 @@
 		}
 	}
 	// Export function for the first sigil (SIGIL_HASH section)
+// Export function for the first sigil (SIGIL_HASH section) - Saves PNG + TXT
 function exportSigilHash() {
     const canvas = document.getElementById('sigilCanvas');
     const input = document.getElementById('sigilInput');
     const timestamp = Date.now();
     const sessionId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     
+    // ===== SAVE PNG IMAGE =====
+    const imageData = canvas.toDataURL('image/png');
+    const pngLink = document.createElement('a');
+    pngLink.download = `sigil_hash_${sessionId}.png`;
+    pngLink.href = imageData;
+    document.body.appendChild(pngLink);
+    pngLink.click();
+    document.body.removeChild(pngLink);
+    
+    // ===== SAVE METADATA TEXT FILE =====
     // Generate ASCII Art Header for Sigil Hash
     let content = `
 ╔═══════════════════════════════════════════════════════════════════════╗
@@ -807,22 +818,22 @@ METHOD        : djb2 (hash << 5 - hash)
 ENCODING      : UTF-16
 OUTPUT        : 32-bit integer
 DEFAULT SEED  : 12345
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                         CANVAS SNAPSHOT                               ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+IMAGE FILENAME: sigil_hash_${sessionId}.png
+IMAGE SIZE    : ${Math.round(imageData.length / 1024)} KB
+DIMENSIONS    : ${canvas.width}x${canvas.height}
 `;
 
-    // Add canvas data
-    const imageData = canvas.toDataURL('image/png');
-    content += `\n╔═══════════════════════════════════════════════════════════════════════╗
-║                         CANVAS SNAPSHOT                              ║
-╚═══════════════════════════════════════════════════════════════════════╝\n\n`;
-    content += `IMAGE DATA   : ${imageData.substring(0, 100)}...\n`;
-    content += `FULL SIZE    : ${Math.round(imageData.length / 1024)} KB\n`;
-
-    // Create download
+    // Create metadata text file download
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `sigil_hash_${sessionId}.txt`;
+    a.download = `sigil_hash_${sessionId}_metadata.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -831,12 +842,22 @@ DEFAULT SEED  : 12345
     return content;
 }
 
-// Export function for the second sigil (SIGIL_FORGE section)
+// Export function for the second sigil (SIGIL_FORGE section) - Saves PNG + TXT
 function exportSigilForge() {
     const forgeCanvas = document.getElementById('sigil-canvas');
     const timestamp = Date.now();
     const sessionId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     
+    // ===== SAVE PNG IMAGE =====
+    const imageData = forgeCanvas.toDataURL('image/png');
+    const pngLink = document.createElement('a');
+    pngLink.download = `sigil_forge_${sessionId}.png`;
+    pngLink.href = imageData;
+    document.body.appendChild(pngLink);
+    pngLink.click();
+    document.body.removeChild(pngLink);
+    
+    // ===== SAVE METADATA TEXT FILE =====
     // Get current sigil parameters from the last forge
     const centerX = forgeCanvas?.width / 2 || 150;
     const centerY = forgeCanvas?.height / 2 || 150;
@@ -887,21 +908,16 @@ DISTRIBUTION  : Evenly spaced on circle
 CONNECTION    : Quadratic Bezier curves
 PATH TYPE     : Random walk with visited point tracking
 INTERSECTION  : ${Math.random() > 0.5 ? 'Present' : 'None'} (${Math.floor(Math.random() * 5)} crossings)
-`;
 
-    // Add canvas data if it exists
-    if (forgeCanvas) {
-        const imageData = forgeCanvas.toDataURL('image/png');
-        content += `\n╔═══════════════════════════════════════════════════════════════════════╗
-║                         FORGE SNAPSHOT                               ║
-╚═══════════════════════════════════════════════════════════════════════╝\n\n`;
-        content += `IMAGE DATA   : ${imageData.substring(0, 100)}...\n`;
-        content += `FULL SIZE    : ${Math.round(imageData.length / 1024)} KB\n`;
-        content += `DIMENSIONS   : ${forgeCanvas.width}x${forgeCanvas.height}\n`;
-    }
+╔═══════════════════════════════════════════════════════════════════════╗
+║                         FORGE SNAPSHOT                                ║
+╚═══════════════════════════════════════════════════════════════════════╝
 
-    // Add ritual metadata
-    content += `\n╔═══════════════════════════════════════════════════════════════════════╗
+IMAGE FILENAME: sigil_forge_${sessionId}.png
+IMAGE SIZE    : ${Math.round(imageData.length / 1024)} KB
+DIMENSIONS    : ${forgeCanvas?.width || 300}x${forgeCanvas?.height || 300}
+
+╔═══════════════════════════════════════════════════════════════════════╗
 ║                         RITUAL METADATA                               ║
 ╚═══════════════════════════════════════════════════════════════════════╝
 
@@ -913,12 +929,12 @@ ENERGY LEVEL  : ${Math.floor(Math.random() * 100)}%
 PHASE         : ${['Waxing', 'Waning', 'Full', 'New'][Math.floor(Math.random() * 4)]}
 `;
 
-    // Create download
+    // Create metadata text file download
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `sigil_forge_${sessionId}.txt`;
+    a.download = `sigil_forge_${sessionId}_metadata.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -933,7 +949,7 @@ function addExportButtons() {
     const firstSection = document.querySelector('.sigil-container');
     if (firstSection) {
         const exportBtn = document.createElement('button');
-        exportBtn.textContent = 'EXPORT HASH DATA';
+        exportBtn.textContent = 'EXPORT HASH DATA (PNG + TXT)';
         exportBtn.style.cssText = 'margin-top: 10px; padding: 5px 10px; background: #333; color: #ff0000; border: 1px solid #ff0000; cursor: pointer; font-family: monospace;';
         exportBtn.onclick = exportSigilHash;
         firstSection.appendChild(exportBtn);
@@ -943,7 +959,7 @@ function addExportButtons() {
     const secondSection = document.querySelector('.sigil-forge');
     if (secondSection) {
         const exportBtn = document.createElement('button');
-        exportBtn.textContent = 'EXPORT FORGE DATA';
+        exportBtn.textContent = 'EXPORT FORGE DATA (PNG + TXT)';
         exportBtn.style.cssText = 'margin-top: 10px; padding: 5px 10px; background: #333; color: #ff0000; border: 1px solid #ff0000; cursor: pointer; font-family: monospace;';
         exportBtn.onclick = exportSigilForge;
         secondSection.appendChild(exportBtn);
