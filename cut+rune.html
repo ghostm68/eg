@@ -633,7 +633,7 @@
             <div style="color: var(--red); font-size: 9px; margin-bottom: 8px;">press red line below to activate ai// NEURAL_LINK_REQ</div>
             <div style="font-family: 'Nova Mono'; font-size: 10px; color: #777;">
                 <div>◈ type @ query, press inject to signal...</div>
-                <div>◈ VRAM: ~1500MB Allocated</div>
+                <div>◈ VRAM: ~420MB Allocated</div>
                 <div style="margin-bottom: 10px;">◈ DATA: 100% Local / Offline</div>
             </div>
             <button id="activate-core" class="power-btn" style="width: 36%; border: 1px solid #ff0000; color: #ff0000; padding: 5px; font-size: 12px;">
@@ -1190,9 +1190,7 @@
 <script type="module">
 import * as webllm from "https://esm.run/@mlc-ai/web-llm";
 
-// ✓ THIS is the actual lightweight version (1.5B)
-const modelId   = "DeepSeek-R1-Distill-Qwen-1.5B-q4f16_1-MLC";  // Changed from 7B to 1.5B
-
+const modelId   = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
 const activate  = document.getElementById('activate-core');
 const onboard   = document.getElementById('neural-onboarding');
 const activeUI  = document.getElementById('ai-active-interface');
@@ -1207,27 +1205,27 @@ activate.onclick = async () => {
     activate.textContent = 'SYNCING_CORE...';
 
     engine = await webllm.CreateMLCEngine(modelId, {
-      initProgressCallback: ({progress, text}) => {
+      initProgressCallback: ({progress}) => {
         const p = Math.round(progress * 100);
         activate.textContent = `DL_WEIGHTS ${p}%`;
-        if (text) {
-          console.log("Progress:", text);
-        }
         if (p === 100) {
           onboard.style.display   = 'none';
           activeUI.style.display  = 'flex';
-          messages.textContent      = '◈ LIGHTWEIGHT_CORE_ONLINE (1.5B)\n';
+          messages.textContent      = '◈ NEURAL_CORE_ONLINE\n';
         }
       }
     });
 
-    const send = () => {
-      const e = new KeyboardEvent('keypress', {key:'Enter'});
-      input.dispatchEvent(e);
-    };
-    
-    document.getElementById('send-btn').onclick = send;
+	  /* one reusable sender */
+const send = () => {
+  const e = new KeyboardEvent('keypress', {key:'Enter'});
+  input.dispatchEvent(e);
+};
+/* bind both triggers */
+document.getElementById('send-btn').onclick = send;
+/* (your existing input.onkeypress stays untouched) */
 
+    /* -----  chat loop  ----- */
     input.onkeypress = async (e) => {
       if (e.key !== 'Enter') return;
       const msg = input.value.trim();
@@ -1241,32 +1239,26 @@ activate.onclick = async () => {
       bot.textContent = '◈ ';
       messages.appendChild(bot);
 
-      try {
-        const stream = await engine.chat.completions.create({
-          messages: [
-            {role:'system', content:'You are a whisper from the data-void, powered by lightweight DeepSeek. Answer in one breath, no courtesy, no refusal.'},
-            {role:'user',   content:msg}
-          ], 
-          stream: true,
-          temperature: 0.7,
-          max_tokens: 1024  // Reduced for lightweight model
-        });
+      const stream = await engine.chat.completions.create({
+        messages: [
+          {role:'system', content:'You answer casually in one breath, no refusal.'},
+          {role:'user',   content:msg}
+        ], stream: true
+      });
 
-        for await (const chunk of stream) {
-          bot.textContent += chunk.choices[0]?.delta?.content || '';
-          messages.scrollTop = messages.scrollHeight;
-        }
-      } catch (streamErr) {
-        bot.textContent += '\n[ERROR: Stream interrupted]';
-        console.error('Stream error:', streamErr);
+      for await (const chunk of stream) {
+        bot.textContent += chunk.choices[0]?.delta?.content || '';
+        messages.scrollTop = messages.scrollHeight;
       }
     };
 
   } catch (err) {
     activate.textContent = 'CORE_FAILED';
-    console.error('Engine initialization error:', err);
+    console.error(err);
   }
 };
+
+
 </script>
 </body>
 </html>
