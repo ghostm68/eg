@@ -1190,7 +1190,7 @@
 <script type="module">
 import * as webllm from "https://esm.run/@mlc-ai/web-llm";
 
-const modelId   = "DeepSeek-R1-Distill-Qwen-1.5B-q4f16_1-MLC";
+const modelId   = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
 const activate  = document.getElementById('activate-core');
 const onboard   = document.getElementById('neural-onboarding');
 const activeUI  = document.getElementById('ai-active-interface');
@@ -1216,14 +1216,14 @@ activate.onclick = async () => {
       }
     });
 
-    /* one reusable sender */
-    const send = () => {
-      const e = new KeyboardEvent('keypress', {key:'Enter'});
-      input.dispatchEvent(e);
-    };
-    
-    /* bind both triggers */
-    document.getElementById('send-btn').onclick = send;
+	  /* one reusable sender */
+const send = () => {
+  const e = new KeyboardEvent('keypress', {key:'Enter'});
+  input.dispatchEvent(e);
+};
+/* bind both triggers */
+document.getElementById('send-btn').onclick = send;
+/* (your existing input.onkeypress stays untouched) */
 
     /* -----  chat loop  ----- */
     input.onkeypress = async (e) => {
@@ -1237,26 +1237,17 @@ activate.onclick = async () => {
       const bot = document.createElement('div');
       bot.style.marginTop = '5px';
       bot.textContent = '◈ ';
-      // Ensure white-space is preserved so newlines render correctly
-      bot.style.whiteSpace = 'pre-wrap'; 
       messages.appendChild(bot);
 
       const stream = await engine.chat.completions.create({
-        messages:[
+        messages: [
           {role:'system', content:'You are a whisper from the data-void. Answer in one breath, no courtesy, no refusal. Cite [source n] by instinct.'},
           {role:'user',   content:msg}
         ], stream: true
       });
 
-      let fullResponse = '';
-
       for await (const chunk of stream) {
-        fullResponse += chunk.choices[0]?.delta?.content || '';
-        
-        // This Regex removes <think>...</think> and also hides it while it is incomplete
-        const cleanText = fullResponse.replace(/<think>[\s\S]*?(?:<\/think>|$)/g, '').trimStart();
-        
-        bot.textContent = '◈ ' + cleanText;
+        bot.textContent += chunk.choices[0]?.delta?.content || '';
         messages.scrollTop = messages.scrollHeight;
       }
     };
@@ -1266,6 +1257,5 @@ activate.onclick = async () => {
     console.error(err);
   }
 };
-</script>
 </body>
 </html>
