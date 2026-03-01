@@ -217,58 +217,46 @@
 		</p>
 	</section>
 <!-- ========================================== -->
-<!-- 1. SCRIPT TAGS (WITH FALLBACK)             -->
-<!-- ========================================== -->
-<!-- ========================================== -->
-<!-- 1. SCRIPT TAGS (WORKING FALLBACK)          -->
-<!-- ========================================== -->
-<!-- ========================================== -->
-<!-- 1. SCRIPT TAGS (CLEAN - NO FALLBACK NEEDED) -->
+<!-- 1. SCRIPT TAGS (WORKING LOCAL PATH)        -->
 <!-- ========================================== -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<!-- Local copy from same repo -->
 <script src="js/turn.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
 <!-- ========================================== -->
-<!-- 2. FLIPBOOK STYLES                         -->
+<!-- 2. FLIPBOOK STYLES (CRITICAL FIXES)        -->
 <!-- ========================================== -->
 <style>
     #flipbook-wrapper {
-        border: 2px solid red;
+        border: 2px solid red; /* DEBUG - remove after testing */
         background: #000;
         padding: 10px;
         display: flex;
         justify-content: center;
         overflow: hidden;
-        min-height: 600px;
     }
     
     #flipbook {
         width: 800px;
         height: 600px;
         position: relative;
-        margin: 0 auto;
-        background: #333;
+        background: #333; /* DEBUG - dark background so you see the container */
+        border: 2px solid lime; /* DEBUG */
     }
     
     #flipbook .page {
         background: #ffffff;
-        width: 400px;
+        width: 400px; /* Half of 800 for double spread */
         height: 600px;
         position: absolute;
         top: 0;
         left: 0;
-        box-shadow: 0 0 20px rgba(255,0,0,0.8);
+        box-shadow: 0 0 10px rgba(255,0,0,0.5);
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #000;
-        font-family: monospace;
-        font-size: 18px;
-        font-weight: bold;
         overflow: hidden;
-        border: 3px solid blue;
+        border: 2px solid blue; /* DEBUG - see each page */
     }
     
     #flipbook .page canvas {
@@ -278,8 +266,14 @@
     }
     
     @media (max-width: 800px) {
-        #flipbook { width: 100% !important; height: 500px !important; }
-        #flipbook .page { width: 100% !important; height: 100% !important; }
+        #flipbook {
+            width: 100% !important;
+            height: 500px !important;
+        }
+        #flipbook .page {
+            width: 100% !important;
+            height: 100% !important;
+        }
     }
 </style>
 
@@ -305,21 +299,17 @@
 </section>
 
 <!-- ========================================== -->
-<!-- 4. THE JAVASCRIPT (WITH SAFETY CHECKS)     -->
-<!-- ========================================== -->
-<!-- ========================================== -->
 <!-- 4. THE JAVASCRIPT                          -->
 <!-- ========================================== -->
 <script>
 $(document).ready(function() {
     // Safety check
     if (typeof $.fn.turn === 'undefined') {
-        $('#flipbook').html('<div style="color:red;padding:20px;">ERROR: Turn.js library not loaded. Check console for network errors.</div>');
-        console.error('Turn.js not found. jQuery version:', $.fn.jquery);
+        $('#flipbook').html('<div style="color:red;padding:20px;">ERROR: Turn.js not loaded</div>');
         return;
     }
     
-    console.log('Turn.js loaded, version:', $.fn.turn.version);
+    console.log('Turn.js loaded');
     
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
@@ -347,8 +337,11 @@ $(document).ready(function() {
             const height = isMobile ? (window.innerWidth - 40) * 1.3 : 600;
             const pageWidth = isMobile ? width : width / 2;
             
-            // Set size before init
-            $flipbook.css({ width: width, height: height });
+            // CRITICAL: Set explicit dimensions before init
+            $flipbook.css({ 
+                width: width + 'px', 
+                height: height + 'px' 
+            });
 
             // Initialize Turn.js
             $flipbook.turn({
@@ -371,9 +364,13 @@ $(document).ready(function() {
                 }
             });
 
+            console.log('Turn.js initialized, loading pages 1 and 2...');
+            
             // Load first pages
             renderPage(1, pageWidth, height);
-            if (!isMobile && totalPages > 1) renderPage(2, pageWidth, height);
+            if (!isMobile && totalPages > 1) {
+                renderPage(2, pageWidth, height);
+            }
 
         }).catch(err => {
             console.error("PDF Load Error: ", err);
@@ -383,18 +380,29 @@ $(document).ready(function() {
     function renderPage(pageNum, pWidth, pHeight) {
         const $flipbook = $('#flipbook');
         
-        if ($flipbook.turn('hasPage', pageNum)) return;
+        if ($flipbook.turn('hasPage', pageNum)) {
+            console.log(`Page ${pageNum} already exists`);
+            return;
+        }
 
+        console.log(`Creating page ${pageNum}`);
+
+        // Create page with explicit dimensions
         const element = $('<div />', { 
-            'class': 'page p' + pageNum,
-            'css': { width: pWidth, height: pHeight }
+            'class': 'page p' + pageNum
+        }).css({
+            'width': pWidth + 'px',
+            'height': pHeight + 'px',
+            'background-color': '#fff'
         }).text(`LOADING ${pageNum}...`);
         
         $flipbook.turn('addPage', element, pageNum);
 
+        // Render PDF
         pdfDoc.getPage(pageNum).then(page => {
             const scale = 1.5;
             const viewport = page.getViewport({ scale: scale });
+            
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             
@@ -406,7 +414,7 @@ $(document).ready(function() {
                 viewport: viewport
             }).promise.then(() => {
                 element.empty().append(canvas);
-                console.log(`Page ${pageNum} drawn`);
+                console.log(`Page ${pageNum} drawn and added`);
             });
         });
     }
