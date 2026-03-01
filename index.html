@@ -216,30 +216,41 @@
 			first draft title was "POSSESSION GARDENS"
 		</p>
 	</section>
+<!-- ========================================== -->
+<!-- 1. SCRIPT TAGS (THE WORKING CDN LINKS)     -->
+<!-- ========================================== -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Putting the working cdnjs link back! -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+<!-- ========================================== -->
+<!-- 2. FLIPBOOK STYLES                         -->
+<!-- ========================================== -->
 <style>
-    
+    /* Turn.js needs to control the size, so no width/height here */
     #flipbook .page {
-        background: white;
-        /* The red shadow looks awesome for a hacker/terminal theme, keep it! */
-        box-shadow: 0 0 10px rgba(255,0,0,0.3); 
+        background: #ffffff;
+        box-shadow: 0 0 10px rgba(255,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #000;
+        font-family: monospace;
+        font-size: 18px;
+        font-weight: bold;
     }
     
     #flipbook .page canvas {
         width: 100%;
         height: 100%;
         display: block;
-        object-fit: contain; /* This prevents the PDF text from stretching out of proportion */
+        object-fit: contain; /* Keeps PDF aspect ratio perfect */
     }
 </style>
-<!-- ========================================== -->
-<!-- 1. SCRIPT TAGS (MUST BE IN THIS ORDER)     -->
-<!-- ========================================== -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/blasten/turn.js@master/lib/turn.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
 <!-- ========================================== -->
-<!-- 2. THE HTML FLIPBOOK UI                    -->
+<!-- 3. THE HTML UI                             -->
 <!-- ========================================== -->
 <section>
     <h2 style="color: var(--primary); font-family: var(--font-seg); border-bottom: 1px solid var(--secondary); padding-bottom: 5px;">
@@ -247,7 +258,6 @@
     </h2>
     
     <div style="border: 1px solid var(--secondary); background: #000; padding: 10px; display: flex; justify-content: center; overflow: hidden;">
-        <!-- Clean div for Turn.js to control completely -->
         <div id="flipbook" style="margin: 0 auto; position: relative;"></div>
     </div>
     
@@ -261,119 +271,99 @@
 </section>
 
 <!-- ========================================== -->
-<!-- 3. THE JAVASCRIPT LOGIC                    -->
+<!-- 4. THE JAVASCRIPT                          -->
 <!-- ========================================== -->
 <script>
-// 1. Setup PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+$(document).ready(function() {
+    // Setup PDF.js
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-// 2. Proxy Setup
-const rawGithubUrl = 'https://raw.githubusercontent.com/ghostm68/99/main/iranthescreenplayv3.pdf';
-const proxyUrl = 'https://lively-limitless.inkrealm.workers.dev/?url=' + encodeURIComponent(rawGithubUrl);
+    // Cloudflare Proxy Setup
+    const rawGithubUrl = 'https://raw.githubusercontent.com/ghostm68/99/main/iranthescreenplayv3.pdf';
+    const proxyUrl = 'https://lively-limitless.inkrealm.workers.dev/?url=' + encodeURIComponent(rawGithubUrl);
 
-let pdfDoc = null;
-let totalPages = 0;
+    let pdfDoc = null;
+    let totalPages = 0;
 
-console.log("1. Starting PDF fetch...");
+    console.log("1. Starting PDF fetch...");
 
-// Ensure Turn.js loaded properly before proceeding
-if (typeof $.fn.turn !== 'function') {
-    $('#flipbook').html('<div style="color: red; padding: 20px;">CRITICAL ERROR: Turn.js failed to load. Check script tags.</div>');
-    throw new Error("Turn.js is missing!");
-}
-
-fetch(proxyUrl)
-    .then(response => response.arrayBuffer())
-    .then(buffer => pdfjsLib.getDocument({ data: buffer }).promise)
-    .then(pdf => {
-        pdfDoc = pdf;
-        totalPages = pdf.numPages;
-        console.log(`2. PDF Parsed Successfully! Total Pages: ${totalPages}`);
-        
-        document.getElementById('page-indicator').textContent = `PAGE: 1/${totalPages}`;
-        
-        const $flipbook = $('#flipbook');
-        const isMobile = window.innerWidth < 800;
-        
-        // Init Flipbook
-        $flipbook.turn({
-            width: isMobile ? window.innerWidth - 40 : 800,
-            height: isMobile ? (window.innerWidth - 40) * 1.3 : 600,
-            display: isMobile ? 'single' : 'double',
-            autoCenter: true,
-            gradients: true,
-            elevation: 50,
-            pages: totalPages,
-            when: {
-                missing: function(e, pages, turn) {
-                    for (let i = 0; i < pages.length; i++) {
-                        renderPage(pages[i]);
+    // Fetch PDF securely
+    fetch(proxyUrl)
+        .then(response => response.arrayBuffer())
+        .then(buffer => pdfjsLib.getDocument({ data: buffer }).promise)
+        .then(pdf => {
+            pdfDoc = pdf;
+            totalPages = pdf.numPages;
+            console.log(`2. PDF Parsed Successfully! Total Pages: ${totalPages}`);
+            
+            document.getElementById('page-indicator').textContent = `PAGE: 1/${totalPages}`;
+            
+            const $flipbook = $('#flipbook');
+            const isMobile = window.innerWidth < 800;
+            
+            // Initialize Flipbook Engine
+            $flipbook.turn({
+                width: isMobile ? window.innerWidth - 40 : 800,
+                height: isMobile ? (window.innerWidth - 40) * 1.3 : 600,
+                display: isMobile ? 'single' : 'double',
+                autoCenter: true,
+                gradients: true,
+                elevation: 50,
+                pages: totalPages,
+                when: {
+                    missing: function(e, pages, turn) {
+                        for (let i = 0; i < pages.length; i++) {
+                            renderPage(pages[i]);
+                        }
+                    },
+                    turned: function(e, page, view) {
+                        document.getElementById('page-indicator').textContent = `PAGE: ${page}/${totalPages}`;
                     }
-                },
-                turned: function(e, page, view) {
-                    document.getElementById('page-indicator').textContent = `PAGE: ${page}/${totalPages}`;
                 }
-            }
-        });
+            });
 
-        // Force load initial pages
-        renderPage(1);
-        if (!isMobile && totalPages > 1) renderPage(2);
+            // Force load pages 1 and 2 immediately
+            renderPage(1);
+            if (!isMobile && totalPages > 1) renderPage(2);
 
-    }).catch(err => {
-        console.error("PDF Load Error: ", err);
-        $('#flipbook').html(`<div style="color: red; padding: 20px;">SYSTEM ERR: ${err.message}</div>`);
-    });
-
-// 3. Render Page Logic
-function renderPage(pageNum) {
-    const $flipbook = $('#flipbook');
-    if ($flipbook.turn('hasPage', pageNum)) return;
-
-    // Create page wrapper with LOADING text
-    const element = $('<div />', {
-        'class': 'page', 
-        'css': { 
-            background: '#ffffff', 
-            color: '#000000',
-            width: '100%', 
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '18px',
-            fontWeight: 'bold'
-        }
-    }).text(`LOADING PAGE ${pageNum}...`);
-
-    $flipbook.turn('addPage', element, pageNum);
-
-    // Draw PDF to Canvas
-    pdfDoc.getPage(pageNum).then(page => {
-        const viewport = page.getViewport({ scale: 1.0 }); // Safe scale
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        canvas.style.width = '100%';
-        canvas.style.height = '100%';
-        canvas.style.display = 'block';
-        canvas.style.objectFit = 'contain';
-        
-        page.render({
-            canvasContext: context,
-            viewport: viewport
-        }).promise.then(() => {
-            // Success! Replace text with Canvas
-            element.empty().append(canvas);
-            console.log(`3. SUCCESS! Page ${pageNum} drawn.`);
         }).catch(err => {
-            element.text(`ERROR DRAWING PAGE ${pageNum}`);
+            console.error("PDF Load Error: ", err);
+            $('#flipbook').html(`<div style="color: red; padding: 20px;">SYSTEM ERR: ${err.message}</div>`);
         });
-    });
-}
 
+    // Render Logic
+    function renderPage(pageNum) {
+        const $flipbook = $('#flipbook');
+        if ($flipbook.turn('hasPage', pageNum)) return;
+
+        // Create page with temporary loading text
+        const element = $('<div />', { 'class': 'page' }).text(`LOADING PAGE ${pageNum}...`);
+        $flipbook.turn('addPage', element, pageNum);
+
+        // Draw PDF to Canvas
+        pdfDoc.getPage(pageNum).then(page => {
+            const viewport = page.getViewport({ scale: 1.0 }); // Safe scale limit
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            
+            page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise.then(() => {
+                // Remove loading text and inject canvas!
+                element.empty().append(canvas);
+                console.log(`3. SUCCESS! Page ${pageNum} drawn.`);
+            }).catch(err => {
+                element.text(`ERROR DRAWING PAGE ${pageNum}`);
+            });
+        });
+    }
+});
+
+// Flip buttons mapping
 function nextPage() { $('#flipbook').turn('next'); }
 function prevPage() { $('#flipbook').turn('previous'); }
 </script>
