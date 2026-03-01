@@ -313,15 +313,18 @@
 <!-- ========================================== -->
 <!-- 4. THE JAVASCRIPT                          -->
 <!-- ========================================== -->
+<!-- ========================================== -->
+<!-- 4. THE JAVASCRIPT (DEBUGGED)               -->
+<!-- ========================================== -->
 <script>
 $(document).ready(function() {
     if (typeof $.fn.turn === 'undefined') {
         $('#flipbook').html('<div style="color:red;padding:20px;">ERROR: Turn.js not loaded</div>');
         return;
     }
-
-    console.log('Turn.js loaded, starting...');
-
+    
+    console.log('Turn.js loaded, version check:', $.fn.turn.version || 'unknown');
+    
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
     const rawGithubUrl = 'https://raw.githubusercontent.com/ghostm68/99/main/iranthescreenplayv3.pdf';
@@ -329,6 +332,7 @@ $(document).ready(function() {
 
     let pdfDoc = null;
     let totalPages = 0;
+    let flipbookInitialized = false;
 
     fetch(proxyUrl)
         .then(response => response.arrayBuffer())
@@ -337,128 +341,112 @@ $(document).ready(function() {
             pdfDoc = pdf;
             totalPages = pdf.numPages;
             console.log(`PDF loaded: ${totalPages} pages`);
-
-            document.getElementById('page-indicator').textContent = `PAGE: 1/${totalPages}`;
-
+            
             const $flipbook = $('#flipbook');
             const isMobile = window.innerWidth < 800;
             const width = isMobile ? window.innerWidth - 40 : 800;
             const height = isMobile ? (window.innerWidth - 40) * 1.3 : 600;
+            
+            // Explicitly set dimensions
+            $flipbook.css({ width: width, height: height });
 
-            // CRITICAL: Set container size explicitly
-            $flipbook.css({ 
-                width: width, 
-                height: height,
-                visibility: 'visible',
-                display: 'block'
-            });
-
-            // Initialize Turn.js with explicit options
-            $flipbook.turn({
-                width: width,
-                height: height,
-                display: isMobile ? 'single' : 'double',
-                autoCenter: true,
-                gradients: true,
-                elevation: 50,
-                pages: totalPages,
-                acceleration: true,
-                when: {
-                    missing: function(e, pages) {
-                        console.log('Missing pages:', pages);
-                        for (let i = 0; i < pages.length; i++) {
-                            addPage(pages[i]);
+            // Initialize Turn.js - SIMPLIFIED OPTIONS
+            try {
+                $flipbook.turn({
+                    width: width,
+                    height: height,
+                    display: isMobile ? 'single' : 'double',
+                    autoCenter: true,
+                    pages: totalPages,
+                    when: {
+                        turning: function(e, page, view) {
+                            console.log('Turning to page:', page);
+                        },
+                        turned: function(e, page, view) {
+                            document.getElementById('page-indicator').textContent = `PAGE: ${page}/${totalPages}`;
+                            console.log('Turned to page:', page, 'view:', view);
                         }
-                    },
-                    turned: function(e, page, view) {
-                        console.log('Turned to page:', page, 'view:', view);
-                        document.getElementById('page-indicator').textContent = `PAGE: ${page}/${totalPages}`;
                     }
-                }
-            });
-
-            console.log('Turn.js initialized');
-
-            // Add first two pages immediately
-            addPage(1);
-            if (!isMobile && totalPages > 1) {
-                addPage(2);
+                });
+                flipbookInitialized = true;
+                console.log('Turn.js initialized successfully');
+            } catch (err) {
+                console.error('Turn.js init error:', err);
+                $('#flipbook').html(`<div style="color:red;padding:20px;">INIT ERROR: ${err.message}</div>`);
+                return;
             }
+
+            // Add pages after init
+            setTimeout(() => {
+                try {
+                    // Add page 1
+                    if (!$flipbook.turn('hasPage', 1)) {
+                        const page1 = $('<div class="page" style="background:#fff;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">Loading page 1...</div>');
+                        $flipbook.turn('addPage', page1, 1);
+                        renderPDFToElement(1, page1);
+                    }
+                    
+                    // Add page 2 if not mobile
+                    if (!isMobile && !$flipbook.turn('hasPage', 2)) {
+                        const page2 = $('<div class="page" style="background:#fff;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">Loading page 2...</div>');
+                        $flipbook.turn('addPage', page2, 2);
+                        renderPDFToElement(2, page2);
+                    }
+                    
+                    // Force update and go to page 1
+                    $flipbook.turn('update');
+                    setTimeout(() => {
+                        $flipbook.turn('page', 1);
+                    }, 200);
+                    
+                } catch (err) {
+                    console.error('Error adding pages:', err);
+                }
+            }, 100);
 
         }).catch(err => {
             console.error("PDF Error:", err);
             $('#flipbook').html(`<div style="color: red; padding: 20px;">PDF ERROR: ${err.message}</div>`);
         });
 
-    function addPage(pageNum) {
-        const $flipbook = $('#flipbook');
-
-        if ($flipbook.turn('hasPage', pageNum)) {
-            console.log(`Page ${pageNum} already added`);
-            return;
-        }
-
-        console.log(`Adding page ${pageNum}`);
-
-        // Create simple div with loading text
-        const element = $('<div class="page loading">LOADING PAGE ' + pageNum + '...</div>');
-
-        // Add to flipbook
-        $flipbook.turn('addPage', element, pageNum);
-
-        // Now render PDF into it
-        renderPDFPage(pageNum, element);
-    }
-
-    function renderPDFPage(pageNum, element) {
+    function renderPDFToElement(pageNum, element) {
         pdfDoc.getPage(pageNum).then(page => {
-            // Calculate scale to fit
-            const containerWidth = element.width() || 400;
-            const containerHeight = element.height() || 600;
-
-            const viewport = page.getViewport({ scale: 1 });
-            const scale = Math.min(
-                containerWidth / viewport.width,
-                containerHeight / viewport.height
-            ) * 1.5; // Slight upscale for quality
-
-            const scaledViewport = page.getViewport({ scale: scale });
-
+            const viewport = page.getViewport({ scale: 1.5 });
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
-
-            canvas.width = scaledViewport.width;
-            canvas.height = scaledViewport.height;
-
-            console.log(`Rendering page ${pageNum} at ${canvas.width}x${canvas.height}`);
-
+            
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            
             page.render({
                 canvasContext: context,
-                viewport: scaledViewport
+                viewport: viewport
             }).promise.then(() => {
-                element.removeClass('loading').empty().append(canvas);
+                element.empty().append(canvas);
                 console.log(`Page ${pageNum} rendered successfully`);
             }).catch(err => {
-                console.error(`Render error page ${pageNum}:`, err);
-                element.text('ERROR RENDERING');
+                console.error(`Render error:`, err);
+                element.html('<div style="color:red;">Render failed</div>');
             });
         }).catch(err => {
-            console.error(`Get page error ${pageNum}:`, err);
-            element.text('ERROR LOADING');
+            console.error(`Get page error:`, err);
+            element.html('<div style="color:red;">Load failed</div>');
         });
     }
 });
 
 function nextPage() { 
-    var $flipbook = $('#flipbook');
-    if ($flipbook.turn('is')) {
-        $flipbook.turn('next');
+    try {
+        $('#flipbook').turn('next');
+    } catch(e) {
+        console.error('Next page error:', e);
     }
 }
 function prevPage() { 
-    var $flipbook = $('#flipbook');
-    if ($flipbook.turn('is')) {
-        $flipbook.turn('previous');
+    try {
+        $('#flipbook').turn('previous');
+    } catch(e) {
+        console.error('Prev page error:', e);
     }
 }
 </script>
