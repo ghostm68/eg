@@ -260,69 +260,86 @@
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-let currentPage = 1;
-let totalPages = 0;
+// Route through jsDelivr to bypass GitHub's CORS block
+const pdfUrl = 'https://cdn.jsdelivr.net/gh/ghostm68/99@main/iranthescreenplayv3.pdf';
 let pdfDoc = null;
+let totalPages = 0;
 
-// Load PDF
-pdfjsLib.getDocument('https://github.com/ghostm68/99/raw/main/iranthescreenplayv3.pdf').promise.then(pdf => {
+// Init Flipbook
+pdfjsLib.getDocument(pdfUrl).promise.then(pdf => {
     pdfDoc = pdf;
     totalPages = pdf.numPages;
     document.getElementById('page-indicator').textContent = `PAGE: 1/${totalPages}`;
     
-    // Load first two pages
-    loadPages(1);
+    const $flipbook = $('#flipbook');
+    const isMobile = window.innerWidth < 800;
+    
+    // Initialize Turn.js exactly ONCE
+    $flipbook.turn({
+        width: isMobile ? window.innerWidth - 40 : 800,
+        height: isMobile ? (window.innerWidth - 40) * 1.3 : 600,
+        display: isMobile ? 'single' : 'double',
+        autoCenter: true,
+        gradients: true,
+        elevation: 50,
+        pages: totalPages,
+        when: {
+            missing: function(e, pages, turn) {
+                // Dynamically render pages only when requested
+                for (let i = 0; i < pages.length; i++) {
+                    renderPage(pages[i]);
+                }
+            },
+            turned: function(e, page, view) {
+                // Update indicator based on Turn.js internal state
+                document.getElementById('page-indicator').textContent = `PAGE: ${page}/${totalPages}`;
+            }
+        }
+    });
+
+    // Force load the initial pages
+    renderPage(1);
+    if (!isMobile && totalPages > 1) renderPage(2);
+
+}).catch(err => {
+    console.error("PDF Load Error: ", err);
+    $('#flipbook').html(`<div style="color: var(--red); padding: 20px;">SYSTEM ERR: CORS or PDF load failed. ${err.message}</div>`);
 });
 
-async function loadPages(startPage) {
-    $('#flipbook').empty();
+// Render individual canvas pages inside Turn.js
+function renderPage(pageNum) {
+    const $flipbook = $('#flipbook');
     
-    for (let i = startPage; i <= Math.min(startPage + 1, totalPages); i++) {
-        const page = await pdfDoc.getPage(i);
+    // Prevent rendering a page that already exists
+    if ($flipbook.turn('hasPage', pageNum)) return;
+
+    // Create the wrapper
+    const element = $('<div />', {'class': 'page', 'css': {background: '#fff'}});
+    $flipbook.turn('addPage', element, pageNum);
+
+    // Fetch and draw PDF data
+    pdfDoc.getPage(pageNum).then(page => {
         const viewport = page.getViewport({ scale: 1.5 });
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
         
         canvas.width = viewport.width;
         canvas.height = viewport.height;
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
         
-        await page.render({
+        element.append(canvas);
+
+        page.render({
             canvasContext: context,
             viewport: viewport
-        }).promise;
-        
-        const pageDiv = $('<div>').addClass('page').css({
-            'background': '#fff',
-            'box-shadow': '0 0 10px rgba(255,0,0,0.3)'
-        }).append(canvas);
-        
-        $('#flipbook').append(pageDiv);
-    }
-    
-    $('#flipbook').turn({
-        width: 800,
-        height: 600,
-        autoCenter: true,
-        gradients: true,
-        elevation: 50
+        });
     });
 }
 
-function nextPage() {
-    if (currentPage < totalPages - 1) {
-        currentPage += 2;
-        loadPages(currentPage);
-        document.getElementById('page-indicator').textContent = `PAGE: ${currentPage}/${totalPages}`;
-    }
-}
-
-function prevPage() {
-    if (currentPage > 1) {
-        currentPage -= 2;
-        loadPages(currentPage);
-        document.getElementById('page-indicator').textContent = `PAGE: ${currentPage}/${totalPages}`;
-    }
-}
+// Map your custom buttons to Turn.js internal methods
+function nextPage() { $('#flipbook').turn('next'); }
+function prevPage() { $('#flipbook').turn('previous'); }
 </script>
 	<a href="https://github.com/ghostm68/99/raw/main/iranthescreenplayv3.pdf" 
    download="iran_the_screenplay_v3.pdf"
