@@ -240,8 +240,10 @@
          working title=party code // FLIPBOOK
     </h2>
     
-    <div style="border: 1px solid var(--secondary); background: #000; padding: 10px;">
-        <div id="flipbook" style="width: 100%; height: 600px; margin: 0 auto;"></div>
+    <!-- The outer container can be responsive, but the flipbook div must be clean -->
+    <div style="border: 1px solid var(--secondary); background: #000; padding: 10px; display: flex; justify-content: center; overflow: hidden;">
+        <!-- Removed width:100% and height:600px so Turn.js can set exact pixel dimensions -->
+        <div id="flipbook" style="margin: 0 auto; position: relative;"></div>
     </div>
     
     <div style="display: flex; justify-content: space-between; margin-top: 10px; font-family: var(--font-tech); font-size: 0.8rem;">
@@ -331,29 +333,55 @@ function renderPage(pageNum) {
     const $flipbook = $('#flipbook');
     if ($flipbook.turn('hasPage', pageNum)) return;
 
-    console.log(`Drawing page ${pageNum}...`);
-    const element = $('<div />', {'class': 'page', 'css': {background: '#fff'}});
+    // 1. Create the page container with a guaranteed WHITE background and temporary text
+    const element = $('<div />', {
+        'class': 'page', 
+        'css': { 
+            background: '#ffffff', 
+            color: '#000000',
+            width: '100%', 
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '20px',
+            fontWeight: 'bold'
+        }
+    }).text(`LOADING PAGE ${pageNum}...`); // Temporary text
+
+    // Add to Turn.js
     $flipbook.turn('addPage', element, pageNum);
 
+    // 2. Render the actual PDF Canvas over it
     pdfDoc.getPage(pageNum).then(page => {
-        const viewport = page.getViewport({ scale: 1.5 });
+        const viewport = page.getViewport({ scale: 1.0 }); // Keep scale 1.0 to prevent memory crashes
+        
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
         
         canvas.width = viewport.width;
         canvas.height = viewport.height;
+        
         canvas.style.width = '100%';
         canvas.style.height = '100%';
+        canvas.style.display = 'block';
+        canvas.style.objectFit = 'contain';
         
-        element.append(canvas);
-
+        // Render the PDF data
         page.render({
             canvasContext: context,
             viewport: viewport
+        }).promise.then(() => {
+            // Success! Remove the "LOADING..." text and inject the canvas
+            element.empty().append(canvas);
+            console.log(`6. SUCCESS! Page ${pageNum} painted on screen.`);
+        }).catch(err => {
+            element.text(`ERROR DRAWING PAGE ${pageNum}`);
+            console.error(`CANVAS RENDER ERR on page ${pageNum}:`, err);
         });
+        
     });
 }
-
 function nextPage() { $('#flipbook').turn('next'); }
 function prevPage() { $('#flipbook').turn('previous'); }
 </script>
