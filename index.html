@@ -235,22 +235,24 @@
         overflow: hidden;
         min-height: 640px;
     }
-
+    
     #flipbook {
         width: 800px;
         height: 600px;
         position: relative;
         background: #222;
-        box-shadow: 0 0 20px rgba(0,255,0,0.3);
+        box-shadow: 0 0 20px rgba(255,0,0,0.3); /* RED glow */
+        border: 2px solid #ff0000; /* RED border */
     }
-
-    /* Turn.js creates .turn-page-wrapper, target that too */
+    
+    /* Turn.js internal wrapper */
     #flipbook .turn-page-wrapper {
         position: absolute;
         overflow: hidden;
         background: #fff;
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
-
+    
     #flipbook .page {
         background: #ffffff;
         width: 100%;
@@ -262,29 +264,21 @@
         align-items: center;
         justify-content: center;
         overflow: hidden;
-        box-shadow: inset 0 0 50px rgba(0,0,0,0.1);
     }
-
+    
     #flipbook .page canvas {
-        max-width: 100%;
-        max-height: 100%;
+        max-width: 95%;
+        max-height: 95%;
         display: block;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
-
-    /* Loading text style */
-    #flipbook .page.loading {
-        color: #333;
-        font-family: monospace;
-        font-size: 14px;
-    }
-
+    
     @media (max-width: 840px) {
-        #flipbook-wrapper {
-            padding: 10px;
-        }
-        #flipbook {
-            width: 100% !important;
-            height: 500px !important;
+        #flipbook-wrapper { padding: 10px; }
+        #flipbook { 
+            width: 100% !important; 
+            height: 500px !important; 
+            box-shadow: 0 0 15px rgba(255,0,0,0.3); /* Red glow for mobile */
         }
     }
 </style>
@@ -294,7 +288,7 @@
 <!-- ========================================== -->
 <section>
     <h2 style="color: var(--primary); font-family: var(--font-seg); border-bottom: 1px solid var(--secondary); padding-bottom: 5px;">
-         working title=party code // FLIPBOOK
+         working title=party code // iran FLIPBOOK
     </h2>
 
     <div id="flipbook-wrapper">
@@ -323,7 +317,7 @@ $(document).ready(function() {
         return;
     }
     
-    console.log('Turn.js loaded, version check:', $.fn.turn.version || 'unknown');
+    console.log('Turn.js loaded');
     
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
@@ -332,7 +326,6 @@ $(document).ready(function() {
 
     let pdfDoc = null;
     let totalPages = 0;
-    let flipbookInitialized = false;
 
     fetch(proxyUrl)
         .then(response => response.arrayBuffer())
@@ -347,67 +340,64 @@ $(document).ready(function() {
             const width = isMobile ? window.innerWidth - 40 : 800;
             const height = isMobile ? (window.innerWidth - 40) * 1.3 : 600;
             
-            // Explicitly set dimensions
             $flipbook.css({ width: width, height: height });
 
-            // Initialize Turn.js - SIMPLIFIED OPTIONS
-            try {
-                $flipbook.turn({
-                    width: width,
-                    height: height,
-                    display: isMobile ? 'single' : 'double',
-                    autoCenter: true,
-                    pages: totalPages,
-                    when: {
-                        turning: function(e, page, view) {
-                            console.log('Turning to page:', page);
-                        },
-                        turned: function(e, page, view) {
-                            document.getElementById('page-indicator').textContent = `PAGE: ${page}/${totalPages}`;
-                            console.log('Turned to page:', page, 'view:', view);
+            $flipbook.turn({
+                width: width,
+                height: height,
+                display: isMobile ? 'single' : 'double',
+                autoCenter: true,
+                pages: totalPages,
+                when: {
+                    turning: function(e, page, view) {
+                        console.log('Turning to page:', page, 'view:', view);
+                        // Preload pages in current view
+                        const range = $flipbook.turn('range', page);
+                        for (let p = range[0]; p <= range[1]; p++) {
+                            if (p > 0 && p <= totalPages && !$flipbook.turn('hasPage', p)) {
+                                addPage(p);
+                            }
                         }
+                    },
+                    turned: function(e, page, view) {
+                        document.getElementById('page-indicator').textContent = `PAGE: ${page}/${totalPages}`;
                     }
-                });
-                flipbookInitialized = true;
-                console.log('Turn.js initialized successfully');
-            } catch (err) {
-                console.error('Turn.js init error:', err);
-                $('#flipbook').html(`<div style="color:red;padding:20px;">INIT ERROR: ${err.message}</div>`);
-                return;
-            }
-
-            // Add pages after init
-            setTimeout(() => {
-                try {
-                    // Add page 1
-                    if (!$flipbook.turn('hasPage', 1)) {
-                        const page1 = $('<div class="page" style="background:#fff;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">Loading page 1...</div>');
-                        $flipbook.turn('addPage', page1, 1);
-                        renderPDFToElement(1, page1);
-                    }
-                    
-                    // Add page 2 if not mobile
-                    if (!isMobile && !$flipbook.turn('hasPage', 2)) {
-                        const page2 = $('<div class="page" style="background:#fff;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">Loading page 2...</div>');
-                        $flipbook.turn('addPage', page2, 2);
-                        renderPDFToElement(2, page2);
-                    }
-                    
-                    // Force update and go to page 1
-                    $flipbook.turn('update');
-                    setTimeout(() => {
-                        $flipbook.turn('page', 1);
-                    }, 200);
-                    
-                } catch (err) {
-                    console.error('Error adding pages:', err);
                 }
-            }, 100);
+            });
+
+            console.log('Turn.js initialized');
+
+            // Load first pages
+            setTimeout(() => {
+                addPage(1);
+                if (!isMobile) addPage(2);
+                
+                $flipbook.turn('update');
+                setTimeout(() => {
+                    $flipbook.turn('page', 1);
+                }, 100);
+            }, 50);
 
         }).catch(err => {
             console.error("PDF Error:", err);
             $('#flipbook').html(`<div style="color: red; padding: 20px;">PDF ERROR: ${err.message}</div>`);
         });
+
+    function addPage(pageNum) {
+        const $flipbook = $('#flipbook');
+        
+        if ($flipbook.turn('hasPage', pageNum)) return;
+
+        const element = $('<div class="page" style="background:#fff;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">Loading...</div>');
+        
+        try {
+            $flipbook.turn('addPage', element, pageNum);
+            renderPDFToElement(pageNum, element);
+            console.log(`Page ${pageNum} added`);
+        } catch (err) {
+            console.error(`Error adding page ${pageNum}:`, err);
+        }
+    }
 
     function renderPDFToElement(pageNum, element) {
         pdfDoc.getPage(pageNum).then(page => {
@@ -423,31 +413,17 @@ $(document).ready(function() {
                 viewport: viewport
             }).promise.then(() => {
                 element.empty().append(canvas);
-                console.log(`Page ${pageNum} rendered successfully`);
-            }).catch(err => {
-                console.error(`Render error:`, err);
-                element.html('<div style="color:red;">Render failed</div>');
+                console.log(`Page ${pageNum} rendered`);
             });
-        }).catch(err => {
-            console.error(`Get page error:`, err);
-            element.html('<div style="color:red;">Load failed</div>');
         });
     }
 });
 
 function nextPage() { 
-    try {
-        $('#flipbook').turn('next');
-    } catch(e) {
-        console.error('Next page error:', e);
-    }
+    try { $('#flipbook').turn('next'); } catch(e) { console.error(e); }
 }
 function prevPage() { 
-    try {
-        $('#flipbook').turn('previous');
-    } catch(e) {
-        console.error('Prev page error:', e);
-    }
+    try { $('#flipbook').turn('previous'); } catch(e) { console.error(e); }
 }
 </script>
 	<a href="https://github.com/ghostm68/99/raw/main/iranthescreenplayv3.pdf" 
