@@ -222,15 +222,13 @@
 <!-- ========================================== -->
 <!-- 1. SCRIPT TAGS (WORKING FALLBACK)          -->
 <!-- ========================================== -->
+<!-- ========================================== -->
+<!-- 1. SCRIPT TAGS (CLEAN - NO FALLBACK NEEDED) -->
+<!-- ========================================== -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/blasten/turn.js@master/lib/turn.js"></script>
+<!-- Use cdnjs version 4 - this one works -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/4/turn.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-<script>
-// Emergency fallback if GitHub fails
-if (typeof $.fn.turn === 'undefined') {
-    document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/4/turn.min.js"><\/script>');
-}
-</script>
 
 <!-- ========================================== -->
 <!-- 2. FLIPBOOK STYLES                         -->
@@ -309,17 +307,19 @@ if (typeof $.fn.turn === 'undefined') {
 <!-- ========================================== -->
 <!-- 4. THE JAVASCRIPT (WITH SAFETY CHECKS)     -->
 <!-- ========================================== -->
+<!-- ========================================== -->
+<!-- 4. THE JAVASCRIPT                          -->
+<!-- ========================================== -->
 <script>
-// Wait for everything to load
-function initFlipbook() {
-    // Check if Turn.js loaded
+$(document).ready(function() {
+    // Safety check
     if (typeof $.fn.turn === 'undefined') {
-        console.error('Turn.js not loaded! Retrying in 500ms...');
-        setTimeout(initFlipbook, 500);
+        $('#flipbook').html('<div style="color:red;padding:20px;">ERROR: Turn.js library not loaded. Check console for network errors.</div>');
+        console.error('Turn.js not found. jQuery version:', $.fn.jquery);
         return;
     }
     
-    console.log('Turn.js loaded successfully, initializing...');
+    console.log('Turn.js loaded, version:', $.fn.turn.version);
     
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
@@ -410,15 +410,7 @@ function initFlipbook() {
             });
         });
     }
-}
-
-// Start initialization when DOM is ready
-$(document).ready(function() {
-    // Safety check
-    if (typeof $.fn.turn === 'undefined') {
-        $('#flipbook').html('<div style="color:red;padding:20px;">ERROR: Flipbook library failed to load. Check internet connection.</div>');
-        return;
-    }
+});
 
 function nextPage() { 
     if ($('#flipbook').turn('is')) $('#flipbook').turn('next'); 
