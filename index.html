@@ -223,9 +223,14 @@
 <!-- 1. SCRIPT TAGS (WORKING FALLBACK)          -->
 <!-- ========================================== -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<!-- Use cdnjs version 4 which has the jQuery plugin -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/4/turn.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/blasten/turn.js@master/lib/turn.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script>
+// Emergency fallback if GitHub fails
+if (typeof $.fn.turn === 'undefined') {
+    document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/4/turn.min.js"><\/script>');
+}
+</script>
 
 <!-- ========================================== -->
 <!-- 2. FLIPBOOK STYLES                         -->
@@ -408,7 +413,12 @@ function initFlipbook() {
 }
 
 // Start initialization when DOM is ready
-$(document).ready(initFlipbook);
+$(document).ready(function() {
+    // Safety check
+    if (typeof $.fn.turn === 'undefined') {
+        $('#flipbook').html('<div style="color:red;padding:20px;">ERROR: Flipbook library failed to load. Check internet connection.</div>');
+        return;
+    }
 
 function nextPage() { 
     if ($('#flipbook').turn('is')) $('#flipbook').turn('next'); 
