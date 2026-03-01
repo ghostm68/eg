@@ -216,33 +216,38 @@
 			first draft title was "POSSESSION GARDENS"
 		</p>
 	</section>
-	<!-- FLIPBOOK MODULE -->
-	<style>
-    #flipbook {
-        width: 100%;
-        height: 600px;
-        margin: 0 auto;
-    }
+<style>
     
     #flipbook .page {
         background: white;
-        box-shadow: 0 0 10px rgba(255,0,0,0.3);
+        /* The red shadow looks awesome for a hacker/terminal theme, keep it! */
+        box-shadow: 0 0 10px rgba(255,0,0,0.3); 
     }
     
     #flipbook .page canvas {
         width: 100%;
         height: 100%;
         display: block;
+        object-fit: contain; /* This prevents the PDF text from stretching out of proportion */
     }
 </style>
+<!-- ========================================== -->
+<!-- 1. SCRIPT TAGS (MUST BE IN THIS ORDER)     -->
+<!-- ========================================== -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/blasten/turn.js@master/lib/turn.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+<!-- ========================================== -->
+<!-- 2. THE HTML FLIPBOOK UI                    -->
+<!-- ========================================== -->
 <section>
     <h2 style="color: var(--primary); font-family: var(--font-seg); border-bottom: 1px solid var(--secondary); padding-bottom: 5px;">
          working title=party code // FLIPBOOK
     </h2>
     
-    <!-- The outer container can be responsive, but the flipbook div must be clean -->
     <div style="border: 1px solid var(--secondary); background: #000; padding: 10px; display: flex; justify-content: center; overflow: hidden;">
-        <!-- Removed width:100% and height:600px so Turn.js can set exact pixel dimensions -->
+        <!-- Clean div for Turn.js to control completely -->
         <div id="flipbook" style="margin: 0 auto; position: relative;"></div>
     </div>
     
@@ -255,43 +260,35 @@
     </div>
 </section>
 
-<!-- 1. jQuery -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-<!-- 2. The OFFICIAL Turn.js Library pulled directly from the creator's GitHub -->
-<script src="https://cdn.jsdelivr.net/gh/blasten/turn.js@master/lib/turn.js"></script>
-
-<!-- 3. PDF.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-
+<!-- ========================================== -->
+<!-- 3. THE JAVASCRIPT LOGIC                    -->
+<!-- ========================================== -->
 <script>
+// 1. Setup PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-// Route through your custom proxy
+// 2. Proxy Setup
 const rawGithubUrl = 'https://raw.githubusercontent.com/ghostm68/99/main/iranthescreenplayv3.pdf';
 const proxyUrl = 'https://lively-limitless.inkrealm.workers.dev/?url=' + encodeURIComponent(rawGithubUrl);
 
 let pdfDoc = null;
 let totalPages = 0;
 
-console.log("1. Starting PDF fetch via Cloudflare Worker...");
+console.log("1. Starting PDF fetch...");
 
-// 1. Fetch manually to bypass PDF.js header/streaming strictness
+// Ensure Turn.js loaded properly before proceeding
+if (typeof $.fn.turn !== 'function') {
+    $('#flipbook').html('<div style="color: red; padding: 20px;">CRITICAL ERROR: Turn.js failed to load. Check script tags.</div>');
+    throw new Error("Turn.js is missing!");
+}
+
 fetch(proxyUrl)
-    .then(response => {
-        if (!response.ok) throw new Error(`Proxy responded with status: ${response.status}`);
-        console.log("2. Response received. Converting to binary Buffer...");
-        return response.arrayBuffer(); // Force it to read as raw binary
-    })
-    .then(buffer => {
-        console.log("3. Data downloaded. Sending to PDF.js...");
-        // 2. Pass the raw buffer directly to PDF.js
-        return pdfjsLib.getDocument({ data: buffer }).promise;
-    })
+    .then(response => response.arrayBuffer())
+    .then(buffer => pdfjsLib.getDocument({ data: buffer }).promise)
     .then(pdf => {
         pdfDoc = pdf;
         totalPages = pdf.numPages;
-        console.log(`4. PDF Parsed Successfully! Total Pages: ${totalPages}`);
+        console.log(`2. PDF Parsed Successfully! Total Pages: ${totalPages}`);
         
         document.getElementById('page-indicator').textContent = `PAGE: 1/${totalPages}`;
         
@@ -325,15 +322,15 @@ fetch(proxyUrl)
 
     }).catch(err => {
         console.error("PDF Load Error: ", err);
-        $('#flipbook').html(`<div style="color: var(--red); padding: 20px;">SYSTEM ERR: ${err.message}</div>`);
+        $('#flipbook').html(`<div style="color: red; padding: 20px;">SYSTEM ERR: ${err.message}</div>`);
     });
 
-// Render individual canvas pages inside Turn.js
+// 3. Render Page Logic
 function renderPage(pageNum) {
     const $flipbook = $('#flipbook');
     if ($flipbook.turn('hasPage', pageNum)) return;
 
-    // 1. Create the page container with a guaranteed WHITE background and temporary text
+    // Create page wrapper with LOADING text
     const element = $('<div />', {
         'class': 'page', 
         'css': { 
@@ -344,44 +341,39 @@ function renderPage(pageNum) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '20px',
+            fontSize: '18px',
             fontWeight: 'bold'
         }
-    }).text(`LOADING PAGE ${pageNum}...`); // Temporary text
+    }).text(`LOADING PAGE ${pageNum}...`);
 
-    // Add to Turn.js
     $flipbook.turn('addPage', element, pageNum);
 
-    // 2. Render the actual PDF Canvas over it
+    // Draw PDF to Canvas
     pdfDoc.getPage(pageNum).then(page => {
-        const viewport = page.getViewport({ scale: 1.0 }); // Keep scale 1.0 to prevent memory crashes
-        
+        const viewport = page.getViewport({ scale: 1.0 }); // Safe scale
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
         
         canvas.width = viewport.width;
         canvas.height = viewport.height;
-        
         canvas.style.width = '100%';
         canvas.style.height = '100%';
         canvas.style.display = 'block';
         canvas.style.objectFit = 'contain';
         
-        // Render the PDF data
         page.render({
             canvasContext: context,
             viewport: viewport
         }).promise.then(() => {
-            // Success! Remove the "LOADING..." text and inject the canvas
+            // Success! Replace text with Canvas
             element.empty().append(canvas);
-            console.log(`6. SUCCESS! Page ${pageNum} painted on screen.`);
+            console.log(`3. SUCCESS! Page ${pageNum} drawn.`);
         }).catch(err => {
             element.text(`ERROR DRAWING PAGE ${pageNum}`);
-            console.error(`CANVAS RENDER ERR on page ${pageNum}:`, err);
         });
-        
     });
 }
+
 function nextPage() { $('#flipbook').turn('next'); }
 function prevPage() { $('#flipbook').turn('previous'); }
 </script>
