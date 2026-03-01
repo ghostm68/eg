@@ -211,9 +211,101 @@
 		</h1>
 		<p style="font-family: 'Special Elite'; font-size: 0.9rem; color: #888;">
 			Mobile Architecture dESIGN under-WAY.<br>
-			InkRealm.info Protocol.
+			InkRealm.info Protocol. <br>
+			"PARTY CODE" now available!<br>
+			first draft title was "POSSESSION GARDENS"
 		</p>
 	</section>
+	<!-- FLIPBOOK MODULE -->
+<section>
+    <h2 style="color: var(--primary); font-family: var(--font-seg); border-bottom: 1px solid var(--secondary); padding-bottom: 5px;">
+        IRAN_THE_SCREENPLAY, working title=party code // FLIPBOOK
+    </h2>
+    
+    <div style="border: 1px solid var(--secondary); background: #000; padding: 10px;">
+        <div id="flipbook" style="width: 100%; height: 600px; margin: 0 auto;"></div>
+    </div>
+    
+    <div style="display: flex; justify-content: space-between; margin-top: 10px; font-family: var(--font-tech); font-size: 0.8rem;">
+        <span id="page-indicator" style="color: var(--primary);">PAGE: 0/0</span>
+        <div>
+            <button onclick="prevPage()" style="background: #111; border: 1px solid var(--secondary); color: var(--text-main); padding: 5px 15px; cursor: pointer; font-family: var(--font-tech);">◀ PREV</button>
+            <button onclick="nextPage()" style="background: #111; border: 1px solid var(--secondary); color: var(--text-main); padding: 5px 15px; cursor: pointer; font-family: var(--font-tech);">NEXT ▶</button>
+        </div>
+    </div>
+</section>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/turn.js@4.1.0/turn.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.html';
+
+let currentPage = 1;
+let totalPages = 0;
+let pdfDoc = null;
+
+// Load PDF
+pdfjsLib.getDocument('https://github.com/ghostm68/99/raw/main/iranthescreenplayv3.pdf').promise.then(pdf => {
+    pdfDoc = pdf;
+    totalPages = pdf.numPages;
+    document.getElementById('page-indicator').textContent = `PAGE: 1/${totalPages}`;
+    
+    // Load first two pages
+    loadPages(1);
+});
+
+async function loadPages(startPage) {
+    $('#flipbook').empty();
+    
+    for (let i = startPage; i <= Math.min(startPage + 1, totalPages); i++) {
+        const page = await pdfDoc.getPage(i);
+        const viewport = page.getViewport({ scale: 1.5 });
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        
+        await page.render({
+            canvasContext: context,
+            viewport: viewport
+        }).promise;
+        
+        const pageDiv = $('<div>').addClass('page').css({
+            'background': '#fff',
+            'box-shadow': '0 0 10px rgba(255,0,0,0.3)'
+        }).append(canvas);
+        
+        $('#flipbook').append(pageDiv);
+    }
+    
+    $('#flipbook').turn({
+        width: 800,
+        height: 600,
+        autoCenter: true,
+        gradients: true,
+        elevation: 50
+    });
+}
+
+function nextPage() {
+    if (currentPage < totalPages - 1) {
+        currentPage += 2;
+        loadPages(currentPage);
+        document.getElementById('page-indicator').textContent = `PAGE: ${currentPage}/${totalPages}`;
+    }
+}
+
+function prevPage() {
+    if (currentPage > 1) {
+        currentPage -= 2;
+        loadPages(currentPage);
+        document.getElementById('page-indicator').textContent = `PAGE: ${currentPage}/${totalPages}`;
+    }
+}
+</script>
 	<!-- The Module Wrapper -->
 	<div style="
 		position: relative;
