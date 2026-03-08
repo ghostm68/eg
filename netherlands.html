@@ -999,7 +999,7 @@ en: "Do Not Sell My Info (KKKalifornia)"
             // Start video rotator and force play after splash
             setTimeout(() => {
                 startRotation();
-                forceVideoPlay(); // ADD THIS LINE
+                forceVideoPlay();
             }, 500);
         }
 
@@ -1031,31 +1031,60 @@ en: "Do Not Sell My Info (KKKalifornia)"
             hideSplash();
         });
 
-        // ===== VIDEO ROTATOR - AUTOPLAY ONLY, NO SELECTION =====
-        const videos = document.querySelectorAll('.hero-video');
+        // ===== VIDEO ROTATOR WITH BLUR BACKGROUND =====
+        const videoWrappers = document.querySelectorAll('.video-wrapper');
         let currentVideo = 0;
         let videoInterval;
 
         function switchVideo(index) {
-            if (index < 0 || index >= videos.length) return;
-            videos.forEach(v => v.classList.remove('active'));
-            videos[index].classList.add('active');
-            // Play the newly active video
-            videos[index].play().catch(e => console.log("Could not play video:", e));
+            if (index < 0 || index >= videoWrappers.length) return;
+            
+            // Remove active class from all wrappers
+            videoWrappers.forEach(w => w.classList.remove('active'));
+            
+            // Add active class to new wrapper
+            videoWrappers[index].classList.add('active');
+            
+            // Play videos in the active wrapper
+            const activeWrapper = videoWrappers[index];
+            const blurVideo = activeWrapper.querySelector('.hero-video-blur');
+            const mainVideo = activeWrapper.querySelector('.hero-video');
+            
+            // Pause videos in other wrappers to save resources
+            videoWrappers.forEach((wrapper, i) => {
+                if (i !== index) {
+                    const videos = wrapper.querySelectorAll('video');
+                    videos.forEach(v => {
+                        v.pause();
+                        v.currentTime = 0;
+                    });
+                }
+            });
+            
+            // Play the active videos
+            if (blurVideo) {
+                blurVideo.play().catch(e => console.log("Could not play blur video:", e));
+            }
+            if (mainVideo) {
+                mainVideo.play().catch(e => console.log("Could not play main video:", e));
+            }
+            
             currentVideo = index;
         }
 
         function startRotation() {
-            // First, ensure first video is active and playing
-            if (videos.length) {
-                videos.forEach((v, i) => {
-                    if (i === 0) v.classList.add('active');
-                    else v.classList.remove('active');
-                });
+            if (videoWrappers.length) {
+                // Ensure first video is active and playing
+                switchVideo(0);
                 
-                // Start the rotation
+                // Clear any existing interval
+                if (videoInterval) {
+                    clearInterval(videoInterval);
+                }
+                
+                // Start rotation
                 videoInterval = setInterval(() => {
-                    let next = (currentVideo + 1) % videos.length;
+                    let next = (currentVideo + 1) % videoWrappers.length;
                     switchVideo(next);
                 }, 7500);
             }
@@ -1063,24 +1092,27 @@ en: "Do Not Sell My Info (KKKalifornia)"
 
         // ===== FORCE VIDEOS TO PLAY =====
         function forceVideoPlay() {
-            // Hero videos
-            const heroVideos = document.querySelectorAll('.hero-video');
-            heroVideos.forEach(video => {
-                // Only try to play the active one, others will play when they become active
-                if (video.classList.contains('active')) {
+            // Find the active wrapper and play its videos
+            const activeWrapper = document.querySelector('.video-wrapper.active');
+            if (activeWrapper) {
+                const videos = activeWrapper.querySelectorAll('video');
+                videos.forEach(video => {
                     video.play().catch(e => {
                         console.log("Autoplay prevented:", e);
                         // Add click handler as fallback
                         document.body.addEventListener('click', function playOnClick() {
-                            // Play all videos when user clicks
-                            heroVideos.forEach(v => {
-                                v.play().catch(err => console.log("Still couldn't play:", err));
+                            const allWrappers = document.querySelectorAll('.video-wrapper');
+                            allWrappers.forEach(wrapper => {
+                                const wrapperVideos = wrapper.querySelectorAll('video');
+                                wrapperVideos.forEach(v => {
+                                    v.play().catch(err => console.log("Still couldn't play:", err));
+                                });
                             });
                             document.body.removeEventListener('click', playOnClick);
                         }, { once: true });
                     });
-                }
-            });
+                });
+            }
             
             // Grid videos
             const gridVideos = document.querySelectorAll('.video-card video');
@@ -1093,6 +1125,7 @@ en: "Do Not Sell My Info (KKKalifornia)"
         window.addEventListener('load', () => {
             setTimeout(() => {
                 if (!splashScreen.classList.contains('active')) {
+                    startRotation();
                     forceVideoPlay();
                 }
             }, 1000);
