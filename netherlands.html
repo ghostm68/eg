@@ -108,14 +108,30 @@ en: "Do Not Sell My Info (KKKalifornia)"
             pointer-events: none;
         }
 
-        .cover-image-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
+      .cover-image-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--black); /* Fallback color */
+}
 
-      /* Find .cover-image in the styles and replace with: */
+/* Blurred background version */
+.cover-image-container::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    background-image: url('https://raw.githubusercontent.com/ghostm68/pantheon/main/wordstar.nexus.lucy.netherlands_20240910_121342186.jpg');
+    background-size: cover;
+    background-position: center;
+    filter: blur(15px) brightness(0.7);
+    transform: scale(1.1);
+    z-index: 1;
+}
+
 .cover-image {
     position: absolute;
     top: 0;
@@ -123,14 +139,13 @@ en: "Do Not Sell My Info (KKKalifornia)"
     width: 100%;
     height: 100%;
     background-image: url('https://raw.githubusercontent.com/ghostm68/pantheon/main/wordstar.nexus.lucy.netherlands_20240910_121342186.jpg');
-    background-size: contain; /* Changed from 'cover' */
+    background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-    background-color: #000; /* Adds black background for letterboxing */
     transform: scale(1.1);
     transition: transform 8s ease-out;
+    z-index: 2; /* Places main image above blur */
 }
-
         .splash-screen.active .cover-image {
             transform: scale(1);
         }
@@ -746,19 +761,18 @@ en: "Do Not Sell My Info (KKKalifornia)"
     <main>
         <!-- 🎬 LARGE FULL‑HEIGHT VIDEO HERO -->
         <section class="video-hero">
-            <div class="video-container" id="videoRotator">
-                <video class="hero-video active" muted loop playsinline>
-                    <source src="https://github.com/ghostm68/pantheon/raw/main/wordstar.lucyhale_20240702_060348310.mp4" type="video/mp4">
-                </video>
-                <video class="hero-video" muted loop playsinline>
-                    <source src="https://github.com/ghostm68/pantheon/raw/main/lucyhale_20240910_111151632.mp4" type="video/mp4">
-                </video>
-                <video class="hero-video" muted loop playsinline>
-                    <source src="https://github.com/ghostm68/pantheon/raw/main/lucyhale_20240620_203005163.mp4" type="video/mp4">
-                </video>
-                <video class="hero-video" muted loop playsinline>
-                    <source src="https://github.com/ghostm68/pantheon/raw/main/lucy88maggie_20240808_143654070.mp4" type="video/mp4">
-                </video>
+           <video class="hero-video active" muted loop playsinline autoplay>
+    <source src="https://github.com/ghostm68/pantheon/raw/main/wordstar.lucyhale_20240702_060348310.mp4" type="video/mp4">
+</video>
+<video class="hero-video" muted loop playsinline autoplay>
+    <source src="https://github.com/ghostm68/pantheon/raw/main/lucy_20240807_205316501.mp4" type="video/mp4">  <!-- ← CHANGED TO SURVEILLANCE FILM -->
+</video>
+<video class="hero-video" muted loop playsinline autoplay>
+    <source src="https://github.com/ghostm68/pantheon/raw/main/lucyhale_20240620_203005163.mp4" type="video/mp4">
+</video>
+<video class="hero-video" muted loop playsinline autoplay>
+    <source src="https://github.com/ghostm68/pantheon/raw/main/lucy88maggie_20240808_143654070.mp4" type="video/mp4">
+</video>
             </div>
             <div class="hero-overlay">
                 <h1 class="hero-title">LUCY HALE</h1>
@@ -871,141 +885,180 @@ en: "Do Not Sell My Info (KKKalifornia)"
     </main>
 
     <!-- JavaScript -->
-    <script>
-        (function() {
-            // ===== SPLASH SCREEN =====
-            const splashScreen = document.getElementById('splashScreen');
-            const skipSplash = document.getElementById('skipSplash');
-            const splashProgress = document.getElementById('splashProgress');
-            let splashTimeout;
-            let progressInterval;
-            const splashDuration = 6000; // 6 seconds total display time
-            const progressUpdateRate = 50; // Update every 50ms
+<script>
+    (function() {
+        // ===== SPLASH SCREEN =====
+        const splashScreen = document.getElementById('splashScreen');
+        const skipSplash = document.getElementById('skipSplash');
+        const splashProgress = document.getElementById('splashProgress');
+        let splashTimeout;
+        let progressInterval;
+        const splashDuration = 6000; // 6 seconds total display time
+        const progressUpdateRate = 50; // Update every 50ms
+        
+        function hideSplash() {
+            splashScreen.classList.remove('active');
+            splashScreen.classList.add('hidden');
+            clearTimeout(splashTimeout);
+            clearInterval(progressInterval);
+            // Start video rotator and force play after splash
+            setTimeout(() => {
+                startRotation();
+                forceVideoPlay(); // ADD THIS LINE
+            }, 500);
+        }
+
+        function startSplashTimer() {
+            let progress = 0;
+            const increment = 100 / (splashDuration / progressUpdateRate);
             
-          function hideSplash() {
-    splashScreen.classList.remove('active');
-    splashScreen.classList.add('hidden');
-    clearTimeout(splashTimeout);
-    clearInterval(progressInterval);
-    // Start video rotator after splash
-    setTimeout(() => {
-        startRotation(); // Make sure this line exists
-    }, 500);
-}
+            progressInterval = setInterval(() => {
+                progress += increment;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(progressInterval);
+                }
+                splashProgress.style.width = progress + '%';
+            }, progressUpdateRate);
+            
+            splashTimeout = setTimeout(hideSplash, splashDuration);
+        }
 
-            function startSplashTimer() {
-                let progress = 0;
-                const increment = 100 / (splashDuration / progressUpdateRate);
+        // Start splash on load
+        window.addEventListener('load', () => {
+            splashScreen.classList.add('active');
+            startSplashTimer();
+        });
+
+        // Skip button
+        skipSplash.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideSplash();
+        });
+
+        // ===== VIDEO ROTATOR - AUTOPLAY ONLY, NO SELECTION =====
+        const videos = document.querySelectorAll('.hero-video');
+        let currentVideo = 0;
+        let videoInterval;
+
+        function switchVideo(index) {
+            if (index < 0 || index >= videos.length) return;
+            videos.forEach(v => v.classList.remove('active'));
+            videos[index].classList.add('active');
+            // Play the newly active video
+            videos[index].play().catch(e => console.log("Could not play video:", e));
+            currentVideo = index;
+        }
+
+        function startRotation() {
+            // First, ensure first video is active and playing
+            if (videos.length) {
+                videos.forEach((v, i) => {
+                    if (i === 0) v.classList.add('active');
+                    else v.classList.remove('active');
+                });
                 
-                progressInterval = setInterval(() => {
-                    progress += increment;
-                    if (progress >= 100) {
-                        progress = 100;
-                        clearInterval(progressInterval);
-                    }
-                    splashProgress.style.width = progress + '%';
-                }, progressUpdateRate);
-                
-                splashTimeout = setTimeout(hideSplash, splashDuration);
+                // Start the rotation
+                videoInterval = setInterval(() => {
+                    let next = (currentVideo + 1) % videos.length;
+                    switchVideo(next);
+                }, 7500);
             }
+        }
 
-            // Start splash on load
-            window.addEventListener('load', () => {
-                splashScreen.classList.add('active');
-                startSplashTimer();
+        // ===== FORCE VIDEOS TO PLAY =====
+        function forceVideoPlay() {
+            // Hero videos
+            const heroVideos = document.querySelectorAll('.hero-video');
+            heroVideos.forEach(video => {
+                // Only try to play the active one, others will play when they become active
+                if (video.classList.contains('active')) {
+                    video.play().catch(e => {
+                        console.log("Autoplay prevented:", e);
+                        // Add click handler as fallback
+                        document.body.addEventListener('click', function playOnClick() {
+                            // Play all videos when user clicks
+                            heroVideos.forEach(v => {
+                                v.play().catch(err => console.log("Still couldn't play:", err));
+                            });
+                            document.body.removeEventListener('click', playOnClick);
+                        }, { once: true });
+                    });
+                }
             });
+            
+            // Grid videos
+            const gridVideos = document.querySelectorAll('.video-card video');
+            gridVideos.forEach(video => {
+                video.play().catch(e => console.log("Grid video autoplay prevented"));
+            });
+        }
 
-            // Skip button
-            skipSplash.addEventListener('click', (e) => {
+        // Try to play videos immediately if splash is already hidden
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (!splashScreen.classList.contains('active')) {
+                    forceVideoPlay();
+                }
+            }, 1000);
+        });
+
+        // ===== NAVIGATION =====
+        const menuToggle = document.getElementById('menuToggle');
+        const navPanel = document.getElementById('navPanel');
+        const closeNav = document.getElementById('closeNav');
+
+        menuToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            navPanel.classList.add('active');
+        });
+
+        closeNav.addEventListener('click', (e) => {
+            e.preventDefault();
+            navPanel.classList.remove('active');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!navPanel.contains(e.target) && !menuToggle.contains(e.target)) {
+                navPanel.classList.remove('active');
+            }
+        });
+
+        // ===== SEARCH OVERLAY =====
+        const searchButtons = document.querySelectorAll('.header-icon .fa-search, #searchToggle');
+        const searchOverlay = document.querySelector('.searchform-overlay');
+        const closeSearch = document.querySelector('.btn-close-search');
+        
+        searchButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
                 e.preventDefault();
-                hideSplash();
+                if (searchOverlay) {
+                    searchOverlay.classList.add('active');
+                    setTimeout(() => {
+                        const searchInput = searchOverlay.querySelector('.search-field');
+                        if (searchInput) searchInput.focus();
+                    }, 100);
+                }
             });
-
-            // ===== VIDEO ROTATOR =====
-           // ===== VIDEO ROTATOR - AUTOPLAY ONLY, NO SELECTION =====
-const videos = document.querySelectorAll('.hero-video');
-let currentVideo = 0;
-let videoInterval;
-
-function switchVideo(index) {
-    if (index < 0 || index >= videos.length) return;
-    videos.forEach(v => v.classList.remove('active'));
-    videos[index].classList.add('active');
-    currentVideo = index;
-}
-
-function startRotation() {
-    // First, ensure first video is active and playing
-    if (videos.length) {
-        videos.forEach((v, i) => {
-            if (i === 0) v.classList.add('active');
-            else v.classList.remove('active');
         });
         
-        // Start the rotation
-        videoInterval = setInterval(() => {
-            let next = (currentVideo + 1) % videos.length;
-            switchVideo(next);
-        }, 7500);
-    }
-}
-
-            // ===== NAVIGATION =====
-            const menuToggle = document.getElementById('menuToggle');
-            const navPanel = document.getElementById('navPanel');
-            const closeNav = document.getElementById('closeNav');
-
-            menuToggle.addEventListener('click', (e) => {
+        if (closeSearch) {
+            closeSearch.addEventListener('click', function(e) {
                 e.preventDefault();
-                navPanel.classList.add('active');
+                searchOverlay.classList.remove('active');
             });
-
-            closeNav.addEventListener('click', (e) => {
-                e.preventDefault();
-                navPanel.classList.remove('active');
-            });
-
-            document.addEventListener('click', (e) => {
-                if (!navPanel.contains(e.target) && !menuToggle.contains(e.target)) {
-                    navPanel.classList.remove('active');
-                }
-            });
-
-            // ===== SEARCH OVERLAY =====
-            const searchButtons = document.querySelectorAll('.header-icon .fa-search, #searchToggle');
-            const searchOverlay = document.querySelector('.searchform-overlay');
-            const closeSearch = document.querySelector('.btn-close-search');
-            
-            searchButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    if (searchOverlay) {
-                        searchOverlay.classList.add('active');
-                        setTimeout(() => {
-                            const searchInput = searchOverlay.querySelector('.search-field');
-                            if (searchInput) searchInput.focus();
-                        }, 100);
-                    }
-                });
-            });
-            
-            if (closeSearch) {
-                closeSearch.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    searchOverlay.classList.remove('active');
-                });
+        }
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && searchOverlay && searchOverlay.classList.contains('active')) {
+                searchOverlay.classList.remove('active');
             }
-            
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && searchOverlay && searchOverlay.classList.contains('active')) {
-                    searchOverlay.classList.remove('active');
-                }
-            });
+        });
 
-            searchOverlay.addEventListener('click', (e) => {
-                if (e.target === searchOverlay) searchOverlay.classList.remove('active');
-            });
-        })();
-    </script>
+        searchOverlay.addEventListener('click', (e) => {
+            if (e.target === searchOverlay) searchOverlay.classList.remove('active');
+        });
+    })();
+</script>
 </body>
 </html>   
