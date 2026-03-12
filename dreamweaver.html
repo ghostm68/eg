@@ -40,7 +40,7 @@
         font-family: var(--font-main);
         height: 100vh;
         width: 100vw;
-        overflow: hidden; /* Desktop handles scroll internally */
+        overflow: hidden; 
         display: flex;
         flex-direction: column;
         transition: background-color 0.5s ease;
@@ -66,10 +66,7 @@
         letter-spacing: 2px;
     }
 
-    .ws-logo {
-        height: 40px; width: auto;
-        filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
-    }
+    .ws-logo { height: 40px; width: auto; filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5)); }
     .logo-text path { fill: var(--text-main); transition: fill 0.5s; }
     .logo-x path { fill: var(--accent-primary); transition: 0.3s; }
 
@@ -79,19 +76,22 @@
         display: flex;
         flex-direction: row;
         gap: 30px;
-        padding: 20px;
+        padding: 30px;
         overflow: hidden; 
-        height: calc(100vh - 110px); /* Adjust for header/footer */
+        height: calc(100vh - 110px); 
     }
 
-    /* --- SIDE A: TEXT PANE --- */
+    /* --- SIDE A: TEXT PANE (CURRENT ENTRY) --- */
     .text-pane {
         flex: 1.2;
         display: flex;
         flex-direction: column;
         gap: 20px;
         height: 100%;
+        overflow-y: auto;
     }
+    .text-pane::-webkit-scrollbar { width: 5px; }
+    .text-pane::-webkit-scrollbar-thumb { background: var(--accent-primary); }
 
     .nav-box {
         background: rgba(10, 10, 10, 0.85);
@@ -124,48 +124,31 @@
         font-size: 0.95rem; 
         color: var(--text-main);
         line-height: 1.6;
+        white-space: pre-wrap;
     }
 
-    /* Scrollable Text Log */
-    .scroll-box {
-        flex-grow: 1;
-        overflow-y: auto;
-        white-space: pre-wrap; /* Keeps formatting pure */
-    }
-    
-    .scroll-box::-webkit-scrollbar { width: 5px; }
-    .scroll-box::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-    .scroll-box::-webkit-scrollbar-thumb { background: var(--accent-primary); }
-
-    /* --- SIDE B: TRIANGLE IMAGE GRID --- */
+    /* --- SIDE B: SINGLE TRIANGLE SLIDESHOW --- */
     .visual-pane {
-        flex: 2;
+        flex: 1.5;
         height: 100%;
-        overflow-y: auto;
-        padding-right: 15px;
-    }
-    .visual-pane::-webkit-scrollbar { width: 5px; }
-    .visual-pane::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-    .visual-pane::-webkit-scrollbar-thumb { background: var(--accent-primary); }
-
-    .triangle-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 20px;
-        padding-bottom: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
     .triangle-wrapper {
         position: relative;
         width: 100%;
+        max-width: 500px; /* Constrains the triangle size */
         aspect-ratio: 1.15;
         display: flex; justify-content: center; align-items: center;
+        filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.15));
     }
 
     .triangle-border {
         position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
         background: var(--accent-primary);
-        clip-path: polygon(0 0, 100% 0, 50% 100%);
+        clip-path: polygon(0 0, 100% 0, 50% 100%); /* Downward facing */
         z-index: 1; opacity: 0.8;
         transition: background 0.5s;
     }
@@ -177,16 +160,12 @@
         position: relative; z-index: 2;
     }
 
-    /* Make alternating triangles point UP */
-    .triangle-wrapper.up-triangle .triangle-border { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
-    .triangle-wrapper.up-triangle .triangle-shape { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
-
     .triangle-shape img {
         width: 100%; height: 100%;
         object-fit: cover;
-        opacity: 0.6;
+        opacity: 0.7;
         filter: grayscale(100%) contrast(1.2);
-        transition: all 0.3s ease;
+        transition: opacity 1s ease-in-out, filter 0.3s ease, transform 0.3s ease;
     }
     .triangle-shape img:hover {
         opacity: 1;
@@ -208,11 +187,10 @@
     .status-footer a { color: var(--accent-primary); text-decoration: none; font-size: 1rem; }
     .status-footer a:hover { color: var(--text-main); }
 
-    /* === 5. DRAWER === */
+    /* === 5. DRAWERS & BUTTONS === */
     .drawer-toggle-btn {
         position: fixed;
-        bottom: 60px; /* Sits right above the footer */
-        right: 20px;
+        bottom: 60px;
         background: var(--bg-color);
         color: var(--text-main);
         border: 1px solid var(--accent-primary);
@@ -225,7 +203,11 @@
         box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
     .drawer-toggle-btn:hover { background: var(--accent-primary); color: var(--bg-color); }
+    
+    #open-archive-btn { left: 20px; }
+    #open-reader-btn { right: 20px; }
 
+    /* Right Drawer (Reader) */
     .reader-drawer {
         position: fixed; top: 0; right: -100%;
         width: 500px; max-width: 100vw; height: 100vh;
@@ -236,6 +218,19 @@
         display: flex; flex-direction: column;
     }
     .reader-drawer.open { right: 0; }
+
+    /* Left Drawer (Archive .txt) */
+    .archive-drawer {
+        position: fixed; top: 0; left: -100%;
+        width: 600px; max-width: 100vw; height: 100vh;
+        background: var(--bg-color);
+        border-right: 1px solid var(--accent-primary);
+        transition: left 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        z-index: 1000;
+        display: flex; flex-direction: column;
+    }
+    .archive-drawer.open { left: 0; }
+
     .drawer-header {
         display: flex; justify-content: space-between; align-items: center;
         padding: 15px; background: var(--bg-color);
@@ -244,20 +239,29 @@
     }
     .close-drawer-btn { background: none; color: var(--text-main); border: none; cursor: pointer; font-family: inherit; font-size: 1.2rem; }
     .close-drawer-btn:hover { color: var(--accent-primary); }
+    
     .reader-iframe { flex-grow: 1; width: 100%; border: none; background: #000; }
+    
+    .archive-content {
+        flex-grow: 1; padding: 20px; overflow-y: auto;
+        white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6;
+        color: var(--text-main);
+    }
+    .archive-content::-webkit-scrollbar { width: 5px; }
+    .archive-content::-webkit-scrollbar-thumb { background: var(--accent-primary); }
 
     /* Mobile */
     @media (max-width: 900px) {
-        .content-area { flex-direction: column; overflow-y: auto; }
-        .text-pane { height: 60vh; flex: none; }
-        .visual-pane { height: auto; overflow: visible; padding-bottom: 80px; }
+        .content-area { flex-direction: column; overflow-y: auto; padding-bottom: 80px; }
+        .text-pane { height: auto; flex: none; }
+        .visual-pane { height: 400px; padding: 20px 0; }
         body { overflow-y: auto; }
     }
 </style>
 </head>
 <body>
 
-    <!-- HEADER (Identical aesthetic to directory.html) -->
+    <!-- HEADER -->
     <header>
         <div class="header-typing-wrapper" id="header-type-target"></div>
         <svg class="ws-logo" viewBox="0 0 600 90" xmlns="http://www.w3.org/2000/svg">
@@ -286,40 +290,46 @@
 
     <div class="content-area">
         
-        <!-- LEFT: TEXT FEED & THEME SWITCH -->
+        <!-- LEFT: THEME SWITCH & CURRENT ENTRY -->
         <div class="text-pane">
             
             <!-- THE TOGGLE SWITCH -->
             <div class="nav-box active" onclick="toggleTheme()" style="cursor: pointer; flex: none;">
-                <div class="nav-header">SYSTEM_STATUS [SWITCH]</div>
+                <div class="nav-header">SYSTEM_STATUS[SWITCH]</div>
                 <div class="nav-content" style="padding-bottom: 20px;">
-                    CLICK BOX TO TOGGLE VISUAL THEME.<br>
+                    CLICK TO TOGGLE VISUAL THEME.<br>
                     CURRENT: <span id="theme-name" style="color: var(--accent-primary);">CITADELLE_RED</span>
                 </div>
             </div>
 
-            <!-- THE RAW TEXT FETCHER -->
-            <div class="nav-box active" style="flex-grow: 1; display: flex; overflow: hidden;">
-                <div class="nav-header" style="cursor: default;">
-                    >> DREAMWEAVER_ARCHIVE.TXT
-                    <a href="https://wordstar.nexus/dreamweaver.txt" target="_blank" style="color: var(--text-dim); text-decoration: none; font-size: 0.8rem;">[ RAW ]</a>
-                </div>
-                <!-- The JS Fetch will dump the text directly here -->
-                <div class="nav-content scroll-box" id="dreamweaver-text-container">
-                    INITIALIZING FETCH PROTOCOL...
+            <!-- CURRENT ENTRY SPACE (Always Visible) -->
+            <div class="nav-box active" style="flex-grow: 1;">
+                <div class="nav-header">>> CURRENT_LOG // 03.03.2026</div>
+                <div class="nav-content">
+<strong style="color: var(--accent-primary);">> OPERATION_EAGLE_CLAW</strong>
+
+operation eagle claw, operation credible sport, operation earnest will, operation praying mantis, USS Vincennes shoots-down Iran Air Flight 655, operation midnight hammer, operation epic fury...perhaps things will improve if we start naming these events in a different style...
+
+<em>[ This block remains static on load. Use the button in the bottom left to view the complete living archive. ]</em>
                 </div>
             </div>
 
         </div>
 
-        <!-- RIGHT: TRIANGLE IMAGE GRID -->
+        <!-- RIGHT: SINGLE TRIANGLE SLIDESHOW -->
         <div class="visual-pane">
-            <div id="image-gallery" class="triangle-grid"></div>
+            <div class="triangle-wrapper">
+                <div class="triangle-border"></div>
+                <div class="triangle-shape">
+                    <!-- This image will be cycled by JavaScript -->
+                    <img id="slideshow-image" src="https://github.com/ghostm68/pantheon/raw/main/vasilisa.wordstar.nexus.gif" alt="Dreamweaver Image Cycle">
+                </div>
+            </div>
         </div>
 
     </div>
 
-    <!-- FOOTER (Identical to directory.html) -->
+    <!-- FOOTER -->
     <div class="status-footer">
         <span>DRIVE A: READY</span>
         <span>MODE: OVERTYPE</span>
@@ -330,14 +340,26 @@
         </span> 
     </div>
 
-    <!-- FLOATING BUTTON TO OPEN R3ADER -->
-    <button id="open-drawer-btn" class="drawer-toggle-btn">[ ACCESS R3ADER ]</button>
+    <!-- FLOATING BUTTONS -->
+    <button id="open-archive-btn" class="drawer-toggle-btn">[ ACCESS ARCHIVE ]</button>
+    <button id="open-reader-btn" class="drawer-toggle-btn">[ ACCESS R3ADER ]</button>
 
-    <!-- SLIDE OUT DRAWER -->
-    <div id="drawer" class="reader-drawer">
+    <!-- LEFT DRAWER: LIVE ARCHIVE FETCH -->
+    <div id="archive-drawer" class="archive-drawer">
+        <div class="drawer-header">
+            <span>// DREAMWEAVER_ARCHIVE.TXT</span>
+            <button id="close-archive-btn" class="close-drawer-btn">[ X ]</button>
+        </div>
+        <div class="archive-content" id="dreamweaver-text-container">
+            INITIALIZING FETCH PROTOCOL...
+        </div>
+    </div>
+
+    <!-- RIGHT DRAWER: R3ADER -->
+    <div id="reader-drawer" class="reader-drawer">
         <div class="drawer-header">
             <span>// R3ADER_PORTAL</span>
-            <button id="close-drawer-btn" class="close-drawer-btn">[ X ]</button>
+            <button id="close-reader-btn" class="close-drawer-btn">[ X ]</button>
         </div>
         <iframe src="https://wordstar.nexus/reader" class="reader-iframe" title="R3ader"></iframe>
     </div>
@@ -363,9 +385,9 @@
             document.body.classList.toggle('classic-mode');
             const themeLabel = document.getElementById('theme-name');
             if (document.body.classList.contains('classic-mode')) {
-                if (themeLabel) themeLabel.innerText = "WORDSTAR_BLUE";
+                themeLabel.innerText = "WORDSTAR_BLUE";
             } else {
-                if (themeLabel) themeLabel.innerText = "CITADELLE_RED";
+                themeLabel.innerText = "CITADELLE_RED";
             }
         }
 
@@ -383,7 +405,7 @@
                 textContainer.textContent = "SYSTEM_ERROR: UNABLE TO ESTABLISH LINK.\n\n" + error;
             });
 
-        // 4. GENERATE THE ALTERNATING TRIANGLE IMAGE GRID
+        // 4. TRIANGLE SLIDESHOW LOGIC
         const imageUrls =[
             'https://github.com/ghostm68/pantheon/raw/main/vasilisa.wordstar.nexus.gif',
             'https://github.com/ghostm68/pantheon/raw/main/VAPORGRAM176lotta48724ever64233.jpg',
@@ -423,37 +445,44 @@
             'https://github.com/ghostm68/pantheon/raw/main/White-Goddess.jpg'
         ];
 
-        const galleryContainer = document.getElementById('image-gallery');
-        
-        imageUrls.forEach((url, index) => {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'triangle-wrapper';
-            
-            // Alternates triangles up and down for the esoteric pantheon aesthetic
-            if (index % 2 !== 0) {
-                wrapper.classList.add('up-triangle');
-            }
+        const slideImage = document.getElementById('slideshow-image');
+        let currentImageIndex = 0;
 
-            wrapper.innerHTML = `
-                <div class="triangle-border"></div>
-                <div class="triangle-shape">
-                    <img src="${url}" alt="Archive File ${index + 1}">
-                </div>
-            `;
-            galleryContainer.appendChild(wrapper);
-        });
+        // Change the image every 4 seconds
+        setInterval(() => {
+            slideImage.style.opacity = 0; // Fade out
+            
+            setTimeout(() => {
+                currentImageIndex = (currentImageIndex + 1) % imageUrls.length;
+                slideImage.src = imageUrls[currentImageIndex];
+                slideImage.style.opacity = 0.7; // Fade back in
+            }, 1000); // Wait 1s for fade out to complete before swapping src
+        }, 4000);
 
         // 5. DRAWER TOGGLE LOGIC
-        const drawer = document.getElementById('drawer');
-        const openBtn = document.getElementById('open-drawer-btn');
-        const closeBtn = document.getElementById('close-drawer-btn');
+        const readerDrawer = document.getElementById('reader-drawer');
+        const openReaderBtn = document.getElementById('open-reader-btn');
+        const closeReaderBtn = document.getElementById('close-reader-btn');
 
-        openBtn.addEventListener('click', () => drawer.classList.add('open'));
-        closeBtn.addEventListener('click', () => drawer.classList.remove('open'));
+        const archiveDrawer = document.getElementById('archive-drawer');
+        const openArchiveBtn = document.getElementById('open-archive-btn');
+        const closeArchiveBtn = document.getElementById('close-archive-btn');
 
+        // Reader Drawer Events
+        openReaderBtn.addEventListener('click', () => readerDrawer.classList.add('open'));
+        closeReaderBtn.addEventListener('click', () => readerDrawer.classList.remove('open'));
+
+        // Archive Drawer Events
+        openArchiveBtn.addEventListener('click', () => archiveDrawer.classList.add('open'));
+        closeArchiveBtn.addEventListener('click', () => archiveDrawer.classList.remove('open'));
+
+        // Close drawers when clicking outside
         document.addEventListener('click', (event) => {
-            if (!drawer.contains(event.target) && event.target !== openBtn) {
-                drawer.classList.remove('open');
+            if (!readerDrawer.contains(event.target) && event.target !== openReaderBtn) {
+                readerDrawer.classList.remove('open');
+            }
+            if (!archiveDrawer.contains(event.target) && event.target !== openArchiveBtn) {
+                archiveDrawer.classList.remove('open');
             }
         });
     </script>
