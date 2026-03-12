@@ -62,6 +62,39 @@
     .logo-text path { fill: var(--text-main); transition: fill 0.5s; }
     .logo-x path { fill: var(--accent-primary); transition: 0.3s; }
 
+    /* NEW HEADER STYLES */
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 15px; /* Space between hamburger and text */
+    }
+
+    .menu-toggle {
+        cursor: pointer;
+        color: var(--accent-primary);
+        display: flex;
+        align-items: center;
+        transition: color 0.3s;
+    }
+    .menu-toggle:hover { color: var(--text-main); }
+
+    .header-typing-wrapper {
+        font-size: 1.2rem; font-weight: bold;
+        color: var(--accent-primary);
+        text-transform: uppercase; letter-spacing: 2px;
+    }
+
+    /* Style the links that get typed out */
+    .header-typing-wrapper a {
+        color: var(--text-main);
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+    .header-typing-wrapper a:hover {
+        color: var(--accent-primary);
+        text-shadow: 0 0 8px rgba(255,0,0,0.4);
+    }
+
     /* === 3. MAIN SPLIT LAYOUT === */
     .content-area {
         flex-grow: 1; display: flex; flex-direction: row;
@@ -226,6 +259,16 @@
 
     <!-- HEADER -->
     <header>
+             <div class="header-left">
+            <div class="menu-toggle" id="menuBtn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </div>
+            <div class="header-typing-wrapper" id="header-type-target"></div>
+        </div>
         <div class="header-typing-wrapper" id="header-type-target"></div>
         <svg class="ws-logo" viewBox="0 0 600 90" xmlns="http://www.w3.org/2000/svg">
             <g class="logo-text">
@@ -327,18 +370,97 @@ operation eagle claw, operation credible sport, operation earnest will, operatio
     <!-- JAVASCRIPT -->
     <script>
         // 1. TYPING HEADER
-        const textToType = "DREAMWEAVER // TERMINAL";
-        const typingTarget = document.getElementById('header-type-target');
-        let typeIndex = 0;
+      // 1. HYBRID TYPING HEADER & MENU LOGIC
+        const menuBtn = document.getElementById('menuBtn');
+        const headerTarget = document.getElementById('header-type-target');
         
-        function typeHeader() {
-            if (typeIndex < textToType.length) {
-                typingTarget.innerHTML += textToType.charAt(typeIndex);
-                typeIndex++;
-                setTimeout(typeHeader, 50);
+        const defaultText = "DREAMWEAVER // TERMINAL";
+        const menuLinks =[
+            { text: "ARCHIVES", href: "https://inkrealm.mintlify.app/" },
+            { text: "SYSTEMS", href: "https://inkrealm.info/runway" },
+            { text: "ABOUT", href: "https://inkrealm.info/about" },
+            { text: "CONTACT", href: "https://wordstar.nexus/contact" }
+        ];
+        
+        let isMenuOpen = false;
+        let isTyping = false;
+
+        // Function to type the default title
+        function typeDefaultText() {
+            headerTarget.innerHTML = "";
+            isTyping = true;
+            let charIndex = 0;
+            function step() {
+                if (charIndex < defaultText.length) {
+                    headerTarget.innerHTML += defaultText.charAt(charIndex);
+                    charIndex++;
+                    setTimeout(step, 40);
+                } else {
+                    isTyping = false;
+                }
             }
+            step();
         }
-        setTimeout(typeHeader, 300);
+
+        // Function to type out the interactive links
+        function typeHeaderLinks() {
+            headerTarget.innerHTML = "";
+            isTyping = true;
+            let linkIndex = 0;
+            let charIndex = 0;
+            
+            let currentLink = document.createElement('a');
+            currentLink.href = menuLinks[linkIndex].href;
+            currentLink.target = "_blank"; // Opens links in new tab
+            headerTarget.appendChild(currentLink);
+
+            function step() {
+                if (linkIndex >= menuLinks.length) { 
+                    isTyping = false; 
+                    return; 
+                }
+
+                const linkData = menuLinks[linkIndex];
+
+                if (charIndex < linkData.text.length) {
+                    currentLink.textContent += linkData.text.charAt(charIndex);
+                    charIndex++;
+                    setTimeout(step, 40);
+                } else {
+                    linkIndex++;
+                    charIndex = 0;
+                    if (linkIndex < menuLinks.length) {
+                        // Adds the // separator between links
+                        const separator = document.createTextNode(" // ");
+                        headerTarget.appendChild(separator);
+
+                        currentLink = document.createElement('a');
+                        currentLink.href = menuLinks[linkIndex].href;
+                        currentLink.target = "_blank";
+                        headerTarget.appendChild(currentLink);
+                        setTimeout(step, 80);
+                    } else {
+                        isTyping = false;
+                    }
+                }
+            }
+            step();
+        }
+
+        // Initialize with default text on load
+        setTimeout(typeDefaultText, 300);
+
+        // Click Event: Toggle between Title and Links
+        menuBtn.addEventListener('click', () => {
+            if (isTyping) return; // Prevents glitching if clicked while typing
+            if (!isMenuOpen) {
+                typeHeaderLinks();
+                isMenuOpen = true;
+            } else {
+                typeDefaultText();
+                isMenuOpen = false;
+            }
+        });
 
         // 2. THEME SWITCHER
         function toggleTheme() {
