@@ -4,216 +4,330 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dreamweaver // WordStar Nexus</title>
+<!-- FontAwesome for the PDF icon in footer -->
+<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'>
+
 <style>
-    /* =========================================
-       BASE & TERMINAL AESTHETIC (DIRECTORY STYLE)
-       ========================================= */
-    body {
-        margin: 0;
-        padding: 0;
-        background-color: #000;
-        color: #fff;
-        font-family: 'Courier New', Courier, monospace; 
-        overflow-x: hidden;
+    /* === 1. EXACT DIRECTORY VARIABLES === */
+    :root {
+        --bg-color: #000000;
+        --text-main: #E0E0E0;
+        --text-dim: #666666;
+        --accent-primary: #FF0000; /* Red */
+        --accent-secondary: #550000; /* Dark Red */
+        --font-main: 'Courier New', Courier, monospace;
     }
 
-    a { color: #fff; text-decoration: none; transition: color 0.2s; }
-    a:hover { color: #ff0000; text-decoration: underline; }
+    /* WORDSTAR BLUE MODE */
+    body.classic-mode {
+        --bg-color: #0000AA;         /* Blue */
+        --text-main: #FFFFFF;        /* White */
+        --text-dim: #00FFFF;         /* Cyan */
+        --accent-primary: #FFFF00;   /* Yellow */
+        --accent-secondary: #AA5500; /* Amber */
+    }
 
-    /* Custom Terminal Scrollbar */
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: #000; border-left: 1px solid #333; }
-    ::-webkit-scrollbar-thumb { background: #333; }
-    ::-webkit-scrollbar-thumb:hover { background: #ff0000; }
+    ::selection {
+        background: var(--accent-primary);
+        color: var(--bg-color);
+    }
 
-    /* =========================================
-       HEADER & TYPING EFFECT
-       ========================================= */
-    .nexus-header {
-        padding: 1.5rem 2rem;
-        border-bottom: 1px solid #333;
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        font-family: var(--font-main);
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden; /* Desktop handles scroll internally */
+        display: flex;
+        flex-direction: column;
+        transition: background-color 0.5s ease;
+    }
+
+    /* === 2. HEADER & LOGO === */
+    header {
+        width: 100%;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: #050505;
+        padding: 15px 20px;
+        height: 70px;
+        border-bottom: 1px solid var(--accent-secondary);
+        background: rgba(0,0,0,0.2);
     }
-    .nexus-header:hover { border-bottom-color: #ff0000; }
-    
-    #header-typing-target {
+
+    .header-typing-wrapper {
+        font-size: 1.2rem;
         font-weight: bold;
-        color: #ff0000;
-        letter-spacing: 1px;
+        color: var(--accent-primary);
+        text-transform: uppercase;
+        letter-spacing: 2px;
     }
 
-    /* =========================================
-       MAIN SPLIT LAYOUT
-       ========================================= */
-    .nexus-container {
+    .ws-logo {
+        height: 40px; width: auto;
+        filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
+    }
+    .logo-text path { fill: var(--text-main); transition: fill 0.5s; }
+    .logo-x path { fill: var(--accent-primary); transition: 0.3s; }
+
+    /* === 3. MAIN SPLIT LAYOUT === */
+    .content-area {
+        flex-grow: 1;
         display: flex;
-        height: calc(100vh - 75px); /* Full height minus header */
-        box-sizing: border-box;
+        flex-direction: row;
+        gap: 30px;
+        padding: 20px;
+        overflow: hidden; 
+        height: calc(100vh - 110px); /* Adjust for header/footer */
     }
 
-    /* LEFT SIDE: DIRECTORY IMAGE GRID */
-    .visual-pane {
-        flex: 1;
-        min-width: 300px;
-        max-width: 500px;
-        border-right: 1px solid #333;
-        overflow-y: auto;
-        padding: 1rem;
-        background: #020202;
-        transition: border-color 0.3s;
-    }
-    .visual-pane:hover { border-right-color: #ff0000; }
-
-    .image-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr; /* 2-Column Grid instead of Triangle */
-        gap: 10px;
-    }
-
-    .image-grid img {
-        width: 100%;
-        height: auto;
-        aspect-ratio: 1 / 1;
-        object-fit: cover;
-        border: 1px solid #333;
-        transition: all 0.2s ease-in-out;
-        opacity: 0.8;
-    }
-    .image-grid img:hover {
-        border-color: #ff0000;
-        opacity: 1;
-        transform: scale(1.02);
-        z-index: 10;
-    }
-
-    /* RIGHT SIDE: LIVE .TXT FILE PULL */
+    /* --- SIDE A: TEXT PANE --- */
     .text-pane {
-        flex: 2;
-        overflow-y: auto;
-        padding: 2rem;
-        background: #000;
+        flex: 1.2;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        height: 100%;
     }
 
     .nav-box {
-        border: 1px solid #333;
-        background: #050505;
-        padding: 2rem;
-        transition: all 0.3s;
+        background: rgba(10, 10, 10, 0.85);
+        border: 1px solid var(--text-dim);
+        border-left: 3px solid var(--text-dim);
+        color: var(--text-main);
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
     }
-    .nav-box:hover {
-        border-color: #ff0000;
-        box-shadow: 0 0 15px rgba(255, 0, 0, 0.1);
-    }
-
-    .nav-header {
-        margin-top: 0;
-        color: #ff0000;
-        border-bottom: 1px dashed #333;
-        padding-bottom: 10px;
-        font-size: 1.1rem;
-        text-transform: uppercase;
+    body.classic-mode .nav-box { background: rgba(0, 0, 100, 0.85); }
+    
+    .nav-box.active { 
+        border-color: var(--accent-primary); 
+        border-left: 6px solid var(--accent-primary); 
     }
 
-    #dreamweaver-text-container {
-        color: #ccc;
+    .nav-header { 
+        padding: 15px; 
+        font-weight: bold; 
+        color: var(--accent-primary);
+        border-bottom: 1px solid var(--accent-secondary);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .nav-content {
+        padding: 15px; 
+        font-size: 0.95rem; 
+        color: var(--text-main);
         line-height: 1.6;
-        white-space: pre-wrap; /* Formats raw .txt perfectly */
-        font-size: 0.95rem;
     }
 
-    /* =========================================
-       DRAWER COMPONENT (R3ADER PULL-OUT)
-       ========================================= */
+    /* Scrollable Text Log */
+    .scroll-box {
+        flex-grow: 1;
+        overflow-y: auto;
+        white-space: pre-wrap; /* Keeps formatting pure */
+    }
+    
+    .scroll-box::-webkit-scrollbar { width: 5px; }
+    .scroll-box::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+    .scroll-box::-webkit-scrollbar-thumb { background: var(--accent-primary); }
+
+    /* --- SIDE B: TRIANGLE IMAGE GRID --- */
+    .visual-pane {
+        flex: 2;
+        height: 100%;
+        overflow-y: auto;
+        padding-right: 15px;
+    }
+    .visual-pane::-webkit-scrollbar { width: 5px; }
+    .visual-pane::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+    .visual-pane::-webkit-scrollbar-thumb { background: var(--accent-primary); }
+
+    .triangle-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 20px;
+        padding-bottom: 40px;
+    }
+
+    .triangle-wrapper {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1.15;
+        display: flex; justify-content: center; align-items: center;
+    }
+
+    .triangle-border {
+        position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
+        background: var(--accent-primary);
+        clip-path: polygon(0 0, 100% 0, 50% 100%);
+        z-index: 1; opacity: 0.8;
+        transition: background 0.5s;
+    }
+
+    .triangle-shape {
+        width: 100%; height: 100%;
+        clip-path: polygon(0 0, 100% 0, 50% 100%);
+        background: #000;
+        position: relative; z-index: 2;
+    }
+
+    /* Make alternating triangles point UP */
+    .triangle-wrapper.up-triangle .triangle-border { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+    .triangle-wrapper.up-triangle .triangle-shape { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+
+    .triangle-shape img {
+        width: 100%; height: 100%;
+        object-fit: cover;
+        opacity: 0.6;
+        filter: grayscale(100%) contrast(1.2);
+        transition: all 0.3s ease;
+    }
+    .triangle-shape img:hover {
+        opacity: 1;
+        filter: grayscale(0%) contrast(1);
+        transform: scale(1.05);
+    }
+
+    /* === 4. STATUS FOOTER === */
+    .status-footer {
+        border-top: 1px solid var(--text-dim);
+        background: var(--bg-color); 
+        color: var(--text-dim);
+        padding: 10px 20px; 
+        font-size: 0.8rem;
+        display: flex; justify-content: space-between;
+        transition: background-color 0.5s;
+        z-index: 50;
+    }
+    .status-footer a { color: var(--accent-primary); text-decoration: none; font-size: 1rem; }
+    .status-footer a:hover { color: var(--text-main); }
+
+    /* === 5. DRAWER === */
     .drawer-toggle-btn {
         position: fixed;
-        bottom: 2rem;
-        right: 2rem;
-        background: #000;
-        color: #fff;
-        border: 1px solid #333;
+        bottom: 60px; /* Sits right above the footer */
+        right: 20px;
+        background: var(--bg-color);
+        color: var(--text-main);
+        border: 1px solid var(--accent-primary);
         padding: 10px 20px;
         font-family: inherit;
         font-weight: bold;
         cursor: pointer;
         z-index: 999;
         transition: all 0.2s;
-        text-transform: uppercase;
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
-    .drawer-toggle-btn:hover {
-        background: #ff0000;
-        color: #000;
-        border-color: #ff0000;
-    }
+    .drawer-toggle-btn:hover { background: var(--accent-primary); color: var(--bg-color); }
 
     .reader-drawer {
-        position: fixed;
-        top: 0;
-        right: -100%;
-        width: 500px;
-        max-width: 100vw;
-        height: 100vh;
-        background: #000;
-        border-left: 1px solid #ff0000;
+        position: fixed; top: 0; right: -100%;
+        width: 500px; max-width: 100vw; height: 100vh;
+        background: var(--bg-color);
+        border-left: 1px solid var(--accent-primary);
         transition: right 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
         z-index: 1000;
-        display: flex;
-        flex-direction: column;
+        display: flex; flex-direction: column;
     }
     .reader-drawer.open { right: 0; }
-
     .drawer-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem;
-        background: #050505;
-        border-bottom: 1px solid #333;
-        color: #ff0000;
-        font-weight: bold;
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 15px; background: var(--bg-color);
+        border-bottom: 1px solid var(--accent-secondary);
+        color: var(--accent-primary); font-weight: bold;
     }
-
-    .close-drawer-btn {
-        background: none;
-        color: #fff;
-        border: 1px solid #333;
-        cursor: pointer;
-        font-family: inherit;
-        padding: 5px 10px;
-    }
-    .close-drawer-btn:hover { background: #ff0000; color: #000; border-color: #ff0000; }
+    .close-drawer-btn { background: none; color: var(--text-main); border: none; cursor: pointer; font-family: inherit; font-size: 1.2rem; }
+    .close-drawer-btn:hover { color: var(--accent-primary); }
     .reader-iframe { flex-grow: 1; width: 100%; border: none; background: #000; }
 
+    /* Mobile */
     @media (max-width: 900px) {
-        .nexus-container { flex-direction: column; height: auto; }
-        .visual-pane { max-width: 100%; height: 40vh; border-right: none; border-bottom: 1px solid #333; }
+        .content-area { flex-direction: column; overflow-y: auto; }
+        .text-pane { height: 60vh; flex: none; }
+        .visual-pane { height: auto; overflow: visible; padding-bottom: 80px; }
+        body { overflow-y: auto; }
     }
 </style>
 </head>
 <body>
 
-    <!-- DIRECTORY HEADER -->
-    <div class="nexus-header">
-        <span id="header-typing-target"></span>
-        <a href="https://wordstar.nexus/dreamweaver.txt" target="_blank">[ RAW_ACCESS ]</a>
+    <!-- HEADER (Identical aesthetic to directory.html) -->
+    <header>
+        <div class="header-typing-wrapper" id="header-type-target"></div>
+        <svg class="ws-logo" viewBox="0 0 600 90" xmlns="http://www.w3.org/2000/svg">
+            <g class="logo-text">
+                <path d="M 25 25 L 32 25 L 39 60 L 46 25 L 52 25 L 59 60 L 66 25 L 73 25 L 63 68 L 57 68 L 50 35 L 43 68 L 37 68 Z"/>
+                <path d="M 90 23 Q 105 23 105 45.5 Q 105 68 90 68 Q 75 68 75 45.5 Q 75 23 90 23 Z M 90 28 Q 82 28 82 45.5 Q 82 63 90 63 Q 98 63 98 45.5 Q 98 28 90 28 Z"/>
+                <path d="M 120 25 L 127 25 L 127 33 Q 130 25 138 25 L 140 25 L 140 31 L 136 31 Q 127 31 127 40 L 127 68 L 120 68 Z"/>
+                <path d="M 155 25 L 172 25 Q 187 25 187 46.5 Q 187 68 172 68 L 155 68 Z M 162 30 L 162 63 L 171 63 Q 180 63 180 46.5 Q 180 30 171 30 Z"/>
+                <path d="M 202 25 Q 217 25 217 35 L 210 35 Q 210 30 202 30 Q 197 30 197 33.5 Q 197 37 202 38 L 210 40 Q 219 42 219 51 Q 219 68 205 68 Q 190 68 190 57 L 197 57 Q 197 63 205 63 Q 211 63 211 59 Q 211 56 206 54.5 L 198 52.5 Q 190 50.5 190 42 Q 190 25 202 25 Z"/>
+                <path d="M 232 18 L 239 18 L 239 25 L 247 25 L 247 30 L 239 30 L 239 58 Q 239 63 243 63 L 247 63 L 247 68 L 241 68 Q 232 68 232 58 L 232 30 L 226 30 L 226 25 L 232 25 Z"/>
+                <path d="M 265 25 Q 279 25 279 42 L 279 68 L 272 68 L 272 63 Q 268 68 260 68 Q 248 68 248 58 Q 248 48 260 48 L 272 48 L 272 42 Q 272 30 264 30 Q 257 30 256 36 L 249 36 Q 250 25 265 25 Z M 272 53 L 261 53 Q 255 53 255 58 Q 255 63 261 63 Q 272 63 272 53 Z"/>
+                <path d="M 294 25 L 301 25 L 301 33 Q 304 25 312 25 L 314 25 L 314 31 L 310 31 Q 301 31 301 40 L 301 68 L 294 68 Z"/>
+                <circle cx="330" cy="63" r="3"/>
+                <path d="M 350 25 L 357 25 L 357 31 Q 361 25 370 25 Q 382 25 382 37 L 382 68 L 375 68 L 375 38 Q 375 30 368 30 Q 357 30 357 42 L 357 68 L 350 68 Z"/>
+                <path d="M 397 25 Q 412 25 412 42 L 398 42 Q 398 50 398 52 Q 398 63 406 63 Q 411 63 412 58 L 419 58 Q 418 68 406 68 Q 391 68 391 46.5 Q 391 25 406 25 Z M 398 37 L 405 37 Q 405 30 406 30 Q 412 30 412 37 Z"/>
+            </g>
+            <g class="logo-x">
+                <path d="M 435 18 L 449 18 L 465 40 L 481 18 L 495 18 L 473 46.5 L 497 75 L 483 75 L 465 51 L 447 75 L 433 75 L 457 46.5 Z"/>
+            </g>
+            <g class="logo-text">
+                <path d="M 512 25 L 519 25 L 519 55 Q 519 63 526 63 Q 537 63 537 51 L 537 25 L 544 25 L 544 68 L 537 68 L 537 62 Q 533 68 524 68 Q 512 68 512 56 Z"/>
+                <path d="M 559 25 Q 574 25 574 35 L 567 35 Q 567 30 559 30 Q 554 30 554 33.5 Q 554 37 559 38 L 567 40 Q 576 42 576 51 Q 576 68 562 68 Q 547 68 547 57 L 554 57 Q 554 63 562 63 Q 568 63 568 59 Q 568 56 563 54.5 L 555 52.5 Q 547 50.5 547 42 Q 547 25 559 25 Z"/>
+            </g>
+        </svg>
+    </header>
+
+    <div class="content-area">
+        
+        <!-- LEFT: TEXT FEED & THEME SWITCH -->
+        <div class="text-pane">
+            
+            <!-- THE TOGGLE SWITCH -->
+            <div class="nav-box active" onclick="toggleTheme()" style="cursor: pointer; flex: none;">
+                <div class="nav-header">SYSTEM_STATUS [SWITCH]</div>
+                <div class="nav-content" style="padding-bottom: 20px;">
+                    CLICK BOX TO TOGGLE VISUAL THEME.<br>
+                    CURRENT: <span id="theme-name" style="color: var(--accent-primary);">CITADELLE_RED</span>
+                </div>
+            </div>
+
+            <!-- THE RAW TEXT FETCHER -->
+            <div class="nav-box active" style="flex-grow: 1; display: flex; overflow: hidden;">
+                <div class="nav-header" style="cursor: default;">
+                    >> DREAMWEAVER_ARCHIVE.TXT
+                    <a href="https://wordstar.nexus/dreamweaver.txt" target="_blank" style="color: var(--text-dim); text-decoration: none; font-size: 0.8rem;">[ RAW ]</a>
+                </div>
+                <!-- The JS Fetch will dump the text directly here -->
+                <div class="nav-content scroll-box" id="dreamweaver-text-container">
+                    INITIALIZING FETCH PROTOCOL...
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT: TRIANGLE IMAGE GRID -->
+        <div class="visual-pane">
+            <div id="image-gallery" class="triangle-grid"></div>
+        </div>
+
     </div>
 
-    <div class="nexus-container">
-        <!-- LEFT: IMAGE DIRECTORY GRID (All Images Visible) -->
-        <div class="visual-pane">
-            <div id="image-gallery" class="image-grid"></div>
-        </div>
-
-        <!-- RIGHT: LIVE TXT FILE FEED -->
-        <div class="text-pane">
-            <div class="nav-box">
-                <h3 class="nav-header">>> DREAMWEAVER_ARCHIVE.TXT // SYSTEM_ONLINE</h3>
-                <!-- The JS Fetch will dump the text file directly into this container -->
-                <div id="dreamweaver-text-container">INITIALIZING FETCH PROTOCOL...</div>
-            </div>
-        </div>
+    <!-- FOOTER (Identical to directory.html) -->
+    <div class="status-footer">
+        <span>DRIVE A: READY</span>
+        <span>MODE: OVERTYPE</span>
+        <span> "quiet, piggy!" -an inky-kid book, AVAILABLE NOW 
+           <a href="https://github.com/ghostm68/pantheon/raw/main/Quiet_Piggy_a%20wordstar%20child's%20book.pdf" target="_blank">  
+               <i class='fa fa-file-pdf-o' style="margin-left:5px;"></i>
+           </a>
+        </span> 
     </div>
 
     <!-- FLOATING BUTTON TO OPEN R3ADER -->
@@ -230,9 +344,9 @@
 
     <!-- JAVASCRIPT: LOGIC & ARCHITECTURE -->
     <script>
-        // 1. TYPING EFFECT (Matching wordstar.nexus/directory)
-        const textToType = "DREAMWEAVER_ARCHIVE_ONLINE...";
-        const typingTarget = document.getElementById('header-typing-target');
+        // 1. TYPING HEADER
+        const textToType = "DREAMWEAVER // TERMINAL";
+        const typingTarget = document.getElementById('header-type-target');
         let typeIndex = 0;
         
         function typeHeader() {
@@ -242,25 +356,34 @@
                 setTimeout(typeHeader, 50);
             }
         }
-        setTimeout(typeHeader, 300); // Start slightly after page load
+        setTimeout(typeHeader, 300);
 
-        // 2. FETCH THE DREAMWEAVER.TXT FILE AUTOMATICALLY
+        // 2. THEME SWITCHER
+        function toggleTheme() {
+            document.body.classList.toggle('classic-mode');
+            const themeLabel = document.getElementById('theme-name');
+            if (document.body.classList.contains('classic-mode')) {
+                if (themeLabel) themeLabel.innerText = "WORDSTAR_BLUE";
+            } else {
+                if (themeLabel) themeLabel.innerText = "CITADELLE_RED";
+            }
+        }
+
+        // 3. FETCH THE DREAMWEAVER.TXT AUTOMATICALLY
         const textContainer = document.getElementById('dreamweaver-text-container');
-        
         fetch('https://wordstar.nexus/dreamweaver.txt')
             .then(response => {
                 if (!response.ok) throw new Error("NETWORK_RESPONSE_ERROR");
                 return response.text();
             })
             .then(data => {
-                textContainer.textContent = data; // Dumps raw text formatting perfectly
+                textContainer.textContent = data; 
             })
             .catch(error => {
-                textContainer.textContent = "SYSTEM_ERROR: UNABLE TO ESTABLISH LINK WITH DREAMWEAVER.TXT\n\n" + error;
-                textContainer.style.color = "#ff0000";
+                textContainer.textContent = "SYSTEM_ERROR: UNABLE TO ESTABLISH LINK.\n\n" + error;
             });
 
-        // 3. GENERATE THE IMAGE GRID
+        // 4. GENERATE THE ALTERNATING TRIANGLE IMAGE GRID
         const imageUrls =[
             'https://github.com/ghostm68/pantheon/raw/main/vasilisa.wordstar.nexus.gif',
             'https://github.com/ghostm68/pantheon/raw/main/VAPORGRAM176lotta48724ever64233.jpg',
@@ -301,14 +424,26 @@
         ];
 
         const galleryContainer = document.getElementById('image-gallery');
+        
         imageUrls.forEach((url, index) => {
-            const img = document.createElement('img');
-            img.src = url;
-            img.alt = `Archive Image ${index + 1}`;
-            galleryContainer.appendChild(img);
+            const wrapper = document.createElement('div');
+            wrapper.className = 'triangle-wrapper';
+            
+            // Alternates triangles up and down for the esoteric pantheon aesthetic
+            if (index % 2 !== 0) {
+                wrapper.classList.add('up-triangle');
+            }
+
+            wrapper.innerHTML = `
+                <div class="triangle-border"></div>
+                <div class="triangle-shape">
+                    <img src="${url}" alt="Archive File ${index + 1}">
+                </div>
+            `;
+            galleryContainer.appendChild(wrapper);
         });
 
-        // 4. DRAWER TOGGLE LOGIC
+        // 5. DRAWER TOGGLE LOGIC
         const drawer = document.getElementById('drawer');
         const openBtn = document.getElementById('open-drawer-btn');
         const closeBtn = document.getElementById('close-drawer-btn');
