@@ -90,13 +90,13 @@
     /* === 3. MAIN SPLIT LAYOUT === */
     .content-area {
         flex-grow: 1; display: flex; flex-direction: row;
-        gap: 30px; padding: 30px;
+        gap: 20px; padding: 30px;
         overflow: hidden; height: calc(100vh - 110px); 
     }
 
     /* --- SIDE A: TEXT PANE --- */
     .text-pane {
-        flex: 1; /* Adjusted for 3-columns */
+        flex: 1.2; 
         display: flex; flex-direction: column; gap: 20px;
         height: 100%;
     }
@@ -112,7 +112,6 @@
     body.classic-mode .nav-box { background: rgba(0, 0, 100, 0.85); }
     .nav-box.active { border-color: var(--accent-primary); border-left: 6px solid var(--accent-primary); }
 
-    /* COMPACT THEME SWITCHER */
     #theme-switch-box {
         flex-direction: row;
         justify-content: space-between;
@@ -124,7 +123,6 @@
     #theme-switch-box:hover { background: rgba(255,255,255,0.05); }
     .theme-label { font-weight: bold; color: var(--text-dim); }
 
-    /* AUGMENTED CURRENT ENTRY */
     #current-entry-box { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
     
     .nav-header { 
@@ -144,32 +142,46 @@
     .nav-content::-webkit-scrollbar { width: 5px; }
     .nav-content::-webkit-scrollbar-thumb { background: var(--accent-primary); }
 
-    /* --- SIDE B: MIDDLE VIDEO PANE --- */
+    /* --- SIDE B: MIDDLE VIDEO PANE (SMALL TRIANGLE) --- */
     .video-pane {
-        flex: 1.2; /* Slightly larger to properly frame standard video aspect ratios */
-        display: flex; flex-direction: column; gap: 20px;
+        flex: 0.8; /* Slightly smaller flex so it fits snug between text and the big triangle */
+        display: flex; justify-content: center; align-items: center;
         height: 100%;
     }
 
-    .video-content {
-        flex-grow: 1;
-        background: #000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        overflow: hidden;
+    /* ----- mini upside-down triangle ----- */
+    .triangle-wrapper.small-down {
+        width: 336px;
+        height: 336px;
+        max-width: 100%; /* Safety fallback for small screens */
+        transform: rotate(180deg);
+        margin: 0;
+        position: relative;
+        filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.2));
     }
-
-    .video-content video, .video-content iframe {
+    .triangle-wrapper.small-down .triangle-border,
+    .triangle-wrapper.small-down .triangle-shape {
         width: 100%;
         height: 100%;
-        object-fit: contain; /* ensures the full video is visible with letterboxing if needed */
-        border: none;
+    }
+    
+    .triangle-shape video {
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+        opacity: 0.7;
+        /* The wrapper is rotated 180deg, meaning the video plays upside down. 
+           We counter-rotate it back 180deg and scale slightly to avoid clipped edges. */
+        transform: rotate(180deg) scale(1.15); 
+        transition: opacity 0.5s ease;
+    }
+    .triangle-shape video:hover {
+        opacity: 1;
     }
 
     /* --- SIDE C: SINGLE TRIANGLE SLIDESHOW --- */
     .visual-pane {
-        flex: 1; /* Adjusted for 3-columns */
+        flex: 1.2; 
         height: 100%;
         display: flex; justify-content: center; align-items: center;
     }
@@ -266,7 +278,7 @@
     @media (max-width: 1100px) {
         .content-area { flex-direction: column; overflow-y: auto; padding-bottom: 80px; }
         .text-pane, .video-pane, .visual-pane { height: auto; flex: none; }
-        .video-pane { height: 350px; } /* Gives the video a locked height on mobile */
+        .video-pane { height: 350px; } 
         .visual-pane { height: 400px; padding: 20px 0; }
         body { overflow-y: auto; }
     }
@@ -316,13 +328,11 @@
         <!-- LEFT: COMPACT THEME SWITCH & AUGMENTED CURRENT ENTRY -->
         <div class="text-pane">
             
-            <!-- COMPACT ONE-LINE TOGGLE SWITCH -->
             <div class="nav-box active" id="theme-switch-box" onclick="toggleTheme()">
                 <span class="theme-label">> SYSTEM_STATUS [ THEME_SWITCH ]</span>
                 <span>CURRENT: <span id="theme-name" style="color: var(--accent-primary); font-weight: bold;">CITADELLE_RED</span></span>
             </div>
 
-            <!-- AUGMENTED CURRENT ENTRY SPACE -->
             <div class="nav-box active" id="current-entry-box">
                 <div class="nav-header">>> CURRENT_LOG // 03.12.2026</div>
                 <div class="nav-content">
@@ -336,13 +346,14 @@ once upon a building entrance again, dark man beneath a vehicle...recall story o
 
         </div>
 
-        <!-- MIDDLE: NEW VIDEO FEED PORTAL -->
+        <!-- MIDDLE: NEW VIDEO PANE (SMALL UPSIDE-DOWN TRIANGLE) -->
         <div class="video-pane">
-            <div class="nav-box active" style="flex-grow: 1;">
-                <div class="nav-header">>> SURVEILLANCE_FEED // SIGNAL_LOCKED</div>
-                <div class="video-content">
-                    <!-- Swap this src with your own MP4 link. If you prefer YouTube, replace this <video> block with a YouTube <iframe> -->
-                    <video src="https://www.w3schools.com/html/mov_bbb.mp4" controls autoplay loop muted playsinline></video>
+            <div class="triangle-wrapper small-down">
+                <div class="triangle-border"></div>
+                <div class="triangle-shape">
+                    <video autoplay muted loop playsinline>
+                        <source src="https://github.com/ghostm68/666/raw/main/m_20260312_082351833.mp4" type="video/mp4">
+                    </video>
                 </div>
             </div>
         </div>
@@ -511,6 +522,7 @@ once upon a building entrance again, dark man beneath a vehicle...recall story o
 
         // 4. TRIANGLE SLIDESHOW LOGIC
         const imageUrls =[
+            'https://github.com/ghostm68/99/raw/main/keira.gif',             
             'https://github.com/ghostm68/pantheon/raw/main/vasilisa.wordstar.nexus.gif',
             'https://github.com/ghostm68/pantheon/raw/main/VAPORGRAM176lotta48724ever64233.jpg',
             'https://github.com/ghostm68/pantheon/raw/main/Kristina.wordstar.gif',
