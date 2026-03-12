@@ -52,17 +52,6 @@
         background: rgba(0,0,0,0.2);
     }
 
-    .header-typing-wrapper {
-        font-size: 1.2rem; font-weight: bold;
-        color: var(--accent-primary);
-        text-transform: uppercase; letter-spacing: 2px;
-    }
-
-    .ws-logo { height: 40px; width: auto; filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5)); }
-    .logo-text path { fill: var(--text-main); transition: fill 0.5s; }
-    .logo-x path { fill: var(--accent-primary); transition: 0.3s; }
-
-    /* NEW HEADER STYLES */
     .header-left {
         display: flex;
         align-items: center;
@@ -84,7 +73,6 @@
         text-transform: uppercase; letter-spacing: 2px;
     }
 
-    /* Style the links that get typed out */
     .header-typing-wrapper a {
         color: var(--text-main);
         text-decoration: none;
@@ -95,6 +83,10 @@
         text-shadow: 0 0 8px rgba(255,0,0,0.4);
     }
 
+    .ws-logo { height: 40px; width: auto; filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5)); }
+    .logo-text path { fill: var(--text-main); transition: fill 0.5s; }
+    .logo-x path { fill: var(--accent-primary); transition: 0.3s; }
+
     /* === 3. MAIN SPLIT LAYOUT === */
     .content-area {
         flex-grow: 1; display: flex; flex-direction: row;
@@ -104,7 +96,7 @@
 
     /* --- SIDE A: TEXT PANE --- */
     .text-pane {
-        flex: 1.2;
+        flex: 1; /* Adjusted for 3-columns */
         display: flex; flex-direction: column; gap: 20px;
         height: 100%;
     }
@@ -143,18 +135,42 @@
 
     .nav-content {
         padding: 20px; 
-        font-size: 1.05rem; /* Augmented size */
+        font-size: 1.05rem;
         color: var(--text-main);
-        line-height: 1.8;   /* Better readability */
+        line-height: 1.8;
         white-space: pre-wrap;
-        overflow-y: auto;   /* Scroll if it gets long */
+        overflow-y: auto;
     }
     .nav-content::-webkit-scrollbar { width: 5px; }
     .nav-content::-webkit-scrollbar-thumb { background: var(--accent-primary); }
 
-    /* --- SIDE B: SINGLE TRIANGLE SLIDESHOW --- */
+    /* --- SIDE B: MIDDLE VIDEO PANE --- */
+    .video-pane {
+        flex: 1.2; /* Slightly larger to properly frame standard video aspect ratios */
+        display: flex; flex-direction: column; gap: 20px;
+        height: 100%;
+    }
+
+    .video-content {
+        flex-grow: 1;
+        background: #000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+    }
+
+    .video-content video, .video-content iframe {
+        width: 100%;
+        height: 100%;
+        object-fit: contain; /* ensures the full video is visible with letterboxing if needed */
+        border: none;
+    }
+
+    /* --- SIDE C: SINGLE TRIANGLE SLIDESHOW --- */
     .visual-pane {
-        flex: 1.5; height: 100%;
+        flex: 1; /* Adjusted for 3-columns */
+        height: 100%;
         display: flex; justify-content: center; align-items: center;
     }
 
@@ -247,9 +263,10 @@
     .archive-content::-webkit-scrollbar-thumb { background: var(--accent-primary); }
 
     /* Mobile */
-    @media (max-width: 900px) {
+    @media (max-width: 1100px) {
         .content-area { flex-direction: column; overflow-y: auto; padding-bottom: 80px; }
-        .text-pane { height: auto; flex: none; }
+        .text-pane, .video-pane, .visual-pane { height: auto; flex: none; }
+        .video-pane { height: 350px; } /* Gives the video a locked height on mobile */
         .visual-pane { height: 400px; padding: 20px 0; }
         body { overflow-y: auto; }
     }
@@ -269,7 +286,7 @@
             </div>
             <div class="header-typing-wrapper" id="header-type-target"></div>
         </div>
-        <div class="header-typing-wrapper" id="header-type-target"></div>
+        
         <svg class="ws-logo" viewBox="0 0 600 90" xmlns="http://www.w3.org/2000/svg">
             <g class="logo-text">
                 <path d="M 25 25 L 32 25 L 39 60 L 46 25 L 52 25 L 59 60 L 66 25 L 73 25 L 63 68 L 57 68 L 50 35 L 43 68 L 37 68 Z"/>
@@ -317,6 +334,17 @@ once upon a building entrance again, dark man beneath a vehicle...recall story o
                 </div>
             </div>
 
+        </div>
+
+        <!-- MIDDLE: NEW VIDEO FEED PORTAL -->
+        <div class="video-pane">
+            <div class="nav-box active" style="flex-grow: 1;">
+                <div class="nav-header">>> SURVEILLANCE_FEED // SIGNAL_LOCKED</div>
+                <div class="video-content">
+                    <!-- Swap this src with your own MP4 link. If you prefer YouTube, replace this <video> block with a YouTube <iframe> -->
+                    <video src="https://www.w3schools.com/html/mov_bbb.mp4" controls autoplay loop muted playsinline></video>
+                </div>
+            </div>
         </div>
 
         <!-- RIGHT: SINGLE TRIANGLE SLIDESHOW -->
@@ -369,8 +397,7 @@ once upon a building entrance again, dark man beneath a vehicle...recall story o
 
     <!-- JAVASCRIPT -->
     <script>
-        // 1. TYPING HEADER
-      // 1. HYBRID TYPING HEADER & MENU LOGIC
+        // 1. HYBRID TYPING HEADER & MENU LOGIC
         const menuBtn = document.getElementById('menuBtn');
         const headerTarget = document.getElementById('header-type-target');
         
@@ -385,7 +412,6 @@ once upon a building entrance again, dark man beneath a vehicle...recall story o
         let isMenuOpen = false;
         let isTyping = false;
 
-        // Function to type the default title
         function typeDefaultText() {
             headerTarget.innerHTML = "";
             isTyping = true;
@@ -402,7 +428,6 @@ once upon a building entrance again, dark man beneath a vehicle...recall story o
             step();
         }
 
-        // Function to type out the interactive links
         function typeHeaderLinks() {
             headerTarget.innerHTML = "";
             isTyping = true;
@@ -411,7 +436,7 @@ once upon a building entrance again, dark man beneath a vehicle...recall story o
             
             let currentLink = document.createElement('a');
             currentLink.href = menuLinks[linkIndex].href;
-            currentLink.target = "_blank"; // Opens links in new tab
+            currentLink.target = "_blank"; 
             headerTarget.appendChild(currentLink);
 
             function step() {
@@ -430,7 +455,6 @@ once upon a building entrance again, dark man beneath a vehicle...recall story o
                     linkIndex++;
                     charIndex = 0;
                     if (linkIndex < menuLinks.length) {
-                        // Adds the // separator between links
                         const separator = document.createTextNode(" // ");
                         headerTarget.appendChild(separator);
 
@@ -447,12 +471,10 @@ once upon a building entrance again, dark man beneath a vehicle...recall story o
             step();
         }
 
-        // Initialize with default text on load
         setTimeout(typeDefaultText, 300);
 
-        // Click Event: Toggle between Title and Links
         menuBtn.addEventListener('click', () => {
-            if (isTyping) return; // Prevents glitching if clicked while typing
+            if (isTyping) return; 
             if (!isMenuOpen) {
                 typeHeaderLinks();
                 isMenuOpen = true;
