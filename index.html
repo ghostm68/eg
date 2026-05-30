@@ -358,6 +358,207 @@
         </div>
     </div>
 </section>
+<!-- ASTRAL MATRIX -->
+	<section style="margin: 40px auto; max-width: 800px;">
+		<div style="border: 1px solid var(--red); background: #050505; padding: 20px; position: relative;">
+			
+			<!-- Header -->
+			<div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #333; padding-bottom: 10px; margin-bottom: 20px;">
+				<h2 style="color: var(--primary); font-family: var(--font-seg); margin: 0; font-size: 1.5rem;">THE ASTRAL MATRIX</h2>
+				<div style="font-family: var(--font-mono); font-size: 10px; color: #666; text-align: right;">
+					CELESTIAL // DIGITAL DIVINATION<br>
+					<span id="astral-status">AWAITING ALIGNMENT...</span>
+				</div>
+			</div>
+
+			<!-- The Zodiac Grid -->
+			<div id="zodiac-grid" style="
+				display: grid; 
+				grid-template-columns: repeat(4, 1fr); 
+				gap: 5px; 
+				margin-bottom: 20px;
+			">
+				<!-- Populated by JS -->
+			</div>
+
+			<!-- Controls -->
+			<div style="display: flex; gap: 10px; margin-bottom: 20px;">
+				<button onclick="castAlignment()" style="
+					background: #111; 
+					border: 1px solid var(--red); 
+					color: var(--red); 
+					padding: 10px 20px; 
+					font-family: var(--font-mono); 
+					cursor: pointer; 
+					flex: 1;
+					transition: all 0.2s;
+				" onmouseover="this.style.background='var(--red)'; this.style.color='#000';" onmouseout="this.style.background='#111'; this.style.color='var(--red)';">
+					[ CAST ALIGNMENT ]
+				</button>
+			</div>
+
+			<!-- The Reading Output -->
+			<div id="astral-readout" style="
+				min-height: 120px; 
+				background: rgba(255,0,0,0.05); 
+				border: 1px solid #333; 
+				padding: 15px; 
+				font-family: var(--font-tech); 
+				font-size: 14px; 
+				line-height: 1.6; 
+				color: #ccc;
+			">
+				<span style="color: #555;">[ ORACLE CORE STANDBY... CLICK CAST TO GENERATE TRANSIT ]</span>
+			</div>
+		</div>
+	</section>
+
+	<!-- ASTRAL MATRIX LOGIC -->
+	<script> 
+	const zodiacSigns = [
+		{ sign: "ARIES", glyph: "♈︎", trait: "Kinetic violence. The spark of the machine." },
+		{ sign: "TAURUS", glyph: "♉︎", trait: "Heavy matter. The unmovable mainframe." },
+		{ sign: "GEMINI", glyph: "♊︎", trait: "Fragmented frequencies. Dual-core processing." },
+		{ sign: "CANCER", glyph: "♋︎", trait: "Lunar memory. Nostalgia bleeding through the screen." },
+		{ sign: "LEO", glyph: "♌︎", trait: "Solar ego. The spotlight on the empty stage." },
+		{ sign: "VIRGO", glyph: "♍︎", trait: "Micro-calculations. Flawless syntax, sterile heart." },
+		{ sign: "LIBRA", glyph: "♎︎", trait: "Symmetrical aesthetics. The beauty of a balanced equation." },
+		{ sign: "SCORPIO", glyph: "♏︎", trait: "Complete systemic death and rebirth. Encrypted secrets." },
+		{ sign: "SAGITTARIUS", glyph: "♐︎", trait: "Infinite bandwidth. The desire to broadcast into the void." },
+		{ sign: "CAPRICORN", glyph: "♑︎", trait: "Cold architecture. Building prisons of glass and steel." },
+		{ sign: "AQUARIUS", glyph: "♒︎", trait: "Alien logic. The ghost rebelling against the machine." },
+		{ sign: "PISCES", glyph: "♓︎", trait: "Dissolving boundaries. The static of a collective dream." }
+	];
+
+	const planets = [
+		{ name: "SUN (CORE)", glyph: "☉", domain: "Your central operating system." },
+		{ name: "MOON (SUBCONSCIOUS)", glyph: "☽", domain: "Your background cache and hidden fears." },
+		{ name: "ASCENDANT (INTERFACE)", glyph: "ASC", domain: "The mask you present to the network." }
+	];
+
+	let astralAudioCtx = null;
+
+	function initZodiacGrid() {
+		const grid = document.getElementById('zodiac-grid');
+		if (!grid) return;
+		
+		grid.innerHTML = '';
+		zodiacSigns.forEach((z, i) => {
+			const cell = document.createElement('div');
+			cell.id = `zodiac-cell-${i}`;
+			cell.style.cssText = `
+				border: 1px solid #333; 
+				padding: 10px; 
+				text-align: center; 
+				color: #555;
+				font-family: var(--font-mono);
+				transition: all 0.5s ease;
+			`;
+			cell.innerHTML = `<div style="font-size: 1.5rem; margin-bottom: 5px;">${z.glyph}</div><div style="font-size: 8px;">${z.sign}</div>`;
+			grid.appendChild(cell);
+		});
+	}
+
+	function playAstralChime() {
+		try {
+			if (!astralAudioCtx) {
+				astralAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+			}
+			
+			if (astralAudioCtx.state === 'suspended') astralAudioCtx.resume();
+
+			const baseFreq = 220 + (Math.random() * 100); 
+			const frequencies = [baseFreq, baseFreq * 1.2, baseFreq * 1.5, baseFreq * 2.0];
+
+			frequencies.forEach((freq, index) => {
+				const osc = astralAudioCtx.createOscillator();
+				const gain = astralAudioCtx.createGain();
+				
+				osc.type = index % 2 === 0 ? 'sine' : 'triangle';
+				osc.frequency.value = freq;
+				
+				gain.gain.setValueAtTime(0.001, astralAudioCtx.currentTime);
+				gain.gain.linearRampToValueAtTime(0.1, astralAudioCtx.currentTime + 1.5);
+				gain.gain.linearRampToValueAtTime(0.001, astralAudioCtx.currentTime + 5.5);
+				
+				osc.connect(gain);
+				gain.connect(astralAudioCtx.destination);
+				
+				osc.start();
+				osc.stop(astralAudioCtx.currentTime + 6);
+			});
+		} catch (error) {
+			console.warn("Audio Context blocked: ", error);
+		}
+	}
+
+	function castAlignment() {
+		const readout = document.getElementById('astral-readout');
+		const status = document.getElementById('astral-status');
+		
+		if (!readout || !status) return;
+		
+		playAstralChime();
+
+		document.querySelectorAll('[id^="zodiac-cell-"]').forEach(cell => {
+			cell.style.borderColor = '#333';
+			cell.style.color = '#555';
+			cell.style.background = 'transparent';
+		});
+
+		status.innerHTML = "CALCULATING ORBITAL TRAJECTORIES...";
+		status.style.color = "var(--red)";
+		readout.innerHTML = "";
+
+		let readingHTML = "";
+		
+		planets.forEach((planet, index) => {
+			const signIndex = Math.floor(Math.random() * zodiacSigns.length);
+			const sign = zodiacSigns[signIndex];
+			
+			setTimeout(() => {
+				const cell = document.getElementById(`zodiac-cell-${signIndex}`);
+				if (cell) {
+					cell.style.borderColor = "var(--red)";
+					cell.style.color = "var(--red)";
+					cell.style.background = "rgba(255,0,0,0.1)";
+				}
+			}, index * 800); 
+
+			readingHTML += `
+				<div style="margin-bottom: 15px; opacity: 0; animation: fadeIn 1s forwards; animation-delay: ${index * 0.8}s;">
+					<span style="color: var(--red); font-size: 1.2rem;">${planet.glyph} ${planet.name} in ${sign.sign} ${sign.glyph}</span><br>
+					<span style="color: #888; font-size: 10px;">${planet.domain}</span><br>
+					<span style="color: #ccc;">${sign.trait}</span>
+				</div>
+			`;
+		});
+
+		setTimeout(() => {
+			readout.innerHTML = readingHTML;
+			status.innerHTML = "ALIGNMENT LOCKED";
+			setTimeout(() => { status.style.color = "#666"; }, 1000);
+		}, 100);
+	}
+
+	if (!document.getElementById('astral-keyframes')) {
+		const style = document.createElement('style');
+		style.id = 'astral-keyframes';
+		style.innerHTML = `
+			@keyframes fadeIn {
+				from { opacity: 0; transform: translateY(5px); }
+				to { opacity: 1; transform: translateY(0); }
+			}
+		`;
+		document.head.appendChild(style);
+	}
+
+	window.castAlignment = castAlignment;
+
+	document.addEventListener('DOMContentLoaded', () => {
+		initZodiacGrid(); 
+	});
+	</script>
 <!-- ========================================== -->
 <!-- 1. SCRIPT TAGS                             -->
 <!-- ========================================== -->
