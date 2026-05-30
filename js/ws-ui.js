@@ -399,6 +399,9 @@ function togglePower() {
 // ==========================================
 // THE ASTRAL MATRIX (Cyber-Astrology)
 // ==========================================
+// ==========================================
+// THE ASTRAL MATRIX (Cyber-Astrology)
+// ==========================================
 
 const zodiacSigns = [
     { sign: "ARIES", glyph: "♈︎", trait: "Kinetic violence. The spark of the machine." },
@@ -444,44 +447,52 @@ function initZodiacGrid() {
     });
 }
 
-// Play a celestial, glass-like drone chord
+// Play a celestial, glass-like drone chord (BULLETPROOF VERSION)
 function playAstralChime() {
-    if (!astralAudioCtx) {
-        astralAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    try {
+        if (!astralAudioCtx) {
+            astralAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        
+        if (astralAudioCtx.state === 'suspended') astralAudioCtx.resume();
+
+        const baseFreq = 220 + (Math.random() * 100); 
+        const frequencies = [baseFreq, baseFreq * 1.2, baseFreq * 1.5, baseFreq * 2.0];
+
+        frequencies.forEach((freq, index) => {
+            const osc = astralAudioCtx.createOscillator();
+            const gain = astralAudioCtx.createGain();
+            
+            osc.type = index % 2 === 0 ? 'sine' : 'triangle';
+            osc.frequency.value = freq;
+            
+            // Safe linear ramping logic that won't crash older Safari/WebKit engines
+            gain.gain.setValueAtTime(0.001, astralAudioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.1, astralAudioCtx.currentTime + 1.5);
+            gain.gain.linearRampToValueAtTime(0.001, astralAudioCtx.currentTime + 5.5);
+            
+            osc.connect(gain);
+            gain.connect(astralAudioCtx.destination);
+            
+            osc.start();
+            osc.stop(astralAudioCtx.currentTime + 6);
+        });
+    } catch (error) {
+        console.warn("Audio Context blocked, but reading will continue: ", error);
     }
-    
-    // Ensure context is running (fixes browser autoplay policies)
-    if (astralAudioCtx.state === 'suspended') astralAudioCtx.resume();
-
-    // Randomize a mystical chord (Minor 9th vibe)
-    const baseFreq = 220 + (Math.random() * 100); 
-    const frequencies = [baseFreq, baseFreq * 1.2, baseFreq * 1.5, baseFreq * 2.0];
-
-    frequencies.forEach((freq, index) => {
-        const osc = astralAudioCtx.createOscillator();
-        const gain = astralAudioCtx.createGain();
-        
-        osc.type = index % 2 === 0 ? 'sine' : 'triangle';
-        osc.frequency.value = freq;
-        
-        // Slow, swelling attack and long release (like a singing bowl)
-        gain.gain.setValueAtTime(0, astralAudioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.1, astralAudioCtx.currentTime + 2);
-        gain.gain.exponentialRampToValueAtTime(0.001, astralAudioCtx.currentTime + 6);
-        
-        osc.connect(gain);
-        gain.connect(astralAudioCtx.destination);
-        
-        osc.start();
-        osc.stop(astralAudioCtx.currentTime + 6);
-    });
 }
 
 function castAlignment() {
     const readout = document.getElementById('astral-readout');
     const status = document.getElementById('astral-status');
     
-    // Play Audio
+    // SAFETY CHECK: If HTML is missing, alert the console so we know immediately
+    if (!readout || !status) {
+        console.error("ERROR: Astral Matrix HTML elements ('astral-readout' or 'astral-status') not found on this page.");
+        return;
+    }
+    
+    // Play Audio (will fail gracefully if blocked by browser)
     playAstralChime();
 
     // Reset Grid visuals
@@ -499,11 +510,9 @@ function castAlignment() {
     let readingHTML = "";
     
     planets.forEach((planet, index) => {
-        // Pick a random sign
         const signIndex = Math.floor(Math.random() * zodiacSigns.length);
         const sign = zodiacSigns[signIndex];
         
-        // Highlight grid cell
         setTimeout(() => {
             const cell = document.getElementById(`zodiac-cell-${signIndex}`);
             if (cell) {
@@ -511,9 +520,8 @@ function castAlignment() {
                 cell.style.color = "var(--red)";
                 cell.style.background = "rgba(255,0,0,0.1)";
             }
-        }, index * 800); // Stagger the visual highlights
+        }, index * 800); 
 
-        // Build the text output
         readingHTML += `
             <div style="margin-bottom: 15px; opacity: 0; animation: fadeIn 1s forwards; animation-delay: ${index * 0.8}s;">
                 <span style="color: var(--red); font-size: 1.2rem;">${planet.glyph} ${planet.name} in ${sign.sign} ${sign.glyph}</span><br>
@@ -531,24 +539,27 @@ function castAlignment() {
     }, 100);
 }
 
-// Add the fade-in animation to the document dynamically
-const style = document.createElement('style');
-style.innerHTML = `
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(5px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-`;
-document.head.appendChild(style);
+// Add the fade-in animation
+if (!document.getElementById('astral-keyframes')) {
+    const style = document.createElement('style');
+    style.id = 'astral-keyframes';
+    style.innerHTML = `
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    `;
+    document.head.appendChild(style);
+}
 
-// Expose to window for the button click
+// Expose to window
 window.castAlignment = castAlignment;
 
 // ==========================================
 // MASTER INITIALIZATION
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    drawSigil("WORDSTAR");
-    addExportButtons();
-    initZodiacGrid(); // <-- Merged the Zodiac grid builder here!
+    if (typeof drawSigil === 'function') drawSigil("WORDSTAR");
+    if (typeof addExportButtons === 'function') addExportButtons();
+    initZodiacGrid(); 
 });
