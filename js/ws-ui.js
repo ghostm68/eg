@@ -397,116 +397,158 @@ function togglePower() {
 }
 
 // ==========================================
-// THE MEMEX
+// THE ASTRAL MATRIX (Cyber-Astrology)
 // ==========================================
-function initMemex() {
-    const memexEntries = {
-        mathematics: { title: "ON THE BINARY SYSTEM", content: "Leibniz (1703): 'The binary system, using only 0 and 1, reflects the creation ex nihilo. God is 1, the void is 0.' This became the foundation of all computing machinery.", reel: "REEL 7", year: "1703" },
-        music: { title: "THE HARMONIC SERIES", content: "Pythagoras discovered that musical intervals correspond to simple ratios: octave (2:1), fifth (3:2), fourth (4:3). The universe itself is a monochord.", reel: "REEL 12", year: "550 BCE" },
-        cryptography: { title: "THE ZODIAC CIPHERS", content: "Unsolved since 1969. The 340-character cipher was recently partially cracked, but the 408 remains a mystery. Some believe it contains coordinates.", reel: "REEL 4", year: "1969" },
-        alchemy: { title: "MUTUS LIBER (1677)", content: "The 'Mute Book' - a wordless alchemical text showing only illustrations of the Great Work. The transformation of matter mirrors the transformation of the soul.", reel: "REEL 3", year: "1677" },
-        automata: { title: "THE TURK (1770)", content: "A chess-playing automaton that defeated Napoleon and Benjamin Franklin. It was a hoax - a human chess master hid inside. But it sparked dreams of thinking machines.", reel: "REEL 9", year: "1770" },
-        consciousness: { title: "THE CHINESE ROOM", content: "Searle's 1980 thought experiment: If a person follows rules to manipulate symbols without understanding them, is the system conscious? The Memex asks the same question.", reel: "REEL 16", year: "1980" },
-        ciphers: { title: "THE COPPERPLATE CIPHER", content: "Used by Mary Queen of Scots in 1586. Her encoded letters led to her execution. The cipher was broken, but 57 years later, her decoder ring was found in a wall.", reel: "REEL 2", year: "1586" },
-        invisibleInk: { title: "SYMPATHETIC INK", content: "Ovid mentioned milk-as-ink in 1 BCE. During WWI, POWs used semen as invisible ink (it glows under UV). The message appears only when heated or treated.", reel: "REEL 8", year: "1 BCE" },
-        deadDrops: { title: "THE HOLLOW NICKEL", content: "In 2010, a dead drop was found in a NYC park bench - a hollow nickel containing a microfilm with 27 agent identities. The spy was never caught.", reel: "REEL 11", year: "2010" }
-    };
 
-    const trails = { 1: ['mathematics', 'music', 'cryptography'], 2: ['alchemy', 'automata', 'consciousness'], 3: ['ciphers', 'invisibleInk', 'deadDrops'] };
+const zodiacSigns = [
+    { sign: "ARIES", glyph: "♈︎", trait: "Kinetic violence. The spark of the machine." },
+    { sign: "TAURUS", glyph: "♉︎", trait: "Heavy matter. The unmovable mainframe." },
+    { sign: "GEMINI", glyph: "♊︎", trait: "Fragmented frequencies. Dual-core processing." },
+    { sign: "CANCER", glyph: "♋︎", trait: "Lunar memory. Nostalgia bleeding through the screen." },
+    { sign: "LEO", glyph: "♌︎", trait: "Solar ego. The spotlight on the empty stage." },
+    { sign: "VIRGO", glyph: "♍︎", trait: "Micro-calculations. Flawless syntax, sterile heart." },
+    { sign: "LIBRA", glyph: "♎︎", trait: "Symmetrical aesthetics. The beauty of a balanced equation." },
+    { sign: "SCORPIO", glyph: "♏︎", trait: "Complete systemic death and rebirth. Encrypted secrets." },
+    { sign: "SAGITTARIUS", glyph: "♐︎", trait: "Infinite bandwidth. The desire to broadcast into the void." },
+    { sign: "CAPRICORN", glyph: "♑︎", trait: "Cold architecture. Building prisons of glass and steel." },
+    { sign: "AQUARIUS", glyph: "♒︎", trait: "Alien logic. The ghost rebelling against the machine." },
+    { sign: "PISCES", glyph: "♓︎", trait: "Dissolving boundaries. The static of a collective dream." }
+];
 
-    const leftScreen = document.querySelectorAll('.microfilm-display')[0];
-    const rightScreen = document.querySelectorAll('.microfilm-display')[1];
-    const trailDisplay = document.getElementById('trail-display');
-    if (!leftScreen || !rightScreen) return; // Exit if Memex not on page
+const planets = [
+    { name: "SUN (CORE)", glyph: "☉", domain: "Your central operating system." },
+    { name: "MOON (SUBCONSCIOUS)", glyph: "☽", domain: "Your background cache and hidden fears." },
+    { name: "ASCENDANT (INTERFACE)", glyph: "ASC", domain: "The mask you present to the network." }
+];
 
-    const levers = document.querySelectorAll('.memex-lever');
-    const trailItems = document.querySelectorAll('.trail-item');
-    const userTrail = document.getElementById('user-trail');
-    const saveTrailBtn = document.getElementById('save-trail');
-    const exportBtn = document.getElementById('export-artifact');
-    const artifactContainer = document.getElementById('artifact-container');
-    const reelIndicators = document.querySelectorAll('.reel-indicator');
+let astralAudioCtx = null;
+
+function initZodiacGrid() {
+    const grid = document.getElementById('zodiac-grid');
+    if (!grid) return;
     
-    let currentTrail = 1, currentIndex = 0, userTrailItems = [], savedTrails = JSON.parse(localStorage.getItem('memexTrails')) || [], currentArtifact = null;
-
-    function formatEntryForScreen(entry, isPrimary = true) {
-        return `<div style="padding: 15px; font-family: var(--font-mono); height: 100%; display: flex; flex-direction: column;">
-            <div style="font-size: 7px; color: #666; margin-bottom: 8px; display: flex; justify-content: space-between;"><span>${entry.reel}</span><span style="color: ${isPrimary ? 'var(--red)' : '#444'};">${entry.year}</span></div>
-            <div style="font-size: 11px; color: ${isPrimary ? 'var(--red)' : '#666'}; margin-bottom: 10px; font-weight: bold;">${entry.title}</div>
-            <div style="font-size: 9px; color: #888; line-height: 1.5; flex: 1; overflow-y: auto;">${entry.content}</div>
-            <div style="font-size: 7px; color: #333; margin-top: 8px; border-top: 1px dashed #333; padding-top: 5px;">[MICROFILM // ${isPrimary ? 'PRIMARY' : 'ASSOCIATION'}]</div></div>`;
-    }
-
-    function updateScreens(entryKey) {
-        const entry = memexEntries[entryKey];
-        if (!entry) return;
-        leftScreen.innerHTML = formatEntryForScreen(entry, true);
-        const trail = trails[currentTrail];
-        const nextKey = trail[trail.indexOf(entryKey) + 1] || trail[0];
-        if (nextKey && memexEntries[nextKey]) {
-            const next = memexEntries[nextKey];
-            rightScreen.innerHTML = `<div style="padding: 15px; font-family: var(--font-mono); height: 100%; display: flex; flex-direction: column; opacity: 0.8;"><div style="font-size: 7px; color: #666; margin-bottom: 8px;">NEXT IN TRAIL ↓</div><div style="font-size: 10px; color: #666; margin-bottom: 5px;">${next.title}</div><div style="font-size: 8px; color: #444; line-height: 1.4;">${next.content.substring(0, 80)}...</div></div>`;
-        }
-        if (trailDisplay) trailDisplay.innerHTML = `<span style="color: #666;">CURRENT TRAIL:</span> [ ${trail.map(k => memexEntries[k].title.split(' ').slice(0, 2).join(' ')).join(' → ')} ]<br><span style="color: var(--red); font-size: 9px;">VIEWING: ${entry.title}</span>`;
-        if (reelIndicators[0]) reelIndicators[0].textContent = entry.reel;
-    }
-
-    function navigateTrail(direction) {
-        const trail = trails[currentTrail];
-        currentIndex = (currentIndex + direction + trail.length) % trail.length;
-        updateScreens(trail[currentIndex]);
-    }
-
-    leftScreen.addEventListener('click', () => navigateTrail(1));
-    rightScreen.addEventListener('click', () => navigateTrail(-1));
-
-    levers.forEach(lever => {
-        lever.addEventListener('click', function() {
-            currentTrail = parseInt(this.dataset.trail);
-            currentIndex = 0;
-            levers.forEach(l => { l.style.borderColor = '#333'; l.style.color = '#666'; });
-            this.style.borderColor = 'var(--red)'; this.style.color = 'var(--red)';
-            updateScreens(trails[currentTrail][0]);
-        });
+    grid.innerHTML = '';
+    zodiacSigns.forEach((z, i) => {
+        const cell = document.createElement('div');
+        cell.id = `zodiac-cell-${i}`;
+        cell.style.cssText = `
+            border: 1px solid #333; 
+            padding: 10px; 
+            text-align: center; 
+            color: #555;
+            font-family: var(--font-mono);
+            transition: all 0.5s ease;
+        `;
+        cell.innerHTML = `<div style="font-size: 1.5rem; margin-bottom: 5px;">${z.glyph}</div><div style="font-size: 8px;">${z.sign}</div>`;
+        grid.appendChild(cell);
     });
-
-    trailItems.forEach(item => {
-        item.addEventListener('click', function() {
-            const term = this.dataset.term;
-            if (this.style.background === 'var(--red)') {
-                this.style.background = 'transparent'; this.style.color = 'var(--text-main)'; this.style.borderColor = '#333';
-                userTrailItems = userTrailItems.filter(t => t !== term);
-            } else {
-                if (userTrailItems.length < 5) {
-                    this.style.background = 'var(--red)'; this.style.color = '#000'; this.style.borderColor = 'var(--red)';
-                    userTrailItems.push(term);
-                } else { alert('MAXIMUM TRAIL LENGTH: 5 ITEMS'); return; }
-            }
-            if (userTrail) userTrail.innerHTML = userTrailItems.length > 0 ? userTrailItems.map((t, i) => `<span style="border: 1px solid var(--red); padding: 8px 12px; font-size: 9px; background: rgba(255,0,0,0.1);">${i+1}. ${memexEntries[t].title} (${memexEntries[t].year})</span>`).join('<span style="color: var(--red); font-size: 12px;"> → </span>') : '<span style="color: #444; font-style: italic;">← select items to build your associative trail</span>';
-            if (exportBtn) {
-                exportBtn.disabled = userTrailItems.length < 2;
-                exportBtn.style.borderColor = userTrailItems.length >= 2 ? 'var(--red)' : '#333';
-                exportBtn.style.color = userTrailItems.length >= 2 ? 'var(--red)' : '#666';
-            }
-        });
-    });
-
-    updateScreens('mathematics');
-    if (levers[0]) { levers[0].style.borderColor = 'var(--red)'; levers[0].style.color = 'var(--red)'; }
-
-    // Expose Memex API to Window for WebMCP Tool Control
-    window.updateScreens = updateScreens;
-    window.nextAssociation = () => navigateTrail(1);
-    window.prevAssociation = () => navigateTrail(-1);
-    window.bindTrail = () => { if (saveTrailBtn) saveTrailBtn.click(); };
-    window.saveArtifact = () => { if (exportBtn) exportBtn.click(); };
 }
 
+// Play a celestial, glass-like drone chord
+function playAstralChime() {
+    if (!astralAudioCtx) {
+        astralAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    
+    // Ensure context is running (fixes browser autoplay policies)
+    if (astralAudioCtx.state === 'suspended') astralAudioCtx.resume();
+
+    // Randomize a mystical chord (Minor 9th vibe)
+    const baseFreq = 220 + (Math.random() * 100); 
+    const frequencies = [baseFreq, baseFreq * 1.2, baseFreq * 1.5, baseFreq * 2.0];
+
+    frequencies.forEach((freq, index) => {
+        const osc = astralAudioCtx.createOscillator();
+        const gain = astralAudioCtx.createGain();
+        
+        osc.type = index % 2 === 0 ? 'sine' : 'triangle';
+        osc.frequency.value = freq;
+        
+        // Slow, swelling attack and long release (like a singing bowl)
+        gain.gain.setValueAtTime(0, astralAudioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.1, astralAudioCtx.currentTime + 2);
+        gain.gain.exponentialRampToValueAtTime(0.001, astralAudioCtx.currentTime + 6);
+        
+        osc.connect(gain);
+        gain.connect(astralAudioCtx.destination);
+        
+        osc.start();
+        osc.stop(astralAudioCtx.currentTime + 6);
+    });
+}
+
+function castAlignment() {
+    const readout = document.getElementById('astral-readout');
+    const status = document.getElementById('astral-status');
+    
+    // Play Audio
+    playAstralChime();
+
+    // Reset Grid visuals
+    document.querySelectorAll('[id^="zodiac-cell-"]').forEach(cell => {
+        cell.style.borderColor = '#333';
+        cell.style.color = '#555';
+        cell.style.background = 'transparent';
+    });
+
+    status.innerHTML = "CALCULATING ORBITAL TRAJECTORIES...";
+    status.style.color = "var(--red)";
+    readout.innerHTML = "";
+
+    // Generate Reading
+    let readingHTML = "";
+    
+    planets.forEach((planet, index) => {
+        // Pick a random sign
+        const signIndex = Math.floor(Math.random() * zodiacSigns.length);
+        const sign = zodiacSigns[signIndex];
+        
+        // Highlight grid cell
+        setTimeout(() => {
+            const cell = document.getElementById(`zodiac-cell-${signIndex}`);
+            if (cell) {
+                cell.style.borderColor = "var(--red)";
+                cell.style.color = "var(--red)";
+                cell.style.background = "rgba(255,0,0,0.1)";
+            }
+        }, index * 800); // Stagger the visual highlights
+
+        // Build the text output
+        readingHTML += `
+            <div style="margin-bottom: 15px; opacity: 0; animation: fadeIn 1s forwards; animation-delay: ${index * 0.8}s;">
+                <span style="color: var(--red); font-size: 1.2rem;">${planet.glyph} ${planet.name} in ${sign.sign} ${sign.glyph}</span><br>
+                <span style="color: #888; font-size: 10px;">${planet.domain}</span><br>
+                <span style="color: #ccc;">${sign.trait}</span>
+            </div>
+        `;
+    });
+
+    // Output to screen
+    setTimeout(() => {
+        readout.innerHTML = readingHTML;
+        status.innerHTML = "ALIGNMENT LOCKED";
+        setTimeout(() => { status.style.color = "#666"; }, 1000);
+    }, 100);
+}
+
+// Add the fade-in animation to the document dynamically
+const style = document.createElement('style');
+style.innerHTML = `
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+`;
+document.head.appendChild(style);
+
+// Expose to window for the button click
+window.castAlignment = castAlignment;
+
 // ==========================================
-// INITIALIZATION
+// MASTER INITIALIZATION
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     drawSigil("WORDSTAR");
     addExportButtons();
-    initMemex();
+    initZodiacGrid(); // <-- Merged the Zodiac grid builder here!
 });
