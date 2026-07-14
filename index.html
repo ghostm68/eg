@@ -1056,17 +1056,17 @@ document.addEventListener('DOMContentLoaded', () => {
         align-items: center;
         overflow: hidden;
         min-height: 640px;
-        transition: background 0.3s ease;
+        transition: transform 0.3s ease; /* Transition applied to wrapper scale */
     }
     
     #flipbook {
-        width: 960px; /* Enlarged from 800px for better legibility */
-        height: 700px; /* Scaled proportionally */
+        width: 960px; 
+        height: 700px; 
         position: relative;
         background: #222;
         box-shadow: 0 0 20px rgba(255,0,0,0.3); /* RED glow */
         border: 2px solid #ff0000; /* RED border */
-        transition: transform 0.3s ease;
+        /* No transform here - prevents subpixel page drift */
     }
     
     /* Turn.js internal wrapper */
@@ -1136,8 +1136,12 @@ document.addEventListener('DOMContentLoaded', () => {
         background: transparent;
         padding: 0;
         min-height: auto;
-        flex-grow: 1;
-        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 960px;
+        height: 700px;
+        margin: auto;
     }
 
     #flipbook-container.theater-mode #flipbook-controls {
@@ -1148,12 +1152,13 @@ document.addEventListener('DOMContentLoaded', () => {
         border-radius: 4px;
         z-index: 100000;
         width: 90%;
+        margin-top: 20px;
     }
 
-    /* Enlarges the book size smoothly only when inside Theater Mode on Desktop */
+    /* Scaling applied to parent wrapper. Prevents Turn.js from drift calculations. */
     @media (min-width: 801px) {
-        #flipbook-container.theater-mode #flipbook {
-            transform: scale(1.18); /* Enlarge print size by 18% */
+        #flipbook-container.theater-mode #flipbook-wrapper {
+            transform: scale(1.18); 
             transform-origin: center center;
         }
     }
@@ -1208,16 +1213,13 @@ $(document).ready(function() {
 
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    // Brimless PDF URL (with spaces)
     const rawGithubUrl = 'https://raw.githubusercontent.com/ghostm68/pantheon/48b2c43110d39bdf5cfa8d48949fc1dcf3413500/BRIMLESS%20THE%20COLD-SOLDER%20JOINT,%20A%20NOVEL.pdf';
-    
-    // Pass to proxy worker
     const proxyUrl = 'https://lively-limitless.inkrealm.workers.dev/?url=' + encodeURIComponent(rawGithubUrl);
 
     let pdfDoc = null;
     let totalPages = 0;
 
-    // Toggle Theater Mode
+    // Toggle Theater Mode without triggering turn('update')
     $('#theater-toggle').on('click', function() {
         $('body').toggleClass('no-scroll');
         $('#flipbook-container').toggleClass('theater-mode');
@@ -1227,11 +1229,6 @@ $(document).ready(function() {
         } else {
             $(this).text('⛶ THEATER MODE');
         }
-        
-        // Force Turn.js to update alignments after display context changes
-        setTimeout(() => {
-            $('#flipbook').turn('update');
-        }, 150);
     });
 
     fetch(proxyUrl)
