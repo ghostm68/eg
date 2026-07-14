@@ -1035,7 +1035,6 @@ window.downloadAstralLog = downloadAstralLog;
 document.addEventListener('DOMContentLoaded', () => {
 	initZodiacGrid(); 
 });
-</script>
 <!-- ========================================== -->
 <!-- 1. SCRIPT TAGS                             -->
 <!-- ========================================== -->
@@ -1108,7 +1107,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- ========================================== -->
 <section>
     <h2 style="color: var(--primary); font-family: var(--font-seg); border-bottom: 1px solid var(--secondary); padding-bottom: 5px;">
-         working title=party code // iran FLIPBOOK
+         BRIMLESS: THE COLD-SOLDER JOINT // FLIPBOOK
     </h2>
 
     <div id="flipbook-wrapper">
@@ -1125,10 +1124,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </section>
 
 <!-- ========================================== -->
-<!-- 4. THE JAVASCRIPT                          -->
-<!-- ========================================== -->
-<!-- ========================================== -->
-<!-- 4. THE JAVASCRIPT (DEBUGGED)               -->
+<!-- 4. THE JAVASCRIPT (WITH CANVAS PRUNING)    -->
 <!-- ========================================== -->
 <script>
 $(document).ready(function() {
@@ -1141,7 +1137,8 @@ $(document).ready(function() {
     
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    const rawGithubUrl = 'https://raw.githubusercontent.com/ghostm68/99/main/iranthescreenplayv3.pdf';
+    // Updated URL pointing to the Brimless manuscript
+    const rawGithubUrl = 'https://raw.githubusercontent.com/ghostm68/pantheon/48b2c43110d39bdf5cfa8d48949fc1dcf3413500/BRIMLESS%20THE%20COLD-SOLDER%20JOINT,%20A%20NOVEL.pdf';
     const proxyUrl = 'https://lively-limitless.inkrealm.workers.dev/?url=' + encodeURIComponent(rawGithubUrl);
 
     let pdfDoc = null;
@@ -1171,16 +1168,17 @@ $(document).ready(function() {
                 when: {
                     turning: function(e, page, view) {
                         console.log('Turning to page:', page, 'view:', view);
-                        // Preload pages in current view
+                        // Preload pages in current view (loads or re-loads if pruned)
                         const range = $flipbook.turn('range', page);
                         for (let p = range[0]; p <= range[1]; p++) {
-                            if (p > 0 && p <= totalPages && !$flipbook.turn('hasPage', p)) {
+                            if (p > 0 && p <= totalPages) {
                                 addPage(p);
                             }
                         }
                     },
                     turned: function(e, page, view) {
                         document.getElementById('page-indicator').textContent = `PAGE: ${page}/${totalPages}`;
+                        prunePages(page); // Release off-screen canvas memory
                     }
                 }
             });
@@ -1206,9 +1204,18 @@ $(document).ready(function() {
     function addPage(pageNum) {
         const $flipbook = $('#flipbook');
         
-        if ($flipbook.turn('hasPage', pageNum)) return;
+        // If Turn.js already has the page container, check if it needs to be re-rendered
+        if ($flipbook.turn('hasPage', pageNum)) {
+            const pageElement = $flipbook.find(`[data-page="${pageNum}"]`);
+            if (pageElement.length && pageElement.find('canvas').length === 0) {
+                pageElement.html('Loading...');
+                renderPDFToElement(pageNum, pageElement);
+            }
+            return;
+        }
 
-        const element = $('<div class="page" style="background:#fff;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">Loading...</div>');
+        // Add page container with a data-page attribute for tracking
+        const element = $(`<div class="page" data-page="${pageNum}" style="background:#fff;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">Loading...</div>`);
         
         try {
             $flipbook.turn('addPage', element, pageNum);
@@ -1237,6 +1244,25 @@ $(document).ready(function() {
             });
         });
     }
+
+    // Prune off-screen pages to keep memory usage safe, particularly on mobile
+    function prunePages(currentPage) {
+        const $flipbook = $('#flipbook');
+        const keepRange = 6; // Keep 6 pages on either side of the current view loaded
+
+        for (let p = 1; p <= totalPages; p++) {
+            if (Math.abs(p - currentPage) > keepRange) {
+                if ($flipbook.turn('hasPage', p)) {
+                    const pageElement = $flipbook.find(`[data-page="${p}"]`);
+                    // If page has a rendered canvas, wipe it to reclaim memory
+                    if (pageElement.length && pageElement.find('canvas').length > 0) {
+                        pageElement.empty().html('Loading...');
+                        console.log(`Pruned page ${p} to free canvas memory`);
+                    }
+                }
+            }
+        }
+    }
 });
 
 function nextPage() { 
@@ -1246,10 +1272,11 @@ function prevPage() {
     try { $('#flipbook').turn('previous'); } catch(e) { console.error(e); }
 }
 </script>
-	<a href="https://github.com/ghostm68/99/raw/main/iranthescreenplayv3.pdf" 
-   download="iran_the_screenplay_v3.pdf"
+
+<a href="https://github.com/ghostm68/pantheon/raw/48b2c43110d39bdf5cfa8d48949fc1dcf3413500/BRIMLESS%20THE%20COLD-SOLDER%20JOINT,%20A%20NOVEL.pdf" 
+   download="BRIMLESS_THE_COLD_SOLDER_JOINT_A_NOVEL.pdf"
    style="background: #111; border: 1px solid var(--primary); color: var(--primary); padding: 5px 15px; text-decoration: none; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 5px;">
-    <span>⬇</span> DOWNLOAD PDF
+    <span>⬇</span> DOWNLOAD MANUSCRIPT
 </a>
 	<!-- The Module Wrapper -->
 	<div style="
