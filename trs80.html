@@ -6,7 +6,7 @@
 <title>WordStar Nexus: Fusion Architecture</title>
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-       <style>
+<style>
 /* === DEFINE VARIABLES FIRST === */
 :root {
     --red: #ff0033;
@@ -82,7 +82,7 @@
   }
   .menu-btn:active { background-color: #fff; }
   .shortcut-key { color: var(--accent-red); margin-right: 4px; }
-  .menu-btn:hover .shortcut-key { color: #000; }
+  .menu-btn:hover .shortcut-key { color: #000; }\
 
   /* --- SECTION 2: EDITOR --- */
   #editor-container {
@@ -187,9 +187,9 @@
   .f-key:hover b { color: #000; }
   .f-key:active { background-color: #fff; }
 
-  /* --- SECTION 5: SYSTEM DECK (Map & GIF) --- */
+  /* --- SECTION 5: SYSTEM DECK (Map, Intel Feed & GIF) --- */
   #system-deck {
-    height: 150px;
+    height: 160px;
     display: flex;
     background-color: #000;
     border-top: 2px solid var(--accent-red);
@@ -201,15 +201,95 @@
     overflow: hidden;
   }
 
-  /* Map Specifics */
+  /* Tactical Real-Time Intel Feed */
+  #intel-panel {
+    width: 250px;
+    background-color: #050505;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    font-family: 'VT323', monospace;
+  }
+
+  .intel-header {
+    color: var(--accent-red);
+    border-bottom: 1px solid #222;
+    padding-bottom: 3px;
+    margin-bottom: 6px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .intel-list {
+    flex-grow: 1;
+    overflow-y: auto;
+    font-size: 0.95rem;
+    line-height: 1.2;
+  }
+
+  .intel-item {
+    border-bottom: 1px dashed #1a1a1a;
+    padding: 4px 0;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .intel-item:hover {
+    background-color: #101010;
+  }
+
+  .intel-time {
+    color: #555;
+    margin-right: 5px;
+  }
+
+  .intel-alert {
+    color: var(--accent-red);
+    font-weight: bold;
+    margin-right: 4px;
+  }
+
+  /* Map Specifics - Red monochrome military vector styling */
   #map-panel { flex-grow: 1; }
   #map {
     width: 100%;
     height: 100%;
-    filter: grayscale(100%) contrast(1.2) brightness(0.7);
+    background-color: #000 !important;
+    filter: sepia(100%) hue-rotate(320deg) saturate(1000%) brightness(0.65) contrast(1.4);
     transition: filter 0.3s;
   }
-  #map:hover { filter: grayscale(0%); }
+  #map:hover { filter: sepia(100%) hue-rotate(320deg) saturate(1400%) brightness(0.8) contrast(1.5); }
+
+  /* Custom Pulsing Radar Marker classes for ISS */
+  .iss-marker {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .iss-crosshair {
+    width: 8px;
+    height: 8px;
+    border: 2px solid var(--accent-red);
+    border-radius: 50%;
+    background: var(--accent-red);
+  }
+
+  .iss-radar-ping {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border: 1px solid var(--accent-red);
+    border-radius: 50%;
+    animation: ping 2s infinite ease-out;
+  }
+
+  @keyframes ping {
+    0% { transform: scale(0.5); opacity: 1; }
+    100% { transform: scale(2.5); opacity: 0; }
+  }
 
   /* GIF/Logo Specifics */
   #logo-panel {
@@ -229,19 +309,21 @@
   .coord-overlay {
     position: absolute;
     top: 5px; right: 5px;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0,0,0,0.85);
     color: var(--accent-red);
-    padding: 2px 5px;
-    font-size: 0.8rem;
+    padding: 2px 6px;
+    font-size: 0.85rem;
     z-index: 500;
     border: 1px solid #333;
+    letter-spacing: 0.05em;
   }
 
   @media print {
     #top-bar, #lower-stack, .crt::before { display: none !important; }
     body, html, #editor-container { background-color: white !important; height: auto !important; display: block !important; }
-    #editor { color: black !important; font-family: 'Courier New', monospace !important; width: 100% !important; padding: 0 !important; }
+    #editor { color: black !important; font-family: \'Courier New\', monospace !important; width: 100% !important; padding: 0 !important; }
   }
+  
 /* Mobile Optimization */
 @media (max-width: 768px) {
     /* Make top bar scrollable */
@@ -297,9 +379,14 @@
         height: 100px;
     }
     
-    /* Hide GIF panel on mobile */
-    #logo-panel {
-        display: none;
+    /* Hide auxiliary panels on mobile */
+    #intel-panel, #logo-panel {
+        display: none !important;
+    }
+
+    #map-panel {
+        width: 100%;
+        flex-grow: 1;
     }
     
     /* Adjust status bar */
@@ -349,11 +436,16 @@
 /* Tablet adjustments */
 @media (min-width: 769px) and (max-width: 1024px) {
     #system-deck {
-        height: 120px;
+        height: 130px;
+    }
+    
+    #intel-panel {
+        width: 180px;
+        font-size: 0.85rem;
     }
     
     #logo-panel {
-        width: 150px;
+        width: 130px;
     }
     
     #logo-panel img {
@@ -384,7 +476,7 @@
 WORDSTAR NEXUS [FUSION ARCHITECTURE]
 ------------------------------------
 System Online.
-ISS Tracker: Active.
+Tactical Intel Stream: Active.
 Command Bridge: Active.
 
 INSERT Mode: ON
@@ -426,15 +518,26 @@ INSERT Mode: ON
             <div class="f-key" onclick="handleCommand('exit')"><b>F10</b>CLEAR</div>
         </div>
 
-        <!-- 5. SYSTEM DECK (Map + Gif) -->
+        <!-- 5. SYSTEM DECK (Intel Panel, Map + Gif) -->
         <div id="system-deck">
+            <!-- Left Panel: Scrolling list of live threat warnings -->
+            <div class="deck-panel" id="intel-panel">
+                <div class="intel-header">Tactical Alerts</div>
+                <div class="intel-list" id="intel-list">
+                    <div style="color:#555; text-align:center; margin-top:20px;">CONNECTING TO STREAM...</div>
+                </div>
+            </div>
+            
+            <!-- Center Panel: Grid Map -->
             <div class="deck-panel" id="map-panel">
                 <div id="map"></div>
-                <div class="coord-overlay">ISS: <span id="lat">0.00</span>, <span id="lon">0.00</span></div>
+                <div class="coord-overlay">ORBIT STATUS [ISS]: <span id="lat">0.00</span>, <span id="lon">0.00</span></div>
             </div>
+            
+            <!-- Right Panel: Gif Monitor -->
             <div class="deck-panel" id="logo-panel">
                 <img src="https://raw.githubusercontent.com/ghostm68/pantheon/main/quirky.gif" alt="System">
-                <div style="margin-top:5px; font-size: 0.8rem; color: #666;">SYS.MONITOR</div>
+                <div style="margin-top:5px; font-size: 0.8rem; color: #666; font-family: monospace;">SYS.MONITOR</div>
             </div>
         </div>
 
@@ -653,30 +756,107 @@ INSERT Mode: ON
     editor.addEventListener('keyup', updateStats);
     editor.addEventListener('input', updateStats);
 
-    /* --- 4. MAP SYSTEM --- */
+    /* --- 4. MAP & INTELLIGENCE SYSTEM --- */
     const map = L.map('map', {zoomControl: false, attributionControl:false}).setView([0,0], 2);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         subdomains: 'abcd', maxZoom: 19
     }).addTo(map);
     
-    const issIcon = L.icon({
-        iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/International_Space_Station.svg',
-        iconSize: [30, 18], iconAnchor: [15, 9]
+    // Glowing pulsing radar ping marker for ISS
+    const issIcon = L.divIcon({
+        className: 'iss-marker',
+        html: '<div class="iss-radar-ping"></div><div class="iss-crosshair"></div>',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
     });
     const marker = L.marker([0,0], {icon: issIcon}).addTo(map);
 
+    // Dotted track path polyline for the ISS orbit
+    const issPath = L.polyline([], {
+        color: 'rgba(204, 0, 0, 0.6)',
+        weight: 1.5,
+        dashArray: '4, 4'
+    }).addTo(map);
+
+    // Layer group to hold live global seismic warning events
+    const seismicLayer = L.layerGroup().addTo(map);
+
+    // 4.1 Update ISS position and add trail point
     async function updateISS() {
         try {
             const r = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
             const d = await r.json();
-            marker.setLatLng([d.latitude, d.longitude]);
-            map.panTo([d.latitude, d.longitude]);
+            const latLng = [d.latitude, d.longitude];
+
+            marker.setLatLng(latLng);
+            issPath.addLatLng(latLng);
+
+            // Limit track line length to prevent browser memory bloat over time
+            const latLngs = issPath.getLatLngs();
+            if (latLngs.length > 80) {
+                latLngs.shift();
+                issPath.setLatLngs(latLngs);
+            }
+
+            map.panTo(latLng);
             document.getElementById('lat').innerText = d.latitude.toFixed(2);
             document.getElementById('lon').innerText = d.longitude.toFixed(2);
         } catch(e) {}
     }
+
+    // 4.2 Fetch real-time global seismic threats using USGS Public API
+    async function fetchSeismicIntel() {
+        try {
+            const response = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson');
+            const data = await response.json();
+            
+            seismicLayer.clearLayers();
+            const intelList = document.getElementById('intel-list');
+            intelList.innerHTML = ''; 
+            
+            if (!data.features || data.features.length === 0) {
+                intelList.innerHTML = '<div style="color:#444; text-align:center; margin-top:20px;">NO RECENT THREATS</div>';
+                return;
+            }
+
+            // Slice to the top 10 most recent global events
+            data.features.slice(0, 10).forEach(event => {
+                const [lon, lat] = event.geometry.coordinates;
+                const mag = event.properties.mag;
+                const place = event.properties.place;
+                const timeStr = new Date(event.properties.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
+                
+                // Plot red tactical warning rings on the map
+                const circle = L.circleMarker([lat, lon], {
+                    radius: mag * 2.2,
+                    color: 'var(--accent-red)',
+                    fillColor: 'var(--accent-red)',
+                    fillOpacity: 0.35,
+                    weight: 1.5
+                }).bindPopup(`<b>TACTICAL DETECT</b><br>Seismic Alert: M${mag}<br>${place}`).addTo(seismicLayer);
+                
+                // Add event item to the scrolling "Tactical Alerts" terminal console
+                const item = document.createElement('div');
+                item.className = 'intel-item';
+                item.innerHTML = `<span class="intel-time">[${timeStr}]</span><span class="intel-alert">M${mag}</span> ${place}`;
+                item.onclick = () => {
+                    map.setView([lat, lon], 4);
+                    circle.openPopup();
+                };
+                intelList.appendChild(item);
+            });
+        } catch (e) {
+            console.error("Tactical stream disconnect:", e);
+            document.getElementById('intel-list').innerHTML = '<div style="color:#552222; text-align:center; margin-top:20px;">CONN_ERROR</div>';
+        }
+    }
+
+    // Initialization and loop schedules
     setInterval(updateISS, 5000);
     updateISS();
+
+    setInterval(fetchSeismicIntel, 60000);
+    fetchSeismicIntel();
 
 </script>
 </body>
