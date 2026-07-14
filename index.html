@@ -1036,14 +1036,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	initZodiacGrid(); 
 });
 <!-- ========================================== -->
-<!-- 1. SCRIPT TAGS                             -->
-<!-- ========================================== -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="js/turn.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-
-<!-- ========================================== -->
-<!-- 2. FLIPBOOK STYLES                         -->
+<!-- 1. FLIPBOOK STYLES                         -->
 <!-- ========================================== -->
 <style>
     #flipbook-wrapper {
@@ -1103,7 +1096,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </style>
 
 <!-- ========================================== -->
-<!-- 3. THE HTML UI                             -->
+<!-- 2. THE HTML UI                             -->
 <!-- ========================================== -->
 <section>
     <h2 style="color: var(--primary); font-family: var(--font-seg); border-bottom: 1px solid var(--secondary); padding-bottom: 5px;">
@@ -1111,7 +1104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </h2>
 
     <div id="flipbook-wrapper">
-        <div id="flipbook"></div>
+        <div id="flipbook"><div style="color: #fff; padding: 20px;">Loading libraries...</div></div>
     </div>
 
     <div style="display: flex; justify-content: space-between; margin-top: 10px; font-family: var(--font-tech); font-size: 0.8rem;">
@@ -1124,20 +1117,38 @@ document.addEventListener('DOMContentLoaded', () => {
 </section>
 
 <!-- ========================================== -->
-<!-- 4. THE JAVASCRIPT (WITH CANVAS PRUNING)    -->
+<!-- 3. THE JAVASCRIPT (SEQUENTIAL LOADER)      -->
 <!-- ========================================== -->
 <script>
-$(document).ready(function() {
-    if (typeof $.fn.turn === 'undefined') {
-        $('#flipbook').html('<div style="color:red;padding:20px;">ERROR: Turn.js not loaded</div>');
-        return;
-    }
-    
-    console.log('Turn.js loaded');
+// Dynamic Script Loader to guarantee load order
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error(`Failed to load: ${src}`));
+        document.head.appendChild(script);
+    });
+}
+
+// Order of execution: jQuery -> PDF.js -> Turn.js CDN
+loadScript("https://code.jquery.com/jquery-3.6.0.min.js")
+    .then(() => loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"))
+    .then(() => loadScript("https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"))
+    .then(() => {
+        // Run application code once dependencies are guaranteed to exist
+        initFlipbook();
+    })
+    .catch(err => {
+        console.error("Library load error:", err);
+        document.getElementById('flipbook').innerHTML = `<div style="color: red; padding: 20px;">Failed to load libraries: ${err.message}</div>`;
+    });
+
+function initFlipbook() {
+    $('#flipbook').html('<div style="color:#fff;padding:20px;">Loading manuscript...</div>');
     
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    // Updated URL pointing to the Brimless manuscript
     const rawGithubUrl = 'https://raw.githubusercontent.com/ghostm68/pantheon/48b2c43110d39bdf5cfa8d48949fc1dcf3413500/BRIMLESS%20THE%20COLD-SOLDER%20JOINT,%20A%20NOVEL.pdf';
     const proxyUrl = 'https://lively-limitless.inkrealm.workers.dev/?url=' + encodeURIComponent(rawGithubUrl);
 
@@ -1153,6 +1164,8 @@ $(document).ready(function() {
             console.log(`PDF loaded: ${totalPages} pages`);
             
             const $flipbook = $('#flipbook');
+            $flipbook.empty(); // Clear loading message
+
             const isMobile = window.innerWidth < 800;
             const width = isMobile ? window.innerWidth - 40 : 800;
             const height = isMobile ? (window.innerWidth - 40) * 1.3 : 600;
@@ -1167,8 +1180,6 @@ $(document).ready(function() {
                 pages: totalPages,
                 when: {
                     turning: function(e, page, view) {
-                        console.log('Turning to page:', page, 'view:', view);
-                        // Preload pages in current view (loads or re-loads if pruned)
                         const range = $flipbook.turn('range', page);
                         for (let p = range[0]; p <= range[1]; p++) {
                             if (p > 0 && p <= totalPages) {
@@ -1178,14 +1189,12 @@ $(document).ready(function() {
                     },
                     turned: function(e, page, view) {
                         document.getElementById('page-indicator').textContent = `PAGE: ${page}/${totalPages}`;
-                        prunePages(page); // Release off-screen canvas memory
+                        prunePages(page);
                     }
                 }
             });
 
-            console.log('Turn.js initialized');
-
-            // Load first pages
+            // Initial load of first pages
             setTimeout(() => {
                 addPage(1);
                 if (!isMobile) addPage(2);
@@ -1204,7 +1213,6 @@ $(document).ready(function() {
     function addPage(pageNum) {
         const $flipbook = $('#flipbook');
         
-        // If Turn.js already has the page container, check if it needs to be re-rendered
         if ($flipbook.turn('hasPage', pageNum)) {
             const pageElement = $flipbook.find(`[data-page="${pageNum}"]`);
             if (pageElement.length && pageElement.find('canvas').length === 0) {
@@ -1214,13 +1222,11 @@ $(document).ready(function() {
             return;
         }
 
-        // Add page container with a data-page attribute for tracking
         const element = $(`<div class="page" data-page="${pageNum}" style="background:#fff;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">Loading...</div>`);
         
         try {
             $flipbook.turn('addPage', element, pageNum);
             renderPDFToElement(pageNum, element);
-            console.log(`Page ${pageNum} added`);
         } catch (err) {
             console.error(`Error adding page ${pageNum}:`, err);
         }
@@ -1240,21 +1246,18 @@ $(document).ready(function() {
                 viewport: viewport
             }).promise.then(() => {
                 element.empty().append(canvas);
-                console.log(`Page ${pageNum} rendered`);
             });
         });
     }
 
-    // Prune off-screen pages to keep memory usage safe, particularly on mobile
     function prunePages(currentPage) {
         const $flipbook = $('#flipbook');
-        const keepRange = 6; // Keep 6 pages on either side of the current view loaded
+        const keepRange = 6;
 
         for (let p = 1; p <= totalPages; p++) {
             if (Math.abs(p - currentPage) > keepRange) {
                 if ($flipbook.turn('hasPage', p)) {
                     const pageElement = $flipbook.find(`[data-page="${p}"]`);
-                    // If page has a rendered canvas, wipe it to reclaim memory
                     if (pageElement.length && pageElement.find('canvas').length > 0) {
                         pageElement.empty().html('Loading...');
                         console.log(`Pruned page ${p} to free canvas memory`);
@@ -1263,7 +1266,7 @@ $(document).ready(function() {
             }
         }
     }
-});
+}
 
 function nextPage() { 
     try { $('#flipbook').turn('next'); } catch(e) { console.error(e); }
@@ -1275,7 +1278,7 @@ function prevPage() {
 
 <a href="https://github.com/ghostm68/pantheon/raw/48b2c43110d39bdf5cfa8d48949fc1dcf3413500/BRIMLESS%20THE%20COLD-SOLDER%20JOINT,%20A%20NOVEL.pdf" 
    download="BRIMLESS_THE_COLD_SOLDER_JOINT_A_NOVEL.pdf"
-   style="background: #111; border: 1px solid var(--primary); color: var(--primary); padding: 5px 15px; text-decoration: none; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 5px;">
+   style="background: #111; border: 1px solid var(--primary); color: var(--primary); padding: 5px 15px; text-decoration: none; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 5px; margin-top: 15px;">
     <span>⬇</span> DOWNLOAD MANUSCRIPT
 </a>
 	<!-- The Module Wrapper -->
