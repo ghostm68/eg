@@ -1056,7 +1056,8 @@ document.addEventListener('DOMContentLoaded', () => {
         align-items: center;
         overflow: hidden;
         min-height: 640px;
-        transition: transform 0.3s ease; /* Transition applied to wrapper scale */
+        transition: transform 0.2s ease-out; /* Smooth transition when scaling */
+        flex-shrink: 0; /* Prevents flexbox from compressing the wrapper */
     }
     
     #flipbook {
@@ -1066,7 +1067,7 @@ document.addEventListener('DOMContentLoaded', () => {
         background: #222;
         box-shadow: 0 0 20px rgba(255,0,0,0.3); /* RED glow */
         border: 2px solid #ff0000; /* RED border */
-        /* No transform here - prevents subpixel page drift */
+        flex-shrink: 0; /* Prevents flexbox from distorting Turn.js page sizes */
     }
     
     /* Turn.js internal wrapper */
@@ -1142,6 +1143,7 @@ document.addEventListener('DOMContentLoaded', () => {
         width: 960px;
         height: 700px;
         margin: auto;
+        flex-shrink: 0;
     }
 
     #flipbook-container.theater-mode #flipbook-controls {
@@ -1154,14 +1156,6 @@ document.addEventListener('DOMContentLoaded', () => {
         width: 90%;
         margin-top: 20px;
     }
-
-    /* Scaling applied to parent wrapper. Prevents Turn.js from drift calculations. */
-    @media (min-width: 801px) {
-        #flipbook-container.theater-mode #flipbook-wrapper {
-            transform: scale(1.18); 
-            transform-origin: center center;
-        }
-    }
     
     /* Mobile styles overrides */
     @media (max-width: 840px) {
@@ -1171,7 +1165,7 @@ document.addEventListener('DOMContentLoaded', () => {
             height: 500px !important; 
             box-shadow: 0 0 15px rgba(255,0,0,0.3); /* Red glow for mobile */
         }
-        #theater-toggle { display: none; } /* Hide theater mode button on mobile */
+        #theater-toggle { display: none; } /* Hide theater mode button on mobile portrait */
     }
 </style>
 
@@ -1219,7 +1213,7 @@ $(document).ready(function() {
     let pdfDoc = null;
     let totalPages = 0;
 
-    // Toggle Theater Mode without triggering turn('update')
+    // Toggle Theater Mode and run adjustScale()
     $('#theater-toggle').on('click', function() {
         $('body').toggleClass('no-scroll');
         $('#flipbook-container').toggleClass('theater-mode');
@@ -1229,6 +1223,8 @@ $(document).ready(function() {
         } else {
             $(this).text('⛶ THEATER MODE');
         }
+        
+        adjustScale();
     });
 
     fetch(proxyUrl)
@@ -1275,6 +1271,9 @@ $(document).ready(function() {
                 }
             });
 
+            // Initial scale calculation
+            adjustScale();
+
             // Initial load of first pages
             setTimeout(() => {
                 addPage(1);
@@ -1290,6 +1289,43 @@ $(document).ready(function() {
             console.error("PDF Loading Error:", err);
             $('#flipbook').html(`<div style="color: red; padding: 20px;">PDF ERROR: ${err.message}<br><small>Confirm the proxy is online and file path is correct.</small></div>`);
         });
+
+    // Dynamic scale calculation based on real-time viewport limits
+    function adjustScale() {
+        const $wrapper = $('#flipbook-wrapper');
+        const isTheater = $('#flipbook-container').hasClass('theater-mode');
+        
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        // Use exact dimensions of the book container
+        const bookWidth = $('#flipbook').width() || 960;
+        const bookHeight = $('#flipbook').height() || 700;
+        
+        let scale = 1.0;
+        
+        if (isTheater) {
+            // Calculate a safe maximum scale fitting inside the screen boundaries
+            const maxScaleX = (viewportWidth * 0.95) / bookWidth;
+            const maxScaleY = (viewportHeight * 0.78) / bookHeight; // Leaves room for controls below
+            
+            scale = Math.min(maxScaleX, maxScaleY);
+            scale = Math.max(0.3, Math.min(1.4, scale)); // Safe boundaries
+        } else {
+            // Standard mode: Scale down only if the book exceeds screen width
+            if (viewportWidth < (bookWidth + 40)) {
+                scale = (viewportWidth - 40) / bookWidth;
+            }
+        }
+        
+        $wrapper.css({
+            'transform': `scale(${scale})`,
+            'transform-origin': 'center center'
+        });
+    }
+
+    // Keep scaling correct on resizing or device rotations
+    $(window).on('resize orientationchange', adjustScale);
 
     function addPage(pageNum) {
         const $flipbook = $('#flipbook');
