@@ -1035,8 +1035,16 @@ window.downloadAstralLog = downloadAstralLog;
 document.addEventListener('DOMContentLoaded', () => {
 	initZodiacGrid(); 
 });
+</script>
 <!-- ========================================== -->
-<!-- 1. FLIPBOOK STYLES                         -->
+<!-- 1. SCRIPT TAGS (ORDERED SEQUENTIALLY)      -->
+<!-- ========================================== -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+<!-- ========================================== -->
+<!-- 2. FLIPBOOK STYLES                         -->
 <!-- ========================================== -->
 <style>
     #flipbook-wrapper {
@@ -1096,7 +1104,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </style>
 
 <!-- ========================================== -->
-<!-- 2. THE HTML UI                             -->
+<!-- 3. THE HTML UI                             -->
 <!-- ========================================== -->
 <section>
     <h2 style="color: var(--primary); font-family: var(--font-seg); border-bottom: 1px solid var(--secondary); padding-bottom: 5px;">
@@ -1104,7 +1112,9 @@ document.addEventListener('DOMContentLoaded', () => {
     </h2>
 
     <div id="flipbook-wrapper">
-        <div id="flipbook"><div style="color: #fff; padding: 20px;">Loading libraries...</div></div>
+        <div id="flipbook">
+            <div style="color: #fff; padding: 20px;">Loading manuscript...</div>
+        </div>
     </div>
 
     <div style="display: flex; justify-content: space-between; margin-top: 10px; font-family: var(--font-tech); font-size: 0.8rem;">
@@ -1117,46 +1127,34 @@ document.addEventListener('DOMContentLoaded', () => {
 </section>
 
 <!-- ========================================== -->
-<!-- 3. THE JAVASCRIPT (SEQUENTIAL LOADER)      -->
+<!-- 4. THE JAVASCRIPT                          -->
 <!-- ========================================== -->
 <script>
-// Dynamic Script Loader to guarantee load order
-function loadScript(src) {
-    return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = src;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error(`Failed to load: ${src}`));
-        document.head.appendChild(script);
-    });
-}
+$(document).ready(function() {
+    // Check if turn.js loaded successfully
+    if (typeof $.fn.turn === 'undefined') {
+        $('#flipbook').html('<div style="color:red;padding:20px;">ERROR: Turn.js failed to load. Please check browser console.</div>');
+        return;
+    }
 
-// Order of execution: jQuery -> PDF.js -> Turn.js CDN
-loadScript("https://code.jquery.com/jquery-3.6.0.min.js")
-    .then(() => loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"))
-    .then(() => loadScript("https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"))
-    .then(() => {
-        // Run application code once dependencies are guaranteed to exist
-        initFlipbook();
-    })
-    .catch(err => {
-        console.error("Library load error:", err);
-        document.getElementById('flipbook').innerHTML = `<div style="color: red; padding: 20px;">Failed to load libraries: ${err.message}</div>`;
-    });
-
-function initFlipbook() {
-    $('#flipbook').html('<div style="color:#fff;padding:20px;">Loading manuscript...</div>');
-    
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
+    // Brimless PDF URL (with spaces)
     const rawGithubUrl = 'https://raw.githubusercontent.com/ghostm68/pantheon/48b2c43110d39bdf5cfa8d48949fc1dcf3413500/BRIMLESS%20THE%20COLD-SOLDER%20JOINT,%20A%20NOVEL.pdf';
+    
+    // Pass to your proxy worker
     const proxyUrl = 'https://lively-limitless.inkrealm.workers.dev/?url=' + encodeURIComponent(rawGithubUrl);
 
     let pdfDoc = null;
     let totalPages = 0;
 
     fetch(proxyUrl)
-        .then(response => response.arrayBuffer())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Failed to fetch PDF (Status: ${response.status})`);
+            }
+            return response.arrayBuffer();
+        })
         .then(buffer => pdfjsLib.getDocument({ data: buffer }).promise)
         .then(pdf => {
             pdfDoc = pdf;
@@ -1189,7 +1187,7 @@ function initFlipbook() {
                     },
                     turned: function(e, page, view) {
                         document.getElementById('page-indicator').textContent = `PAGE: ${page}/${totalPages}`;
-                        prunePages(page);
+                        prunePages(page); // Active canvas cleanup
                     }
                 }
             });
@@ -1206,8 +1204,8 @@ function initFlipbook() {
             }, 50);
 
         }).catch(err => {
-            console.error("PDF Error:", err);
-            $('#flipbook').html(`<div style="color: red; padding: 20px;">PDF ERROR: ${err.message}</div>`);
+            console.error("PDF Loading Error:", err);
+            $('#flipbook').html(`<div style="color: red; padding: 20px;">PDF ERROR: ${err.message}<br><small>Confirm the proxy is online and file path is correct.</small></div>`);
         });
 
     function addPage(pageNum) {
@@ -1252,7 +1250,7 @@ function initFlipbook() {
 
     function prunePages(currentPage) {
         const $flipbook = $('#flipbook');
-        const keepRange = 6;
+        const keepRange = 6; // Keep 6 pages around current view
 
         for (let p = 1; p <= totalPages; p++) {
             if (Math.abs(p - currentPage) > keepRange) {
@@ -1260,13 +1258,12 @@ function initFlipbook() {
                     const pageElement = $flipbook.find(`[data-page="${p}"]`);
                     if (pageElement.length && pageElement.find('canvas').length > 0) {
                         pageElement.empty().html('Loading...');
-                        console.log(`Pruned page ${p} to free canvas memory`);
                     }
                 }
             }
         }
     }
-}
+});
 
 function nextPage() { 
     try { $('#flipbook').turn('next'); } catch(e) { console.error(e); }
