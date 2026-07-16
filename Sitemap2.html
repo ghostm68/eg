@@ -1087,8 +1087,10 @@
     /* ===== SPLASH STAMP ===== */
     .splash-stamp-container {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 2.5rem;
     }
     .splash-stamp {
       opacity: 0.6;
@@ -1275,7 +1277,7 @@
 
   /* Splash: single column, smaller type */
   .splash-content { grid-template-columns: 1fr; gap: 2rem; padding-top: 5rem; }
-  .splash-stamp-container { display: none; }
+  .splash-stamp-container { display: none !important; }
   .splash-title { font-size: clamp(2.5rem, 12vw, 4rem); }
 
   /* Telemetry: stack */
@@ -1331,12 +1333,10 @@
         grid-template-columns: 1fr;
         gap: 3rem;
       }
-      .splash-stamp-container { display: none; }
+      .splash-stamp-container { display: none !important; }
     }
     
 </style>
-<base target="_blank">
-<base target="_blank">
 </head>
 <body class="loading">
 
@@ -1365,7 +1365,7 @@
     <div class="loading-bar-container">
       <div class="loading-bar" id="loadingBar"></div>
     </div>
-    <div class="loading-percent" id="loadingPercent">0%</div>
+    <div class="loading-percent" id="loadingPercent">ноль</div>
   </div>
 
   <!-- Floating Background -->
@@ -1423,10 +1423,19 @@
             </a>
           </div>
 
-          <!-- Spinning stamp on splash -->
+          <!-- Spinning stamp and monitor feed on splash -->
           <div class="splash-stamp-container">
+            <!-- Active surveillance monitor of the inkrealm kessler landing sequence -->
+            <div class="splash-terminal-frame" style="width: 320px; height: 180px; border: 1px solid rgba(220, 20, 60, 0.25); background: #000; position: relative; overflow: hidden; box-shadow: 0 0 25px rgba(220, 20, 60, 0.1); border-radius: 4px;">
+              <div style="position: absolute; top: 0; left: 0; right: 0; height: 20px; background: rgba(220, 20, 60, 0.12); border-bottom: 1px solid rgba(220, 20, 60, 0.2); display: flex; justify-content: space-between; align-items: center; padding: 0 8px; z-index: 5;">
+                <span style="font-family: 'Share Tech Mono', monospace; font-size: 0.6rem; color: var(--red); letter-spacing: 1px;">REMOTE_SCAN // INKREALM.KESSLER</span>
+                <span style="width: 6px; height: 6px; background: var(--red); border-radius: 50%; animation: pulse 1.2s infinite;"></span>
+              </div>
+              <iframe src="https://inkrealm.info/kessler" style="width: 100%; height: 100%; border: none; padding-top: 20px; pointer-events: none;" scrolling="no"></iframe>
+            </div>
+
             <div class="spinning-stamp splash-stamp" data-hover>
-              <svg viewBox="0 0 200 200" width="180" height="180">
+              <svg viewBox="0 0 200 200" width="140" height="140">
                 <path id="splashCircle" d="M 100, 100 m -75, 0 a 75,75 0 1,1 150,0 a 75,75 0 1,1 -150,0" fill="none" />
                 <text font-family="'Share Tech Mono', monospace" font-size="14" fill="rgba(244,237,228,0.15)" letter-spacing="4">
                   <textPath href="#splashCircle">
@@ -1514,17 +1523,19 @@
             Beyond acting, she maintains an active presence in modeling and digital media, collaborating with brands and causes that align with her values. This archive documents her professional trajectory, campaign work, and ongoing creative output.
           </p>
           <div class="bio-stats">
-            <div class="bio-stat">
-              <span class="bio-stat-value">15+</span>
-              <span class="bio-stat-label">Film Credits</span>
-            </div>
-            <div class="bio-stat">
-              <span class="bio-stat-value">3</span>
-              <span class="bio-stat-label">Languages</span>
-            </div>
-            <div class="bio-stat">
-              <span class="bio-stat-value">2014</span>
-              <span class="bio-stat-label">Career Start</span>
+            <div class="bio-stats">
+              <div class="bio-stat">
+                <span class="bio-stat-value">15+</span>
+                <span class="bio-stat-label">Film Credits</span>
+              </div>
+              <div class="bio-stat">
+                <span class="bio-stat-value">3</span>
+                <span class="bio-stat-label">Languages</span>
+              </div>
+              <div class="bio-stat">
+                <span class="bio-stat-value">2014</span>
+                <span class="bio-stat-label">Career Start</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1730,11 +1741,11 @@
 
         loadingBar.style.width = loadProgress + '%';
         const russianNumbers = [
-  'ноль', 'десять', 'двадцать', 'тридцать', 'сорок',
-  'пятьдесят', 'шестьдесят', 'семьдесят', 'восемьдесят', 'девяносто', 'сто'
-];
-const numIndex = Math.min(Math.floor(loadProgress / 10), 10);
-loadingPercent.textContent = russianNumbers[numIndex];
+          'ноль', 'десять', 'двадцать', 'тридцать', 'сорок',
+          'пятьдесят', 'шестьдесят', 'семьдесят', 'восемьдесят', 'девяносто', 'сто'
+        ];
+        const numIndex = Math.min(Math.floor(loadProgress / 10), 10);
+        loadingPercent.textContent = russianNumbers[numIndex];
       }, 120);
 
       function finishLoader() {
@@ -1902,12 +1913,11 @@ loadingPercent.textContent = russianNumbers[numIndex];
         activeIndicators[0].style.color = "var(--red)";
       }
 
-      // Crossfade video
+      // Crossfade video (Direct element update)
       if (player) {
         player.style.opacity = '0';
         setTimeout(() => {
-          const source = player.querySelector('source');
-          if (source) source.src = data.video;
+          player.src = data.video;
           player.load();
           player.play().catch(() => {});
           player.style.opacity = '1';
