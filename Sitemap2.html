@@ -90,11 +90,8 @@
       background-size: 100% 4px;
       z-index: 99;
       pointer-events: none;
-      animation: scanlineAnimation 10s linear infinite;
-    }
-    @keyframes scanlineAnimation {
-      0% { transform: translateY(-100%); }
-      100% { transform: translateY(100%); }
+      opacity: 0.8;
+      will-change: transform;
     }
     .noise-overlay {
       position: fixed;
@@ -1010,6 +1007,68 @@
       }
       .splash-stamp-container { display: none !important; }
     }
+
+    /* ===== ATMOSPHERIC REFINEMENT (LAG FIX) ===== */
+    .splash-atmosphere {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      background: linear-gradient(135deg, var(--ink) 0%, #0a0a0a 30%, var(--charcoal) 60%, var(--gallery-black) 100%);
+    }
+    .atmosphere-gradient {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 30% 50%, rgba(220, 20, 60, 0.08) 0%, transparent 60%),
+                  radial-gradient(ellipse at 70% 30%, rgba(44, 90, 139, 0.06) 0%, transparent 50%);
+    }
+    .atmosphere-grain {
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    }
+    .atmosphere-orb {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.1;
+      will-change: transform;
+    }
+    .orb-1 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(220, 20, 60, 0.25), transparent 70%);
+      top: 10%; left: 60%;
+    }
+    .orb-2 {
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(44, 90, 139, 0.2), transparent 70%);
+      top: 50%; left: 20%;
+    }
+    .orb-3 {
+      width: 250px; height: 250px;
+      background: radial-gradient(circle, rgba(107, 91, 69, 0.2), transparent 70%);
+      top: 30%; left: 40%;
+    }
+
+    /* ===== CONTAINED TELEMETRY STYLINGS ===== */
+    .telemetry-visual {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      width: 100%;
+      max-width: 560px; /* Restricts maximum stretching */
+      margin: 0 auto;
+    }
+    .telemetry-monitor-frame {
+      width: 100%;
+      max-width: 560px; /* Confirms layout box dimensions */
+      aspect-ratio: 16/9;
+      background: #000;
+      position: relative;
+      border: 1px solid rgba(220, 20, 60, 0.35);
+      box-shadow: 0 0 30px rgba(220, 20, 60, 0.15);
+      overflow: hidden;
+      margin: 0 auto;
+    }
   </style>
 </head>
 <body class="loading">
@@ -1095,7 +1154,7 @@
                 <div style="position: absolute; top: 0; left: 0; right: 0; height: 20px; background: rgba(220, 20, 60, 0.12); border-bottom: 1px solid rgba(220, 20, 60, 0.2); display: flex; justify-content: space-between; align-items: center; padding: 0 8px; z-index: 5;">
                   <span style="font-family: 'Share Tech Mono', monospace; font-size: 0.6rem; color: var(--red); letter-spacing: 1px;">LOCAL_FILE // MKJAPAN3.JPG</span>
                 </div>
-                <img src="https://raw.githubusercontent.com/ghostm68/vite-react/main/src/assets/mkjapan3.jpg" style="width: 100%; height: 100%; object-fit: cover; padding-top: 20px;" alt="Marta Kessler in Japan">
+                <img src="https://raw.githubusercontent.com/ghostm68/vite-react/main/src/assets/mkjapan3.jpg" onerror="handleImageError(this, 'mkjapan3')" style="width: 100%; height: 100%; object-fit: cover; padding-top: 20px;" alt="Marta Kessler in Japan">
               </div>
 
               <!-- Video Frame -->
@@ -1259,20 +1318,20 @@
           <div class="monolith-scene" style="z-index: 1;">
             <div class="sechenov-prism">
               <!-- Face 1 -->
-              <div class="prism-face face-1" onclick="sendToTelemetry('https://raw.githubusercontent.com/ghostm68/vite-react/main/src/assets/kmheadshotjuly1.jpg', 'July Headshot Concept // 01', '3:4 Portrait', 'Static Capture', 'LOG_JULY_01')">
-                <img src="https://raw.githubusercontent.com/ghostm68/vite-react/main/src/assets/kmheadshotjuly1.jpg" alt="KM July Headshot 1">
+              <div class="prism-face face-1" onclick="sendToTelemetry(this.querySelector('img').src, 'July Headshot Concept // 01', '3:4 Portrait', 'Static Capture', 'LOG_JULY_01')">
+                <img src="https://raw.githubusercontent.com/ghostm68/vite-react/main/src/assets/kmheadshotjuly1.jpg" onerror="handleImageError(this, 'kmheadshotjuly1')" alt="KM July Headshot 1">
               </div>
               <!-- Face 2 -->
-              <div class="prism-face face-2" onclick="sendToTelemetry('https://raw.githubusercontent.com/ghostm68/vite-react/main/src/assets/kmheadshotjuly2.jpg', 'July Headshot Concept // 02', '3:4 Portrait', 'Static Capture', 'LOG_JULY_02')">
-                <img src="https://raw.githubusercontent.com/ghostm68/vite-react/main/src/assets/kmheadshotjuly2.jpg" alt="KM July Headshot 2">
+              <div class="prism-face face-2" onclick="sendToTelemetry(this.querySelector('img').src, 'July Headshot Concept // 02', '3:4 Portrait', 'Static Capture', 'LOG_JULY_02')">
+                <img src="https://raw.githubusercontent.com/ghostm68/vite-react/main/src/assets/kmheadshotjuly2.jpg" onerror="handleImageError(this, 'kmheadshotjuly2')" alt="KM July Headshot 2">
               </div>
               <!-- Face 3 -->
-              <div class="prism-face face-3" onclick="sendToTelemetry('https://raw.githubusercontent.com/ghostm68/vite-react/main/src/assets/kmheadshotjuly3.jpg', 'July Headshot Concept // 03', '3:4 Portrait', 'Static Capture', 'LOG_JULY_03')">
-                <img src="https://raw.githubusercontent.com/ghostm68/vite-react/main/src/assets/kmheadshotjuly3.jpg" alt="KM July Headshot 3">
+              <div class="prism-face face-3" onclick="sendToTelemetry(this.querySelector('img').src, 'July Headshot Concept // 03', '3:4 Portrait', 'Static Capture', 'LOG_JULY_03')">
+                <img src="https://raw.githubusercontent.com/ghostm68/vite-react/main/src/assets/kmheadshotjuly3.jpg" onerror="handleImageError(this, 'kmheadshotjuly3')" alt="KM July Headshot 3">
               </div>
               <!-- Face 4 -->
-              <div class="prism-face face-4" onclick="sendToTelemetry('https://raw.githubusercontent.com/ghostm68/vite-react/main/src/assets/kmheadshotjuly4.jpg', 'July Headshot Concept // 04', '3:4 Portrait', 'Static Capture', 'LOG_JULY_04')">
-                <img src="https://raw.githubusercontent.com/ghostm68/vite-react/main/src/assets/kmheadshotjuly4.jpg" alt="KM July Headshot 4">
+              <div class="prism-face face-4" onclick="sendToTelemetry(this.querySelector('img').src, 'July Headshot Concept // 04', '3:4 Portrait', 'Static Capture', 'LOG_JULY_04')">
+                <img src="https://raw.githubusercontent.com/ghostm68/vite-react/main/src/assets/kmheadshotjuly4.jpg" onerror="handleImageError(this, 'kmheadshotjuly4')" alt="KM July Headshot 4">
               </div>
             </div>
           </div>
@@ -1456,6 +1515,29 @@
   </div>
 
   <script>
+    // Self-correcting filename & raw reference fallback function
+    function handleImageError(imgElement, baseName) {
+      let attempt = parseInt(imgElement.getAttribute('data-attempt') || '0');
+      
+      // Rotates through casing, file extension, and raw address format parameters 
+      const candidates = [
+        `https://raw.githubusercontent.com/ghostm68/vite-react/main/src/assets/${baseName}.jpg`,
+        `https://raw.githubusercontent.com/ghostm68/vite-react/main/src/assets/${baseName}.JPG`,
+        `https://raw.githubusercontent.com/ghostm68/vite-react/main/src/assets/${baseName}.jpeg`,
+        `https://raw.githubusercontent.com/ghostm68/vite-react/main/src/assets/${baseName}.JPEG`,
+        `https://raw.githubusercontent.com/ghostm68/vite-react/main/src/assets/${baseName}.png`,
+        `https://raw.githubusercontent.com/ghostm68/vite-react/refs/heads/main/src/assets/${baseName}.jpg`,
+        `https://raw.githubusercontent.com/ghostm68/vite-react/refs/heads/main/src/assets/${baseName}.JPG`,
+        `https://raw.githubusercontent.com/ghostm68/vite-react/refs/heads/main/src/assets/${baseName}.jpeg`,
+        `https://raw.githubusercontent.com/ghostm68/vite-react/refs/heads/main/src/assets/${baseName}.JPEG`
+      ];
+      
+      if (attempt < candidates.length) {
+        imgElement.setAttribute('data-attempt', attempt + 1);
+        imgElement.src = candidates[attempt];
+      }
+    }
+
     // Russian word mapper for percentage loading states
     function getRussianPercentWord(p) {
       if (p < 10) return "ноль";
