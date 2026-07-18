@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="https://raw.githubusercontent.com/ghostm68/pantheon/main/wordstar_20240712_065715533.svg">
 <title>Two Skinny Girls | The Museum of Sound</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -94,8 +95,8 @@ nav {
 }
 
 .guitar-wrap {
-  width: 220px;
-  height: 300px;
+  width: 110px;
+  height: 150px;
   margin-bottom: 2rem;
   position: relative;
 }
@@ -260,7 +261,13 @@ p.body {
   margin-top: 0.75rem;
   font-style: italic;
 }
-
+  
+.section {
+  padding: 6rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  scroll-margin-top: 80px; /* Accounts for the height of your sticky navigation bar */
+}
 /* ===== AUDIO ===== */
 .audio-list { margin-top: 2rem; }
 .audio-row {
@@ -461,7 +468,7 @@ footer p {
   .nav-links a { font-size: 0.6rem; }
   .section { padding: 4rem 1.5rem; }
   .gallery { grid-template-columns: repeat(2, 1fr); }
-  .guitar-wrap { width: 160px; height: 220px; }
+  .guitar-wrap { width: 80px; height: 110px; }
 }
 </style>
 <!-- Open Graph Metadata -->
@@ -602,6 +609,26 @@ footer p {
       </div>
     </div>
   </div>
+  <!-- Random Archive Transmission Box -->
+<div style="margin-top: 3rem; background: rgba(0,0,0,0.2); border: 1px dashed rgba(0,0,0,0.3); padding: 30px; text-align: center;">
+  <p class="section-label" style="opacity: 0.8; margin-bottom: 0.5rem;">[ SYSTEM LOG // ARCHIVE GENERATOR ]</p>
+  <h3 style="font-family: 'Playfair Display', serif; font-size: 1.4rem; text-transform: uppercase; margin-bottom: 1.5rem; color: var(--white);">
+    <em>Random Transmission</em>
+  </h3>
+  
+  <!-- Tuned Player Interface -->
+  <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); padding: 20px; max-width: 500px; margin: 0 auto 1.5rem auto;">
+    <div id="random-track-title" style="font-family: 'Space Mono', monospace; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; color: var(--white); opacity: 0.6;">
+      [ SYSTEM OFFLINE // TUNE IN BELOW ]
+    </div>
+    <audio id="random-audio-element" controls style="width: 100%; height: 28px; display: none; outline: none;"></audio>
+  </div>
+
+  <!-- Tune Button -->
+  <button id="tune-btn" class="btn" onclick="tuneRandomTrack()" style="margin: 0; padding: 0.6rem 1.5rem; border-color: var(--black); color: var(--black);">
+    ⚡ TUNE IN
+  </button>
+</div>
 </section>
 
 <!-- KRISTIN [BLACK CANVAS] -->
@@ -913,6 +940,8 @@ audioRows.forEach(row => {
   audio.addEventListener('ended', () => {
     playBtn.textContent = '▶';
     timeText.textContent = '0:00';
+     const randomAudio = document.getElementById('random-audio-element');
+    if (randomAudio) randomAudio.pause();
   });
 });
 
@@ -938,6 +967,43 @@ lightbox.addEventListener('click', () => {
 function toggleSection(headerElement) {
   const section = headerElement.parentElement;
   section.classList.toggle('open');
+}
+  // List of random archive tracks (e.g. Artemis or older cuts)
+// Swap these URLs and names with your actual archive tracks
+const artemisArchive = [
+  { name: "Artemis Session - Cut A", url: "https://github.com/ghostm68/eg/raw/refs/heads/main/k616h.mp3" },
+  { name: "Artemis Session - Cut B", url: "https://github.com/ghostm68/eg/raw/refs/heads/main/semen3.mp3" },
+  { name: "Artemis Session - Cut C", url: "https://github.com/ghostm68/eg/raw/refs/heads/main/keira%20sunday2.mp3" }
+];
+
+function tuneRandomTrack() {
+  const player = document.getElementById('random-audio-element');
+  const titleDisplay = document.getElementById('random-track-title');
+  const tuneBtn = document.getElementById('tune-btn');
+
+  // Pick a random track from the list
+  const randomIndex = Math.floor(Math.random() * artemisArchive.length);
+  const selectedTrack = artemisArchive[randomIndex];
+
+  // If a track from the main list is currently playing, pause it and reset its UI
+  if (currentAudio) {
+    currentAudio.pause();
+    currentPlayBtn.textContent = '▶';
+    
+    const prevRow = currentPlayBtn.closest('.audio-row');
+    if (prevRow) {
+      prevRow.querySelector('.t-time').textContent = '0:00';
+    }
+  }
+
+  // Load and play the random track
+  player.src = selectedTrack.url;
+  player.style.display = 'block';
+  titleDisplay.style.opacity = '1';
+  titleDisplay.textContent = `[ ACTIVE TRANSMISSION ] // ${selectedTrack.name}`;
+  tuneBtn.textContent = "⚡ TUNE ANOTHER";
+
+  player.play().catch(e => console.log("Auto-play blocked or loading error:", e));
 }
 </script>
 </body>
