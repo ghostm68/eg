@@ -6,13 +6,12 @@
     <title>Two Skinny Girls | Archive</title>
     <style>
         :root {
-            --bg: #050505;
-            --surface: #0c0c0c;
-            --border: #1a1a1a;
-            --red-bright: #ff0033;
-            --red-dim: #990022;
-            --text-main: #dddddd;
-            --text-muted: #888888;
+            --bg-red: #cc0024;       /* Stark, bright crimson */
+            --panel-black: #080808;  /* Deep contrast black */
+            --border-light: #ffffff;
+            --border-dim: #444444;
+            --text-white: #ffffff;
+            --text-grey: #aaaaaa;
         }
 
         * {
@@ -23,262 +22,291 @@
         }
 
         body {
-            background-color: var(--bg);
-            color: var(--text-main);
-            overflow-x: hidden;
-            height: 100vh;
+            background-color: var(--bg-red);
+            color: var(--text-white);
+            min-height: 100vh;
         }
 
-        /* Ambient Crimson Background Glow */
-        .ambient-glow {
-            position: fixed;
-            inset: 0;
-            background: radial-gradient(circle at 10% 20%, rgba(255, 0, 51, 0.12) 0%, transparent 60%);
-            pointer-events: none;
-            z-index: 1;
+        /* Direct to Content Split-Screen Layout */
+        .wrapper {
+            display: flex;
+            min-height: 100vh;
         }
 
-        /* Clean, Uncluttered Landing Interface */
-        .landing-container {
-            position: relative;
-            z-index: 10;
-            height: 100vh;
+        /* Left Side: Sticky Visual & Identity Hub */
+        .left-panel {
+            width: 40%;
+            background-color: var(--panel-black);
+            border-right: 3px solid var(--border-light);
+            padding: 40px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            padding: 10% 5%;
-            max-width: 800px;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            height: 100vh;
         }
 
-        .title-group h1 {
-            font-size: clamp(2.5rem, 6vw, 4rem);
-            color: var(--text-main);
-            letter-spacing: -2px;
+        .title-area h1 {
+            font-size: 2.5rem;
             line-height: 1;
+            letter-spacing: -1px;
             margin-bottom: 10px;
         }
 
-        .title-group h1 em {
+        .title-area h1 em {
+            color: var(--bg-red);
             font-style: italic;
-            color: var(--red-bright);
-            text-shadow: 0 0 15px rgba(255, 0, 51, 0.4);
         }
 
-        .subtitle {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 40px;
-            letter-spacing: 2px;
+        .motto {
+            font-size: 0.85rem;
+            color: var(--text-grey);
+            border-left: 2px solid var(--bg-red);
+            padding-left: 10px;
+            margin-top: 15px;
         }
 
-        /* Navigation Buttons */
-        .menu-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            max-width: 350px;
+        /* Right Side: Scrollable Tracklist & Lyrics */
+        .right-panel {
+            width: 60%;
+            padding: 40px;
+            overflow-y: auto;
         }
 
-        .menu-btn {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            padding: 18px 20px;
-            text-align: left;
+        /* Compact Track Blocks */
+        .track-header {
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            margin-top: 30px;
+            margin-bottom: 8px;
+            color: var(--text-white);
+            text-transform: uppercase;
+        }
+
+        .track-box {
+            background: var(--panel-black);
+            border: 1px solid var(--border-dim);
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 5px 5px 0px rgba(0,0,0,0.3);
+        }
+
+        .track-title {
+            color: var(--text-grey);
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+        }
+
+        audio {
+            width: 100%;
+            height: 28px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        details {
+            outline: none;
+        }
+
+        summary {
+            color: var(--bg-red);
+            font-size: 0.8rem;
             cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
+            list-style: none;
+            font-weight: bold;
+            user-select: none;
+        }
+        
+        summary::-webkit-details-marker {
+            display: none;
         }
 
-        .menu-btn:hover {
-            border-color: var(--red-bright);
-            color: var(--red-bright);
-            box-shadow: 0 0 20px rgba(255, 0, 51, 0.15);
+        .lyrics-content {
+            margin-top: 12px;
+            padding: 12px;
+            border-left: 1px dashed var(--bg-red);
+            font-size: 0.8rem;
+            line-height: 1.6;
+            color: #ff8899; /* Readable pinkish-red over black */
         }
 
-        /* Backdrop Overlay for opened menus */
-        .backdrop {
+        /* Image Zoom Styling (The Capo-style zoom emulation) */
+        .zoom-trigger {
+            cursor: zoom-in;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        .zoom-trigger:hover {
+            opacity: 1;
+            transform: scale(1.02);
+        }
+
+        /* Zoom Overlay Backdrop */
+        .zoom-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             opacity: 0;
             visibility: hidden;
-            z-index: 90;
-            transition: all 0.4s ease;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+            cursor: zoom-out;
         }
 
-        .backdrop.active {
+        .zoom-overlay.active {
             opacity: 1;
             visibility: visible;
         }
 
-        /* Full-Page Side Drawer */
-        .drawer {
-            position: fixed;
-            top: 0;
-            right: -100%; /* Hidden off-screen right */
-            width: 100%;
-            max-width: 700px; /* Sits cleanly on the right of desktop, full-width on mobile */
-            height: 100vh;
-            background: var(--surface);
-            border-left: 2px solid var(--red-dim);
-            z-index: 100;
-            transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            overflow-y: auto;
-            padding: 40px 30px;
+        .zoom-overlay img {
+            max-width: 90%;
+            max-height: 90%;
+            border: 1px solid #333;
+            transform: scale(0.95);
+            transition: transform 0.25s ease;
         }
 
-        .drawer.active {
-            right: 0;
-            box-shadow: -20px 0 50px rgba(0,0,0,0.9);
+        .zoom-overlay.active img {
+            transform: scale(1);
         }
 
-        .close-drawer {
-            background: transparent;
-            border: none;
-            color: var(--red-bright);
-            cursor: pointer;
-            font-size: 0.85rem;
-            letter-spacing: 2px;
-            float: right;
-            margin-bottom: 30px;
-        }
-
-        .drawer-inner {
-            clear: both;
+        /* Responsive collapse for small screens */
+        @media (max-width: 900px) {
+            .wrapper {
+                flex-direction: column;
+            }
+            .left-panel {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-right: none;
+                border-bottom: 3px solid var(--border-light);
+                padding: 30px 20px;
+            }
+            .right-panel {
+                width: 100%;
+                padding: 30px 20px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="ambient-glow"></div>
+    <div class="wrapper">
 
-    <!-- MAIN INTERFACE -->
-    <main class="landing-container">
-        <div class="title-group">
-            <h1>TWO SKINNY <em>GIRLS</em></h1>
-            <p class="subtitle">// ARCHIVE_LOG_SYSTEM</p>
-        </div>
-
-        <nav class="menu-list">
-            <!-- Buttons toggle our drawers -->
-            <button class="menu-btn" onclick="toggleDrawer('drawer-obituary')">
-                [ 01 // THE OBITUARY EP ]
-            </button>
-            <button class="menu-btn" onclick="toggleDrawer('drawer-smoke')">
-                [ 02 // "SMOKE THRONE" SESSIONS ]
-            </button>
-        </nav>
-    </main>
-
-    <!-- BACKDROP -->
-    <div class="backdrop" id="backdrop" onclick="closeAllDrawers()"></div>
-
-    <!-- DRAWER 1: OBITUARY EP (Empty Placeholder) -->
-    <div class="drawer" id="drawer-obituary">
-        <button class="close-drawer" onclick="closeAllDrawers()">[ CLOSE_X ]</button>
-        <div class="drawer-inner">
-            <h2 style="color: var(--red-bright); margin-bottom: 20px;">// OBITUARY EP</h2>
-            <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 20px;">
-                Content for the Obituary EP, lyrics, and metadata can be organized here inside vertical flow, avoiding crowded page layouts.
-            </p>
-        </div>
-    </div>
-
-    <!-- DRAWER 2: SMOKE THRONE (Containing your compact markup) -->
-    <div class="drawer" id="drawer-smoke">
-        <button class="close-drawer" onclick="closeAllDrawers()">[ CLOSE_X ]</button>
-        <div class="drawer-inner">
-            
-            <!-- YOUR SENSITIVE COMPACT AUDIO SESSIONS CODE -->
-            <div>
-                <h3 style="color: #ffffff; font-size: 1rem; margin-bottom: 25px; border-left: 3px solid var(--red-bright); padding-left: 10px; letter-spacing: 1px;">
-                    >> AUDIO LOGS // "SMOKE THRONE"
-                </h3>
-
-                <!-- VIDEO ARTIFACT -->
-                <div style="margin: 20px auto 30px auto; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border: 1px dashed var(--red-dim);">
-                    <video 
-                        src="https://github.com/ghostm68/666/raw/main/keira_20260621_112723637.mp4" 
-                        controls 
-                        loop 
-                        muted 
-                        autoplay 
-                        playsinline
-                        style="width: 100%; border: 1px solid #333333; opacity: 0.85;">
-                    </video>
-                    <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 10px; font-style: italic;">
-                        [ VISUAL_LOG // sky_MERGE: keira_20260621.mp4 ]
-                    </div>
-                </div>
-
-                <!-- TRACK 06 -->
-                <div style="color: #dddddd; font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 5px; margin-top: 25px;">// 06. THE SUNRISE CUT [06.22.2026]</div>
-                <div style="margin: 5px 0; padding: 10px; border: 1px solid var(--border); background: rgba(255, 255, 255, 0.01);">
-                    <div style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 6px;">[ audio_TRACK_06 ] // keira's country.mp3</div>
-                    <audio controls style="width: 100%; height: 28px; outline: none; opacity: 0.8;"><source src="https://github.com/ghostm68/eg/raw/refs/heads/main/keira'scountryTWOSKINNYGIRLS06222026.mp3" type="audio/mpeg"></audio>
-                    
-                    <details style="margin-top: 10px; outline: none;" ontoggle="this.querySelector('span').innerText = this.open ? '[ - ]' : '[ + ]'">
-                        <summary style="color: var(--red-bright); font-size: 0.8rem; cursor: pointer; display: block; outline: none;">
-                            <span>[ + ]</span> VIEW_LYRICS // DRAFT_06
-                        </summary>
-                        <div style="margin-top: 10px; padding: 10px; border-left: 1px dashed var(--red-dim); font-size: 0.8rem; color: var(--red-bright); line-height: 1.6;">
-                            it was a hotter than hell sunrise / i shaved a cigarette tight / i looked into keira's eyes / i saw her wanderlust's appetite<br><br>
-                            sleep in my dream tonight...
-                        </div>
-                    </details>
-                </div>
-
-                <!-- TRACK 05 -->
-                <div style="color: #dddddd; font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 5px; margin-top: 25px;">// 05. THE EVENING CUT [06.21.2026]</div>
-                <div style="margin: 5px 0; padding: 10px; border: 1px solid var(--border); background: rgba(255, 255, 255, 0.01);">
-                    <div style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 6px;">[ audio_TRACK_05 ] // keira evening2.mp3</div>
-                    <audio controls style="width: 100%; height: 28px; outline: none; opacity: 0.8;"><source src="https://github.com/ghostm68/eg/raw/refs/heads/main/keira%20evening2.mp3" type="audio/mpeg"></audio>
-
-                    <details style="margin-top: 10px; outline: none;" ontoggle="this.querySelector('span').innerText = this.open ? '[ - ]' : '[ + ]'">
-                        <summary style="color: var(--red-bright); font-size: 0.8rem; cursor: pointer; display: block; outline: none;">
-                            <span>[ + ]</span> VIEW_LYRICS // DRAFT_05
-                        </summary>
-                        <div style="margin-top: 10px; padding: 10px; border-left: 1px dashed var(--red-dim); font-size: 0.8rem; color: var(--red-bright); line-height: 1.6;">
-                            sleep in my dream tonight<br>
-                            sleep in my dream tonight<br><br>
-                            love is come heroey...
-                        </div>
-                    </details>
-                </div>
-
-                <!-- COVER IMAGE & FILE NOTE -->
-                <div style="margin-top: 40px; text-align: center;">
-                    <img src="https://github.com/ghostm68/666/raw/main/twoskinnygirls.keira1782337265343.png" 
-                         style="width: 140px; border: 1px solid var(--border); opacity: 0.8; transition: opacity 0.3s;"
-                         onmouseover="this.style.opacity='1'"
-                         onmouseout="this.style.opacity='0.8'">
-                    <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 12px; font-style: italic; line-height: 1.4;">
-                        [ FILE_NOTE: thanks, emilee, keira, and alivia...especially, specifically, keira. honorable mention to murphy. ]
-                    </div>
-                </div>
-
+        <!-- LEFT PANEL (STAYING IMMOBILE) -->
+        <aside class="left-panel">
+            <div class="title-area">
+                <h1>TWO SKINNY <em>GIRLS</em></h1>
+                <p style="font-size: 0.75rem; color: var(--text-grey); letter-spacing: 2px;">// CURATED AUDIO LOGS</p>
+                <p class="motto">"Ain't no wifey music"</p>
             </div>
 
-        </div>
+            <!-- Loop Video Frame -->
+            <div style="margin: 30px 0; border: 1px solid var(--border-dim); background: #000; padding: 10px;">
+                <video 
+                    src="https://github.com/ghostm68/666/raw/main/keira_20260621_112723637.mp4" 
+                    controls loop muted autoplay playsinline
+                    style="width: 100%; border: 1px solid var(--border-dim); opacity: 0.85;">
+                </video>
+                <div style="font-size: 0.7rem; color: var(--text-grey); margin-top: 8px; font-style: italic; text-align: center;">
+                    [ VISUAL_LOG // keira_20260621.mp4 ]
+                </div>
+            </div>
+
+            <!-- Thumbnail with Zoom Trigger -->
+            <div style="text-align: center;">
+                <img 
+                    src="https://github.com/ghostm68/666/raw/main/twoskinnygirls.keira1782337265343.png" 
+                    class="zoom-trigger"
+                    onclick="openZoom(this)"
+                    style="width: 120px; border: 1px solid var(--border-dim); display: block; margin: 0 auto;"
+                    alt="Keira Render Cover">
+                <p style="font-size: 0.65rem; color: var(--text-grey); margin-top: 8px; font-style: italic;">
+                    [ Click cover to zoom ]
+                </p>
+            </div>
+        </aside>
+
+        <!-- RIGHT PANEL (SCROLLABLE ARCHIVE) -->
+        <main class="right-panel">
+
+            <!-- TRACK 06 -->
+            <div class="track-header">// 06. THE SUNRISE CUT [06.22.2026]</div>
+            <div class="track-box">
+                <div class="track-title">[ audio_TRACK_06 ] // keira'scountry.mp3</div>
+                <audio controls><source src="https://github.com/ghostm68/eg/raw/refs/heads/main/keira'scountryTWOSKINNYGIRLS06222026.mp3" type="audio/mpeg"></audio>
+                
+                <details ontoggle="this.querySelector('span').innerText = this.open ? '[ - ]' : '[ + ]'">
+                    <summary><span>[ + ]</span> VIEW_LYRICS // DRAFT_06</summary>
+                    <div class="lyrics-content">
+                        it was a hotter than hell sunrise / i shaved a cigarette tight / i looked into keira's eyes / i saw her wanderlust's appetite<br><br>
+                        sleep in my dream tonight<br><br>
+                        it was a ringing bell's caress / thoughts buzzed in a scrolling curve / keira had a new bracelet to possess / a barista with a perfect serve<br><br>
+                        sleep in my dream tonight...
+                    </div>
+                </details>
+            </div>
+
+            <!-- TRACK 05 -->
+            <div class="track-header">// 05. THE EVENING CUT [06.21.2026]</div>
+            <div class="track-box">
+                <div class="track-title">[ audio_TRACK_05 ] // keira evening2.mp3</div>
+                <audio controls><source src="https://github.com/ghostm68/eg/raw/refs/heads/main/keira%20evening2.mp3" type="audio/mpeg"></audio>
+
+                <details ontoggle="this.querySelector('span').innerText = this.open ? '[ - ]' : '[ + ]'">
+                    <summary><span>[ + ]</span> VIEW_LYRICS // DRAFT_05</summary>
+                    <div class="lyrics-content">
+                        sleep in my dream tonight<br>
+                        sleep in my dream tonight<br><br>
+                        love is come heroey / down your bending David / star enthusiasm moth curb Beauty / light ford that random battery thrift rid<br><br>
+                        sleep in my dream tonight...
+                    </div>
+                </details>
+            </div>
+
+            <!-- TRACK 04 -->
+            <div class="track-header">// 04. THE SUNDAY CUT [06.21.2026]</div>
+            <div class="track-box">
+                <div class="track-title">[ audio_TRACK_04 ] // keira sunday2.mp3</div>
+                <audio controls><source src="https://github.com/ghostm68/eg/raw/refs/heads/main/keira%20sunday2.mp3" type="audio/mpeg"></audio>
+
+                <details ontoggle="this.querySelector('span').innerText = this.open ? '[ - ]' : '[ + ]'">
+                    <summary><span>[ + ]</span> VIEW_LYRICS // DRAFT_04</summary>
+                    <div class="lyrics-content">
+                        i'm thinking about keira's ink / there's multiple chemicals outdoors / honey we are staying in / until the right rain itself pours <br><br>
+                        sleep in my dream tonight...
+                    </div>
+                </details>
+            </div>
+
+            <div style="font-size: 0.7rem; color: #fff; opacity: 0.7; margin-top: 40px; border-top: 1px solid #fff; padding-top: 15px; font-style: italic;">
+                [ FILE_NOTE: thanks, emilee, keira, and alivia...obviously, especially, specifically, keira. honorable mention to murphy.]
+            </div>
+        </main>
+
     </div>
 
-    <!-- EXTREMELY LIGHT JAVASCRIPT FOR TOGGLING DRAWERS -->
+    <!-- ZOOM OVERLAY ELEMENT -->
+    <div class="zoom-overlay" id="zoomOverlay" onclick="closeZoom()">
+        <img id="zoomTargetImg" src="" alt="Zoomed Artifact">
+    </div>
+
+    <!-- ZOOM JAVASCRIPT -->
     <script>
-        function toggleDrawer(drawerId) {
-            closeAllDrawers();
-            document.getElementById(drawerId).classList.add('active');
-            document.getElementById('backdrop').classList.add('active');
-            // Prevent main page body scroll while viewing drawer
-            document.body.style.overflow = 'hidden';
+        function openZoom(imageElement) {
+            const overlay = document.getElementById('zoomOverlay');
+            const targetImg = document.getElementById('zoomTargetImg');
+            targetImg.src = imageElement.src;
+            overlay.classList.add('active');
         }
 
-        function closeAllDrawers() {
-            const drawers = document.querySelectorAll('.drawer');
-            drawers.forEach(drawer => drawer.classList.remove('active'));
-            document.getElementById('backdrop').classList.remove('active');
-            document.body.style.overflow = 'auto';
+        function closeZoom() {
+            document.getElementById('zoomOverlay').classList.remove('active');
         }
     </script>
 </body>
