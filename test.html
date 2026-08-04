@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebGPU Diagnostic</title>
+    <style>
+        body { background: #000; color: #fff; font-family: monospace; padding: 2rem; font-size: 1.2rem; line-height: 1.6; }
+        h1 { color: #ff0033; border-bottom: 1px solid #ff0033; padding-bottom: 0.5rem; }
+        .ok { color: #00ffcc; font-weight: bold; }
+        .err { color: #ff0033; font-weight: bold; }
+        .solution { margin-top: 1.5rem; background: #111; padding: 1rem; border: 1px solid #333; }
+    </style>
+</head>
+<body>
+    <h1>WebGPU SYSTEM DIAGNOSTIC</h1>
+    <div id="results">Testing system...</div>
+
+    <script>
+        const results = document.getElementById('results');
+        let html = "";
+        
+        // Test 1: Secure Context
+        if (window.isSecureContext) {
+            html += "<p class='ok'>✓ SECURE CONTEXT: ACTIVE</p>";
+        } else {
+            html += "<p class='err'>✗ SECURE CONTEXT: INACTIVE</p>";
+            html += "<div class='solution'><strong>How to fix:</strong> Your browser address bar likely starts with 'file:///'. WebGPU is strictly blocked on local files. You must start your local server (e.g., Python server) and access this page via 'http://localhost:8000' instead.</div>";
+        }
+        
+        // Test 2: WebGPU Support
+        if (navigator.gpu) {
+            html += "<p class='ok'>✓ WEBGPU HARDWARE ACCESS: DETECTED</p>";
+        } else {
+            html += "<p class='err'>✗ WEBGPU HARDWARE ACCESS: BLOCKED / NOT FOUND</p>";
+            if (window.isSecureContext) {
+                html += "<div class='solution'><strong>How to fix:</strong> Your browser is secure, but cannot access your GPU. Go to Chrome Settings, search for <strong>'Hardware Acceleration'</strong>, and ensure <strong>'Use graphics acceleration when available'</strong> is toggled ON. Then restart your browser.</div>";
+            }
+        }
+        
+        if (window.isSecureContext && navigator.gpu) {
+            html += "<p class='ok' style='margin-top:2rem;'>✓ EVERYTHING IS OK. Your browser is ready to run Gemma 4.</p>";
+        }
+        
+        results.innerHTML = html;
+    </script>
+</body>
+</html>
