@@ -134,6 +134,7 @@
 </div>
 
 <!-- 3. HERMES POPOUT (Bottom Right) -->
+<!-- 3. HERMES POPOUT (Bottom Right) -->
 <div class="hermes-anchor">
 	<div class="hermes-window" id="hermes-window">
 		<div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:10px; color:var(--primary);">
@@ -213,40 +214,49 @@
 		</p>
 
 		<!-- THE WEBLLM ARCHITECTURE QUOTE -->
-		<div style="
-			margin-top: 40px; 
-			border-left: 2px solid var(--primary); 
-			padding: 15px 15px 15px 20px; 
-			text-align: left; 
-			max-width: 650px; 
-			margin-left: auto; 
-			margin-right: auto; 
-			background: var(--bg-card);
-			box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
-		">
-			<p style="font-family: 'VT323', monospace; font-size: 1.3rem; color: #ccc; line-height: 1.4; margin: 0;">
-				"It is wild to think that you are running a 3-billion-parameter neural network completely offline, strictly inside a browser tab, using your local GPU."
-			</p>
-			
-			<div style="
-				font-family: var(--font-tech); 
-				font-size: 0.75rem; 
-				color: #666; 
-				margin-top: 15px; 
-				text-transform: uppercase; 
-				letter-spacing: 1px;
-				line-height: 1.6;
-			">
-				<span style="color: #888;">// HERMES_CORE ARCHITECTURE_NOTES</span><br>
-				> Hardware Acceleration via WebGPU<br>
-				> Model weight sharding & IndexedDB Caching<br>
-				> Zero server latency. Absolute privacy.<br>
-				<span style="color: var(--primary); font-weight: bold; margin-top: 5px; display: inline-block;">
-					You are at the cutting edge of decentralized web cognition. Click on  the "H" to get it.
-				</span>
-			</div>
+<!-- THE WEBLLM ARCHITECTURE QUOTE -->
+<div style="
+	margin-top: 40px; 
+	border-left: 2px solid var(--primary); 
+	padding: 15px 15px 15px 20px; 
+	text-align: left; 
+	max-width: 650px; 
+	margin-left: auto; 
+	margin-right: auto; 
+	background: var(--bg-card);
+	box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+">
+	<p style="font-family: 'VT323', monospace; font-size: 1.3rem; color: #ccc; line-height: 1.4; margin: 0;">
+		"It is wild to think that you are running a 3-billion-parameter neural network completely offline, strictly inside a browser tab, using your local GPU."
+	</p>
+	
+	<div style="
+		font-family: var(--font-tech); 
+		font-size: 0.75rem; 
+		color: #666; 
+		margin-top: 15px; 
+		text-transform: uppercase; 
+		letter-spacing: 1px;
+		line-height: 1.6;
+	">
+		<span style="color: #888;">// HERMES_CORE ARCHITECTURE_NOTES</span><br>
+		> Hardware Acceleration via WebGPU (Chrome, Edge, or Safari 18+ required)<br>
+		> Model weight sharding & IndexedDB Caching<br>
+		> Zero server latency. Absolute privacy.<br>
+		
+		<div style="margin-top: 10px; color: #777; border-top: 1px solid #222; padding-top: 10px; text-transform: none; font-style: italic;">
+			<span style="color: var(--primary); font-weight: bold; text-transform: uppercase; font-style: normal; display: block; margin-bottom: 2px;">Requirements & Performance Notes:</span>
+			The first initialization requires downloading sharded model files. 
+			This first load will feel slow depending on your bandwidth, but weights are cached locally to your device storage (IndexedDB). Subsequent launches will load instantly.
+			<br><br>
+			If your system's VRAM is restricted, or the browser throttles active GPU threads, the loader will automatically cascade down to a high-speed 0.5B parameter Qwen layout to preserve window stability.
 		</div>
-	</section>
+
+		<span style="color: var(--primary); font-weight: bold; margin-top: 12px; display: inline-block;">
+			You are at the cutting edge of decentralized web cognition. Click on the "H" to get it.
+		</span>
+	</div>
+</div>
 		<!-- ========================================== -->
 <!-- MCC: MODEL CONTINUITY CHARTER              -->
 <!-- ========================================== -->
@@ -3071,44 +3081,87 @@ window.onload = function() {
 
 <!-- HERMES AI (WebLLM) -->
 <!-- HERMES AI (WebLLM) FOR WORDSTAR -->
+<!-- 3. HERMES POPOUT (Bottom Right) -->
+<div class="hermes-anchor">
+	<div class="hermes-window" id="hermes-window">
+		<div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:10px; color:var(--primary);">
+			<span>HERMES_NODE</span>
+			<span id="nous-status">OFFLINE</span>
+		</div>
+		<div id="hermes-output" class="hermes-output">SYSTEM STANDBY...<br>CLICK INITIALIZE.</div>
+		<input type="text" id="hermes-input" placeholder="QUERY..." style="width:100%; background:#000; border:1px solid #333; color:#fff; padding:5px;">
+		<div style="display:flex; gap:5px; margin-top:5px;">
+			<button id="loadCoreBtn" style="flex:1; background:#111; border:1px solid #333; color:var(--primary); cursor:pointer;">INIT</button>
+			<button id="transmitBtn" style="flex:1; background:#111; border:1px solid #333; color:#fff; cursor:pointer;">SEND</button>
+		</div>
+	</div>
+	<button class="hermes-btn" onclick="toggleHermes()">H</button>
+</div>
+
+<!-- HERMES AI (WebLLM) FOR WORDSTAR WITH QWEN AUTO-FALLBACK -->
 <script type="module">
     import * as webllm from "https://esm.run/@mlc-ai/web-llm";
-    const modelId = "Hermes-3-Llama-3.2-3B-q4f16_1-MLC"; 
-    let engine;
+    
+    const primaryModelId = "Hermes-3-Llama-3.2-3B-q4f16_1-MLC"; 
+    const fallbackModelId = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
+    let engine = null;
+    let activeModelId = primaryModelId;
 
-    // Pointing exactly to Wordstar's HTML IDs
     const btn = document.getElementById('loadCoreBtn');
     const output = document.getElementById('hermes-output');
     const genBtn = document.getElementById('transmitBtn'); 
     const promptInput = document.getElementById('hermes-input'); 
 
+    async function loadModel(modelId, isFallback = false) {
+        activeModelId = modelId;
+        const displayName = isFallback ? "QWEN 0.5B (FALLBACK)" : "HERMES 3B";
+        output.innerHTML = `INITIALIZING...<br>CONNECTING TO ${displayName}...`;
+        
+        engine = await webllm.CreateMLCEngine(modelId, {
+            initProgressCallback: (report) => {
+                const p = Math.round(report.progress * 100);
+                output.innerHTML = `LOADING ${displayName}: ${p}%<br><span style="font-size:8px; color:#666; display:block; margin-top:4px; line-height:1.2;">${report.text}</span>`; 
+                
+                if (p === 100) {
+                    output.textContent = `${displayName} ONLINE. READY.`;
+                    if (btn) btn.style.display = 'none';
+                    
+                    const status = document.getElementById('nous-status');
+                    if (status) {
+                        status.textContent = isFallback ? "FALLBACK" : "ONLINE"; 
+                        status.style.color = isFallback ? "#f7f705" : "var(--primary)"; 
+                    }
+                }
+            }
+        });
+        engine.currentModelId = modelId;
+    }
+
     if (btn) {
         btn.onclick = async () => {
             try {
-                if (!navigator.gpu) throw new Error("GPU MISSING");
+                if (!navigator.gpu) throw new Error("WebGPU unsupported or blocked on this browser.");
                 btn.disabled = true; 
                 btn.textContent = "SYNCING...";
-                output.innerHTML = "INITIALIZING...<br>DOWNLOADING MODEL...";
                 
-                engine = await webllm.CreateMLCEngine(modelId, {
-                    initProgressCallback: (report) => {
-                        const p = Math.round(report.progress * 100);
-                        // Prints the loading percentage directly to the output window
-                        output.innerHTML = `LOADING: ${p}%<br><span style="font-size:8px; color:#666;">${report.text}</span>`; 
-                        
-                        if (p === 100) {
-                            output.textContent = "HERMES ONLINE. AWAITING QUERY.";
-                            btn.style.display = 'none';
-                            
-                            const status = document.getElementById('nous-status');
-                            if (status) {
-                                status.textContent = "ONLINE"; 
-                                status.style.color = "var(--primary)"; 
-                            }
-                        }
-                    }
-                });
-            } catch (err) { output.textContent = "ERR: " + err.message; }
+                try {
+                    // Attempt to load the primary 3B Hermes model
+                    await loadModel(primaryModelId, false);
+                } catch (primaryErr) {
+                    console.warn("Primary model initialization failed. Triggering 0.5B fallback cascade.", primaryErr);
+                    output.innerHTML = `<span style="color:#ff0033; font-weight:bold;">VRAM EXCEEDED / LOAD FAILED</span><br>Auto-cascading to light Qwen fallback...`;
+                    
+                    // Short pause to let user read the cascade event
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                    // Launch tiny 0.5B model fallback
+                    await loadModel(fallbackModelId, true);
+                }
+            } catch (err) { 
+                output.innerHTML = `<span style="color:#ff0033; font-weight:bold;">FATAL ERR:</span> ${err.message}`; 
+                btn.disabled = false;
+                btn.textContent = "RETRY";
+            }
         };
     }
 
@@ -3124,20 +3177,27 @@ window.onload = function() {
             
             try {
                 const chunks = await engine.chat.completions.create({ 
-                    messages: [{ role: "system", content: "You are HERMES." }, { role: "user", content: val }],
-                    stream: true, temperature: 0.7, max_tokens: 512
+                    messages: [
+                        { role: "system", content: "You are a professional assistant." }, 
+                        { role: "user", content: val }
+                    ],
+                    stream: true, 
+                    temperature: 0.7, 
+                    max_tokens: 512
                 });
                 for await (const chunk of chunks) {
                     fullText += chunk.choices[0]?.delta?.content || "";
                     output.textContent = fullText; 
                     output.scrollTop = output.scrollHeight;
                 }
-            } catch (e) { output.textContent = "ERR: " + e.message; } 
-            finally { genBtn.disabled = false; }
+            } catch (e) { 
+                output.textContent = "ERR: " + e.message; 
+            } finally { 
+                genBtn.disabled = false; 
+            }
         };
     }
 </script>
-
 
 <!-- THREE.JS FOOTER -->
 <script>
