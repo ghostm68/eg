@@ -861,35 +861,70 @@ document.querySelectorAll('a, button').forEach(el => {
 // ============================================
 // FLUID TEXT ENGINE
 // ============================================
+// ============================================
+// RESPONSIVE FLUID TEXT ENGINE
+// ============================================
 function initFluidText() {
     const containers = document.querySelectorAll('[data-fluid]');
     containers.forEach(container => {
         const input = container.querySelector('[data-fluid-input]');
         const output = container.querySelector('[data-fluid-output]');
         if (!input || !output) return;
-        const text = input.textContent.trim();
-        const words = text.split(/\s+/);
+        
+        const rawText = input.textContent.trim();
+        
+        // Dynamically split sentences to keep mobile readability high
+        const sentences = rawText.match(/[^.!?]+[.!?]+(\s|$)/g) || [rawText];
+        const groupSize = window.innerWidth < 768 ? 2 : 4; // Shorter paragraphs on mobile
+        const paragraphs = [];
+        
+        for (let i = 0; i < sentences.length; i += groupSize) {
+            paragraphs.push(sentences.slice(i, i + groupSize).join('').trim());
+        }
+        
         output.innerHTML = '';
-        words.forEach((word, i) => {
-            const span = document.createElement('span');
-            span.className = 'fluid-word';
-            span.textContent = word + ' ';
-            span.style.transitionDelay = (i * 0.008) + 's';
-            output.appendChild(span);
+        
+        paragraphs.forEach(paraText => {
+            if (!paraText) return;
+            const p = document.createElement('p');
+            p.style.marginBottom = '28px';
+            p.style.textAlign = 'justify';
+            p.style.lineHeight = '1.75';
+            
+            const words = paraText.split(/\s+/);
+            words.forEach((word, i) => {
+                const span = document.createElement('span');
+                span.className = 'fluid-word';
+                span.textContent = word + ' ';
+                span.style.transitionDelay = (i * 0.003) + 's';
+                p.appendChild(span);
+            });
+            
+            output.appendChild(p);
+            
+            // Attach a local ScrollTrigger to each individual paragraph
+            ScrollTrigger.create({
+                trigger: p,
+                start: 'top 85%',
+                end: 'bottom 40%',
+                scrub: true,
+                onUpdate: (self) => {
+                    const progress = self.progress;
+                    const spans = p.querySelectorAll('.fluid-word');
+                    const revealCount = Math.floor(progress * spans.length);
+                    spans.forEach((span, i) => {
+                        if (i < revealCount) {
+                            span.classList.add('visible');
+                        } else {
+                            span.classList.remove('visible');
+                        }
+                    });
+                }
+            });
         });
-        ScrollTrigger.create({
-            trigger: container,
-            start: 'top 75%',
-            end: 'bottom 40%',
-            onUpdate: (self) => {
-                const progress = self.progress;
-                const spans = output.querySelectorAll('.fluid-word');
-                const revealCount = Math.floor(progress * spans.length);
-                spans.forEach((span, i) => {
-                    if (i < revealCount) span.classList.add('visible');
-                });
-            }
-        });
+        
+        // Force ScrollTrigger to recalculate metrics after DOM generation
+        ScrollTrigger.refresh();
     });
 }
 
