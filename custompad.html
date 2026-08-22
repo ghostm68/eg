@@ -134,26 +134,68 @@
         }
 
         /* Notepad Section */
-        #notepad-section {
-            background: #141414;
-            border: 1px solid #2a2a2a;
-            border-radius: 8px;
-            padding: 1.5rem;
-            height: fit-content;
-            position: sticky;
-            top: 2rem;
-        }
+     /* BASE NOTEPAD */
+#notepad {
+    width: 100%;
+    min-height: 280px;
+    max-height: 50vh;
+    overflow-y: auto;
+    background: #0a0a0a;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 1.2rem;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    box-sizing: border-box;
+    outline: none;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
 
-        #notepad-section h2 {
-            margin-top: 0;
-            font-size: 1.3rem;
-            font-family: 'Cinzel', serif;
-            letter-spacing: 1px;
-            color: #eee;
-            border-bottom: 1px solid #2a2a2a;
-            padding-bottom: 0.75rem;
-        }
+/* === LEVEL 0: RAW TERMINAL === */
+#notepad.level-0 {
+    font-family: 'DejaVu Sans Mono', monospace !important;
+    color: #e0e0e0;
+    border-color: #333;
+    letter-spacing: 0;
+    text-shadow: none;
+    background: #0a0a0a;
+}
 
+/* === LEVEL 1: CIPHER MATRIX === */
+#notepad.level-1 {
+    font-family: 'DejaVu Sans Mono', monospace !important;
+    color: #00ff66 !important;
+    background: #051109 !important;
+    border-color: #00ff66 !important;
+    text-shadow: 0 0 8px rgba(0, 255, 102, 0.6);
+    letter-spacing: 0.05em;
+}
+
+/* === LEVEL 2: KINETIC EDITORIAL === */
+#notepad.level-2 {
+    font-family: 'Cormorant Garamond', 'Georgia', serif !important;
+    font-size: 1.25rem !important;
+    font-style: italic;
+    color: #ffffff !important;
+    background: #0e0d0b !important;
+    border-color: #d4af37 !important;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+    letter-spacing: 0.02em;
+}
+
+/* === LEVEL 3: PARAMETRIC OVERDRIVE === */
+#notepad.level-3 {
+    font-family: 'Cinzel', serif !important;
+    font-size: 1.1rem !important;
+    color: #fff8db !important;
+    background: #141005 !important;
+    border-color: #d4af37 !important;
+    box-shadow: 0 0 25px rgba(212, 175, 55, 0.3), inset 0 0 15px rgba(212, 175, 55, 0.1);
+    text-shadow: 0 0 12px #d4af37, 0 0 25px rgba(212, 175, 55, 0.8);
+    letter-spacing: 0.12em;
+}
         .font-selector {
             margin-bottom: 1rem;
         }
@@ -645,99 +687,107 @@
     <!-- SCRIPT 2: REAL-TIME REACTIVE TYPOGRAPHY ENGINE -->
     <script>
         let currentLevel = 0;
-        const chars = '!<>-_\\/[]{}—=+*^?#@%&010101';
+const chars = '!<>-_\\/[]{}—=+*^?#@%&010101';
+const pad = document.getElementById('notepad');
 
-        // Built-in Decryption Scrambler
-        function runCipherWave(element) {
-            const originalText = element.innerText;
-            if (!originalText || originalText.trim().length === 0) return;
+// Initialize with Level 0
+pad.classList.add('level-0');
 
-            let iteration = 0;
-            const interval = setInterval(() => {
-                element.innerText = originalText
-                    .split('')
-                    .map((char, index) => {
-                        if (char === ' ' || char === '\n') return char;
-                        if (index < iteration) {
-                            return originalText[index];
-                        }
-                        return chars[Math.floor(Math.random() * chars.length)];
-                    })
-                    .join('');
+function setFontLevel(lvl) {
+    currentLevel = lvl;
 
-                if (iteration >= originalText.length) {
-                    clearInterval(interval);
-                    element.innerText = originalText; // Ensure exact finish
-                }
-                iteration += 1;
-            }, 25);
+    // 1. Update HUD buttons
+    document.querySelectorAll('.lvl-btn').forEach((b, i) => {
+        b.classList.toggle('active', i === lvl);
+    });
+
+    // 2. Remove all level styling classes and apply the new persistent tier
+    pad.classList.remove('level-0', 'level-1', 'level-2', 'level-3');
+    pad.classList.add(`level-${lvl}`);
+
+    // 3. Level Switch Transition Effects
+    if (lvl === 1) {
+        // Run full text cipher decode
+        runFullCipher(pad);
+    } else if (lvl === 2) {
+        // Kinetic elastic scale
+        gsap.fromTo(pad, 
+            { scale: 0.97, y: 10 }, 
+            { scale: 1, y: 0, duration: 0.5, ease: "elastic.out(1, 0.5)" }
+        );
+    } else if (lvl === 3) {
+        // Parametric gold flash
+        gsap.fromTo(pad, 
+            { filter: "brightness(2) contrast(1.2)" }, 
+            { filter: "brightness(1) contrast(1)", duration: 0.6 }
+        );
+    }
+}
+
+// Live Cipher Algorithm for Level 1
+function runFullCipher(element) {
+    const originalText = element.innerText;
+    if (!originalText || originalText.trim().length === 0) return;
+
+    let iteration = 0;
+    const interval = setInterval(() => {
+        element.innerText = originalText
+            .split('')
+            .map((char, index) => {
+                if (char === ' ' || char === '\n') return char;
+                if (index < iteration) return originalText[index];
+                return chars[Math.floor(Math.random() * chars.length)];
+            })
+            .join('');
+
+        if (iteration >= originalText.length) {
+            clearInterval(interval);
+            element.innerText = originalText;
         }
+        iteration += 2;
+    }, 20);
+}
 
-        // Font Level Switcher
-        function setFontLevel(lvl) {
-            currentLevel = lvl;
+// Live Keystroke Reactions per Level
+pad.addEventListener('keydown', (e) => {
+    // LEVEL 1: Cipher Glitch while typing
+    if (currentLevel === 1 && e.key.length === 1) {
+        gsap.fromTo(pad, 
+            { textShadow: "0 0 15px #00ff66, -2px 0 0 #00ffff" }, 
+            { textShadow: "0 0 8px rgba(0, 255, 102, 0.6)", duration: 0.2 }
+        );
+    }
 
-            // Update UI buttons
-            document.querySelectorAll('.lvl-btn').forEach((b, i) => {
-                b.classList.toggle('active', i === lvl);
-            });
-
-            // Level-specific setup
-            if (lvl === 3) {
-                notepad.classList.add('parametric-mode');
-            } else {
-                notepad.classList.remove('parametric-mode');
-            }
-
-            // LEVEL 1 TRIGGER: Scramble & decrypt entire buffer
-            if (lvl === 1) {
-                runCipherWave(notepad);
-            }
-
-            // Flash effect on Level Switch
-            gsap.fromTo(notepad, 
-                { backgroundColor: lvl === 3 ? "rgba(212, 175, 55, 0.25)" : "rgba(255, 255, 255, 0.15)" }, 
-                { backgroundColor: "#0a0a0a", duration: 0.4, ease: "power2.out" }
+    // LEVEL 2: Kinetic Recoil Punch
+    if (currentLevel === 2) {
+        if (e.key === 'Enter') {
+            gsap.fromTo(pad, 
+                { y: 8, rotate: -0.5 }, 
+                { y: 0, rotate: 0, duration: 0.4, ease: "elastic.out(1.2, 0.3)" }
             );
+        } else if (e.key.length === 1) {
+            const randX = (Math.random() - 0.5) * 4;
+            const randY = (Math.random() - 0.5) * 2;
+            gsap.fromTo(pad, { x: randX, y: randY }, { x: 0, y: 0, duration: 0.08 });
         }
+    }
 
-        // Live Keystroke Reaction Engine
-        notepad.addEventListener('keydown', (e) => {
-            // LEVEL 2: KINETIC MECHANICAL RECOIL
-            if (currentLevel === 2) {
-                if (e.key === 'Enter') {
-                    // Shockwave bounce on return key
-                    gsap.fromTo(notepad, 
-                        { y: 8, scale: 0.99 }, 
-                        { y: 0, scale: 1, duration: 0.35, ease: "elastic.out(1.2, 0.4)" }
-                    );
-                } else {
-                    // Micro recoil jitter on every letter
-                    const randX = (Math.random() - 0.5) * 3;
-                    const randY = (Math.random() - 0.5) * 2;
-                    gsap.fromTo(notepad, 
-                        { x: randX, y: randY }, 
-                        { x: 0, y: 0, duration: 0.1 }
-                    );
-                }
+    // LEVEL 3: Parametric Laser Expansion
+    if (currentLevel === 3 && e.key.length === 1) {
+        gsap.fromTo(pad, 
+            { 
+                textShadow: "0 0 20px #ffffff, 0 0 35px #d4af37",
+                letterSpacing: "0.18em"
+            }, 
+            { 
+                textShadow: "0 0 12px #d4af37, 0 0 25px rgba(212, 175, 55, 0.8)",
+                letterSpacing: "0.12em", 
+                duration: 0.3,
+                ease: "power2.out"
             }
-
-            // LEVEL 3: PARAMETRIC NEON PULSE
-            if (currentLevel === 3) {
-                gsap.fromTo(notepad, 
-                    { 
-                        textShadow: "0 0 15px #d4af37, 0 0 30px #ffffff",
-                        letterSpacing: "0.08em"
-                    }, 
-                    { 
-                        textShadow: "0 0 4px rgba(212, 175, 55, 0.4), 0 0 0px #000",
-                        letterSpacing: "0em",
-                        duration: 0.3, 
-                        ease: "power2.out" 
-                    }
-                );
-            }
-        });
+        );
+    }
+});
     </script>
 </body>
 </html>
