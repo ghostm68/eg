@@ -7,6 +7,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DejaVu+Sans+Mono&family=DejaVu+Sans:wght@400;700&family=DejaVu+Serif:wght@400;700&display=swap" rel="stylesheet">
+    </script><script defer src="https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/gsap.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/SplitText.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/ScrollTrigger.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/Flip.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/ScrambleTextPlugin.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/DrawSVGPlugin.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@barba/core@2.10.3/dist/barba.umd.min.js"></script>
+<script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.61/build/spline-viewer.js"></script>
+<script defer src="https://unpkg.com/lenis@1.3.17/dist/lenis.min.js"></script> 
     <style>
         body {
             background: #0a0a0a;
@@ -192,6 +201,54 @@
         .loading {
             opacity: 0.7;
         }
+        #font-level-hud {
+    position: fixed;
+    top: 1rem;
+    right: 1.5rem;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background: rgba(10, 10, 10, 0.85);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    padding: 6px 12px;
+    border-radius: 4px;
+    z-index: 999;
+    font-family: monospace;
+}
+
+.hud-label {
+    color: #d4af37;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+}
+
+.lvl-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #aaa;
+    font-size: 10px;
+    padding: 2px 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.lvl-btn.active, .lvl-btn:hover {
+    color: #000;
+    background: #d4af37;
+    border-color: #d4af37;
+}
+
+#pad {
+    width: 800px;
+    max-width: 90vw;
+    margin: 6rem auto;
+    min-height: 70vh;
+    outline: none;
+    font-family: 'Cormorant Garamond', 'Cinzel', serif;
+    font-size: 1.5rem;
+    line-height: 1.8;
+    color: #f0f0f0;
+}
     </style>
 </head>
 <body>
@@ -229,7 +286,13 @@
                     <option value="dejavu-serif">DejaVu Serif</option>
                 </select>
             </div>
-
+<div id="font-level-hud">
+    <span class="hud-label">FONT LEVEL:</span>
+    <button onclick="setFontLevel(0)" class="lvl-btn active">0: RAW</button>
+    <button onclick="setFontLevel(1)" class="lvl-btn">1: CIPHER</button>
+    <button onclick="setFontLevel(2)" class="lvl-btn">2: KINETIC</button>
+    <button onclick="setFontLevel(3)" class="lvl-btn">3: PARAMETRIC</button>
+</div>
             <textarea id="notepad" placeholder="Write your thoughts about the art..."></textarea>
 
             <div id="attachedImage" style="display: none;">
@@ -516,6 +579,54 @@
         }
 
         initialize();
+    </script>
+    <script>
+        // Ensure GSAP plugins are registered
+gsap.registerPlugin(SplitText, ScrambleTextPlugin, Flip);
+
+let currentLevel = 0;
+const pad = document.getElementById('pad');
+
+function setFontLevel(lvl) {
+    currentLevel = lvl;
+    document.querySelectorAll('.lvl-btn').forEach((b, i) => {
+        b.classList.toggle('active', i === lvl);
+    });
+}
+
+// Intercept typing / interactions based on the Level
+pad.addEventListener('input', (e) => {
+    if (currentLevel === 1) {
+        // LEVEL 1: Cipher Scramble on recent words
+        const selection = window.getSelection();
+        if (!selection.anchorNode) return;
+        
+        const parentEl = selection.anchorNode.parentElement;
+        if (parentEl && parentEl !== pad) {
+            gsap.to(parentEl, {
+                duration: 0.4,
+                scrambleText: { text: parentEl.innerText, chars: "!<>-_\\/[]{}—=+*^?#@%&" }
+            });
+        }
+    }
+});
+
+// LEVEL 2: Trigger Kinetic Split / Float on Enter Key
+pad.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && currentLevel === 2) {
+        setTimeout(() => {
+            const split = new SplitText(pad, { type: "words,chars" });
+            gsap.from(split.chars, {
+                duration: 0.6,
+                opacity: 0,
+                scale: 0.5,
+                y: -20,
+                stagger: 0.02,
+                ease: "back.out(2)"
+            });
+        }, 10);
+    }
+});
     </script>
 </body>
 </html>
