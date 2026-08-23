@@ -19,11 +19,13 @@
             --xs: 584px;
             --font-sans: "HelveticaProRoman", "Helvetica", sans-serif;
             --font-mono: "2XAMONOVF", monospace;
+            --font-story: "Fleming", "HelveticaProRoman", serif, sans-serif;
             --font-scale: 1;
             --font-sm: calc(1rem * var(--font-scale));
             --font-sd: calc(1.25rem * var(--font-scale));
             --font-md: calc(1.5625rem * var(--font-scale));
             --font-lg: calc(1.875rem * var(--font-scale));
+            --font-xl: calc(2.25rem * var(--font-scale));
             --pad: 1.25rem;
             --gap: .625rem;
             --nav-height: calc(var(--font-md) + var(--pad) * 2);
@@ -57,20 +59,27 @@
             --border-radius-text: .15rem;
         }
 
-        /* ── WORDSTAR BLUE (Classic Mode) ── */
-        body.classic-mode {
-            --bg-color: #0000AA;
-            --bg-card: rgba(0, 0, 170, 0.85);
-            --primary: #FFFF00;
-            --secondary: #00FFFF;
-            --text-main: #FFFFFF;
-            --scanline-tint: rgba(255, 255, 255, 0.1);
-            --white: #ffffff;
-            --grey: #333333;
-            --red: #FFFF00;
-            --dark-grey: #222222;
-            --selection-bg: #FFFF00;  
-            --selection-color: #0000AA; 
+        /* ── FONTS ── */
+        @font-face {
+            font-family: "Fleming";
+            src: url("https://raw.githubusercontent.com/ghostm68/eg/main/fonts/fleming-regular.woff2") format("woff2");
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: HelveticaProRoman;
+            src: url(/public/dist/assets/HelveticaProRoman-CPlYd_WS.woff2) format("woff2");
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: "2XAMONOVF";
+            src: url("https://raw.githubusercontent.com/ghostm68/eg/main/fonts/wordstar-regular.woff2") format("woff2");
+            font-style: normal;
+            font-weight: 100 900;
+            font-display: swap;
         }
 
         /* === SELECTION STYLES === */
@@ -89,21 +98,6 @@
         @media only screen and (max-width:1024px) { :root { --font-scale: .9; } }
         @media only screen and (max-width:768px)  { :root { --font-scale: .8; } }
         @media only screen and (max-width:584px)  { :root { --pad: .75rem; --gap: .5rem; } }
-
-        @font-face {
-            font-family: HelveticaProRoman;
-            src: url(/public/dist/assets/HelveticaProRoman-CPlYd_WS.woff2) format("woff2");
-            font-style: normal;
-            font-weight: 400;
-            font-display: swap;
-        }
-        @font-face {
-            font-family: "2XAMONOVF";
-            src: url("https://raw.githubusercontent.com/ghostm68/eg/main/fonts/wordstar-regular.woff2") format("woff2");
-            font-style: normal;
-            font-weight: 100 900;
-            font-display: swap;
-        }
 
         * {
             margin: 0;
@@ -194,19 +188,37 @@
             padding: var(--pad);
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
             z-index: 500;
             mix-blend-mode: difference;
             pointer-events: none;
         }
         header .nav .logo {
             pointer-events: auto;
+            display: flex;
+            align-items: center;
         }
         header .nav .logo a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.65rem;
             font-size: calc(var(--font-lg) * 1.15);
             font-weight: 700;
             letter-spacing: -0.02em;
             color: var(--white);
+        }
+        .header-pencil-wrap {
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .header-pencil-wrap svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
         }
         header .nav ul {
             display: flex;
@@ -265,7 +277,7 @@
         .story-title {
             font-family: var(--font-mono);
             color: var(--foreground);
-            font-size: calc(var(--font-xl) * 1.1);
+            font-size: calc(var(--font-xl) * 1.15);
             line-height: 1;
             letter-spacing: -0.03em;
             margin-bottom: 0.3em;
@@ -279,32 +291,46 @@
             letter-spacing: 0.05em;
         }
 
+        /* ── FLUID STORY ENGINE & ILLUMINATION ── */
         .fluid-story-wrapper {
             position: relative;
             column-count: 2;
             column-gap: 50px;
-            column-rule: 1px solid var(--foreground-dimmed);
+            column-rule: 1px solid rgba(255, 0, 0, 0.2);
         }
         @media (max-width: 768px) {
             .fluid-story-wrapper { column-count: 1; }
         }
         [data-fluid-input] { display: none; }
+        
         [data-fluid-output] {
-            font-family: var(--font-sans);
-            font-size: clamp(1rem, 1.4vw, 1.2rem);
-            font-weight: 300;
-            line-height: 1.8;
-            color: var(--foreground);
+            font-family: var(--font-story);
+            font-size: clamp(1.1rem, 1.45vw, 1.3rem);
+            font-weight: 400;
+            line-height: 1.85;
             text-align: left;
         }
+
+        /* Dimmed base state */
         [data-fluid-output] .fluid-word {
             display: inline;
-            opacity: 1;
-            color: var(--foreground);
-            transition: color 0.2s ease;
+            opacity: 0.22;
+            color: var(--ash);
+            transition: opacity 0.35s ease, color 0.35s ease, text-shadow 0.35s ease;
         }
-        [data-fluid-output] .fluid-word:hover {
+
+        /* Scrolled into focus state */
+        [data-fluid-output] .fluid-word.illuminated {
+            opacity: 1;
+            color: var(--text-main);
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.25);
+        }
+
+        /* Hover interaction */
+        [data-fluid-output] .fluid-word.illuminated:hover {
             color: var(--primary);
+            text-shadow: 0 0 8px var(--primary);
+            cursor: default;
         }
 
         /* ── SERVICES ── */
@@ -435,7 +461,7 @@
             background-position: 50%;
             transform: translateZ(0);
             animation: noise 2s steps(1) infinite;
-            background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iODAiIGZpbGw9IiMwZjBmMGYiLz48cmVjdCB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIwLjA0IiB4PSIwIiB5PSIwIi8+PHJlY3Qgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0iI2ZmZiIgb3BhY2l0eT0iMC4wNiIgeD0iMiIgeT0iMyIvPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmZmYiIG9wYWNpdHk9IjAuMDMiIHg9IjUiIHk9IjciLz48cmVjdCB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIwLjA1IiB4PSI5IiB5PSIyIi8+PC9zdmc+);
+            background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iODAiIGZpbGw9IiMwZjBmMGYiLz48cmVjdCB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIwLjA0IiB4PSIwIiB5PSIwIi8+PHJlY3Qgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0iI2ZmZiIgb3BhY2l0eT0iMC4wNiIgeD0iMiIgeT0iMyIvPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmZmYiIG9wYWNpdHk9IjAuMDMiIHg9IjUiIHk9IjciLz48cmVjdCB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIwLjA1IiB4PSI5IiB5PSIyIi8+PHJlY3Qgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0iI2ZmZiIgb3BhY2l0eT0iMC4wNyIgeD0iMTIiIHk9IjUiLz48cmVjdCB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIwLjA0IiB4PSIxNSIgeT0iOSIvPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmZmYiIG9wYWNpdHk9IjAuMDYiIHg9IjE4IiB5PSIxIi8+PHJlY3Qgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0iI2ZmZiIgb3BhY2l0eT0iMC4wMyIgeD0iMjAiIHk9IjYiLz48cmVjdCB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIwLjA1IiB4PSIyMyIgeT0iNCIvPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmZmYiIG9wYWNpdHk9IjAuMDciIHg9IjI2IiB5PSI4Ii8+PC9zdmc+);
             opacity: .25;
             mix-blend-mode: screen;
         }
@@ -457,11 +483,62 @@
     <!-- ====== NOISE OVERLAY ====== -->
     <div class="noise" aria-hidden="true"></div>
 
-    <!-- ====== HEADER (CORNER PINNED) ====== -->
+    <!-- ====== HEADER (CORNER PINNED WITH ELECTRIC PENCIL) ====== -->
     <header>
         <nav class="nav" aria-label="Main navigation">
             <div class="logo">
-                <a href="/" class="button--has-hover">WORDSTAR</a>
+                <a href="/" class="button--has-hover">
+                    <span class="header-pencil-wrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" class="electric-pencil-svg">
+                            <defs>
+                                <filter id="electric-glow" x="-20%" y="-20%" width="140%" height="140%">
+                                    <feGaussianBlur stdDeviation="3" result="blur" />
+                                    <feMerge>
+                                        <feMergeNode in="blur" />
+                                        <feMergeNode in="SourceGraphic" />
+                                    </feMerge>
+                                </filter>
+                            </defs>
+                            <style>
+                                .ep-stroke { stroke: var(--primary); stroke-width: 3.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+                                .ep-fill { fill: var(--primary); }
+                                .ep-bolt { stroke: #ffffff; stroke-width: 2.5; fill: none; filter: url(#electric-glow); animation: zap 1.5s infinite alternate; }
+                                .ep-body { fill: #0a0a0a; stroke: var(--primary); stroke-width: 3.5; }
+                                @keyframes zap {
+                                    0% { opacity: 0.7; stroke: var(--primary); }
+                                    50% { opacity: 1; stroke: #ffffff; }
+                                    100% { opacity: 0.9; stroke: #ff4444; }
+                                }
+                            </style>
+                            <g transform="rotate(-45 250 250)">
+                                <path d="M 230 70 L 270 70 A 15 15 0 0 1 270 100 L 230 100 A 15 15 0 0 1 230 70 Z" class="ep-body" />
+                                <rect x="230" y="100" width="40" height="20" class="ep-stroke" />
+                                <line x1="230" y1="108" x2="270" y2="108" class="ep-stroke" />
+                                <line x1="230" y1="114" x2="270" y2="114" class="ep-stroke" />
+                                <polygon points="230,120 270,120 270,350 230,350" class="ep-body" />
+                                <line x1="243" y1="120" x2="243" y2="350" class="ep-stroke" />
+                                <line x1="257" y1="120" x2="257" y2="350" class="ep-stroke" />
+                                <polygon points="230,350 270,350 250,410" class="ep-body" />
+                                <line x1="243" y1="350" x2="250" y2="410" class="ep-stroke" />
+                                <line x1="257" y1="350" x2="250" y2="410" class="ep-stroke" />
+                                <polygon points="245,395 255,395 250,410" class="ep-fill" />
+                            </g>
+                            <g class="ep-bolt">
+                                <path d="M 120 380 L 100 400 L 115 410 L 80 435 L 105 425 L 90 460" />
+                                <path d="M 140 330 L 110 335 L 125 350 L 70 365" />
+                                <path d="M 170 410 L 160 440 L 175 445 L 150 480" />
+                                <path d="M 135 365 L 115 385 L 130 395 L 95 430" />
+                                <path d="M 190 370 L 220 385 L 210 395 L 245 420" />
+                                <path d="M 160 340 L 190 330 L 180 345 L 220 340" />
+                                <circle cx="110" cy="310" r="2" class="ep-fill" />
+                                <circle cx="65" cy="400" r="3" class="ep-fill" />
+                                <circle cx="180" cy="470" r="2.5" class="ep-fill" />
+                                <circle cx="240" cy="370" r="2" class="ep-fill" />
+                            </g>
+                        </svg>
+                    </span>
+                    <span>WORDSTAR</span>
+                </a>
             </div>
             <ul>
                 <li><a href="/dreamweaver" class="button--has-hover">DREAMWEAVER</a></li>
@@ -478,14 +555,14 @@
         <section class="manifesto" aria-labelledby="story-heading">
             <div class="manifesto-wrapper">
                 <div class="story-container">
-                    <div class="ed-label reveal">Story 01</div>
+                    <div class="ed-label reveal">Transmission 01</div>
                     <h1 id="story-heading" class="story-title reveal">Suitcases of the Silenced</h1>
                     <p class="story-by reveal">by inky</p>
                     
                     <div class="fluid-story-wrapper reveal" data-fluid>
                         <p data-fluid-input>
-                            The morning fog rolled across the lower basin, veiling the old brick facades in a pale, quiet light. For decades, the rail yard had hummed with the rhythmic clatter of freight cars and the low murmurs of shifting crews. Johan kept his watch from the signal tower, observing the subtle movements of the yard below. Every route was mapped, every switch documented with mechanical precision. As the years advanced, the quiet town gave way to modern thoroughfares, but the memory of the original crossing remained etched into the foundations. Documents yellowed in archive drawers, yet the spirit of vigilance never diminished. Each signal carried the weight of history, a steady reminder of the voices that shaped the silent frontier.
-                        </p>
+                              I reckon it started with the girl, little Lilly Durant, back in the fall of that year when the leaves hung like bloody hands from the cottonwoods along the creek. She was twelve, sharp as a hawkbill knife, with eyes that caught the light like river quartz. Lilly lived in a clapboard building down by the rail yards in a town called Bitter Crossing—folks called it that on account of the alkali water that soured your gut. Her pa was the watchman there, Johan Durant, a man with hands like leather mitts from years of oiling locks and sweeping dust. He kept the place tight as a miser's fist. That afternoon, Lilly walked home from school under a sky the color of hammered lead. She entered the building at quarter past three, her books clutched like a shield. The grainy eye of the watchman's camera caught her trailing after a woman—a tall, shadowed figure in a long coat, moving like smoke through the dim hall. They say the woman, Dora Benning, had no roots in that town, just drifted in like a dust devil, renting a room from her sister upstairs. Dora called to the girl, sweet as poisoned honey, and Lilly followed, innocent as a lamb to the shear. Inside that room, evil unfolded plain as a wanted poster. Dora made the child strip and wash, then took her pleasure in ways that blacken the soul to tell. When Lilly fought, Dora bound her mouth with silver tape that gleamed like sin, choked the breath from her young throat, stabbed her fierce with a box blade till the floorboards drank red. She hacked the head free, wrapped the pieces in burlap, and dragged the lot down to the cellar in the dead of night. Come midnight, a tramp stumbling from the hooch tents found the trunk—a scarred travel case, heavy as judgment—dumped in the hollow by the tracks. Inside, the girl, folded like laundry, mutilated and still. Johan saw it on the footage at dawn and raised the cry. The law came with lanterns and bloodhounds, but the trunk told the tale. They took Dora easy; she cracked like dry earth, confessed it all with eyes flat as a snake's. The papers blared it for a week: Girl's Body in Basement Trunk—Fiend Confesses Butchery. But Lilly? She faded quick, just another clipping yellowing in some archive drawer. Folks shook their heads, crossed the street from the Durant place, and got on with scraping a living. They forgot she was worth more than headlines—worth a whole heaven, that girl, with dreams of books and horses yet unridden. The law hanged Dora slow in the spring, but it didn't mend the hollow in Johan's chest. He took to the bottle, muttering about prophets silenced young, voices crying in the wilderness that no one heeds. Lilly, he said, was like John the Baptist—pure, pointing the way, cut down by Herod's hand before the light came full. I listened to him once in a roadhouse, his voice gravel over whiskey. "She saw the dark coming," he said. "Warned us all, and we let her go quiet." Years rolled like wagon wheels over that dust. The rails rusted, Bitter Crossing grew into a sprawl of neon and ticky-tack, but the echo lingered. Then came Stella Pierce, out east in the timber country, where the pines claw the sky like black fingers. Stella was no child; thirty-one, lithe as a whip, with hair like autumn fire and a face that sold dreams on the glowing screens. They called her an influencer, whatever that means—a modern herald, preaching beauty and grit to the faceless hordes. She had a dog, a golden hound named Morrow, and a feed full of light: poses in the sage, sermons on mending hearts, calls to rise above the mud. It was after a Christmas hoedown in Grazel Flats, that raw November night in ought-twenty-five, when the devil circled back. Stella shared a ride home with a gal pal, stepped out into the frosted air of her stairwell under a moon like a chipped plate. She tapped out messages on her phone: Creep in the stairwell. Dark figure shadowing. Last words from a voice that reached millions. Neighbors heard the ruckus—thumps like furniture wrestling, a muffled cry. They spied Pete Marlow—that's what they called him, the bouncer from the juke joint, broad as a barn door with eyes like bad debts—hauling a rolled rug from the building, sweat gleaming on his neck. Pete was her cast-off man, a Slovenian stray who'd latched on like a burr. She'd told folks she was done with him, summer past, but he wouldn't quit. Wouldn't let the sun set on his claim. He ambushed her there in the cold, they fought fierce over the ending, and he squeezed the life from her throat with hands made for breaking chairs. Stuffed her into a suitcase—black leather, the kind salesmen tote lies in—tied it shut with his belt. Drove it cross the border line into the Slovenian scrub, that tangled wood near Majsperk where the wind whispers old grudges. Buried it shallow under pine needles and rot, then torched his red buggy in a casino lot to cover tracks, thinking fire cleanses all. She missed a picture shoot come Monday. Her photographer rode out to the apartment, found Morrow whining alone, bowl dry. Phone tossed in the brush like trash. The law fanned out with drones humming like locusts, sniffers questing the wind. Pete bolted to his kinfolk's, but they pinned him quick, dragged him back in irons. He stonewalled at first, lips sealed tight, but the hours ground him down. Cracked like Dora before him. "I did it," he said, voice flat as a grave marker. "Strangled her in the heat. Show you the spot." They followed his lead to the woods, dug up the suitcase under a sky spitting snow. Stella inside, bruised and broken, but still she, worth every star in that firmament. The papers howled again: Influencer's Body in Border Woods—Ex Confesses Strangle and Dump. Another clipping, another fade. Coworkers spoke of her fire, how she pulled folks from the pit with her words. Neighbors recalled her laughing off Pete's shadow. But the world scrolled past, chasing the next flicker. Johan Durant heard of it up in Bitter Crossing, older now, liver-spotted and leaning on a cane carved from creek driftwood. He rode the bus east, stood at the grave they scratched for Stella in the potter's field. "John and the Christ," he muttered to the wind. "Lilly cried the warning, pointed to the light. Stella was the light herself—influencer, they called her, spreading gospel on glass panes. Both silenced in trunks, prophets stuffed away like soiled linen. But worth? Lord, they were worth the whole damn frontier." I was there that day, the law dog who chased both shadows—Dora's ghost and Pete's flame. Seen too many hollows filled with the young and the bright. Ain't no poetry in the blood, but there's poetry in the worth. Every soul's a deed to eternity, notarized in the book up high. These two, Lilly and Stella, they ain't just newsprint ghosts. They're the grit in the oyster, the pearl forming slow. Their stories ride the wind eternal, reminding us: heed the cry in the stairwell, the figure in the scrub. For everyone's worth the fight—the long ride, the hard dig, the final reckoning under the pines. And when the suitcase opens at the judgment, it'll empty light, not shadow. That's the true grit of it.
+                       </p>
                         <div data-fluid-output></div>
                     </div>
                     
@@ -639,10 +716,10 @@
                     if (!paraText) return;
                     const p = document.createElement('p');
                     p.style.marginBottom = '28px';
-                    p.style.lineHeight = '1.8';
+                    p.style.lineHeight = '1.85';
                     
                     const words = paraText.split(/\s+/);
-                    words.forEach((word, i) => {
+                    words.forEach((word) => {
                         const span = document.createElement('span');
                         span.className = 'fluid-word';
                         span.textContent = word + ' ';
@@ -650,15 +727,36 @@
                     });
                     
                     output.appendChild(p);
+
+                    // Re-enabled ScrollTrigger Illumination Scrub
+                    ScrollTrigger.create({
+                        trigger: p,
+                        start: 'top 85%',
+                        end: 'bottom 45%',
+                        scrub: 0.2,
+                        onUpdate: (self) => {
+                            const progress = self.progress;
+                            const spans = p.querySelectorAll('.fluid-word');
+                            const revealCount = Math.floor(progress * spans.length);
+                            spans.forEach((span, i) => {
+                                if (i < revealCount) {
+                                    span.classList.add('illuminated');
+                                } else {
+                                    span.classList.remove('illuminated');
+                                }
+                            });
+                        }
+                    });
                 });
             });
+            ScrollTrigger.refresh();
         }
 
         gsap.registerPlugin(ScrollTrigger);
 
         gsap.utils.toArray('.reveal').forEach((el) => {
             gsap.fromTo(el,
-                { y: 40, opacity: 0 },
+                { y: 35, opacity: 0 },
                 {
                     y: 0, 
                     opacity: 1, 
