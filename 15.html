@@ -516,13 +516,24 @@ header .nav ul li a:hover {
             transform: translateY(30px);
             will-change: transform, opacity;
         }
+        /* ── POINTER TRAIL CANVAS ── */
+        #trailCanvas {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: screen;
+        }
     </style>
 </head>
 <body class="theme--dark">
 
     <!-- ====== NOISE OVERLAY ====== -->
     <div class="noise" aria-hidden="true"></div>
-
+<!-- ====== POINTER TRAIL CANVAS ====== -->
+    <canvas id="trailCanvas"></canvas>
     <!-- ====== HEADER (CORNER PINNED WITH ELECTRIC PENCIL) ====== -->
     <header>
         <nav class="nav" aria-label="Main navigation">
@@ -824,6 +835,98 @@ header .nav ul li a:hover {
         } else {
             initFluidText();
         }
+        /* ====== POINTER TRAIL ENGINE ====== */
+        (function initPointerTrail() {
+            const canvas = document.getElementById('trailCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            let width, height, dpr;
+            const points = [];
+            const MAX_POINTS = 28; // Trail length
+            let mouse = { x: -100, y: -100, active: false };
+
+            function resize() {
+                dpr = window.devicePixelRatio || 1;
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width * dpr;
+                canvas.height = height * dpr;
+                ctx.scale(dpr, dpr);
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            window.addEventListener('pointermove', (e) => {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+                mouse.active = true;
+                points.push({
+                    x: mouse.x,
+                    y: mouse.y,
+                    age: 0,
+                    size: Math.random() * 2 + 3
+                });
+            });
+
+            window.addEventListener('pointerleave', () => {
+                mouse.active = false;
+            });
+
+            function render() {
+                ctx.clearRect(0, 0, width, height);
+
+                // Update & prune trail points
+                for (let i = points.length - 1; i >= 0; i--) {
+                    const p = points[i];
+                    p.age++;
+                    if (p.age > MAX_POINTS) {
+                        points.splice(i, 1);
+                    }
+                }
+
+                // Draw electric red glowing trail ribbon
+                if (points.length > 1) {
+                    ctx.beginPath();
+                    ctx.moveTo(points[0].x, points[0].y);
+
+                    for (let i = 1; i < points.length - 1; i++) {
+                        const xc = (points[i].x + points[i + 1].x) / 2;
+                        const yc = (points[i].y + points[i + 1].y) / 2;
+                        ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+                    }
+
+                    // Outer red glow
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.strokeStyle = 'rgba(255, 0, 0, 0.4)';
+                    ctx.lineWidth = 6;
+                    ctx.shadowColor = '#ff0000';
+                    ctx.shadowBlur = 12;
+                    ctx.stroke();
+
+                    // Inner bright core
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctx.lineWidth = 1.8;
+                    ctx.shadowBlur = 4;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0; // reset
+                }
+
+                // Micro spark sparks along path
+                for (let i = 0; i < points.length; i++) {
+                    const p = points[i];
+                    const alpha = 1 - (p.age / MAX_POINTS);
+                    ctx.fillStyle = `rgba(255, ${Math.floor(p.age * 8)}, ${Math.floor(p.age * 8)}, ${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, Math.max(0.5, p.size * alpha), 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                requestAnimationFrame(render);
+            }
+            requestAnimationFrame(render);
+        })();
     </script>
 </body>
 </html>
