@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IBM System/370 Console Word Processor</title>
- <link rel="icon" type="image/png" href="/svg/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/png" href="/svg/favicon-96x96.png" sizes="96x96" />
 <link rel="icon" type="image/svg+xml" href="/svg/favicon.svg" />
 <link rel="shortcut icon" href="/svg/favicon.ico" />
 <link rel="apple-touch-icon" sizes="180x180" href="/svg/apple-touch-icon.png" />
@@ -491,10 +491,10 @@ body {
 
 <div class="s370-console">
   <!-- Top IBM 370 Bar -->
-<div class="ibm-header">
-  <div class="ibm-logo" style="letter-spacing: 2px; font-size: 22px;">wordstar.nexus</div>
-  <div class="system-title" style="text-transform: lowercase;">v/370sx &bull; <span>ebcdic</span></div>
-</div>
+  <div class="ibm-header">
+    <div class="ibm-logo" style="letter-spacing: 2px; font-size: 22px;">wordstar.nexus</div>
+    <div class="system-title" style="text-transform: lowercase;">v/370sx &bull; <span>ebcdic</span></div>
+  </div>
 
   <!-- Upper Tier: Floppy / CRT Section -->
   <div class="upper-deck">
@@ -558,7 +558,8 @@ body {
       </div>
       
       <!-- Compact CRT Display with Red Scrollbar -->
-    <textarea id="editor" class="terminal-editor" spellcheck="false">IBM SYSTEM/370 CONSOLE &bull; ebcdic
+      <div class="crt-enclosure" id="crt-screen">
+        <textarea id="editor" class="terminal-editor" spellcheck="false">IBM SYSTEM/370 CONSOLE &bull; ebcdic
 wordstar.nexus/ebcdic -- READY.
 
 ============================================================
@@ -574,10 +575,12 @@ _</textarea>
 
       <!-- Lower Status Strip -->
       <div class="sub-status-bar">
-    <span style="font-size: 9px; color: var(--engraved-dim);">SYS_REG_HEX: <span style="color:#eee;">0x7E3</span></span>
-    <span style="font-size: 9px; color: #aaa;">
-      <span style="color:var(--accent-red); font-weight:bold;">●</span> URL-HASH SYNC: <span style="color:#4ade80;">ARMED</span>
-    </span>
+        <span style="font-size: 9px; color: var(--engraved-dim);">SYS_REG_HEX: <span style="color:#eee;">0x7E3</span></span>
+        <span style="font-size: 9px; color: #aaa;">
+          <span style="color:var(--accent-red); font-weight:bold;">●</span> URL-HASH SYNC: <span style="color:#4ade80;">ARMED</span>
+        </span>
+      </div>
+
     </div>
 
   </div>
@@ -1042,10 +1045,23 @@ _</textarea>
     playClick(800);
   });
 
- document.getElementById('btn-ipl').addEventListener('click', () => {
-  playClick(200, 0.08);
-  if (confirm('EXECUTE SYSTEM IPL (CLEAR BUFFER & RESET)?')) {
-    editor.value = 
+  const btnBold = document.getElementById('btn-bold');
+  btnBold.addEventListener('click', () => {
+    btnBold.classList.toggle('active');
+    editor.style.fontWeight = btnBold.classList.contains('active') ? 'bold' : 'normal';
+    playClick(800);
+  });
+
+  const btnAudio = document.getElementById('btn-audio');
+  btnAudio.addEventListener('click', () => {
+    audioEnabled = !audioEnabled;
+    btnAudio.classList.toggle('active', audioEnabled);
+  });
+
+  document.getElementById('btn-ipl').addEventListener('click', () => {
+    playClick(200, 0.08);
+    if (confirm('EXECUTE SYSTEM IPL (CLEAR BUFFER & RESET)?')) {
+      editor.value = 
 `IBM SYSTEM/370 CONSOLE • ebcdic
 wordstar.nexus/ebcdic -- READY.
 
@@ -1058,22 +1074,6 @@ at any time to save or share your live draft.
 
 READY FOR INPUT.
 _`;
-    updateCounters();
-    location.hash = '';
-    localStorage.removeItem('s370-article-hash');
-  }
-});
-
-  const btnAudio = document.getElementById('btn-audio');
-  btnAudio.addEventListener('click', () => {
-    audioEnabled = !audioEnabled;
-    btnAudio.classList.toggle('active', audioEnabled);
-  });
-
-  document.getElementById('btn-ipl').addEventListener('click', () => {
-    playClick(200, 0.08);
-    if (confirm('EXECUTE SYSTEM IPL (CLEAR BUFFER)?')) {
-      editor.value = 'IBM SYSTEM/370 RE-INITIALIZED.\nREADY.\n_';
       updateCounters();
       location.hash = '';
       localStorage.removeItem('s370-article-hash');
