@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IBM System/370 Console Word Processor</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&family=VT323&family=Courier+Prime&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --panel-black: #151516;
+    --panel-sub: #1e1e20;
+    --bezel-edge: #2b2b2e;
+    --engraved-white: #d8d8d8;
+    --engraved-dim: #777779;
+    --accent-red: #ff2a2a;
+    --accent-red-dim: #420808;
+    --crt-phosphor: #d8e2dc; /* Monochrome phosphor */
+    --crt-bg: #090a0c;
+  }
+
+  * {
+    box-sizing: border-box;
+    user-select: none;
+  }
+
+  body {
+    background-color: #080809;
+    font-family: 'IBM Plex Mono', monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    color: var(--engraved-white);
+  }
+
+  /* Main Cabinet */
+  .s370-console {
+    width: 960px;
+    background: var(--panel-black);
+    border: 6px solid #0a0a0b;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.95), inset 0 1px 0 rgba(255,255,255,0.1);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Top Header Strip */
+  .ibm-header {
+    background: #000;
+    height: 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px;
+    border-bottom: 3px solid #282828;
+  }
+
+  .ibm-logo {
+    font-size: 30px;
+    font-weight: 900;
+    letter-spacing: 5px;
+    color: #ffffff;
+    font-family: 'Arial Black', sans-serif;
+  }
+
+  .system-title {
+    font-size: 20px;
+    letter-spacing: 2px;
+    color: #e0e0e0;
+  }
+  .system-title span {
+    font-size: 32px;
+    font-weight: bold;
+    margin-left: 6px;
+  }
+
+  /* Upper Bay: Floppy Left & CRT/Indicators Right */
+  .upper-deck {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    border-bottom: 4px solid #0a0a0b;
+  }
+
+  /* Left Side: Microcode / Floppy Drive Recess */
+  .floppy-bay {
+    background: #111112;
+    border-right: 4px solid #0a0a0b;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .drive-recess {
+    width: 240px;
+    height: 250px;
+    background: #484b4f;
+    border: 8px solid #232426;
+    border-radius: 4px;
+    box-shadow: inset 0 10px 25px rgba(0,0,0,0.8);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-align: center;
+  }
+
+  .drive-recess:hover {
+    border-color: #3b3d40;
+  }
+
+  .drive-hub {
+    width: 80px;
+    height: 80px;
+    background: #252628;
+    border: 5px solid #6b6e73;
+    border-radius: 50%;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .drive-hub-inner {
+    width: 24px;
+    height: 24px;
+    background: #0f1011;
+    border-radius: 50%;
+  }
+
+  .drive-slot-latch {
+    width: 60px;
+    height: 70px;
+    background: #202123;
+    border: 2px solid #5a5c61;
+    border-radius: 2px;
+  }
+
+  .drive-label {
+    position: absolute;
+    top: 10px;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: #bbb;
+    text-transform: uppercase;
+  }
+
+  .drop-hint {
+    position: absolute;
+    bottom: 8px;
+    font-size: 9px;
+    color: #ddd;
+    text-shadow: 0 1px 2px #000;
+  }
+
+  /* Right Side: Matrix Status & Compact CRT Editor */
+  .right-operation-bay {
+    background: var(--panel-sub);
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .sub-status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #111112;
+    padding: 6px 12px;
+    border: 1px solid #2d2d30;
+  }
+
+  .register-lamps {
+    display: flex;
+    gap: 6px;
+  }
+
+  .lamp {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-red-dim);
+    border: 1px solid #111;
+  }
+
+  .lamp.lit {
+    background: var(--accent-red);
+    box-shadow: 0 0 6px var(--accent-red);
+  }
+
+  /* Compact CRT Monitor */
+  .crt-enclosure {
+    position: relative;
+    background: var(--crt-bg);
+    border: 6px solid #161617;
+    outline: 2px solid #333;
+    border-radius: 6px;
+    height: 200px;
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.9);
+    overflow: hidden;
+  }
+
+  .crt-enclosure::before {
+    content: " ";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.45) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .terminal-editor {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--crt-phosphor);
+    font-family: 'VT323', monospace;
+    font-size: 19px;
+    line-height: 1.25;
+    padding: 12px;
+    resize: none;
+    text-shadow: 0 0 4px rgba(255,255,255,0.4);
+    scrollbar-color: var(--accent-red) #100404;
+    scrollbar-width: thin;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Custom Red Scrollbar */
+  .terminal-editor::-webkit-scrollbar {
+    width: 7px;
+  }
+  .terminal-editor::-webkit-scrollbar-track {
+    background: #0d0404;
+    border-left: 1px solid #330b0b;
+  }
+  .terminal-editor::-webkit-scrollbar-thumb {
+    background: var(--accent-red);
+    box-shadow: 0 0 8px rgba(255, 42, 42, 0.8);
+    border-radius: 1px;
+  }
+  .terminal-editor::-webkit-scrollbar-thumb:hover {
+    background: #ff5555;
+  }
+
+  /* Mid Deck: Large Rotary Knobs */
+  .mid-deck-knobs {
+    background: #19191a;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-bottom: 4px solid #0a0a0b;
+  }
+
+  .dial-control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .dial-title {
+    font-size: 9px;
+    letter-spacing: 1.2px;
+    color: var(--engraved-dim);
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .dial-face {
+    width: 58px;
+    height: 58px;
+    background: radial-gradient(circle, #3a3b3d 0%, #171718 75%);
+    border: 2px solid #4f5154;
+    border-radius: 50%;
+    position: relative;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.3);
+    transition: transform 0.1s ease-out;
+  }
+
+  .dial-notch {
+    position: absolute;
+    top: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 3px;
+    height: 14px;
+    background: #ffffff;
+    border-radius: 1px;
+  }
+
+  .dial-value {
+    font-size: 10px;
+    color: var(--engraved-white);
+    background: #000;
+    padding: 2px 6px;
+    border: 1px solid #333;
+    min-width: 60px;
+    text-align: center;
+  }
+
+  /* Lower Deck: Action Keypads & Digital Counters */
+  .lower-deck {
+    background: var(--panel-black);
+    padding: 18px 24px;
+    display: grid;
+    grid-template-columns: 280px 1fr 200px;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .button-matrix {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .btn-s370 {
+    background: #242426;
+    border: 2px solid #4a4a4d;
+    color: #e5e5e5;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 10px 4px;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #000, inset 0 1px 0 rgba(255,255,255,0.15);
+    text-align: center;
+  }
+
+  .btn-s370:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #000;
+  }
+
+  .btn-s370.active {
+    border-color: var(--accent-red);
+    color: var(--accent-red);
+    box-shadow: 0 0 8px rgba(255, 42, 42, 0.4);
+  }
+
+  /* 7-Segment LED Counters */
+  .readout-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .readout-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0c0c0d;
+    border: 1px solid #2a2a2d;
+    padding: 6px 10px;
+  }
+
+  .readout-label {
+    font-size: 10px;
+    color: var(--engraved-dim);
+  }
+
+  .digital-counter {
+    color: var(--accent-red);
+    font-size: 15px;
+    font-family: monospace;
+    letter-spacing: 2px;
+    text-shadow: 0 0 6px var(--accent-red);
+  }
+
+  .file-input-hidden {
+    display: none;
+  }
+    #trailCanvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999; /* Floats above knobs & screen */
+}
+</style>
+</head>
+<body>
+<canvas id="trailCanvas"></canvas>
+<div class="s370-console">
+  <!-- Top IBM 370 Bar -->
+  <div class="ibm-header">
+    <div class="ibm-logo">IBM</div>
+    <div class="system-title">System/<span>370</span></div>
+  </div>
+
+  <!-- Upper Tier: Floppy / CRT Section -->
+  <div class="upper-deck">
+    
+    <!-- Left: Microcode / Storage Drive Bay -->
+    <div class="floppy-bay">
+      <input type="file" id="file-uploader" class="file-input-hidden" accept=".txt,.md,.json,.csv">
+      <div class="drive-recess" id="drop-zone" title="Click or Drag & Drop a .txt file here to load">
+        <span class="drive-label">STORAGE UNIT &bull; S/370</span>
+        <div class="drive-hub">
+          <div class="drive-hub-inner"></div>
+        </div>
+        <div class="drive-slot-latch"></div>
+        <span class="drop-hint">[ LOAD / DROP TXT ]</span>
+      </div>
+    </div>
+
+    <!-- Right: Status Readouts & CRT Text Area -->
+    <div class="right-operation-bay">
+      <div class="sub-status-bar">
+        <span style="font-size: 9px; color: var(--engraved-dim);">PROCESSOR STATUS &bull; READY</span>
+        <div class="register-lamps">
+          <div class="lamp lit" id="lamp-1"></div>
+          <div class="lamp lit" id="lamp-2"></div>
+          <div class="lamp" id="lamp-3"></div>
+          <div class="lamp lit" id="lamp-4"></div>
+          <div class="lamp" id="lamp-5"></div>
+        </div>
+      </div>
+
+      <!-- Small CRT Display with Red Scrollbar -->
+      <div class="crt-enclosure">
+        <textarea id="editor" class="terminal-editor" spellcheck="false">IBM SYSTEM/370 CONSOLE WORD PROCESSOR
+RELEASE 1972 -- ALL CHANNELS ACTIVE.
+
+READY FOR INPUT.
+_</textarea>
+      </div>
+
+      <div class="sub-status-bar">
+        <span style="font-size: 9px; color: var(--engraved-dim);">SYS_REG_HEX: <span style="color:#eee;">0x7E3</span></span>
+        <span style="font-size: 9px; color: var(--engraved-dim);">LINE WRAP: <span style="color:var(--accent-red);">ON</span></span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Middle Tier: Large Rotary Knobs -->
+  <div class="mid-deck-knobs">
+    
+    <!-- Knob 1: Font Selector -->
+    <div class="dial-control">
+      <span class="dial-title">Font Family</span>
+      <div id="knob-font" class="dial-face" title="Scroll or click to rotate">
+        <div class="dial-notch"></div>
+      </div>
+      <div class="dial-value" id="val-font">VT323</div>
+    </div>
+
+    <!-- Knob 2: Font Size -->
+    <div class="dial-control">
+      <span class="dial-title">Font Size</span>
+      <div id="knob-size" class="dial-face" title="Scroll or click to rotate">
+        <div class="dial-notch"></div>
+      </div>
+      <div class="dial-value" id="val-size">19 PX</div>
+    </div>
+
+    <!-- Knob 3: Glow & Phosphor Tone -->
+    <div class="dial-control">
+      <span class="dial-title">Phosphor Tone</span>
+      <div id="knob-tone" class="dial-face" title="Scroll or click to rotate">
+        <div class="dial-notch"></div>
+      </div>
+      <div class="dial-value" id="val-tone">WHITE P4</div>
+    </div>
+
+    <!-- Knob 4: Line Height / Pitch -->
+    <div class="dial-control">
+      <span class="dial-title">Line Pitch</span>
+      <div id="knob-pitch" class="dial-face" title="Scroll or click to rotate">
+        <div class="dial-notch"></div>
+      </div>
+      <div class="dial-value" id="val-pitch">1.25</div>
+    </div>
+
+  </div>
+
+  <!-- Lower Tier: Buttons, Toggles & Digital Meters -->
+  <div class="lower-deck">
+    
+    <!-- Matrix Push Buttons -->
+    <div class="button-matrix">
+      <button class="btn-s370" id="btn-caps">CAPS</button>
+      <button class="btn-s370" id="btn-bold">BOLD</button>
+      <button class="btn-s370 active" id="btn-audio">AUDIO</button>
+      <button class="btn-s370" id="btn-store">STORE</button>
+      <button class="btn-s370" id="btn-print">PRINT</button>
+      <button class="btn-s370" id="btn-ipl" style="color:var(--accent-red);">IPL CLR</button>
+    </div>
+
+    <!-- Middle Spacer / Mode Indication -->
+    <div style="border-left: 2px solid #222; border-right: 2px solid #222; padding: 0 18px;">
+      <div style="font-size: 9px; color: var(--engraved-dim); margin-bottom: 6px; letter-spacing: 1px;">CHANNEL SELECTOR</div>
+      <div style="font-size: 11px; color:#aaa;">DATA SET &bull; DIRECT CONSOLE ACCESS</div>
+    </div>
+
+    <!-- Red Digital 7-Segment Style Counters -->
+    <div class="readout-block">
+      <div class="readout-row">
+        <span class="readout-label">WORDS</span>
+        <div class="digital-counter" id="cnt-words">0011</div>
+      </div>
+      <div class="readout-row">
+        <span class="readout-label">CHARS</span>
+        <div class="digital-counter" id="cnt-chars">0082</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Web Audio Synthesizer for 1970s Relay Clacks
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  let audioEnabled = true;
+
+  function playClick(freq = 700, duration = 0.012) {
+    if (!audioEnabled) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  }
+
+  const editor = document.getElementById('editor');
+  const cntWords = document.getElementById('cnt-words');
+  const cntChars = document.getElementById('cnt-chars');
+  const lamps = [document.getElementById('lamp-1'), document.getElementById('lamp-2'), document.getElementById('lamp-3'), document.getElementById('lamp-4'), document.getElementById('lamp-5')];
+
+  // Editor Character and Word Counting
+  editor.addEventListener('input', () => {
+    playClick(1400, 0.004);
+    const text = editor.value;
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    cntWords.textContent = String(words).padStart(4, '0');
+    cntChars.textContent = String(text.length).padStart(4, '0');
+
+    // Blip status lamps randomly on key input
+    lamps.forEach(lamp => {
+      if (Math.random() > 0.4) lamp.classList.toggle('lit');
+    });
+  });
+
+  // 1. Font Knob Logic
+  const fontPresets = [
+    { label: 'VT323', font: "'VT323', monospace" },
+    { label: 'IBM PLEX', font: "'IBM Plex Mono', monospace" },
+    { label: 'COURIER', font: "'Courier Prime', monospace" },
+    { label: 'SHR TECH', font: "'Share Tech Mono', monospace" }
+  ];
+  let fontIdx = 0;
+  const knobFont = document.getElementById('knob-font');
+  const valFont = document.getElementById('val-font');
+
+  function setFont() {
+    knobFont.style.transform = `rotate(${(fontIdx * 90) - 45}deg)`;
+    valFont.textContent = fontPresets[fontIdx].label;
+    editor.style.fontFamily = fontPresets[fontIdx].font;
+    playClick(350, 0.03);
+  }
+  knobFont.addEventListener('click', () => {
+    fontIdx = (fontIdx + 1) % fontPresets.length;
+    setFont();
+  });
+
+  // 2. Font Size Knob
+  const sizePresets = [15, 19, 23, 27];
+  let sizeIdx = 1;
+  const knobSize = document.getElementById('knob-size');
+  const valSize = document.getElementById('val-size');
+
+  function setSize() {
+    knobSize.style.transform = `rotate(${(sizeIdx * 90) - 45}deg)`;
+    valSize.textContent = sizePresets[sizeIdx] + ' PX';
+    editor.style.fontSize = sizePresets[sizeIdx] + 'px';
+    playClick(400, 0.03);
+  }
+  knobSize.addEventListener('click', () => {
+    sizeIdx = (sizeIdx + 1) % sizePresets.length;
+    setSize();
+  });
+
+  // 3. Phosphor Tone Knob (Monochrome Palettes)
+  const tonePresets = [
+    { label: 'WHITE P4', color: '#d8e2dc', bg: '#090a0c' },
+    { label: 'GREEN P1', color: '#4ade80', bg: '#051208' },
+    { label: 'AMBER P3', color: '#fbbf24', bg: '#140c03' },
+    { label: 'HIGH CONTR', color: '#ffffff', bg: '#000000' }
+  ];
+  let toneIdx = 0;
+  const knobTone = document.getElementById('knob-tone');
+  const valTone = document.getElementById('val-tone');
+
+  function setTone() {
+    knobTone.style.transform = `rotate(${(toneIdx * 90) - 45}deg)`;
+    valTone.textContent = tonePresets[toneIdx].label;
+    document.documentElement.style.setProperty('--crt-phosphor', tonePresets[toneIdx].color);
+    document.documentElement.style.setProperty('--crt-bg', tonePresets[toneIdx].bg);
+    playClick(450, 0.03);
+  }
+  knobTone.addEventListener('click', () => {
+    toneIdx = (toneIdx + 1) % tonePresets.length;
+    setTone();
+  });
+
+  // 4. Line Pitch Knob
+  const pitchPresets = [1.1, 1.25, 1.5, 1.8];
+  let pitchIdx = 1;
+  const knobPitch = document.getElementById('knob-pitch');
+  const valPitch = document.getElementById('val-pitch');
+
+  function setPitch() {
+    knobPitch.style.transform = `rotate(${(pitchIdx * 90) - 45}deg)`;
+    valPitch.textContent = pitchPresets[pitchIdx].toString();
+    editor.style.lineHeight = pitchPresets[pitchIdx];
+    playClick(500, 0.03);
+  }
+  knobPitch.addEventListener('click', () => {
+    pitchIdx = (pitchIdx + 1) % pitchPresets.length;
+    setPitch();
+  });
+
+  // Mouse Wheel support for all knobs
+  [knobFont, knobSize, knobTone, knobPitch].forEach(k => {
+    k.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      k.click();
+    });
+  });
+
+  // Format and Mode Buttons
+  const btnCaps = document.getElementById('btn-caps');
+  btnCaps.addEventListener('click', () => {
+    btnCaps.classList.toggle('active');
+    editor.style.textTransform = btnCaps.classList.contains('active') ? 'uppercase' : 'none';
+    playClick(800);
+  });
+
+  const btnBold = document.getElementById('btn-bold');
+  btnBold.addEventListener('click', () => {
+    btnBold.classList.toggle('active');
+    editor.style.fontWeight = btnBold.classList.contains('active') ? 'bold' : 'normal';
+    playClick(800);
+  });
+
+  const btnAudio = document.getElementById('btn-audio');
+  btnAudio.addEventListener('click', () => {
+    audioEnabled = !audioEnabled;
+    btnAudio.classList.toggle('active', audioEnabled);
+  });
+
+  // Storage / IPL Actions
+  document.getElementById('btn-ipl').addEventListener('click', () => {
+    playClick(200, 0.08);
+    if (confirm('EXECUTE SYSTEM IPL (CLEAR BUFFER)?')) {
+      editor.value = 'IBM SYSTEM/370 RE-INITIALIZED.\nREADY.\n_';
+      cntWords.textContent = '0003';
+      cntChars.textContent = '0039';
+    }
+  });
+
+  document.getElementById('btn-store').addEventListener('click', () => {
+    playClick(500, 0.05);
+    const blob = new Blob([editor.value], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'S370_DATASET.TXT';
+    a.click();
+  });
+
+  document.getElementById('btn-print').addEventListener('click', () => {
+    playClick(500, 0.05);
+    window.print();
+  });
+
+  // Floppy / Microcode Drive Drag & Drop Loader
+  const dropZone = document.getElementById('drop-zone');
+  const fileUploader = document.getElementById('file-uploader');
+
+  dropZone.addEventListener('click', () => fileUploader.click());
+
+  fileUploader.addEventListener('change', (e) => {
+    if (e.target.files[0]) readFile(e.target.files[0]);
+  });
+
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = "var(--accent-red)";
+  });
+
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.style.borderColor = "#232426";
+  });
+
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = "#232426";
+    if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);
+  });
+
+  function readFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      playClick(150, 0.1);
+      editor.value = e.target.result;
+      editor.dispatchEvent(new Event('input'));
+    };
+    reader.readAsText(file);
+  }
+
+  // Initialize Default States
+  setFont();
+  setSize();
+  setTone();
+  setPitch();
+   /* ====== S/370 CRT LASER POINTER TRAIL ====== */
+(function initPointerTrail() {
+    const canvas = document.getElementById('trailCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    let W, H, dpr;
+    const pts = [];
+    const LIFE = 500; // Trail fade duration in ms (tight & snappy)
+    const isCoarse = window.matchMedia('(pointer: coarse)').matches;
+
+    function resize() {
+        dpr = window.devicePixelRatio || 1;
+        W = window.innerWidth;
+        H = window.innerHeight;
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        ctx.resetTransform();
+        ctx.scale(dpr, dpr);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    if (!isCoarse) {
+        window.addEventListener('pointermove', (e) => {
+            pts.push({
+                x: e.clientX,
+                y: e.clientY,
+                t: performance.now()
+            });
+        });
+    }
+
+    function render() {
+        requestAnimationFrame(render);
+        if (isCoarse) return;
+
+        const now = performance.now();
+
+        // Prune expired points
+        while (pts.length && now - pts[0].t > LIFE) {
+            pts.shift();
+        }
+
+        ctx.clearRect(0, 0, W, H);
+        if (pts.length < 2) return;
+
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // Draw laser trail with phosphor bloom
+        for (let i = 1; i < pts.length; i++) {
+            const progress = (now - pts[i].t) / LIFE;
+            const alpha = Math.max(0, Math.min(1, (1 - progress) * 1.2));
+
+            ctx.strokeStyle = `rgba(255, 42, 42, ${alpha.toFixed(3)})`;
+            ctx.shadowColor = 'rgba(255, 42, 42, 0.8)';
+            ctx.shadowBlur = 4; // Subtle CRT phosphor glow
+            ctx.lineWidth = 1.35;
+
+            ctx.beginPath();
+            ctx.moveTo(pts[i - 1].x, pts[i - 1].y);
+            ctx.lineTo(pts[i].x, pts[i].y);
+            ctx.stroke();
+        }
+    }
+    requestAnimationFrame(render);
+})(); 
+</script>
+</body>
+</html>
