@@ -128,9 +128,14 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .drive-recess:hover { border-color: #3b3d40; }
+.drive-recess.loading {
+  border-color: var(--accent-red);
+  box-shadow: inset 0 10px 25px rgba(0,0,0,0.8), 0 0 12px rgba(255,42,42,0.35);
+}
 
 .drive-hub {
   width: 70px;
@@ -142,6 +147,16 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.4s ease;
+}
+
+.drive-recess.loading .drive-hub {
+  animation: hubSpin 0.6s ease-out;
+}
+
+@keyframes hubSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .drive-hub-inner {
@@ -247,6 +262,8 @@ body {
   background: #111112;
   padding: 4px 8px;
   border: 1px solid #2d2d30;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .register-lamps {
@@ -260,6 +277,7 @@ body {
   border-radius: 50%;
   background: var(--accent-red-dim);
   border: 1px solid #111;
+  transition: background 0.15s, box-shadow 0.15s;
 }
 
 .lamp.lit {
@@ -267,14 +285,14 @@ body {
   box-shadow: 0 0 5px var(--accent-red);
 }
 
-/* CRT Screen */
+/* CRT Screen — modestly taller, still console-proportioned */
 .crt-enclosure {
   position: relative;
   background: var(--crt-bg);
   border: 4px solid #161617;
   outline: 1px solid #333;
   border-radius: 4px;
-  height: 180px;
+  height: 220px;
   overflow: hidden;
   box-shadow: inset 0 0 30px rgba(0,0,0,0.95);
 }
@@ -307,6 +325,7 @@ body {
   position: relative;
   z-index: 1;
   text-shadow: 0 0 calc(6px * var(--beam-gain)) rgba(255,255,255,0.4);
+  user-select: text; /* allow text selection inside the editor */
 }
 
 /* Crimson Scrollbar */
@@ -397,11 +416,17 @@ body {
   padding: 8px 3px;
   cursor: pointer;
   box-shadow: 0 2px 0 #000;
+  transition: border-color 0.15s, color 0.15s;
 }
 
 .btn-s370.active {
   border-color: var(--accent-red);
   color: var(--accent-red);
+}
+
+.btn-s370:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 #000;
 }
 
 .center-channel-panel {
@@ -441,6 +466,58 @@ body {
 
 .file-input-hidden { display: none; }
 
+/* ---- NEW: URL Memory / Hash Sync UI ---- */
+.hash-sync-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hash-payload {
+  font-size: 9px;
+  color: #888;
+  letter-spacing: 0.5px;
+  min-width: 52px;
+}
+
+.btn-copy-link {
+  background: #1a1a1c;
+  border: 1px solid #3a3a3d;
+  color: #ccc;
+  font-family: inherit;
+  font-size: 8px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-copy-link:hover {
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+}
+
+.btn-copy-link.copied {
+  border-color: #4ade80;
+  color: #4ade80;
+}
+
+.status-flash {
+  font-size: 9px;
+  color: var(--accent-red);
+  letter-spacing: 1px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  min-width: 90px;
+  text-align: right;
+}
+
+.status-flash.show {
+  opacity: 1;
+}
+
 /* Responsive System */
 @media (max-width: 768px) {
   body { padding: 6px; }
@@ -474,13 +551,14 @@ body {
     border-bottom: 1px solid #222;
     padding: 8px 0;
   }
+  .crt-enclosure { height: 180px; }
 }
 
 @media (max-width: 480px) {
   .ibm-logo { font-size: 20px; }
   .system-title { font-size: 15px; }
   .system-title span { font-size: 22px; }
-  .crt-enclosure { height: 150px; }
+  .crt-enclosure { height: 160px; }
   .crt-top-subpanel { gap: 6px; }
   .mini-knob { width: 28px; height: 28px; }
 }
@@ -547,7 +625,7 @@ body {
 
       <!-- Upper Status Strip -->
       <div class="sub-status-bar">
-        <span style="font-size: 9px; color: var(--engraved-dim);">PROCESSOR STATUS &bull; READY</span>
+        <span style="font-size: 9px; color: var(--engraved-dim);" id="proc-status">PROCESSOR STATUS &bull; READY</span>
         <div class="register-lamps">
           <div class="lamp lit" id="lamp-1"></div>
           <div class="lamp lit" id="lamp-2"></div>
@@ -559,26 +637,32 @@ body {
       
       <!-- Compact CRT Display with Red Scrollbar -->
       <div class="crt-enclosure" id="crt-screen">
-        <textarea id="editor" class="terminal-editor" spellcheck="false">IBM SYSTEM/370 CONSOLE &bull; ebcdic
+        <textarea id="editor" class="terminal-editor" spellcheck="false">IBM SYSTEM/370 CONSOLE • ebcdic
 wordstar.nexus/ebcdic -- READY.
 
 ============================================================
 [SYSTEM NOTICE: REALTIME COMPRESSED URL MEMORY ACTIVE]
 Your document continuously compresses into the address bar URL.
-No account or database required. Bookmark or copy your link 
-at any time to save or share your live draft.
+No account or database required. Bookmark or use COPY LINK
+to save or share your live draft.
 ============================================================
 
 READY FOR INPUT.
 _</textarea>
       </div>
 
-      <!-- Lower Status Strip -->
+      <!-- Lower Status Strip — enhanced URL memory UI -->
       <div class="sub-status-bar">
-        <span style="font-size: 9px; color: var(--engraved-dim);">SYS_REG_HEX: <span style="color:#eee;">0x7E3</span></span>
-        <span style="font-size: 9px; color: #aaa;">
-          <span style="color:var(--accent-red); font-weight:bold;">●</span> URL-HASH SYNC: <span style="color:#4ade80;">ARMED</span>
-        </span>
+        <span style="font-size: 9px; color: var(--engraved-dim);">SYS_REG_HEX: <span style="color:#eee;" id="sys-reg">0x7E3</span></span>
+        
+        <div class="hash-sync-group">
+          <span style="font-size: 9px; color: #aaa;">
+            <span style="color:var(--accent-red); font-weight:bold;">●</span> URL-HASH SYNC: <span style="color:#4ade80;" id="hash-state">ARMED</span>
+          </span>
+          <span class="hash-payload" id="hash-size">0 B</span>
+          <button class="btn-copy-link" id="btn-copy-link" title="Copy the current live document link">COPY LINK</button>
+          <span class="status-flash" id="status-flash"></span>
+        </div>
       </div>
 
     </div>
@@ -677,6 +761,26 @@ _</textarea>
   const cntWords = document.getElementById('cnt-words');
   const cntChars = document.getElementById('cnt-chars');
   const lamps = [document.getElementById('lamp-1'), document.getElementById('lamp-2'), document.getElementById('lamp-3'), document.getElementById('lamp-4'), document.getElementById('lamp-5')];
+  const statusFlash = document.getElementById('status-flash');
+  const procStatus = document.getElementById('proc-status');
+  const hashSizeEl = document.getElementById('hash-size');
+  const hashStateEl = document.getElementById('hash-state');
+
+  function flashStatus(msg, duration = 1600) {
+    if (!statusFlash) return;
+    statusFlash.textContent = msg;
+    statusFlash.classList.add('show');
+    setTimeout(() => statusFlash.classList.remove('show'), duration);
+  }
+
+  function cascadeLamps() {
+    lamps.forEach((lamp, i) => {
+      setTimeout(() => {
+        lamp.classList.add('lit');
+        setTimeout(() => lamp.classList.remove('lit'), 180);
+      }, i * 60);
+    });
+  }
 
   function updateCounters() {
     const text = editor.value;
@@ -865,6 +969,7 @@ _</textarea>
 
   /* =========================================================
      STANDALONE URL COMPRESSION & AUTO-SAVE ENGINE
+     + payload size indicator
      ========================================================= */
   (function initAutoSave() {
     editor.addEventListener('input', debounce(500, saveArticle));
@@ -881,6 +986,7 @@ _</textarea>
         }
         updateArticleTitle();
         updateCounters();
+        updateHashSize();
       } catch (e) {
         console.log('No saved dataset found');
       }
@@ -895,6 +1001,7 @@ _</textarea>
         localStorage.setItem('s370-article-hash', hash);
       } catch (e) {}
       updateArticleTitle();
+      updateHashSize();
     }
 
     async function setArticle(hash) {
@@ -909,6 +1016,19 @@ _</textarea>
     function updateArticleTitle() {
       const match = editor.value.match(/^\n*#(.+)\n/);
       if (match) document.title = `${match[1]} - S/370 CONSOLE`;
+    }
+
+    function updateHashSize() {
+      const hash = location.hash || '';
+      const bytes = Math.max(0, hash.length - 1); // exclude leading #
+      let label;
+      if (bytes < 1024) label = bytes + ' B';
+      else label = (bytes / 1024).toFixed(1) + ' KB';
+      if (hashSizeEl) hashSizeEl.textContent = label;
+      if (hashStateEl) {
+        hashStateEl.textContent = bytes > 0 ? 'ARMED' : 'IDLE';
+        hashStateEl.style.color = bytes > 0 ? '#4ade80' : '#888';
+      }
     }
 
     async function compressArticle(string) {
@@ -944,7 +1064,47 @@ _</textarea>
         timer = setTimeout(() => fn(...args), ms);
       };
     }
+
+    // expose for copy button
+    window._updateHashSize = updateHashSize;
   })();
+
+  /* =========================================================
+     COPY LINK BUTTON
+     ========================================================= */
+  const btnCopyLink = document.getElementById('btn-copy-link');
+  if (btnCopyLink) {
+    btnCopyLink.addEventListener('click', async () => {
+      const url = location.href;
+      try {
+        await navigator.clipboard.writeText(url);
+        btnCopyLink.classList.add('copied');
+        btnCopyLink.textContent = 'COPIED';
+        flashStatus('LINK COPIED');
+        playClick(900, 0.04);
+        cascadeLamps();
+        setTimeout(() => {
+          btnCopyLink.classList.remove('copied');
+          btnCopyLink.textContent = 'COPY LINK';
+        }, 1800);
+      } catch (err) {
+        // fallback
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        btnCopyLink.classList.add('copied');
+        btnCopyLink.textContent = 'COPIED';
+        flashStatus('LINK COPIED');
+        setTimeout(() => {
+          btnCopyLink.classList.remove('copied');
+          btnCopyLink.textContent = 'COPY LINK';
+        }, 1800);
+      }
+    });
+  }
 
   /* =========================================================
      MID-DECK ROTARY KNOBS
@@ -1036,7 +1196,7 @@ _</textarea>
   });
 
   /* =========================================================
-     LOWER BUTTON ACTIONS & STORAGE
+     LOWER BUTTON ACTIONS & STORAGE (enhanced feedback)
      ========================================================= */
   const btnCaps = document.getElementById('btn-caps');
   btnCaps.addEventListener('click', () => {
@@ -1068,8 +1228,8 @@ wordstar.nexus/ebcdic -- READY.
 ============================================================
 [SYSTEM NOTICE: REALTIME COMPRESSED URL MEMORY ACTIVE]
 Your document continuously compresses into the address bar URL.
-No account or database required. Bookmark or copy your link 
-at any time to save or share your live draft.
+No account or database required. Bookmark or use COPY LINK
+to save or share your live draft.
 ============================================================
 
 READY FOR INPUT.
@@ -1077,6 +1237,10 @@ _`;
       updateCounters();
       location.hash = '';
       localStorage.removeItem('s370-article-hash');
+      if (window._updateHashSize) window._updateHashSize();
+      cascadeLamps();
+      flashStatus('IPL COMPLETE');
+      if (procStatus) procStatus.textContent = 'PROCESSOR STATUS • READY';
     }
   });
 
@@ -1087,14 +1251,22 @@ _`;
     a.href = URL.createObjectURL(blob);
     a.download = 'S370_DATASET.TXT';
     a.click();
+    cascadeLamps();
+    flashStatus('STORE COMPLETE');
+    if (procStatus) {
+      procStatus.textContent = 'PROCESSOR STATUS • STORE OK';
+      setTimeout(() => { procStatus.textContent = 'PROCESSOR STATUS • READY'; }, 1800);
+    }
   });
 
   document.getElementById('btn-print').addEventListener('click', () => {
     playClick(500, 0.05);
+    cascadeLamps();
+    flashStatus('PRINT QUEUE');
     window.print();
   });
 
-  // Floppy Drag & Drop Loader
+  // Floppy Drag & Drop Loader (with visual feedback)
   const dropZone = document.getElementById('drop-zone');
   const fileUploader = document.getElementById('file-uploader');
 
@@ -1117,10 +1289,14 @@ _`;
 
   function readFile(file) {
     const reader = new FileReader();
+    dropZone.classList.add('loading');
     reader.onload = (e) => {
       playClick(150, 0.1);
       editor.value = e.target.result;
       editor.dispatchEvent(new Event('input'));
+      cascadeLamps();
+      flashStatus('DATASET LOADED');
+      setTimeout(() => dropZone.classList.remove('loading'), 700);
     };
     reader.readAsText(file);
   }
@@ -1133,6 +1309,7 @@ _`;
   setGain(1);
   setRecoil(2);
   updateModeKnob(0);
+  updateCounters();
 
   /* =========================================================
      CRT LASER POINTER TRAIL ENGINE
