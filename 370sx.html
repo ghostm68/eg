@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IBM System/370 Console Word Processor</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&family=VT323&family=Courier+Prime&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+<!-- GSAP Core for Kinetic & Parametric Engine -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
 <style>
 :root {
   --panel-black: #151516;
@@ -16,6 +20,7 @@
   --accent-red-dim: #420808;
   --crt-phosphor: #d8e2dc;
   --crt-bg: #090a0c;
+  --beam-gain: 1.0;
 }
 
 * {
@@ -295,6 +300,7 @@ body {
   scrollbar-width: thin;
   position: relative;
   z-index: 1;
+  text-shadow: 0 0 calc(6px * var(--beam-gain)) rgba(255,255,255,0.4);
 }
 
 /* Crimson Scrollbar */
@@ -429,59 +435,32 @@ body {
 
 .file-input-hidden { display: none; }
 
-/* =========================================================
-   MOBILE / RESPONSIVE SYSTEM (TABLETS & PHONES)
-   ========================================================= */
+/* Responsive System */
 @media (max-width: 768px) {
-  body {
-    padding: 6px;
-  }
-
-  .upper-deck {
-    grid-template-columns: 1fr; /* Stack Floppy Bay atop CRT */
-  }
-
+  body { padding: 6px; }
+  .upper-deck { grid-template-columns: 1fr; }
   .floppy-bay {
     border-right: none;
     border-bottom: 4px solid #0a0a0b;
     padding: 10px;
   }
-
   .drive-recess {
     width: 100%;
     max-width: 260px;
-    height: 120px; /* Slim compact profile on mobile */
+    height: 120px;
     flex-direction: row;
     gap: 16px;
   }
-
-  .drive-hub {
-    width: 50px;
-    height: 50px;
-    margin-bottom: 0;
-  }
-
-  .drive-slot-latch {
-    height: 40px;
-    width: 30px;
-  }
-
+  .drive-hub { width: 50px; height: 50px; margin-bottom: 0; }
+  .drive-slot-latch { height: 40px; width: 30px; }
   .drive-label { top: 4px; }
   .drop-hint { bottom: 4px; }
-
-  /* Mid Dials Grid Wrap */
   .mid-deck-knobs {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
   }
-
-  /* Lower Deck Stacking */
-  .lower-deck {
-    grid-template-columns: 1fr;
-    gap: 14px;
-  }
-
+  .lower-deck { grid-template-columns: 1fr; gap: 14px; }
   .center-channel-panel {
     border-left: none;
     border-right: none;
@@ -495,19 +474,9 @@ body {
   .ibm-logo { font-size: 20px; }
   .system-title { font-size: 15px; }
   .system-title span { font-size: 22px; }
-
-  .crt-enclosure {
-    height: 150px;
-  }
-
-  .crt-top-subpanel {
-    gap: 6px;
-  }
-
-  .mini-knob {
-    width: 28px;
-    height: 28px;
-  }
+  .crt-enclosure { height: 150px; }
+  .crt-top-subpanel { gap: 6px; }
+  .mini-knob { width: 28px; height: 28px; }
 }
 </style>
 </head>
@@ -540,7 +509,7 @@ body {
     <!-- Column 2: Operation Bay (Contains Trimmers + CRT Screen) -->
     <div class="right-operation-bay">
       
-      <!-- Mini Calibration Sub-Panel Placed Correctly Atop CRT -->
+      <!-- Mini Calibration Sub-Panel atop CRT -->
       <div class="crt-top-subpanel">
         <!-- Emulation Mode Knob -->
         <div class="mini-dial-unit">
@@ -554,7 +523,7 @@ body {
         <!-- Trimmer 1: Beam / Glow Intensity -->
         <div class="mini-dial-unit">
           <span class="mini-label">BEAM GAIN</span>
-          <div id="gain-knob" class="mini-knob">
+          <div id="gain-knob" class="mini-knob" title="Click or scroll to adjust glow intensity">
             <div class="mini-knob-notch"></div>
           </div>
           <span class="mini-status" id="gain-status-text">1.0x</span>
@@ -563,7 +532,7 @@ body {
         <!-- Trimmer 2: Recoil Tension -->
         <div class="mini-dial-unit">
           <span class="mini-label">RECOIL DAMP</span>
-          <div id="recoil-knob" class="mini-knob">
+          <div id="recoil-knob" class="mini-knob" title="Click or scroll to adjust keyboard recoil">
             <div class="mini-knob-notch"></div>
           </div>
           <span class="mini-status" id="recoil-status-text">MED</span>
@@ -583,7 +552,7 @@ body {
       </div>
 
       <!-- Compact CRT Display with Red Scrollbar -->
-      <div class="crt-enclosure">
+      <div class="crt-enclosure" id="crt-screen">
         <textarea id="editor" class="terminal-editor" spellcheck="false">IBM SYSTEM/370 CONSOLE WORD PROCESSOR
 RELEASE 1972 -- ALL CHANNELS ACTIVE.
 
@@ -666,6 +635,7 @@ _</textarea>
     </div>
   </div>
 </div>
+
 <script>
   // Web Audio Synthesizer for 1970s Relay Clacks
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -687,25 +657,283 @@ _</textarea>
   }
 
   const editor = document.getElementById('editor');
+  const crtScreen = document.getElementById('crt-screen');
   const cntWords = document.getElementById('cnt-words');
   const cntChars = document.getElementById('cnt-chars');
   const lamps = [document.getElementById('lamp-1'), document.getElementById('lamp-2'), document.getElementById('lamp-3'), document.getElementById('lamp-4'), document.getElementById('lamp-5')];
 
-  // Editor Character and Word Counting
-  editor.addEventListener('input', () => {
-    playClick(1400, 0.004);
+  function updateCounters() {
     const text = editor.value;
     const words = text.trim() ? text.trim().split(/\s+/).length : 0;
     cntWords.textContent = String(words).padStart(4, '0');
     cntChars.textContent = String(text.length).padStart(4, '0');
+  }
 
-    // Blip status lamps randomly on key input
+  editor.addEventListener('input', () => {
+    playClick(1400, 0.004);
+    updateCounters();
     lamps.forEach(lamp => {
       if (Math.random() > 0.4) lamp.classList.toggle('lit');
     });
   });
 
-  // 1. Font Knob Logic
+  /* =========================================================
+     TOP SUB-PANEL CONTROLS (EMULATION, GAIN, RECOIL)
+     ========================================================= */
+  let currentDocLevel = 0;
+  const docChars = '§!<>-_\\/[]{}—=+*^?#@%&010101';
+
+  window.setDocLevel = function(lvl) {
+    currentDocLevel = lvl;
+
+    if (lvl === 1) {
+      runCipherEffect(editor);
+    } else if (lvl === 2 && typeof gsap !== 'undefined') {
+      gsap.fromTo(crtScreen, 
+        { scale: 0.98, x: -5 }, 
+        { scale: 1, x: 0, duration: 0.4, ease: "elastic.out(1, 0.4)" }
+      );
+    } else if (lvl === 3 && typeof gsap !== 'undefined') {
+      gsap.fromTo(editor, 
+        { filter: "brightness(2) contrast(1.4)" }, 
+        { filter: "brightness(1) contrast(1)", duration: 0.5 }
+      );
+    }
+  };
+
+  // Matrix Cyber Cipher Decode Effect
+  function runCipherEffect(element) {
+    const originalText = element.value;
+    if (!originalText || originalText.trim().length === 0) return;
+
+    let iteration = 0;
+    const interval = setInterval(() => {
+      element.value = originalText
+        .split('')
+        .map((char, index) => {
+          if (char === ' ' || char === '\n') return char;
+          if (index < iteration) return originalText[index];
+          return docChars[Math.floor(Math.random() * docChars.length)];
+        })
+        .join('');
+
+      if (iteration >= originalText.length) {
+        clearInterval(interval);
+        element.value = originalText;
+      }
+      iteration += 3;
+    }, 20);
+  }
+
+  // 1. Emulation Mode Rotary Knob (0:RAW, 1:CIPHER, 2:KINETIC, 3:PARAM)
+  const modeNames = ["0: RAW", "1: CIPHER", "2: KINETIC", "3: PARAM"];
+  const modeAngles = [-45, 0, 45, 90];
+  const modeKnob = document.getElementById('mode-rotary-knob');
+  const modeStatus = document.getElementById('mode-status-text');
+
+  function updateModeKnob(lvl) {
+    currentDocLevel = lvl;
+    modeKnob.style.transform = `rotate(${modeAngles[lvl]}deg)`;
+    modeStatus.textContent = modeNames[lvl];
+    window.setDocLevel(lvl);
+    playClick(550, 0.02);
+  }
+
+  modeKnob.addEventListener('click', () => {
+    const nextLevel = (currentDocLevel + 1) % 4;
+    updateModeKnob(nextLevel);
+  });
+
+  modeKnob.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const nextLevel = (currentDocLevel + (e.deltaY > 0 ? 1 : 3)) % 4;
+    updateModeKnob(nextLevel);
+  });
+
+  // 2. Beam Gain Trimmer Knob (CRT Phosphor Glow Multiplier)
+  const gainPresets = [
+    { label: "0.5x", val: "0.5", angle: -45 },
+    { label: "1.0x", val: "1.0", angle: 0 },
+    { label: "1.5x", val: "1.5", angle: 45 },
+    { label: "2.0x", val: "2.0", angle: 90 }
+  ];
+  let gainIdx = 1;
+  const gainKnob = document.getElementById('gain-knob');
+  const gainStatus = document.getElementById('gain-status-text');
+
+  function setGain(idx) {
+    gainIdx = idx;
+    gainKnob.style.transform = `rotate(${gainPresets[idx].angle}deg)`;
+    gainStatus.textContent = gainPresets[idx].label;
+    document.documentElement.style.setProperty('--beam-gain', gainPresets[idx].val);
+    playClick(600, 0.02);
+  }
+
+  gainKnob.addEventListener('click', () => {
+    setGain((gainIdx + 1) % gainPresets.length);
+  });
+  gainKnob.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    setGain((gainIdx + (e.deltaY > 0 ? 1 : gainPresets.length - 1)) % gainPresets.length);
+  });
+
+  // 3. Recoil Tension Trimmer Knob (Physical Keyboard Shake)
+  const recoilPresets = [
+    { label: "OFF", mult: 0, angle: -45 },
+    { label: "LOW", mult: 0.5, angle: 0 },
+    { label: "MED", mult: 1.0, angle: 45 },
+    { label: "HIGH", mult: 2.0, angle: 90 }
+  ];
+  let recoilIdx = 2;
+  const recoilKnob = document.getElementById('recoil-knob');
+  const recoilStatus = document.getElementById('recoil-status-text');
+
+  function setRecoil(idx) {
+    recoilIdx = idx;
+    recoilKnob.style.transform = `rotate(${recoilPresets[idx].angle}deg)`;
+    recoilStatus.textContent = recoilPresets[idx].label;
+    playClick(650, 0.02);
+  }
+
+  recoilKnob.addEventListener('click', () => {
+    setRecoil((recoilIdx + 1) % recoilPresets.length);
+  });
+  recoilKnob.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    setRecoil((recoilIdx + (e.deltaY > 0 ? 1 : recoilPresets.length - 1)) % recoilPresets.length);
+  });
+
+  // Live Keystroke Reactions with GSAP
+  editor.addEventListener('keydown', (e) => {
+    if (typeof gsap === 'undefined') return;
+    const recoilFactor = recoilPresets[recoilIdx].mult;
+
+    // LEVEL 1: Cipher Flash
+    if (currentDocLevel === 1 && e.key.length === 1) {
+      gsap.fromTo(editor, 
+        { textShadow: "0 0 15px #ff0033, 2px 0 0 #ffffff" }, 
+        { textShadow: "0 0 6px rgba(255, 0, 51, 0.6)", duration: 0.2 }
+      );
+    }
+
+    // LEVEL 2: Mechanical Soft-Machine Recoil
+    if (currentDocLevel === 2 && recoilFactor > 0) {
+      if (e.key === 'Enter') {
+        gsap.fromTo(crtScreen, 
+          { y: 5 * recoilFactor, rotate: -0.2 * recoilFactor }, 
+          { y: 0, rotate: 0, duration: 0.35, ease: "elastic.out(1.2, 0.3)" }
+        );
+      } else if (e.key.length === 1) {
+        const randX = (Math.random() - 0.5) * 3 * recoilFactor;
+        const randY = (Math.random() - 0.5) * 2 * recoilFactor;
+        gsap.fromTo(crtScreen, { x: randX, y: randY }, { x: 0, y: 0, duration: 0.08 });
+      }
+    }
+
+    // LEVEL 3: Parametric Laser Overdrive
+    if (currentDocLevel === 3 && e.key.length === 1) {
+      gsap.fromTo(editor, 
+        { 
+          textShadow: "0 0 20px #ffffff, 0 0 35px #ff0033",
+          letterSpacing: "0.14em"
+        }, 
+        { 
+          textShadow: "0 0 8px #ff0033, 0 0 16px rgba(255, 0, 51, 0.8)",
+          letterSpacing: "0.05em", 
+          duration: 0.3,
+          ease: "power2.out"
+        }
+      );
+    }
+  });
+
+  /* =========================================================
+     STANDALONE URL COMPRESSION & AUTO-SAVE ENGINE
+     ========================================================= */
+  (function initAutoSave() {
+    editor.addEventListener('input', debounce(500, saveArticle));
+    window.addEventListener('DOMContentLoaded', loadArticle);
+    window.addEventListener('hashchange', loadArticle);
+
+    async function loadArticle() {
+      try {
+        if (location.hash !== '') {
+          await setArticle(location.hash);
+        } else {
+          const saved = localStorage.getItem('s370-article-hash');
+          if (saved) await setArticle(saved);
+        }
+        updateArticleTitle();
+        updateCounters();
+      } catch (e) {
+        console.log('No saved dataset found');
+      }
+    }
+
+    async function saveArticle() {
+      const hash = await getArticleHash();
+      if (location.hash !== hash) {
+        history.replaceState({}, '', hash);
+      }
+      try { 
+        localStorage.setItem('s370-article-hash', hash);
+      } catch (e) {}
+      updateArticleTitle();
+    }
+
+    async function setArticle(hash) {
+      const content = await decompressArticle(hash.slice(1));
+      editor.value = content;
+    }
+
+    async function getArticleHash() {
+      return '#' + await compressArticle(editor.value);
+    }
+
+    function updateArticleTitle() {
+      const match = editor.value.match(/^\n*#(.+)\n/);
+      if (match) document.title = `${match[1]} - S/370 CONSOLE`;
+    }
+
+    async function compressArticle(string) {
+      if (!string) return '';
+      const byteArray = new TextEncoder().encode(string);
+      const stream = new CompressionStream('deflate-raw');
+      const writer = stream.writable.getWriter();
+      writer.write(byteArray);
+      writer.close();
+      const buffer = await new Response(stream.readable).arrayBuffer();
+      return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+    }
+
+    async function decompressArticle(b64) {
+      if (!b64) return '';
+      const byteArray = Uint8Array.from(
+        atob(b64.replace(/-/g, "+").replace(/_/g, "/")), 
+        c => c.charCodeAt(0)
+      );
+      const stream = new DecompressionStream('deflate-raw');
+      const writer = stream.writable.getWriter();
+      writer.write(byteArray);
+      writer.close();
+      const buffer = await new Response(stream.readable).arrayBuffer();
+      return new TextDecoder().decode(buffer);
+    }
+
+    function debounce(ms, fn) {
+      let timer;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), ms);
+      };
+    }
+  })();
+
+  /* =========================================================
+     MID-DECK ROTARY KNOBS
+     ========================================================= */
+  // 1. Font Family
   const fontPresets = [
     { label: 'VT323', font: "'VT323', monospace" },
     { label: 'IBM PLEX', font: "'IBM Plex Mono', monospace" },
@@ -727,7 +955,7 @@ _</textarea>
     setFont();
   });
 
-  // 2. Font Size Knob
+  // 2. Font Size
   const sizePresets = [15, 19, 23, 27];
   let sizeIdx = 1;
   const knobSize = document.getElementById('knob-size');
@@ -744,7 +972,7 @@ _</textarea>
     setSize();
   });
 
-  // 3. Phosphor Tone Knob (Monochrome Palettes)
+  // 3. Phosphor Tone
   const tonePresets = [
     { label: 'WHITE P4', color: '#d8e2dc', bg: '#090a0c' },
     { label: 'GREEN P1', color: '#4ade80', bg: '#051208' },
@@ -767,7 +995,7 @@ _</textarea>
     setTone();
   });
 
-  // 4. Line Pitch Knob
+  // 4. Line Pitch
   const pitchPresets = [1.1, 1.25, 1.5, 1.8];
   let pitchIdx = 1;
   const knobPitch = document.getElementById('knob-pitch');
@@ -784,7 +1012,6 @@ _</textarea>
     setPitch();
   });
 
-  // Mouse Wheel support for all knobs
   [knobFont, knobSize, knobTone, knobPitch].forEach(k => {
     k.addEventListener('wheel', (e) => {
       e.preventDefault();
@@ -792,7 +1019,9 @@ _</textarea>
     });
   });
 
-  // Format and Mode Buttons
+  /* =========================================================
+     LOWER BUTTON ACTIONS & STORAGE
+     ========================================================= */
   const btnCaps = document.getElementById('btn-caps');
   btnCaps.addEventListener('click', () => {
     btnCaps.classList.toggle('active');
@@ -813,13 +1042,13 @@ _</textarea>
     btnAudio.classList.toggle('active', audioEnabled);
   });
 
-  // Storage / IPL Actions
   document.getElementById('btn-ipl').addEventListener('click', () => {
     playClick(200, 0.08);
     if (confirm('EXECUTE SYSTEM IPL (CLEAR BUFFER)?')) {
       editor.value = 'IBM SYSTEM/370 RE-INITIALIZED.\nREADY.\n_';
-      cntWords.textContent = '0003';
-      cntChars.textContent = '0039';
+      updateCounters();
+      location.hash = '';
+      localStorage.removeItem('s370-article-hash');
     }
   });
 
@@ -837,25 +1066,21 @@ _</textarea>
     window.print();
   });
 
-  // Floppy / Microcode Drive Drag & Drop Loader
+  // Floppy Drag & Drop Loader
   const dropZone = document.getElementById('drop-zone');
   const fileUploader = document.getElementById('file-uploader');
 
   dropZone.addEventListener('click', () => fileUploader.click());
-
   fileUploader.addEventListener('change', (e) => {
     if (e.target.files[0]) readFile(e.target.files[0]);
   });
-
   dropZone.addEventListener('dragover', (e) => {
     e.preventDefault();
     dropZone.style.borderColor = "var(--accent-red)";
   });
-
   dropZone.addEventListener('dragleave', () => {
     dropZone.style.borderColor = "#232426";
   });
-
   dropZone.addEventListener('drop', (e) => {
     e.preventDefault();
     dropZone.style.borderColor = "#232426";
@@ -872,105 +1097,78 @@ _</textarea>
     reader.readAsText(file);
   }
 
-  // Initialize Default States
+  // Initialize Defaults
   setFont();
   setSize();
   setTone();
   setPitch();
+  setGain(1);
+  setRecoil(2);
+  updateModeKnob(0);
 
-  /* ====== 4-POSITION STEPPED EMULATION SWITCH ====== */
-const modeNames = ["0: RAW", "1: CIPHER", "2: KINETIC", "3: PARAM"];
-const modeAngles = [-45, 0, 45, 90]; // 4 stepped detent angles
-
-const modeKnob = document.getElementById('mode-rotary-knob');
-const modeStatus = document.getElementById('mode-status-text');
-
-function updateModeKnob(lvl) {
-    currentDocLevel = lvl;
-    modeKnob.style.transform = `rotate(${modeAngles[lvl]}deg)`;
-    modeStatus.textContent = modeNames[lvl];
-    window.setDocLevel(lvl);
-}
-
-// Click or wheel to cycle modes (0 -> 1 -> 2 -> 3 -> 0)
-modeKnob.addEventListener('click', () => {
-    const nextLevel = (currentDocLevel + 1) % 4;
-    updateModeKnob(nextLevel);
-});
-
-modeKnob.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    const nextLevel = (currentDocLevel + (e.deltaY > 0 ? 1 : 3)) % 4;
-    updateModeKnob(nextLevel);
-});
-   /* ====== S/370 CRT LASER POINTER TRAIL ====== */
-(function initPointerTrail() {
+  /* =========================================================
+     CRT LASER POINTER TRAIL ENGINE
+     ========================================================= */
+  (function initPointerTrail() {
     const canvas = document.getElementById('trailCanvas');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
     let W, H, dpr;
     const pts = [];
-    const LIFE = 500; // Trail fade duration in ms (tight & snappy)
+    const LIFE = 500;
     const isCoarse = window.matchMedia('(pointer: coarse)').matches;
 
     function resize() {
-        dpr = window.devicePixelRatio || 1;
-        W = window.innerWidth;
-        H = window.innerHeight;
-        canvas.width = W * dpr;
-        canvas.height = H * dpr;
-        ctx.resetTransform();
-        ctx.scale(dpr, dpr);
+      dpr = window.devicePixelRatio || 1;
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      ctx.resetTransform();
+      ctx.scale(dpr, dpr);
     }
     resize();
     window.addEventListener('resize', resize);
 
     if (!isCoarse) {
-        window.addEventListener('pointermove', (e) => {
-            pts.push({
-                x: e.clientX,
-                y: e.clientY,
-                t: performance.now()
-            });
-        });
+      window.addEventListener('pointermove', (e) => {
+        pts.push({ x: e.clientX, y: e.clientY, t: performance.now() });
+      });
     }
 
     function render() {
-        requestAnimationFrame(render);
-        if (isCoarse) return;
+      requestAnimationFrame(render);
+      if (isCoarse) return;
 
-        const now = performance.now();
+      const now = performance.now();
+      while (pts.length && now - pts[0].t > LIFE) {
+        pts.shift();
+      }
 
-        // Prune expired points
-        while (pts.length && now - pts[0].t > LIFE) {
-            pts.shift();
-        }
+      ctx.clearRect(0, 0, W, H);
+      if (pts.length < 2) return;
 
-        ctx.clearRect(0, 0, W, H);
-        if (pts.length < 2) return;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
 
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
+      for (let i = 1; i < pts.length; i++) {
+        const progress = (now - pts[i].t) / LIFE;
+        const alpha = Math.max(0, Math.min(1, (1 - progress) * 1.2));
 
-        // Draw laser trail with phosphor bloom
-        for (let i = 1; i < pts.length; i++) {
-            const progress = (now - pts[i].t) / LIFE;
-            const alpha = Math.max(0, Math.min(1, (1 - progress) * 1.2));
+        ctx.strokeStyle = `rgba(255, 42, 42, ${alpha.toFixed(3)})`;
+        ctx.shadowColor = 'rgba(255, 42, 42, 0.8)';
+        ctx.shadowBlur = 4;
+        ctx.lineWidth = 1.35;
 
-            ctx.strokeStyle = `rgba(255, 42, 42, ${alpha.toFixed(3)})`;
-            ctx.shadowColor = 'rgba(255, 42, 42, 0.8)';
-            ctx.shadowBlur = 4; // Subtle CRT phosphor glow
-            ctx.lineWidth = 1.35;
-
-            ctx.beginPath();
-            ctx.moveTo(pts[i - 1].x, pts[i - 1].y);
-            ctx.lineTo(pts[i].x, pts[i].y);
-            ctx.stroke();
-        }
+        ctx.beginPath();
+        ctx.moveTo(pts[i - 1].x, pts[i - 1].y);
+        ctx.lineTo(pts[i].x, pts[i].y);
+        ctx.stroke();
+      }
     }
     requestAnimationFrame(render);
-})(); 
+  })();
 </script>
 </body>
 </html>
