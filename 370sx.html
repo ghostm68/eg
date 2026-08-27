@@ -391,6 +391,61 @@
   pointer-events: none;
   z-index: 9999; /* Floats above knobs & screen */
 }
+  .crt-top-subpanel {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: #111113;
+  border-bottom: 2px solid #28282b;
+  padding: 8px 12px;
+}
+
+.mini-dial-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.mini-label {
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: #777;
+  text-transform: uppercase;
+}
+
+.mini-knob {
+  width: 36px;
+  height: 36px;
+  background: radial-gradient(circle, #38393c 0%, #171718 80%);
+  border: 1.5px solid #4f5154;
+  border-radius: 50%;
+  position: relative;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.2);
+  transition: transform 0.15s cubic-bezier(0.3, 1.8, 0.5, 1);
+}
+
+.mini-knob-notch {
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 8px;
+  background: #ff2a2a; /* Crimson notch */
+  border-radius: 1px;
+}
+
+.mini-status {
+  font-size: 9px;
+  color: #ff2a2a;
+  background: #000;
+  padding: 1px 4px;
+  border: 1px solid #2a2a2c;
+  min-width: 50px;
+  text-align: center;
+}
 </style>
 </head>
 <body>
@@ -417,7 +472,35 @@
         <span class="drop-hint">[ LOAD / DROP TXT ]</span>
       </div>
     </div>
+<!-- Mini Calibration Sub-Panel atop the CRT -->
+<div class="crt-top-subpanel">
+  <!-- Mode Rotary Knob (0:RAW -> 3:PARAMETRIC) -->
+  <div class="mini-dial-unit">
+    <span class="mini-label">EMULATION MODE</span>
+    <div id="mode-rotary-knob" class="mini-knob" title="Click or scroll to change engine mode">
+      <div class="mini-knob-notch"></div>
+    </div>
+    <span class="mini-status" id="mode-status-text">0: RAW</span>
+  </div>
 
+  <!-- Realtime Trimmer 1: Beam / Glow Intensity -->
+  <div class="mini-dial-unit">
+    <span class="mini-label">BEAM GAIN</span>
+    <div id="gain-knob" class="mini-knob">
+      <div class="mini-knob-notch"></div>
+    </div>
+    <span class="mini-status" id="gain-status-text">1.0x</span>
+  </div>
+
+  <!-- Realtime Trimmer 2: Recoil Tension -->
+  <div class="mini-dial-unit">
+    <span class="mini-label">RECOIL DAMP</span>
+    <div id="recoil-knob" class="mini-knob">
+      <div class="mini-knob-notch"></div>
+    </div>
+    <span class="mini-status" id="recoil-status-text">MED</span>
+  </div>
+</div>
     <!-- Right: Status Readouts & CRT Text Area -->
     <div class="right-operation-bay">
       <div class="sub-status-bar">
@@ -734,6 +817,32 @@ _</textarea>
   setSize();
   setTone();
   setPitch();
+
+  /* ====== 4-POSITION STEPPED EMULATION SWITCH ====== */
+const modeNames = ["0: RAW", "1: CIPHER", "2: KINETIC", "3: PARAM"];
+const modeAngles = [-45, 0, 45, 90]; // 4 stepped detent angles
+
+const modeKnob = document.getElementById('mode-rotary-knob');
+const modeStatus = document.getElementById('mode-status-text');
+
+function updateModeKnob(lvl) {
+    currentDocLevel = lvl;
+    modeKnob.style.transform = `rotate(${modeAngles[lvl]}deg)`;
+    modeStatus.textContent = modeNames[lvl];
+    window.setDocLevel(lvl);
+}
+
+// Click or wheel to cycle modes (0 -> 1 -> 2 -> 3 -> 0)
+modeKnob.addEventListener('click', () => {
+    const nextLevel = (currentDocLevel + 1) % 4;
+    updateModeKnob(nextLevel);
+});
+
+modeKnob.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const nextLevel = (currentDocLevel + (e.deltaY > 0 ? 1 : 3)) % 4;
+    updateModeKnob(nextLevel);
+});
    /* ====== S/370 CRT LASER POINTER TRAIL ====== */
 (function initPointerTrail() {
     const canvas = document.getElementById('trailCanvas');
