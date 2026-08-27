@@ -109,7 +109,39 @@
     </section>
 
     <!-- Dependency-free form handler -->
-    <script data-cfasync="false" type="text/javascript" src="https://cdn.jsdelivr.net/gh/ghostm68/eg@main/form-submission-handler.js"></script>
+    <script>
+  const form = document.getElementById('contact-form');
+  const statusMsg = document.getElementById('form-status-message');
+  const fallbackEmail = 'contact@wordstar.nexus'; // or contact@inkrealm.info
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Initial transmitting state
+    statusMsg.style.display = 'block';
+    statusMsg.style.color = '#ffaa00';
+    statusMsg.innerText = 'TRANSMITTING...';
+
+    const formData = new FormData(form);
+
+    // mode: 'no-cors' sends data cleanly without browser CORS blocks
+    fetch(form.action, {
+      method: 'POST',
+      body: formData,
+      mode: 'no-cors'
+    })
+    .then(() => {
+      statusMsg.style.color = '#00ff66';
+      statusMsg.innerText = '✓ MESSAGE SENT SUCCESSFULLY.';
+      form.reset();
+    })
+    .catch((err) => {
+      console.error('Submission error:', err);
+      statusMsg.style.color = '#ff4444';
+      statusMsg.innerHTML = `⚠️ ERROR TRANSMITTING DATA. Please reach out directly via <a href="mailto:${fallbackEmail}" style="color: #ff4444; text-decoration: underline; font-weight: bold;">${fallbackEmail}</a>`;
+    });
+  });
+</script>
 </body>
 
 </html>
