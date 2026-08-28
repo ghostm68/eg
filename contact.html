@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WORDSTAR // TEN</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -37,7 +37,8 @@
         .flicker { animation: intenseFlicker 0.2s infinite; }
 
         .scroll-height {
-            height: 300vh; /* 3 panels for now — expand as needed */
+            /* tighter: roughly 1 panel height of scroll per panel */
+            height: 300vh;
         }
 
         .viewport {
@@ -90,6 +91,8 @@
             justify-content: center;
             padding: 60px;
             border-left: 1px solid #222;
+            overflow-y: auto;          /* allows form to scroll inside panel on mobile */
+            -webkit-overflow-scrolling: touch;
         }
 
         .file-header {
@@ -114,12 +117,13 @@
             border-left: 1px solid #333;
         }
 
-        /* CONTACT FORM STYLING */
+        /* CONTACT FORM */
         .contact-form {
             display: flex;
             flex-direction: column;
             gap: 18px;
             max-width: 420px;
+            width: 100%;
         }
 
         .contact-form input,
@@ -128,10 +132,12 @@
             border: 1px solid #333;
             color: var(--text-color);
             font-family: 'Courier New', Courier, monospace;
-            font-size: 1rem;
+            font-size: 16px;           /* 16px prevents iOS zoom on focus */
             padding: 12px 14px;
             outline: none;
             transition: border-color 0.2s;
+            border-radius: 0;
+            -webkit-appearance: none;
         }
 
         .contact-form input:focus {
@@ -168,6 +174,31 @@
             pointer-events: none;
             z-index: 100;
         }
+
+        /* Mobile adjustments */
+        @media (max-width: 768px) {
+            .panel {
+                flex-direction: column;
+            }
+            .art-side {
+                width: 100%;
+                height: 40vh;
+                padding: 20px;
+            }
+            .art-side img {
+                max-height: 35vh;
+            }
+            .text-side {
+                width: 100%;
+                height: 60vh;
+                padding: 30px 24px;
+                border-left: none;
+                border-top: 1px solid #222;
+            }
+            .scroll-height {
+                height: 280vh;   /* slightly tighter on mobile */
+            }
+        }
     </style>
 </head>
 <body>
@@ -178,7 +209,7 @@
         <div class="viewport">
             <div class="track">
 
-                <!-- PANEL 01 — CLARK NOVA -->
+                <!-- PANEL 01 -->
                 <section class="panel">
                     <div class="art-side">
                         <img src="https://raw.githubusercontent.com/ghostm68/pantheon/main/clarknova.inkrealm.info.ai123164f.gif" class="flicker" alt="Clark Nova">
@@ -197,7 +228,7 @@ DEAD ROOM.
                     </div>
                 </section>
 
-                <!-- PANEL 02 — SLUTPUPPY / PLACEHOLDER -->
+                <!-- PANEL 02 -->
                 <section class="panel">
                     <div class="art-side">
                         <img src="https://raw.githubusercontent.com/ghostm68/pantheon/main/slutpuppy1%20November%2018,%202025%20-%2010_02PM%20(3).png" class="flicker" alt="Slutpuppy">
@@ -219,7 +250,6 @@ LOW-RES WORLD.
                 <!-- PANEL 03 — CONTACT -->
                 <section class="panel">
                     <div class="art-side">
-                        <!-- swap for any wordstar.nexus / pantheon asset or video -->
                         <img src="https://raw.githubusercontent.com/ghostm68/99/main/5379e792-a434-4666-8e51-bb8e41de678b_inky_gif.gif" 
                              style="width:120px; border-radius:50%; filter:none;" alt="inky">
                     </div>
@@ -227,20 +257,18 @@ LOW-RES WORLD.
                         <div class="file-header">CONTACT // TRANSMISSION</div>
                         
                         <form class="contact-form" id="contact-form" 
-      action="https://script.google.com/macros/s/AKfycbxIgPzEFm9gLsCdS61QUc6BjLfyWGFHW6o_7fUDemRckHt3HGVKeSOnxOcPlUB9A1TR/exec" 
-      method="POST">
+                              action="https://script.google.com/macros/s/AKfycbxIgPzEFm9gLsCdS61QUc6BjLfyWGFHW6o_7fUDemRckHt3HGVKeSOnxOcPlUB9A1TR/exec" 
+                              method="POST">
     
-    <input type="text" name="name" placeholder="NAME" required>
-    <input type="text" name="Business Name" placeholder="BUSINESS NAME" required>
-    <input type="email" name="email" placeholder="EMAIL" required>
-    
-    <!-- honeypot -->
-    <input type="text" name="honeypot" style="display:none" tabindex="-1" autocomplete="off">
-    
-    <button type="submit">SEND TRANSMISSION</button>
-    <p id="form-status"></p>
-</form>      
+                            <input type="text" name="name" placeholder="NAME" required autocomplete="name">
+                            <input type="text" name="Business Name" placeholder="BUSINESS NAME" required>
+                            <input type="email" name="email" placeholder="EMAIL" required autocomplete="email">
                             
+                            <input type="text" name="honeypot" style="display:none" tabindex="-1" autocomplete="off">
+                            
+                            <button type="submit">SEND TRANSMISSION</button>
+                            <p id="form-status"></p>
+                        </form>
                     </div>
                 </section>
 
@@ -254,6 +282,7 @@ LOW-RES WORLD.
         const track = document.querySelector(".track");
         const panels = gsap.utils.toArray(".panel");
 
+        // tighter end calculation to reduce trailing empty space
         gsap.to(track, {
             xPercent: -100 * (panels.length - 1),
             ease: "none",
@@ -261,7 +290,8 @@ LOW-RES WORLD.
                 trigger: ".scroll-height",
                 pin: true,
                 scrub: 1,
-                end: () => "+=" + track.offsetWidth
+                end: () => "+=" + (track.offsetWidth * 0.85), // reduced multiplier kills the big gap
+                invalidateOnRefresh: true
             }
         });
 
@@ -282,7 +312,7 @@ LOW-RES WORLD.
             }
         });
 
-        // lightweight form handler (no external dependency)
+        // form handler
         document.getElementById("contact-form").addEventListener("submit", async function(e) {
             e.preventDefault();
             const status = document.getElementById("form-status");
@@ -304,6 +334,19 @@ LOW-RES WORLD.
             } catch (err) {
                 status.textContent = "LINK FAILURE.";
             }
+        });
+
+        // prevent keyboard from fighting the pinned scroll on mobile
+        const inputs = document.querySelectorAll(".contact-form input");
+        inputs.forEach(input => {
+            input.addEventListener("focus", () => {
+                // briefly disable ScrollTrigger while typing
+                ScrollTrigger.getAll().forEach(st => st.disable(false));
+            });
+            input.addEventListener("blur", () => {
+                ScrollTrigger.getAll().forEach(st => st.enable());
+                ScrollTrigger.refresh();
+            });
         });
     </script>
 </body>
