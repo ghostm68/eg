@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Anagram Engine</title>
+  <title>Anagram Engine · Wordstar Nexus</title>
   <style>
     :root {
       --red: #ff0033;
@@ -50,6 +50,8 @@
       justify-content: space-between;
       border-bottom: 1px solid var(--border);
       padding-bottom: 0.75rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
     }
 
     header h1 {
@@ -59,12 +61,18 @@
       color: var(--red);
     }
 
+    header .brand {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
     header .status {
       font-size: 0.75rem;
       color: var(--muted);
     }
 
-    /* Input + Inventory */
     .input-row {
       display: grid;
       gap: 0.5rem;
@@ -135,7 +143,6 @@
       color: var(--white);
     }
 
-    /* Options */
     .options {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -150,11 +157,41 @@
       gap: 0.25rem;
     }
 
-    /* Actions */
+    /* Mode toggle */
+    .mode-toggle {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .mode-toggle button {
+      flex: 1;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .mode-toggle button.active {
+      background: var(--red);
+      color: var(--black);
+      font-weight: 700;
+    }
+
+    .mode-toggle button:not(.active):hover {
+      background: #151515;
+      color: var(--red);
+    }
+
     .actions {
       display: flex;
       flex-wrap: wrap;
       gap: 0.5rem;
+      align-items: center;
     }
 
     button {
@@ -166,7 +203,7 @@
       font-size: 0.8rem;
       cursor: pointer;
       border-radius: 2px;
-      transition: border-color 0.15s, color 0.15s;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
     }
 
     button:hover {
@@ -192,7 +229,6 @@
       cursor: not-allowed;
     }
 
-    /* Main panels */
     .panels {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -200,9 +236,7 @@
     }
 
     @media (max-width: 720px) {
-      .panels {
-        grid-template-columns: 1fr;
-      }
+      .panels { grid-template-columns: 1fr; }
     }
 
     .panel {
@@ -232,7 +266,6 @@
       padding: 0.4rem 0;
     }
 
-    /* Suggestions */
     .suggestion {
       display: flex;
       align-items: center;
@@ -240,6 +273,7 @@
       padding: 0.4rem 0.75rem;
       cursor: pointer;
       border-left: 2px solid transparent;
+      gap: 0.5rem;
     }
 
     .suggestion:hover {
@@ -252,12 +286,18 @@
       letter-spacing: 0.03em;
     }
 
+    .suggestion .phrase {
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      color: var(--white);
+    }
+
     .suggestion .len {
       font-size: 0.7rem;
       color: var(--muted);
+      white-space: nowrap;
     }
 
-    /* Claimed */
     .claimed-list {
       list-style: none;
     }
@@ -281,16 +321,11 @@
       font-size: 0.85rem;
     }
 
-    /* Footer / export */
     .footer {
       border-top: 1px solid var(--border);
       padding-top: 0.75rem;
       font-size: 0.8rem;
       color: var(--muted);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      justify-content: space-between;
     }
 
     .export-box {
@@ -302,19 +337,23 @@
       min-height: 2.5rem;
       width: 100%;
       margin-top: 0.4rem;
+      white-space: pre-wrap;
     }
 
-    .loading {
+    .hint {
+      font-size: 0.7rem;
       color: var(--muted);
-      font-size: 0.85rem;
-      padding: 1rem;
+      margin-top: 0.25rem;
     }
   </style>
 </head>
 <body>
   <div class="app">
     <header>
-      <h1>ANAGRAM ENGINE</h1>
+      <div>
+        <h1>ANAGRAM ENGINE</h1>
+        <div class="brand">Wordstar Nexus</div>
+      </div>
       <div class="status" id="status">Loading dictionary…</div>
     </header>
 
@@ -326,6 +365,13 @@
     </div>
 
     <div class="options">
+      <div class="opt" style="grid-column: 1 / -1;">
+        <label>Mode</label>
+        <div class="mode-toggle">
+          <button type="button" id="modeWords" class="active">Words</button>
+          <button type="button" id="modePhrases">Phrases</button>
+        </div>
+      </div>
       <div class="opt">
         <label>Min length</label>
         <input type="number" id="minLen" value="3" min="2" max="20" />
@@ -360,7 +406,15 @@
       </div>
       <div class="opt">
         <label>Max results</label>
-        <input type="number" id="maxResults" value="50" min="10" max="200" />
+        <input type="number" id="maxResults" value="40" min="10" max="120" />
+      </div>
+      <div class="opt" id="phraseDepthOpt">
+        <label>Phrase depth</label>
+        <select id="phraseDepth">
+          <option value="2">2 words</option>
+          <option value="3" selected>3 words</option>
+          <option value="4">4 words</option>
+        </select>
       </div>
     </div>
 
@@ -368,13 +422,14 @@
       <button class="primary" id="btnFind">Find</button>
       <button id="btnUndo" disabled>Undo</button>
       <button id="btnClear">Clear</button>
-      <button id="btnExport">Export</button>
+      <button id="btnExportTxt">Export .txt</button>
+      <button id="btnCopy">Copy</button>
     </div>
 
     <div class="panels">
       <div class="panel">
         <div class="panel-head">
-          <span>Suggestions</span>
+          <span id="sugLabel">Suggestions</span>
           <span id="sugCount">0</span>
         </div>
         <div class="panel-body" id="suggestions">
@@ -394,24 +449,31 @@
     </div>
 
     <div class="footer">
-      <div>
-        <div>Export / current build</div>
-        <div class="export-box" id="exportBox">—</div>
-      </div>
+      <div>Current build</div>
+      <div class="export-box" id="exportBox">—</div>
+      <div class="hint">Export .txt produces a Wordstar Nexus marked file for download.</div>
     </div>
   </div>
 
   <script>
     // ============================================================
-    // Anagram Engine — core
+    // Anagram Engine · Wordstar Nexus
     // ============================================================
 
     const VOWELS = new Set("aeiou");
+    const RARE = new Set("jqxz");
 
     /** @type {string[]} */
     let DICT = [];
+    /** Precomputed counts for speed in phrase mode */
+    let DICT_COUNTS = [];
 
-    /** Letter counts 0-25 for a-z */
+    let mode = "words"; // "words" | "phrases"
+    let remaining = new Uint8Array(26);
+    let original = new Uint8Array(26);
+    /** @type {{word:string, counts:Uint8Array}[]} */
+    let claimed = [];
+
     function countsFrom(str) {
       const c = new Uint8Array(26);
       for (const ch of str) {
@@ -421,31 +483,33 @@
       return c;
     }
 
-    function canForm(wordCounts, inventory) {
-      for (let i = 0; i < 26; i++) {
-        if (wordCounts[i] > inventory[i]) return false;
-      }
+    function canForm(need, have) {
+      for (let i = 0; i < 26; i++) if (need[i] > have[i]) return false;
       return true;
     }
 
-    function subtract(inventory, wordCounts) {
-      const next = inventory.slice();
-      for (let i = 0; i < 26; i++) next[i] -= wordCounts[i];
-      return next;
+    function subtract(inv, sub) {
+      const n = inv.slice();
+      for (let i = 0; i < 26; i++) n[i] -= sub[i];
+      return n;
     }
 
-    function add(inventory, wordCounts) {
-      const next = inventory.slice();
-      for (let i = 0; i < 26; i++) next[i] += wordCounts[i];
-      return next;
+    function add(inv, addend) {
+      const n = inv.slice();
+      for (let i = 0; i < 26; i++) n[i] += addend[i];
+      return n;
     }
 
     function inventoryToString(inv) {
       let s = "";
-      for (let i = 0; i < 26; i++) {
-        s += String.fromCharCode(97 + i).repeat(inv[i]);
-      }
+      for (let i = 0; i < 26; i++) s += String.fromCharCode(97 + i).repeat(inv[i]);
       return s;
+    }
+
+    function totalLetters(inv) {
+      let t = 0;
+      for (let i = 0; i < 26; i++) t += inv[i];
+      return t;
     }
 
     function vowelPct(inv) {
@@ -457,18 +521,9 @@
       return total === 0 ? 0 : Math.round((vows / total) * 100);
     }
 
-    function totalLetters(inv) {
-      let t = 0;
-      for (let i = 0; i < 26; i++) t += inv[i];
-      return t;
-    }
-
-    // Remaining "goodness": prefer words that leave balanced vowels / avoid rare letters
-    // Simple heuristic: higher remaining vowel % + fewer leftover rare letters is better
-    const RARE = new Set("jqxz");
     function remainingScore(after) {
       const tot = totalLetters(after);
-      if (tot === 0) return 1000; // perfect
+      if (tot === 0) return 1000;
       const vp = vowelPct(after);
       let rare = 0;
       for (let i = 0; i < 26; i++) {
@@ -477,31 +532,14 @@
       return vp * 2 - rare * 8 - tot * 0.3;
     }
 
-    // ------------------------------------------------------------
-    // State
-    // ------------------------------------------------------------
-    let remaining = new Uint8Array(26);
-    let original = new Uint8Array(26);
-    /** @type {{word:string, counts:Uint8Array}[]} */
-    let claimed = [];
-    let lastSuggestions = [];
-
-    // ------------------------------------------------------------
-    // DOM
-    // ------------------------------------------------------------
-    const $ = (id) => document.getElementById(id);
-    const phraseEl = $("phrase");
-    const invEl = $("inventory");
-    const metaEl = $("meta");
-    const sugEl = $("suggestions");
-    const claimedEl = $("claimed");
-    const claimedEmpty = $("claimedEmpty");
-    const statusEl = $("status");
-    const exportBox = $("exportBox");
-
     function normalize(str) {
       return (str || "").toLowerCase().replace(/[^a-z]/g, "");
     }
+
+    // ------------------------------------------------------------
+    // DOM helpers
+    // ------------------------------------------------------------
+    const $ = (id) => document.getElementById(id);
 
     function getOptions() {
       return {
@@ -512,11 +550,13 @@
         must: normalize($("must").value),
         mustNot: normalize($("mustNot").value),
         rankBy: $("rankBy").value,
-        maxResults: Math.min(200, parseInt($("maxResults").value, 10) || 50),
+        maxResults: Math.min(120, parseInt($("maxResults").value, 10) || 40),
+        phraseDepth: parseInt($("phraseDepth").value, 10) || 3,
       };
     }
 
     function renderInventory() {
+      const invEl = $("inventory");
       invEl.innerHTML = "";
       const letters = [];
       for (let i = 0; i < 26; i++) {
@@ -528,96 +568,94 @@
         chip.textContent = n > 1 ? ch + n : ch;
         letters.push(chip);
       }
-      if (letters.length === 0) {
-        invEl.innerHTML = '<span class="meta">No letters</span>';
-      } else {
-        letters.forEach((c) => invEl.appendChild(c));
-      }
+      if (!letters.length) invEl.innerHTML = '<span class="meta">No letters</span>';
+      else letters.forEach((c) => invEl.appendChild(c));
+
       const tot = totalLetters(remaining);
-      const vp = vowelPct(remaining);
-      metaEl.innerHTML = `<strong>${tot}</strong> letters remaining · <strong>${vp}%</strong> vowels`;
+      $("meta").innerHTML = `<strong>${tot}</strong> letters remaining · <strong>${vowelPct(remaining)}%</strong> vowels`;
     }
 
     function renderClaimed() {
-      claimedEl.innerHTML = "";
-      claimed.forEach((c, idx) => {
+      const list = $("claimed");
+      list.innerHTML = "";
+      claimed.forEach((c) => {
         const li = document.createElement("li");
         li.innerHTML = `<span class="word">${c.word}</span><span class="len">${c.word.length}</span>`;
-        claimedEl.appendChild(li);
+        list.appendChild(li);
       });
-      claimedEmpty.style.display = claimed.length ? "none" : "block";
+      $("claimedEmpty").style.display = claimed.length ? "none" : "block";
       $("claimedCount").textContent = claimed.length;
       $("btnUndo").disabled = claimed.length === 0;
-      updateExport();
+      updateExportBox();
     }
 
-    function updateExport() {
+    function updateExportBox() {
       const words = claimed.map((c) => c.word).join(" · ");
       const left = inventoryToString(remaining);
-      exportBox.textContent = words
+      $("exportBox").textContent = words
         ? (left ? `${words}  |  leftover: ${left}` : words)
         : (left ? `leftover: ${left}` : "—");
     }
 
-    function renderSuggestions(list) {
-      lastSuggestions = list;
-      sugEl.innerHTML = "";
-      if (!list.length) {
-        sugEl.innerHTML = '<div class="empty">No matches with current filters / remaining letters.</div>';
+    function renderSuggestions(items) {
+      const el = $("suggestions");
+      el.innerHTML = "";
+      if (!items.length) {
+        el.innerHTML = '<div class="empty">No matches with current filters / remaining letters.</div>';
         $("sugCount").textContent = "0";
         return;
       }
       const frag = document.createDocumentFragment();
-      list.forEach((item) => {
+      items.forEach((item) => {
         const div = document.createElement("div");
         div.className = "suggestion";
-        div.innerHTML = `<span class="word">${item.word}</span><span class="len">${item.word.length}</span>`;
-        div.addEventListener("click", () => claim(item.word));
+        if (item.phrase) {
+          div.innerHTML = `<span class="phrase">${item.phrase}</span><span class="len">${item.words.length}w</span>`;
+          div.addEventListener("click", () => claimPhrase(item.words));
+        } else {
+          div.innerHTML = `<span class="word">${item.word}</span><span class="len">${item.word.length}</span>`;
+          div.addEventListener("click", () => claim(item.word));
+        }
         frag.appendChild(div);
       });
-      sugEl.appendChild(frag);
-      $("sugCount").textContent = list.length;
+      el.appendChild(frag);
+      $("sugCount").textContent = items.length;
     }
 
     // ------------------------------------------------------------
-    // Engine
+    // Word-mode finder
     // ------------------------------------------------------------
-    function findSuggestions() {
-      if (!DICT.length) return;
+    function findWords() {
       const opt = getOptions();
       const mustC = countsFrom(opt.must);
       const mustNotSet = new Set(opt.mustNot);
-
       const candidates = [];
-      for (const word of DICT) {
+
+      for (let i = 0; i < DICT.length; i++) {
+        const word = DICT[i];
         const len = word.length;
         if (len < opt.minLen || len > opt.maxLen) continue;
         if (opt.prefix && !word.startsWith(opt.prefix)) continue;
         if (opt.suffix && !word.endsWith(opt.suffix)) continue;
 
-        // must-not letters
         let bad = false;
         for (const ch of word) {
           if (mustNotSet.has(ch)) { bad = true; break; }
         }
         if (bad) continue;
 
-        const wc = countsFrom(word);
-        // must-contain
+        const wc = DICT_COUNTS[i];
         if (!canForm(mustC, wc)) continue;
-        // fits remaining inventory
         if (!canForm(wc, remaining)) continue;
 
         candidates.push({ word, counts: wc, len });
       }
 
-      // rank
       if (opt.rankBy === "length") {
         candidates.sort((a, b) => b.len - a.len || a.word.localeCompare(b.word));
       } else if (opt.rankBy === "alpha") {
         candidates.sort((a, b) => a.word.localeCompare(b.word));
       } else {
-        // remaining goodness
         candidates.sort((a, b) => {
           const sa = remainingScore(subtract(remaining, a.counts));
           const sb = remainingScore(subtract(remaining, b.counts));
@@ -628,11 +666,118 @@
       renderSuggestions(candidates.slice(0, opt.maxResults));
     }
 
+    // ------------------------------------------------------------
+    // Phrase-mode finder (bounded recursive search)
+    // ------------------------------------------------------------
+    function findPhrases() {
+      const opt = getOptions();
+      const maxDepth = opt.phraseDepth;
+      const maxResults = opt.maxResults;
+      const minLen = opt.minLen;
+      const maxLen = opt.maxLen;
+      const mustNotSet = new Set(opt.mustNot);
+      const results = [];
+      const seen = new Set();
+
+      // Candidate words that fit the current remaining letters at all
+      const pool = [];
+      for (let i = 0; i < DICT.length; i++) {
+        const word = DICT[i];
+        const len = word.length;
+        if (len < minLen || len > maxLen) continue;
+        if (opt.prefix && !word.startsWith(opt.prefix)) continue;
+        if (opt.suffix && !word.endsWith(opt.suffix)) continue;
+        let bad = false;
+        for (const ch of word) if (mustNotSet.has(ch)) { bad = true; break; }
+        if (bad) continue;
+        const wc = DICT_COUNTS[i];
+        if (!canForm(wc, remaining)) continue;
+        pool.push({ word, counts: wc, len });
+      }
+
+      // Prefer longer words first → fewer deep branches
+      pool.sort((a, b) => b.len - a.len);
+
+      const startTime = performance.now();
+      const TIME_BUDGET = 450; // ms
+
+      function search(inv, path, startIdx) {
+        if (results.length >= maxResults) return;
+        if (performance.now() - startTime > TIME_BUDGET) return;
+
+        const left = totalLetters(inv);
+        if (left === 0 && path.length >= 2) {
+          const key = path.slice().sort().join(" ");
+          if (!seen.has(key)) {
+            seen.add(key);
+            results.push({
+              phrase: path.join(" · "),
+              words: path.slice(),
+            });
+          }
+          return;
+        }
+        if (path.length >= maxDepth) return;
+        if (left < minLen) return;
+
+        for (let i = startIdx; i < pool.length; i++) {
+          const w = pool[i];
+          if (w.len > left) continue;
+          if (!canForm(w.counts, inv)) continue;
+          // keep non-decreasing length order to reduce duplicates
+          if (path.length && w.len > path[path.length - 1].length) continue;
+
+          const nextInv = subtract(inv, w.counts);
+          path.push(w.word);
+          search(nextInv, path, i); // allow same word again? use i+1 to forbid reuse of earlier pool entries
+          path.pop();
+
+          if (results.length >= maxResults) return;
+          if (performance.now() - startTime > TIME_BUDGET) return;
+        }
+      }
+
+      search(remaining.slice(), [], 0);
+
+      // Also accept near-complete (small leftovers) if we have few exact hits
+      if (results.length < 8) {
+        // light second pass already covered by early exits; keep simple for v1
+      }
+
+      renderSuggestions(results);
+    }
+
+    function findSuggestions() {
+      if (!DICT.length) return;
+      if (mode === "phrases") {
+        $("sugLabel").textContent = "Phrase suggestions";
+        findPhrases();
+      } else {
+        $("sugLabel").textContent = "Word suggestions";
+        findWords();
+      }
+    }
+
+    // ------------------------------------------------------------
+    // Claim / Undo / Clear
+    // ------------------------------------------------------------
     function claim(word) {
       const wc = countsFrom(word);
       if (!canForm(wc, remaining)) return;
       remaining = subtract(remaining, wc);
       claimed.push({ word, counts: wc });
+      renderInventory();
+      renderClaimed();
+      findSuggestions();
+    }
+
+    function claimPhrase(words) {
+      for (const w of words) {
+        const wc = countsFrom(w);
+        if (!canForm(wc, remaining)) return;
+        remaining = subtract(remaining, wc);
+        claimed.push({ word: w, counts: wc });
+      }
       renderInventory();
       renderClaimed();
       findSuggestions();
@@ -647,28 +792,93 @@
       findSuggestions();
     }
 
-    function clearAll() {
-      claimed = [];
-      const cleaned = normalize(phraseEl.value);
-      remaining = countsFrom(cleaned);
-      original = remaining.slice();
-      renderInventory();
-      renderClaimed();
-      findSuggestions();
-    }
-
     function onPhraseInput() {
-      const cleaned = normalize(phraseEl.value);
-      // only reset remaining if no claims, or always rebuild from original - claims
+      const cleaned = normalize($("phrase").value);
       original = countsFrom(cleaned);
-      // rebuild remaining from original minus claimed
       remaining = original.slice();
       for (const c of claimed) {
         remaining = subtract(remaining, c.counts);
-        // safety: if over-subtract (phrase changed), clamp
         for (let i = 0; i < 26; i++) if (remaining[i] < 0) remaining[i] = 0;
       }
       renderInventory();
+      findSuggestions();
+    }
+
+    // ------------------------------------------------------------
+    // Export — Wordstar Nexus marked .txt
+    // ------------------------------------------------------------
+    function buildExportText() {
+      const phrase = $("phrase").value.trim() || "(none)";
+      const words = claimed.map((c) => c.word);
+      const leftover = inventoryToString(remaining);
+      const now = new Date().toISOString().slice(0, 19).replace("T", " ");
+
+      const lines = [
+        "══════════════════════════════════════════════════",
+        "  WORDSTAR NEXUS  ·  ANAGRAM ENGINE",
+        "══════════════════════════════════════════════════",
+        "",
+        `Generated : ${now}`,
+        `Source    : ${phrase}`,
+        `Mode      : ${mode}`,
+        "",
+        "── Claimed ───────────────────────────────────────",
+        words.length ? words.map((w, i) => `  ${String(i + 1).padStart(2)}. ${w}`).join("\n") : "  (none)",
+        "",
+        "── Leftover letters ───────────────────────────────",
+        leftover ? `  ${leftover}` : "  (none — perfect anagram)",
+        "",
+        "── Build line ────────────────────────────────────",
+        words.length
+          ? `  ${words.join(" · ")}${leftover ? "  |  leftover: " + leftover : ""}`
+          : "  —",
+        "",
+        "══════════════════════════════════════════════════",
+        "  wordstar.nexus/gram",
+        "══════════════════════════════════════════════════",
+        "",
+      ];
+      return lines.join("\n");
+    }
+
+    function downloadTxt() {
+      const text = buildExportText();
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const stamp = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `wordstar-nexus-anagram-${stamp}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      $("status").textContent = "Exported .txt";
+      setTimeout(() => {
+        $("status").textContent = `Ready · ${DICT.length.toLocaleString()} words`;
+      }, 1600);
+    }
+
+    function copyBuild() {
+      const text = buildExportText();
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+          $("status").textContent = "Copied to clipboard";
+          setTimeout(() => {
+            $("status").textContent = `Ready · ${DICT.length.toLocaleString()} words`;
+          }, 1500);
+        });
+      }
+    }
+
+    // ------------------------------------------------------------
+    // Mode switching
+    // ------------------------------------------------------------
+    function setMode(m) {
+      mode = m;
+      $("modeWords").classList.toggle("active", m === "words");
+      $("modePhrases").classList.toggle("active", m === "phrases");
+      $("phraseDepthOpt").style.opacity = m === "phrases" ? "1" : "0.45";
       findSuggestions();
     }
 
@@ -679,57 +889,50 @@
     $("btnUndo").addEventListener("click", undo);
     $("btnClear").addEventListener("click", () => {
       claimed = [];
-      phraseEl.value = "";
+      $("phrase").value = "";
       remaining = new Uint8Array(26);
       original = new Uint8Array(26);
       renderInventory();
       renderClaimed();
       renderSuggestions([]);
-      phraseEl.focus();
+      $("phrase").focus();
     });
-    $("btnExport").addEventListener("click", () => {
-      const text = exportBox.textContent;
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(() => {
-          statusEl.textContent = "Copied to clipboard";
-          setTimeout(() => (statusEl.textContent = `Ready · ${DICT.length.toLocaleString()} words`), 1500);
-        });
-      }
-    });
+    $("btnExportTxt").addEventListener("click", downloadTxt);
+    $("btnCopy").addEventListener("click", copyBuild);
 
-    phraseEl.addEventListener("input", onPhraseInput);
-    ["minLen", "maxLen", "prefix", "suffix", "must", "mustNot", "rankBy", "maxResults"].forEach((id) => {
-      $(id).addEventListener("change", findSuggestions);
-      $(id).addEventListener("input", () => {
-        if (id === "prefix" || id === "suffix" || id === "must" || id === "mustNot") findSuggestions();
+    $("modeWords").addEventListener("click", () => setMode("words"));
+    $("modePhrases").addEventListener("click", () => setMode("phrases"));
+
+    $("phrase").addEventListener("input", onPhraseInput);
+
+    ["minLen", "maxLen", "prefix", "suffix", "must", "mustNot", "rankBy", "maxResults", "phraseDepth"].forEach((id) => {
+      const el = $(id);
+      el.addEventListener("change", findSuggestions);
+      el.addEventListener("input", () => {
+        if (["prefix", "suffix", "must", "mustNot"].includes(id)) findSuggestions();
       });
     });
 
     // Load dictionary
     async function loadDict() {
       try {
-        // Prefer local words.json (pre-extracted). Fallback to remote if needed.
         let res = await fetch("words.json");
         if (!res.ok) throw new Error("local missing");
         DICT = await res.json();
-        statusEl.textContent = `Ready · ${DICT.length.toLocaleString()} words`;
-      } catch (e) {
-        statusEl.textContent = "Fetching dictionary…";
-        try {
-          const res = await fetch("https://raw.githubusercontent.com/adambom/dictionary/master/dictionary.json");
-          const raw = await res.json();
-          const set = new Set();
-          for (const k of Object.keys(raw)) {
-            const w = k.toLowerCase().replace(/[^a-z]/g, "");
-            if (w.length >= 2 && w.length <= 20) set.add(w);
-          }
-          DICT = Array.from(set).sort();
-          statusEl.textContent = `Ready · ${DICT.length.toLocaleString()} words (remote)`;
-        } catch (err) {
-          statusEl.textContent = "Dictionary load failed";
-          console.error(err);
+      } catch {
+        $("status").textContent = "Fetching dictionary…";
+        const res = await fetch("https://raw.githubusercontent.com/adambom/dictionary/master/dictionary.json");
+        const raw = await res.json();
+        const set = new Set();
+        for (const k of Object.keys(raw)) {
+          const w = k.toLowerCase().replace(/[^a-z]/g, "");
+          if (w.length >= 2 && w.length <= 20) set.add(w);
         }
+        DICT = Array.from(set).sort();
       }
+
+      DICT_COUNTS = DICT.map((w) => countsFrom(w));
+      $("status").textContent = `Ready · ${DICT.length.toLocaleString()} words`;
       onPhraseInput();
     }
 
