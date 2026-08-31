@@ -3,15 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Anagram Engine · Wordstar Nexus</title>
+  <title>gRAM · Wordstar Nexus</title>
   <style>
     :root {
       --red: #ff0033;
       --black: #0a0a0a;
-      --grey: #1a1a1a;
+      --grey: #141414;
+      --panel: #0d0d0d;
       --white: #ffffff;
-      --muted: #888;
+      --muted: #777;
       --border: #2a2a2a;
+      --ok: #5dffa0;
+      --ok-bg: #0f1f14;
+      --ok-border: #2a8f4e;
     }
 
     * {
@@ -33,11 +37,11 @@
       color: var(--white);
       min-height: 100vh;
       line-height: 1.4;
-      font-size: 14px;
+      font-size: 13px;
       position: relative;
     }
 
-    /* Background video — attenuated so UI stays primary */
+    /* Background video — attenuated */
     .bg-video {
       position: fixed;
       inset: 0;
@@ -45,89 +49,130 @@
       height: 100%;
       object-fit: cover;
       z-index: 0;
-      opacity: 0.22;
+      opacity: 0.18;
       pointer-events: none;
-      filter: saturate(0.7) brightness(0.55);
+      filter: saturate(0.6) brightness(0.5);
     }
-
     .bg-veil {
       position: fixed;
       inset: 0;
       z-index: 1;
       background: linear-gradient(
         180deg,
-        rgba(10, 10, 10, 0.72) 0%,
-        rgba(10, 10, 10, 0.55) 40%,
-        rgba(10, 10, 10, 0.78) 100%
+        rgba(10, 10, 10, 0.78) 0%,
+        rgba(10, 10, 10, 0.6) 45%,
+        rgba(10, 10, 10, 0.82) 100%
       );
       pointer-events: none;
     }
 
+    /* ── App shell ── */
     .app {
       position: relative;
       z-index: 2;
-      max-width: 1100px;
+      max-width: 1180px;
       margin: 0 auto;
-      padding: 1.5rem;
+      padding: 1rem 1.25rem 2rem;
       display: grid;
-      gap: 1.25rem;
+      grid-template-columns: 1fr;
+      gap: 0.9rem;
     }
 
+    /* Header */
     header {
       display: flex;
       align-items: baseline;
       justify-content: space-between;
       border-bottom: 1px solid var(--border);
-      padding-bottom: 0.75rem;
+      padding-bottom: 0.65rem;
       flex-wrap: wrap;
-      gap: 0.5rem;
+      gap: 0.4rem;
     }
-
     header h1 {
-      font-size: 1.25rem;
+      font-size: 1.2rem;
       font-weight: 600;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.06em;
       color: var(--red);
     }
-
     header .brand {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       color: var(--muted);
-      letter-spacing: 0.12em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
+      margin-left: 0.5rem;
     }
-
     header .status {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: var(--muted);
     }
 
-    .input-row {
-      display: grid;
-      gap: 0.5rem;
+    /* ── Zone labels ── */
+    .zone-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
     }
 
-    label {
-      font-size: 0.7rem;
+    /* ── Panel ── */
+    .panel {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      display: flex;
+      flex-direction: column;
+    }
+    .panel-head {
+      padding: 0.45rem 0.7rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.65rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 340px;
+      padding: 0.3rem 0;
+    }
+
+    /* ── Source + Live build zone ── */
+    .zone-source {
+      display: grid;
+      gap: 0.75rem;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      padding: 0.85rem;
+    }
+
+    label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 0.25rem;
     }
 
     input[type="text"],
     input[type="number"],
-    select {
+    select,
+    textarea {
       background: var(--grey);
       border: 1px solid var(--border);
       color: var(--white);
-      padding: 0.55rem 0.75rem;
+      padding: 0.5rem 0.7rem;
       font: inherit;
       border-radius: 2px;
       width: 100%;
     }
-
     input:focus,
-    select:focus {
+    select:focus,
+    textarea:focus {
       outline: none;
       border-color: var(--red);
     }
@@ -135,194 +180,221 @@
     .inventory {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.35rem;
+      gap: 0.3rem;
       align-items: center;
-      min-height: 2.2rem;
-      padding: 0.5rem 0;
+      min-height: 1.8rem;
+      padding: 0.35rem 0 0;
     }
-
     .letter-chip {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 1.6rem;
-      height: 1.6rem;
-      padding: 0 0.3rem;
+      min-width: 1.45rem;
+      height: 1.45rem;
+      padding: 0 0.25rem;
       background: var(--grey);
       border: 1px solid var(--border);
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 600;
     }
-
     .letter-chip.vowel {
       border-color: var(--red);
       color: var(--red);
     }
-
     .letter-chip.zero {
       opacity: 0.25;
     }
-
     .meta {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: var(--muted);
+      margin-top: 0.25rem;
     }
-
     .meta strong {
       color: var(--white);
     }
 
-    .options {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 0.75rem;
-      padding: 0.9rem;
+    /* Live build */
+    .live-display {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.18rem;
+      min-height: 1.6rem;
+      align-items: center;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      margin-top: 0.35rem;
+    }
+    .live-letter {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.25rem;
+      height: 1.4rem;
+      padding: 0 0.12rem;
+      border-radius: 2px;
       background: var(--grey);
       border: 1px solid var(--border);
     }
-
-    .opt {
-      display: grid;
-      gap: 0.25rem;
+    .live-letter.ok {
+      border-color: var(--ok-border);
+      color: var(--ok);
+      background: var(--ok-bg);
+    }
+    .live-letter.bad {
+      border-color: var(--red);
+      color: var(--red);
+      background: #1a0808;
+      text-decoration: line-through;
+    }
+    .live-letter.space {
+      min-width: 0.45rem;
+      background: transparent;
+      border: none;
+    }
+    .live-meta {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 0.3rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      align-items: center;
+    }
+    .live-meta .ok-tag { color: var(--ok); }
+    .live-meta .bad-tag { color: var(--red); }
+    .live-preview-inv {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.22rem;
+      align-items: center;
+      min-height: 1.3rem;
+      margin-top: 0.2rem;
+    }
+    .live-preview-inv .letter-chip {
+      font-size: 0.7rem;
+      min-width: 1.25rem;
+      height: 1.25rem;
+      opacity: 0.9;
+    }
+    .live-actions {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin-top: 0.45rem;
     }
 
-    /* Mode toggle */
+    /* ── Filters zone ── */
+    .zone-filters {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      padding: 0.75rem;
+    }
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 0.55rem 0.7rem;
+    }
     .mode-toggle {
       display: flex;
       gap: 0;
       border: 1px solid var(--border);
       overflow: hidden;
+      grid-column: 1 / -1;
     }
-
     .mode-toggle button {
       flex: 1;
       border: none;
       border-radius: 0;
       background: transparent;
-      padding: 0.5rem 0.75rem;
-      font-size: 0.75rem;
+      padding: 0.4rem 0.6rem;
+      font-size: 0.7rem;
       letter-spacing: 0.06em;
       text-transform: uppercase;
+      color: var(--white);
+      cursor: pointer;
     }
-
     .mode-toggle button.active {
       background: var(--red);
       color: var(--black);
       font-weight: 700;
     }
-
     .mode-toggle button:not(.active):hover {
       background: #151515;
       color: var(--red);
     }
 
+    /* ── Actions bar ── */
     .actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
+      gap: 0.4rem;
       align-items: center;
     }
-
     button {
       background: transparent;
       border: 1px solid var(--border);
       color: var(--white);
-      padding: 0.45rem 0.9rem;
+      padding: 0.4rem 0.8rem;
       font: inherit;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       cursor: pointer;
       border-radius: 2px;
       transition: border-color 0.15s, color 0.15s, background 0.15s;
     }
-
     button:hover {
       border-color: var(--red);
       color: var(--red);
     }
-
     button.primary {
       background: var(--red);
       border-color: var(--red);
       color: var(--black);
       font-weight: 600;
     }
-
     button.primary:hover {
       background: #ff3355;
       border-color: #ff3355;
       color: var(--black);
     }
-
     button:disabled {
       opacity: 0.35;
       cursor: not-allowed;
     }
 
-    .panels {
+    /* ── Results zone ── */
+    .zone-results {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1.25rem;
+      gap: 0.9rem;
     }
-
     @media (max-width: 720px) {
-      .panels { grid-template-columns: 1fr; }
-    }
-
-    .panel {
-      border: 1px solid var(--border);
-      background: #0d0d0d;
-      display: flex;
-      flex-direction: column;
-      min-height: 280px;
-    }
-
-    .panel-head {
-      padding: 0.55rem 0.75rem;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .panel-body {
-      flex: 1;
-      overflow-y: auto;
-      max-height: 420px;
-      padding: 0.4rem 0;
+      .zone-results { grid-template-columns: 1fr; }
     }
 
     .suggestion {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.4rem 0.75rem;
+      padding: 0.35rem 0.7rem;
       cursor: pointer;
       border-left: 2px solid transparent;
-      gap: 0.5rem;
+      gap: 0.4rem;
     }
-
     .suggestion:hover {
       background: var(--grey);
       border-left-color: var(--red);
     }
-
     .suggestion .word {
       font-weight: 600;
       letter-spacing: 0.03em;
     }
-
     .suggestion .phrase {
       font-weight: 500;
       letter-spacing: 0.02em;
-      color: var(--white);
     }
-
     .suggestion .len {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       color: var(--muted);
       white-space: nowrap;
     }
@@ -330,186 +402,205 @@
     .claimed-list {
       list-style: none;
     }
-
     .claimed-list li {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.4rem 0.75rem;
+      padding: 0.35rem 0.7rem;
       border-bottom: 1px solid #151515;
     }
-
     .claimed-list .word {
       font-weight: 600;
       color: var(--red);
     }
-
     .empty {
-      padding: 1.5rem 0.75rem;
+      padding: 1.25rem 0.7rem;
       color: var(--muted);
-      font-size: 0.85rem;
+      font-size: 0.8rem;
     }
 
-    .footer {
+    /* ── Scratch + Export zone ── */
+    .zone-bottom {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.9rem;
+    }
+    @media (max-width: 720px) {
+      .zone-bottom { grid-template-columns: 1fr; }
+    }
+
+    .scratch-area {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      display: flex;
+      flex-direction: column;
+      min-height: 160px;
+    }
+    .scratch-area textarea {
+      flex: 1;
+      border: none;
+      background: transparent;
+      resize: vertical;
+      min-height: 120px;
+      padding: 0.6rem 0.7rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: var(--white);
+    }
+    .scratch-area textarea:focus {
+      outline: none;
+    }
+    .scratch-actions {
+      display: flex;
+      gap: 0.35rem;
+      padding: 0.4rem 0.6rem;
       border-top: 1px solid var(--border);
-      padding-top: 0.75rem;
-      font-size: 0.8rem;
-      color: var(--muted);
     }
 
     .export-box {
       background: var(--grey);
       border: 1px solid var(--border);
-      padding: 0.6rem 0.75rem;
-      font-size: 0.85rem;
+      padding: 0.55rem 0.7rem;
+      font-size: 0.8rem;
       word-break: break-word;
-      min-height: 2.5rem;
-      width: 100%;
-      margin-top: 0.4rem;
+      min-height: 2.4rem;
       white-space: pre-wrap;
+      margin-top: 0.35rem;
+    }
+    .hint {
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-top: 0.35rem;
+      line-height: 1.45;
     }
 
-    .hint {
+    /* Footer strip */
+    .footer-strip {
+      border-top: 1px solid var(--border);
+      padding-top: 0.6rem;
       font-size: 0.7rem;
       color: var(--muted);
-      margin-top: 0.25rem;
     }
-    .triangle-video-frame {
-    position: absolute;
-    top: 15%;
-    right: 5%;
-    width: 240px;
-    height: 150px;
-    opacity: 0.7;
-    pointer-events: none;
-    z-index: 1;
-    will-change: transform;
-}
-.triangle-inner-video {
-    width: 100%; height: 100%;
-    background: #333;
-    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-}
-.triangle-inner-video video {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-    transform: scale(0.96);
-    opacity: 0.85;
-}
-/* Responsive adjustments for the Triangle Video Frame */
-@media (max-width: 900px) {
-    .triangle-video-frame {
-        position: relative;
-        top: auto;
-        right: auto;
-        margin: 0 auto 40px auto;
-        width: 140px;
-        height: 110px;
-        opacity: 0.85;
-        display: block;
-        order: -1; /* Places the video above the hero text on mobile */
+
+    /* Mobile stacking order is natural via DOM order */
+    @media (max-width: 720px) {
+      .app { padding: 0.75rem; gap: 0.7rem; }
+      .filters-grid { grid-template-columns: 1fr 1fr; }
+      .panel-body { max-height: 280px; }
     }
-}
   </style>
 </head>
 <body>
-  <video class="bg-video" autoplay muted loop playsinline preload="metadata"
-    poster="">
+  <video class="bg-video" autoplay muted loop playsinline preload="metadata">
     <source src="https://raw.githubusercontent.com/ghostm68/666/main/gram_1788115405837.mp4" type="video/mp4" />
   </video>
   <div class="bg-veil" aria-hidden="true"></div>
 
   <div class="app">
+    <!-- HEADER -->
     <header>
       <div>
         <h1>gRAM</h1>
-        <div class="triangle-video-frame" data-parallax>
-        <div class="triangle-inner-video">
-            <video autoplay muted loop playsinline>
-                <source src="https://raw.githubusercontent.com/ghostm68/666/main/gram_1788115405837.mp4" type="video/mp4">
-            </video>
-        </div>
-    </div>
-        <div class="brand">cut+rune annex</div>
+        <span class="brand">cut+rune annex · wordstar nexus</span>
       </div>
       <div class="status" id="status">Loading dictionary…</div>
     </header>
 
-    <div class="input-row">
-      <label for="phrase">Source phrase</label>
-      <input type="text" id="phrase" placeholder="Type or paste a phrase…" autocomplete="off" spellcheck="false" />
-      <div class="inventory" id="inventory"></div>
-      <div class="meta" id="meta"></div>
-    </div>
+    <!-- ZONE: SOURCE + LIVE BUILD -->
+    <section class="zone-source">
+      <div>
+        <label for="phrase">Source phrase</label>
+        <input type="text" id="phrase" placeholder="Type or paste a phrase…" autocomplete="off" spellcheck="false" />
+        <div class="inventory" id="inventory"></div>
+        <div class="meta" id="meta"></div>
+      </div>
 
-    <div class="options">
-      <div class="opt" style="grid-column: 1 / -1;">
-        <label>Mode</label>
-        <div class="mode-toggle">
-          <button type="button" id="modeWords" class="active">Words</button>
-          <button type="button" id="modePhrases">Phrases</button>
+      <div>
+        <label for="liveInput">Live build — type to test against remaining letters</label>
+        <input type="text" id="liveInput" placeholder="Letters light green if available, red if overdrawn…" autocomplete="off" spellcheck="false" />
+        <div class="live-display" id="liveDisplay"></div>
+        <div class="live-meta" id="liveMeta"></div>
+        <div class="zone-label" style="margin-top:0.4rem;">Preview remaining after this build</div>
+        <div class="live-preview-inv" id="livePreviewInv"></div>
+        <div class="live-actions">
+          <button class="primary" id="btnClaimLive" disabled>Claim this</button>
+          <button id="btnClearLive">Clear build</button>
         </div>
       </div>
-      <div class="opt">
-        <label>Min length</label>
-        <input type="number" id="minLen" value="3" min="2" max="20" />
-      </div>
-      <div class="opt">
-        <label>Max length</label>
-        <input type="number" id="maxLen" value="12" min="2" max="25" />
-      </div>
-      <div class="opt">
-        <label>Prefix</label>
-        <input type="text" id="prefix" placeholder="" maxlength="8" />
-      </div>
-      <div class="opt">
-        <label>Suffix</label>
-        <input type="text" id="suffix" placeholder="" maxlength="8" />
-      </div>
-      <div class="opt">
-        <label>Must contain</label>
-        <input type="text" id="must" placeholder="" maxlength="12" />
-      </div>
-      <div class="opt">
-        <label>Must not</label>
-        <input type="text" id="mustNot" placeholder="" maxlength="12" />
-      </div>
-      <div class="opt">
-        <label>Rank by</label>
-        <select id="rankBy">
-          <option value="length">Length (longest)</option>
-          <option value="remaining">Remaining goodness</option>
-          <option value="alpha">Alphabetical</option>
-        </select>
-      </div>
-      <div class="opt">
-        <label>Max results</label>
-        <input type="number" id="maxResults" value="40" min="10" max="120" />
-      </div>
-      <div class="opt" id="phraseDepthOpt">
-        <label>Phrase depth</label>
-        <select id="phraseDepth">
-          <option value="2">2 words</option>
-          <option value="3" selected>3 words</option>
-          <option value="4">4 words</option>
-        </select>
-      </div>
-      <div class="opt" id="maxLeftoverOpt">
-        <label>Max leftovers</label>
-        <input type="number" id="maxLeftover" value="4" min="0" max="12" title="Allow phrases that leave this many letters unused (0 = exact only)" />
-      </div>
-    </div>
+    </section>
 
+    <!-- ZONE: FILTERS -->
+    <section class="zone-filters">
+      <div class="zone-label">Filters · Mode</div>
+      <div class="filters-grid">
+        <div style="grid-column:1/-1;">
+          <div class="mode-toggle">
+            <button type="button" id="modeWords" class="active">Words</button>
+            <button type="button" id="modePhrases">Phrases</button>
+          </div>
+        </div>
+        <div>
+          <label for="minLen">Min length</label>
+          <input type="number" id="minLen" value="3" min="2" max="20" />
+        </div>
+        <div>
+          <label for="maxLen">Max length</label>
+          <input type="number" id="maxLen" value="12" min="2" max="25" />
+        </div>
+        <div>
+          <label for="prefix">Prefix</label>
+          <input type="text" id="prefix" placeholder="" maxlength="8" />
+        </div>
+        <div>
+          <label for="suffix">Suffix</label>
+          <input type="text" id="suffix" placeholder="" maxlength="8" />
+        </div>
+        <div>
+          <label for="must">Must contain</label>
+          <input type="text" id="must" placeholder="" maxlength="12" />
+        </div>
+        <div>
+          <label for="mustNot">Must not</label>
+          <input type="text" id="mustNot" placeholder="" maxlength="12" />
+        </div>
+        <div>
+          <label for="rankBy">Rank by</label>
+          <select id="rankBy">
+            <option value="length">Length (longest)</option>
+            <option value="remaining">Remaining goodness</option>
+            <option value="alpha">Alphabetical</option>
+          </select>
+        </div>
+        <div>
+          <label for="maxResults">Max results</label>
+          <input type="number" id="maxResults" value="40" min="10" max="120" />
+        </div>
+        <div id="phraseDepthOpt">
+          <label for="phraseDepth">Phrase depth</label>
+          <select id="phraseDepth">
+            <option value="2">2 words</option>
+            <option value="3" selected>3 words</option>
+            <option value="4">4 words</option>
+          </select>
+        </div>
+        <div id="maxLeftoverOpt">
+          <label for="maxLeftover">Max leftovers</label>
+          <input type="number" id="maxLeftover" value="4" min="0" max="12" title="Allow phrases that leave this many letters unused (0 = exact only)" />
+        </div>
+      </div>
+    </section>
+
+    <!-- ACTIONS -->
     <div class="actions">
       <button class="primary" id="btnFind">Find</button>
       <button id="btnUndo" disabled>Undo</button>
-      <button id="btnClear">Clear</button>
+      <button id="btnClear">Clear all</button>
       <button id="btnExportTxt">Export .txt</button>
-      <button id="btnCopy">Copy</button>
+      <button id="btnCopy">Copy build</button>
     </div>
 
-    <div class="panels">
+    <!-- ZONE: RESULTS -->
+    <section class="zone-results">
       <div class="panel">
         <div class="panel-head">
           <span id="sugLabel">Suggestions</span>
@@ -529,22 +620,40 @@
           <div class="empty" id="claimedEmpty">No words claimed yet.</div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="footer">
-      <div>Current build</div>
-      <div class="export-box" id="exportBox">—</div>
-      <div class="hint">
-  Export .txt produces a Wordstar Nexus marked file for download.<br>
-  Phrase mode searches for multi-word covers of the current letter inventory. 
-  For long inputs, first claim one or two solid words in Words mode to shrink the pool, then switch to Phrases.
-</div>
+    <!-- ZONE: SCRATCH + EXPORT -->
+    <section class="zone-bottom">
+      <div class="scratch-area">
+        <div class="panel-head">
+          <span>Scratch notepad</span>
+          <span style="font-size:0.6rem; opacity:0.7;">local only</span>
+        </div>
+        <textarea id="scratch" placeholder="Jot ideas, partial anagrams, notes…&#10;Persists in this browser."></textarea>
+        <div class="scratch-actions">
+          <button id="btnClearScratch">Clear notes</button>
+          <button id="btnCopyScratch">Copy notes</button>
+        </div>
+      </div>
+      <div>
+        <div class="zone-label">Current build</div>
+        <div class="export-box" id="exportBox">—</div>
+        <div class="hint">
+          Export .txt produces a Wordstar Nexus marked file.<br>
+          Phrase mode searches multi-word covers of the current inventory.
+          For long inputs, claim solid words in Words mode first, then switch to Phrases.
+        </div>
+      </div>
+    </section>
+
+    <div class="footer-strip">
+      wordstar.nexus/gram · anagram engine
     </div>
   </div>
 
   <script>
     // ============================================================
-    // Anagram Engine · Wordstar Nexus
+    // gRAM · Anagram Engine · Wordstar Nexus
     // ============================================================
 
     const VOWELS = new Set("aeiou");
@@ -711,6 +820,106 @@
     }
 
     // ------------------------------------------------------------
+    // Live build
+    // ------------------------------------------------------------
+    function updateLiveBuild() {
+      const raw = $("liveInput").value;
+      const display = $("liveDisplay");
+      const meta = $("liveMeta");
+      const previewEl = $("livePreviewInv");
+      display.innerHTML = "";
+      previewEl.innerHTML = "";
+
+      if (!raw.trim()) {
+        meta.innerHTML = "";
+        $("btnClaimLive").disabled = true;
+        renderLivePreview(remaining);
+        return;
+      }
+
+      const used = new Uint8Array(26);
+      let badCount = 0;
+      let okCount = 0;
+      const frag = document.createDocumentFragment();
+
+      for (const ch of raw) {
+        const lower = ch.toLowerCase();
+        const span = document.createElement("span");
+        if (lower >= "a" && lower <= "z") {
+          const i = lower.charCodeAt(0) - 97;
+          used[i]++;
+          if (used[i] <= remaining[i]) {
+            span.className = "live-letter ok";
+            okCount++;
+          } else {
+            span.className = "live-letter bad";
+            badCount++;
+          }
+          span.textContent = ch;
+        } else if (ch === " ") {
+          span.className = "live-letter space";
+          span.textContent = " ";
+        } else {
+          span.className = "live-letter";
+          span.style.opacity = "0.5";
+          span.textContent = ch;
+        }
+        frag.appendChild(span);
+      }
+      display.appendChild(frag);
+
+      const cleaned = normalize(raw);
+      const fullyValid = badCount === 0 && cleaned.length > 0;
+      $("btnClaimLive").disabled = !fullyValid;
+
+      if (fullyValid) {
+        meta.innerHTML = `<span class="ok-tag">✓ all letters available</span> · <strong>${cleaned.length}</strong> letters · ready to claim`;
+      } else if (cleaned.length === 0) {
+        meta.innerHTML = `<span class="meta">no letters yet</span>`;
+      } else {
+        meta.innerHTML = `<span class="bad-tag">✗ ${badCount} overdrawn</span> · <span class="ok-tag">${okCount} ok</span> · ${cleaned.length} letters total`;
+      }
+
+      const preview = remaining.slice();
+      for (let i = 0; i < 26; i++) {
+        preview[i] = Math.max(0, preview[i] - used[i]);
+      }
+      renderLivePreview(preview);
+    }
+
+    function renderLivePreview(inv) {
+      const el = $("livePreviewInv");
+      el.innerHTML = "";
+      const letters = [];
+      for (let i = 0; i < 26; i++) {
+        const n = inv[i];
+        if (n === 0 && original[i] === 0) continue;
+        const ch = String.fromCharCode(97 + i);
+        const chip = document.createElement("span");
+        chip.className = "letter-chip" + (VOWELS.has(ch) ? " vowel" : "") + (n === 0 ? " zero" : "");
+        chip.textContent = n > 1 ? ch + n : ch;
+        letters.push(chip);
+      }
+      if (!letters.length) el.innerHTML = '<span class="meta">empty</span>';
+      else letters.forEach((c) => el.appendChild(c));
+    }
+
+    function claimLive() {
+      const tokens = $("liveInput").value.trim().split(/\s+/).map((t) => normalize(t)).filter(Boolean);
+      for (const w of tokens) {
+        const wc = countsFrom(w);
+        if (!canForm(wc, remaining)) return;
+        remaining = subtract(remaining, wc);
+        claimed.push({ word: w, counts: wc });
+      }
+      $("liveInput").value = "";
+      updateLiveBuild();
+      renderInventory();
+      renderClaimed();
+      findSuggestions();
+    }
+
+    // ------------------------------------------------------------
     // Word-mode finder
     // ------------------------------------------------------------
     function findWords() {
@@ -755,10 +964,7 @@
     }
 
     // ------------------------------------------------------------
-    // Phrase-mode finder (bounded recursive search)
-    // Now accepts near-complete phrases that leave a small number of
-    // letters unused (controlled by Max leftovers). Exact matches
-    // are still preferred and ranked first.
+    // Phrase-mode finder
     // ------------------------------------------------------------
     function findPhrases() {
       const opt = getOptions();
@@ -771,7 +977,6 @@
       const results = [];
       const seen = new Set();
 
-      // Candidate words that fit the current remaining letters at all
       const pool = [];
       for (let i = 0; i < DICT.length; i++) {
         const word = DICT[i];
@@ -787,19 +992,17 @@
         pool.push({ word, counts: wc, len });
       }
 
-      // Prefer longer words first → fewer deep branches
       pool.sort((a, b) => b.len - a.len);
 
       const startTime = performance.now();
-      const TIME_BUDGET = 600; // slightly higher budget for partials
+      const TIME_BUDGET = 600;
 
       function search(inv, path, startIdx) {
-        if (results.length >= maxResults * 3) return; // gather extra then rank/trim
+        if (results.length >= maxResults * 3) return;
         if (performance.now() - startTime > TIME_BUDGET) return;
 
         const left = totalLetters(inv);
 
-        // Accept any path of ≥2 words whose leftover count is within budget
         if (path.length >= 2 && left <= maxLeftover) {
           const key = path.slice().sort().join(" ");
           if (!seen.has(key)) {
@@ -808,10 +1011,9 @@
               phrase: path.join(" · ") + (left ? `  [${left} left]` : ""),
               words: path.slice(),
               leftover: left,
-              score: remainingScore(inv), // higher = better leftovers
+              score: remainingScore(inv),
             });
           }
-          // Do not return early — continue searching for better (fewer-leftover) paths
         }
 
         if (path.length >= maxDepth) return;
@@ -821,7 +1023,6 @@
           const w = pool[i];
           if (w.len > left) continue;
           if (!canForm(w.counts, inv)) continue;
-          // keep non-decreasing length order to reduce duplicates
           if (path.length && w.len > path[path.length - 1].length) continue;
 
           const nextInv = subtract(inv, w.counts);
@@ -836,7 +1037,6 @@
 
       search(remaining.slice(), [], 0);
 
-      // Rank: exact first, then fewest leftovers, then best remaining-score, then longer phrases
       results.sort((a, b) => {
         if (a.leftover !== b.leftover) return a.leftover - b.leftover;
         if (b.score !== a.score) return b.score - a.score;
@@ -867,6 +1067,7 @@
       claimed.push({ word, counts: wc });
       renderInventory();
       renderClaimed();
+      updateLiveBuild();
       findSuggestions();
     }
 
@@ -879,6 +1080,7 @@
       }
       renderInventory();
       renderClaimed();
+      updateLiveBuild();
       findSuggestions();
     }
 
@@ -888,6 +1090,7 @@
       remaining = add(remaining, last.counts);
       renderInventory();
       renderClaimed();
+      updateLiveBuild();
       findSuggestions();
     }
 
@@ -900,19 +1103,20 @@
         for (let i = 0; i < 26; i++) if (remaining[i] < 0) remaining[i] = 0;
       }
       renderInventory();
+      updateLiveBuild();
       findSuggestions();
     }
 
     // ------------------------------------------------------------
-    // Export — Wordstar Nexus marked .txt
+    // Export
     // ------------------------------------------------------------
     function buildExportText() {
       const phrase = $("phrase").value.trim() || "(none)";
       const words = claimed.map((c) => c.word);
       const leftover = inventoryToString(remaining);
       const now = new Date().toISOString().slice(0, 19).replace("T", " ");
+      const scratch = ($("scratch").value || "").trim();
 
-      // Pure ASCII — avoids mojibake on Android / strict viewers
       const rule = "==================================================";
       const sub  = "--------------------------------------------------";
 
@@ -939,11 +1143,13 @@
           ? `  ${words.join(" + ")}${leftover ? "  |  leftover: " + leftover : ""}`
           : "  -",
         "",
-        rule,
-        "  wordstar.nexus/gram",
-        rule,
-        "",
       ];
+
+      if (scratch) {
+        lines.push("Scratch notes", sub, scratch.split("\n").map((l) => "  " + l).join("\n"), "");
+      }
+
+      lines.push(rule, "  wordstar.nexus/gram", rule, "");
       return lines.join("\n");
     }
 
@@ -990,6 +1196,24 @@
     }
 
     // ------------------------------------------------------------
+    // Scratch notepad (localStorage)
+    // ------------------------------------------------------------
+    const SCRATCH_KEY = "gram-scratch-v1";
+
+    function loadScratch() {
+      try {
+        const saved = localStorage.getItem(SCRATCH_KEY);
+        if (saved != null) $("scratch").value = saved;
+      } catch (_) {}
+    }
+
+    function saveScratch() {
+      try {
+        localStorage.setItem(SCRATCH_KEY, $("scratch").value);
+      } catch (_) {}
+    }
+
+    // ------------------------------------------------------------
     // Wire up
     // ------------------------------------------------------------
     $("btnFind").addEventListener("click", findSuggestions);
@@ -997,11 +1221,13 @@
     $("btnClear").addEventListener("click", () => {
       claimed = [];
       $("phrase").value = "";
+      $("liveInput").value = "";
       remaining = new Uint8Array(26);
       original = new Uint8Array(26);
       renderInventory();
       renderClaimed();
       renderSuggestions([]);
+      updateLiveBuild();
       $("phrase").focus();
     });
     $("btnExportTxt").addEventListener("click", downloadTxt);
@@ -1010,7 +1236,20 @@
     $("modeWords").addEventListener("click", () => setMode("words"));
     $("modePhrases").addEventListener("click", () => setMode("phrases"));
 
-    // Initial state: Words mode → dim phrase-only controls
+    $("liveInput").addEventListener("input", updateLiveBuild);
+    $("btnClaimLive").addEventListener("click", claimLive);
+    $("btnClearLive").addEventListener("click", () => {
+      $("liveInput").value = "";
+      updateLiveBuild();
+      $("liveInput").focus();
+    });
+    $("liveInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !$("btnClaimLive").disabled) {
+        e.preventDefault();
+        claimLive();
+      }
+    });
+
     $("phraseDepthOpt").style.opacity = "0.45";
     $("maxLeftoverOpt").style.opacity = "0.45";
 
@@ -1022,6 +1261,26 @@
       el.addEventListener("input", () => {
         if (["prefix", "suffix", "must", "mustNot"].includes(id)) findSuggestions();
       });
+    });
+
+    // Scratch
+    loadScratch();
+    $("scratch").addEventListener("input", saveScratch);
+    $("btnClearScratch").addEventListener("click", () => {
+      $("scratch").value = "";
+      saveScratch();
+      $("scratch").focus();
+    });
+    $("btnCopyScratch").addEventListener("click", () => {
+      const t = $("scratch").value;
+      if (navigator.clipboard && t) {
+        navigator.clipboard.writeText(t).then(() => {
+          $("status").textContent = "Notes copied";
+          setTimeout(() => {
+            $("status").textContent = `Ready · ${DICT.length.toLocaleString()} words`;
+          }, 1200);
+        });
+      }
     });
 
     // Load dictionary
@@ -1045,6 +1304,7 @@
       DICT_COUNTS = DICT.map((w) => countsFrom(w));
       $("status").textContent = `Ready · ${DICT.length.toLocaleString()} words`;
       onPhraseInput();
+      updateLiveBuild();
     }
 
     loadDict();
