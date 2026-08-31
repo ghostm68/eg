@@ -13,9 +13,9 @@
       --white: #ffffff;
       --muted: #777;
       --border: #2a2a2a;
-      --ok: #5dffa0;
-      --ok-bg: #0f1f14;
-      --ok-border: #2a8f4e;
+      --ok: #A74E4A;
+      --ok-bg: rgba(167, 78, 74, 0.15);
+      --ok-border: #A74E4A;
     }
 
     * {
@@ -429,34 +429,60 @@
       .zone-bottom { grid-template-columns: 1fr; }
     }
 
-    .scratch-area {
-      border: 1px solid var(--border);
-      background: var(--panel);
-      display: flex;
-      flex-direction: column;
-      min-height: 160px;
-    }
-    .scratch-area textarea {
-      flex: 1;
-      border: none;
-      background: transparent;
-      resize: vertical;
-      min-height: 120px;
-      padding: 0.6rem 0.7rem;
-      font-size: 0.85rem;
-      line-height: 1.5;
-      color: var(--white);
-    }
-    .scratch-area textarea:focus {
-      outline: none;
-    }
-    .scratch-actions {
-      display: flex;
-      gap: 0.35rem;
-      padding: 0.4rem 0.6rem;
-      border-top: 1px solid var(--border);
-    }
+/* ── Scratch Notepad in Red ── */
+.scratch-area {
+  border: 1px solid #4a0d14;
+  border-left: 3px solid var(--red);
+  background: #0f0507;
+  display: flex;
+  flex-direction: column;
+  min-height: 160px;
+}
 
+.scratch-area .panel-head {
+  color: var(--red);
+  border-bottom: 1px solid #4a0d14;
+  background: #14070a;
+}
+
+.scratch-area textarea {
+  flex: 1;
+  border: none;
+  background: transparent;
+  resize: vertical;
+  min-height: 120px;
+  padding: 0.6rem 0.7rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #ff3355; /* Scratchpad red text */
+}
+
+.scratch-area textarea::placeholder {
+  color: #77222c; /* Muted red placeholder */
+}
+
+.scratch-area textarea:focus {
+  outline: none;
+  color: #ffffff;
+}
+
+.scratch-actions {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.4rem 0.6rem;
+  border-top: 1px solid #4a0d14;
+  background: #14070a;
+}
+.scratch-area textarea::selection {
+  background: var(--red); /* Bright Red Highlight */
+  color: #ffffff;         /* Crisp White Text on selection */
+  text-shadow: none;
+}
+.scratch-area textarea::-moz-selection {
+  background: var(--red);
+  color: #ffffff;
+  text-shadow: none;
+}
     .export-box {
       background: var(--grey);
       border: 1px solid var(--border);
@@ -672,8 +698,7 @@
         <div class="panel-head">
           <span>Scratch notepad</span>
           <span style="font-size:0.6rem; opacity:0.7;">local only</span>
-        </div>
-        <textarea id="scratch" placeholder="Jot ideas, partial anagrams, notes…&#10;Persists in this browser."></textarea>
+        </div><textarea id="scratch" placeholder="Jot ideas, partial anagrams, notes…&#10;Auto-saves to URL hash & persists in browser."></textarea>
         <div class="scratch-actions">
           <button id="btnClearScratch">Clear notes</button>
           <button id="btnCopyScratch">Copy notes</button>
@@ -1352,6 +1377,103 @@
     }
 
     loadDict();
+  </script>
+  <script>
+    /* =========================================================
+   SCRATCHPAD AUTO-SAVE TO URL HASH & LOCALSTORAGE
+   ========================================================= */
+(function() {
+  const scratch = document.getElementById('scratch');
+  if (!scratch) return;
+
+  // Listen for typing and URL hash changes
+  scratch.addEventListener('input', debounce(400, saveScratchToHash));
+  window.addEventListener('DOMContentLoaded', loadScratchFromHash);
+  window.addEventListener('hashchange', loadScratchFromHash);
+
+  // Load scratchpad from URL hash or fallback to localStorage
+  async function loadScratchFromHash() {
+    try {
+      if (location.hash && location.hash.length > 1) {
+        await setScratchContent(location.hash);
+      } else {
+        const saved = localStorage.getItem('gram_scratch_hash');
+        if (saved) await setScratchContent(saved);
+      }
+    } catch (e) {
+      console.log('No compressed scratchpad found in URL');
+    }
+  }
+
+  // Save scratchpad content to URL hash
+  async function saveScratchToHash() {
+    const text = scratch.value;
+    if (!text.trim()) {
+      if (location.hash) {
+        history.replaceState(null, '', location.pathname + location.search);
+      }
+      try { localStorage.removeItem('gram_scratch_hash'); } catch(e) {}
+      return;
+    }
+
+    const hash = await getScratchHash(text);
+    if (location.hash !== hash) {
+      history.replaceState(null, '', hash);
+    }
+    try { 
+      localStorage.setItem('gram_scratch_hash', hash);
+      localStorage.setItem('gram_scratch', text);
+    } catch (e) {}
+  }
+
+  // Decompress and set scratchpad value
+  async function setScratchContent(hash) {
+    const cleanHash = hash.startsWith('#') ? hash.slice(1) : hash;
+    const content = await decompressString(cleanHash);
+    if (content !== null && content !== undefined) {
+      scratch.value = content;
+      // Also update word/char counters if your script uses them
+      scratch.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }
+
+  // Compress string to URL-safe Base64 Hash
+  async function getScratchHash(text) {
+    return '#' + await compressString(text);
+  }
+
+  async function compressString(string) {
+    const byteArray = new TextEncoder().encode(string);
+    const stream = new CompressionStream('deflate-raw');
+    const writer = stream.writable.getWriter();
+    writer.write(byteArray);
+    writer.close();
+    const buffer = await new Response(stream.readable).arrayBuffer();
+    return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+  }
+
+  async function decompressString(b64) {
+    const byteArray = Uint8Array.from(
+      atob(b64.replace(/-/g, "+").replace(/_/g, "/")), 
+      c => c.charCodeAt(0)
+    );
+    const stream = new DecompressionStream('deflate-raw');
+    const writer = stream.writable.getWriter();
+    writer.write(byteArray);
+    writer.close();
+    const buffer = await new Response(stream.readable).arrayBuffer();
+    return new TextDecoder().decode(buffer);
+  }
+
+  function debounce(ms, fn) {
+    let timer;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn(...args), ms);
+    };
+  }
+})();
   </script>
 </body>
 </html>
