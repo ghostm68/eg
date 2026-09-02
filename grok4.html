@@ -11,17 +11,21 @@
 <link rel="manifest" href="/svg/site.webmanifest" />
     <title>Grok 4+</title>
     <style>
-        /* === COLOR VARIABLES & RETRO-TERMINAL RESETS === */
+        /* === STRICT PALETTE: RED • GREY • BLACK • WHITE (YELLOW FOR ALERTS) === */
         :root {
             --red: #ff0033;
             --red-glow: rgba(255, 0, 51, 0.4);
             --red-dim: #20080c;
             --black: #0a0a0a;
-            --panel-bg: #1a1a1a;
-            --border-color: #333333;
-            --text-dim: #aaaaaa;
-            --accent-green: #4a7c4a;
-            --term-dim: #444444;
+            --panel-bg: #141414;
+            --border-color: #2b2b2b;
+            --text-dim: #999999;
+            --text-main: #f0f0f0;
+            --white: #ffffff;
+            --grey-dark: #181818;
+            --grey-mid: #333333;
+            --grey-light: #777777;
+            --yellow-alert: #ffcc00;
         }
 
         *, *::before, *::after {
@@ -36,7 +40,7 @@
 
         body {
             background: var(--black);
-            color: #f0f0f0;
+            color: var(--text-main);
             font-family: 'Georgia', serif;
             margin: 0;
             padding: clamp(0.5rem, 2vw, 0.8rem);
@@ -129,6 +133,7 @@
             margin: 0.2rem 0;
             text-align: center;
             letter-spacing: 1.5px;
+            color: var(--white);
         }
 
         .subtitle {
@@ -167,13 +172,14 @@
         .panel h2 {
             margin-top: 0;
             font-size: 1.1rem;
-            color: #eee;
+            color: var(--white);
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 0.4rem;
             margin-bottom: 0.6rem;
+            letter-spacing: 0.5px;
         }
 
-        /* === CHAT DISPLAY & RED ASSISTANT THEME === */
+        /* === CHAT DISPLAY: MONOCHROME USER & CRIMSON GROK === */
         .chat-display {
             flex: 1;
             background: var(--black);
@@ -193,16 +199,23 @@
             word-wrap: break-word;
         }
 
+        /* User Message: Monochrome Slate/Grey */
         .user-message {
-            background: #1a3a1a;
-            border-left: 3px solid var(--accent-green);
+            background: var(--grey-dark);
+            border-left: 3px solid var(--grey-light);
+            color: #dedede;
         }
 
-        /* Grok / Assistant Message: Deep Crimson with Red Border */
+        .user-message .message-role {
+            color: var(--text-dim);
+        }
+
+        /* Grok Message: Deep Crimson & Red Border */
         .assistant-message {
             background: var(--red-dim);
             border-left: 3px solid var(--red);
-            box-shadow: inset 0 0 12px rgba(255, 0, 51, 0.05);
+            color: var(--white);
+            box-shadow: inset 0 0 12px rgba(255, 0, 51, 0.06);
         }
 
         .assistant-message .message-role {
@@ -214,7 +227,7 @@
             font-weight: bold;
             font-size: 0.75rem;
             margin-bottom: 0.3rem;
-            opacity: 0.85;
+            letter-spacing: 0.5px;
         }
 
         .chat-controls {
@@ -248,12 +261,18 @@
         select, input[type="text"], input[type="password"], textarea {
             width: 100%;
             padding: 0.45rem;
-            background: #161616;
-            color: #eee;
+            background: #181818;
+            color: var(--white);
             border: 1px solid var(--border-color);
             border-radius: 4px;
             font-size: 16px; /* Prevents auto-zoom on iOS */
             font-family: inherit;
+        }
+
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--red);
+            box-shadow: 0 0 5px var(--red-glow);
         }
 
         .key-input-group {
@@ -268,8 +287,17 @@
 
         .api-help {
             font-size: 0.7rem;
-            color: #777;
+            color: var(--text-dim);
             margin-top: 0.3rem;
+        }
+
+        .api-help a {
+            color: var(--white);
+            text-decoration: underline;
+        }
+
+        .api-help a:hover {
+            color: var(--red);
         }
 
         .prompt-section {
@@ -296,17 +324,26 @@
             font-size: 0.85rem;
             min-height: 42px;
             font-weight: bold;
+            background: var(--grey-dark);
+            border-color: var(--border-color);
+        }
+
+        #sendButton:hover:not(:disabled) {
+            background: var(--red-dim);
+            border-color: var(--red);
+            color: var(--white);
+            box-shadow: 0 0 8px var(--red-glow);
         }
 
         #loadingIndicator {
             display: none;
             margin-top: 8px;
-            color: var(--red);
+            color: var(--yellow-alert);
             font-size: 0.8rem;
             text-align: center;
         }
 
-        /* === TELEMETRY PANEL === */
+        /* === STATUS & TELEMETRY PANEL === */
         .status-display {
             flex: 1;
             background: var(--black);
@@ -322,13 +359,14 @@
             font-family: monospace;
         }
 
-        .status-ok { color: var(--accent-green); }
-        .status-error { color: #cc5555; }
+        .status-ok { color: var(--white); }
+        .status-warn { color: var(--yellow-alert); }
+        .status-error { color: var(--red); }
 
         button {
             background: transparent;
-            color: #eee;
-            border: 1px solid #555;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
             cursor: pointer;
             font-family: 'Georgia', serif;
             transition: all 0.2s ease;
@@ -336,24 +374,25 @@
         }
 
         button:hover {
-            background: #222;
-            border-color: #777;
+            background: var(--grey-dark);
+            border-color: var(--grey-light);
         }
 
         button:disabled {
-            opacity: 0.5;
+            opacity: 0.4;
             cursor: not-allowed;
         }
 
         .api-status {
             margin: 1rem 0;
             font-size: 0.75rem;
-            color: #666;
+            color: #555555;
             text-align: center;
         }
 
         ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-thumb { background: var(--term-dim); }
+        ::-webkit-scrollbar-thumb { background: var(--grey-mid); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--red); }
     </style>
 </head>
 <body>
@@ -370,9 +409,7 @@
             </div>
         </div>
     </div>
-
-    <h1>GROK 4 • WORDSTAR NEXUS</h1>
-    <p class="subtitle">• Grok Ai (Pollinations • xAI 4.1 Direct • OpenRouter)</p>
+    <p class="subtitle">•  Grok Architecture (Pollinations • xAI 4.1 Direct • OpenRouter)</p>
 
     <div class="container">
         <!-- Column 1: Chat History -->
@@ -382,12 +419,12 @@
             <div class="chat-display" id="chatDisplay">
                 <div class="message assistant-message">
                     <div class="message-role">GROK</div>
-                    Grok terminal ready. Currently on <strong>Pollinations (Zero-Key Grok)</strong>. Send a prompt or choose your gateway in Controls.
+                    Grok terminal initialized. Select your preferred gateway in Controls and transmit a prompt.
                 </div>
             </div>
 
             <div class="chat-controls">
-                <button id="clearChat">Clear Chat</button>
+                <button id="clearChat">Clear Buffer</button>
                 <button id="exportChat">Export TXT</button>
             </div>
         </div>
@@ -398,9 +435,9 @@
             
             <!-- Gateway Selection -->
             <div class="control-group">
-                <label for="providerSelect">Grok Routing:</label>
+                <label for="providerSelect">Grok Routing Gateway:</label>
                 <select id="providerSelect">
-                    <option value="pollinations" selected>🌸 Pollinations (Keyless Grok Builds)</option>
+                    <option value="pollinations" selected>🌸 Pollinations (Unified Grok Gateway)</option>
                     <option value="xai">⚡ xAI Official API (Grok 4.1 Only • BYOK)</option>
                     <option value="openrouter">🌐 OpenRouter (Grok Roster • BYOK)</option>
                 </select>
@@ -418,11 +455,11 @@
             <div class="control-group" id="apiKeyContainer">
                 <label for="apiKey" id="apiKeyLabel">API Key:</label>
                 <div class="key-input-group">
-                    <input type="password" id="apiKey" placeholder="No key required for Pollinations Grok" autocomplete="off">
+                    <input type="password" id="apiKey" placeholder="pk_... or sk_... (enter.pollinations.ai)" autocomplete="off">
                     <button class="toggle-key" id="toggleKey" type="button" title="Show/Hide Key">👁️</button>
                 </div>
                 <div class="api-help" id="apiKeyHelp">
-                    Grok active. No key required.
+                    Get key at <a href="https://enter.pollinations.ai" target="_blank" rel="noopener noreferrer">enter.pollinations.ai</a>
                 </div>
             </div>
 
@@ -434,7 +471,7 @@
 
             <div class="send-section">
                 <button id="sendButton">Transmit to Grok</button>
-                <div id="loadingIndicator">⏳ Grok is calculating...</div>
+                <div id="loadingIndicator">⏳ Grok is processing telemetry...</div>
             </div>
         </div>
 
@@ -442,35 +479,34 @@
         <div id="status-section" class="panel">
             <h2>Status & Telemetry</h2>
             <div class="status-display" id="statusDisplay">WordStar Grok Interface Online.
-Gateway: Pollinations.ai (Keyless Grok)
+Pollinations.ai (Unified Cluster)
 Ready for query dispatch.</div>
         </div>
     </div>
 
     <div class="api-status">
-        wordstar.nexus/grok4 • Dedicated Grok Architecture
+        wordstar.nexus/grok4 • Dedicated Grok Terminal
     </div>
 
     <script>
         // Cloudflare CORS Proxy Relay for browser-restricted endpoints
         const CORS_PROXY = 'https://lively-limitless.inkrealm.workers.dev/?url=';
 
-        // Strictly Grok Models per Gateway
+        // STRICTLY GROK MODELS PER GATEWAY
         const PROVIDER_CONFIG = {
             pollinations: {
                 name: 'Pollinations.ai',
-                keyRequired: false,
-                keyStorage: null,
+                keyRequired: true,
+                keyStorage: 'pollinations_api_key',
                 useProxy: false,
-                placeholder: 'No key required (Public Grok Gateway)',
-                helpText: 'Public anonymous Grok endpoint. No account required.',
-                endpoint: 'https://text.pollinations.ai/openai',
+                placeholder: 'pk_... or sk_... (from enter.pollinations.ai)',
+                helpText: 'Get free key at <a href="https://enter.pollinations.ai" target="_blank" rel="noopener noreferrer">enter.pollinations.ai</a>',
+                endpoint: 'https://gen.pollinations.ai/v1/chat/completions',
                 models: [
                     { id: 'grok', name: 'grok (Standard Grok Build)' },
                     { id: 'grok-large', name: 'grok-large (High Capacity Context)' },
-                    { id: 'grok-4.20', name: 'grok-4.20 (Community Fast)' },
-                    { id: 'grok-4.3', name: 'grok-4.3 (Community Reasoning)' },
-                    { id: 'grok-reasoning', name: 'grok-reasoning (Deep Thought Mode)' }
+                    { id: 'grok-4.20', name: 'grok-4.20 (Fast Build)' },
+                    { id: 'grok-reasoning', name: 'grok-reasoning (Deep Thought)' }
                 ]
             },
             xai: {
@@ -479,7 +515,7 @@ Ready for query dispatch.</div>
                 keyStorage: 'xai_api_key',
                 useProxy: true, // Routes through Cloudflare Worker to avoid browser CORS blocks
                 placeholder: 'xai-...',
-                helpText: 'Official key from <a href="https://console.x.ai/" target="_blank" rel="noopener noreferrer" style="color: #4a7c7c;">console.x.ai</a>',
+                helpText: 'Official key from <a href="https://console.x.ai/" target="_blank" rel="noopener noreferrer">console.x.ai</a>',
                 endpoint: 'https://api.x.ai/v1/chat/completions',
                 models: [
                     { id: 'grok-4-1-fast-non-reasoning', name: 'grok-4-1-fast-non-reasoning (Official Fast)' },
@@ -493,7 +529,7 @@ Ready for query dispatch.</div>
                 keyStorage: 'openrouter_api_key',
                 useProxy: false, // OpenRouter natively allows browser CORS
                 placeholder: 'sk-or-v1-...',
-                helpText: 'OpenRouter key from <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" style="color: #4a7c7c;">openrouter.ai/keys</a>',
+                helpText: 'OpenRouter key from <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer">openrouter.ai/keys</a>',
                 endpoint: 'https://openrouter.ai/api/v1/chat/completions',
                 models: [
                     { id: 'x-ai/grok-4.1-fast', name: 'x-ai/grok-4.1-fast' },
@@ -512,9 +548,9 @@ Ready for query dispatch.</div>
         function updateStatus(message, type = 'info') {
             const status = document.getElementById('statusDisplay');
             const timestamp = new Date().toLocaleTimeString();
-            const prefix = type === 'ok' ? '✓' : type === 'error' ? '✗' : 'ℹ';
+            const prefix = type === 'ok' ? '✓' : type === 'warn' ? '▲' : type === 'error' ? '✗' : 'ℹ';
             status.textContent = `[${timestamp}] ${prefix} ${message}\n\n${status.textContent}`;
-            status.className = `status-display ${type === 'ok' ? 'status-ok' : type === 'error' ? 'status-error' : ''}`;
+            status.className = `status-display ${type === 'ok' ? 'status-ok' : type === 'warn' ? 'status-warn' : type === 'error' ? 'status-error' : ''}`;
         }
 
         function syncProviderUI() {
@@ -591,7 +627,7 @@ Ready for query dispatch.</div>
             const apiKey = keyInput.value.trim();
 
             if (config.keyRequired && !apiKey) {
-                updateStatus(`API key required for ${config.name}. Please enter a key.`, 'error');
+                updateStatus(`API key required for ${config.name}. Please enter a key.`, 'warn');
                 return;
             }
 
@@ -599,7 +635,7 @@ Ready for query dispatch.</div>
             const message = input.value.trim();
             
             if (!message) {
-                updateStatus('Please enter a prompt for Grok.', 'error');
+                updateStatus('Prompt buffer empty. Enter text to send.', 'warn');
                 return;
             }
 
@@ -611,9 +647,9 @@ Ready for query dispatch.</div>
             const loader = document.getElementById('loadingIndicator');
 
             sendBtn.disabled = true;
-            sendBtn.textContent = 'Grok Thinking...';
+            sendBtn.textContent = 'Grok Calculating...';
             loader.style.display = 'block';
-            updateStatus(`Dispatching prompt to [${config.name} / ${modelName}]...`);
+            updateStatus(`Transmitting to [${config.name} / ${modelName}]...`);
 
             try {
                 const headers = { 'Content-Type': 'application/json' };
@@ -654,7 +690,7 @@ Ready for query dispatch.</div>
                 
                 addMessage('assistant', reply);
                 conversationHistory.push({ role: 'assistant', content: reply });
-                updateStatus(`Grok response received successfully (${config.name})`, 'ok');
+                updateStatus(`Grok response received (${config.name})`, 'ok');
                 
             } catch (error) {
                 updateStatus(`Grok Gateway Error: ${error.message}`, 'error');
@@ -676,17 +712,17 @@ Ready for query dispatch.</div>
         });
 
         document.getElementById('clearChat').addEventListener('click', () => {
-            if (confirm('Reset conversation session?')) {
+            if (confirm('Reset conversation buffer?')) {
                 const chat = document.getElementById('chatDisplay');
-                chat.innerHTML = '<div class="message assistant-message"><div class="message-role">GROK</div>Session cleared. Ready for a new Grok prompt.</div>';
+                chat.innerHTML = '<div class="message assistant-message"><div class="message-role">GROK</div>Buffer cleared. Ready for a new Grok prompt.</div>';
                 conversationHistory = [];
-                updateStatus('Grok conversation memory reset.', 'ok');
+                updateStatus('Conversation memory cleared.', 'ok');
             }
         });
 
         document.getElementById('exportChat').addEventListener('click', () => {
             if (conversationHistory.length === 0) {
-                updateStatus('No messages to export.', 'error');
+                updateStatus('No messages to export.', 'warn');
                 return;
             }
             const content = conversationHistory.map(m => `${m.role.toUpperCase()}:\n${m.content}\n`).join('\n---\n\n');
