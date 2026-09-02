@@ -446,7 +446,7 @@
                 </select>
             </div>
 
-            <textarea id="notepad" placeholder="Write ideas, notes, or edit AI-generated scenes here..."></textarea>
+            <textarea id="notepad" placeholder="Write ideas, notes, or edit AI-generated scenes here...AUTOSAVES TO URL..."></textarea>
 
             <div class="notepad-controls">
                 <button id="exportButton">Export as TXT</button>
@@ -698,6 +698,107 @@ red unfurls—inextinguishable, infinite.</div>
     if (savedKey) {
         document.getElementById('apiKey').value = savedKey;
     }
+</script>
+    <!-- Drop this right before </body> -->
+<script>
+// ========== NOTEPAD AUTO-SAVE TO URL HASH ==========
+(function() {
+    const notepad = document.getElementById('notepad');
+    if (!notepad) return;
+
+    // Event listeners
+    notepad.addEventListener('input', debounce(500, saveArticle));
+    window.addEventListener('DOMContentLoaded', loadArticle);
+    window.addEventListener('hashchange', loadArticle);
+
+    // Also trigger save when user imports from AI or clears
+    const copyBtn = document.getElementById('copyButton');
+    const clearBtn = document.getElementById('clearButton');
+    if (copyBtn) copyBtn.addEventListener('click', () => setTimeout(saveArticle, 50));
+    if (clearBtn) clearBtn.addEventListener('click', () => setTimeout(saveArticle, 50));
+
+    // Load content from URL hash or localStorage
+    async function loadArticle() {
+        try {
+            if (location.hash !== '') {
+                await setArticle(location.hash);
+            } else {
+                const saved = localStorage.getItem('article-hash');
+                if (saved) await setArticle(saved);
+            }
+            updateArticleTitle();
+        } catch (e) {
+            console.log('No article loaded');
+        }
+    }
+
+    // Save content to URL hash and localStorage
+    async function saveArticle() {
+        const hash = await getArticleHash();
+        if (location.hash !== hash) {
+            history.replaceState({}, '', hash);
+        }
+        try { 
+            localStorage.setItem('article-hash', hash);
+        } catch (e) {}
+        updateArticleTitle();
+    }
+
+    // Set textarea content from hash
+    async function setArticle(hash) {
+        if (!hash || hash === '#') return;
+        const content = await decompressArticle(hash.slice(1));
+        notepad.value = content;
+    }
+
+    // Get hash from textarea content
+    async function getArticleHash() {
+        const content = notepad.value;
+        if (!content.trim()) return '';
+        return '#' + await compressArticle(content);
+    }
+
+    // Update page title from first # Header if present
+    function updateArticleTitle() {
+        const match = notepad.value.match(/^\n*#(.+)\n/);
+        if (match) document.title = `${match[1].trim()} - INK REALM`;
+    }
+
+    // Compress content using native Deflate
+    async function compressArticle(string) {
+        const byteArray = new TextEncoder().encode(string);
+        const stream = new CompressionStream('deflate-raw');
+        const writer = stream.writable.getWriter();
+        writer.write(byteArray);
+        writer.close();
+        const buffer = await new Response(stream.readable).arrayBuffer();
+        return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+            .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+    }
+
+    // Decompress content
+    async function decompressArticle(b64) {
+        const byteArray = Uint8Array.from(
+            atob(b64.replace(/-/g, "+").replace(/_/g, "/")), 
+            c => c.charCodeAt(0)
+        );
+        const stream = new DecompressionStream('deflate-raw');
+        const writer = stream.writable.getWriter();
+        writer.write(byteArray);
+        writer.close();
+        const buffer = await new Response(stream.readable).arrayBuffer();
+        return new TextDecoder().decode(buffer);
+    }
+
+    // Debounce helper
+    function debounce(ms, fn) {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => fn(...args), ms);
+        };
+    }
+})();
 </script>
 </body>
 </html>
