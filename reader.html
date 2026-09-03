@@ -38,8 +38,42 @@
     details[open] summary:after { transform: rotate(180deg); opacity: 1; }
     details > div { position: absolute; z-index: 100; }
 
-    #controls-panel { width: 460px; min-width: 380px; max-width: 520px; }
-    @media (max-width: 900px) { #controls-panel { width: 100%; max-width: none; } }
+    /* Desktop / wide: controls left, text right */
+    #controls-panel {
+      width: 380px;
+      min-width: 300px;
+      max-width: 420px;
+      flex-shrink: 0;
+    }
+    /* Narrow (iframe drawer ~500px, mobile): stack — text first so it is always visible */
+    @media (max-width: 720px) {
+      #brim-layout {
+        flex-direction: column !important;
+      }
+      #controls-panel {
+        width: 100% !important;
+        max-width: none !important;
+        min-width: 0 !important;
+        height: auto !important;
+        max-height: 42vh;
+        border-right: none;
+        border-bottom: 1px solid #333;
+        order: 2 !important; /* controls below text */
+      }
+      #controls-panel .flex-1 {
+        max-height: 42vh;
+      }
+      #brim-layout > .order-2,
+      #brim-layout > div:last-child {
+        order: 1 !important; /* text on top */
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+      #content {
+        font-size: 0.95rem !important;
+        padding: 0.75rem 1rem !important;
+      }
+    }
 
     #searchBox.search-active {
       border-color: var(--red) !important;
@@ -73,7 +107,10 @@
     <strong class="text-red-500">Keys:</strong> ← → • R random • Esc close index
   </div>
 </details>
-    <a href="https://inkrealm.info" class="text-xs font-mono border border-gray-600 px-3 py-1 hover:bg-red-600 hover:text-black hover:border-red-600 transition-all duration-300 uppercase tracking-widest no-underline text-gray-400">Return to Realm</a>
+    <div class="flex items-center gap-2">
+      <a href="#" id="openFullReader" class="text-xs font-mono border border-red-800 px-3 py-1 hover:bg-red-600 hover:text-black hover:border-red-600 transition-all duration-300 uppercase tracking-widest no-underline text-red-500" title="Open full reader in new tab">Full Reader</a>
+      <a href="https://inkrealm.info" class="text-xs font-mono border border-gray-600 px-2 py-1 hover:bg-red-600 hover:text-black hover:border-red-600 transition-all duration-300 uppercase tracking-widest no-underline text-gray-500" title="Return to Realm">Realm</a>
+    </div>
   </div>
 </div>
 
@@ -683,7 +720,17 @@ function updateUIState() {
   buildIndex();
 }
 
-document.addEventListener('DOMContentLoaded', loadText);
+document.addEventListener('DOMContentLoaded', () => {
+  loadText();
+  const fullBtn = document.getElementById('openFullReader');
+  if (fullBtn) {
+    fullBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Open this same reader page full-size (works when iframed or standalone)
+      window.open(window.location.href, '_blank', 'noopener');
+    });
+  }
+});
 
 searchBox.addEventListener('input', debounce(e => performSearch(e.target.value), 300));
 
