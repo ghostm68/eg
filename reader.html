@@ -1,18 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"> 
-  <!-- FIXED MOBILE VIEWPORT -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1024">
   <title>dreamweaver reader...</title>
-  
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Fuse.js for Fuzzy Search -->
-  <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.basic.min.js"></script>
-
-  <!-- Fonts -->
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
   <link href="https://fonts.cdnfonts.com/css/voodoo" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
 
@@ -21,236 +14,134 @@
     ::selection{background:var(--red);color:var(--black);text-shadow:none;}
     *{-webkit-tap-highlight-color:transparent;}
     body{font-family:'Special Elite',serif;background:var(--black);color:var(--white);margin:0;touch-action:manipulation;}
-    
-    /* CRT Scanline Overlay */
     body::after{content:"";position:fixed;inset:0;background:linear-gradient(rgba(18,16,16,0) 50%,rgba(0,0,0,.15) 50%),linear-gradient(90deg,rgba(255,0,0,.04),rgba(0,255,0,.02),rgba(0,0,255,.04));background-size:100% 3px,3px 100%;z-index:999;pointer-events:none;}
-    
     .highlight{background:var(--red);color:var(--black);padding:1px 3px;}
     .custom-scrollbar::-webkit-scrollbar{width:6px;}.custom-scrollbar::-webkit-scrollbar-track{background:var(--black);}.custom-scrollbar::-webkit-scrollbar-thumb{background:var(--red);border-radius:3px;}
     input,textarea,button{font-family:'Special Elite',serif;}
     button{user-select:none;cursor:pointer;}
     .voodoo{font-family:'Voodoo',sans-serif;}
     
-    /* Analytics modal */
     .analytics-modal {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: var(--dark-grey);
-      border: 2px solid var(--red);
-      padding: 20px;
-      z-index: 1000;
-      max-width: 80vw;
-      max-height: 80vh;
-      overflow-y: auto;
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: var(--dark-grey); border: 2px solid var(--red); padding: 20px;
+      z-index: 1000; max-width: 80vw; max-height: 80vh; overflow-y: auto;
       box-shadow: 0 0 30px rgba(255, 0, 51, 0.3);
     }
-    
-    .analytics-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.8);
-      z-index: 999;
-    }
+    .analytics-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; }
 
-    /* Details Summary Marker */
     details summary::-webkit-details-marker { display: none; }
     details summary { position: relative; padding-right: 15px; }
     details summary:after {
-      content: "▼";
-      position: absolute;
-      right: 0;
-      top: 0;
-      font-size: 8px;
-      transition: transform 0.2s;
-      opacity: 0.5;
+      content: "▼"; position: absolute; right: 0; top: 0; font-size: 8px;
+      transition: transform 0.2s; opacity: 0.5;
     }
-    details[open] summary:after {
-      transform: rotate(180deg);
-      opacity: 1;
-    }
+    details[open] summary:after { transform: rotate(180deg); opacity: 1; }
     details > div { position: absolute; z-index: 100; }
 
-    /* Mobile Tab Styles */
-    .mobile-tab-btn.active {
-      background: var(--red) !important;
-      color: #000 !important;
+    #controls-panel { width: 460px; min-width: 380px; max-width: 520px; }
+    @media (max-width: 900px) { #controls-panel { width: 100%; max-width: none; } }
+
+    #searchBox.search-active {
       border-color: var(--red) !important;
+      box-shadow: 0 0 8px rgba(255, 0, 51, 0.35);
     }
-    .search-mode-active {
-      background: var(--red) !important;
-      color: #000 !important;
+    .mode-active {
       border-color: var(--red) !important;
+      color: var(--red) !important;
+      background: rgba(255, 0, 51, 0.08);
+    }
+    #semanticStatus {
+      font-size: 10px; color: #666; min-height: 14px; margin-top: 2px;
     }
   </style>
 </head>
 
-<body class="bg-black text-gray-300 flex flex-col h-screen overflow-hidden">
-
-<!-- HEADER -->
-<div class="sticky top-0 z-50 w-full pt-3 pb-3 px-4 sm:px-6 md:px-8 border-b border-red-800 bg-black flex-shrink-0">
+<body class="bg-black text-gray-300">
+<div class="sticky top-0 z-50 w-full pt-3 pb-3 px-4 sm:px-6 border-b border-red-800 bg-black">
   <div class="flex justify-between items-center max-w-full">
-    <div class="flex items-center">
-      <h1 class="text-xl sm:text-2xl md:text-3xl font-bold voodoo truncate mr-2" style="color:var(--red)">⚡ dreamweaver reader...⚡</h1>
+   <h1 class="text-2xl md:text-3xl font-bold voodoo" style="color:var(--red)">⚡ dreamweaver reader...⚡</h1>
 
-      <details class="ml-1 sm:ml-3 hidden sm:block">
-        <summary class="text-xs font-bold text-gray-500 uppercase tracking-widest cursor-pointer hover:text-red-500 list-none">
-          ⚡ Quick Search Guide
-        </summary>
-        <div class="absolute mt-2 p-3 bg-black border border-gray-800 z-50 w-56 text-xs text-gray-400">
-          <strong class="text-red-500">Search:</strong> Type → Use Next/Prev to navigate matches<br>
-          <strong class="text-red-500">Filter:</strong> Click tags first to narrow search<br>
-          <strong class="text-red-500">Keys:</strong> ← → arrows • R random<br>
-          <div class="text-[10px] text-gray-600 italic mt-1">Search respects active tag filter</div>
-        </div>
-      </details>
-    </div>
-
-    <div class="flex items-center gap-2">
-      <span id="semanticIndicator" class="text-[9px] font-mono text-yellow-600 hidden md:inline">🧠 Model Loading</span>
-      <a href="https://inkrealm.info" class="text-xs font-mono border border-gray-600 px-3 py-1 hover:bg-red-600 hover:text-black hover:border-red-600 transition-all duration-300 uppercase tracking-widest no-underline text-gray-400">Return to Realm</a>
-    </div>
+<details class="ml-3">
+  <summary class="text-xs font-bold text-gray-500 uppercase tracking-widest cursor-pointer hover:text-red-500 list-none">
+    ⚡ Search Guide
+  </summary>
+  <div class="absolute mt-2 p-3 bg-black border border-gray-800 z-50 w-72 text-xs text-gray-400">
+    <strong class="text-red-500">Exact:</strong> plain text • "quoted phrase" • word1 or word2 • -exclude<br>
+    <strong class="text-red-500">Fuzzy:</strong> typo-tolerant + light synonyms<br>
+    <strong class="text-red-500">Semantic:</strong> meaning search (all-MiniLM-L6-v2, loads on first use ~23 MB)<br>
+    <strong class="text-red-500">Filter:</strong> click tags first to narrow<br>
+    <strong class="text-red-500">Keys:</strong> ← → • R random • Esc close index
   </div>
-
-  <!-- MOBILE TABS -->
-  <div class="flex md:hidden mt-2 gap-2 border-t border-gray-900 pt-1.5">
-    <button onclick="switchMobileTab('reader')" id="mobTabReader" class="mobile-tab-btn active flex-1 py-1 text-xs border border-gray-800 text-gray-400 uppercase font-mono">📖 Read</button>
-    <button onclick="switchMobileTab('controls')" id="mobTabControls" class="mobile-tab-btn flex-1 py-1 text-xs border border-gray-800 text-gray-400 uppercase font-mono">⚙️ Controls & AI</button>
+</details>
+    <a href="https://inkrealm.info" class="text-xs font-mono border border-gray-600 px-3 py-1 hover:bg-red-600 hover:text-black hover:border-red-600 transition-all duration-300 uppercase tracking-widest no-underline text-gray-400">Return to Realm</a>
   </div>
 </div>
 
-<!-- TWO-COLUMN LAYOUT -->
-<div id="brim-layout" class="flex-1 flex flex-col md:flex-row w-full overflow-hidden bg-black relative">
-  
-  <!-- LEFT: READER -->
-  <div id="readerPane" class="flex-1 flex flex-col h-full border-r border-gray-800 relative min-w-0">
-    <div id="loading" class="absolute inset-0 flex items-center justify-center text-xl font-mono" style="color:var(--red)">Loading dreamweaver.txt …</div>
-    <div id="content" class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 lg:p-10 text-base md:text-lg leading-relaxed whitespace-pre-wrap custom-scrollbar" style="display:none;"></div>
-    <div id="entryInfo" class="p-3 border-t border-gray-800 text-xs text-gray-500 bg-black flex-shrink-0"></div>
-  </div>
+<div id="brim-layout" class="flex flex-col md:flex-row w-full h-[calc(100vh-68px)] overflow-hidden bg-black">
 
-  <!-- RIGHT: CONTROLS -->
-  <div id="controlsPane" class="hidden md:flex w-full md:w-[400px] flex-col h-full bg-[#0a0a0a] border-l border-gray-800 flex-shrink-0 overflow-y-auto custom-scrollbar">
-    <div class="p-5 custom-scrollbar">
-      
-      <!-- NAV -->
+  <div id="controls-panel" class="flex flex-col h-full bg-[#0a0a0a] border-r border-gray-800 flex-shrink-0 order-1">
+    <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
       <div class="flex items-center justify-between mb-4 gap-2">
         <button id="prevBtn" class="flex-1 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors text-sm">← Prev</button>
-        <button id="randomBtn" class="px-4 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors text-sm" title="Random entry (R)">⚡</button>
+        <button id="randomBtn" class="px-3 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors">⚡</button>
         <button id="nextBtn" class="flex-1 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors text-sm">Next →</button>
       </div>
 
-      <!-- SEARCH WITH KEYWORD / SEMANTIC TOGGLE -->
-      <div class="mb-5">
-        <div class="flex gap-1 mb-2">
-          <button id="searchModeFuzzy" onclick="setSearchMode('fuzzy')" class="search-mode-active flex-1 text-[10px] py-1 border border-gray-700 uppercase font-mono">🔍 Keyword / Fuzzy</button>
-          <button id="searchModeSemantic" onclick="setSearchMode('semantic')" class="flex-1 text-[10px] py-1 border border-gray-700 text-gray-400 uppercase font-mono hover:text-white">🧠 Semantic AI</button>
+      <div class="mb-4">
+        <input type="text" id="searchBox" class="w-full bg-[#111] border border-gray-700 p-2.5 text-white text-sm focus:border-red-500 focus:outline-none transition-colors" placeholder='Search… "exact" or -exclude'>
+        <div class="flex justify-between items-center mt-2 gap-1.5 flex-wrap">
+          <div id="searchStats" class="text-xs text-gray-500 h-4 flex-1 min-w-[80px]"></div>
+          <button id="exactBtn" class="text-[10px] uppercase tracking-widest border border-gray-700 px-2 py-0.5 text-gray-500 hover:border-red-500 transition-colors mode-active" data-mode="exact">Exact</button>
+          <button id="fuzzyBtn" class="text-[10px] uppercase tracking-widest border border-gray-700 px-2 py-0.5 text-gray-500 hover:border-red-500 transition-colors" data-mode="fuzzy">Fuzzy</button>
+          <button id="semanticBtn" class="text-[10px] uppercase tracking-widest border border-gray-700 px-2 py-0.5 text-gray-500 hover:border-red-500 transition-colors" data-mode="semantic">Semantic</button>
+          <button id="indexBtn" class="text-xs text-gray-500 hover:text-red-500 uppercase tracking-widest border-b border-transparent hover:border-red-500">Index</button>
         </div>
-        <input type="text" id="searchBox" class="w-full bg-[#111] border border-gray-700 p-2.5 text-sm text-white focus:border-red-500 focus:outline-none transition-colors" placeholder="Search (+term, -exclude, &quot;exact&quot;)...">
-        <div class="flex justify-between items-center mt-2">
-          <div id="searchStats" class="text-xs text-gray-500 h-4 font-mono"></div>
-          <button id="indexBtn" class="text-xs text-gray-500 hover:text-red-500 uppercase tracking-widest border-b border-transparent hover:border-red-500">Toggle Index</button>
-        </div>
+        <div id="semanticStatus"></div>
       </div>
 
-      <!-- ANALYTICS TOOLBAR -->
-      <div class="mb-5 pb-5 border-b border-gray-800">
-        <div class="flex flex-wrap gap-2 mb-2">
-          <button onclick="analyzeWordCount()" class="text-xs px-2.5 py-1 border border-gray-700 hover:border-red-500 hover:text-red-500 transition-colors">📊 Word Count</button>
-          <button onclick="checkCharacterNames()" class="text-xs px-2.5 py-1 border border-gray-700 hover:border-red-500 hover:text-red-500 transition-colors">👤 Characters</button>
-          <button onclick="findRepetitions()" class="text-xs px-2.5 py-1 border border-gray-700 hover:border-red-500 hover:text-red-500 transition-colors">🔁 Repetitions</button>
-          <button onclick="checkTimeline()" class="text-xs px-2.5 py-1 border border-gray-700 hover:border-red-500 hover:text-red-500 transition-colors">⏰ Timeline</button>
+      <div class="mb-4 pb-4 border-b border-gray-800">
+        <div class="flex flex-wrap gap-1.5 mb-1">
+          <button onclick="analyzeWordCount()" class="text-[10px] px-2 py-1 border border-gray-700 hover:border-red-500 hover:text-red-500 transition-colors">📊 Words</button>
+          <button onclick="checkCharacterNames()" class="text-[10px] px-2 py-1 border border-gray-700 hover:border-red-500 hover:text-red-500 transition-colors">👤 Chars</button>
+          <button onclick="findRepetitions()" class="text-[10px] px-2 py-1 border border-gray-700 hover:border-red-500 hover:text-red-500 transition-colors">🔁 Reps</button>
+          <button onclick="checkTimeline()" class="text-[10px] px-2 py-1 border border-gray-700 hover:border-red-500 hover:text-red-500 transition-colors">⏰ Time</button>
         </div>
-        <div id="analyticsStatus" class="text-[10px] text-gray-600 h-4 font-mono"></div>
+        <div id="analyticsStatus" class="text-[10px] text-gray-600 h-4"></div>
       </div>
 
-      <!-- FILTERS -->
-      <div id="filterBtns" class="flex flex-wrap gap-1.5 mb-5 pb-5 border-b border-gray-800">
-        <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="all">All</button>
-        <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="book">Book</button>
-        <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="film">Film</button>
-        <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="dream">Dream</button>
-        <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="lyric">Lyric</button>
-        <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="poem">Poem</button>
+      <div id="filterBtns" class="flex flex-wrap gap-1.5 mb-4 pb-4 border-b border-gray-800">
+        <button class="filter-btn px-2.5 py-1 text-[10px] border border-gray-700 text-gray-500 hover:border-red-500" data-filter="all">All</button>
+        <button class="filter-btn px-2.5 py-1 text-[10px] border border-gray-700 text-gray-500 hover:border-red-500" data-filter="book">Book</button>
+        <button class="filter-btn px-2.5 py-1 text-[10px] border border-gray-700 text-gray-500 hover:border-red-500" data-filter="film">Film</button>
+        <button class="filter-btn px-2.5 py-1 text-[10px] border border-gray-700 text-gray-500 hover:border-red-500" data-filter="dream">Dream</button>
       </div>
 
-      <!-- INDEX -->
-      <div id="dateNav" class="hidden mb-5 max-h-60 overflow-y-auto border border-gray-800 bg-[#111] custom-scrollbar"></div>
+      <div id="dateNav" class="hidden mb-4 max-h-48 overflow-y-auto border border-gray-800 bg-[#111] custom-scrollbar"></div>
 
-      <!-- NVIDIA AI -->
-      <div class="mt-2">
-        <h2 class="text-xl font-bold mb-3 text-gray-600 voodoo">AI EDITOR</h2>
+      <div class="mt-1">
+        <h2 class="text-lg font-bold mb-3 text-gray-600 voodoo">AI EDITOR</h2>
         <input type="password" id="apiKeyInput" class="w-full bg-black border border-gray-800 p-2 text-xs text-red-500 font-mono mb-3 focus:outline-none focus:border-red-900" placeholder="NVIDIA API KEY...">
         <div class="flex gap-1.5 mb-2">
-          <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500 font-mono" data-context="current">Current</button>
-          <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500 font-mono" data-context="matches">Top Matches</button>
-          <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500 font-mono" data-context="all">Outline</button>
-          <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500 font-mono" data-context="none">None</button>
+          <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500" data-context="current">Current</button>
+          <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500" data-context="all">Outline</button>
+          <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500" data-context="none">None</button>
         </div>
-        <p id="contextInfo" class="text-[10px] text-gray-600 mb-2.5 text-right font-mono">Target: Current Entry</p>
-        <textarea id="aiInput" class="w-full bg-[#111] border border-gray-800 p-2.5 text-xs text-gray-300 focus:border-red-500 focus:outline-none min-h-[75px] mb-2 custom-scrollbar" placeholder="Enter prompt..."></textarea>
-        <button id="askAiBtn" class="w-full bg-red-900/20 hover:bg-red-900/40 border border-red-900 text-red-500 py-2 text-xs font-bold tracking-widest transition-all font-mono">TRANSMIT</button>
-        <div id="aiResponse" class="mt-3 p-3 bg-black border border-gray-800 text-xs text-gray-400 min-h-[90px] whitespace-pre-wrap font-mono custom-scrollbar"><span class="opacity-30">:: Awaiting Input ::</span></div>
+        <p id="contextInfo" class="text-[10px] text-gray-600 mb-2 text-right">Target: Current Entry</p>
+        <textarea id="aiInput" class="w-full bg-[#111] border border-gray-800 p-2.5 text-sm text-gray-300 focus:border-red-500 focus:outline-none min-h-[70px] mb-2" placeholder="Enter prompt..."></textarea>
+        <button id="askAiBtn" class="w-full bg-red-900/20 hover:bg-red-900/40 border border-red-900 text-red-500 py-2 text-xs font-bold tracking-widest transition-all">TRANSMIT</button>
+        <div id="aiResponse" class="mt-3 p-2.5 bg-black border border-gray-800 text-sm text-gray-400 min-h-[90px] whitespace-pre-wrap font-mono custom-scrollbar"><span class="opacity-30">:: Awaiting Input ::</span></div>
       </div>
-
     </div>
+  </div>
+
+  <div class="flex-1 flex flex-col h-full relative min-w-0 order-2">
+    <div id="loading" class="absolute inset-0 flex items-center justify-center text-xl" style="color:var(--red)">Loading dreamweaver.txt …</div>
+    <div id="content" class="flex-1 overflow-y-auto p-5 md:p-6 lg:p-8 text-base md:text-lg leading-relaxed whitespace-pre-wrap custom-scrollbar" style="display:none;"></div>
+    <div id="entryInfo" class="p-2.5 border-t border-gray-800 text-xs text-gray-500 bg-black flex-shrink-0"></div>
   </div>
 </div>
 
-<!-- ============ IN-BROWSER TRANSFORMERS.JS SEMANTIC MODULE ============ -->
-<script type="module">
-  import { pipeline, cos_sim } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
-
-  let semanticExtractor = null;
-  let semanticReady = false;
-
-  async function initSemanticModel() {
-    try {
-      const indicator = document.getElementById('semanticIndicator');
-      indicator.classList.remove('hidden');
-      indicator.textContent = '🧠 Loading Semantic Model...';
-
-      semanticExtractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
-      semanticReady = true;
-      indicator.textContent = '🧠 Semantic Ready';
-      indicator.classList.replace('text-yellow-600', 'text-green-500');
-
-      // Generate vector embeddings in background
-      if (window.readerEntries && window.readerEntries.length > 0) {
-        for (const entry of window.readerEntries) {
-          const sample = entry.title + ' ' + entry.content.substring(0, 350);
-          const out = await semanticExtractor(sample, { pooling: 'mean', normalize: true });
-          entry.embedding = Array.from(out.data);
-        }
-      }
-    } catch (e) {
-      console.warn('Semantic vector search fallback:', e);
-      document.getElementById('semanticIndicator').textContent = '⚠️ Keyword Engine Active';
-    }
-  }
-
-  setTimeout(initSemanticModel, 800);
-
-  window.runSemanticSearch = async function(query) {
-    if (!semanticReady || !semanticExtractor) return [];
-    const queryOut = await semanticExtractor(query, { pooling: 'mean', normalize: true });
-    const qEmbed = Array.from(queryOut.data);
-
-    return window.readerEntries
-      .filter(e => e.embedding)
-      .map(entry => ({
-        entry,
-        similarity: cos_sim(qEmbed, entry.embedding)
-      }))
-      .sort((a, b) => b.similarity - a.similarity)
-      .map(res => res.entry);
-  };
-</script>
-
-<!-- ============  READER SCRIPT  ============ -->
 <script id="reader-script">
-/* ----------  CONFIG  ---------- */
 const TXT_FILE_URL = 'dreamweaver.txt';
 
 const ENTRY_PATTERN = /^(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4}|\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4}|\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4})/i;
@@ -264,7 +155,19 @@ const TAG_PATTERNS = {
   dream: /\b(dream|dreamt|dreaming|nightmare|sleep|slumber|awake|waking|woke|unconscious|surreal|subconscious|her|me|trance|i|nocturnal|midnight|twilight)\b|\[dream\]/i
 };
 
-/* ----------  STATE  ---------- */
+const SYNONYMS = {
+  dream: ['dreamt', 'dreaming', 'nightmare', 'dreams'],
+  dreamt: ['dream', 'dreaming', 'nightmare'],
+  nightmare: ['dream', 'dreamt', 'terror'],
+  sleep: ['slumber', 'asleep', 'slept', 'sleeping'],
+  book: ['novel', 'story', 'chapter', 'text'],
+  novel: ['book', 'story'],
+  film: ['movie', 'cinema', 'scene', 'screenplay'],
+  movie: ['film', 'cinema'],
+  write: ['wrote', 'writing', 'written'],
+  read: ['reading', 'reader']
+};
+
 window.readerEntries = [];
 window.readerCurrentIndex = 0;
 let currentFilter = 'all';
@@ -273,71 +176,53 @@ let searchResults = [];
 let isSearching = false;
 let isIndexVisible = false;
 let searchTimeout = null;
-let searchMode = 'fuzzy'; // 'fuzzy' | 'semantic'
-let fuseInstance = null;
+let searchMode = 'exact';
+let fuse = null;
 
-/* ----------  DOM  ---------- */
+const fuseOptions = {
+  keys: [{ name: 'title', weight: 0.35 }, { name: 'content', weight: 0.65 }],
+  threshold: 0.38,
+  ignoreLocation: true,
+  minMatchCharLength: 2,
+  includeScore: true,
+  shouldSort: true
+};
+
+let semanticReady = false;
+let semanticLoading = false;
+let embedder = null;
+let entryEmbeddings = null;
+
 const searchBox = document.getElementById('searchBox');
 const searchStats = document.getElementById('searchStats');
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
 const randomBtn = document.getElementById('randomBtn');
 const indexBtn = document.getElementById('indexBtn');
+const exactBtn = document.getElementById('exactBtn');
+const fuzzyBtn = document.getElementById('fuzzyBtn');
+const semanticBtn = document.getElementById('semanticBtn');
+const semanticStatus = document.getElementById('semanticStatus');
 const dateNav = document.getElementById('dateNav');
 const entryInfo = document.getElementById('entryInfo');
 const loadingDiv = document.getElementById('loading');
 const contentDiv = document.getElementById('content');
 const analyticsStatus = document.getElementById('analyticsStatus');
 
-/* ----------  MOBILE TAB CONTROLLER ---------- */
-function switchMobileTab(tab) {
-  const readerPane = document.getElementById('readerPane');
-  const controlsPane = document.getElementById('controlsPane');
-  const tabReader = document.getElementById('mobTabReader');
-  const tabControls = document.getElementById('mobTabControls');
-
-  if (tab === 'reader') {
-    readerPane.classList.remove('hidden');
-    controlsPane.classList.add('hidden');
-    tabReader.classList.add('active');
-    tabControls.classList.remove('active');
-  } else {
-    readerPane.classList.add('hidden');
-    controlsPane.classList.remove('hidden');
-    controlsPane.classList.add('flex');
-    tabReader.classList.remove('active');
-    tabControls.classList.add('active');
-  }
-}
-
-function setSearchMode(mode) {
-  searchMode = mode;
-  document.getElementById('searchModeFuzzy').className = mode === 'fuzzy' ? 'search-mode-active flex-1 text-[10px] py-1 border border-gray-700 uppercase font-mono' : 'flex-1 text-[10px] py-1 border border-gray-700 text-gray-400 uppercase font-mono hover:text-white';
-  document.getElementById('searchModeSemantic').className = mode === 'semantic' ? 'search-mode-active flex-1 text-[10px] py-1 border border-gray-700 uppercase font-mono' : 'flex-1 text-[10px] py-1 border border-gray-700 text-gray-400 uppercase font-mono hover:text-white';
-  if (searchBox.value.trim()) performSearch(searchBox.value);
-}
-
-/* ----------  ANALYTICS FUNCTIONS (OPTIMIZED FOR LARGE FILES) ---------- */
 function showAnalyticsModal(content) {
-  const existingModal = document.querySelector('.analytics-modal');
-  const existingOverlay = document.querySelector('.analytics-overlay');
-  if (existingModal) existingModal.remove();
-  if (existingOverlay) existingOverlay.remove();
-  
+  document.querySelector('.analytics-modal')?.remove();
+  document.querySelector('.analytics-overlay')?.remove();
   const overlay = document.createElement('div');
   overlay.className = 'analytics-overlay';
   overlay.onclick = () => { overlay.remove(); modal.remove(); };
-  
   const modal = document.createElement('div');
   modal.className = 'analytics-modal custom-scrollbar';
   modal.innerHTML = `
     <div class="flex justify-between items-center mb-4">
       <h3 class="text-xl voodoo" style="color:var(--red)">ANALYTICS</h3>
-      <button onclick="this.closest('.analytics-modal').remove(); this.closest('.analytics-overlay').remove();" class="text-xs border border-gray-700 px-2 py-1 hover:border-red-500">CLOSE</button>
+      <button onclick="this.closest('.analytics-modal').remove(); document.querySelector('.analytics-overlay')?.remove();" class="text-xs border border-gray-700 px-2 py-1 hover:border-red-500">CLOSE</button>
     </div>
-    <div class="text-sm font-mono whitespace-pre-wrap max-h-[60vh] overflow-y-auto">${content}</div>
-  `;
-  
+    <div class="text-sm font-mono whitespace-pre-wrap max-h-[60vh] overflow-y-auto">${content}</div>`;
   document.body.appendChild(overlay);
   document.body.appendChild(modal);
 }
@@ -351,338 +236,118 @@ function analyzeWordCount() {
   setAnalyticsStatus('Analyzing word count...');
   setTimeout(() => {
     try {
-      if (!window.readerEntries.length) {
-        setAnalyticsStatus('No entries loaded', true);
-        return;
-      }
-      
-      const stats = {
-        totalEntries: window.readerEntries.length,
-        totalWords: 0,
-        totalCharacters: 0,
-        averageWords: 0,
-        longestEntry: { title: '', words: 0 },
-        shortestEntry: { title: '', words: Infinity }
-      };
-      
-      const wordCountsByTag = {};
-      const monthlyWords = {};
-      
-      const chunkSize = 500;
-      for (let i = 0; i < window.readerEntries.length; i += chunkSize) {
-        for (let j = i; j < i + chunkSize && j < window.readerEntries.length; j++) {
-          const entry = window.readerEntries[j];
-          const words = entry.content.trim().split(/\s+/).length;
-          const chars = entry.content.length;
-          
-          stats.totalWords += words;
-          stats.totalCharacters += chars;
-          
-          if (words > stats.longestEntry.words) stats.longestEntry = { title: entry.title, words };
-          if (words < stats.shortestEntry.words) stats.shortestEntry = { title: entry.title, words };
-          
-          entry.tags.forEach(tag => {
-            wordCountsByTag[tag] = (wordCountsByTag[tag] || 0) + words;
-          });
-          if (entry.tags.length === 0) {
-            wordCountsByTag['untagged'] = (wordCountsByTag['untagged'] || 0) + words;
-          }
-          
-          const monthMatch = entry.title.match(/(\d{4})[-\/](\d{1,2})/);
-          if (monthMatch) {
-            const key = `${monthMatch[1]}-${monthMatch[2].padStart(2, '0')}`;
-            monthlyWords[key] = (monthlyWords[key] || 0) + words;
-          }
-        }
-      }
-      
+      if (!window.readerEntries.length) { setAnalyticsStatus('No entries loaded', true); return; }
+      const stats = { totalEntries: window.readerEntries.length, totalWords: 0, totalCharacters: 0, averageWords: 0, longestEntry: { title: '', words: 0 }, shortestEntry: { title: '', words: Infinity } };
+      const wordCountsByTag = {}, monthlyWords = {};
+      window.readerEntries.forEach(entry => {
+        const words = entry.content.trim().split(/\s+/).length;
+        stats.totalWords += words; stats.totalCharacters += entry.content.length;
+        if (words > stats.longestEntry.words) stats.longestEntry = { title: entry.title, words };
+        if (words < stats.shortestEntry.words) stats.shortestEntry = { title: entry.title, words };
+        entry.tags.forEach(t => wordCountsByTag[t] = (wordCountsByTag[t] || 0) + words);
+        if (!entry.tags.length) wordCountsByTag.untagged = (wordCountsByTag.untagged || 0) + words;
+        const m = entry.title.match(/(\d{4})[-\/](\d{1,2})/);
+        if (m) { const k = `${m[1]}-${m[2].padStart(2,'0')}`; monthlyWords[k] = (monthlyWords[k] || 0) + words; }
+      });
       stats.averageWords = Math.round(stats.totalWords / stats.totalEntries);
-      
-      const sortedTags = Object.entries(wordCountsByTag)
-        .sort((a, b) => b[1] - a[1])
-        .map(([tag, count]) => `${tag}: ${count.toLocaleString()} words`);
-      
-      const sortedMonths = Object.entries(monthlyWords)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .slice(-12)
-        .map(([month, count]) => `${month}: ${count.toLocaleString()} words`);
-      
-      const report = `
-TOTAL ENTRIES: ${stats.totalEntries.toLocaleString()}
-TOTAL WORDS: ${stats.totalWords.toLocaleString()}
-TOTAL CHARACTERS: ${stats.totalCharacters.toLocaleString()}
-AVERAGE WORDS PER ENTRY: ${stats.averageWords.toLocaleString()}
-
-LONGEST ENTRY: "${stats.longestEntry.title}" (${stats.longestEntry.words.toLocaleString()} words)
-SHORTEST ENTRY: "${stats.shortestEntry.title}" (${stats.shortestEntry.words.toLocaleString()} words)
-
-WORD COUNT BY TAG:
-${sortedTags.join('\n')}
-
-RECENT MONTHLY ACTIVITY (Last 12 months):
-${sortedMonths.join('\n')}
-
-ENTRIES WITH 1000+ WORDS: ${window.readerEntries.filter(e => e.content.trim().split(/\s+/).length >= 1000).length}
-ENTRIES WITH < 100 WORDS: ${window.readerEntries.filter(e => e.content.trim().split(/\s+/).length < 100).length}
-
-Last updated: ${new Date().toLocaleString()}
-      `.trim();
-      
+      const sortedTags = Object.entries(wordCountsByTag).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`${t}: ${c.toLocaleString()} words`);
+      const sortedMonths = Object.entries(monthlyWords).sort(([a],[b])=>a.localeCompare(b)).slice(-12).map(([m,c])=>`${m}: ${c.toLocaleString()} words`);
+      const report = `TOTAL ENTRIES: ${stats.totalEntries.toLocaleString()}\nTOTAL WORDS: ${stats.totalWords.toLocaleString()}\nTOTAL CHARACTERS: ${stats.totalCharacters.toLocaleString()}\nAVERAGE WORDS PER ENTRY: ${stats.averageWords.toLocaleString()}\n\nLONGEST: "${stats.longestEntry.title}" (${stats.longestEntry.words.toLocaleString()})\nSHORTEST: "${stats.shortestEntry.title}" (${stats.shortestEntry.words.toLocaleString()})\n\nWORD COUNT BY TAG:\n${sortedTags.join('\n')}\n\nRECENT MONTHLY:\n${sortedMonths.join('\n')}\n\n1000+ WORDS: ${window.readerEntries.filter(e=>e.content.trim().split(/\s+/).length>=1000).length}\n<100 WORDS: ${window.readerEntries.filter(e=>e.content.trim().split(/\s+/).length<100).length}\n\n${new Date().toLocaleString()}`;
       showAnalyticsModal(report);
-      setAnalyticsStatus('Word count analysis complete');
-    } catch (error) {
-      console.error('Word count error:', error);
-      setAnalyticsStatus('Analysis failed: ' + error.message, true);
-    }
-  }, 50);
+      setAnalyticsStatus('Word count complete');
+    } catch (e) { setAnalyticsStatus('Failed: ' + e.message, true); }
+  }, 40);
 }
 
 function checkCharacterNames() {
-  setAnalyticsStatus('Scanning for characters...');
+  setAnalyticsStatus('Scanning characters...');
   setTimeout(() => {
     try {
-      const commonNames = [
-        'alice', 'bob', 'charlie', 'david', 'eve', 'frank', 'grace', 'henry', 'isabel', 'jack',
-        'kate', 'leo', 'mia', 'nathan', 'olivia', 'paul', 'quinn', 'rachel', 'sam', 'tara',
-        'lotta', 'wendy', 'xavier', 'yvonne', 'zack',
-        'john', 'jane', 'mary', 'james', 'emilee', 'michael', 'william', 'david', 'richard', 'joseph',
-        'thomas', 'charles', 'christopher', 'daniel', 'matthew', 'tim', 'donald', 'mark', 'inky'
-      ];
-      
-      const characterMap = new Map();
-      const characterMentions = new Map();
       const nameRegex = /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g;
-      
-      const sampleSize = Math.min(500, window.readerEntries.length);
-      const sampleEntries = window.readerEntries
-        .slice()
-        .sort(() => Math.random() - 0.5)
-        .slice(0, sampleSize);
-      
-      sampleEntries.forEach(entry => {
+      const characterMap = new Map(), characterMentions = new Map();
+      const sample = window.readerEntries.sort(() => Math.random() - 0.5).slice(0, Math.min(500, window.readerEntries.length));
+      sample.forEach(entry => {
         const matches = entry.content.match(nameRegex);
-        if (matches) {
-          matches.forEach(name => {
-            const normalized = name.toLowerCase();
-            if (name.length > 2 && 
-                !['The', 'And', 'But', 'For', 'Not', 'You', 'She', 'He', 'They', 'This', 'That'].includes(name) &&
-                !normalized.endsWith('\'s')) {
-              
-              characterMap.set(name, (characterMap.get(name) || 0) + 1);
-              if (!characterMentions.has(name)) characterMentions.set(name, new Set());
-              characterMentions.get(name).add(entry.title);
-            }
-          });
-        }
-      });
-      
-      const sortedCharacters = Array.from(characterMap.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 50);
-      
-      let report = `CHARACTER ANALYSIS (sampled ${sampleSize} entries)\n\n`;
-      report += `Total unique potential characters: ${characterMap.size}\n\n`;
-      
-      if (sortedCharacters.length > 0) {
-        report += 'MOST FREQUENT CHARACTERS:\n';
-        sortedCharacters.forEach(([name, count], index) => {
-          const mentions = Array.from(characterMentions.get(name) || []).slice(0, 3);
-          report += `${index + 1}. ${name}: ${count} mentions`;
-          if (mentions.length > 0) report += ` (in: ${mentions.join(', ')})`;
-          report += '\n';
+        if (matches) matches.forEach(name => {
+          if (name.length > 2 && !['The','And','But','For','Not','You','She','He','They','This','That'].includes(name) && !name.toLowerCase().endsWith("'s")) {
+            characterMap.set(name, (characterMap.get(name) || 0) + 1);
+            if (!characterMentions.has(name)) characterMentions.set(name, new Set());
+            characterMentions.get(name).add(entry.title);
+          }
         });
-      } else {
-        report += 'No character names detected. Try a larger sample.';
-      }
-      
-      report += `\n\nCommon names detected: ${commonNames.filter(name => characterMap.has(name)).join(', ')}`;
-      report += `\n\nAnalysis completed at: ${new Date().toLocaleTimeString()}`;
-      
+      });
+      const sorted = Array.from(characterMap.entries()).sort((a,b)=>b[1]-a[1]).slice(0, 40);
+      let report = `CHARACTER ANALYSIS (sampled ${sample.length})\n\nUnique: ${characterMap.size}\n\nMOST FREQUENT:\n`;
+      sorted.forEach(([n,c],i) => {
+        const mens = Array.from(characterMentions.get(n)||[]).slice(0,2);
+        report += `${i+1}. ${n}: ${c}${mens.length ? ` (${mens.join(', ')})` : ''}\n`;
+      });
       showAnalyticsModal(report);
-      setAnalyticsStatus(`Found ${characterMap.size} potential characters`);
-    } catch (error) {
-      console.error('Character analysis error:', error);
-      setAnalyticsStatus('Character scan failed', true);
-    }
-  }, 50);
+      setAnalyticsStatus(`Found ${characterMap.size} names`);
+    } catch (e) { setAnalyticsStatus('Scan failed', true); }
+  }, 40);
 }
 
 function findRepetitions() {
   setAnalyticsStatus('Finding repetitions...');
   setTimeout(() => {
     try {
-      const sampleText = window.readerEntries
-        .slice(0, 100)
-        .map(e => e.content.toLowerCase())
-        .join('\n')
-        .replace(/[^\w\s]/g, ' ');
-      
-      const words = sampleText.split(/\s+/).filter(w => w.length > 3);
-      const phraseLength = 3;
-      const phraseCounts = new Map();
-      
-      for (let i = 0; i <= words.length - phraseLength; i++) {
-        const phrase = words.slice(i, i + phraseLength).join(' ');
-        phraseCounts.set(phrase, (phraseCounts.get(phrase) || 0) + 1);
+      const text = window.readerEntries.slice(0, 100).map(e => e.content.toLowerCase()).join('\n').replace(/[^\w\s]/g, ' ');
+      const words = text.split(/\s+/).filter(w => w.length > 3);
+      const counts = new Map();
+      for (let i = 0; i <= words.length - 3; i++) {
+        const p = words.slice(i, i+3).join(' ');
+        counts.set(p, (counts.get(p) || 0) + 1);
       }
-      
-      const repetitions = Array.from(phraseCounts.entries())
-        .filter(([_, count]) => count >= 3)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 20);
-      
-      let report = 'REPETITION ANALYSIS (3-word phrases)\n\n';
-      report += `Analyzed ${words.length.toLocaleString()} words from first 100 entries\n\n`;
-      
-      if (repetitions.length > 0) {
-        report += 'MOST REPEATED PHRASES:\n';
-        repetitions.forEach(([phrase, count], index) => {
-          report += `${index + 1}. "${phrase}": ${count} times\n`;
-        });
-        
-        const topPhrase = repetitions[0][0];
-        const exampleEntries = window.readerEntries
-          .filter(e => e.content.toLowerCase().includes(topPhrase))
-          .slice(0, 3)
-          .map(e => `• ${e.title}`)
-          .join('\n');
-        
-        if (exampleEntries) report += `\n"${topPhrase}" appears in:\n${exampleEntries}`;
-      } else {
-        report += 'No significant repetitions found (3+ occurrences).';
-      }
-      
-      report += `\n\nAnalysis completed: ${new Date().toLocaleString()}`;
-      
-      showAnalyticsModal(report);
-      setAnalyticsStatus(`Found ${repetitions.length} repeated phrases`);
-    } catch (error) {
-      console.error('Repetition analysis error:', error);
-      setAnalyticsStatus('Repetition search failed', true);
-    }
-  }, 50);
+      const reps = Array.from(counts.entries()).filter(([,c])=>c>=3).sort((a,b)=>b[1]-a[1]).slice(0, 18);
+      let report = `REPETITION (3-word phrases)\n\nFrom first 100 entries (${words.length.toLocaleString()} words)\n\n`;
+      reps.forEach(([p,c],i) => report += `${i+1}. "${p}": ${c}\n`);
+      showAnalyticsModal(report || 'No significant repetitions.');
+      setAnalyticsStatus(`Found ${reps.length} phrases`);
+    } catch (e) { setAnalyticsStatus('Failed', true); }
+  }, 40);
 }
 
 function checkTimeline() {
   setAnalyticsStatus('Building timeline...');
   setTimeout(() => {
     try {
-      const datePatterns = [
+      const patterns = [
         /(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/,
         /(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/,
         /(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{4})/i,
         /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2}),?\s+(\d{4})/i
       ];
-      
-      const monthMap = {
-        jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
-        jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
-      };
-      
-      const entriesWithDates = [];
-      
+      const monthMap = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+      const dated = [];
       window.readerEntries.forEach(entry => {
-        let dateStr = null;
-        let year, month, day;
-        
-        for (const pattern of datePatterns) {
-          const match = entry.title.match(pattern);
-          if (match) {
-            if (pattern === datePatterns[0]) [, year, month, day] = match;
-            else if (pattern === datePatterns[1]) [, day, month, year] = match;
-            else if (pattern === datePatterns[2]) {
-              [, day, month, year] = match;
-              month = monthMap[month.toLowerCase().substring(0, 3)];
-            } else if (pattern === datePatterns[3]) {
-              [, month, day, year] = match;
-              month = monthMap[month.toLowerCase().substring(0, 3)];
-            }
-            
-            if (year && month && day) {
-              month = month.padStart(2, '0');
-              day = day.padStart(2, '0');
-              dateStr = `${year}-${month}-${day}`;
-              break;
-            }
+        for (const pat of patterns) {
+          const m = entry.title.match(pat);
+          if (!m) continue;
+          let y, mo, d;
+          if (pat === patterns[0]) [,y,mo,d] = m;
+          else if (pat === patterns[1]) [,d,mo,y] = m;
+          else if (pat === patterns[2]) { [,d,mo,y] = m; mo = monthMap[mo.toLowerCase().slice(0,3)]; }
+          else { [,mo,d,y] = m; mo = monthMap[mo.toLowerCase().slice(0,3)]; }
+          if (y && mo && d) {
+            dated.push({ title: entry.title, date: `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`, ts: new Date(`${y}-${mo}-${d}`).getTime() });
+            break;
           }
         }
-        
-        if (dateStr) {
-          entriesWithDates.push({
-            title: entry.title,
-            date: dateStr,
-            timestamp: new Date(dateStr).getTime(),
-            words: entry.content.trim().split(/\s+/).length,
-            tags: entry.tags
-          });
-        }
       });
-      
-      entriesWithDates.sort((a, b) => a.timestamp - b.timestamp);
-      
-      const byYear = {};
-      const byMonth = {};
-      
-      entriesWithDates.forEach(entry => {
-        const year = entry.date.substring(0, 4);
-        const month = entry.date.substring(0, 7);
-        byYear[year] = (byYear[year] || 0) + 1;
-        byMonth[month] = (byMonth[month] || 0) + 1;
-      });
-      
-      const totalWithDates = entriesWithDates.length;
-      const firstDate = entriesWithDates[0]?.date;
-      const lastDate = entriesWithDates[entriesWithDates.length - 1]?.date;
-      
-      const productiveMonths = Object.entries(byMonth)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10);
-      
-      let report = 'TIMELINE ANALYSIS\n\n';
-      report += `Entries with detectable dates: ${totalWithDates}/${window.readerEntries.length} (${Math.round(totalWithDates/window.readerEntries.length*100)}%)\n`;
-      report += `Timespan: ${firstDate || 'N/A'} to ${lastDate || 'N/A'}\n\n`;
-      
-      report += 'ENTRIES BY YEAR:\n';
-      Object.entries(byYear)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .forEach(([year, count]) => {
-          report += `${year}: ${count} entries\n`;
-        });
-      
-      report += '\nMOST PRODUCTIVE MONTHS:\n';
-      productiveMonths.forEach(([month, count], index) => {
-        report += `${index + 1}. ${month}: ${count} entries\n`;
-      });
-      
-      if (entriesWithDates.length > 1) {
-        const gaps = [];
-        for (let i = 1; i < entriesWithDates.length; i++) {
-          const gapDays = Math.round((entriesWithDates[i].timestamp - entriesWithDates[i-1].timestamp) / (1000 * 60 * 60 * 24));
-          if (gapDays > 30) {
-            gaps.push({ from: entriesWithDates[i-1].date, to: entriesWithDates[i].date, days: gapDays });
-          }
-        }
-        
-        if (gaps.length > 0) {
-          report += '\nSIGNIFICANT GAPS (>30 days):\n';
-          gaps.slice(0, 5).forEach(gap => {
-            report += `${gap.from} → ${gap.to}: ${gap.days} days\n`;
-          });
-        }
-      }
-      
-      report += `\nAnalysis completed: ${new Date().toLocaleString()}`;
-      
+      dated.sort((a,b) => a.ts - b.ts);
+      const byYear = {}, byMonth = {};
+      dated.forEach(e => { byYear[e.date.slice(0,4)] = (byYear[e.date.slice(0,4)]||0)+1; byMonth[e.date.slice(0,7)] = (byMonth[e.date.slice(0,7)]||0)+1; });
+      let report = `TIMELINE\n\nDated: ${dated.length}/${window.readerEntries.length}\nSpan: ${dated[0]?.date||'N/A'} → ${dated.at(-1)?.date||'N/A'}\n\nBY YEAR:\n`;
+      Object.entries(byYear).sort().forEach(([y,c]) => report += `${y}: ${c}\n`);
+      report += '\nTOP MONTHS:\n';
+      Object.entries(byMonth).sort((a,b)=>b[1]-a[1]).slice(0,8).forEach(([m,c],i) => report += `${i+1}. ${m}: ${c}\n`);
       showAnalyticsModal(report);
-      setAnalyticsStatus(`Timeline built with ${totalWithDates} dated entries`);
-    } catch (error) {
-      console.error('Timeline analysis error:', error);
-      setAnalyticsStatus('Timeline analysis failed', true);
-    }
-  }, 50);
+      setAnalyticsStatus(`Timeline: ${dated.length} dated`);
+    } catch (e) { setAnalyticsStatus('Failed', true); }
+  }, 40);
 }
 
-/* ----------  SEARCH UTILS  ---------- */
 function parseSearchQuery(q) {
   const terms = { and: [], or: [], not: [], exact: [] };
   const exactMatches = q.match(/"[^"]+"/g);
@@ -711,51 +376,141 @@ function matchesSearch(e, terms) {
   return true;
 }
 
+function expandWithSynonyms(query) {
+  const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const expanded = new Set(tokens);
+  tokens.forEach(t => {
+    if (SYNONYMS[t]) SYNONYMS[t].forEach(s => expanded.add(s));
+  });
+  return Array.from(expanded).join(' ');
+}
+
 function highlightText(text, query) {
   if (!query) return text;
   try {
-    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(`(${escapedQuery})`, 'gi');
-    return text.replace(regex, '<span class="highlight" style="background:var(--red); color:black; padding:0 2px;">$1</span>');
-  } catch (e) {
-    return text;
-  }
+    const tokens = query.replace(/"[^"]+"/g, m => m.slice(1,-1))
+      .split(/\s+/).filter(t => t && t !== 'and' && t !== 'or' && !t.startsWith('-') && t.length > 1);
+    let result = text;
+    tokens.forEach(tok => {
+      const escaped = tok.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      result = result.replace(new RegExp(`(${escaped})`, 'gi'), '<span class="highlight">$1</span>');
+    });
+    return result;
+  } catch { return text; }
 }
 
-function debounce(func, delay) {
+function debounce(fn, delay) {
   return function(...args) {
     if (searchTimeout) clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => func.apply(this, args), delay);
+    searchTimeout = setTimeout(() => fn.apply(this, args), delay);
   };
 }
 
-/* ----------  LOAD & PARSE  ---------- */
+function rebuildFuse() {
+  fuse = new Fuse(getFilteredEntries(), fuseOptions);
+}
+
+function updateModeButtons() {
+  [exactBtn, fuzzyBtn, semanticBtn].forEach(b => b.classList.remove('mode-active'));
+  if (searchMode === 'exact') exactBtn.classList.add('mode-active');
+  if (searchMode === 'fuzzy') fuzzyBtn.classList.add('mode-active');
+  if (searchMode === 'semantic') semanticBtn.classList.add('mode-active');
+}
+
+function updateSearchLighting() {
+  const hasQuery = searchBox.value.trim().length > 0;
+  const advanced = searchMode !== 'exact' || /["\-]|\bor\b/i.test(searchBox.value);
+  searchBox.classList.toggle('search-active', hasQuery && (advanced || isSearching));
+}
+
+async function ensureSemantic() {
+  if (semanticReady) return true;
+  if (semanticLoading) return false;
+  semanticLoading = true;
+  semanticStatus.textContent = 'Loading semantic model (~23 MB)…';
+  try {
+    const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2');
+    env.allowLocalModels = false;
+    env.useBrowserCache = true;
+    embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
+      dtype: 'q8',
+      progress_callback: (p) => {
+        if (p.status === 'progress' && p.progress) {
+          semanticStatus.textContent = `Loading model… ${Math.round(p.progress)}%`;
+        }
+      }
+    });
+    semanticStatus.textContent = 'Embedding entries…';
+    await buildEntryEmbeddings();
+    semanticReady = true;
+    semanticStatus.textContent = 'Semantic ready';
+    setTimeout(() => { if (semanticStatus.textContent === 'Semantic ready') semanticStatus.textContent = ''; }, 2500);
+    return true;
+  } catch (err) {
+    console.error(err);
+    semanticStatus.textContent = 'Semantic failed to load';
+    semanticLoading = false;
+    return false;
+  } finally {
+    semanticLoading = false;
+  }
+}
+
+async function embedText(text) {
+  const out = await embedder(text, { pooling: 'mean', normalize: true });
+  return Array.from(out.data);
+}
+
+function cosine(a, b) {
+  let dot = 0;
+  for (let i = 0; i < a.length; i++) dot += a[i] * b[i];
+  return dot;
+}
+
+async function buildEntryEmbeddings() {
+  entryEmbeddings = new Map();
+  const pool = window.readerEntries;
+  const batchSize = 8;
+  for (let i = 0; i < pool.length; i += batchSize) {
+    const slice = pool.slice(i, i + batchSize);
+    await Promise.all(slice.map(async (e) => {
+      const snippet = (e.title + ' ' + e.content.slice(0, 400)).replace(/\s+/g, ' ').trim();
+      const vec = await embedText(snippet);
+      entryEmbeddings.set(e.id, vec);
+    }));
+    semanticStatus.textContent = `Embedding entries… ${Math.min(i + batchSize, pool.length)}/${pool.length}`;
+    await new Promise(r => setTimeout(r, 0));
+  }
+}
+
+async function semanticSearch(query) {
+  if (!await ensureSemantic()) return [];
+  const qVec = await embedText(query);
+  const pool = getFilteredEntries();
+  const scored = [];
+  for (const e of pool) {
+    const vec = entryEmbeddings.get(e.id);
+    if (!vec) continue;
+    const score = cosine(qVec, vec);
+    if (score > 0.28) scored.push({ entry: e, score });
+  }
+  scored.sort((a, b) => b.score - a.score);
+  return scored.map(s => s.entry);
+}
+
 async function loadText() {
   try {
     const res = await fetch(TXT_FILE_URL);
     if (!res.ok) throw new Error('File not found');
     let text = await res.text();
     text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-    
     parseEntries(text);
-
-    // Initialize Fuse.js instance
-    fuseInstance = new Fuse(window.readerEntries, {
-      keys: [{ name: 'title', weight: 0.6 }, { name: 'content', weight: 0.4 }],
-      threshold: 0.35,
-      ignoreLocation: true
-    });
-    
     loadingDiv.style.display = 'none';
     contentDiv.style.display = 'block';
-
-    if (window.readerEntries.length > 0) {
-      showEntry(window.readerEntries[0].id);
-    }
-    
+    if (window.readerEntries.length > 0) showEntry(window.readerEntries[0].id);
     const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
     if (allBtn) styleActiveFilter(allBtn);
-    
+    rebuildFuse();
     buildIndex();
     updateUIState();
   } catch (err) {
@@ -765,103 +520,74 @@ async function loadText() {
 
 function parseEntries(text) {
   const lines = text.split('\n');
-  let current = null;
-  let id = 0;
-
+  let current = null, id = 0;
   lines.forEach(line => {
-    const cleanLine = line.trim(); 
-    const m = cleanLine.match(ENTRY_PATTERN);
-    
+    const clean = line.trim();
+    const m = clean.match(ENTRY_PATTERN);
     if (m) {
       if (current && current.content.trim()) {
         detectTags(current);
         window.readerEntries.push(current);
       }
-      current = {
-        id: ++id,
-        title: m[0].trim(),
-        content: line + '\n',
-        tags: []
-      };
+      current = { id: ++id, title: m[0].trim(), content: line + '\n', tags: [] };
     } else if (current) {
       current.content += line + '\n';
     }
   });
-
   if (current && current.content.trim()) {
     detectTags(current);
     window.readerEntries.push(current);
   }
-  
   console.log(`Parsed ${window.readerEntries.length} entries`);
 }
 
 function detectTags(e) {
   const text = (e.title + ' ' + e.content).toLowerCase();
   for (const [tag, re] of Object.entries(TAG_PATTERNS)) {
-    if (tag !== 'all' && re.test(text)) {
-      e.tags.push(tag);
-    }
+    if (tag !== 'all' && re.test(text)) e.tags.push(tag);
   }
 }
 
 function getFilteredEntries() {
-  return currentFilter === 'all' 
-    ? window.readerEntries 
-    : window.readerEntries.filter(e => e.tags.includes(currentFilter));
+  return currentFilter === 'all' ? window.readerEntries : window.readerEntries.filter(e => e.tags.includes(currentFilter));
 }
 
-/* ----------  DISPLAY  ---------- */
 function showEntry(entryId) {
   const e = window.readerEntries.find(x => x.id === entryId);
   if (!e) return;
-  
   window.readerCurrentIndex = entryId;
   let displayContent = e.content;
-  
-  if (isSearching && searchQuery) {
-    displayContent = highlightText(displayContent, searchQuery);
-  }
-  
+  if (isSearching && searchQuery) displayContent = highlightText(displayContent, searchQuery);
   displayContent = displayContent.split('\n').map(line => {
-    const trimmed = line.trim();
-    if (!trimmed) return '<br>';
-    return `<p class="mb-4 leading-relaxed">${trimmed}</p>`;
+    const t = line.trim();
+    return t ? `<p class="mb-4 leading-relaxed">${t}</p>` : '<br>';
   }).join('');
-  
   contentDiv.innerHTML = displayContent;
-  
   const pool = isSearching ? searchResults : getFilteredEntries();
   const idx = pool.findIndex(x => x.id === entryId);
   const words = e.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
-  
-  const tagsHtml = e.tags.length > 0 
-    ? e.tags.map(t => `<span class="px-2 py-1 border text-[10px] uppercase border-gray-600 ${t === currentFilter ? 'text-red-500 border-red-500' : 'text-gray-400'}">${t}</span>`).join('')
-    : '<span class="px-2 py-1 border text-[10px] uppercase border-gray-800 text-gray-700">Unclassified</span>';
-
-  const filterIndicator = currentFilter !== 'all' 
-    ? `<span class="text-[10px] uppercase tracking-wider text-red-500 border border-red-900 bg-red-900/20 px-2 py-1 rounded ml-2">FILTER: ${currentFilter}</span>` 
-    : '';
-
+  const tagsHtml = e.tags.length
+    ? e.tags.map(t => `<span class="px-2 py-0.5 border text-[10px] uppercase border-gray-600 ${t===currentFilter?'text-red-500 border-red-500':'text-gray-400'}">${t}</span>`).join('')
+    : '<span class="px-2 py-0.5 border text-[10px] uppercase border-gray-800 text-gray-700">Unclassified</span>';
+  const filterIndicator = currentFilter !== 'all'
+    ? `<span class="text-[10px] uppercase tracking-wider text-red-500 border border-red-900 bg-red-900/20 px-2 py-0.5 rounded ml-2">FILTER: ${currentFilter}</span>` : '';
   entryInfo.innerHTML = `
     <div class="flex flex-col gap-1">
       <div class="flex items-center flex-wrap">
         <span class="text-xs text-gray-500 uppercase tracking-widest">DREAMWEAVER ARCHIVE</span>
         ${filterIndicator}
-        <span class="ml-2 font-bold text-xl voodoo" style="color:var(--red)">${e.title}</span>
+        <span class="ml-2 font-bold text-lg voodoo" style="color:var(--red)">${e.title}</span>
       </div>
       <div class="text-xs text-gray-400 flex items-center gap-2 flex-wrap">
-        ${isSearching ? `Result ${idx + 1}/${searchResults.length}` : `Entry ${idx + 1}/${pool.length}`}
+        ${isSearching ? `Result ${idx+1}/${searchResults.length}` : `Entry ${idx+1}/${pool.length}`}
         <span>•</span>${words} words
         <span class="ml-2 flex gap-1 flex-wrap">${tagsHtml}</span>
       </div>
     </div>`;
-  
   prevBtn.disabled = idx <= 0;
   nextBtn.disabled = idx >= pool.length - 1;
   prevBtn.style.opacity = prevBtn.disabled ? '0.3' : '1';
   nextBtn.style.opacity = nextBtn.disabled ? '0.3' : '1';
-
   contentDiv.scrollTop = 0;
   if (isIndexVisible) buildIndex();
 }
@@ -869,133 +595,110 @@ function showEntry(entryId) {
 function showRandomEntry() {
   const pool = isSearching ? searchResults : getFilteredEntries();
   if (!pool.length) return;
-  
-  let randomIdx;
-  do {
-    randomIdx = Math.floor(Math.random() * pool.length);
-  } while (pool[randomIdx].id === window.readerCurrentIndex && pool.length > 1);
-  
-  showEntry(pool[randomIdx].id);
+  let i;
+  do { i = Math.floor(Math.random() * pool.length); } while (pool[i].id === window.readerCurrentIndex && pool.length > 1);
+  showEntry(pool[i].id);
 }
 
 function navigateEntries(dir) {
   const pool = isSearching ? searchResults : getFilteredEntries();
   const idx = pool.findIndex(x => x.id === window.readerCurrentIndex);
-  const newIdx = dir === 'next' ? idx + 1 : idx - 1;
-  
-  if (newIdx >= 0 && newIdx < pool.length) {
-    showEntry(pool[newIdx].id);
-  }
+  const n = dir === 'next' ? idx + 1 : idx - 1;
+  if (n >= 0 && n < pool.length) showEntry(pool[n].id);
 }
 
 function buildIndex() {
   const pool = isSearching ? searchResults : getFilteredEntries();
   dateNav.innerHTML = '';
-  
-  if (pool.length === 0) {
-    dateNav.innerHTML = '<div class="p-4 text-xs text-gray-600">No entries found for this filter.</div>';
+  if (!pool.length) {
+    dateNav.innerHTML = '<div class="p-3 text-xs text-gray-600">No entries found.</div>';
     return;
   }
-
   pool.forEach(e => {
     const div = document.createElement('div');
-    div.className = 'p-3 border-b border-gray-700 cursor-pointer hover:bg-gray-900 transition-colors';
-    
+    div.className = 'p-2.5 border-b border-gray-700 cursor-pointer hover:bg-gray-900 transition-colors';
     if (e.id === window.readerCurrentIndex) {
       div.style.background = '#1a1a1a';
       div.style.borderLeft = '3px solid var(--red)';
     }
-    
     const preview = e.content.replace(/<[^>]*>/g, '').substring(0, 50).replace(/\n/g, ' ') + '...';
-    
-    div.innerHTML = `
-      <div class="text-sm font-bold text-gray-300 mb-1 truncate voodoo">${e.title}</div>
-      <div class="text-xs text-gray-600 font-mono truncate">${preview}</div>
-    `;
-    
-    div.addEventListener('click', () => {
-      showEntry(e.id);
-      if (window.innerWidth <= 768) switchMobileTab('reader');
-    });
+    div.innerHTML = `<div class="text-sm font-bold text-gray-300 mb-0.5 truncate voodoo">${e.title}</div>
+      <div class="text-xs text-gray-600 font-mono truncate">${preview}</div>`;
+    div.addEventListener('click', () => showEntry(e.id));
     dateNav.appendChild(div);
   });
 }
 
 function styleActiveFilter(btn) {
   document.querySelectorAll('.filter-btn').forEach(b => {
-    b.style.background = 'transparent';
-    b.style.borderColor = '#333';
-    b.style.color = '#666';
+    b.style.background = 'transparent'; b.style.borderColor = '#333'; b.style.color = '#666';
   });
-  btn.style.background = 'var(--red)';
-  btn.style.color = 'black';
-  btn.style.borderColor = 'var(--red)';
+  btn.style.background = 'var(--red)'; btn.style.color = 'black'; btn.style.borderColor = 'var(--red)';
 }
 
-/* ----------  ADVANCED SEARCH (FUZZY / SEMANTIC) ---------- */
 async function performSearch(query) {
-  const trimmedQuery = query.trim();
-  
-  if (!trimmedQuery) {
-    isSearching = false;
-    searchResults = [];
+  const trimmed = query.trim();
+  updateSearchLighting();
+  if (!trimmed) {
+    isSearching = false; searchResults = [];
     updateUIState();
-    
     const pool = getFilteredEntries();
-    if (pool.length > 0) {
-      const entryToShow = window.readerCurrentIndex > 0 ? window.readerCurrentIndex : pool[0].id;
-      showEntry(entryToShow);
-    }
+    if (pool.length) showEntry(window.readerCurrentIndex > 0 ? window.readerCurrentIndex : pool[0].id);
     return;
   }
-  
   isSearching = true;
-  searchQuery = trimmedQuery;
+  searchQuery = trimmed;
   const pool = getFilteredEntries();
 
-  if (searchMode === 'semantic' && window.runSemanticSearch) {
-    searchStats.textContent = '🧠 Running semantic search...';
-    const semanticMatches = await window.runSemanticSearch(trimmedQuery);
-    searchResults = semanticMatches.filter(e => currentFilter === 'all' || e.tags.includes(currentFilter));
+  if (searchMode === 'semantic') {
+    searchStats.textContent = 'semantic…';
+    searchResults = await semanticSearch(trimmed);
+  } else if (searchMode === 'fuzzy') {
+    if (!fuse) rebuildFuse();
+    const expanded = expandWithSynonyms(trimmed);
+    const results = fuse.search(expanded);
+    searchResults = results.map(r => r.item);
   } else {
-    // Exact / Boolean or Fuse.js Fuzzy Fallback
-    if (trimmedQuery.includes('"') || trimmedQuery.includes('+') || trimmedQuery.includes('-')) {
-      const terms = parseSearchQuery(trimmedQuery);
-      searchResults = pool.filter(entry => matchesSearch(entry, terms));
-    } else {
-      const results = fuseInstance.search(trimmedQuery);
-      searchResults = results.map(r => r.item).filter(e => currentFilter === 'all' || e.tags.includes(currentFilter));
-    }
+    const terms = parseSearchQuery(trimmed);
+    searchResults = pool.filter(e => matchesSearch(e, terms));
   }
-  
+
   updateUIState();
-  
-  if (searchResults.length > 0) {
-    showEntry(searchResults[0].id);
-  } else {
-    contentDiv.innerHTML = `
-      <div class="text-center mt-10 p-4">
-        <div class="text-gray-500">No matches found for "${trimmedQuery}"</div>
-      </div>`;
-    entryInfo.innerHTML = `<div class="text-xs text-gray-500">Search: "${trimmedQuery}"</div>`;
+  if (searchResults.length) showEntry(searchResults[0].id);
+  else {
+    contentDiv.innerHTML = `<div class="text-center mt-10 p-4"><div class="text-gray-500">No matches for "${trimmed}"</div></div>`;
+    entryInfo.innerHTML = `<div class="text-xs text-gray-500">Search: "${trimmed}"</div>`;
   }
 }
 
 function updateUIState() {
   if (isSearching) {
-    searchStats.textContent = `${searchResults.length} matches`;
+    const label = searchMode === 'semantic' ? 'semantic' : searchMode === 'fuzzy' ? 'fuzzy' : '';
+    searchStats.textContent = `${searchResults.length} matches${label ? ' (' + label + ')' : ''}`;
   } else {
     const count = getFilteredEntries().length;
     searchStats.textContent = currentFilter !== 'all' ? `${count} ${currentFilter}s` : `${count} entries`;
   }
+  updateSearchLighting();
   buildIndex();
 }
 
-/* ----------  EVENTS  ---------- */
 document.addEventListener('DOMContentLoaded', loadText);
 
 searchBox.addEventListener('input', debounce(e => performSearch(e.target.value), 300));
-searchBox.addEventListener('keydown', e => { if (e.key === 'Enter') performSearch(e.target.value); });
+
+[exactBtn, fuzzyBtn, semanticBtn].forEach(btn => {
+  btn.addEventListener('click', async () => {
+    searchMode = btn.dataset.mode;
+    updateModeButtons();
+    if (searchMode === 'semantic') {
+      semanticStatus.textContent = semanticReady ? 'Semantic ready' : 'Will load on first search…';
+    } else {
+      semanticStatus.textContent = '';
+    }
+    if (searchBox.value.trim()) await performSearch(searchBox.value);
+  });
+});
 
 prevBtn.addEventListener('click', () => navigateEntries('prev'));
 nextBtn.addEventListener('click', () => navigateEntries('next'));
@@ -1009,36 +712,29 @@ indexBtn.addEventListener('click', () => {
 
 document.getElementById('filterBtns').addEventListener('click', e => {
   if (!e.target.classList.contains('filter-btn')) return;
-  
   styleActiveFilter(e.target);
   currentFilter = e.target.dataset.filter;
   searchBox.value = '';
   isSearching = false;
-  
   isIndexVisible = true;
   dateNav.classList.remove('hidden');
+  rebuildFuse();
   updateUIState();
-  
   const filtered = getFilteredEntries();
-  if (filtered.length > 0) {
+  if (filtered.length) {
     showEntry(filtered[0].id);
     dateNav.scrollTop = 0;
   } else {
-    contentDiv.innerHTML = `<div class="text-center mt-20 text-gray-600">No entries found tagged as <span style="color:var(--red)">${currentFilter}</span>.</div>`;
+    contentDiv.innerHTML = `<div class="text-center mt-20 text-gray-600">No entries tagged <span style="color:var(--red)">${currentFilter}</span>.</div>`;
     entryInfo.innerHTML = '';
   }
 });
 
 document.addEventListener('keydown', e => {
-  if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-  
-  if (e.key === 'ArrowLeft' || e.key === 'j' || e.key === 'J') navigateEntries('prev');
-  if (e.key === 'ArrowRight' || e.key === 'k' || e.key === 'K') navigateEntries('next');
+  if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+  if (e.key === 'ArrowLeft') navigateEntries('prev');
+  if (e.key === 'ArrowRight') navigateEntries('next');
   if (e.key.toLowerCase() === 'r') showRandomEntry();
-  if (e.key === '/') {
-    e.preventDefault();
-    searchBox.focus();
-  }
   if (e.key === 'Escape' && isIndexVisible) {
     dateNav.classList.add('hidden');
     isIndexVisible = false;
@@ -1046,48 +742,49 @@ document.addEventListener('keydown', e => {
 });
 </script>
 
-<!-- ============ NVIDIA AI ENGINE ============ -->
 <script id="ai-script">
-/* ----------  AI CONFIG  ---------- */
+/* Updated models — safer from near-term deprecation (Sep 2026) */
 const NVIDIA_MODELS = {
-    stable: "nvidia/nemotron-3-ultra-550b-a55b",
-    backup: "mistralai/mistral-medium-3.5-128b"
+  stable: "nvidia/nemotron-3.5-lightning-30b-a3b",
+  backup: "nvidia/llama-3.3-nemotron-super-49b-v1.5"
 };
-let currentModel = NVIDIA_MODELS.stable, aiContext = 'current';
+let currentModel = NVIDIA_MODELS.stable;
+let aiContext = 'current';
+
 const apiKeyInput = document.getElementById('apiKeyInput');
 const aiInput = document.getElementById('aiInput');
 const askAiBtn = document.getElementById('askAiBtn');
 const aiResponseDiv = document.getElementById('aiResponse');
 const contextInfo = document.getElementById('contextInfo');
 
-/* ----------  INIT  ---------- */
-if (localStorage.getItem('dreamweaver_nvidia_key')) apiKeyInput.value = localStorage.getItem('dreamweaver_nvidia_key');
+if (localStorage.getItem('dreamweaver_nvidia_key')) {
+  apiKeyInput.value = localStorage.getItem('dreamweaver_nvidia_key');
+}
 apiKeyInput.addEventListener('input', e => localStorage.setItem('dreamweaver_nvidia_key', e.target.value));
 
-/* ----------  TRANSMIT  ---------- */
 askAiBtn.addEventListener('click', async () => {
-  const key = apiKeyInput.value.trim(), msg = aiInput.value.trim();
+  const key = apiKeyInput.value.trim();
+  const msg = aiInput.value.trim();
   if (!key) { aiResponseDiv.innerHTML = '<p class="text-red-500">Please enter an NVIDIA API Key.</p>'; return; }
   if (!msg) return;
   if (!window.readerEntries?.length) { aiResponseDiv.innerHTML = '<p class="text-red-500">dreamweaver.txt not loaded yet.</p>'; return; }
-  
-  askAiBtn.disabled = true; askAiBtn.textContent = 'TRANSMITTING...';
+
+  askAiBtn.disabled = true;
+  askAiBtn.textContent = 'TRANSMITTING...';
   aiResponseDiv.innerHTML = '<p class="animate-pulse" style="color:var(--red)">manifesting...</p>';
-  
+
   try {
     let ctx = '';
     if (aiContext === 'current') {
       const e = window.readerEntries.find(x => x.id === window.readerCurrentIndex);
       if (e) ctx = `CONTEXT (Current – ${e.title}):\n${e.content.substring(0, 4000)}\n\n---\n`;
-    } else if (aiContext === 'matches') {
-      const topPool = (isSearching ? searchResults : getFilteredEntries()).slice(0, 3);
-      ctx = `CONTEXT (Top Matches):\n` + topPool.map(e => `[${e.title}]\n${e.content.substring(0, 800)}`).join('\n---\n') + `\n\n---\n`;
     } else if (aiContext === 'all') {
       ctx = `CONTEXT (Outline):\n${window.readerEntries.map(x => `- ${x.title} (${x.tags.join(', ')})`).join('\n')}\n\n---\n`;
     }
 
-    const proxy = 'https://lively-limitless.inkrealm.workers.dev/?url=' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
-    const res = await fetch(proxy, {
+    const proxyUrl = 'https://lively-limitless.inkrealm.workers.dev/?url=' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
+
+    const res = await fetch(proxyUrl, {
       method: 'POST',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1106,7 +803,7 @@ askAiBtn.addEventListener('click', async () => {
       if (res.status === 404) throw new Error('404 Switch');
       const t = await res.text();
       let m = t;
-      try { m = JSON.parse(t).error?.message || t; } catch(e) { m = t; }
+      try { m = JSON.parse(t).error?.message || t; } catch {}
       throw new Error(m);
     }
 
@@ -1128,21 +825,15 @@ askAiBtn.addEventListener('click', async () => {
   }
 });
 
-/* ----------  CONTEXT BUTTONS  ---------- */
 document.addEventListener('click', e => {
   if (!e.target.classList.contains('context-btn')) return;
   document.querySelectorAll('.context-btn').forEach(b => {
-    b.style.background = 'var(--dark-grey)';
-    b.style.color = '#888';
-    b.style.borderColor = '#333';
+    b.style.background = 'var(--dark-grey)'; b.style.color = '#888'; b.style.borderColor = '#333';
   });
-  e.target.style.background = 'var(--red)';
-  e.target.style.color = 'black';
-  e.target.style.borderColor = 'var(--red)';
+  e.target.style.background = 'var(--red)'; e.target.style.color = 'black'; e.target.style.borderColor = 'var(--red)';
   aiContext = e.target.dataset.context;
-  contextInfo.textContent = `Context: ${aiContext.toUpperCase()} (${aiContext === 'current' ? 'Reading current entry' : aiContext === 'matches' ? 'Reading top 3 matches' : aiContext === 'all' ? 'Reading all titles' : 'No context'})`;
+  contextInfo.textContent = `Context: ${aiContext.toUpperCase()} (${aiContext==='current'?'Reading current entry':aiContext==='all'?'Reading all titles':'No context'})`;
 });
 </script>
-
 </body>
 </html>
