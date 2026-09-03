@@ -2,10 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"> 
-  <meta name="viewport" content="width=1024">
+  <!-- FIXED MOBILE VIEWPORT -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>dreamweaver reader...</title>
+  
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- new fonts -->
+  
+  <!-- Fuse.js for Fuzzy Search -->
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.basic.min.js"></script>
+
+  <!-- Fonts -->
   <link href="https://fonts.cdnfonts.com/css/voodoo" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
 
@@ -14,12 +21,14 @@
     ::selection{background:var(--red);color:var(--black);text-shadow:none;}
     *{-webkit-tap-highlight-color:transparent;}
     body{font-family:'Special Elite',serif;background:var(--black);color:var(--white);margin:0;touch-action:manipulation;}
+    
+    /* CRT Scanline Overlay */
     body::after{content:"";position:fixed;inset:0;background:linear-gradient(rgba(18,16,16,0) 50%,rgba(0,0,0,.15) 50%),linear-gradient(90deg,rgba(255,0,0,.04),rgba(0,255,0,.02),rgba(0,0,255,.04));background-size:100% 3px,3px 100%;z-index:999;pointer-events:none;}
+    
     .highlight{background:var(--red);color:var(--black);padding:1px 3px;}
     .custom-scrollbar::-webkit-scrollbar{width:6px;}.custom-scrollbar::-webkit-scrollbar-track{background:var(--black);}.custom-scrollbar::-webkit-scrollbar-thumb{background:var(--red);border-radius:3px;}
     input,textarea,button{font-family:'Special Elite',serif;}
     button{user-select:none;cursor:pointer;}
-    /* headings in voodoo */
     .voodoo{font-family:'Voodoo',sans-serif;}
     
     /* Analytics modal */
@@ -44,136 +53,208 @@
       background: rgba(0, 0, 0, 0.8);
       z-index: 999;
     }
+
+    /* Details Summary Marker */
+    details summary::-webkit-details-marker { display: none; }
+    details summary { position: relative; padding-right: 15px; }
+    details summary:after {
+      content: "▼";
+      position: absolute;
+      right: 0;
+      top: 0;
+      font-size: 8px;
+      transition: transform 0.2s;
+      opacity: 0.5;
+    }
+    details[open] summary:after {
+      transform: rotate(180deg);
+      opacity: 1;
+    }
+    details > div { position: absolute; z-index: 100; }
+
+    /* Mobile Tab Styles */
+    .mobile-tab-btn.active {
+      background: var(--red) !important;
+      color: #000 !important;
+      border-color: var(--red) !important;
+    }
+    .search-mode-active {
+      background: var(--red) !important;
+      color: #000 !important;
+      border-color: var(--red) !important;
+    }
   </style>
-  <style>
-  /* Add to your existing style block */
-  details summary::-webkit-details-marker {
-    display: none;
-  }
-  details summary {
-    position: relative;
-    padding-right: 15px;
-  }
-  details summary:after {
-    content: "▼";
-    position: absolute;
-    right: 0;
-    top: 0;
-    font-size: 8px;
-    transition: transform 0.2s;
-    opacity: 0.5;
-  }
-  details[open] summary:after {
-    transform: rotate(180deg);
-    opacity: 1;
-  }
-  details > div {
-    position: absolute;
-    z-index: 100;
-  }
-</style>
 </head>
 
-<body class="bg-black text-gray-300">
-<!-- HEADER -->
-<div class="sticky top-0 z-50 w-full pt-4 pb-4 px-4 sm:px-6 md:px-8 border-b border-red-800 bg-black">
-  <div class="flex justify-between items-center max-w-full">
-   <h1 class="text-3xl font-bold voodoo" style="color:var(--red)">⚡ dreamweaver reader...⚡</h1>
+<body class="bg-black text-gray-300 flex flex-col h-screen overflow-hidden">
 
-<details class="ml-3">
-  <summary class="text-xs font-bold text-gray-500 uppercase tracking-wildest cursor-pointer hover:text-red-500 list-none">
-    ⚡ Quick Search Guide
-  </summary>
-  <div class="absolute mt-2 p-3 bg-black border border-gray-800 z-50 w-56 text-xs text-gray-400">
-    <strong class="text-red-500">Search:</strong> Type → Use Next/Prev to navigate matches<br>
-    <strong class="text-red-500">Filter:</strong> Click tags first to narrow search<br>
-    <strong class="text-red-500">Keys:</strong> ← → arrows • R random<br>
-    <div class="text-[10px] text-gray-600 italic mt-1">Search respects active tag filter</div>
+<!-- HEADER -->
+<div class="sticky top-0 z-50 w-full pt-3 pb-3 px-4 sm:px-6 md:px-8 border-b border-red-800 bg-black flex-shrink-0">
+  <div class="flex justify-between items-center max-w-full">
+    <div class="flex items-center">
+      <h1 class="text-xl sm:text-2xl md:text-3xl font-bold voodoo truncate mr-2" style="color:var(--red)">⚡ dreamweaver reader...⚡</h1>
+
+      <details class="ml-1 sm:ml-3 hidden sm:block">
+        <summary class="text-xs font-bold text-gray-500 uppercase tracking-widest cursor-pointer hover:text-red-500 list-none">
+          ⚡ Quick Search Guide
+        </summary>
+        <div class="absolute mt-2 p-3 bg-black border border-gray-800 z-50 w-56 text-xs text-gray-400">
+          <strong class="text-red-500">Search:</strong> Type → Use Next/Prev to navigate matches<br>
+          <strong class="text-red-500">Filter:</strong> Click tags first to narrow search<br>
+          <strong class="text-red-500">Keys:</strong> ← → arrows • R random<br>
+          <div class="text-[10px] text-gray-600 italic mt-1">Search respects active tag filter</div>
+        </div>
+      </details>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <span id="semanticIndicator" class="text-[9px] font-mono text-yellow-600 hidden md:inline">🧠 Model Loading</span>
+      <a href="https://inkrealm.info" class="text-xs font-mono border border-gray-600 px-3 py-1 hover:bg-red-600 hover:text-black hover:border-red-600 transition-all duration-300 uppercase tracking-widest no-underline text-gray-400">Return to Realm</a>
+    </div>
   </div>
-</details>
-    <a href="https://inkrealm.info" class="text-xs font-mono border border-gray-600 px-3 py-1 hover:bg-red-600 hover:text-black hover:border-red-600 transition-all duration-300 uppercase tracking-widest no-underline text-gray-400">Return to Realm</a>
+
+  <!-- MOBILE TABS -->
+  <div class="flex md:hidden mt-2 gap-2 border-t border-gray-900 pt-1.5">
+    <button onclick="switchMobileTab('reader')" id="mobTabReader" class="mobile-tab-btn active flex-1 py-1 text-xs border border-gray-800 text-gray-400 uppercase font-mono">📖 Read</button>
+    <button onclick="switchMobileTab('controls')" id="mobTabControls" class="mobile-tab-btn flex-1 py-1 text-xs border border-gray-800 text-gray-400 uppercase font-mono">⚙️ Controls & AI</button>
   </div>
 </div>
 
 <!-- TWO-COLUMN LAYOUT -->
-<div id="brim-layout" class="flex flex-col md:flex-row w-full h-[calc(100vh-80px)] overflow-hidden bg-black">
+<div id="brim-layout" class="flex-1 flex flex-col md:flex-row w-full overflow-hidden bg-black relative">
+  
   <!-- LEFT: READER -->
-  <div class="flex-1 flex flex-col h-full border-r border-gray-800 relative min-w-0">
-    <div id="loading" class="absolute inset-0 flex items-center justify-center text-xl" style="color:var(--red)">Loading dreamweaver.txt …</div>
-    <div id="content" class="flex-1 overflow-y-auto p-6 md:p-8 lg:p-10 text-base md:text-lg leading-relaxed whitespace-pre-wrap custom-scrollbar" style="display:none;"></div>
+  <div id="readerPane" class="flex-1 flex flex-col h-full border-r border-gray-800 relative min-w-0">
+    <div id="loading" class="absolute inset-0 flex items-center justify-center text-xl font-mono" style="color:var(--red)">Loading dreamweaver.txt …</div>
+    <div id="content" class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 lg:p-10 text-base md:text-lg leading-relaxed whitespace-pre-wrap custom-scrollbar" style="display:none;"></div>
     <div id="entryInfo" class="p-3 border-t border-gray-800 text-xs text-gray-500 bg-black flex-shrink-0"></div>
   </div>
 
   <!-- RIGHT: CONTROLS -->
-  <div class="w-full md:w-[400px] flex flex-col h-full bg-[#0a0a0a] border-l border-gray-800 flex-shrink-0">
-    <div class="flex-1 overflow-y-auto p-5 custom-scrollbar">
+  <div id="controlsPane" class="hidden md:flex w-full md:w-[400px] flex-col h-full bg-[#0a0a0a] border-l border-gray-800 flex-shrink-0 overflow-y-auto custom-scrollbar">
+    <div class="p-5 custom-scrollbar">
+      
       <!-- NAV -->
-      <div class="flex items-center justify-between mb-6 gap-2">
-        <button id="prevBtn" class="flex-1 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors">← Prev</button>
-        <button id="randomBtn" class="px-4 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors">⚡</button>
-        <button id="nextBtn" class="flex-1 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors">Next →</button>
+      <div class="flex items-center justify-between mb-4 gap-2">
+        <button id="prevBtn" class="flex-1 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors text-sm">← Prev</button>
+        <button id="randomBtn" class="px-4 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors text-sm" title="Random entry (R)">⚡</button>
+        <button id="nextBtn" class="flex-1 border border-gray-700 hover:border-red-500 text-gray-400 hover:text-red-500 py-2 transition-colors text-sm">Next →</button>
       </div>
 
-      <!-- SEARCH -->
-      <div class="mb-6">
-        <input type="text" id="searchBox" class="w-full bg-[#111] border border-gray-700 p-3 text-white focus:border-red-500 focus:outline-none transition-colors" placeholder="Search text...">
+      <!-- SEARCH WITH KEYWORD / SEMANTIC TOGGLE -->
+      <div class="mb-5">
+        <div class="flex gap-1 mb-2">
+          <button id="searchModeFuzzy" onclick="setSearchMode('fuzzy')" class="search-mode-active flex-1 text-[10px] py-1 border border-gray-700 uppercase font-mono">🔍 Keyword / Fuzzy</button>
+          <button id="searchModeSemantic" onclick="setSearchMode('semantic')" class="flex-1 text-[10px] py-1 border border-gray-700 text-gray-400 uppercase font-mono hover:text-white">🧠 Semantic AI</button>
+        </div>
+        <input type="text" id="searchBox" class="w-full bg-[#111] border border-gray-700 p-2.5 text-sm text-white focus:border-red-500 focus:outline-none transition-colors" placeholder="Search (+term, -exclude, &quot;exact&quot;)...">
         <div class="flex justify-between items-center mt-2">
-          <div id="searchStats" class="text-xs text-gray-500 h-4"></div>
+          <div id="searchStats" class="text-xs text-gray-500 h-4 font-mono"></div>
           <button id="indexBtn" class="text-xs text-gray-500 hover:text-red-500 uppercase tracking-widest border-b border-transparent hover:border-red-500">Toggle Index</button>
         </div>
       </div>
 
-      <!-- ANALYTICS TOOLBAR (NEW) -->
-      <div class="mb-6 pb-6 border-b border-gray-800">
+      <!-- ANALYTICS TOOLBAR -->
+      <div class="mb-5 pb-5 border-b border-gray-800">
         <div class="flex flex-wrap gap-2 mb-2">
-          <button onclick="analyzeWordCount()" class="text-xs px-3 py-1 border border-gray-700 hover:border-red-500 hover:text-red-500 transition-colors">📊 Word Count</button>
-          <button onclick="checkCharacterNames()" class="text-xs px-3 py-1 border border-gray-700 hover:border-red-500 hover:text-red-500 transition-colors">👤 Characters</button>
-          <button onclick="findRepetitions()" class="text-xs px-3 py-1 border border-gray-700 hover:border-red-500 hover:text-red-500 transition-colors">🔁 Repetitions</button>
-          <button onclick="checkTimeline()" class="text-xs px-3 py-1 border border-gray-700 hover:border-red-500 hover:text-red-500 transition-colors">⏰ Timeline</button>
+          <button onclick="analyzeWordCount()" class="text-xs px-2.5 py-1 border border-gray-700 hover:border-red-500 hover:text-red-500 transition-colors">📊 Word Count</button>
+          <button onclick="checkCharacterNames()" class="text-xs px-2.5 py-1 border border-gray-700 hover:border-red-500 hover:text-red-500 transition-colors">👤 Characters</button>
+          <button onclick="findRepetitions()" class="text-xs px-2.5 py-1 border border-gray-700 hover:border-red-500 hover:text-red-500 transition-colors">🔁 Repetitions</button>
+          <button onclick="checkTimeline()" class="text-xs px-2.5 py-1 border border-gray-700 hover:border-red-500 hover:text-red-500 transition-colors">⏰ Timeline</button>
         </div>
-        <div id="analyticsStatus" class="text-[10px] text-gray-600 h-4"></div>
+        <div id="analyticsStatus" class="text-[10px] text-gray-600 h-4 font-mono"></div>
       </div>
 
       <!-- FILTERS -->
-      <div id="filterBtns" class="flex flex-wrap gap-2 mb-6 pb-6 border-b border-gray-800">
+      <div id="filterBtns" class="flex flex-wrap gap-1.5 mb-5 pb-5 border-b border-gray-800">
         <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="all">All</button>
-         <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="book">Book</button>
+        <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="book">Book</button>
         <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="film">Film</button>
-         <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="dream">Dream</button>
+        <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="dream">Dream</button>
+        <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="lyric">Lyric</button>
+        <button class="filter-btn px-3 py-1 text-xs border border-gray-700 text-gray-500 hover:border-red-500" data-filter="poem">Poem</button>
       </div>
 
       <!-- INDEX -->
-      <div id="dateNav" class="hidden mb-6 max-h-60 overflow-y-auto border border-gray-800 bg-[#111] custom-scrollbar"></div>
+      <div id="dateNav" class="hidden mb-5 max-h-60 overflow-y-auto border border-gray-800 bg-[#111] custom-scrollbar"></div>
 
       <!-- NVIDIA AI -->
       <div class="mt-2">
-        <h2 class="text-xl font-bold mb-4 text-gray-600 voodoo">AI EDITOR</h2>
-        <input type="password" id="apiKeyInput" class="w-full bg-black border border-gray-800 p-2 text-xs text-red-500 font-mono mb-4 focus:outline-none focus:border-red-900" placeholder="NVIDIA API KEY...">
-        <div class="flex gap-2 mb-2">
-          <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500" data-context="current">Current</button>
-          <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500" data-context="all">Outline</button>
-          <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500" data-context="none">None</button>
+        <h2 class="text-xl font-bold mb-3 text-gray-600 voodoo">AI EDITOR</h2>
+        <input type="password" id="apiKeyInput" class="w-full bg-black border border-gray-800 p-2 text-xs text-red-500 font-mono mb-3 focus:outline-none focus:border-red-900" placeholder="NVIDIA API KEY...">
+        <div class="flex gap-1.5 mb-2">
+          <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500 font-mono" data-context="current">Current</button>
+          <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500 font-mono" data-context="matches">Top Matches</button>
+          <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500 font-mono" data-context="all">Outline</button>
+          <button class="context-btn flex-1 py-1 text-[10px] uppercase border border-gray-700 text-gray-500 font-mono" data-context="none">None</button>
         </div>
-        <p id="contextInfo" class="text-[10px] text-gray-600 mb-3 text-right">Target: Current Entry</p>
-        <textarea id="aiInput" class="w-full bg-[#111] border border-gray-800 p-3 text-sm text-gray-300 focus:border-red-500 focus:outline-none min-h-[80px] mb-2" placeholder="Enter prompt..."></textarea>
-        <button id="askAiBtn" class="w-full bg-red-900/20 hover:bg-red-900/40 border border-red-900 text-red-500 py-2 text-xs font-bold tracking-widest transition-all">TRANSMIT</button>
-        <div id="aiResponse" class="mt-4 p-3 bg-black border border-gray-800 text-sm text-gray-400 min-h-[100px] whitespace-pre-wrap font-mono custom-scrollbar"><span class="opacity-30">:: Awaiting Input ::</span></div>
+        <p id="contextInfo" class="text-[10px] text-gray-600 mb-2.5 text-right font-mono">Target: Current Entry</p>
+        <textarea id="aiInput" class="w-full bg-[#111] border border-gray-800 p-2.5 text-xs text-gray-300 focus:border-red-500 focus:outline-none min-h-[75px] mb-2 custom-scrollbar" placeholder="Enter prompt..."></textarea>
+        <button id="askAiBtn" class="w-full bg-red-900/20 hover:bg-red-900/40 border border-red-900 text-red-500 py-2 text-xs font-bold tracking-widest transition-all font-mono">TRANSMIT</button>
+        <div id="aiResponse" class="mt-3 p-3 bg-black border border-gray-800 text-xs text-gray-400 min-h-[90px] whitespace-pre-wrap font-mono custom-scrollbar"><span class="opacity-30">:: Awaiting Input ::</span></div>
       </div>
+
     </div>
   </div>
 </div>
 
+<!-- ============ IN-BROWSER TRANSFORMERS.JS SEMANTIC MODULE ============ -->
+<script type="module">
+  import { pipeline, cos_sim } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+
+  let semanticExtractor = null;
+  let semanticReady = false;
+
+  async function initSemanticModel() {
+    try {
+      const indicator = document.getElementById('semanticIndicator');
+      indicator.classList.remove('hidden');
+      indicator.textContent = '🧠 Loading Semantic Model...';
+
+      semanticExtractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+      semanticReady = true;
+      indicator.textContent = '🧠 Semantic Ready';
+      indicator.classList.replace('text-yellow-600', 'text-green-500');
+
+      // Generate vector embeddings in background
+      if (window.readerEntries && window.readerEntries.length > 0) {
+        for (const entry of window.readerEntries) {
+          const sample = entry.title + ' ' + entry.content.substring(0, 350);
+          const out = await semanticExtractor(sample, { pooling: 'mean', normalize: true });
+          entry.embedding = Array.from(out.data);
+        }
+      }
+    } catch (e) {
+      console.warn('Semantic vector search fallback:', e);
+      document.getElementById('semanticIndicator').textContent = '⚠️ Keyword Engine Active';
+    }
+  }
+
+  setTimeout(initSemanticModel, 800);
+
+  window.runSemanticSearch = async function(query) {
+    if (!semanticReady || !semanticExtractor) return [];
+    const queryOut = await semanticExtractor(query, { pooling: 'mean', normalize: true });
+    const qEmbed = Array.from(queryOut.data);
+
+    return window.readerEntries
+      .filter(e => e.embedding)
+      .map(entry => ({
+        entry,
+        similarity: cos_sim(qEmbed, entry.embedding)
+      }))
+      .sort((a, b) => b.similarity - a.similarity)
+      .map(res => res.entry);
+  };
+</script>
+
 <!-- ============  READER SCRIPT  ============ -->
 <script id="reader-script">
 /* ----------  CONFIG  ---------- */
-
 const TXT_FILE_URL = 'dreamweaver.txt';
 
-// REGEX: Matches dates like:
-// 12.12.23 | 2024-01-01 | Jan 12, 2024 | 12 Jan 2024
 const ENTRY_PATTERN = /^(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4}|\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4}|\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4})/i;
 
-// KEYWORDS: This is how the code knows which tab a text belongs to.
 const TAG_PATTERNS = {
   all: /.*/,
   lyric: /\b(lyrics?|song|track|release|chords|verse|chorus|hook|beat|tempo|melody|harmony|vocals|singing|performer|band|album|single|studio|recording|entitled|special thanks)\b|\[lyric\]/i,
@@ -192,6 +273,8 @@ let searchResults = [];
 let isSearching = false;
 let isIndexVisible = false;
 let searchTimeout = null;
+let searchMode = 'fuzzy'; // 'fuzzy' | 'semantic'
+let fuseInstance = null;
 
 /* ----------  DOM  ---------- */
 const searchBox = document.getElementById('searchBox');
@@ -206,24 +289,45 @@ const loadingDiv = document.getElementById('loading');
 const contentDiv = document.getElementById('content');
 const analyticsStatus = document.getElementById('analyticsStatus');
 
-/* ----------  ANALYTICS FUNCTIONS (OPTIMIZED FOR LARGE FILES) ---------- */
+/* ----------  MOBILE TAB CONTROLLER ---------- */
+function switchMobileTab(tab) {
+  const readerPane = document.getElementById('readerPane');
+  const controlsPane = document.getElementById('controlsPane');
+  const tabReader = document.getElementById('mobTabReader');
+  const tabControls = document.getElementById('mobTabControls');
 
+  if (tab === 'reader') {
+    readerPane.classList.remove('hidden');
+    controlsPane.classList.add('hidden');
+    tabReader.classList.add('active');
+    tabControls.classList.remove('active');
+  } else {
+    readerPane.classList.add('hidden');
+    controlsPane.classList.remove('hidden');
+    controlsPane.classList.add('flex');
+    tabReader.classList.remove('active');
+    tabControls.classList.add('active');
+  }
+}
+
+function setSearchMode(mode) {
+  searchMode = mode;
+  document.getElementById('searchModeFuzzy').className = mode === 'fuzzy' ? 'search-mode-active flex-1 text-[10px] py-1 border border-gray-700 uppercase font-mono' : 'flex-1 text-[10px] py-1 border border-gray-700 text-gray-400 uppercase font-mono hover:text-white';
+  document.getElementById('searchModeSemantic').className = mode === 'semantic' ? 'search-mode-active flex-1 text-[10px] py-1 border border-gray-700 uppercase font-mono' : 'flex-1 text-[10px] py-1 border border-gray-700 text-gray-400 uppercase font-mono hover:text-white';
+  if (searchBox.value.trim()) performSearch(searchBox.value);
+}
+
+/* ----------  ANALYTICS FUNCTIONS (OPTIMIZED FOR LARGE FILES) ---------- */
 function showAnalyticsModal(content) {
-  // Remove any existing modal
   const existingModal = document.querySelector('.analytics-modal');
   const existingOverlay = document.querySelector('.analytics-overlay');
   if (existingModal) existingModal.remove();
   if (existingOverlay) existingOverlay.remove();
   
-  // Create overlay
   const overlay = document.createElement('div');
   overlay.className = 'analytics-overlay';
-  overlay.onclick = () => {
-    overlay.remove();
-    modal.remove();
-  };
+  overlay.onclick = () => { overlay.remove(); modal.remove(); };
   
-  // Create modal
   const modal = document.createElement('div');
   modal.className = 'analytics-modal custom-scrollbar';
   modal.innerHTML = `
@@ -243,10 +347,8 @@ function setAnalyticsStatus(text, isError = false) {
   analyticsStatus.style.color = isError ? 'var(--red)' : 'var(--white)';
 }
 
-// Memory-efficient word count analysis
 function analyzeWordCount() {
   setAnalyticsStatus('Analyzing word count...');
-  
   setTimeout(() => {
     try {
       if (!window.readerEntries.length) {
@@ -266,26 +368,19 @@ function analyzeWordCount() {
       const wordCountsByTag = {};
       const monthlyWords = {};
       
-      // Process entries in chunks to avoid blocking
-      let processed = 0;
-      const processChunk = (start, end) => {
-        for (let i = start; i < end && i < window.readerEntries.length; i++) {
-          const entry = window.readerEntries[i];
+      const chunkSize = 500;
+      for (let i = 0; i < window.readerEntries.length; i += chunkSize) {
+        for (let j = i; j < i + chunkSize && j < window.readerEntries.length; j++) {
+          const entry = window.readerEntries[j];
           const words = entry.content.trim().split(/\s+/).length;
           const chars = entry.content.length;
           
           stats.totalWords += words;
           stats.totalCharacters += chars;
           
-          // Track longest/shortest
-          if (words > stats.longestEntry.words) {
-            stats.longestEntry = { title: entry.title, words };
-          }
-          if (words < stats.shortestEntry.words) {
-            stats.shortestEntry = { title: entry.title, words };
-          }
+          if (words > stats.longestEntry.words) stats.longestEntry = { title: entry.title, words };
+          if (words < stats.shortestEntry.words) stats.shortestEntry = { title: entry.title, words };
           
-          // Count by tag
           entry.tags.forEach(tag => {
             wordCountsByTag[tag] = (wordCountsByTag[tag] || 0) + words;
           });
@@ -293,34 +388,23 @@ function analyzeWordCount() {
             wordCountsByTag['untagged'] = (wordCountsByTag['untagged'] || 0) + words;
           }
           
-          // Extract month from title for monthly stats
           const monthMatch = entry.title.match(/(\d{4})[-\/](\d{1,2})/);
           if (monthMatch) {
             const key = `${monthMatch[1]}-${monthMatch[2].padStart(2, '0')}`;
             monthlyWords[key] = (monthlyWords[key] || 0) + words;
           }
-          
-          processed++;
         }
-      };
-      
-      // Process in chunks of 500 entries
-      const chunkSize = 500;
-      for (let i = 0; i < window.readerEntries.length; i += chunkSize) {
-        processChunk(i, i + chunkSize);
       }
       
       stats.averageWords = Math.round(stats.totalWords / stats.totalEntries);
       
-      // Sort tags by word count
       const sortedTags = Object.entries(wordCountsByTag)
         .sort((a, b) => b[1] - a[1])
         .map(([tag, count]) => `${tag}: ${count.toLocaleString()} words`);
       
-      // Sort months chronologically
       const sortedMonths = Object.entries(monthlyWords)
         .sort(([a], [b]) => a.localeCompare(b))
-        .slice(-12) // Last 12 months
+        .slice(-12)
         .map(([month, count]) => `${month}: ${count.toLocaleString()} words`);
       
       const report = `
@@ -353,10 +437,8 @@ Last updated: ${new Date().toLocaleString()}
   }, 50);
 }
 
-// Optimized character name detection
 function checkCharacterNames() {
   setAnalyticsStatus('Scanning for characters...');
-  
   setTimeout(() => {
     try {
       const commonNames = [
@@ -371,9 +453,9 @@ function checkCharacterNames() {
       const characterMentions = new Map();
       const nameRegex = /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g;
       
-      // Sample entries to avoid processing everything (for performance)
       const sampleSize = Math.min(500, window.readerEntries.length);
       const sampleEntries = window.readerEntries
+        .slice()
         .sort(() => Math.random() - 0.5)
         .slice(0, sampleSize);
       
@@ -382,27 +464,21 @@ function checkCharacterNames() {
         if (matches) {
           matches.forEach(name => {
             const normalized = name.toLowerCase();
-            // Filter out common words that aren't names
             if (name.length > 2 && 
                 !['The', 'And', 'But', 'For', 'Not', 'You', 'She', 'He', 'They', 'This', 'That'].includes(name) &&
                 !normalized.endsWith('\'s')) {
               
               characterMap.set(name, (characterMap.get(name) || 0) + 1);
-              
-              // Track which entries mention this character
-              if (!characterMentions.has(name)) {
-                characterMentions.set(name, new Set());
-              }
+              if (!characterMentions.has(name)) characterMentions.set(name, new Set());
               characterMentions.get(name).add(entry.title);
             }
           });
         }
       });
       
-      // Convert to array and sort by frequency
       const sortedCharacters = Array.from(characterMap.entries())
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 50); // Top 50 characters
+        .slice(0, 50);
       
       let report = `CHARACTER ANALYSIS (sampled ${sampleSize} entries)\n\n`;
       report += `Total unique potential characters: ${characterMap.size}\n\n`;
@@ -412,9 +488,7 @@ function checkCharacterNames() {
         sortedCharacters.forEach(([name, count], index) => {
           const mentions = Array.from(characterMentions.get(name) || []).slice(0, 3);
           report += `${index + 1}. ${name}: ${count} mentions`;
-          if (mentions.length > 0) {
-            report += ` (in: ${mentions.join(', ')})`;
-          }
+          if (mentions.length > 0) report += ` (in: ${mentions.join(', ')})`;
           report += '\n';
         });
       } else {
@@ -433,34 +507,29 @@ function checkCharacterNames() {
   }, 50);
 }
 
-// Find repeated phrases (optimized for large text)
 function findRepetitions() {
   setAnalyticsStatus('Finding repetitions...');
-  
   setTimeout(() => {
     try {
-      // Use a sampling approach for large files
       const sampleText = window.readerEntries
-        .slice(0, 100) // First 100 entries
+        .slice(0, 100)
         .map(e => e.content.toLowerCase())
         .join('\n')
         .replace(/[^\w\s]/g, ' ');
       
       const words = sampleText.split(/\s+/).filter(w => w.length > 3);
-      const phraseLength = 3; // Look for 3-word phrases
+      const phraseLength = 3;
       const phraseCounts = new Map();
       
-      // Count phrases
       for (let i = 0; i <= words.length - phraseLength; i++) {
         const phrase = words.slice(i, i + phraseLength).join(' ');
         phraseCounts.set(phrase, (phraseCounts.get(phrase) || 0) + 1);
       }
       
-      // Filter for repetitions (appear at least 3 times)
       const repetitions = Array.from(phraseCounts.entries())
         .filter(([_, count]) => count >= 3)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 20); // Top 20 repetitions
+        .slice(0, 20);
       
       let report = 'REPETITION ANALYSIS (3-word phrases)\n\n';
       report += `Analyzed ${words.length.toLocaleString()} words from first 100 entries\n\n`;
@@ -471,19 +540,14 @@ function findRepetitions() {
           report += `${index + 1}. "${phrase}": ${count} times\n`;
         });
         
-        // Find example entries containing the top repetition
-        if (repetitions.length > 0) {
-          const topPhrase = repetitions[0][0];
-          const exampleEntries = window.readerEntries
-            .filter(e => e.content.toLowerCase().includes(topPhrase))
-            .slice(0, 3)
-            .map(e => `• ${e.title}`)
-            .join('\n');
-          
-          if (exampleEntries) {
-            report += `\n"${topPhrase}" appears in:\n${exampleEntries}`;
-          }
-        }
+        const topPhrase = repetitions[0][0];
+        const exampleEntries = window.readerEntries
+          .filter(e => e.content.toLowerCase().includes(topPhrase))
+          .slice(0, 3)
+          .map(e => `• ${e.title}`)
+          .join('\n');
+        
+        if (exampleEntries) report += `\n"${topPhrase}" appears in:\n${exampleEntries}`;
       } else {
         report += 'No significant repetitions found (3+ occurrences).';
       }
@@ -499,18 +563,15 @@ function findRepetitions() {
   }, 50);
 }
 
-// Timeline analysis
 function checkTimeline() {
   setAnalyticsStatus('Building timeline...');
-  
   setTimeout(() => {
     try {
-      // Extract dates from titles
       const datePatterns = [
-        /(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/, // YYYY-MM-DD
-        /(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/, // DD-MM-YYYY
-        /(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{4})/i, // DD Month YYYY
-        /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2}),?\s+(\d{4})/i // Month DD, YYYY
+        /(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/,
+        /(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/,
+        /(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{4})/i,
+        /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2}),?\s+(\d{4})/i
       ];
       
       const monthMap = {
@@ -527,14 +588,12 @@ function checkTimeline() {
         for (const pattern of datePatterns) {
           const match = entry.title.match(pattern);
           if (match) {
-            if (pattern === datePatterns[0]) { // YYYY-MM-DD
-              [, year, month, day] = match;
-            } else if (pattern === datePatterns[1]) { // DD-MM-YYYY
-              [, day, month, year] = match;
-            } else if (pattern === datePatterns[2]) { // DD Month YYYY
+            if (pattern === datePatterns[0]) [, year, month, day] = match;
+            else if (pattern === datePatterns[1]) [, day, month, year] = match;
+            else if (pattern === datePatterns[2]) {
               [, day, month, year] = match;
               month = monthMap[month.toLowerCase().substring(0, 3)];
-            } else if (pattern === datePatterns[3]) { // Month DD, YYYY
+            } else if (pattern === datePatterns[3]) {
               [, month, day, year] = match;
               month = monthMap[month.toLowerCase().substring(0, 3)];
             }
@@ -559,27 +618,22 @@ function checkTimeline() {
         }
       });
       
-      // Sort by date
       entriesWithDates.sort((a, b) => a.timestamp - b.timestamp);
       
-      // Group by year and month
       const byYear = {};
       const byMonth = {};
       
       entriesWithDates.forEach(entry => {
         const year = entry.date.substring(0, 4);
         const month = entry.date.substring(0, 7);
-        
         byYear[year] = (byYear[year] || 0) + 1;
         byMonth[month] = (byMonth[month] || 0) + 1;
       });
       
-      // Calculate statistics
       const totalWithDates = entriesWithDates.length;
       const firstDate = entriesWithDates[0]?.date;
       const lastDate = entriesWithDates[entriesWithDates.length - 1]?.date;
       
-      // Most productive months
       const productiveMonths = Object.entries(byMonth)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10);
@@ -600,17 +654,12 @@ function checkTimeline() {
         report += `${index + 1}. ${month}: ${count} entries\n`;
       });
       
-      // Find gaps in timeline
       if (entriesWithDates.length > 1) {
         const gaps = [];
         for (let i = 1; i < entriesWithDates.length; i++) {
           const gapDays = Math.round((entriesWithDates[i].timestamp - entriesWithDates[i-1].timestamp) / (1000 * 60 * 60 * 24));
-          if (gapDays > 30) { // Gaps longer than a month
-            gaps.push({
-              from: entriesWithDates[i-1].date,
-              to: entriesWithDates[i].date,
-              days: gapDays
-            });
+          if (gapDays > 30) {
+            gaps.push({ from: entriesWithDates[i-1].date, to: entriesWithDates[i].date, days: gapDays });
           }
         }
         
@@ -664,13 +713,11 @@ function matchesSearch(e, terms) {
 
 function highlightText(text, query) {
   if (!query) return text;
-  
   try {
     const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const regex = new RegExp(`(${escapedQuery})`, 'gi');
     return text.replace(regex, '<span class="highlight" style="background:var(--red); color:black; padding:0 2px;">$1</span>');
   } catch (e) {
-    console.log('Highlight error:', e);
     return text;
   }
 }
@@ -688,21 +735,24 @@ async function loadText() {
     const res = await fetch(TXT_FILE_URL);
     if (!res.ok) throw new Error('File not found');
     let text = await res.text();
-    
-    // Normalize line endings
     text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
     
     parseEntries(text);
+
+    // Initialize Fuse.js instance
+    fuseInstance = new Fuse(window.readerEntries, {
+      keys: [{ name: 'title', weight: 0.6 }, { name: 'content', weight: 0.4 }],
+      threshold: 0.35,
+      ignoreLocation: true
+    });
     
     loadingDiv.style.display = 'none';
     contentDiv.style.display = 'block';
 
     if (window.readerEntries.length > 0) {
-      // If we are refreshing, try to stay on the same entry, otherwise go to first
       showEntry(window.readerEntries[0].id);
     }
     
-    // Set "All" button active
     const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
     if (allBtn) styleActiveFilter(allBtn);
     
@@ -719,32 +769,25 @@ function parseEntries(text) {
   let id = 0;
 
   lines.forEach(line => {
-    // TRIM line before checking regex. 
-    // This allows dates to have accidental spaces before them.
     const cleanLine = line.trim(); 
     const m = cleanLine.match(ENTRY_PATTERN);
     
     if (m) {
-      // Save previous entry if exists
       if (current && current.content.trim()) {
         detectTags(current);
         window.readerEntries.push(current);
       }
-      
-      // Start new entry
       current = {
         id: ++id,
-        title: m[0].trim(), // Use the regex match as the title
+        title: m[0].trim(),
         content: line + '\n',
         tags: []
       };
     } else if (current) {
-      // Continue current entry
       current.content += line + '\n';
     }
   });
 
-  // Don't forget the last entry
   if (current && current.content.trim()) {
     detectTags(current);
     window.readerEntries.push(current);
@@ -754,9 +797,7 @@ function parseEntries(text) {
 }
 
 function detectTags(e) {
-  // combine title and content for better detection
   const text = (e.title + ' ' + e.content).toLowerCase();
-  
   for (const [tag, re] of Object.entries(TAG_PATTERNS)) {
     if (tag !== 'all' && re.test(text)) {
       e.tags.push(tag);
@@ -776,15 +817,12 @@ function showEntry(entryId) {
   if (!e) return;
   
   window.readerCurrentIndex = entryId;
-  
   let displayContent = e.content;
   
-  // Apply highlighting if searching
   if (isSearching && searchQuery) {
     displayContent = highlightText(displayContent, searchQuery);
   }
   
-  // Format paragraphs
   displayContent = displayContent.split('\n').map(line => {
     const trimmed = line.trim();
     if (!trimmed) return '<br>';
@@ -797,13 +835,10 @@ function showEntry(entryId) {
   const idx = pool.findIndex(x => x.id === entryId);
   const words = e.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
   
-  // Generate Tags HTML
-// Generate Tags HTML
   const tagsHtml = e.tags.length > 0 
     ? e.tags.map(t => `<span class="px-2 py-1 border text-[10px] uppercase border-gray-600 ${t === currentFilter ? 'text-red-500 border-red-500' : 'text-gray-400'}">${t}</span>`).join('')
     : '<span class="px-2 py-1 border text-[10px] uppercase border-gray-800 text-gray-700">Unclassified</span>';
 
-  // Add a filter indicator if we aren't viewing "All"
   const filterIndicator = currentFilter !== 'all' 
     ? `<span class="text-[10px] uppercase tracking-wider text-red-500 border border-red-900 bg-red-900/20 px-2 py-1 rounded ml-2">FILTER: ${currentFilter}</span>` 
     : '';
@@ -822,11 +857,8 @@ function showEntry(entryId) {
       </div>
     </div>`;
   
-  // Smart button disabling
   prevBtn.disabled = idx <= 0;
   nextBtn.disabled = idx >= pool.length - 1;
-  
-  // Visual feedback for disabled buttons
   prevBtn.style.opacity = prevBtn.disabled ? '0.3' : '1';
   nextBtn.style.opacity = nextBtn.disabled ? '0.3' : '1';
 
@@ -839,7 +871,6 @@ function showRandomEntry() {
   if (!pool.length) return;
   
   let randomIdx;
-  // Try to find a new one, but don't loop forever if only 1 exists
   do {
     randomIdx = Math.floor(Math.random() * pool.length);
   } while (pool[randomIdx].id === window.readerCurrentIndex && pool.length > 1);
@@ -882,7 +913,10 @@ function buildIndex() {
       <div class="text-xs text-gray-600 font-mono truncate">${preview}</div>
     `;
     
-    div.addEventListener('click', () => showEntry(e.id));
+    div.addEventListener('click', () => {
+      showEntry(e.id);
+      if (window.innerWidth <= 768) switchMobileTab('reader');
+    });
     dateNav.appendChild(div);
   });
 }
@@ -893,27 +927,23 @@ function styleActiveFilter(btn) {
     b.style.borderColor = '#333';
     b.style.color = '#666';
   });
-  
   btn.style.background = 'var(--red)';
   btn.style.color = 'black';
   btn.style.borderColor = 'var(--red)';
 }
 
-/* ----------  SEARCH  ---------- */
-function performSearch(query) {
+/* ----------  ADVANCED SEARCH (FUZZY / SEMANTIC) ---------- */
+async function performSearch(query) {
   const trimmedQuery = query.trim();
-  console.log('Searching for:', trimmedQuery);
   
   if (!trimmedQuery) {
     isSearching = false;
     searchResults = [];
     updateUIState();
     
-    // Show current or first entry
     const pool = getFilteredEntries();
     if (pool.length > 0) {
-      const entryToShow = window.readerCurrentIndex > 0 ? 
-        window.readerCurrentIndex : pool[0].id;
+      const entryToShow = window.readerCurrentIndex > 0 ? window.readerCurrentIndex : pool[0].id;
       showEntry(entryToShow);
     }
     return;
@@ -921,22 +951,22 @@ function performSearch(query) {
   
   isSearching = true;
   searchQuery = trimmedQuery;
-  
-  // SIMPLE SEARCH - Change this line to decide scope:
-  // Option A: Search within current filter (like horse reader)
   const pool = getFilteredEntries();
-  
-  // Option B: Search ALL entries (old behavior you wanted)
-  // const pool = window.readerEntries;
-  
-  const queryLower = trimmedQuery.toLowerCase();
-  
-  searchResults = pool.filter(entry => {
-    const searchText = (entry.content + ' ' + entry.title).toLowerCase();
-    return searchText.includes(queryLower);
-  });
-  
-  console.log(`Found ${searchResults.length} of ${pool.length} entries`);
+
+  if (searchMode === 'semantic' && window.runSemanticSearch) {
+    searchStats.textContent = '🧠 Running semantic search...';
+    const semanticMatches = await window.runSemanticSearch(trimmedQuery);
+    searchResults = semanticMatches.filter(e => currentFilter === 'all' || e.tags.includes(currentFilter));
+  } else {
+    // Exact / Boolean or Fuse.js Fuzzy Fallback
+    if (trimmedQuery.includes('"') || trimmedQuery.includes('+') || trimmedQuery.includes('-')) {
+      const terms = parseSearchQuery(trimmedQuery);
+      searchResults = pool.filter(entry => matchesSearch(entry, terms));
+    } else {
+      const results = fuseInstance.search(trimmedQuery);
+      searchResults = results.map(r => r.item).filter(e => currentFilter === 'all' || e.tags.includes(currentFilter));
+    }
+  }
   
   updateUIState();
   
@@ -965,6 +995,7 @@ function updateUIState() {
 document.addEventListener('DOMContentLoaded', loadText);
 
 searchBox.addEventListener('input', debounce(e => performSearch(e.target.value), 300));
+searchBox.addEventListener('keydown', e => { if (e.key === 'Enter') performSearch(e.target.value); });
 
 prevBtn.addEventListener('click', () => navigateEntries('prev'));
 nextBtn.addEventListener('click', () => navigateEntries('next'));
@@ -981,24 +1012,16 @@ document.getElementById('filterBtns').addEventListener('click', e => {
   
   styleActiveFilter(e.target);
   currentFilter = e.target.dataset.filter;
-  
-  // Clear search when switching filters to avoid confusion
   searchBox.value = '';
   isSearching = false;
   
-  // UX IMPROVEMENT: 
-  // 1. Force the index to open so we see the list of filtered items
   isIndexVisible = true;
   dateNav.classList.remove('hidden');
-  
-  // 2. Update the UI
   updateUIState();
   
-  // 3. Show first entry of new filter, or random if that feels more "Dreamweaver"
   const filtered = getFilteredEntries();
   if (filtered.length > 0) {
     showEntry(filtered[0].id);
-    // Scroll the index to the top so we see the new results
     dateNav.scrollTop = 0;
   } else {
     contentDiv.innerHTML = `<div class="text-center mt-20 text-gray-600">No entries found tagged as <span style="color:var(--red)">${currentFilter}</span>.</div>`;
@@ -1009,9 +1032,13 @@ document.getElementById('filterBtns').addEventListener('click', e => {
 document.addEventListener('keydown', e => {
   if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
   
-  if (e.key === 'ArrowLeft') navigateEntries('prev');
-  if (e.key === 'ArrowRight') navigateEntries('next');
+  if (e.key === 'ArrowLeft' || e.key === 'j' || e.key === 'J') navigateEntries('prev');
+  if (e.key === 'ArrowRight' || e.key === 'k' || e.key === 'K') navigateEntries('next');
   if (e.key.toLowerCase() === 'r') showRandomEntry();
+  if (e.key === '/') {
+    e.preventDefault();
+    searchBox.focus();
+  }
   if (e.key === 'Escape' && isIndexVisible) {
     dateNav.classList.add('hidden');
     isIndexVisible = false;
@@ -1019,77 +1046,103 @@ document.addEventListener('keydown', e => {
 });
 </script>
 
-<!-- keep your existing ai-script block here -->
+<!-- ============ NVIDIA AI ENGINE ============ -->
 <script id="ai-script">
 /* ----------  AI CONFIG  ---------- */
-const NVIDIA_MODELS={
+const NVIDIA_MODELS = {
     stable: "nvidia/nemotron-3-ultra-550b-a55b",
     backup: "mistralai/mistral-medium-3.5-128b"
-}
-let currentModel=NVIDIA_MODELS.stable,aiContext='current';
-const apiKeyInput=document.getElementById('apiKeyInput');
-const aiInput=document.getElementById('aiInput');
-const askAiBtn=document.getElementById('askAiBtn');
-const aiResponseDiv=document.getElementById('aiResponse');
-const contextInfo=document.getElementById('contextInfo');
+};
+let currentModel = NVIDIA_MODELS.stable, aiContext = 'current';
+const apiKeyInput = document.getElementById('apiKeyInput');
+const aiInput = document.getElementById('aiInput');
+const askAiBtn = document.getElementById('askAiBtn');
+const aiResponseDiv = document.getElementById('aiResponse');
+const contextInfo = document.getElementById('contextInfo');
 
 /* ----------  INIT  ---------- */
-if(localStorage.getItem('dreamweaver_nvidia_key'))apiKeyInput.value=localStorage.getItem('dreamweaver_nvidia_key');
-apiKeyInput.addEventListener('input',e=>localStorage.setItem('dreamweaver_nvidia_key',e.target.value));
+if (localStorage.getItem('dreamweaver_nvidia_key')) apiKeyInput.value = localStorage.getItem('dreamweaver_nvidia_key');
+apiKeyInput.addEventListener('input', e => localStorage.setItem('dreamweaver_nvidia_key', e.target.value));
 
 /* ----------  TRANSMIT  ---------- */
-askAiBtn.addEventListener('click',async()=>{
-  const key=apiKeyInput.value.trim(),msg=aiInput.value.trim();
-  if(!key){aiResponseDiv.innerHTML='<p class="text-red-500">Please enter an NVIDIA API Key.</p>';return;}
-  if(!msg)return;
-  if(!window.readerEntries?.length){aiResponseDiv.innerHTML='<p class="text-red-500">dreamweaver.txt not loaded yet.</p>';return;}
-  askAiBtn.disabled=true;askAiBtn.textContent='TRANSMITTING...';
-  aiResponseDiv.innerHTML='<p class="animate-pulse" style="color:var(--red)">manifesting...</p>';
-  try{
-    let ctx='';
-    if(aiContext==='current'){
-      const e=window.readerEntries.find(x=>x.id===window.readerCurrentIndex);
-      if(e)ctx=`CONTEXT (Current – ${e.title}):\n${e.content.substring(0,4000)}\n\n---\n`;
-    }else if(aiContext==='all'){
-      ctx=`CONTEXT (Outline):\n${window.readerEntries.map(x=>`- ${x.title} (${x.tags.join(', ')})`).join('\n')}\n\n---\n`;
+askAiBtn.addEventListener('click', async () => {
+  const key = apiKeyInput.value.trim(), msg = aiInput.value.trim();
+  if (!key) { aiResponseDiv.innerHTML = '<p class="text-red-500">Please enter an NVIDIA API Key.</p>'; return; }
+  if (!msg) return;
+  if (!window.readerEntries?.length) { aiResponseDiv.innerHTML = '<p class="text-red-500">dreamweaver.txt not loaded yet.</p>'; return; }
+  
+  askAiBtn.disabled = true; askAiBtn.textContent = 'TRANSMITTING...';
+  aiResponseDiv.innerHTML = '<p class="animate-pulse" style="color:var(--red)">manifesting...</p>';
+  
+  try {
+    let ctx = '';
+    if (aiContext === 'current') {
+      const e = window.readerEntries.find(x => x.id === window.readerCurrentIndex);
+      if (e) ctx = `CONTEXT (Current – ${e.title}):\n${e.content.substring(0, 4000)}\n\n---\n`;
+    } else if (aiContext === 'matches') {
+      const topPool = (isSearching ? searchResults : getFilteredEntries()).slice(0, 3);
+      ctx = `CONTEXT (Top Matches):\n` + topPool.map(e => `[${e.title}]\n${e.content.substring(0, 800)}`).join('\n---\n') + `\n\n---\n`;
+    } else if (aiContext === 'all') {
+      ctx = `CONTEXT (Outline):\n${window.readerEntries.map(x => `- ${x.title} (${x.tags.join(', ')})`).join('\n')}\n\n---\n`;
     }
-   const proxyUrl = 'https://lively-limitless.inkrealm.workers.dev/?url=' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
-    const res=await fetch(proxy,{
-      method:'POST',
-      headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:currentModel,
-        messages:[
-          {role:'system',content:'Expert for DREAMWEAVER archive. Be concise. Answer questions about the text. Give other answers when requested.'},
-          {role:'user',content:ctx+'User Question: '+msg}
+
+    const proxy = 'https://lively-limitless.inkrealm.workers.dev/?url=' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
+    const res = await fetch(proxy, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: currentModel,
+        messages: [
+          { role: 'system', content: 'Expert for DREAMWEAVER archive. Be concise. Answer questions about the text. Give other answers when requested.' },
+          { role: 'user', content: ctx + 'User Question: ' + msg }
         ],
-        temperature:.6,top_p:1,max_tokens:1024
+        temperature: 0.6,
+        top_p: 1,
+        max_tokens: 1024
       })
     });
-    if(!res.ok){if(res.status===404)throw new Error('404 Switch');const t=await res.text();let m=t;try{m=JSON.parse(t).error?.message||t;}catch{m=t}throw new Error(m);}
-    const data=await res.json();
-    let txt=data.choices[0].message.content;
-    txt=txt.replace(/\*\*(.*?)\*\*/g,'<strong style="color:var(--red)">$1</strong>').replace(/\n/g,'<br>');
-    aiResponseDiv.innerHTML=txt;
-  }catch(err){
-    console.error(err);
-    if(err.message.includes('404')||err.message.includes('Switch')){
-      currentModel=NVIDIA_MODELS.backup;
-      aiResponseDiv.innerHTML='<p style="color:#888">Primary model unavailable. Switched to Backup.<br><strong>Please click Transmit again.</strong></p>';
-    }else{
-      aiResponseDiv.innerHTML=`<p style="color:var(--red)">Error: ${err.message}</p>`;
+
+    if (!res.ok) {
+      if (res.status === 404) throw new Error('404 Switch');
+      const t = await res.text();
+      let m = t;
+      try { m = JSON.parse(t).error?.message || t; } catch(e) { m = t; }
+      throw new Error(m);
     }
-  }finally{askAiBtn.disabled=false;askAiBtn.textContent='TRANSMIT';}
+
+    const data = await res.json();
+    let txt = data.choices[0].message.content;
+    txt = txt.replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--red)">$1</strong>').replace(/\n/g, '<br>');
+    aiResponseDiv.innerHTML = txt;
+  } catch (err) {
+    console.error(err);
+    if (err.message.includes('404') || err.message.includes('Switch')) {
+      currentModel = NVIDIA_MODELS.backup;
+      aiResponseDiv.innerHTML = '<p style="color:#888">Primary model unavailable. Switched to Backup.<br><strong>Please click Transmit again.</strong></p>';
+    } else {
+      aiResponseDiv.innerHTML = `<p style="color:var(--red)">Error: ${err.message}</p>`;
+    }
+  } finally {
+    askAiBtn.disabled = false;
+    askAiBtn.textContent = 'TRANSMIT';
+  }
 });
 
 /* ----------  CONTEXT BUTTONS  ---------- */
-document.addEventListener('click',e=>{
-  if(!e.target.classList.contains('context-btn'))return;
-  document.querySelectorAll('.context-btn').forEach(b=>{b.style.background='var(--dark-grey)';b.style.color='#888';b.style.borderColor='#333';});
-  e.target.style.background='var(--red)';e.target.style.color='black';e.target.style.borderColor='var(--red)';
-  aiContext=e.target.dataset.context;
-  contextInfo.textContent=`Context: ${aiContext.toUpperCase()} (${aiContext==='current'?'Reading current entry':aiContext==='all'?'Reading all titles':'No context'})`;
+document.addEventListener('click', e => {
+  if (!e.target.classList.contains('context-btn')) return;
+  document.querySelectorAll('.context-btn').forEach(b => {
+    b.style.background = 'var(--dark-grey)';
+    b.style.color = '#888';
+    b.style.borderColor = '#333';
+  });
+  e.target.style.background = 'var(--red)';
+  e.target.style.color = 'black';
+  e.target.style.borderColor = 'var(--red)';
+  aiContext = e.target.dataset.context;
+  contextInfo.textContent = `Context: ${aiContext.toUpperCase()} (${aiContext === 'current' ? 'Reading current entry' : aiContext === 'matches' ? 'Reading top 3 matches' : aiContext === 'all' ? 'Reading all titles' : 'No context'})`;
 });
 </script>
+
 </body>
 </html>
