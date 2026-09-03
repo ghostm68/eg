@@ -16,6 +16,7 @@
     body{font-family:'Special Elite',serif;background:var(--black);color:var(--white);margin:0;touch-action:manipulation;}
     body::after{content:"";position:fixed;inset:0;background:linear-gradient(rgba(18,16,16,0) 50%,rgba(0,0,0,.15) 50%),linear-gradient(90deg,rgba(255,0,0,.04),rgba(0,255,0,.02),rgba(0,0,255,.04));background-size:100% 3px,3px 100%;z-index:999;pointer-events:none;}
     .highlight{background:var(--red);color:var(--black);padding:1px 3px;}
+    .highlight.active-hit{outline:2px solid #fff;outline-offset:1px;box-shadow:0 0 10px rgba(255,0,51,0.6);}
     .custom-scrollbar::-webkit-scrollbar{width:6px;}.custom-scrollbar::-webkit-scrollbar-track{background:var(--black);}.custom-scrollbar::-webkit-scrollbar-thumb{background:var(--red);border-radius:3px;}
     input,textarea,button{font-family:'Special Elite',serif;}
     button{user-select:none;cursor:pointer;}
@@ -133,6 +134,12 @@
           <button id="semanticBtn" class="text-[10px] uppercase tracking-widest border border-gray-700 px-2 py-0.5 text-gray-500 hover:border-red-500 transition-colors" data-mode="semantic">Semantic</button>
           <button id="indexBtn" class="text-xs text-gray-500 hover:text-red-500 uppercase tracking-widest border-b border-transparent hover:border-red-500">Index</button>
         </div>
+        <div id="matchNav" class="hidden flex items-center gap-2 mt-1.5 text-[10px] text-gray-500">
+          <button id="prevMatchBtn" class="border border-gray-700 px-2 py-0.5 hover:border-red-500 hover:text-red-500">↑ hit</button>
+          <span id="matchCounter">hit 0/0</span>
+          <button id="nextMatchBtn" class="border border-gray-700 px-2 py-0.5 hover:border-red-500 hover:text-red-500">hit ↓</button>
+          <span class="text-gray-600 ml-1">n / p</span>
+        </div>
         <div id="semanticStatus"></div>
       </div>
 
@@ -215,6 +222,8 @@ let isIndexVisible = false;
 let searchTimeout = null;
 let searchMode = 'exact';
 let fuse = null;
+let matchIndex = 0;
+let matchEls = [];
 
 const fuseOptions = {
   keys: [{ name: 'title', weight: 0.35 }, { name: 'content', weight: 0.65 }],
@@ -236,6 +245,10 @@ const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
 const randomBtn = document.getElementById('randomBtn');
 const indexBtn = document.getElementById('indexBtn');
+const matchNav = document.getElementById('matchNav');
+const matchCounter = document.getElementById('matchCounter');
+const prevMatchBtn = document.getElementById('prevMatchBtn');
+const nextMatchBtn = document.getElementById('nextMatchBtn');
 const exactBtn = document.getElementById('exactBtn');
 const fuzzyBtn = document.getElementById('fuzzyBtn');
 const semanticBtn = document.getElementById('semanticBtn');
@@ -627,6 +640,64 @@ function showEntry(entryId) {
   nextBtn.style.opacity = nextBtn.disabled ? '0.3' : '1';
   contentDiv.scrollTop = 0;
   if (isIndexVisible) buildIndex();
+  // Collect in-entry hits and jump to first
+  matchEls = Array.from(contentDiv.querySelectorAll('.highlight'));
+  matchIndex = 0;
+  updateMatchUI();
+  if (matchEls.length) {
+    requestAnimationFrame(() => scrollToMatch(0));
+  }
+}
+
+function updateMatchUI() {
+  if (!matchNav) return;
+  if (isSearching && matchEls.length > 0) {
+    matchNav.classList.remove('hidden');
+    matchNav.classList.add('flex');
+    matchCounter.textContent = `hit ${matchIndex + 1}/${matchEls.length}`;
+  } else if (isSearching) {
+    matchNav.classList.remove('hidden');
+    matchNav.classList.add('flex');
+    matchCounter.textContent = 'hit 0/0';
+  } else {
+    matchNav.classList.add('hidden');
+    matchNav.classList.remove('flex');
+  }
+}
+
+function scrollToMatch(i) {
+  if (!matchEls.length) return;
+  matchEls.forEach(el => el.classList.remove('active-hit'));
+  matchIndex = ((i % matchEls.length) + matchEls.length) % matchEls.length;
+  const el = matchEls[matchIndex];
+  el.classList.add('active-hit');
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  updateMatchUI();
+}
+
+function navigateMatch(dir) {
+  if (!isSearching) {
+    navigateEntries(dir);
+    return;
+  }
+  if (!matchEls.length) {
+    navigateEntries(dir);
+    return;
+  }
+  if (dir === 'next') {
+    if (matchIndex >= matchEls.length - 1) {
+      // last hit in entry → next entry
+      navigateEntries('next');
+    } else {
+      scrollToMatch(matchIndex + 1);
+    }
+  } else {
+    if (matchIndex <= 0) {
+      navigateEntries('prev');
+    } else {
+      scrollToMatch(matchIndex - 1);
+    }
+  }
 }
 
 function showRandomEntry() {
@@ -678,6 +749,9 @@ async function performSearch(query) {
   updateSearchLighting();
   if (!trimmed) {
     isSearching = false; searchResults = [];
+    matchEls = [];
+    matchIndex = 0;
+    updateMatchUI();
     updateUIState();
     const pool = getFilteredEntries();
     if (pool.length) showEntry(window.readerCurrentIndex > 0 ? window.readerCurrentIndex : pool[0].id);
@@ -700,9 +774,16 @@ async function performSearch(query) {
     searchResults = pool.filter(e => matchesSearch(e, terms));
   }
 
+  // Auto-open index so all matching entries are visible
+  if (searchResults.length) {
+    isIndexVisible = true;
+    dateNav.classList.remove('hidden');
+  }
   updateUIState();
   if (searchResults.length) showEntry(searchResults[0].id);
   else {
+    matchEls = [];
+    updateMatchUI();
     contentDiv.innerHTML = `<div class="text-center mt-10 p-4"><div class="text-gray-500">No matches for "${trimmed}"</div></div>`;
     entryInfo.innerHTML = `<div class="text-xs text-gray-500">Search: "${trimmed}"</div>`;
   }
@@ -750,6 +831,8 @@ searchBox.addEventListener('input', debounce(e => performSearch(e.target.value),
 prevBtn.addEventListener('click', () => navigateEntries('prev'));
 nextBtn.addEventListener('click', () => navigateEntries('next'));
 randomBtn.addEventListener('click', showRandomEntry);
+if (prevMatchBtn) prevMatchBtn.addEventListener('click', () => navigateMatch('prev'));
+if (nextMatchBtn) nextMatchBtn.addEventListener('click', () => navigateMatch('next'));
 
 indexBtn.addEventListener('click', () => {
   isIndexVisible = !isIndexVisible;
@@ -782,6 +865,8 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') navigateEntries('prev');
   if (e.key === 'ArrowRight') navigateEntries('next');
   if (e.key.toLowerCase() === 'r') showRandomEntry();
+  if (e.key.toLowerCase() === 'n') navigateMatch('next');
+  if (e.key.toLowerCase() === 'p') navigateMatch('prev');
   if (e.key === 'Escape' && isIndexVisible) {
     dateNav.classList.add('hidden');
     isIndexVisible = false;
