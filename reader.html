@@ -473,9 +473,24 @@ function updateSearchLighting() {
   searchBox.classList.toggle('search-active', hasQuery && (advanced || isSearching));
 }
 
+let semanticWaiters = [];
+
+function yieldToUI(ms = 16) {
+  return new Promise(resolve => {
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(() => resolve(), { timeout: ms + 40 });
+    } else {
+      setTimeout(resolve, ms);
+    }
+  });
+}
+
 async function ensureSemantic() {
-  if (semanticReady) return true;
-  if (semanticLoading) return false;
+  if (semanticReady && embedder) return true;
+  if (semanticLoading) {
+    // Wait for in-progress load instead of failing
+    return new Promise(resolve => semanticWaiters.push(resolve));
+  }
   semanticLoading = true;
   semanticStatus.textContent = 'Loading semantic model (~23 MB)…';
   try {
@@ -490,16 +505,20 @@ async function ensureSemantic() {
         }
       }
     });
-    semanticStatus.textContent = 'Embedding entries…';
-    await buildEntryEmbeddings();
+    if (!entryEmbeddings) entryEmbeddings = new Map();
     semanticReady = true;
-    semanticStatus.textContent = 'Semantic ready';
-    setTimeout(() => { if (semanticStatus.textContent === 'Semantic ready') semanticStatus.textContent = ''; }, 2500);
+    semanticStatus.textContent = 'Model ready — embedding on search…';
+    setTimeout(() => {
+      if (semanticStatus.textContent.startsWith('Model ready')) semanticStatus.textContent = '';
+    }, 2000);
+    semanticWaiters.forEach(r => r(true));
+    semanticWaiters = [];
     return true;
   } catch (err) {
     console.error(err);
     semanticStatus.textContent = 'Semantic failed to load';
-    semanticLoading = false;
+    semanticWaiters.forEach(r => r(false));
+    semanticWaiters = [];
     return false;
   } finally {
     semanticLoading = false;
@@ -517,26 +536,36 @@ function cosine(a, b) {
   return dot;
 }
 
-async function buildEntryEmbeddings() {
-  entryEmbeddings = new Map();
-  const pool = window.readerEntries;
-  const batchSize = 8;
-  for (let i = 0; i < pool.length; i += batchSize) {
-    const slice = pool.slice(i, i + batchSize);
-    await Promise.all(slice.map(async (e) => {
-      const snippet = (e.title + ' ' + e.content.slice(0, 400)).replace(/\s+/g, ' ').trim();
+/** Embed missing entries one-at-a-time with UI yields (avoids freeze). */
+async function ensureEmbeddingsFor(pool) {
+  if (!entryEmbeddings) entryEmbeddings = new Map();
+  const missing = pool.filter(e => !entryEmbeddings.has(e.id));
+  if (!missing.length) return;
+  for (let i = 0; i < missing.length; i++) {
+    const e = missing[i];
+    // Short snippet keeps inference fast and relevant
+    const snippet = (e.title + ' ' + e.content.slice(0, 160)).replace(/\s+/g, ' ').trim().slice(0, 280);
+    try {
       const vec = await embedText(snippet);
       entryEmbeddings.set(e.id, vec);
-    }));
-    semanticStatus.textContent = `Embedding entries… ${Math.min(i + batchSize, pool.length)}/${pool.length}`;
-    await new Promise(r => setTimeout(r, 0));
+    } catch (err) {
+      console.warn('embed failed', e.id, err);
+    }
+    if (i % 2 === 0 || i === missing.length - 1) {
+      semanticStatus.textContent = `Embedding… ${i + 1}/${missing.length}`;
+      await yieldToUI(20);
+    }
   }
+  semanticStatus.textContent = '';
 }
 
 async function semanticSearch(query) {
   if (!await ensureSemantic()) return [];
-  const qVec = await embedText(query);
   const pool = getFilteredEntries();
+  // Only embed what we need (current filter), progressively
+  await ensureEmbeddingsFor(pool);
+  const qVec = await embedText(query);
+  await yieldToUI(0);
   const scored = [];
   for (const e of pool) {
     const vec = entryEmbeddings.get(e.id);
