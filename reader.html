@@ -543,8 +543,8 @@ async function ensureEmbeddingsFor(pool) {
   if (!missing.length) return;
   for (let i = 0; i < missing.length; i++) {
     const e = missing[i];
-    // Short snippet keeps inference fast and relevant
-    const snippet = (e.title + ' ' + e.content.slice(0, 160)).replace(/\s+/g, ' ').trim().slice(0, 280);
+    // Title + opening paragraph — enough signal, still light
+    const snippet = (e.title + '. ' + e.content.slice(0, 280)).replace(/\s+/g, ' ').trim().slice(0, 360);
     try {
       const vec = await embedText(snippet);
       entryEmbeddings.set(e.id, vec);
@@ -562,19 +562,27 @@ async function ensureEmbeddingsFor(pool) {
 async function semanticSearch(query) {
   if (!await ensureSemantic()) return [];
   const pool = getFilteredEntries();
-  // Only embed what we need (current filter), progressively
   await ensureEmbeddingsFor(pool);
   const qVec = await embedText(query);
   await yieldToUI(0);
+  const qLower = query.toLowerCase().trim();
   const scored = [];
   for (const e of pool) {
     const vec = entryEmbeddings.get(e.id);
     if (!vec) continue;
-    const score = cosine(qVec, vec);
-    if (score > 0.28) scored.push({ entry: e, score });
+    let score = cosine(qVec, vec);
+    // Hybrid boost: if the literal term appears, don't rely on cosine alone
+    const hay = (e.title + ' ' + e.content).toLowerCase();
+    if (qLower.length >= 2 && hay.includes(qLower)) {
+      score = Math.max(score, 0.42) + 0.15; // guarantee ranking above pure near-misses
+    }
+    scored.push({ entry: e, score });
   }
+  // Soft floor: keep anything remotely related; always return top hits
   scored.sort((a, b) => b.score - a.score);
-  return scored.map(s => s.entry);
+  const strong = scored.filter(s => s.score >= 0.18);
+  const results = (strong.length ? strong : scored.slice(0, 25)).map(s => s.entry);
+  return results;
 }
 
 async function loadText() {
