@@ -325,6 +325,19 @@
     </div>
   </header>
 
+  <div style="background:var(--grey-dark); border-bottom:1px solid var(--border); padding:0.35rem 1.25rem; display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+    <label for="dictSource" style="font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em;">Dictionary</label>
+    <select id="dictSource" style="background:var(--grey-panel); border:1px solid var(--border); color:var(--white); padding:0.2rem 0.45rem; font:inherit; font-size:0.7rem; border-radius:2px;">
+      <option value="local">Local words.json</option>
+      <option value="dwyl">English Words (370k)</option>
+      <option value="fallback">Definition keys</option>
+      <option value="custom">Custom (imported)</option>
+    </select>
+    <button id="btnImportDict" style="padding:0.2rem 0.55rem; font-size:0.7rem;">Import…</button>
+    <input type="file" id="dictFile" accept=".txt,.json,text/plain,application/json" style="display:none;" />
+    <span id="dictLabel" style="font-size:0.65rem; color:var(--muted); margin-left:0.35rem;"></span>
+  </div>
+
   <div class="workbench">
     <!-- PANEL 1 -->
     <div class="panel">
@@ -441,8 +454,8 @@
   </div>
 
   <footer>
-    <div><a href="/gram">← /gram</a> ·  · <a href="https://wordstar.nexus/tmura">loom</a>·  ·<a href="/sitemap">/sitemap</a></div>
-    <div>v/ARTIST · Anagram // wordstar.nexus · MMXXVI</div>
+    <div><a href="/gram">← /gram</a> · <a href="/tmura">/tmura</a> · <a href="/sitemap">/sitemap</a></div>
+    <div>v/ARTIST · Anagram Atelier // wordstar.nexus · MMXXVI</div>
   </footer>
 
   <script>
@@ -779,32 +792,169 @@
       }
     });
 
-    async function loadLexicon() {
-      $("headStatus").textContent = "LOADING DICT…";
-      try {
-        const res = await fetch("words.json");
-        if (!res.ok) throw new Error();
-        DICT = await res.json();
-      } catch {
-        const res = await fetch("https://raw.githubusercontent.com/adambom/dictionary/master/dictionary.json");
-        const raw = await res.json();
-        const set = new Set();
-        for (const k of Object.keys(raw)) {
-          const w = k.toLowerCase().replace(/[^a-z]/g, "");
-          if (w.length >= 2 && w.length <= 15) set.add(w);
-        }
-        DICT = Array.from(set).sort();
-      }
+    // ── Dictionary sources (shared keys with gRAM / TMURA) ──
+    const CUSTOM_DICT_KEY = "gram-custom-dict-v1";
+    const DICT_SOURCE_KEY = "artist-dict-source-v1";
 
+    function normalizeWordList(rawList) {
+      const set = new Set();
+      for (const item of rawList) {
+        const w = String(item || "").toLowerCase().replace(/[^a-z]/g, "");
+        if (w.length >= 2 && w.length <= 20) set.add(w);
+      }
+      return Array.from(set).sort();
+    }
+
+    function finalizeDict(words, label) {
+      DICT = words;
       DICT_COUNTS = DICT.map(w => countsFrom(w));
       DICT_MASKS = new Int32Array(DICT.length);
       for (let i = 0; i < DICT.length; i++) DICT_MASKS[i] = maskFrom(DICT[i]);
-
       $("headStatus").textContent = "READY";
+      if ($("dictLabel")) $("dictLabel").textContent = `${DICT.length.toLocaleString()} · ${label}`;
       updateAll();
     }
 
-    loadLexicon();
+    async function loadFromLocal() {
+      const res = await fetch("words.json");
+      if (!res.ok) throw new Error("local missing");
+      const data = await res.json();
+      return Array.isArray(data) ? normalizeWordList(data) : normalizeWordList(Object.keys(data));
+    }
+
+    async function loadFromDwyl() {
+      const res = await fetch("https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt");
+      if (!res.ok) throw new Error("dwyl fetch failed");
+      const text = await res.text();
+      return normalizeWordList(text.split(/\r?\n/));
+    }
+
+    async function loadFromFallback() {
+      const res = await fetch("https://raw.githubusercontent.com/adambom/dictionary/master/dictionary.json");
+      if (!res.ok) throw new Error("fallback fetch failed");
+      return normalizeWordList(Object.keys(await res.json()));
+    }
+
+    function loadFromCustom() {
+      try {
+        const saved = localStorage.getItem(CUSTOM_DICT_KEY);
+        if (!saved) return null;
+        const list = JSON.parse(saved);
+        return Array.isArray(list) ? normalizeWordList(list) : null;
+      } catch {
+        return null;
+      }
+    }
+
+    async function loadDict(source) {
+      const sel = $("dictSource");
+      const src = source || (sel ? sel.value : "local") || "local";
+      $("headStatus").textContent = "LOADING DICT…";
+      if ($("dictLabel")) $("dictLabel").textContent = "";
+
+      try {
+        let words = null;
+        let label = "";
+
+        if (src === "custom") {
+          words = loadFromCustom();
+          if (!words || !words.length) {
+            $("headStatus").textContent = "NO CUSTOM LIST";
+            try {
+              words = await loadFromLocal();
+              label = "local";
+              if (sel) sel.value = "local";
+            } catch {
+              words = await loadFromFallback();
+              label = "fallback";
+              if (sel) sel.value = "fallback";
+            }
+          } else {
+            label = "custom";
+          }
+        } else if (src === "dwyl") {
+          words = await loadFromDwyl();
+          label = "english-words";
+        } else if (src === "fallback") {
+          words = await loadFromFallback();
+          label = "definition keys";
+        } else {
+          try {
+            words = await loadFromLocal();
+            label = "local";
+          } catch {
+            words = await loadFromFallback();
+            label = "definition keys";
+            if (sel) sel.value = "fallback";
+          }
+        }
+
+        try { localStorage.setItem(DICT_SOURCE_KEY, sel ? sel.value : src); } catch (_) {}
+        finalizeDict(words, label);
+      } catch (err) {
+        $("headStatus").textContent = "DICT FAILED";
+        console.error(err);
+      }
+    }
+
+    function handleDictImport(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          let list = [];
+          const text = reader.result;
+          if (file.name.toLowerCase().endsWith(".json") || text.trim().startsWith("[")) {
+            const parsed = JSON.parse(text);
+            list = Array.isArray(parsed) ? parsed : Object.keys(parsed);
+          } else {
+            list = text.split(/\r?\n/);
+          }
+          const words = normalizeWordList(list);
+          if (!words.length) {
+            $("headStatus").textContent = "IMPORT EMPTY";
+            return;
+          }
+          try {
+            localStorage.setItem(CUSTOM_DICT_KEY, JSON.stringify(words));
+          } catch (_) {}
+          if ($("dictSource")) $("dictSource").value = "custom";
+          finalizeDict(words, "custom");
+          $("headStatus").textContent = "IMPORTED";
+          setTimeout(() => { $("headStatus").textContent = "READY"; }, 1600);
+        } catch (e) {
+          $("headStatus").textContent = "IMPORT FAILED";
+          console.error(e);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    (function initDictControls() {
+      const sel = $("dictSource");
+      const btn = $("btnImportDict");
+      const fileInput = $("dictFile");
+
+      if (sel) {
+        try {
+          const saved = localStorage.getItem(DICT_SOURCE_KEY);
+          if (saved && ["local", "dwyl", "fallback", "custom"].includes(saved)) {
+            sel.value = saved;
+          }
+        } catch (_) {}
+        sel.addEventListener("change", () => loadDict(sel.value));
+      }
+      if (btn && fileInput) {
+        btn.addEventListener("click", () => fileInput.click());
+        fileInput.addEventListener("change", () => {
+          const f = fileInput.files && fileInput.files[0];
+          if (f) handleDictImport(f);
+          fileInput.value = "";
+        });
+      }
+    })();
+
+    loadDict();
   </script>
 </body>
 </html>
