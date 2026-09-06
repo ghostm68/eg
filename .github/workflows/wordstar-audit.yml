@@ -1,0 +1,144 @@
+name: WordStar.nexus Health Audit
+
+on:
+  schedule:
+    - cron: '0 12 * * 1' # Runs automatically every Monday at noon UTC
+  workflow_dispatch:      # Manual trigger button in the Actions tab
+  # Optional: If this file is placed inside the wordstar repo itself,
+  # uncomment the next two lines to auto-run on every code commit:
+  # push:
+  #   branches: [ main ]
+
+jobs:
+  audit:
+    name: Audit WordStar Ecosystem
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Playwright & Chromium
+        run: |
+          npm install playwright
+          npx playwright install --with-deps chromium
+
+      - name: Sweep wordstar.nexus
+        run: |
+          cat << 'EOF' > sweep-wordstar.mjs
+          import { chromium } from 'playwright';
+
+          const ROOT_URL = 'https://wordstar.nexus';
+          const DOMAIN = 'wordstar.nexus';
+
+          async function auditWordstar() {
+            console.log(`\n========================================`);
+            console.log(`[WS] INITIALIZING WORDSTAR SCANNER`);
+            console.log(`Target: ${ROOT_URL}`);
+            console.log(`========================================\n`);
+
+            const browser = await chromium.launch();
+            const discoveryPage = await browser.newPage();
+            const targetUrls = new Set([ROOT_URL]);
+
+            // 1. Discover sub-routes / tools linked within wordstar.nexus
+            try {
+              console.log(`📡 Scanning ${ROOT_URL} for internal modules...`);
+              await discoveryPage.goto(ROOT_URL, { waitUntil: 'networkidle', timeout: 30000 });
+              await discoveryPage.waitForTimeout(2500);
+
+              const discovered = await discoveryPage.evaluate(() => {
+                return Array.from(document.querySelectorAll('a[href]'))
+                  .map(a => a.href.trim())
+                  .filter(h => h && !h.startsWith('mailto:') && !h.startsWith('tel:'));
+              });
+
+              for (const link of discovered) {
+                const clean = link.split('#')[0].replace(/\/$/, '');
+                if (clean.includes(DOMAIN)) {
+                  targetUrls.add(clean);
+                }
+              }
+            } catch (err) {
+              console.error(`⚠️ Could not complete discovery scrape: ${err.message}`);
+            }
+
+            await discoveryPage.close();
+
+            console.log(`Found ${targetUrls.size} route(s) to verify:\n`);
+            Array.from(targetUrls).forEach((u, i) => console.log(`  [${i + 1}] ${u}`));
+
+            let totalFailures = 0;
+
+            // 2. Audit each page
+            for (const url of targetUrls) {
+              console.log(`\n----------------------------------------`);
+              console.log(`Checking: ${url}`);
+              console.log(`----------------------------------------`);
+
+              const page = await browser.newPage();
+              const issues = [];
+
+              // Uncaught JavaScript exceptions
+              page.on('pageerror', err => issues.push(`[JS EXCEPTION] ${err.message}`));
+
+              // Console errors (Three.js shaders, Web Audio glitches, canvas warnings)
+              page.on('console', msg => {
+                if (msg.type() === 'error') issues.push(`[CONSOLE] ${msg.text()}`);
+              });
+
+              // Failed requests (missing retro fonts, dead CDNs, 404s, CORS drops)
+              page.on('requestfailed', req => {
+                issues.push(`[ASSET FAILED] ${req.url()} (${req.failure()?.errorText || 'Failed'})`);
+              });
+
+              try {
+                const res = await page.goto(url, { waitUntil: 'networkidle', timeout: 25000 });
+                if (res && res.status() >= 400) {
+                  issues.push(`[HTTP STATUS] Returned code ${res.status()}`);
+                }
+
+                // Wait 2.5s for CRT filters, Web Audio, or typography engines to initialize
+                await page.waitForTimeout(2500);
+
+                // Check canvas element health (if the page utilizes CRT/Terminal canvas)
+                const canvasHealthy = await page.evaluate(() => {
+                  const canvas = document.querySelector('canvas');
+                  if (!canvas) return true; // No canvas used, skip check
+                  return canvas.width > 0 && canvas.height > 0;
+                });
+
+                if (!canvasHealthy) {
+                  issues.push(`[CANVAS] Terminal/CRT canvas has zero dimensions.`);
+                }
+
+              } catch (e) {
+                issues.push(`[NAVIGATION FAIL] ${e.message}`);
+              }
+
+              if (issues.length === 0) {
+                console.log(`  ✅ [PASS] No runtime anomalies detected.`);
+              } else {
+                totalFailures += issues.length;
+                issues.forEach(issue => console.error(`  ❌ ${issue}`));
+              }
+
+              await page.close();
+            }
+
+            await browser.close();
+
+            console.log(`\n========================================`);
+            if (totalFailures > 0) {
+              console.error(`[WS] AUDIT FAILED: ${totalFailures} issue(s) detected.`);
+              process.exit(1);
+            } else {
+              console.log(`[WS] AUDIT PASSED: All routes operational.`);
+            }
+          }
+
+          auditWordstar();
+          EOF
+
+          node sweep-wordstar.mjs
