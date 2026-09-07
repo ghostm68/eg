@@ -9,13 +9,6 @@ on:
   # push:
   #   branches: [ main ]
 
-permissions:
-  contents: read
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   audit:
     name: Audit WordStar Ecosystem
@@ -26,17 +19,9 @@ jobs:
         with:
           node-version: 20
 
-      - name: Cache Playwright browsers
-        id: playwright-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-chromium-1.63.0
-
       - name: Install Playwright & Chromium
         run: |
-          npm install playwright@1.63.0
-          # Always install OS deps; browsers are restored from cache when possible
+          npm install playwright
           npx playwright install --with-deps chromium
 
       - name: Sweep wordstar.nexus
@@ -85,7 +70,6 @@ jobs:
             Array.from(targetUrls).forEach((u, i) => console.log(`  [${i + 1}] ${u}`));
 
             let totalFailures = 0;
-            const allIssues = [];
 
             // 2. Audit each page
             for (const url of targetUrls) {
@@ -137,10 +121,7 @@ jobs:
                 console.log(`  ✅ [PASS] No runtime anomalies detected.`);
               } else {
                 totalFailures += issues.length;
-                issues.forEach(issue => {
-                  console.error(`  ❌ ${issue}`);
-                  allIssues.push({ url, issue });
-                });
+                issues.forEach(issue => console.error(`  ❌ ${issue}`));
               }
 
               await page.close();
@@ -151,9 +132,6 @@ jobs:
             console.log(`\n========================================`);
             if (totalFailures > 0) {
               console.error(`[WS] AUDIT FAILED: ${totalFailures} issue(s) detected.`);
-              // Write a simple summary file for the artifact
-              const fs = await import('fs');
-              fs.writeFileSync('audit-summary.json', JSON.stringify({ totalFailures, issues: allIssues }, null, 2));
               process.exit(1);
             } else {
               console.log(`[WS] AUDIT PASSED: All routes operational.`);
@@ -164,26 +142,3 @@ jobs:
           EOF
 
           node sweep-wordstar.mjs
-
-      - name: Upload audit summary (on failure)
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: wordstar-audit-summary
-          path: audit-summary.json
-          retention-days: 14
-          if-no-files-found: ignore
-
-      - name: Write job summary
-        if: always()
-        run: |
-          echo "## WordStar.nexus Health Audit" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ -f audit-summary.json ]; then
-            echo "### Failures detected" >> $GITHUB_STEP_SUMMARY
-            echo '```json' >> $GITHUB_STEP_SUMMARY
-            cat audit-summary.json >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-          else
-            echo "✅ All routes operational — no runtime anomalies detected." >> $GITHUB_STEP_SUMMARY
-          fi
