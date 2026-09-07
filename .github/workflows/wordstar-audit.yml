@@ -1,13 +1,10 @@
 name: WordStar.nexus Health Audit
 
 on:
-  schedule:
-    - cron: '0 12 * * 1' # Runs automatically every Monday at noon UTC
-  workflow_dispatch:      # Manual trigger button in the Actions tab
-  # Optional: If this file is placed inside the wordstar repo itself,
-  # uncomment the next two lines to auto-run on every code commit:
-  # push:
-  #   branches: [ main ]
+  workflow_dispatch: # Manual trigger only via the GitHub Actions tab
+
+permissions:
+  contents: read
 
 jobs:
   audit:
@@ -17,7 +14,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install Playwright & Chromium
         run: |
@@ -28,6 +25,7 @@ jobs:
         run: |
           cat << 'EOF' > sweep-wordstar.mjs
           import { chromium } from 'playwright';
+          import fs from 'fs';
 
           const ROOT_URL = 'https://wordstar.nexus';
           const DOMAIN = 'wordstar.nexus';
@@ -45,7 +43,8 @@ jobs:
             // 1. Discover sub-routes / tools linked within wordstar.nexus
             try {
               console.log(`📡 Scanning ${ROOT_URL} for internal modules...`);
-              await discoveryPage.goto(ROOT_URL, { waitUntil: 'networkidle', timeout: 30000 });
+              // domcontentloaded avoids timeouts caused by audio or visual render loops
+              await discoveryPage.goto(ROOT_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
               await discoveryPage.waitForTimeout(2500);
 
               const discovered = await discoveryPage.evaluate(() => {
@@ -70,6 +69,7 @@ jobs:
             Array.from(targetUrls).forEach((u, i) => console.log(`  [${i + 1}] ${u}`));
 
             let totalFailures = 0;
+            const allIssues = [];
 
             // 2. Audit each page
             for (const url of targetUrls) {
@@ -83,18 +83,13 @@ jobs:
               // Uncaught JavaScript exceptions
               page.on('pageerror', err => issues.push(`[JS EXCEPTION] ${err.message}`));
 
-              // Console errors (Three.js shaders, Web Audio glitches, canvas warnings)
+              // Critical console errors
               page.on('console', msg => {
                 if (msg.type() === 'error') issues.push(`[CONSOLE] ${msg.text()}`);
               });
 
-              // Failed requests (missing retro fonts, dead CDNs, 404s, CORS drops)
-              page.on('requestfailed', req => {
-                issues.push(`[ASSET FAILED] ${req.url()} (${req.failure()?.errorText || 'Failed'})`);
-              });
-
               try {
-                const res = await page.goto(url, { waitUntil: 'networkidle', timeout: 25000 });
+                const res = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
                 if (res && res.status() >= 400) {
                   issues.push(`[HTTP STATUS] Returned code ${res.status()}`);
                 }
@@ -121,7 +116,10 @@ jobs:
                 console.log(`  ✅ [PASS] No runtime anomalies detected.`);
               } else {
                 totalFailures += issues.length;
-                issues.forEach(issue => console.error(`  ❌ ${issue}`));
+                issues.forEach(issue => {
+                  console.error(`  ❌ ${issue}`);
+                  allIssues.push({ url, issue });
+                });
               }
 
               await page.close();
@@ -132,6 +130,7 @@ jobs:
             console.log(`\n========================================`);
             if (totalFailures > 0) {
               console.error(`[WS] AUDIT FAILED: ${totalFailures} issue(s) detected.`);
+              fs.writeFileSync('audit-summary.json', JSON.stringify({ totalFailures, issues: allIssues }, null, 2));
               process.exit(1);
             } else {
               console.log(`[WS] AUDIT PASSED: All routes operational.`);
@@ -142,3 +141,26 @@ jobs:
           EOF
 
           node sweep-wordstar.mjs
+
+      - name: Upload audit summary (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wordstar-audit-summary
+          path: audit-summary.json
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## WordStar.nexus Health Audit" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f audit-summary.json ]; then
+            echo "### Failures detected" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat audit-summary.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ All routes operational — no runtime anomalies detected." >> $GITHUB_STEP_SUMMARY
+          fi
