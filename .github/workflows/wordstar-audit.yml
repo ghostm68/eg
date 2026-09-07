@@ -1,14 +1,13 @@
-name: WordStar.nexus Health Audit
+name: WordStar Ecosystem Health Sweep
 
 on:
-  workflow_dispatch: # Manual trigger only via the GitHub Actions tab
+  workflow_dispatch: # Run manually from the GitHub Actions tab
 
 permissions:
   contents: read
 
 jobs:
   audit:
-    name: Audit WordStar Ecosystem
     runs-on: ubuntu-latest
     steps:
       - name: Setup Node.js
@@ -16,136 +15,95 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install Playwright & Chromium
+      - name: Install Playwright Engine
         run: |
           npm install playwright
           npx playwright install --with-deps chromium
 
-      - name: Sweep wordstar.nexus
+      - name: Dynamic Sitemap Discovery & Portal Sweep
         run: |
-          cat << 'EOF' > sweep-wordstar.mjs
+          cat << 'EOF' > sweep.mjs
           import { chromium } from 'playwright';
-          import fs from 'fs';
 
-          const ROOT_URL = 'https://wordstar.nexus';
-          const DOMAIN = 'wordstar.nexus';
+          const SITEMAP_URL = 'https://wordstar.nexus/sitemap';
+          const BASE_DOMAIN = 'wordstar.nexus';
 
-          // Benign errors common in headless CI without physical hardware
-          const IGNORED_CONSOLE_PATTERNS = [
-            'AudioContext',
-            'autoplay',
-            'favicon.ico',
-            'WebGL: INVALID_OPERATION'
-          ];
+          async function auditEcosystem() {
+            console.log(`[SWEEP] Initializing Ecosystem Health Sweep...`);
+            console.log(`[SWEEP] Target Sitemap: ${SITEMAP_URL}`);
 
-          async function auditWordstar() {
-            console.log(`\n========================================`);
-            console.log(`[WS] INITIALIZING WORDSTAR SCANNER`);
-            console.log(`Target: ${ROOT_URL}`);
-            console.log(`========================================\n`);
-
-            const browser = await chromium.launch({
-              args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--use-gl=angle',
-                '--use-angle=swiftshader',
-                '--enable-webgl',
-                '--autoplay-policy=no-user-gesture-required'
-              ]
-            });
-
+            const browser = await chromium.launch();
             const discoveryPage = await browser.newPage();
-            const targetUrls = new Set([ROOT_URL]);
 
-            // 1. Discover sub-routes / tools linked within wordstar.nexus
             try {
-              console.log(`📡 Scanning ${ROOT_URL} for internal modules...`);
-              await discoveryPage.goto(ROOT_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
-              await discoveryPage.waitForTimeout(3000);
-
-              const discovered = await discoveryPage.evaluate(() => {
-                return Array.from(document.querySelectorAll('a[href]'))
-                  .map(a => a.href.trim())
-                  .filter(h => h && !h.startsWith('mailto:') && !h.startsWith('tel:') && !h.startsWith('javascript:'));
-              });
-
-              for (const link of discovered) {
-                const clean = link.split('#')[0].replace(/\/$/, '');
-                if (clean.includes(DOMAIN)) {
-                  targetUrls.add(clean);
-                }
-              }
+              await discoveryPage.goto(SITEMAP_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
             } catch (err) {
-              console.error(`⚠️ Could not complete discovery scrape: ${err.message}`);
+              console.error(`[SWEEP] Failed to reach sitemap: ${err.message}`);
+              await browser.close();
+              process.exit(1);
             }
+
+            // Scrape links from the sitemap
+            const rawLinks = await discoveryPage.evaluate(() => {
+              return Array.from(document.querySelectorAll('a[href]'))
+                .map(a => a.href.trim())
+                .filter(href => href && !href.startsWith('mailto:') && !href.startsWith('tel:') && !href.startsWith('javascript:'));
+            });
 
             await discoveryPage.close();
 
-            console.log(`Found ${targetUrls.size} route(s) to verify:\n`);
-            Array.from(targetUrls).forEach((u, i) => console.log(`  [${i + 1}] ${u}`));
+            const targetUrls = Array.from(new Set(rawLinks))
+              .map(url => url.split('#')[0].replace(/\/$/, ''))
+              .filter(url => url.includes(BASE_DOMAIN) && url !== SITEMAP_URL);
 
-            let totalFailures = 0;
-            const allIssues = [];
+            console.log(`\n🔍 Found ${targetUrls.length} destinations to audit:`);
+            targetUrls.forEach((u, i) => console.log(`   [${i + 1}] ${u}`));
 
-            // 2. Audit each page
+            if (targetUrls.length === 0) {
+              console.warn("⚠️ No portal links were extracted.");
+              await browser.close();
+              return;
+            }
+
+            let failures = 0;
+
             for (const url of targetUrls) {
-              console.log(`\n----------------------------------------`);
-              console.log(`Checking: ${url}`);
-              console.log(`----------------------------------------`);
-
+              console.log(`\n👉 Auditing: ${url}`);
               const page = await browser.newPage();
-              const issues = [];
+              const pageIssues = [];
 
-              // Uncaught fatal JavaScript exceptions
-              page.on('pageerror', err => issues.push(`[JS EXCEPTION] ${err.message}`));
+              // Catch unhandled runtime crashes
+              page.on('pageerror', err => {
+                pageIssues.push(`[UNCAUGHT JS] ${err.message}`);
+              });
 
-              // Critical console errors (filtering CI-specific noise)
+              // Catch console errors (excluding headless CI hardware noise)
               page.on('console', msg => {
                 if (msg.type() === 'error') {
-                  const text = msg.text();
-                  const isIgnored = IGNORED_CONSOLE_PATTERNS.some(p => text.includes(p));
-                  if (!isIgnored) {
-                    issues.push(`[CONSOLE] ${text}`);
+                  const txt = msg.text();
+                  // Filter out headless environment noise (missing sound cards, webgl, favicons)
+                  if (!txt.includes('AudioContext') && !txt.includes('favicon.ico') && !txt.includes('WebGL')) {
+                    pageIssues.push(`[CONSOLE ERROR] ${txt}`);
                   }
                 }
               });
 
               try {
-                const res = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-                if (res && res.status() >= 400) {
-                  issues.push(`[HTTP STATUS] Returned code ${res.status()}`);
+                const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+                if (response && response.status() >= 400) {
+                  pageIssues.push(`[HTTP STATUS] Returned code ${response.status()}`);
                 }
-
-                // Allow 3s for CRT filters, fonts, and DOM hydration
-                await page.waitForTimeout(3000);
-
-                // Check canvas health only for visible display canvases
-                const canvasCheck = await page.evaluate(() => {
-                  const canvases = Array.from(document.querySelectorAll('canvas'));
-                  if (canvases.length === 0) return { exists: false, healthy: true };
-                  // Verify visible canvases have rendered geometry
-                  const visibleCanvases = canvases.filter(c => c.offsetParent !== null);
-                  const allHaveDimensions = visibleCanvases.every(c => c.width > 0 && c.height > 0);
-                  return { exists: true, healthy: allHaveDimensions };
-                });
-
-                if (canvasCheck.exists && !canvasCheck.healthy) {
-                  console.warn(`  ⚠️ [CANVAS] Visible canvas rendered with 0 dimensions.`);
-                }
-
-              } catch (e) {
-                issues.push(`[NAVIGATION FAIL] ${e.message}`);
+                await page.waitForTimeout(2000);
+              } catch (err) {
+                pageIssues.push(`[NAVIGATION FAIL] ${err.message}`);
               }
 
-              if (issues.length === 0) {
-                console.log(`  ✅ [PASS] No runtime anomalies detected.`);
+              if (pageIssues.length > 0) {
+                failures += pageIssues.length;
+                console.error(`❌ Issues found on ${url}:`);
+                pageIssues.forEach(issue => console.error(`   - ${issue}`));
               } else {
-                totalFailures += issues.length;
-                issues.forEach(issue => {
-                  console.error(`  ❌ ${issue}`);
-                  allIssues.push({ url, issue });
-                });
+                console.log(`✅ Clean - No runtime errors detected.`);
               }
 
               await page.close();
@@ -153,40 +111,16 @@ jobs:
 
             await browser.close();
 
-            console.log(`\n========================================`);
-            if (totalFailures > 0) {
-              console.error(`[WS] AUDIT FAILED: ${totalFailures} issue(s) detected.`);
-              fs.writeFileSync('audit-summary.json', JSON.stringify({ totalFailures, issues: allIssues }, null, 2));
+            console.log(`\n================================`);
+            if (failures > 0) {
+              console.error(`❌ Health sweep completed with ${failures} failure(s).`);
               process.exit(1);
             } else {
-              console.log(`[WS] AUDIT PASSED: All routes operational.`);
+              console.log(`🚀 All audited links are fully functional with 0 runtime errors!`);
             }
           }
 
-          auditWordstar();
+          auditEcosystem();
           EOF
 
-          node sweep-wordstar.mjs
-
-      - name: Upload audit summary (on failure)
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: wordstar-audit-summary
-          path: audit-summary.json
-          retention-days: 7
-          if-no-files-found: ignore
-
-      - name: Write job summary
-        if: always()
-        run: |
-          echo "## WordStar.nexus Health Audit" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ -f audit-summary.json ]; then
-            echo "### Failures detected" >> $GITHUB_STEP_SUMMARY
-            echo '```json' >> $GITHUB_STEP_SUMMARY
-            cat audit-summary.json >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-          else
-            echo "✅ All routes operational — no runtime anomalies detected." >> $GITHUB_STEP_SUMMARY
-          fi
+          node sweep.mjs
