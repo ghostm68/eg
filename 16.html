@@ -4,6 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>wordstar.neXus // novawrite quantum displaywriter</title>
+  
+  <!-- In-Browser all-MiniLM-L6-v2 Semantic Embeddings -->
+  <script type="module">
+    import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+    env.allowLocalModels = false;
+    window.transformersPipeline = pipeline;
+  </script>
+
   <style>
     :root {
       --bg-deep: #0a0c10;
@@ -33,13 +41,8 @@
       scrollbar-color: var(--crimson) var(--bg-deep);
     }
 
-    *::-webkit-scrollbar {
-      width: 7px;
-      height: 7px;
-    }
-    *::-webkit-scrollbar-track {
-      background: var(--bg-deep);
-    }
+    *::-webkit-scrollbar { width: 7px; height: 7px; }
+    *::-webkit-scrollbar-track { background: var(--bg-deep); }
     *::-webkit-scrollbar-thumb {
       background: #252b38;
       border-radius: 2px;
@@ -64,16 +67,13 @@
       position: fixed;
       inset: 0;
       pointer-events: none;
-      background: linear-gradient(
-        rgba(18, 16, 16, 0) 50%, 
-        rgba(0, 0, 0, 0.25) 50%
-      );
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
       background-size: 100% 4px;
       z-index: 999;
       opacity: 0.65;
     }
 
-    /* TOP HEADER & SVG LOGO */
+    /* HEADER */
     header {
       background: linear-gradient(180deg, #161b22 0%, #0d0f14 100%);
       border-bottom: 2px solid var(--crimson);
@@ -87,12 +87,7 @@
       z-index: 10;
     }
 
-    .brand-container {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
+    .brand-container { display: flex; align-items: center; gap: 14px; }
     .logo-svg-wrap {
       width: 250px;
       height: 38px;
@@ -100,18 +95,13 @@
       align-items: center;
       filter: drop-shadow(0 2px 5px rgba(0,0,0,0.8));
     }
-
-    .logo-svg-wrap svg {
-      width: 100%;
-      height: 100%;
-      overflow: visible;
-    }
-
+    .logo-svg-wrap svg { width: 100%; height: 100%; overflow: visible; }
     .logo-text { fill: var(--crimson); }
     .logo-x { 
       fill: var(--paper);
       transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       transform-origin: center;
+      cursor: pointer;
     }
     .logo-x:hover { 
       fill: var(--steel);
@@ -130,16 +120,12 @@
       border-radius: 2px;
     }
 
-    .header-controls {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    .header-controls { display: flex; align-items: center; gap: 8px; }
 
     .btn-top {
       font-family: var(--font-mono);
       font-size: 11px;
-      padding: 5px 12px;
+      padding: 5px 10px;
       background: var(--bg-panel);
       color: var(--paper);
       border: 1px solid var(--steel);
@@ -148,7 +134,7 @@
       transition: all 0.2s ease;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
 
     .btn-top:hover {
@@ -164,7 +150,7 @@
       box-shadow: 0 0 10px var(--royal-blue);
     }
 
-    /* FUNCTION KEY RIBBON (F1 - F10) */
+    /* FUNCTION KEY BAR */
     .fkey-bar {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
@@ -201,13 +187,7 @@
       color: #fff;
     }
 
-    .fkey-btn:active {
-      transform: translateY(1px);
-      background: var(--crimson);
-      border-color: var(--crimson-hover);
-    }
-
-    /* AI / QUANTUM PROMPT CONSOLE */
+    /* TOP QUANTUM CONSOLE */
     .ai-console {
       background: #0f1218;
       border-bottom: 1px solid var(--border-dark);
@@ -228,7 +208,7 @@
       gap: 6px;
     }
 
-    .ai-label .blinker {
+    .ai-label .blinker, .muse-deck-header .blinker {
       width: 8px;
       height: 8px;
       background: var(--crimson);
@@ -251,10 +231,6 @@
       outline: none;
     }
 
-    .ai-select:focus {
-      border-color: var(--royal-blue);
-    }
-
     .ai-input {
       flex: 1;
       min-width: 240px;
@@ -265,12 +241,6 @@
       font-family: var(--font-mono);
       font-size: 12px;
       outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .ai-input:focus {
-      border-color: var(--royal-blue);
-      box-shadow: 0 0 6px var(--royal-blue-glow);
     }
 
     .btn-ai {
@@ -299,10 +269,9 @@
       position: relative;
     }
 
-    /* LEFT PANE: NOVAWRITE REFERENCE VAULT */
     .reference-pane {
       width: 38%;
-      min-width: 290px;
+      min-width: 310px;
       max-width: 550px;
       background: var(--bg-panel);
       border-right: 2px solid var(--border-dark);
@@ -331,14 +300,7 @@
       color: var(--steel-light);
     }
 
-    .pane-header b {
-      color: var(--paper);
-    }
-
-    .pane-tools {
-      display: flex;
-      gap: 6px;
-    }
+    .pane-tools { display: flex; gap: 5px; }
 
     .tool-btn {
       background: #090b0e;
@@ -350,10 +312,8 @@
       font-family: var(--font-mono);
     }
 
-    .tool-btn:hover {
-      border-color: var(--royal-blue);
-      color: #fff;
-    }
+    .tool-btn:hover { border-color: var(--royal-blue); color: #fff; }
+    .tool-btn.highlight { border-color: var(--crimson); color: #ff9999; }
 
     .ref-tabs {
       display: flex;
@@ -372,7 +332,6 @@
       cursor: pointer;
       font-family: var(--font-mono);
       border-bottom: 2px solid transparent;
-      transition: all 0.2s;
     }
 
     .ref-tab.active {
@@ -405,9 +364,7 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.5);
     }
 
-    .ref-card.active-accent {
-      border-left-color: var(--crimson);
-    }
+    .ref-card.active-accent { border-left-color: var(--crimson); }
 
     .ref-card-header {
       display: flex;
@@ -418,9 +375,15 @@
       color: var(--steel-light);
     }
 
-    .ref-card-title {
-      font-weight: bold;
-      color: var(--paper);
+    .ref-card-title { font-weight: bold; color: var(--paper); }
+
+    .sim-badge {
+      font-size: 10px;
+      padding: 1px 5px;
+      border: 1px solid var(--royal-blue);
+      background: rgba(65,105,225,0.15);
+      color: #93b5ff;
+      border-radius: 2px;
     }
 
     .ref-card-content {
@@ -432,11 +395,7 @@
       overflow-y: auto;
     }
 
-    .ref-card-actions {
-      margin-top: 8px;
-      display: flex;
-      gap: 6px;
-    }
+    .ref-card-actions { margin-top: 8px; display: flex; gap: 6px; }
 
     .mini-action {
       background: #181d26;
@@ -446,12 +405,10 @@
       padding: 2px 6px;
       cursor: pointer;
       text-transform: uppercase;
+      font-family: var(--font-mono);
     }
 
-    .mini-action:hover {
-      border-color: var(--crimson);
-      color: #fff;
-    }
+    .mini-action:hover { border-color: var(--crimson); color: #fff; }
 
     .ref-scratchpad {
       width: 100%;
@@ -467,11 +424,7 @@
       outline: none;
     }
 
-    .ref-scratchpad:focus {
-      border-color: var(--royal-blue);
-    }
-
-    /* RIGHT PANE: IBM DISPLAYWRITER 370 EDITOR */
+    /* RIGHT: MAIN DRAFTING CONSOLE */
     .editor-pane {
       flex: 1;
       display: flex;
@@ -521,12 +474,7 @@
       caret-color: var(--crimson);
     }
 
-    .page-sheet:focus {
-      border-color: #384257;
-      box-shadow: 0 0 15px rgba(65, 105, 225, 0.15), 0 8px 30px rgba(0, 0, 0, 0.8);
-    }
-
-    /* STATUS LINE (IBM DISPLAYWRITER 370 STYLE) */
+    /* STATUS BAR */
     .status-bar {
       background: #090b0e;
       border-top: 2px solid var(--crimson);
@@ -541,48 +489,141 @@
       z-index: 10;
     }
 
-    .status-left, .status-right {
+    .status-left, .status-right { display: flex; align-items: center; gap: 12px; }
+    .stat-val { color: var(--paper); font-weight: bold; }
+    .stat-tag { color: var(--crimson); font-weight: bold; }
+
+    /* POP-OUT MUSE DECK (TELEGRAPH ARCHITECTURE) */
+    .muse-deck {
+      position: fixed;
+      right: 24px;
+      bottom: 34px;
+      width: 450px;
+      max-width: calc(100vw - 36px);
+      height: 530px;
+      max-height: 82vh;
+      background: #0d0f14;
+      border: 2px solid var(--crimson);
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.9), 0 0 16px var(--crimson-glow);
+      display: flex;
+      flex-direction: column;
+      z-index: 1001;
+      font-family: var(--font-mono);
+      border-radius: 2px;
+    }
+
+    .muse-deck.minimized { height: 38px; overflow: hidden; }
+    .muse-deck.closed { display: none; }
+
+    .muse-deck-header {
+      background: #161b24;
+      border-bottom: 1px solid var(--crimson);
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: move;
+      user-select: none;
+      font-size: 11px;
+      color: var(--paper);
+    }
+
+    .muse-context-bar {
+      background: #090b0e;
+      border-bottom: 1px solid #1c222e;
+      padding: 6px 10px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      justify-content: space-between;
     }
 
-    .stat-val {
-      color: var(--paper);
+    .muse-chat-log {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: radial-gradient(circle at top, #11151e 0%, #08090d 100%);
+    }
+
+    .muse-bubble {
+      padding: 8px 10px;
+      border-radius: 2px;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .muse-bubble.muse-system {
+      border-left: 2px solid var(--steel);
+      color: var(--steel-light);
+      font-size: 11px;
+    }
+
+    .muse-bubble.user-msg {
+      background: #181d28;
+      border: 1px solid #283142;
+      color: #fff;
+      align-self: flex-end;
+      max-width: 88%;
+    }
+
+    .muse-bubble.model-msg {
+      background: #0a0d13;
+      border: 1px solid var(--border-dark);
+      border-left: 3px solid var(--crimson);
+      color: #edf0f5;
+      align-self: flex-start;
+      width: 96%;
+    }
+
+    .splice-btn {
+      display: inline-block;
+      margin-top: 8px;
+      background: var(--crimson);
+      color: #fff;
+      font-size: 10px;
       font-weight: bold;
+      padding: 4px 10px;
+      border: none;
+      cursor: pointer;
+      text-transform: uppercase;
+      border-radius: 2px;
+      font-family: var(--font-mono);
+    }
+    .splice-btn:hover { background: var(--crimson-hover); box-shadow: 0 0 6px var(--crimson); }
+
+    .muse-controls {
+      padding: 10px;
+      background: #11141b;
+      border-top: 1px solid var(--border-dark);
     }
 
-    .stat-tag {
-      color: var(--crimson);
-      font-weight: bold;
-    }
-
-    /* MODAL WINDOW (HEX, HELP, FIND) */
+    /* MODALS */
     .modal-overlay {
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.82);
       backdrop-filter: blur(2px);
-      z-index: 1000;
+      z-index: 1005;
       display: none;
       align-items: center;
       justify-content: center;
       padding: 20px;
     }
 
-    .modal-overlay.active {
-      display: flex;
-    }
+    .modal-overlay.active { display: flex; }
 
     .modal-box {
       width: 100%;
-      max-width: 680px;
+      max-width: 720px;
       background: #11151e;
       border: 2px solid var(--crimson);
       box-shadow: 0 0 25px var(--crimson-glow);
       display: flex;
       flex-direction: column;
-      max-height: 80vh;
+      max-height: 85vh;
     }
 
     .modal-header {
@@ -606,15 +647,40 @@
       cursor: pointer;
     }
 
-    .modal-close:hover {
-      color: var(--crimson);
-    }
-
     .modal-content {
       padding: 16px;
       overflow-y: auto;
       font-size: 12px;
       color: #d8dbe2;
+    }
+
+    .explain-block {
+      background: #090c12;
+      border-left: 3px solid var(--royal-blue);
+      padding: 8px 12px;
+      margin-bottom: 10px;
+    }
+    .explain-block b { color: #fff; }
+
+    .shortcut-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 14px;
+    }
+
+    .shortcut-table td, .shortcut-table th {
+      padding: 6px 10px;
+      border: 1px solid #232a38;
+      text-align: left;
+    }
+
+    .shortcut-table th { background: #19202c; color: var(--paper); }
+    .shortcut-table kbd {
+      background: #090c12;
+      border: 1px solid var(--steel);
+      padding: 2px 6px;
+      font-size: 11px;
+      color: var(--crimson);
     }
 
     .hex-dump {
@@ -629,69 +695,15 @@
       line-height: 1.4;
       white-space: pre;
     }
-
-    .shortcut-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .shortcut-table td, .shortcut-table th {
-      padding: 6px 10px;
-      border: 1px solid #232a38;
-      text-align: left;
-    }
-
-    .shortcut-table th {
-      background: #19202c;
-      color: var(--paper);
-    }
-
-    .shortcut-table kbd {
-      background: #090c12;
-      border: 1px solid var(--steel);
-      padding: 2px 6px;
-      font-size: 11px;
-      color: var(--crimson);
-    }
-
-    /* RESPONSIVE */
-    @media (max-width: 820px) {
-      .reference-pane {
-        width: 100%;
-        max-width: none;
-        height: 280px;
-        border-right: none;
-        border-bottom: 2px solid var(--border-dark);
-      }
-      .workspace {
-        flex-direction: column;
-      }
-    }
   </style>
 </head>
 <body>
 
-  <!-- TOP HEADER WITH REQUESTED EXACT SVG LOGO -->
+  <!-- HEADER -->
   <header>
     <div class="brand-container">
       <div class="logo-svg-wrap" title="wordstar.neXus core">
         <svg viewBox="0 0 600 90" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <style>
-              .logo-text { fill: #b31419; }
-              .logo-x { 
-                fill: #f7f8fa;
-                transition: all 0.3s ease;
-                transform-origin: center;
-              }
-              .logo-x:hover { 
-                fill: #5f6061;
-                filter: drop-shadow(0 0 8px #4169E1);
-                transform: scale(1.15) rotate(5deg);
-              }
-            </style>
-          </defs>	
-          <!-- wordstar.neXus - Yellow/Ivory text with larger blue X -->
           <g class="logo-text">
             <path d="M 25 25 L 32 25 L 39 60 L 46 25 L 52 25 L 59 60 L 66 25 L 73 25 L 63 68 L 57 68 L 50 35 L 43 68 L 37 68 Z"/>
             <path d="M 90 23 Q 105 23 105 45.5 Q 105 68 90 68 Q 75 68 75 45.5 Q 75 23 90 23 Z M 90 28 Q 82 28 82 45.5 Q 82 63 90 63 Q 98 63 98 45.5 Q 98 28 90 28 Z"/>
@@ -705,7 +717,7 @@
             <path d="M 350 25 L 357 25 L 357 31 Q 361 25 370 25 Q 382 25 382 37 L 382 68 L 375 68 L 375 38 Q 375 30 368 30 Q 357 30 357 42 L 357 68 L 350 68 Z"/>
             <path d="M 397 25 Q 412 25 412 42 L 398 42 Q 398 50 398 52 Q 398 63 406 63 Q 411 63 412 58 L 419 58 Q 418 68 406 68 Q 391 68 391 46.5 Q 391 25 406 25 Z M 398 37 L 405 37 Q 405 30 406 30 Q 412 30 412 37 Z"/>
           </g>
-          <g class="logo-x" style="cursor: pointer;">
+          <g class="logo-x">
             <path d="M 435 18 L 449 18 L 465 40 L 481 18 L 495 18 L 473 46.5 L 497 75 L 483 75 L 465 51 L 447 75 L 433 75 L 457 46.5 Z"/>
           </g>
           <g class="logo-text">
@@ -714,66 +726,74 @@
           </g>
         </svg>
       </div>
-      <div class="sys-pill">NOVAWRITE // SYMPHONY-EDITION</div>
+      <div class="sys-pill">QUANTUM DISPLAYWRITER // ENHANCED</div>
     </div>
 
     <div class="header-controls">
-      <button class="btn-top active" id="toggleRefBtn" title="Toggle Reference Pane (IBM Symphony Style)">
-        <span>◫</span> SYMPHONY SPLIT
+      <button class="btn-top active" id="openMuseDeckBtn" data-hint="Open Pop-out Muse Chat & Transmutation Deck (HotKey: F1)">
+        <span>⚡</span> MUSE DECK [F1]
       </button>
-      <button class="btn-top" id="soundToggle" title="Audio Keystroke Feedback">
+      <button class="btn-top active" id="toggleRefBtn" data-hint="Toggle Symphony Reference Vault split view">
+        <span>◫</span> VAULT
+      </button>
+      <button class="btn-top" id="soundToggle" data-hint="Toggle IBM Displaywriter typewriter key audio">
         <span>🔊</span> CLICK: ON
       </button>
-      <button class="btn-top" id="topAiBtn" title="Focus AI Core">
-        <span>⚡</span> AI CORE
+      <button class="btn-top" id="uplinkBtn" data-hint="Configure Cloud Model: Muse 30B, Llama 3.3 70B, or Nemotron">
+        <span>⚙</span> AI UPLINK
+      </button>
+      <button class="btn-top" id="manualBtn" data-hint="Open plain-English Operator Manual & Rosetta Stone (F9)">
+        <span>❓</span> MANUAL [F9]
       </button>
     </div>
   </header>
 
-  <!-- FUNCTION KEYS RIBBON (F1 - F10) -->
+  <!-- FUNCTION KEYS RIBBON -->
   <nav class="fkey-bar">
-    <button class="fkey-btn" onclick="triggerAction('F1')"><span>F1</span>GEN</button>
-    <button class="fkey-btn" onclick="triggerAction('F2')"><span>F2</span>HEX</button>
-    <button class="fkey-btn" onclick="triggerAction('F3')"><span>F3</span>DISK</button>
-    <button class="fkey-btn" onclick="triggerAction('F4')"><span>F4</span>PRNT</button>
-    <button class="fkey-btn" onclick="triggerAction('F5')"><span>F5</span>CLR</button>
-    <button class="fkey-btn" onclick="triggerAction('F6')"><span>F6</span>BOLD</button>
-    <button class="fkey-btn" onclick="triggerAction('F7')"><span>F7</span>UNDR</button>
-    <button class="fkey-btn" onclick="triggerAction('F8')"><span>F8</span>FIND</button>
-    <button class="fkey-btn" onclick="triggerAction('F9')"><span>F9</span>HELP</button>
-    <button class="fkey-btn" onclick="triggerAction('F10')"><span>F10</span>BOOT</button>
+    <button class="fkey-btn" onclick="triggerAction('F1')" data-hint="F1: Toggle Pop-out Muse Telemetry & Transmutation Deck"><span>F1</span>MUSE</button>
+    <button class="fkey-btn" onclick="triggerAction('F2')" data-hint="F2: Inspect memory buffer in raw Hexadecimal"><span>F2</span>HEX</button>
+    <button class="fkey-btn" onclick="triggerAction('F3')" data-hint="F3: Download draft to disk as plain text"><span>F3</span>DISK</button>
+    <button class="fkey-btn" onclick="triggerAction('F4')" data-hint="F4: Print document or export clean PDF"><span>F4</span>PRNT</button>
+    <button class="fkey-btn" onclick="triggerAction('F5')" data-hint="F5: Revert to previous buffer snapshot / Undo"><span>F5</span>REVERT</button>
+    <button class="fkey-btn" onclick="triggerAction('F6')" data-hint="F6: Bold text formatting"><span>F6</span>BOLD</button>
+    <button class="fkey-btn" onclick="triggerAction('F7')" data-hint="F7: Underline formatting"><span>F7</span>UNDR</button>
+    <button class="fkey-btn" onclick="triggerAction('F8')" data-hint="F8: Search & Replace dialog"><span>F8</span>FIND</button>
+    <button class="fkey-btn" onclick="triggerAction('F9')" data-hint="F9: Operator Manual & Function Guide"><span>F9</span>MANUAL</button>
+    <button class="fkey-btn" onclick="triggerAction('F10')" data-hint="F10: Cold restart editor session"><span>F10</span>BOOT</button>
   </nav>
 
-  <!-- AI NEURAL / QUANTUM CUT CONSOLE -->
+  <!-- TOP PROCEDURAL CONSOLE -->
   <section class="ai-console">
     <div class="ai-label">
       <span class="blinker"></span>
       QUANTUM CORE //
     </div>
-    <select class="ai-select" id="aiModeSelect">
-      <option value="quantum">BURROUGHS QUANTUM CUT</option>
-      <option value="continue">CONTINUE DRAFTING</option>
-      <option value="synthesize">SYMPHONY SYNTHESIS (EDITOR + REFS)</option>
-      <option value="hermes">HERMES LITERARY EXEGESIS</option>
+    <select class="ai-select" id="aiModeSelect" data-hint="Local utility: Burroughs Cut remixer, or quick drafting tools">
+      <option value="quantum">BURROUGHS QUANTUM CUT (Text Shredder)</option>
+      <option value="continue">CONTINUE DRAFTING (Local Prose)</option>
+      <option value="synthesize">SYMPHONY SYNTHESIS (Editor + Vault)</option>
+      <option value="hermes">HERMES LITERARY EXEGESIS (Stylistic Muse)</option>
     </select>
     <input 
       type="text" 
       class="ai-input" 
       id="aiPromptInput" 
-      placeholder="Type neural prompt, seed phrase, or 'a horse struck down by lightning'..." 
+      placeholder="Type seed/fragment or use F1 to chat with the Muse..." 
+      data-hint="Procedural seed: Press Enter to execute locally"
     />
-    <button class="btn-ai" id="generateAiBtn">DISPATCH [F1]</button>
+    <button class="btn-ai" id="proceduralRunBtn" data-hint="Run selected local procedural utility directly into editor">RUN UTILITY</button>
   </section>
 
-  <!-- WORKSPACE: IBM SYMPHONY SPLIT (NOVAWRITE REFERENCE + DISPLAYWRITER) -->
+  <!-- MAIN WORKSPACE -->
   <main class="workspace">
-    <!-- LEFT: REFERENCE MATERIALS (NOVAWRITE) -->
+    <!-- LEFT: REFERENCE VAULT -->
     <aside class="reference-pane" id="referencePane">
       <div class="pane-header">
         <span><b>NOVAWRITE</b> // REFERENCE VAULT</span>
         <div class="pane-tools">
-          <button class="tool-btn" onclick="addNewRefCard()" title="Add reference card">+ NOTE</button>
-          <button class="tool-btn" onclick="importFileToRef()" title="Load local .txt/.md file">IMPORT</button>
+          <button class="tool-btn highlight" onclick="runSemanticConceptRerank()" data-hint="Uses all-MiniLM-L6-v2 embeddings to rerank notes by similarity to your draft!">RERANK [AI]</button>
+          <button class="tool-btn" onclick="addNewRefCard()" data-hint="Add a custom note card">+ NOTE</button>
+          <button class="tool-btn" onclick="importFileToRef()" data-hint="Import .txt file into the vault">IMPORT</button>
         </div>
       </div>
 
@@ -784,40 +804,39 @@
       </div>
 
       <div class="ref-body" id="refTabSources">
-        <!-- Default sample reference cards -->
         <div class="ref-card active-accent">
           <div class="ref-card-header">
             <span class="ref-card-title">KIKKULI & THE CHARIOTEERS</span>
-            <span>01 // HIST</span>
+            <span class="sim-badge" id="sim-01">HIST // 01</span>
           </div>
           <div class="ref-card-content">The horse is the keeper of the memory of the plains. Kikkuli knew this: his tablets were lost in the Bronze Age collapse, but the horse became the book of Kikkuli, bound in leather and bone.</div>
           <div class="ref-card-actions">
             <button class="mini-action" onclick="injectRefToEditor(this)">Insert to Text</button>
-            <button class="mini-action" onclick="feedRefToAi(this)">Feed AI</button>
+            <button class="mini-action" onclick="feedRefToMuse(this)">Feed to Muse</button>
           </div>
         </div>
 
         <div class="ref-card">
           <div class="ref-card-header">
             <span class="ref-card-title">BURROUGHS CUT-UP PROTOCOL</span>
-            <span>02 // SYNTAX</span>
+            <span class="sim-badge" id="sim-02">SYNTAX // 02</span>
           </div>
           <div class="ref-card-content">"When you cut into the present the future leaks out." Take four narrative columns, transpose alternate half-lines, allow spontaneous resonance to shatter deterministic writing blocks.</div>
           <div class="ref-card-actions">
             <button class="mini-action" onclick="injectRefToEditor(this)">Insert to Text</button>
-            <button class="mini-action" onclick="feedRefToAi(this)">Feed AI</button>
+            <button class="mini-action" onclick="feedRefToMuse(this)">Feed to Muse</button>
           </div>
         </div>
 
         <div class="ref-card">
           <div class="ref-card-header">
             <span class="ref-card-title">IBM SYMPHONY 1984 NOTE</span>
-            <span>03 // ARCH</span>
+            <span class="sim-badge" id="sim-03">ARCH // 03</span>
           </div>
           <div class="ref-card-content">Unified memory workspace: text drafting, structured data stashes, and real-time calculation coexist on an uninterrupted 640KB canvas. No file bouncing, no lost context.</div>
           <div class="ref-card-actions">
             <button class="mini-action" onclick="injectRefToEditor(this)">Insert to Text</button>
-            <button class="mini-action" onclick="feedRefToAi(this)">Feed AI</button>
+            <button class="mini-action" onclick="feedRefToMuse(this)">Feed to Muse</button>
           </div>
         </div>
       </div>
@@ -826,7 +845,7 @@
         <textarea 
           class="ref-scratchpad" 
           id="scratchpadInput" 
-          placeholder="Jot working quotes, prompt fragments, character names, or URLs. Everything here remains alongside your typewriter window..."
+          placeholder="Jot working quotes, prompt fragments, character names. Stays beside your typewriter sheet..."
         ></textarea>
         <button class="mini-action" style="align-self: flex-start;" onclick="copyScratchpadToEditor()">Paste All to Main Editor</button>
       </div>
@@ -835,27 +854,29 @@
         <div class="ref-card">
           <div class="ref-card-header">
             <span class="ref-card-title">DISPATCH 01: SYSTEM/370</span>
-            <span>EBCDIC_ONLINE</span>
+            <span class="sim-badge">EBCDIC_ONLINE</span>
           </div>
           <div class="ref-card-content">Direct console frequency active. Mechanical recoil, stepped rotary selectors, and raw cathode focus for writers under 640K constraints.</div>
           <div class="ref-card-actions">
             <button class="mini-action" onclick="injectRefToEditor(this)">Insert to Text</button>
+            <button class="mini-action" onclick="feedRefToMuse(this)">Feed to Muse</button>
           </div>
         </div>
         <div class="ref-card">
           <div class="ref-card-header">
             <span class="ref-card-title">DISPATCH 02: SUITCASES</span>
-            <span>SYNC_OK</span>
+            <span class="sim-badge">SYNC_OK</span>
           </div>
-          <div class="ref-card-content">The menthol ash fell. It had to be a dream, he thought, yet he was wide awake. The Huey banked hard against the city lights, the floor tilting beneath our feet.</div>
+          <div class="ref-card-content">The menthol ash fell. It had to be a dream, he thought, yet he was wide awake. The Huey banked hard against the city lights, the floor tilting beneath our feet. Burroughs looked out into the rotor wash.</div>
           <div class="ref-card-actions">
             <button class="mini-action" onclick="injectRefToEditor(this)">Insert to Text</button>
+            <button class="mini-action" onclick="feedRefToMuse(this)">Feed to Muse</button>
           </div>
         </div>
       </div>
     </aside>
 
-    <!-- RIGHT: MAIN TEXT DRAFTING CONSOLE (DISPLAYWRITER) -->
+    <!-- RIGHT: MAIN DRAFTING CONSOLE -->
     <section class="editor-pane">
       <div class="editor-ruler">
         ....+....10....+....20....+....30....+....40....+....50....+....60....+....70....+....80
@@ -867,67 +888,155 @@
           id="editor" 
           contenteditable="true" 
           spellcheck="false"
-        >Initializing Quantum Core... Ready for Input.
-Gen/F1 qUANTUM cUTs 'a horse struck down by lightning'
-Use as notepad type, exports html- Select, F6 for BOLD.
-Click TOP RIGHT for AI (responses auto-import into notes or editor).
-
-The Huey banked hard against the city lights, the floor tilting beneath our feet as the city dropped away into the dark. Burroughs sat back against an ammo crate, lighting a fresh English Ovals cigarette in the roaring draft, while Inky lay on the ribbed floor, catching his breath against his open laptop screen.
+        >The Huey banked hard against the city lights, the floor tilting beneath our feet as the city dropped away into the dark. Burroughs sat back against an ammo crate, lighting a fresh English Ovals cigarette in the roaring draft, while Inky lay on the ribbed floor, catching his breath against his open laptop screen.
 
 Down in DeLand, a woman with a pair of shears was waiting—and we were bringing a flying riot with us.</div>
       </div>
     </section>
   </main>
 
-  <!-- STATUS FOOTER -->
+  <!-- POP-OUT MUSE DECK (TELEGRAPH ARCHITECTURE) -->
+  <div class="muse-deck" id="museDeck">
+    <div class="muse-deck-header" id="museDeckHeader">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="blinker"></span>
+        <b>MUSE DECK // TELEMETRIC APPARATUS</b>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="mini-action" onclick="minimizeMuseDeck()">—</button>
+        <button class="mini-action" onclick="toggleMuseDeck()">✕</button>
+      </div>
+    </div>
+
+    <!-- CONTEXT INGESTION BAR -->
+    <div class="muse-context-bar">
+      <button class="mini-action" onclick="ingestCurrentScene()" title="Locks the paragraph around your cursor as context">
+        ✦ INGEST DRAFT CONTEXT
+      </button>
+      <span id="contextNotice" style="font-size:10px; color:var(--steel-light);">No context loaded</span>
+    </div>
+
+    <!-- SCROLLABLE CHAT & TRANSMISSION LOG -->
+    <div class="muse-chat-log" id="museChatLog">
+      <div class="muse-bubble muse-system">
+        // TELEGRAPH GATEWAY ACTIVE.<br>
+        // Model: <b id="deckModelBadge">meta/muse-glimmer-30b</b><br>
+        // Test concepts here safely. Click <b>[✦ SPLICE TO MANUSCRIPT]</b> to insert approved text into your draft.
+      </div>
+    </div>
+
+    <!-- CONTROLS & INPUT -->
+    <div class="muse-controls">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:11px;">
+        <span>ENTROPY: <b id="entropyVal" style="color:var(--crimson);">0.95</b></span>
+        <input type="range" id="entropySlider" min="0.2" max="1.0" step="0.05" value="0.95" style="width:120px;" oninput="document.getElementById('entropyVal').innerText = this.value">
+      </div>
+      <div style="display:flex; gap:6px;">
+        <textarea id="museCarrierInput" class="ref-scratchpad" style="height:55px; min-height:55px;" placeholder="Transmit carrier signal or scene direction... (Enter to send, Shift+Enter for newline)"></textarea>
+        <button class="btn-ai" id="museTransmuteBtn" onclick="transmitToMuse()" style="min-width:95px;">TRANSMUTE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS FOOTER WITH LIVE HOVER DECODER -->
   <footer class="status-bar">
     <div class="status-left">
-      <span>SYSTEM: <span class="stat-tag">Quantum DisplayWriter 370</span></span>
-      <span>MEM: <span class="stat-val">640K CONVENTIONAL</span></span>
-      <span>DRIVE A: <span class="stat-val" style="color:var(--emerald);">ONLINE</span></span>
+      <span>SYS: <span class="stat-tag">DisplayWriter 370</span></span>
+      <span>MODEL: <span class="stat-val" id="activeModelLabel">meta/muse-glimmer-30b</span></span>
       <span>MODE: <span class="stat-val" id="insertMode">INSERT</span></span>
+      <span>DECODER: <span class="stat-tag" id="hudHint">SYSTEM READY // HOVER OVER ANY BUTTON FOR GUIDANCE</span></span>
     </div>
     <div class="status-right">
       <span>LN: <span class="stat-val" id="statLine">1</span></span>
-      <span>COL: <span class="stat-val" id="statCol">1</span></span>
       <span>WORDS: <span class="stat-val" id="statWords">0</span></span>
-      <span>CHARS: <span class="stat-val" id="statChars">0</span></span>
       <span>STATUS: <span class="stat-tag" id="sysNotice">READY</span></span>
     </div>
   </footer>
 
-  <!-- MODAL: HELP & SHORTCUTS -->
+  <!-- MODAL: OPERATOR MANUAL / ROSETTA STONE -->
   <div class="modal-overlay" id="helpModal">
     <div class="modal-box">
       <div class="modal-header">
-        <span>WORDSTAR // IBM DISPLAYWRITER PROTOCOLS</span>
+        <span>WORDSTAR // OPERATOR MANUAL & ROSETTA STONE</span>
         <button class="modal-close" onclick="closeModal('helpModal')">✕</button>
       </div>
       <div class="modal-content">
-        <p style="margin-bottom: 12px; color: #a0aec0;">Use standard function keys or keyboard equivalents inside the workspace:</p>
+        <div class="explain-block">
+          <b>⚡ HOW TO USE THE MUSE DECK (SAFE WORKFLOW)</b>
+          <p style="margin-top: 4px;">• <b>Sandboxed Staging:</b> The Muse Deck [F1] keeps AI conversations completely separate from your draft. The model will <i>never</i> alter your manuscript until you click <b>[✦ SPLICE TO MANUSCRIPT]</b>.</p>
+          <p style="margin-top: 4px;">• <b>Context Ingestion:</b> Place your cursor in your draft and click <b>[✦ INGEST DRAFT CONTEXT]</b>. The Muse reads your surrounding scene without modifying it.</p>
+          <p style="margin-top: 4px;">• <b>Entropy Dial:</b> 0.95 gives high poetic and sensory atmosphere; 0.50 gives conservative, direct prose.</p>
+        </div>
+
+        <div class="explain-block" style="border-left-color: var(--crimson);">
+          <b>🧠 IN-BROWSER SEMANTIC RADAR (all-MiniLM-L6-v2)</b>
+          <p style="margin-top: 4px;">• <b>RERANK [AI]:</b> Runs 100% locally in your browser. It calculates the mathematical similarity between what you are writing and your Reference Vault cards, automatically sorting the most relevant notes to the top.</p>
+        </div>
+
+        <div class="explain-block" style="border-left-color: var(--amber);">
+          <b>✂ BURROUGHS QUANTUM CUT</b>
+          <p style="margin-top: 4px;">• An algorithmic implementation of William S. Burroughs's cut-up technique. It shreds the words currently on screen and reassembles them into recombinant fragments to break writer's block.</p>
+        </div>
+
         <table class="shortcut-table">
           <thead>
-            <tr><th>KEY</th><th>COMMAND</th><th>DESCRIPTION</th></tr>
+            <tr><th>KEY</th><th>COMMAND</th><th>ACTION</th></tr>
           </thead>
           <tbody>
-            <tr><td><kbd>F1</kbd></td><td>GEN</td><td>Execute AI Quantum Cut / Continuation</td></tr>
-            <tr><td><kbd>F2</kbd></td><td>HEX</td><td>Inspect document buffer in raw Hexadecimal</td></tr>
-            <tr><td><kbd>F3</kbd></td><td>DISK</td><td>Save to disk (.txt, .html, or memory snapshot)</td></tr>
-            <tr><td><kbd>F4</kbd></td><td>PRNT</td><td>Trigger clean document print/PDF export</td></tr>
-            <tr><td><kbd>F5</kbd></td><td>CLR</td><td>Wipe active text buffer</td></tr>
-            <tr><td><kbd>F6</kbd> / <kbd>Ctrl+B</kbd></td><td>BOLD</td><td>Toggle bold text formatting</td></tr>
+            <tr><td><kbd>F1</kbd></td><td>MUSE</td><td>Toggle Pop-out Muse Transmutation Deck</td></tr>
+            <tr><td><kbd>F2</kbd></td><td>HEX</td><td>Inspect document memory buffer in Hexadecimal</td></tr>
+            <tr><td><kbd>F3</kbd></td><td>DISK</td><td>Save document to plain text file</td></tr>
+            <tr><td><kbd>F4</kbd></td><td>PRINT</td><td>Export or print clean manuscript</td></tr>
+            <tr><td><kbd>F5</kbd></td><td>REVERT</td><td>Undo last insertion / restore buffer snapshot</td></tr>
+            <tr><td><kbd>F6</kbd> / <kbd>Ctrl+B</kbd></td><td>BOLD</td><td>Toggle bold text</td></tr>
             <tr><td><kbd>F7</kbd> / <kbd>Ctrl+U</kbd></td><td>UNDR</td><td>Toggle underline styling</td></tr>
-            <tr><td><kbd>F8</kbd> / <kbd>Ctrl+F</kbd></td><td>FIND</td><td>Open Find & Replace dialog</td></tr>
-            <tr><td><kbd>F9</kbd></td><td>HELP</td><td>Display system commands matrix</td></tr>
-            <tr><td><kbd>F10</kbd></td><td>BOOT</td><td>Reboot terminal state & cache</td></tr>
-            <tr><td><kbd>Insert</kbd></td><td>OVERTYPE</td><td>Toggle between Insert & Overtype mode</td></tr>
+            <tr><td><kbd>F8</kbd> / <kbd>Ctrl+F</kbd></td><td>FIND</td><td>Search and replace text</td></tr>
+            <tr><td><kbd>F9</kbd></td><td>MANUAL</td><td>Open this Rosetta Stone manual</td></tr>
+            <tr><td><kbd>F10</kbd></td><td>BOOT</td><td>Cold reboot terminal session</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: HEX DUMP VIEWER -->
+  <!-- MODAL: AI UPLINK CONFIG -->
+  <div class="modal-overlay" id="uplinkModal">
+    <div class="modal-box" style="max-width: 520px;">
+      <div class="modal-header">
+        <span>⚡ NEURAL UPLINK // NVIDIA NIM & MODEL SELECTOR</span>
+        <button class="modal-close" onclick="closeModal('uplinkModal')">✕</button>
+      </div>
+      <div class="modal-content" style="display:flex; flex-direction:column; gap:12px;">
+        <p style="color:var(--steel-light);">Select your preferred generative engine for the Muse Deck:</p>
+        
+        <div>
+          <label style="display:block; margin-bottom:4px; font-weight:bold;">TARGET MODEL:</label>
+          <select id="modelChoice" class="ai-select" style="width:100%;">
+            <option value="meta/muse-glimmer-30b">meta/muse-glimmer-30b [TELEGRAPH DEFAULT]</option>
+            <option value="meta/llama-3.3-70b-instruct">meta/llama-3.3-70b-instruct [TRUE HEAVYWEIGHT 70B]</option>
+            <option value="nvidia/nvidia-nemotron-nano-9b-v2">nvidia/nvidia-nemotron-nano-9b-v2 [FAST 9B NANO]</option>
+            <option value="deepseek-ai/deepseek-r1">deepseek-ai/deepseek-r1 [FRONTIER REASONING]</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="display:block; margin-bottom:4px; font-weight:bold;">NVIDIA API KEY (build.nvidia.com):</label>
+          <input type="password" id="nvidiaApiKey" class="ai-input" style="width:100%;" placeholder="nvapi-..." />
+        </div>
+
+        <div style="font-size:11px; color:#888;">
+          * Key is stored only in your browser's <code>localStorage</code> and routed through the proxy worker.
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: 8px;">
+          <button class="btn-ai" onclick="saveUplinkConfig()">ENGAGE UPLINK</button>
+          <button class="btn-top" onclick="closeModal('uplinkModal')">CANCEL</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: HEX DUMP -->
   <div class="modal-overlay" id="hexModal">
     <div class="modal-box">
       <div class="modal-header">
@@ -960,36 +1069,36 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
     </div>
   </div>
 
-  <!-- JAVASCRIPT LOGIC -->
+  <!-- MAIN SCRIPT -->
   <script>
     const editor = document.getElementById("editor");
     const statWords = document.getElementById("statWords");
-    const statChars = document.getElementById("statChars");
     const statLine = document.getElementById("statLine");
-    const statCol = document.getElementById("statCol");
     const insertModeSpan = document.getElementById("insertMode");
     const sysNotice = document.getElementById("sysNotice");
+    const hudHint = document.getElementById("hudHint");
     const referencePane = document.getElementById("referencePane");
     const toggleRefBtn = document.getElementById("toggleRefBtn");
     const soundToggle = document.getElementById("soundToggle");
     const aiPromptInput = document.getElementById("aiPromptInput");
-    const generateAiBtn = document.getElementById("generateAiBtn");
+    const proceduralRunBtn = document.getElementById("proceduralRunBtn");
     const aiModeSelect = document.getElementById("aiModeSelect");
+    const activeModelLabel = document.getElementById("activeModelLabel");
+    const deckModelBadge = document.getElementById("deckModelBadge");
 
     let soundEnabled = true;
     let isOvertype = false;
     let audioCtx = null;
+    let lastBufferSnapshot = "";
+    let minilmPipeline = null;
+    let currentDraftContext = "";
 
-    // Web Audio Synthesizer for IBM Mechanical Typewriter Sound
+    // AUDIO CLICK GENERATOR
     function playKeyClick() {
       if (!soundEnabled) return;
       try {
-        if (!audioCtx) {
-          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         const filter = audioCtx.createBiquadFilter();
@@ -997,113 +1106,111 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
         osc.type = "triangle";
         osc.frequency.setValueAtTime(140 + Math.random() * 80, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.04);
-
         filter.type = "bandpass";
         filter.frequency.value = 800;
 
         gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.045);
-
         osc.connect(filter);
         filter.connect(gain);
         gain.connect(audioCtx.destination);
-
         osc.start();
         osc.stop(audioCtx.currentTime + 0.05);
-      } catch (e) {
-        // audio context handling
-      }
+      } catch (e) {}
     }
 
-    // Update Word/Char/Cursor Stats
+    // UPDATE STATS & AUTO-SAVE
     function updateStats() {
       const text = editor.innerText || "";
-      statChars.innerText = text.length;
-      
       const words = text.trim() ? text.trim().split(/\s+/).length : 0;
       statWords.innerText = words;
 
-      // Cursor position estimation
       const sel = window.getSelection();
       if (sel && sel.rangeCount > 0) {
         const range = sel.getRangeAt(0);
-        const preCaretRange = range.cloneRange();
-        preCaretRange.selectNodeContents(editor);
-        preCaretRange.setEnd(range.endContainer, range.endOffset);
-        const preText = preCaretRange.toString();
-        const lines = preText.split("\n");
-        statLine.innerText = lines.length;
-        statCol.innerText = lines[lines.length - 1].length + 1;
+        const preRange = range.cloneRange();
+        preRange.selectNodeContents(editor);
+        preRange.setEnd(range.endContainer, range.endOffset);
+        statLine.innerText = preRange.toString().split("\n").length;
       }
-
-      // Auto-save to LocalStorage
       localStorage.setItem("novawrite_buffer", editor.innerHTML);
     }
 
-    editor.addEventListener("input", () => {
-      playKeyClick();
-      updateStats();
-    });
-
+    editor.addEventListener("input", () => { playKeyClick(); updateStats(); });
     editor.addEventListener("keyup", updateStats);
     editor.addEventListener("click", updateStats);
 
-    // Audio button toggle
+    // DYNAMIC STATUS HOVER HINTS
+    document.querySelectorAll('[data-hint]').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        hudHint.innerText = el.getAttribute('data-hint');
+        hudHint.style.color = "var(--amber)";
+      });
+      el.addEventListener('mouseleave', () => {
+        hudHint.innerText = "SYSTEM READY // HOVER OVER ANY BUTTON FOR GUIDANCE";
+        hudHint.style.color = "var(--crimson)";
+      });
+    });
+
+    // SOUND TOGGLE
     soundToggle.addEventListener("click", () => {
       soundEnabled = !soundEnabled;
       soundToggle.innerHTML = soundEnabled ? "<span>🔊</span> CLICK: ON" : "<span>🔇</span> CLICK: OFF";
       soundToggle.classList.toggle("active", soundEnabled);
     });
 
-    // Reference Split Toggle
+    // SYMPHONY SPLIT TOGGLE
     toggleRefBtn.addEventListener("click", () => {
       referencePane.classList.toggle("collapsed");
       toggleRefBtn.classList.toggle("active", !referencePane.classList.contains("collapsed"));
     });
 
-    // Focus AI input button
-    document.getElementById("topAiBtn").addEventListener("click", () => {
-      aiPromptInput.focus();
-      aiPromptInput.select();
+    document.getElementById("manualBtn").addEventListener("click", () => openModal("helpModal"));
+    document.getElementById("uplinkBtn").addEventListener("click", () => {
+      document.getElementById("nvidiaApiKey").value = localStorage.getItem("quantum_nvidia_key") || "";
+      document.getElementById("modelChoice").value = localStorage.getItem("quantum_target_model") || "meta/muse-glimmer-30b";
+      openModal("uplinkModal");
     });
 
-    // Function Key Command Dispatcher
+    function saveUplinkConfig() {
+      const key = document.getElementById("nvidiaApiKey").value.trim();
+      const model = document.getElementById("modelChoice").value;
+      localStorage.setItem("quantum_nvidia_key", key);
+      localStorage.setItem("quantum_target_model", model);
+      activeModelLabel.innerText = model.split('/')[1] || model;
+      deckModelBadge.innerText = model;
+      closeModal("uplinkModal");
+      notify("UPLINK_CONFIG_ENGAGED");
+    }
+
+    // MODAL HELPERS
+    function openModal(id) { document.getElementById(id).classList.add("active"); }
+    function closeModal(id) { document.getElementById(id).classList.remove("active"); editor.focus(); }
+
+    function notify(msg) {
+      sysNotice.innerText = msg;
+      sysNotice.style.color = "var(--amber)";
+      setTimeout(() => {
+        sysNotice.innerText = "READY";
+        sysNotice.style.color = "var(--crimson)";
+      }, 3500);
+    }
+
+    // FUNCTION KEY COMMANDS
     function triggerAction(key) {
       playKeyClick();
       switch (key) {
-        case "F1":
-          runAiGeneration();
-          break;
-        case "F2":
-          showHexModal();
-          break;
-        case "F3":
-          saveToDisk();
-          break;
-        case "F4":
-          window.print();
-          break;
-        case "F5":
-          if (confirm("Wipe document buffer and reset to empty sheet?")) {
-            editor.innerHTML = "";
-            updateStats();
-            notify("BUFFER_CLEARED");
-          }
-          break;
-        case "F6":
-          document.execCommand("bold", false, null);
-          break;
-        case "F7":
-          document.execCommand("underline", false, null);
-          break;
-        case "F8":
-          openModal("findModal");
-          break;
-        case "F9":
-          openModal("helpModal");
-          break;
+        case "F1": toggleMuseDeck(); break;
+        case "F2": showHexModal(); break;
+        case "F3": saveToDisk(); break;
+        case "F4": window.print(); break;
+        case "F5": revertBuffer(); break;
+        case "F6": document.execCommand("bold", false, null); break;
+        case "F7": document.execCommand("underline", false, null); break;
+        case "F8": openModal("findModal"); break;
+        case "F9": openModal("helpModal"); break;
         case "F10":
-          if (confirm("Execute cold boot and reload initial system configuration?")) {
+          if (confirm("Cold boot editor and reload initial template?")) {
             localStorage.removeItem("novawrite_buffer");
             location.reload();
           }
@@ -1111,7 +1218,6 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
       }
     }
 
-    // Keyboard Hotkey Interceptor (F1-F10 + Overtype)
     window.addEventListener("keydown", (e) => {
       if (e.key >= "F1" && e.key <= "F10") {
         e.preventDefault();
@@ -1123,17 +1229,26 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
       }
     });
 
-    // Modals Handling
-    function openModal(id) {
-      document.getElementById(id).classList.add("active");
+    function revertBuffer() {
+      if (lastBufferSnapshot) {
+        editor.innerHTML = lastBufferSnapshot;
+        updateStats();
+        notify("BUFFER_REVERTED_OK");
+      } else {
+        notify("NO_REVERT_POINT");
+      }
     }
 
-    function closeModal(id) {
-      document.getElementById(id).classList.remove("active");
-      editor.focus();
+    function saveToDisk() {
+      const text = editor.innerText;
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `displaywriter_draft_${Date.now()}.txt`;
+      a.click();
+      notify("DISK_SAVED_OK");
     }
 
-    // HEX DUMP GENERATOR (F2)
     function showHexModal() {
       const text = editor.innerText || "";
       let output = "";
@@ -1141,58 +1256,32 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
       for (let i = 0; i < bytes.length; i += 16) {
         const offset = i.toString(16).padStart(6, "0");
         const chunk = bytes.slice(i, i + 16);
-        let hexPart = "";
-        let asciiPart = "";
+        let hexPart = "", asciiPart = "";
         for (let j = 0; j < 16; j++) {
           if (j < chunk.length) {
             hexPart += chunk[j].toString(16).padStart(2, "0") + " ";
             asciiPart += (chunk[j] >= 32 && chunk[j] <= 126) ? String.fromCharCode(chunk[j]) : ".";
-          } else {
-            hexPart += "   ";
-          }
+          } else { hexPart += "   "; }
         }
         output += `${offset}  ${hexPart} |${asciiPart}|\n`;
       }
-      document.getElementById("hexDumpContainer").innerText = output || "000000  00 00 00 00 ... [EMPTY BUFFER]";
+      document.getElementById("hexDumpContainer").innerText = output || "000000 [EMPTY BUFFER]";
       openModal("hexModal");
     }
 
-    // SAVE TO DISK (F3)
-    function saveToDisk() {
-      const text = editor.innerText;
-      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `displaywriter_nexus_${Date.now()}.txt`;
-      a.click();
-      notify("DISK_SAVED_OK");
-    }
-
-    // FIND & REPLACE (F8)
     function executeReplace() {
       const findVal = document.getElementById("findInput").value;
       const replaceVal = document.getElementById("replaceInput").value;
       if (!findVal) return;
-      const text = editor.innerHTML;
-      const escapedFind = findVal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(escapedFind, 'g');
-      editor.innerHTML = text.replace(regex, replaceVal);
+      lastBufferSnapshot = editor.innerHTML;
+      const regex = new RegExp(findVal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+      editor.innerHTML = editor.innerHTML.replace(regex, replaceVal);
       updateStats();
       closeModal("findModal");
       notify("REPLACE_COMPLETE");
     }
 
-    // TEMPORARY NOTICE PROMPT
-    function notify(msg) {
-      sysNotice.innerText = msg;
-      sysNotice.style.color = "var(--amber)";
-      setTimeout(() => {
-        sysNotice.innerText = "READY";
-        sysNotice.style.color = "var(--crimson)";
-      }, 3500);
-    }
-
-    // REFERENCE TABS SWITCHING
+    // VAULT CONTROLS
     function switchRefTab(tab) {
       document.querySelectorAll(".ref-tab").forEach(t => t.classList.remove("active"));
       document.getElementById("refTabSources").style.display = "none";
@@ -1201,37 +1290,36 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
 
       if (tab === "sources") {
         document.getElementById("refTabSources").style.display = "flex";
-        event.target.classList.add("active");
       } else if (tab === "scratchpad") {
         document.getElementById("refTabScratchpad").style.display = "flex";
-        event.target.classList.add("active");
       } else if (tab === "transmissions") {
         document.getElementById("refTabTransmissions").style.display = "flex";
-        event.target.classList.add("active");
       }
+      event.target.classList.add("active");
     }
 
-    // REFERENCE ACTIONS
     function injectRefToEditor(btn) {
-      const card = btn.closest(".ref-card");
-      const content = card.querySelector(".ref-card-content").innerText;
+      lastBufferSnapshot = editor.innerHTML;
+      const content = btn.closest(".ref-card").querySelector(".ref-card-content").innerText;
       editor.focus();
       document.execCommand("insertText", false, "\n\n" + content + "\n");
       updateStats();
       notify("REF_INSERTED");
     }
 
-    function feedRefToAi(btn) {
-      const card = btn.closest(".ref-card");
-      const content = card.querySelector(".ref-card-content").innerText;
-      aiPromptInput.value = content.slice(0, 140);
-      aiPromptInput.focus();
-      notify("SEEDED_TO_AI");
+    function feedRefToMuse(btn) {
+      const content = btn.closest(".ref-card").querySelector(".ref-card-content").innerText;
+      const muse = document.getElementById("museDeck");
+      if (muse.classList.contains("closed")) toggleMuseDeck();
+      document.getElementById("museCarrierInput").value = content;
+      document.getElementById("museCarrierInput").focus();
+      notify("SEEDED_TO_MUSE");
     }
 
     function copyScratchpadToEditor() {
       const padVal = document.getElementById("scratchpadInput").value;
       if (!padVal.trim()) return;
+      lastBufferSnapshot = editor.innerHTML;
       editor.focus();
       document.execCommand("insertText", false, "\n" + padVal + "\n");
       updateStats();
@@ -1250,16 +1338,15 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
       card.innerHTML = `
         <div class="ref-card-header">
           <span class="ref-card-title">${title.toUpperCase()}</span>
-          <span>USR // REF</span>
+          <span class="sim-badge">USR // REF</span>
         </div>
         <div class="ref-card-content">${content}</div>
         <div class="ref-card-actions">
           <button class="mini-action" onclick="injectRefToEditor(this)">Insert to Text</button>
-          <button class="mini-action" onclick="feedRefToAi(this)">Feed AI</button>
+          <button class="mini-action" onclick="feedRefToMuse(this)">Feed to Muse</button>
         </div>
       `;
       container.prepend(card);
-      switchRefTab("sources");
       notify("NOTE_ADDED");
     }
 
@@ -1272,19 +1359,18 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (re) => {
-          const content = re.target.result;
           const container = document.getElementById("refTabSources");
           const card = document.createElement("div");
           card.className = "ref-card active-accent";
           card.innerHTML = `
             <div class="ref-card-header">
               <span class="ref-card-title">${file.name.toUpperCase()}</span>
-              <span>FILE // IMPORT</span>
+              <span class="sim-badge">FILE</span>
             </div>
-            <div class="ref-card-content">${content.slice(0, 1000)}</div>
+            <div class="ref-card-content">${re.target.result.slice(0, 1000)}</div>
             <div class="ref-card-actions">
               <button class="mini-action" onclick="injectRefToEditor(this)">Insert to Text</button>
-              <button class="mini-action" onclick="feedRefToAi(this)">Feed AI</button>
+              <button class="mini-action" onclick="feedRefToMuse(this)">Feed to Muse</button>
             </div>
           `;
           container.prepend(card);
@@ -1295,74 +1381,292 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
       input.click();
     }
 
-    // AI & QUANTUM CUT SYNTHESIS GENERATOR
-    function runAiGeneration() {
-      const prompt = aiPromptInput.value.trim();
-      const mode = aiModeSelect.value;
-      const text = editor.innerText;
-      
-      notify("NEURAL_DISPATCH...");
-      generateAiBtn.disabled = true;
-      generateAiBtn.innerText = "STREAMING...";
-
-      setTimeout(() => {
-        let generatedText = "";
-
-        if (mode === "quantum") {
-          // Burroughs style algorithmic Cut-Up generator
-          const pool = (prompt + " " + text).split(/\s+/).filter(w => w.length > 2);
-          const shuffled = [...pool].sort(() => 0.5 - Math.random());
-          const phrases = [];
-          for (let i = 0; i < Math.min(shuffled.length, 36); i += 4) {
-            phrases.push(shuffled.slice(i, i + 4).join(" "));
-          }
-          generatedText = "\n\n// [QUANTUM CUT COLLAPSE]\n" + phrases.join(" — ") + ".\n";
-        } else if (mode === "continue") {
-          const endings = [
-            "The phosphorescent dials fluttered across the console, recording frequencies unheard since 1972.",
-            "He tapped the carriage return with the flat of his thumb, knowing the broadcast was already circulating through the relay towers.",
-            "Inky watched the cursor pulse in the dark room, feeling the heavy thrum of the mainframe breathing through the chassis.",
-            "Words landed on the CRT screen like iron rivets; there was no room left for retreat."
-          ];
-          const pick = endings[Math.floor(Math.random() * endings.length)];
-          generatedText = " " + pick + " ";
-        } else if (mode === "synthesize") {
-          // Synthesis combining references with current drafts
-          const refs = Array.from(document.querySelectorAll(".ref-card-content")).map(el => el.innerText);
-          const randRef = refs[Math.floor(Math.random() * refs.length)] || "The archives are open.";
-          generatedText = `\n\n[SYMPHONY SYNTHESIS: ${prompt || "PRIMARY_LINE"}]\n` +
-            `Intersecting: "${randRef.slice(0, 90)}..."\n` +
-            `The narrative recombines where cathode memory intersects the open wire. All nodes locked.\n`;
-        } else {
-          generatedText = `\n\n[HERMES EXEGESIS: ${prompt || "SYSTEM"}]\n` +
-            `"Do not shortchange the muse." The frequency from wordstar.nexus remains armed; sovereign words withstand the algorithmic noise.\n`;
-        }
-
-        // Stream into editor
-        editor.focus();
-        document.execCommand("insertText", false, generatedText);
-        updateStats();
-
-        generateAiBtn.disabled = false;
-        generateAiBtn.innerText = "DISPATCH [F1]";
-        notify("NEURAL_SYNC_OK");
-      }, 700);
+    // ==========================================
+    // SEMANTIC CONCEPT RERANK (all-MiniLM-L6-v2)
+    // ==========================================
+    function cosineSimilarity(vecA, vecB) {
+      let dot = 0, normA = 0, normB = 0;
+      for (let i = 0; i < vecA.length; i++) {
+        dot += vecA[i] * vecB[i];
+        normA += vecA[i] * vecA[i];
+        normB += vecB[i] * vecB[i];
+      }
+      return dot / (Math.sqrt(normA) * Math.sqrt(normB));
     }
 
-    generateAiBtn.addEventListener("click", runAiGeneration);
+    async function runSemanticConceptRerank() {
+      if (!window.transformersPipeline) {
+        notify("EMBEDDING_ENGINE_OFFLINE");
+        return;
+      }
+
+      notify("MINILM: VECTORIZING...");
+      try {
+        if (!minilmPipeline) {
+          minilmPipeline = await window.transformersPipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+        }
+
+        const activeDraft = editor.innerText.trim();
+        const queryText = aiPromptInput.value.trim() || activeDraft.slice(-300) || "Burroughs typewriter quantum";
+
+        const qEmb = await minilmPipeline(queryText, { pooling: 'mean', normalize: true });
+        const qVec = qEmb.data;
+
+        const cards = Array.from(document.querySelectorAll("#refTabSources .ref-card"));
+        for (const card of cards) {
+          const content = card.querySelector(".ref-card-content").innerText;
+          const cEmb = await minilmPipeline(content, { pooling: 'mean', normalize: true });
+          const sim = cosineSimilarity(qVec, cEmb.data);
+          card.dataset.sim = sim;
+          const badge = card.querySelector(".sim-badge");
+          if (badge) badge.innerText = `SIM: ${(sim * 100).toFixed(0)}%`;
+        }
+
+        const container = document.getElementById("refTabSources");
+        cards.sort((a, b) => parseFloat(b.dataset.sim || 0) - parseFloat(a.dataset.sim || 0));
+        cards.forEach(c => container.appendChild(c));
+
+        notify("MINILM: RERANK_COMPLETE");
+      } catch (err) {
+        console.error(err);
+        notify("RERANK_FAIL: " + err.message);
+      }
+    }
+
+    // ========================================================
+    // TOP PROCEDURAL GENERATOR (BURROUGHS CUT-UP / LOCAL TOOLS)
+    // ========================================================
+    function runProceduralLocal() {
+      const mode = aiModeSelect.value;
+      const prompt = aiPromptInput.value.trim();
+      const text = editor.innerText;
+      lastBufferSnapshot = editor.innerHTML;
+
+      notify("RUNNING_PROCEDURAL...");
+      let generatedText = "";
+
+      if (mode === "quantum") {
+        const pool = (prompt + " " + text).split(/\s+/).filter(w => w.length > 2);
+        const shuffled = [...pool].sort(() => 0.5 - Math.random());
+        const phrases = [];
+        for (let i = 0; i < Math.min(shuffled.length, 36); i += 4) {
+          phrases.push(shuffled.slice(i, i + 4).join(" "));
+        }
+        generatedText = "\n\n// [QUANTUM CUT COLLAPSE]\n" + phrases.join(" — ") + ".\n";
+      } else if (mode === "continue") {
+        const endings = [
+          "The phosphorescent dials fluttered across the console, recording frequencies unheard since 1972.",
+          "He tapped the carriage return with the flat of his thumb, knowing the broadcast was already circulating through the relay towers.",
+          "Inky watched the cursor pulse in the dark room, feeling the heavy thrum of the mainframe breathing through the chassis.",
+          "Words landed on the CRT screen like iron rivets; there was no room left for retreat."
+        ];
+        generatedText = " " + endings[Math.floor(Math.random() * endings.length)] + " ";
+      } else if (mode === "synthesize") {
+        const refs = Array.from(document.querySelectorAll(".ref-card-content")).map(el => el.innerText);
+        const randRef = refs[0] || "The archives are open.";
+        generatedText = `\n\n[SYMPHONY SYNTHESIS: ${prompt || "PRIMARY_LINE"}]\n` +
+          `Intersecting: "${randRef.slice(0, 90)}..."\n` +
+          `The narrative recombines where cathode memory intersects the open wire. All nodes locked.\n`;
+      } else {
+        generatedText = `\n\n[HERMES EXEGESIS: ${prompt || "SYSTEM"}]\n` +
+          `"Do not shortchange the muse." The frequency from wordstar.nexus remains armed; sovereign words withstand algorithmic noise.\n`;
+      }
+
+      editor.focus();
+      document.execCommand("insertText", false, generatedText);
+      updateStats();
+      notify("PROCEDURAL_DONE");
+    }
+
+    proceduralRunBtn.addEventListener("click", runProceduralLocal);
     aiPromptInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        runAiGeneration();
+        runProceduralLocal();
       }
     });
 
-    // Restore state from LocalStorage on load
+    // ========================================================
+    // POP-OUT MUSE DECK (TELEGRAPH STAGING ARCHITECTURE)
+    // ========================================================
+    function toggleMuseDeck() {
+      const deck = document.getElementById("museDeck");
+      deck.classList.toggle("closed");
+      if (!deck.classList.contains("closed")) {
+        document.getElementById("museCarrierInput").focus();
+      }
+    }
+
+    function minimizeMuseDeck() {
+      document.getElementById("museDeck").classList.toggle("minimized");
+    }
+
+    document.getElementById("openMuseDeckBtn").addEventListener("click", toggleMuseDeck);
+
+    function ingestCurrentScene() {
+      const fullText = editor.innerText;
+      const sel = window.getSelection();
+      let snippet = "";
+
+      if (sel && sel.toString().trim()) {
+        snippet = sel.toString().trim();
+      } else {
+        snippet = fullText.slice(-450);
+      }
+
+      currentDraftContext = snippet;
+      const notice = document.getElementById("contextNotice");
+      notice.innerText = `LOCKED (${snippet.length} chars)`;
+      notice.style.color = "var(--emerald)";
+      notify("DRAFT_CONTEXT_LOCKED");
+    }
+
+    async function transmitToMuse() {
+      const inputEl = document.getElementById("museCarrierInput");
+      const prompt = inputEl.value.trim();
+      const apiKey = localStorage.getItem("quantum_nvidia_key");
+      const entropy = parseFloat(document.getElementById("entropySlider").value) || 0.95;
+      const chatLog = document.getElementById("museChatLog");
+      const sendBtn = document.getElementById("museTransmuteBtn");
+
+      if (!apiKey) {
+        alert("Please enter your NVIDIA API Key under [⚙ AI UPLINK] first!");
+        openModal("uplinkModal");
+        return;
+      }
+      if (!prompt && !currentDraftContext) {
+        alert("Enter a carrier signal prompt or click 'INGEST DRAFT CONTEXT' first.");
+        return;
+      }
+
+      if (prompt) {
+        const userBubble = document.createElement("div");
+        userBubble.className = "muse-bubble user-msg";
+        userBubble.innerText = prompt;
+        chatLog.appendChild(userBubble);
+        inputEl.value = "";
+      }
+
+      const modelBubble = document.createElement("div");
+      modelBubble.className = "muse-bubble model-msg";
+      modelBubble.innerHTML = `<i>// TRANSMUTING SENSORY FLUX WITH MUSE APPARATUS...</i>`;
+      chatLog.appendChild(modelBubble);
+      chatLog.scrollTop = chatLog.scrollHeight;
+
+      sendBtn.disabled = true;
+      sendBtn.innerText = "TRANSMUTING...";
+
+      try {
+        const proxyUrl = 'https://lively-limitless.inkrealm.workers.dev/?url=' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
+        const systemPrompt = "You are an exotic storytelling machine and telemetric transcription unit. Write with visceral atmosphere, razor sensory precision, and evocative Beat/cybernetic prose. Avoid generic summaries or conversational filler; produce direct literary transmission.";
+
+        let userContent = "";
+        if (currentDraftContext) {
+          userContent += `[NARRATIVE CONTEXT]:\n"${currentDraftContext}"\n\n`;
+        }
+        userContent += prompt ? `[CARRIER VECTOR]: ${prompt}` : "Continue the narrative vector seamlessly with razor sensory detail.";
+
+        const targetModel = localStorage.getItem("quantum_target_model") || "meta/muse-glimmer-30b";
+
+        const res = await fetch(proxyUrl, {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer " + apiKey,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: targetModel,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userContent }
+            ],
+            temperature: entropy,
+            top_p: 1.0,
+            max_tokens: 512,
+            stream: false
+          })
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+
+        const data = await res.json();
+        const reply = data.choices?.[0]?.message?.content || "[CORRUPT_TRANSMISSION]";
+
+        modelBubble.innerHTML = `<div>${reply}</div>`;
+        
+        const spliceBtn = document.createElement("button");
+        spliceBtn.className = "splice-btn";
+        spliceBtn.innerText = "✦ Splice to Manuscript";
+        spliceBtn.onclick = () => {
+          lastBufferSnapshot = editor.innerHTML;
+          editor.focus();
+          document.execCommand("insertText", false, "\n\n" + reply + "\n");
+          updateStats();
+          spliceBtn.innerText = "✓ SPLICED";
+          spliceBtn.style.background = "var(--emerald)";
+          notify("FRAGMENT_SPLICED_TO_DRAFT");
+        };
+        modelBubble.appendChild(spliceBtn);
+
+      } catch (err) {
+        modelBubble.innerHTML = `<span style="color:var(--crimson)">// TRANSMISSION FAULT: ${err.message}</span>`;
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerText = "TRANSMUTE";
+        chatLog.scrollTop = chatLog.scrollHeight;
+      }
+    }
+
+    document.getElementById("museCarrierInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        transmitToMuse();
+      }
+    });
+
+    // DRAGGABLE MUSE DECK PHYSICS
+    (function enableDeckDragging() {
+      const deck = document.getElementById("museDeck");
+      const header = document.getElementById("museDeckHeader");
+      let isDragging = false;
+      let startX, startY, initialLeft, initialTop;
+
+      header.addEventListener("mousedown", (e) => {
+        if (e.target.tagName.toLowerCase() === "button") return;
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = deck.getBoundingClientRect();
+        initialLeft = rect.left;
+        initialTop = rect.top;
+        
+        deck.style.right = "auto";
+        deck.style.bottom = "auto";
+        deck.style.left = initialLeft + "px";
+        deck.style.top = initialTop + "px";
+      });
+
+      window.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        deck.style.left = `${Math.max(10, initialLeft + dx)}px`;
+        deck.style.top = `${Math.max(10, initialTop + dy)}px`;
+      });
+
+      window.addEventListener("mouseup", () => {
+        isDragging = false;
+      });
+    })();
+
+    // BOOT RESTORATION
     window.addEventListener("DOMContentLoaded", () => {
       const saved = localStorage.getItem("novawrite_buffer");
-      if (saved) {
-        editor.innerHTML = saved;
-      }
+      if (saved) editor.innerHTML = saved;
+      
+      const savedModel = localStorage.getItem("quantum_target_model") || "meta/muse-glimmer-30b";
+      activeModelLabel.innerText = savedModel.split('/')[1] || savedModel;
+      deckModelBadge.innerText = savedModel;
       updateStats();
     });
   </script>
