@@ -861,6 +861,45 @@
         gap: 6px;
       }
     }
+
+    /* ======================================================== */
+    /* PRINT: clean manuscript only                             */
+    /* ======================================================== */
+    @media print {
+      body::before,
+      header,
+      .fkey-bar,
+      .ai-console,
+      .reference-pane,
+      .muse-deck,
+      .status-bar,
+      .modal-overlay,
+      .editor-ruler {
+        display: none !important;
+      }
+      body {
+        background: #fff !important;
+        color: #000 !important;
+      }
+      .workspace,
+      .editor-pane,
+      .editor-container {
+        display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+        background: #fff !important;
+      }
+      .page-sheet {
+        box-shadow: none !important;
+        border: none !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        color: #000 !important;
+        background: #fff !important;
+        font-size: 12pt !important;
+        line-height: 1.5 !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -896,19 +935,19 @@
     </div>
 
     <div class="header-controls">
-      <button class="btn-top active" id="openMuseDeckBtn" data-hint="Open Pop-out Muse Chat & Transmutation Deck (HotKey: F1)">
+      <button class="btn-top active" id="openMuseDeckBtn" data-hint="Open Pop-out Muse Chat & Transmutation Deck (HotKey: F1)" aria-label="Open Muse Deck (F1)">
         <span>⚡</span> MUSE DECK [F1]
       </button>
-      <button class="btn-top active" id="toggleRefBtn" data-hint="Toggle Symphony Reference Vault split view">
+      <button class="btn-top active" id="toggleRefBtn" data-hint="Toggle Symphony Reference Vault split view" aria-label="Toggle Reference Vault">
         <span>◫</span> VAULT
       </button>
-      <button class="btn-top" id="soundToggle" data-hint="Toggle IBM Displaywriter typewriter key audio">
+      <button class="btn-top" id="soundToggle" data-hint="Toggle IBM Displaywriter typewriter key audio" aria-label="Toggle typewriter click sound">
         <span>🔊</span> CLICK: ON
       </button>
-      <button class="btn-top" id="uplinkBtn" data-hint="Configure Cloud Model: Muse 30B, Llama 3.3 70B, or Nemotron">
+      <button class="btn-top" id="uplinkBtn" data-hint="Configure Cloud Model: Muse 30B, Llama 3.3 70B, or Nemotron" aria-label="Configure AI uplink and API key">
         <span>⚙</span> AI UPLINK
       </button>
-      <button class="btn-top" id="manualBtn" data-hint="Open plain-English Operator Manual & Rosetta Stone (F9)">
+      <button class="btn-top" id="manualBtn" data-hint="Open plain-English Operator Manual & Rosetta Stone (F9)" aria-label="Open operator manual (F9)">
         <span>❓</span> MANUAL [F9]
       </button>
     </div>
@@ -963,10 +1002,10 @@
         </div>
       </div>
 
-      <div class="ref-tabs">
-        <button class="ref-tab active" onclick="switchRefTab('sources')">SOURCES</button>
-        <button class="ref-tab" onclick="switchRefTab('scratchpad')">SCRATCHPAD</button>
-        <button class="ref-tab" onclick="switchRefTab('transmissions')">DISPATCHES</button>
+      <div class="ref-tabs" role="tablist">
+        <button class="ref-tab active" role="tab" aria-selected="true" onclick="switchRefTab('sources', this)">SOURCES</button>
+        <button class="ref-tab" role="tab" aria-selected="false" onclick="switchRefTab('scratchpad', this)">SCRATCHPAD</button>
+        <button class="ref-tab" role="tab" aria-selected="false" onclick="switchRefTab('transmissions', this)">DISPATCHES</button>
       </div>
 
       <div class="ref-body" id="refTabSources">
@@ -1120,11 +1159,11 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
   </footer>
 
   <!-- MODAL: OPERATOR MANUAL / ROSETTA STONE -->
-  <div class="modal-overlay" id="helpModal">
+  <div class="modal-overlay" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle" aria-hidden="true">
     <div class="modal-box">
       <div class="modal-header">
-        <span>WORDSTAR // OPERATOR MANUAL & ROSETTA STONE</span>
-        <button class="modal-close" onclick="closeModal('helpModal')">✕</button>
+        <span id="helpModalTitle">WORDSTAR // OPERATOR MANUAL & ROSETTA STONE</span>
+        <button class="modal-close" onclick="closeModal('helpModal')" aria-label="Close manual">✕</button>
       </div>
       <div class="modal-content">
         <div class="explain-block">
@@ -1166,36 +1205,38 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
   </div>
 
   <!-- MODAL: AI UPLINK CONFIG -->
-  <div class="modal-overlay" id="uplinkModal">
+  <div class="modal-overlay" id="uplinkModal" role="dialog" aria-modal="true" aria-labelledby="uplinkModalTitle" aria-hidden="true">
     <div class="modal-box" style="max-width: 520px;">
       <div class="modal-header">
-        <span>⚡ NEURAL UPLINK // NVIDIA NIM & MODEL SELECTOR</span>
-        <button class="modal-close" onclick="closeModal('uplinkModal')">✕</button>
+        <span id="uplinkModalTitle">⚡ NEURAL UPLINK // NVIDIA NIM & MODEL SELECTOR</span>
+        <button class="modal-close" onclick="closeModal('uplinkModal')" aria-label="Close uplink">✕</button>
       </div>
       <div class="modal-content" style="display:flex; flex-direction:column; gap:12px;">
         <p style="color:var(--steel-light);">Select your preferred generative engine for the Muse Deck:</p>
         
         <div>
-          <label style="display:block; margin-bottom:4px; font-weight:bold;">TARGET MODEL:</label>
+          <label style="display:block; margin-bottom:4px; font-weight:bold;" for="modelChoice">TARGET MODEL:</label>
           <select id="modelChoice" class="ai-select" style="width:100%;">
-  <option value="nvidia/nemotron-3.5-lightning-30b-a3b">nvidia/nemotron-3.5-lightning-30b-a3b [FAST 30B MoE]</option>
-  <option value="meta/muse-glimmer-30b">meta/muse-glimmer-30b [TELEGRAPH DEFAULT]</option>
-  <option value="meta/llama-3.3-70b-instruct">meta/llama-3.3-70b-instruct [HEAVYWEIGHT 70B]</option>
-  <option value="deepseek-ai/deepseek-r1">deepseek-ai/deepseek-r1 [FRONTIER REASONING]</option>
-</select>
+            <option value="nvidia/nemotron-3.5-lightning-30b-a3b">nvidia/nemotron-3.5-lightning-30b-a3b [FAST 30B MoE]</option>
+            <option value="meta/muse-glimmer-30b">meta/muse-glimmer-30b [TELEGRAPH DEFAULT]</option>
+            <option value="meta/llama-3.3-70b-instruct">meta/llama-3.3-70b-instruct [HEAVYWEIGHT 70B]</option>
+            <option value="deepseek-ai/deepseek-r1">deepseek-ai/deepseek-r1 [FRONTIER REASONING]</option>
+          </select>
         </div>
 
         <div>
-          <label style="display:block; margin-bottom:4px; font-weight:bold;">NVIDIA API KEY (build.nvidia.com):</label>
-          <input type="password" id="nvidiaApiKey" class="ai-input" style="width:100%;" placeholder="nvapi-..." />
+          <label style="display:block; margin-bottom:4px; font-weight:bold;" for="nvidiaApiKey">NVIDIA API KEY (build.nvidia.com):</label>
+          <input type="password" id="nvidiaApiKey" class="ai-input" style="width:100%;" placeholder="nvapi-..." autocomplete="off" />
         </div>
 
-        <div style="font-size:11px; color:#888;">
-          * Key is stored only in your browser's <code>localStorage</code> and routed through the proxy worker.
+        <div class="explain-block" style="border-left-color: var(--amber); margin:0;">
+          <b>PRIVACY NOTE</b>
+          <p style="margin-top:4px;">Your key is stored only in this browser’s <code>localStorage</code> (never on our servers). Because of CORS restrictions it is sent via a Cloudflare Worker proxy to NVIDIA. The key leaves your machine only when you transmit to the Muse. You can clear it at any time.</p>
         </div>
 
-        <div style="display: flex; gap: 8px; margin-top: 8px;">
+        <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap:wrap;">
           <button class="btn-ai" onclick="saveUplinkConfig()">ENGAGE UPLINK</button>
+          <button class="btn-top" onclick="clearUplinkKey()">CLEAR KEY</button>
           <button class="btn-top" onclick="closeModal('uplinkModal')">CANCEL</button>
         </div>
       </div>
@@ -1203,11 +1244,11 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
   </div>
 
   <!-- MODAL: HEX DUMP -->
-  <div class="modal-overlay" id="hexModal">
+  <div class="modal-overlay" id="hexModal" role="dialog" aria-modal="true" aria-labelledby="hexModalTitle" aria-hidden="true">
     <div class="modal-box">
       <div class="modal-header">
-        <span>CORE MEMORY HEX DUMP // DISPLAYWRITER BUFFER</span>
-        <button class="modal-close" onclick="closeModal('hexModal')">✕</button>
+        <span id="hexModalTitle">CORE MEMORY HEX DUMP // DISPLAYWRITER BUFFER</span>
+        <button class="modal-close" onclick="closeModal('hexModal')" aria-label="Close hex dump">✕</button>
       </div>
       <div class="modal-content">
         <div class="hex-dump" id="hexDumpContainer"></div>
@@ -1216,11 +1257,11 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
   </div>
 
   <!-- MODAL: FIND & REPLACE -->
-  <div class="modal-overlay" id="findModal">
+  <div class="modal-overlay" id="findModal" role="dialog" aria-modal="true" aria-labelledby="findModalTitle" aria-hidden="true">
     <div class="modal-box" style="max-width: 450px;">
       <div class="modal-header">
-        <span>F8 // SEARCH & REPLACE</span>
-        <button class="modal-close" onclick="closeModal('findModal')">✕</button>
+        <span id="findModalTitle">F8 // SEARCH & REPLACE</span>
+        <button class="modal-close" onclick="closeModal('findModal')" aria-label="Close find dialog">✕</button>
       </div>
       <div class="modal-content" style="display:flex; flex-direction:column; gap:10px;">
         <label>Find string:</label>
@@ -1257,6 +1298,7 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
     let audioCtx = null;
     let lastBufferSnapshot = "";
     let minilmPipeline = null;
+    let isReranking = false;
     let currentDraftContext = "";
 
     // AUDIO CLICK GENERATOR
@@ -1321,6 +1363,7 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
     // SOUND TOGGLE
     soundToggle.addEventListener("click", () => {
       soundEnabled = !soundEnabled;
+      localStorage.setItem("novawrite_sound", soundEnabled ? "1" : "0");
       soundToggle.innerHTML = soundEnabled ? "<span>🔊</span> CLICK: ON" : "<span>🔇</span> CLICK: OFF";
       soundToggle.classList.toggle("active", soundEnabled);
     });
@@ -1341,17 +1384,36 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
     function saveUplinkConfig() {
       const key = document.getElementById("nvidiaApiKey").value.trim();
       const model = document.getElementById("modelChoice").value;
-      localStorage.setItem("quantum_nvidia_key", key);
+      if (key) localStorage.setItem("quantum_nvidia_key", key);
+      else localStorage.removeItem("quantum_nvidia_key");
       localStorage.setItem("quantum_target_model", model);
       activeModelLabel.innerText = model.split('/')[1] || model;
       deckModelBadge.innerText = model;
       closeModal("uplinkModal");
-      notify("UPLINK_CONFIG_ENGAGED");
+      notify(key ? "UPLINK_CONFIG_ENGAGED" : "MODEL_SET_NO_KEY");
+    }
+
+    function clearUplinkKey() {
+      localStorage.removeItem("quantum_nvidia_key");
+      document.getElementById("nvidiaApiKey").value = "";
+      notify("API_KEY_CLEARED");
     }
 
     // MODAL HELPERS
-    function openModal(id) { document.getElementById(id).classList.add("active"); }
-    function closeModal(id) { document.getElementById(id).classList.remove("active"); editor.focus(); }
+    function openModal(id) {
+      const el = document.getElementById(id);
+      el.classList.add("active");
+      el.setAttribute("aria-hidden", "false");
+      // Focus first focusable inside modal
+      const focusable = el.querySelector("button, input, select, textarea");
+      if (focusable) setTimeout(() => focusable.focus(), 50);
+    }
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      el.classList.remove("active");
+      el.setAttribute("aria-hidden", "true");
+      editor.focus();
+    }
 
     function notify(msg) {
       sysNotice.innerText = msg;
@@ -1448,8 +1510,11 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
     }
 
     // VAULT CONTROLS
-    function switchRefTab(tab) {
-      document.querySelectorAll(".ref-tab").forEach(t => t.classList.remove("active"));
+    function switchRefTab(tab, btn) {
+      document.querySelectorAll(".ref-tab").forEach(t => {
+        t.classList.remove("active");
+        t.setAttribute("aria-selected", "false");
+      });
       document.getElementById("refTabSources").style.display = "none";
       document.getElementById("refTabScratchpad").style.display = "none";
       document.getElementById("refTabTransmissions").style.display = "none";
@@ -1461,7 +1526,10 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
       } else if (tab === "transmissions") {
         document.getElementById("refTabTransmissions").style.display = "flex";
       }
-      event.target.classList.add("active");
+      if (btn) {
+        btn.classList.add("active");
+        btn.setAttribute("aria-selected", "true");
+      }
     }
 
     function injectRefToEditor(btn) {
@@ -1565,8 +1633,19 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
         notify("EMBEDDING_ENGINE_OFFLINE");
         return;
       }
+      if (isReranking) {
+        notify("MINILM: ALREADY_RUNNING");
+        return;
+      }
 
+      isReranking = true;
+      const rerankBtn = document.querySelector('[onclick="runSemanticConceptRerank()"]');
+      if (rerankBtn) {
+        rerankBtn.disabled = true;
+        rerankBtn.textContent = "VECTORIZING…";
+      }
       notify("MINILM: VECTORIZING...");
+
       try {
         if (!minilmPipeline) {
           minilmPipeline = await window.transformersPipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
@@ -1596,6 +1675,12 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
       } catch (err) {
         console.error(err);
         notify("RERANK_FAIL: " + err.message);
+      } finally {
+        isReranking = false;
+        if (rerankBtn) {
+          rerankBtn.disabled = false;
+          rerankBtn.textContent = "RERANK [AI]";
+        }
       }
     }
 
@@ -1829,21 +1914,29 @@ Down in DeLand, a woman with a pair of shears was waiting—and we were bringing
     window.addEventListener("DOMContentLoaded", () => {
       const saved = localStorage.getItem("novawrite_buffer");
       if (saved) editor.innerHTML = saved;
-      
+
       const savedModel = localStorage.getItem("quantum_target_model") || "meta/muse-glimmer-30b";
       activeModelLabel.innerText = savedModel.split('/')[1] || savedModel;
       deckModelBadge.innerText = savedModel;
+
+      // Restore sound preference
+      const savedSound = localStorage.getItem("novawrite_sound");
+      if (savedSound === "0") {
+        soundEnabled = false;
+        soundToggle.innerHTML = "<span>🔇</span> CLICK: OFF";
+        soundToggle.classList.remove("active");
+      } else {
+        soundToggle.classList.add("active");
+      }
+
+      // Auto-collapse Reference Vault on small screens
+      if (window.innerWidth <= 820) {
+        referencePane.classList.add("collapsed");
+        toggleRefBtn.classList.remove("active");
+      }
+
       updateStats();
     });
-  </script>
-  <script>
-    // Auto-collapse Reference Vault on small screens on initial load
-window.addEventListener("DOMContentLoaded", () => {
-  if (window.innerWidth <= 820) {
-    referencePane.classList.add("collapsed");
-    toggleRefBtn.classList.remove("active");
-  }
-});
   </script>
 </body>
 </html>
