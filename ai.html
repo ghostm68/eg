@@ -954,17 +954,22 @@
       
       <!-- VIDEO PRESET DOCK -->
      <!-- BULLETPROOF VIDEO DOCK -->
+<!-- BULLETPROOF VIDEO DOCK -->
 <div class="video-dock">
   <label class="dock-label">PRESET:</label>
   <select class="dock-select" id="video-preset-select" onchange="applyVideoPreset(this.value)">
-    <!-- 100% Reliable Direct MP4 Streams (No Embedding Restrictions) -->
+    <!-- Guaranteed Direct MP4 Loop -->
     <option value="mp4_ink">InkRealm MP4 Loop (Default / Guaranteed)</option>
     
-    <!-- Verified Embed-Permitted YouTube Streams -->
-    <option value="yt:_gC_d7rKkI8">Gothic Embers / Hearth Loop (YouTube)</option>
+    <!-- Kept Rain Stream -->
     <option value="yt:mPZkdNFkNps">Heavy Rain on Glass (YouTube)</option>
-    <option value="yt:cQ_4Gg_27yM">Analog TV Static & Noise (YouTube)</option>
-    <option value="yt:jfKfPfyJRdk">Lofi Chill Cyber Stream (YouTube)</option>
+    
+    <!-- Inna Witch Channel Presets (@innawitchofficial) -->
+    <!-- Replace the 11-character IDs below with your favorite uploads -->
+    <option value="yt:VIDEO_ID_1">Inna Witch - Candle Wax Reading</option>
+    <option value="yt:VIDEO_ID_2">Inna Witch - Tarot & Divination</option>
+    <option value="yt:VIDEO_ID_3">Inna Witch - Night Ritual & Hearth</option>
+    <option value="yt:VIDEO_ID_4">Inna Witch - Spirits & Sigils</option>
     
     <!-- Custom Video or YouTube URL -->
     <option value="custom">-- Custom (YouTube ID or MP4 Link) --</option>
@@ -982,7 +987,6 @@
     />
   </div>
 </div>
-     
 
       <!-- FORMATTING TOOLBAR -->
       <div class="toolbar">
@@ -1013,21 +1017,20 @@
       <div class="canvas-viewport">
         
         <!-- Live Video Element Container -->
-        <div class="canvas-video-layer" id="videoLayer">
-          <iframe 
-            id="bg-iframe" 
-            src="https://www.youtube-nocookie.com/embed/Hozfg9_v-V4?autoplay=1&mute=1&controls=0&loop=1&playlist=Hozfg9_v-V4&playsinline=1&showinfo=0&rel=0&modestbranding=1" 
-            allow="autoplay" 
-            frameborder="0">
-          </iframe>
-          <video 
-            id="bg-mp4" 
-            style="display:none;" 
-            src="https://github.com/ghostm68/pantheon/raw/main/inkrealm.info_1696009559686.mp4" 
-            muted autoplay loop playsinline>
-          </video>
-        </div>
-
+       <div class="canvas-video-layer" id="videoLayer">
+  <iframe 
+    id="bg-iframe" 
+    src="https://www.youtube-nocookie.com/embed/YOUR_INNA_WITCH_ID?autoplay=1&mute=1&controls=0&loop=1&playlist=YOUR_INNA_WITCH_ID&playsinline=1&showinfo=0&rel=0&modestbranding=1" 
+    allow="autoplay" 
+    frameborder="0">
+  </iframe>
+  <video 
+    id="bg-mp4" 
+    style="display:none;" 
+    src="https://github.com/ghostm68/pantheon/raw/main/inkrealm.info_1696009559686.mp4" 
+    muted autoplay loop playsinline>
+  </video>
+</div>
         <!-- Floating Text Sheet -->
         <div 
           class="editor-sheet font-nova-round" 
@@ -1128,6 +1131,14 @@
     function closeGramLightbox() { qrLightbox.classList.remove('active'); }
 
     // VIDEO PRESET LOGIC
+// VIDEO PRESET LOGIC
+function parseYouTubeId(input) {
+  if (!input) return '';
+  const clean = input.replace(/^yt:/, '').trim();
+  const match = clean.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|shorts\/)|youtu\.be\/|\?v=)([\w-]{11})/);
+  return match ? match[1] : clean;
+}
+
 function applyVideoPreset(val) {
   const bgIframe = document.getElementById('bg-iframe');
   const bgMp4 = document.getElementById('bg-mp4');
@@ -1136,7 +1147,7 @@ function applyVideoPreset(val) {
 
   if (val === 'custom') {
     const input = prompt(
-      'Enter YouTube ID (e.g. mPZkdNFkNps) OR direct .mp4/.webm video URL:', 
+      'Enter YouTube URL/ID OR direct .mp4/.webm video URL:', 
       'https://github.com/ghostm68/pantheon/raw/main/inkrealm.info_1696009559686.mp4'
     );
     if (!input) return;
@@ -1149,7 +1160,7 @@ function applyVideoPreset(val) {
     bgIframe.src = 'about:blank';
     
     bgMp4.style.display = 'block';
-    bgMp4.style.opacity = currentOpacity; // Preserves current slider opacity
+    bgMp4.style.opacity = currentOpacity;
     bgMp4.src = (val === 'mp4_ink') 
       ? 'https://github.com/ghostm68/pantheon/raw/main/inkrealm.info_1696009559686.mp4' 
       : val;
@@ -1157,14 +1168,14 @@ function applyVideoPreset(val) {
   } 
   // Case B: YouTube Stream
   else {
-    const ytId = val.replace('yt:', '').trim();
+    const ytId = parseYouTubeId(val);
     
     bgMp4.pause();
     bgMp4.style.display = 'none';
     bgMp4.src = '';
     
     bgIframe.style.display = 'block';
-    bgIframe.style.opacity = currentOpacity; // Preserves current slider opacity
+    bgIframe.style.opacity = currentOpacity;
     bgIframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${ytId}&playsinline=1&showinfo=0&rel=0&modestbranding=1&enablejsapi=1`;
   }
 }
