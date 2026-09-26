@@ -1,806 +1,518 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/svg+xml" href="https://cdn.jsdelivr.net/gh/ghostm68/inktwo@main/svg/inky.svg">
-    <link rel="apple-touch-icon" type="image/png" href="https://github.com/ghostm68/pantheon/raw/main/inkto.png" />
-    <title>WordStar Nexus - Map</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-           <style>
-/* === DEFINE VARIABLES FIRST === */
-:root {
-    --red: #ff0033;
-    --black: #0a0a0a;
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Icons & Title -->
+  <link rel="icon" type="image/svg+xml" href="https://cdn.jsdelivr.net/gh/ghostm68/inktwo@main/svg/inky.svg">
+  <link rel="apple-touch-icon" type="image/png" href="https://github.com/ghostm68/pantheon/raw/main/inkto.png" />
+  <title>WordStar Nexus - Map</title>
 
-/* === NOW selection can use them === */
-::selection {
-    background: var(--red);
-    color: var(--black);
-    text-shadow: none;
-}
-</style>
-    <style>
-        /* --- CORE VARIABLES --- */
-        :root {
-            --primary: #DC143C;   /* Crimson */
-            --bg: #050505;        /* Deep Space */
-            --panel: rgba(12, 12, 12, 0.98);
-            --border: #333;
-            --text: #eee;
-            --header-h: 60px;
-            --footer-h: 30px;
-            --sidebar-w: 300px;
-        }
+  <!-- GSAP Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+  <style>
+    /* === DEFINE VARIABLES FIRST === */
+    :root {
+      --red: #ff0033;
+      --black: #0a0a0a;
+      --crimson: #DC143C;
+      --crimson-glow: rgba(220, 20, 60, 0.45);
+      --dark-bg: #08080a;
+      --card-bg: rgba(16, 16, 20, 0.75);
+      --card-hover: rgba(26, 26, 32, 0.95);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(220, 20, 60, 0.7);
+      --txt-head: #fafafa;
+      --txt-dim: #8e8e93;
+      --font-stack: 'Courier New', Courier, monospace;
+    }
 
-        body {
-            font-family: 'Courier New', monospace;
-            background: var(--bg);
-            color: var(--text);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+    /* === Text selection highlight === */
+    ::selection {
+      background: var(--red);
+      color: var(--black);
+      text-shadow: none;
+    }
 
-        /* --- HEADER --- */
-        .sys-header {
-            height: var(--header-h);
-            background: #000;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            z-index: 300;
-        }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        .brand {
-            font-weight: bold;
-            font-size: 1.2rem;
-            color: var(--primary);
-            text-decoration: none;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-left: 15px;
-        }
-        
-        /* ----------  CRT overlay  ---------- */
-        #crt-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 9999;
-            box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
-        }
+    body {
+      background-color: var(--dark-bg);
+      color: var(--txt-head);
+      font-family: var(--font-stack);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
 
-        .scanline {
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom, rgba(255,255,255,0) 50%, rgba(0,0,0,0.5) 50%);
-            background-size: 100% 4px;
-            animation: scanline 10s linear infinite, flicker 0.15s infinite;
-        }
+    /* Ambient Viewport Stage (Desktop hover art) */
+    #ambient-stage {
+      position: fixed;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 0.2;
+      filter: contrast(115%) grayscale(20%);
+      transition: background-image 0.4s ease-in-out, opacity 0.35s ease;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-        @keyframes scanline {
-            0% { background-position: 0 0; }
-            100% { background-position: 0 100%; }
-        }
+    .vignette-overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at 50% 40%, rgba(8,8,10,0.3) 0%, rgba(8,8,10,0.92) 85%);
+      pointer-events: none;
+      z-index: 1;
+    }
 
-        @keyframes flicker {
-            0% { opacity: 0.3; }
-            50% { opacity: 0.4; }
-            100% { opacity: 0.3; }
-        }
+    /* Header & Masthead */
+    .top-bar {
+      position: sticky;
+      top: 0;
+      background: rgba(8, 8, 10, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 50;
+    }
 
-        /* --- LAYOUT CONTAINER --- */
-        .workspace {
-            display: flex;
-            flex: 1;
-            height: calc(100vh - var(--header-h) - var(--footer-h));
-            position: relative;
-            overflow: hidden;
-        }
+    .logo-anchor {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--crimson);
+      text-decoration: none;
+      text-transform: uppercase;
+    }
 
-        /* --- SIDEBAR (OPEN BY DEFAULT) --- */
-        .sidebar {
-            width: var(--sidebar-w);
-            height: 100%;
-            background: var(--panel);
-            border-right: 3px solid var(--border);
-            padding: 20px;
-            overflow-y: auto;
-            flex-shrink: 0;
-            transition: margin-left 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-            z-index: 200;
-            margin-left: 0;
-        }
+    .meta-nav {
+      display: flex;
+      gap: 16px;
+      font-size: 11px;
+      letter-spacing: 1px;
+    }
 
-        .sidebar.collapsed {
-            margin-left: calc(var(--sidebar-w) * -1);
-        }
+    .meta-nav a {
+      color: var(--txt-dim);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .meta-nav a:hover { color: var(--crimson); }
 
-        .sidebar h2 {
-            color: var(--primary);
-            font-size: 16px;
-            text-align: center;
-            border-bottom: 1px solid #333;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
+    /* Statement Block */
+    .masthead-statement {
+      max-width: 1240px;
+      margin: 36px auto 16px auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 10;
+    }
 
-        .sidebar-section { margin-bottom: 25px; }
-        
-        .sidebar-section h3 {
-            color: #888;
-            font-size: 11px;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+    .masthead-statement h1 {
+      font-size: 18px;
+      font-weight: 400;
+      letter-spacing: 1.5px;
+      color: #fff;
+      line-height: 1.5;
+    }
 
-        .sidebar-link {
-            display: block;
-            color: #ccc;
-            text-decoration: none;
-            padding: 6px 10px;
-            margin: 2px 0;
-            font-size: 13px;
-            border-left: 2px solid transparent;
-            transition: all 0.2s;
-        }
+    .masthead-statement p {
+      font-size: 12px;
+      color: var(--txt-dim);
+      margin-top: 6px;
+      letter-spacing: 1px;
+    }
 
-        .sidebar-link:hover {
-            background: rgba(255,255,255,0.05);
-            color: #fff;
-            border-left: 2px solid var(--primary);
-            padding-left: 15px;
-        }
+    .masthead-statement p a {
+      color: var(--crimson);
+      text-decoration: none;
+    }
 
-        /* Toggle Button */
-        .sidebar-toggle {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--primary);
-            padding: 8px 15px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-            font-weight: bold;
-            font-size: 14px;
-            line-height: 1;
-        }
-        .sidebar-toggle:hover { background: rgba(220,20,60,0.2); }
+    /* Filter / Search Bar */
+    .filter-bar {
+      max-width: 1240px;
+      margin: 24px auto 0 auto;
+      padding: 0 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      position: relative;
+      z-index: 10;
+    }
 
+    .filter-pills { display: flex; flex-wrap: wrap; gap: 8px; }
 
-        /* --- MAIN MAP AREA --- */
-        .main-content {
-            flex: 1;
-            position: relative;
-            background: radial-gradient(circle at center, #111 0%, #000 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            cursor: crosshair;
-        }
+    .pill-trigger {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      color: var(--txt-dim);
+      font-family: inherit;
+      font-size: 11px;
+      padding: 6px 12px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.2s ease;
+    }
 
-        #map-container {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+    .pill-trigger:hover, .pill-trigger.active {
+      color: #fff;
+      border-color: var(--crimson);
+      background: rgba(220, 20, 60, 0.14);
+    }
 
-        svg {
-            width: 100%;
-            height: 100%;
-        }
+    .filter-input {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border-subtle);
+      color: #fff;
+      font-family: inherit;
+      font-size: 12px;
+      padding: 7px 12px;
+      width: 220px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .filter-input:focus { border-color: var(--crimson); }
 
-        /* --- CONSTELLATION STYLING --- */
-        .constellation-line {
-            stroke: var(--primary);
-            stroke-width: 1;
-            opacity: 0.3;
-        }
+    /* Directory Container */
+    .catalog-stage {
+      max-width: 1240px;
+      margin: 24px auto 80px auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 10;
+    }
 
-        /* INTERACTIVE STARS (Actual Pages) */
-        .star-point {
-            cursor: pointer;
-            transition: fill 0.3s;
-        }
-        
-        /* NON-INTERACTIVE HUBS (Categories like AI, FICTION) */
-        /* These are now visually distinct and ignore mouse events */
-        .hub-point {
-            fill: #000;
-            stroke: var(--primary);
-            stroke-width: 2px;
-            pointer-events: none; 
-        }
+    .catalog-section { margin-bottom: 44px; }
 
-        /* Realm node style (The Portal) */
-        .star-point.realm-node {
-            fill: #000;
-            stroke: var(--primary);
-            stroke-width: 2px;
-            stroke-dasharray: 4 2;
-        }
+    .section-head {
+      position: sticky;
+      top: 50px;
+      background: rgba(8, 8, 10, 0.94);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border-subtle);
+      border-left: 3px solid var(--crimson);
+      padding: 8px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      z-index: 20;
+    }
 
-        .star-point.territory {
-            fill: #666;
-            transition: all 0.3s;
-        }
+    .section-count {
+      color: var(--crimson);
+      font-size: 10px;
+    }
 
-        .star-point:hover {
-            fill: #FFF;
-            stroke: #FFF;
-            filter: drop-shadow(0 0 8px #FFF);
-        }
+    /* Tiles Grid */
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 8px;
+    }
 
-        .category-label {
-            fill: var(--primary);
-            font-size: 12px;
-            font-weight: bold;
-            text-anchor: middle;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            pointer-events: none;
-            text-shadow: 0 0 5px #000;
-        }
-  .count-badge {
-            background: #222;
-            color: #666;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-        /* Popup */
-        .gsap-popup {
-            position: absolute;
-            background: rgba(0, 0, 0, 0.9);
-            border: 1px solid var(--primary);
-            padding: 10px 15px;
-            pointer-events: none;
-            opacity: 0;
-            z-index: 50;
-            transform: translate(-50%, -100%);
-            margin-top: -15px;
-            white-space: nowrap;
-            max-width: 200px;
-        }
-        .gsap-popup h3 { 
-            color: var(--primary); 
-            font-size: 14px; 
-            margin: 0; 
-            margin-top: 8px;
-        }
-        .gsap-popup p { color: #888; font-size: 10px; margin-top: 4px; }
-        .gsap-popup img {
-            width: 100%;
-            height: 80px;
-            object-fit: cover;
-            border-bottom: 1px solid var(--primary);
-            margin-bottom: 8px;
-            display: block;
-        }
+    .node-tile {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 14px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-subtle);
+      text-decoration: none;
+      color: var(--txt-head);
+      min-height: 58px;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
 
-        /* Footer */
-        .sys-footer {
-            height: var(--footer-h);
-            background: #000;
-            border-top: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            font-size: 10px;
-            color: #444;
-            z-index: 300;
-        }
-        /* Add this to your CSS to clean up the footer links */
-.sys-footer a {
-    text-decoration: none;     /* Removes the blue underline */
-    color: #888;              /* Default color (grey) */
-    transition: color 0.3s;
-    border: none;
-}
+    .node-tile:hover {
+      background: var(--card-hover);
+      border-color: var(--border-focus);
+      transform: translateX(4px);
+    }
 
-.sys-footer a:hover {
-    color: var(--primary);    /* Turns Crimson (#DC143C) on hover */
-}
+    .node-thumb {
+      width: 42px;
+      height: 42px;
+      object-fit: cover;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      flex-shrink: 0;
+      background: #000;
+    }
 
-/* Fixes the separator dots */
-.external-links-separator {
-    margin: 0 5px;
-    color: #444;
-}
-        
-        .sidebar::-webkit-scrollbar { width: 10px; }
-        .sidebar::-webkit-scrollbar-track { background: #0a0a0a; }
-        .sidebar::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 2px; }
-        .sidebar::-webkit-scrollbar-thumb:hover { background: #ff4444; }
+    .node-details {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
 
-        /* --- MOBILE --- */
-        @media (max-width: 768px) {
-            body { height: 100dvh; } 
-            .sidebar { position: absolute; height: 100%; box-shadow: 10px 0 30px #000; }
-            @media (max-width: 400px) { .sidebar { width: 100%; } }
-            .sys-header { padding: 0 10px; }
-            .brand { font-size: 1rem; letter-spacing: 1px; }
-            .gsap-popup { transform: translate(-50%, 20px); margin-top: 0; }
-        }
+    .node-title {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
-        /* Logo Sizing */
-        .wordstar-logo { display: block; width: 100%; max-width: 666px; height: auto; }
-        @media (max-width: 1024px) { .wordstar-logo { max-width: 500px; } }
-        @media (max-width: 768px) { .wordstar-logo { max-width: 400px; } }
-        @media (max-width: 480px) { .wordstar-logo { max-width: 320px; } }
-        @media (max-width: 360px) { .wordstar-logo { max-width: 280px; } }
-    </style>
+    .node-tile:hover .node-title { color: var(--crimson); }
+
+    .node-note {
+      font-size: 10px;
+      color: var(--txt-dim);
+      margin-top: 3px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Footer */
+    .bottom-bar {
+      border-top: 1px solid var(--border-subtle);
+      background: rgba(8, 8, 10, 0.95);
+      padding: 18px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--txt-dim);
+      gap: 16px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .bottom-bar a {
+      color: var(--txt-dim);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .bottom-bar a:hover { color: var(--crimson); }
+
+    /* Mobile adjustments */
+    @media (max-width: 768px) {
+      .grid-container { grid-template-columns: 1fr; }
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .filter-input { width: 100%; }
+      .top-bar { padding: 12px 16px; }
+      .masthead-statement h1 { font-size: 15px; }
+      .node-tile { min-height: 64px; }
+    }
+  </style>
 </head>
 <body>
-    
-    <div id="crt-overlay"><div class="scanline"></div></div>
-    
-    <header class="sys-header">
-        <div style="display:flex; align-items:center;">
-            <button id="sidebar-toggle" class="sidebar-toggle">&lt;&lt;</button>
-            <a href="https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/sitemap.xml" class="brand">_xml</a>
-        </div>
-        <a href="https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus" style="display: block; width: 100%; max-width: 666px;">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 666 88" class="wordstar-logo">
-          <defs>
-            <style>
-              .logo-text { fill: #b31419; }
-              .logo-x { fill: #f7f8fa; transition: all 0.3s ease; transform-origin: center; }
-              .logo-x:hover { fill: #5f6061; filter: drop-shadow(0 0 8px #ffef5c); transform: scale(1.15) rotate(5deg); }
-            </style>
-          </defs>    
-          <g class="logo-text">
-            <path d="M 25 25 L 32 25 L 39 60 L 46 25 L 52 25 L 59 60 L 66 25 L 73 25 L 63 68 L 57 68 L 50 35 L 43 68 L 37 68 Z"/>
-            <path d="M 90 23 Q 105 23 105 45.5 Q 105 68 90 68 Q 75 68 75 45.5 Q 75 23 90 23 Z M 90 28 Q 82 28 82 45.5 Q 82 63 90 63 Q 98 63 98 45.5 Q 98 28 90 28 Z"/>
-            <path d="M 120 25 L 127 25 L 127 33 Q 130 25 138 25 L 140 25 L 140 31 L 136 31 Q 127 31 127 40 L 127 68 L 120 68 Z"/>
-            <path d="M 155 25 L 172 25 Q 187 25 187 46.5 Q 187 68 172 68 L 155 68 Z M 162 30 L 162 63 L 171 63 Q 180 63 180 46.5 Q 180 30 171 30 Z"/>
-            <path d="M 202 25 Q 217 25 217 35 L 210 35 Q 210 30 202 30 Q 197 30 197 33.5 Q 197 37 202 38 L 210 40 Q 219 42 219 51 Q 219 68 205 68 Q 190 68 190 57 L 197 57 Q 197 63 205 63 Q 211 63 211 59 Q 211 56 206 54.5 L 198 52.5 Q 190 50.5 190 42 Q 190 25 202 25 Z"/>
-            <path d="M 232 18 L 239 18 L 239 25 L 247 25 L 247 30 L 239 30 L 239 58 Q 239 63 243 63 L 247 63 L 247 68 L 241 68 Q 232 68 232 58 L 232 30 L 226 30 L 226 25 L 232 25 Z"/>
-            <path d="M 265 25 Q 279 25 279 42 L 279 68 L 272 68 L 272 63 Q 268 68 260 68 Q 248 68 248 58 Q 248 48 260 48 L 272 48 L 272 42 Q 272 30 264 30 Q 257 30 256 36 L 249 36 Q 250 25 265 25 Z M 272 53 L 261 53 Q 255 53 255 58 Q 255 63 261 63 Q 272 63 272 53 Z"/>
-            <path d="M 294 25 L 301 25 L 301 33 Q 304 25 312 25 L 314 25 L 314 31 L 310 31 Q 301 31 301 40 L 301 68 L 294 68 Z"/>
-            <circle cx="330" cy="63" r="3"/>
-            <path d="M 350 25 L 357 25 L 357 31 Q 361 25 370 25 Q 382 25 382 37 L 382 68 L 375 68 L 375 38 Q 375 30 368 30 Q 357 30 357 42 L 357 68 L 350 68 Z"/>
-            <path d="M 397 25 Q 412 25 412 42 L 398 42 Q 398 50 398 52 Q 398 63 406 63 Q 411 63 412 58 L 419 58 Q 418 68 406 68 Q 391 68 391 46.5 Q 391 25 406 25 Z M 398 37 L 405 37 Q 405 30 406 30 Q 412 30 412 37 Z"/>
-          </g>
-          <g class="logo-x" style="cursor: pointer;">
-            <path d="M 435 18 L 449 18 L 465 40 L 481 18 L 495 18 L 473 46.5 L 497 75 L 483 75 L 465 51 L 447 75 L 433 75 L 457 46.5 Z"/>
-          </g>
-          <g class="logo-text">
-            <path d="M 512 25 L 519 25 L 519 55 Q 519 63 526 63 Q 537 63 537 51 L 537 25 L 544 25 L 544 68 L 537 68 L 537 62 Q 533 68 524 68 Q 512 68 512 56 Z"/>
-            <path d="M 559 25 Q 574 25 574 35 L 567 35 Q 567 30 559 30 Q 554 30 554 33.5 Q 554 37 559 38 L 567 40 Q 576 42 576 51 Q 576 68 562 68 Q 547 68 547 57 L 554 57 Q 554 63 562 63 Q 568 63 568 59 Q 568 56 563 54.5 L 555 52.5 Q 547 50.5 547 42 Q 547 25 559 25 Z"/>
-          </g>
-        </svg></a>
-        <div style="font-size: 10px; color: #666;">
-            NAV_SYSTEM: ONLINE
-        </div>
-    </header>
 
-    <div class="workspace">
-        <aside id="sidebar" class="sidebar">
-            <h2>NAVIGATION INDEX</h2>
-            
-            <div class="sidebar-section">
-                <h3>New</h3>
-                <div id="main-links"></div>
-            </div>
-            
-            <div class="sidebar-section">
-                <h3>Writing</h3>
-                <div id="fiction-links"></div>
-            </div>
+  <div id="ambient-stage"></div>
+  <div class="vignette-overlay"></div>
 
-             <div class="sidebar-section">
-                <h3>Fantasia</h3>
-                <div id="resources-links"></div>
-            </div>
+  <!-- Header -->
+  <header class="top-bar">
+    <a href="https://wordstar.nexus" class="logo-anchor">WordStar Nexus</a>
+    <nav class="meta-nav">
+      <a href="https://wordstar.nexus/debrief">Debrief</a>
+      <a href="https://wordstar.nexus/directory">Directory</a>
+      <a href="https://wordstar.nexus/sitemap.xml">XML</a>
+    </nav>
+  </header>
 
-            <div class="sidebar-section">
-                <h3>Apps</h3>
-                <div id="editors-links"></div>
-            </div>
+  <!-- Editorial Lede -->
+  <section class="masthead-statement">
+    <h1>Inky is a writer, musician, and artist.</h1>
+    <p><a href="https://inkrealm.info" target="_blank" rel="noopener">inkrealm.info</a> is the origin story of this domain.</p>
+  </section>
 
-            <div class="sidebar-section">
-                <h3>AI Editors</h3>
-                <div id="ai-links"></div>
-            </div>
-            
-        </aside>
-
-        <main class="main-content" id="scene-container">
-            <div id="map-container">
-                <svg id="star-map" viewBox="0 0 1000 800" preserveAspectRatio="xMidYMid meet">
-                    <!-- BACKGROUND GRID -->
-                    <defs>
-                        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#222" stroke-width="1"/>
-                        </pattern>
-                    </defs>
-                    <rect width="100%" height="100%" fill="url(#grid)" opacity="0.4"/>
-
-                    <!-- UNIVERSE -->
-                    <g id="universe" transform-origin="500 400">
-                        <g id="connections"></g>
-                        <g id="stars"></g>
-                    </g>
-                    
-                    <!-- Labels -->
-                    <g id="labels"></g>
-                </svg>
-            </div>
-            
-            <!-- Popup -->
-            <div id="popup" class="gsap-popup">
-                <h3 id="popup-title"></h3>
-                <p id="popup-desc">ACCESS NODE</p>
-            </div>
-        </main>
+  <!-- Filter & Search Controls -->
+  <div class="filter-bar">
+    <div class="filter-pills" id="pills">
+      <button class="pill-trigger active" data-filter="all">All</button>
+      <button class="pill-trigger" data-filter="wordplay">Word Play</button>
+      <button class="pill-trigger" data-filter="processors">Word Processors</button>
+      <button class="pill-trigger" data-filter="stories">Stories & Notes</button>
+      <button class="pill-trigger" data-filter="other">Other Places</button>
+      <button class="pill-trigger" data-filter="restricted">Restricted</button>
     </div>
+    <input type="text" id="node-search" class="filter-input" placeholder="Search..." autocomplete="off">
+  </div>
 
-<!-- CORRECTED FOOTER -->
-    <footer class="sys-footer">
-          <span>MODE: ORBITAL (HOVER TO PAUSE)</span>
-    <span>LINKS: <span id="link-count">0</span></span>
-        <!-- Navigation Links -->
-        <div style="margin-left: auto; display: flex; align-items: center;">
-            <a href="https://tidal.com/browse/artist/15916023" target="_blank" rel="noopener">Tidal</a>
-            <span class="external-links-separator">•</span>
-            
-            <a href="https://music.apple.com/us/artist/two-skinny-girls/1466240185" target="_blank" rel="noopener">Apple</a>
-            <span class="external-links-separator">•</span>
-            
-            <a href="https://www.redbubble.com/people/inky99/shop" target="_blank" rel="noopener" style="color: #DC143C;">Shop</a>
-            <span class="external-links-separator">•</span>
-            
-                        <!-- SECURE BND LINK -->
-            <a href="https://wandering-base.inkrealm.workers.dev?url=https://inkrealm.info" target="_blank" rel="noopener">inkrealm.info</a>
-            <span class="external-links-separator">•</span>
-            
-            <!-- SECURE BND LINK -->
-            <a href="https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/contact" target="_blank" rel="noopener">Contact</a>
-        
-        </div>
-        
-        <span style="margin-left: 15px;">&copy; 2026</span>
-    </footer>
+  <!-- Main Directory -->
+  <main class="catalog-stage" id="catalog-mount"></main>
 
-    <!-- JAVASCRIPT (Must be at the bottom) -->
-    <script>
-        gsap.registerPlugin();
+  <!-- Footer -->
+  <footer class="bottom-bar">
+    <div>INDEX NODES: <span id="counter" style="color: var(--crimson);">0</span></div>
+    <div style="display:flex; gap:16px;">
+      <a href="https://tidal.com/browse/artist/15916023" target="_blank" rel="noopener">Tidal</a>
+      <a href="https://music.apple.com/us/artist/two-skinny-girls/1466240185" target="_blank" rel="noopener">Apple Music</a>
+      <a href="https://www.redbubble.com/people/inky99/shop" target="_blank" rel="noopener" style="color:var(--crimson)">Shop</a>
+      <a href="https://wordstar.nexus/contact">Contact</a>
+    </div>
+    <div>&copy; WORDSTAR NEXUS</div>
+  </footer>
 
-        // --- DATA ---
-        const sitemapData = [
-    /* ==========  NEW  ========== */
-    /* ==========  NEW  ========== */
-   { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/bakedalaska",   name: "Baked Alaska",  category: "main", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/picassojson1.jpg" },
-  { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/citadelle",          name: "citadelle", category: "main", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/minaro.inkrealm%20(1).jpeg" },
-    { url: "https://wordstar.nexus/cut+rune",      name: "Cut & Rune",    category: "main", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/Peter_Paul_Rubens_-_Rape_of_the_Daughters_of_Leucippus_-_WGA20299.jpg" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://muse.wordstar.nexus",          name: "quantum muse", category: "main", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/d6280e_2fd3d9fcf33543849e43d2a7ce753aeb~mv2.jpg" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://quantum.wordstar.nexus",       name: "0qtopus",      category: "main", image: "https://github.com/ghostm68/pantheon/raw/main/inkrealmliquidhermes934.gif" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/displaywriter2",       name: "dsii",      category: "main", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/emilee.inkrealm.164841611766.gif" },
+  <script>
+    const directory = [
+      /* ========== [I] WORD PLAY ========== */
+      { name: "Cipher", url: "https://wordstar.nexus/code", section: "wordplay", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/the-horse-skull-on-blue.jpg" },
+      { name: "Cut & Rune", url: "https://wordstar.nexus/cut+rune", section: "wordplay", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/Peter_Paul_Rubens_-_Rape_of_the_Daughters_of_Leucippus_-_WGA20299.jpg" },
+      { name: "Gram", url: "https://wordstar.nexus/gram", section: "wordplay", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/picassojson1.jpg" },
+      { name: "Leviticus", url: "https://wordstar.nexus/leviticus", section: "wordplay", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/Michelangelo-Conversion-of-Saul.jpg" },
+      { name: "Lex", url: "https://wordstar.nexus/lex", section: "wordplay", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/Hieronymus_Bosch,_Garden_of_Earthly_Delights_tryptich,_centre_panel_-_detail_3.jpg" },
+      { name: "Tmura", url: "https://wordstar.nexus/tmura", section: "wordplay", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/minaro.inkrealm%20(1).jpeg" },
 
-    /* ==========  WRITING (fiction)  ========== */
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/dreamweaver",   name: "Dreamweaver Ink",    category: "fiction", image: "https://github.com/ghostm68/pantheon/raw/main/laracosima.wordstar.gif" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/wip",           name: "Work in Progress",   category: "fiction", image: "https://github.com/ghostm68/pantheon/raw/main/wagners.wordstar.jpg" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/dejavuglitches",name: "Deja Vu Glitches",   category: "fiction", image: "https://github.com/ghostm68/pantheon/raw/main/laurasophie.h.gif" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/displaywriter", name: "DisplayWriter",      category: "fiction", image: "https://github.com/ghostm68/pantheon/raw/main/laurasophie.h.gif" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/ten",           name: "Slutpuppy",          category: "fiction", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/Minaro.zone.wordstar_240108_223759.gif" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/27",          name: "notes",               category: "fiction", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/Michelangelo-Conversion-of-Saul.jpg" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/38",            name: "38",                 category: "fiction", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/rachelchaleff22625.jpg" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://debrief.wordstar.nexus",         name: "debrief",         category: "fiction", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/minaro.news.jpg" },
+      /* ========== [II] WORD PROCESSORS ========== */
+      { name: "14", url: "https://wordstar.nexus/14", section: "processors", img: "https://lh3.ggpht.com/lAJ1wnr_hEOncOfh9eKzvaS8w-fhLLq5yGlzHBctnjgyOzsbuP4cGIqP4q0A-YvnyXBhJi96il6NIZNhRVW-BVg2lW0=s0" },
+      { name: "16", url: "https://wordstar.nexus/16", section: "processors", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/the-horse-skull-on-blue.jpg" },
+      { name: "AI", url: "https://wordstar.nexus/ai", section: "processors", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/picassojson1.jpg" },
+      { name: "Ataraxia", url: "https://wordstar.nexus/ataraxia", section: "processors", img: "https://raw.githubusercontent.com/ghostm68/99/main/5379e792-a434-4666-8e51-bb8e41de678b_inky_gif.gif" },
+      { name: "Birch", url: "https://wordstar.nexus/birch", section: "processors", img: "https://github.com/ghostm68/pantheon/raw/main/VAPORGRAM.wildfiremap1736434961088.gif" },
+      { name: "Citadelle", url: "https://wordstar.nexus/citadelle", section: "processors", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/minaro.inkrealm%20(1).jpeg" },
+      { name: "Conceptweave", url: "https://wordstar.nexus/conceptweave", section: "processors", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/7f8605cbdd174dcf8ff777756ee92018.gif" },
+      { name: "CustomPad", url: "https://wordstar.nexus/custompad", section: "processors", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/tvc151988-MARLBORO-LIGHTS-MENTHOL-Cigarettes-Wild-Horses-River.webp" },
+      { name: "Displaywriter 2", url: "https://wordstar.nexus/displaywriter2", section: "processors", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/emilee.inkrealm.164841611766.gif" },
+      { name: "EBCDIC", url: "https://wordstar.nexus/ebcdic", section: "processors", img: "https://raw.githubusercontent.com/ghostm68/666/main/Monapromotionalitem.gif" },
+      { name: "Everex", url: "https://wordstar.nexus/everex", section: "processors", img: "https://github.com/ghostm68/pantheon/raw/main/inkrealmliquidhermes934.gif" },
+      { name: "MacWritePro", url: "https://wordstar.nexus/macwritepro", section: "processors", img: "https://github.com/ghostm68/pantheon/raw/main/Detroit.jpeg" },
+      { name: "Q", url: "https://wordstar.nexus/q", section: "processors", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/wetstichler3.gif" },
+      { name: "Quantum Muse", url: "https://muse.wordstar.nexus", section: "processors", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/d6280e_2fd3d9fcf33543849e43d2a7ce753aeb~mv2.jpg" },
+      { name: "Queer", url: "https://wordstar.nexus/queer", section: "processors", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/Michelangelo-Conversion-of-Saul.jpg" },
+      { name: "Seven", url: "https://wordstar.nexus/seven", section: "processors", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/misfits.jpg" },
+      { name: "Six", url: "https://wordstar.nexus/six", section: "processors", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/Diego_Velázquez_053.jpg" },
+      { name: "Textcraft", url: "https://wordstar.nexus/textcraft", section: "processors", img: "https://github.com/ghostm68/pantheon/raw/main/bf.theroadtowellville.gif" },
+      { name: "Triad", url: "https://wordstar.nexus/triad", section: "processors", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/the-horse-skull-on-blue.jpg" },
+      { name: "TRS-80", url: "https://wordstar.nexus/trs80", section: "processors", img: "https://raw.githubusercontent.com/ghostm68/99/main/5379e792-a434-4666-8e51-bb8e41de678b_inky_gif.gif" },
+      { name: "Typecast", url: "https://wordstar.nexus/typecast", section: "processors", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/Kristina.wordstar.gif" },
+      { name: "Typespace", url: "https://wordstar.nexus/typespace", section: "processors", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/zelda.gif" },
+      { name: "Typewriter", url: "https://wordstar.nexus/typewriter", section: "processors", img: "https://github.com/ghostm68/pantheon/raw/main/deepelemblues.twoskinnygirls.gif" },
+      { name: "Z-Spin", url: "https://wordstar.nexus/z", section: "processors", img: "https://github.com/ghostm68/pantheon/raw/main/myrnaloy.wordstar.gif" },
 
-    /* ==========  FANTASIA (resources)  ========== */
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/lex",    name: "dictionary", category: "resources", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/Hieronymus_Bosch,_Garden_of_Earthly_Delights_tryptich,_centre_panel_-_detail_3.jpg" },  
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/nc17",          name: "NC-17",       category: "resources", image: "https://github.com/ghostm68/pantheon/raw/main/wordstarnc17.gif" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/netherlands",   name: "Netherlands", category: "resources", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/437432178.jpg" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/90263",         name: "Martha Kessler",category: "resources", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/d6280e_2fd3d9fcf33543849e43d2a7ce753aeb~mv2.jpg" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/seven",         name: "DOS Seven",   category: "resources", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/misfits.jpg" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/six",           name: "legacy",      category: "resources", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/Diego_Velázquez_053.jpg" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/trs80",         name: "trs80",       category: "resources", image: "https://raw.githubusercontent.com/ghostm68/99/main/5379e792-a434-4666-8e51-bb8e41de678b_inky_gif.gif" },
+      /* ========== [III] STORIES & NOTES ========== */
+      { name: "15", url: "https://wordstar.nexus/15", section: "stories", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/d6280e_2fd3d9fcf33543849e43d2a7ce753aeb~mv2.jpg" },
+      { name: "Baked Alaska", url: "https://wordstar.nexus/bakedalaska", section: "stories", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/picassojson1.jpg" },
+      { name: "Deja Vu Glitches", url: "https://wordstar.nexus/dejavuglitches", section: "stories", img: "https://github.com/ghostm68/pantheon/raw/main/laurasophie.h.gif" },
+      { name: "Dreamweaver", url: "https://wordstar.nexus/dreamweaver", section: "stories", img: "https://github.com/ghostm68/pantheon/raw/main/laracosima.wordstar.gif" },
+      { name: "Notes 27", url: "https://wordstar.nexus/27", section: "stories", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/Michelangelo-Conversion-of-Saul.jpg" },
+      { name: "Notes 38", url: "https://wordstar.nexus/38", section: "stories", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/rachelchaleff22625.jpg" },
+      { name: "Slutpuppy", url: "https://wordstar.nexus/ten", section: "stories", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/Minaro.zone.wordstar_240108_223759.gif" },
+      { name: "Town", url: "https://wordstar.nexus/town", section: "stories", note: "in progress / unpublished notes", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/minaro.news.jpg" },
+      { name: "Work in Progress", url: "https://wordstar.nexus/wip", section: "stories", img: "https://github.com/ghostm68/pantheon/raw/main/wagners.wordstar.jpg" },
 
-    /* ==========  APPS (editors)  ========== */
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/custompad",     name: "CustomPad",     category: "editors", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/tvc151988-MARLBORO-LIGHTS-MENTHOL-Cigarettes-Wild-Horses-River.webp" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/typecast",      name: "Typecast",      category: "editors", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/Kristina.wordstar.gif" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/typespace",     name: "Typespace",     category: "editors", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/zelda.gif" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/z",             name: "Z-Spin",        category: "editors", image: "https://github.com/ghostm68/pantheon/raw/main/myrnaloy.wordstar.gif" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/textcraft",     name: "Text Craft",    category: "editors", image: "https://github.com/ghostm68/pantheon/raw/main/bf.theroadtowellville.gif" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/birch",         name: "Birch v1.9",    category: "editors", image: "https://github.com/ghostm68/pantheon/raw/main/VAPORGRAM.wildfiremap1736434961088.gif" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/macwritepro",   name: "Mac-Thing",     category: "editors", image: "https://github.com/ghostm68/pantheon/raw/main/Detroit.jpeg" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/everex",        name: "Everex",        category: "editors", image: "https://github.com/ghostm68/pantheon/raw/main/inkrealmliquidhermes934.gif" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/ataraxia",      name: "Ataraxia",      category: "editors", image: "https://raw.githubusercontent.com/ghostm68/99/main/5379e792-a434-4666-8e51-bb8e41de678b_inky_gif.gif" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/code",        name: "cipher",        category: "editors", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/the-horse-skull-on-blue.jpg" },
+      /* ========== [IV] OTHER PLACES ========== */
+      { name: "90263", url: "https://wordstar.nexus/90263", section: "other", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/d6280e_2fd3d9fcf33543849e43d2a7ce753aeb~mv2.jpg" },
+      { name: "Home", url: "https://wordstar.nexus/home", section: "other", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/minaro.inkrealm%20(1).jpeg" },
+      { name: "Netherlands", url: "https://wordstar.nexus/netherlands", section: "other", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/437432178.jpg" },
 
-    /* ==========  AI EDITORS (ai)  ========== */
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/q",             name: "Q (AI)",        category: "ai", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/wetstichler3.gif" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/ebcdic",         name: "ebcdic",        category: "ai", image: "https://raw.githubusercontent.com/ghostm68/666/main/Monapromotionalitem.gif" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/queer",         name: "Queer",         category: "ai", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/Michelangelo-Conversion-of-Saul.jpg" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/triad",         name: "Triad",         category: "ai", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/the-horse-skull-on-blue.jpg" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/ai",            name: "AI",            category: "ai", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/picassojson1.jpg" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/conceptweave",  name: "Conceptweave",  category: "ai", image: "https://raw.githubusercontent.com/ghostm68/pantheon/main/7f8605cbdd174dcf8ff777756ee92018.gif" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/14",  name: "gemma",  category: "ai", image: "https://lh3.ggpht.com/lAJ1wnr_hEOncOfh9eKzvaS8w-fhLLq5yGlzHBctnjgyOzsbuP4cGIqP4q0A-YvnyXBhJi96il6NIZNhRVW-BVg2lW0=s0" },
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/typewriter",    name: "Typewriter",    category: "ai", image: "https://github.com/ghostm68/pantheon/raw/main/deepelemblues.twoskinnygirls.gif" },
+      /* ========== [V] RESTRICTED ========== */
+      { name: "404", url: "https://wordstar.nexus/404", section: "restricted", img: "https://raw.githubusercontent.com/ghostm68/pantheon/main/the-horse-skull-on-blue.jpg" },
+      { name: "NC-17", url: "https://wordstar.nexus/nc17", section: "restricted", img: "https://github.com/ghostm68/pantheon/raw/main/wordstarnc17.gif" }
+    ];
 
-    /* ==========  MAIN (duplicates / misc)  ========== */
-    { url: "https://wandering-base.inkrealm.workers.dev?url=https://wordstar.nexus/home",          name: "Home",          category: "main", image: "https://github.com/ghostm68/pantheon/raw/main/zelda.gif" },
-];
+    const sectionMeta = {
+      wordplay:   { title: "Word Play", roman: "I" },
+      processors: { title: "Word Processors", roman: "II" },
+      stories:    { title: "Stories & Notes", roman: "III" },
+      other:      { title: "Other Places", roman: "IV" },
+      restricted: { title: "Restricted", roman: "V" }
+    };
 
+    const stage = document.getElementById('ambient-stage');
+    const catalog = document.getElementById('catalog-mount');
+    const searchField = document.getElementById('node-search');
+    const pillsWrap = document.getElementById('pills');
+    const counterEl = document.getElementById('counter');
 
-        // --- SIDEBAR BUILDER ---
-        function buildSidebar() {
-            const cats = { main: [], fiction: [], editors: [], ai: [], resources: [], domain: [] };
-            
-            sitemapData.forEach(item => {
-                if(cats[item.category]) cats[item.category].push(item);
-                else cats.domain.push(item);
-            });
-            
-            const fill = (id, list) => {
-                const container = document.getElementById(id);
-                // This check prevents errors if an ID is missing in HTML
-                if(!container) return; 
-                
-                list.forEach(item => {
-                    const linkDiv = document.createElement('a');
-                    linkDiv.className = 'sidebar-link';
-                    linkDiv.style.display = 'flex';
-                    linkDiv.style.alignItems = 'center';
-                    linkDiv.style.gap = '10px';
-                    linkDiv.href = item.url;
-                    linkDiv.target = "_blank";
-
-                    const img = document.createElement('img');
-                    img.style.width = '24px';
-                    img.style.height = '24px';
-                    img.style.objectFit = 'cover';
-                    img.style.border = '1px solid #333';
-                    img.style.display = 'block'; 
-                    img.src = item.image;
-
-                    const span = document.createElement('span');
-                    span.innerText = item.name;
-                    
-                    linkDiv.appendChild(img);
-                    linkDiv.appendChild(span);
-                    container.appendChild(linkDiv);
-                });
-            };
-
-            // This triggers the population of the lists
-            fill('main-links', cats.main);
-            fill('fiction-links', cats.fiction);
-            fill('editors-links', cats.editors);
-            fill('ai-links', cats.ai);       // <--- This puts Muse into the AI list
-            fill('resources-links', cats.resources);
-
-         document.getElementById('link-count').textContent = sitemapData.length;
-        }
-
-        // --- MAP BUILDER ---
-        function buildMap() {
-            const cx = 500, cy = 400; 
-            const universe = document.getElementById('universe');
-            const starsGroup = document.getElementById('stars');
-            const linesGroup = document.getElementById('connections');
-            const labelsGroup = document.getElementById('labels');
-
-      // 1.  declare the node
-const nodes = {
-    main:    { angle: 0,   items: [] },   // ← NEW
-    fiction: { angle: 72,  items: [] },
-    editors: { angle: 144, items: [] },
-    ai:      { angle: 216, items: [] },
-    resources:{ angle: 288, items: [] }
-};
-
-// 2.  populate it
-sitemapData.forEach(item => {
-    if (nodes[item.category]) {
-        nodes[item.category].items.push(item);
+    counterEl.textContent = directory.length;
+    if (directory.length > 0) {
+      stage.style.backgroundImage = `url('${directory[0].img}')`;
     }
-});
 
-            const categoryRadius = 220; 
-            const itemRadius = 55;      
+    function renderCatalog(filterKey = 'all', searchQuery = '') {
+      catalog.innerHTML = '';
+      const query = searchQuery.toLowerCase().trim();
 
-            Object.keys(nodes).forEach(key => {
-                const node = nodes[key];
-                const angleRad = (node.angle * Math.PI) / 180;
-                
-                const catX = cx + Math.cos(angleRad) * categoryRadius;
-                const catY = cy + Math.sin(angleRad) * categoryRadius;
+      Object.keys(sectionMeta).forEach(secKey => {
+        if (filterKey !== 'all' && filterKey !== secKey) return;
 
-                // Lines
-                const mainLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                mainLine.setAttribute("x1", cx); mainLine.setAttribute("y1", cy);
-                mainLine.setAttribute("x2", catX); mainLine.setAttribute("y2", catY);
-                mainLine.setAttribute("class", "constellation-line");
-                linesGroup.appendChild(mainLine);
+        // Strict alphabetical order (numeric-aware: numbers 0-9 before A-Z)
+        const entries = directory
+          .filter(item => {
+            const matchesSection = item.section === secKey;
+            const matchesQuery = item.name.toLowerCase().includes(query);
+            return matchesSection && matchesQuery;
+          })
+          .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
-                // Hub
-                const catStar = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                catStar.setAttribute("cx", catX); catStar.setAttribute("cy", catY);
-                catStar.setAttribute("r", 8);
-                catStar.setAttribute("class", "hub-point"); 
-                starsGroup.appendChild(catStar);
+        if (entries.length === 0) return;
 
-                createFloatingLabel(key.toUpperCase(), catX, catY, labelsGroup);
+        const secBlock = document.createElement('section');
+        secBlock.className = 'catalog-section';
 
-                // Children
-                const count = node.items.length;
-                node.items.forEach((item, idx) => {
-                    const itemAngle = (idx / count) * Math.PI * 2;
-                    const itemX = catX + Math.cos(itemAngle) * itemRadius;
-                    const itemY = catY + Math.sin(itemAngle) * itemRadius;
+        const head = document.createElement('div');
+        head.className = 'section-head';
+        head.innerHTML = `
+          <span>[${sectionMeta[secKey].roman}] ${sectionMeta[secKey].title}</span>
+          <span class="section-count">${entries.length}</span>
+        `;
+        secBlock.appendChild(head);
 
-                    const subLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                    subLine.setAttribute("x1", catX); subLine.setAttribute("y1", catY);
-                    subLine.setAttribute("x2", itemX); subLine.setAttribute("y2", itemY);
-                    subLine.setAttribute("class", "constellation-line");
-                    subLine.setAttribute("opacity", "0.2");
-                    linesGroup.appendChild(subLine);
+        const grid = document.createElement('div');
+        grid.className = 'grid-container';
 
-                    const star = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                    star.setAttribute("cx", itemX); star.setAttribute("cy", itemY);
-                    star.setAttribute("r", 4);
-                    star.setAttribute("class", "star-point territory");
-                    
-                    if(key === 'domain') star.setAttribute("fill", "#444");
-                    star.setAttribute("data-name", item.name);
-                    star.setAttribute("data-url", item.url);
-                    star.setAttribute("data-img", item.image); 
-                    starsGroup.appendChild(star);
-                });
-            });
+        entries.forEach(node => {
+          const tile = document.createElement('a');
+          tile.className = 'node-tile';
+          tile.href = node.url;
+          tile.target = "_blank";
+          tile.rel = "noopener noreferrer";
 
-            // Center Realm
-            const centerNode = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            centerNode.setAttribute("cx", cx); centerNode.setAttribute("cy", cy);
-            centerNode.setAttribute("r", 14);
-            centerNode.setAttribute("class", "star-point realm-node");
-            centerNode.setAttribute("data-name", "REALM");
-            centerNode.setAttribute("data-url", "https://www.inkrealm.info");
-            centerNode.setAttribute("data-img", "https://github.com/ghostm68/pantheon/raw/main/realm.jpg");
-            starsGroup.appendChild(centerNode);
-        }
+          tile.innerHTML = `
+            <img class="node-thumb" src="${node.img}" alt="${node.name}" loading="lazy">
+            <div class="node-details">
+              <span class="node-title">${node.name}</span>
+              ${node.note ? `<span class="node-note">${node.note}</span>` : ''}
+            </div>
+          `;
 
-        function createFloatingLabel(text, initialX, initialY, container) {
-            const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            label.textContent = text;
-            label.setAttribute("class", "category-label");
-            label.setAttribute("x", initialX);
-            label.setAttribute("y", initialY + 25);
-            label.dataset.ox = initialX - 500; 
-            label.dataset.oy = initialY - 400;
-            container.appendChild(label);
-        }
+          // Cross-fade backdrop on desktop mouse hover
+          tile.addEventListener('mouseenter', () => {
+            stage.style.backgroundImage = `url('${node.img}')`;
+            stage.style.opacity = '0.32';
+          });
+          tile.addEventListener('mouseleave', () => {
+            stage.style.opacity = '0.2';
+          });
 
-        // --- INIT ---
-        function init() {
-            buildSidebar(); // This builds the list including Muse
-            buildMap();
+          grid.appendChild(tile);
+        });
 
-            const toggle = document.getElementById('sidebar-toggle');
-            const sidebar = document.getElementById('sidebar');
-            const universe = document.getElementById('universe');
-            const scene = document.getElementById('scene-container');
-            const popup = document.getElementById('popup');
-            
-            const rotTween = gsap.to(universe, {
-                rotation: 360,
-                duration: 120,
-                repeat: -1,
-                ease: "none",
-                transformOrigin: "500px 400px",
-                onUpdate: updateLabels
-            });
+        secBlock.appendChild(grid);
+        catalog.appendChild(secBlock);
+      });
+    }
 
-            function updateLabels() {
-                const angle = gsap.getProperty(universe, "rotation") * (Math.PI / 180);
-                const labels = document.querySelectorAll('.category-label');
-                labels.forEach(label => {
-                    const ox = parseFloat(label.dataset.ox);
-                    const oy = parseFloat(label.dataset.oy);
-                    const nx = ox * Math.cos(angle) - oy * Math.sin(angle);
-                    const ny = ox * Math.sin(angle) + oy * Math.cos(angle);
-                    label.setAttribute("x", 500 + nx);
-                    label.setAttribute("y", 400 + ny + 25);
-                });
-            }
+    // Filter pill events
+    pillsWrap.addEventListener('click', (e) => {
+      if (!e.target.classList.contains('pill-trigger')) return;
+      document.querySelectorAll('.pill-trigger').forEach(p => p.classList.remove('active'));
+      e.target.classList.add('active');
+      renderCatalog(e.target.dataset.filter, searchField.value);
+    });
 
-            if (window.innerWidth < 768) {
-                sidebar.classList.add('collapsed');
-                toggle.innerHTML = "&gt;&gt;";
-            }
-            toggle.addEventListener('click', () => {
-                sidebar.classList.toggle('collapsed');
-                toggle.innerHTML = sidebar.classList.contains('collapsed') ? "&gt;&gt;" : "&lt;&lt;";
-            });
+    // Live search
+    searchField.addEventListener('input', (e) => {
+      const activeFilter = document.querySelector('.pill-trigger.active').dataset.filter;
+      renderCatalog(activeFilter, e.target.value);
+    });
 
-            scene.addEventListener('mouseenter', () => gsap.to(rotTween, { timeScale: 0, duration: 0.5 }));
-            scene.addEventListener('mouseleave', () => {
-                gsap.to(rotTween, { timeScale: 1, duration: 1 });
-                gsap.to(popup, { opacity: 0 });
-            });
-            
-            scene.addEventListener('touchstart', () => {
-                gsap.to(rotTween, { timeScale: 0, duration: 0.5 });
-            }, {passive: true});
-            scene.addEventListener('touchend', () => {
-                setTimeout(() => {
-                    gsap.to(rotTween, { timeScale: 1, duration: 1 });
-                    gsap.to(popup, { opacity: 0 });
-                }, 2000); 
-            });
-
-            // Popup Logic
-            const stars = document.querySelectorAll('.star-point');
-            stars.forEach(star => {
-                star.addEventListener('mouseenter', (e) => {
-                    const name = star.getAttribute('data-name');
-                    const imgUrl = star.getAttribute('data-img');
-                    if(!name) return;
-                    
-                    popup.innerHTML = '';
-                    
-                    if(imgUrl) {
-                        const imgElement = document.createElement('img');
-                        imgElement.alt = name;
-                        imgElement.src = imgUrl; 
-                        popup.appendChild(imgElement);
-                    }
-                    
-                    const title = document.createElement('h3');
-                    title.textContent = name;
-                    popup.appendChild(title);
-                    
-                    const desc = document.createElement('p');
-                    desc.textContent = 'ACCESS NODE';
-                    popup.appendChild(desc);
-                    
-                    gsap.to(popup, { opacity: 1, duration: 0.2 });
-                    
-                    const isRealm = star.classList.contains('realm-node');
-                    const rSize = isRealm ? 16 : 8;
-                    gsap.to(star, { attr: {r: rSize}, fill: '#FFF', duration: 0.3 });
-                });
-
-                star.addEventListener('mousemove', (e) => {
-                    gsap.to(popup, { left: e.clientX + 'px', top: e.clientY - 20 + 'px', duration: 0.1 });
-                });
-
-                star.addEventListener('mouseleave', () => {
-                    const isRealm = star.classList.contains('realm-node');
-                    let r = 4;
-                    let f = '#666';
-                    if(isRealm) { r = 14; f = '#000'; }
-                    if(!isRealm && star.getAttribute('fill') === '#444') f = '#444';
-
-                    gsap.to(star, { attr: {r: r}, fill: f, duration: 0.3 });
-                    gsap.to(popup, { opacity: 0, duration: 0.2 });
-                });
-
-                star.addEventListener('click', () => {
-                    const url = star.getAttribute('data-url');
-                    if(url) window.open(url, '_blank');
-                });
-            });
-        }
-
-        init();
-    </script>
+    // Build directory
+    renderCatalog();
+  </script>
 </body>
 </html>
