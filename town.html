@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>⚡ R/W Literary Works ⚡</title>
-  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.basic.min.js"></script>
   <style>
@@ -12,254 +11,230 @@
       --red: #ff3344;
       --red-dim: rgba(255, 51, 68, 0.15);
       --red-border: rgba(255, 51, 68, 0.4);
-      --dark-grey: #121316;
-      --card-bg: #0b0c0e;
-      --border: #26282e;
-      --text-muted: #737887;
+      --bg: #070709;
+      --card-bg: #0e0f14;
+      --input-bg: #121319;
+      --border: #242731;
+      --text: #d1d5db;
+      --text-muted: #6b7280;
     }
 
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Courier New', Courier, monospace;
-      background-color: #070709;
-      color: #d1d5db;
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 1rem;
+      line-height: 1.6;
     }
 
-    .voodoo {
-      font-family: 'Courier New', Courier, monospace;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+    .container { max-width: 900px; margin: 0 auto; }
+    .voodoo { letter-spacing: 0.08em; text-transform: uppercase; }
+
+    /* Button & Input base */
+    button {
+      background: #111218;
+      border: 1px solid var(--border);
+      color: #9ca3af;
+      padding: 0.35rem 0.65rem;
+      font-size: 0.75rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    button:hover:not(:disabled) {
+      border-color: var(--red);
+      color: #fff;
+    }
+    button:disabled { opacity: 0.3; cursor: not-allowed; }
+    
+    input, select, textarea {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: #f3f4f6;
+      font-family: inherit;
+      font-size: 0.8rem;
+      padding: 0.5rem;
+      border-radius: 0;
+      width: 100%;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--red);
     }
 
     .highlight {
       background-color: var(--red);
       color: #000;
       padding: 1px 3px;
-      border-radius: 2px;
       font-weight: bold;
     }
-
     .active-hit {
       outline: 2px solid #fff;
       box-shadow: 0 0 10px var(--red);
       background-color: #fff !important;
       color: #000 !important;
     }
-
     .search-active {
       border-color: var(--red) !important;
       box-shadow: 0 0 10px var(--red-border);
     }
-
-    .mode-active {
+    .mode-active, .filter-active {
       background: var(--red) !important;
       color: #000 !important;
       border-color: var(--red) !important;
       font-weight: bold;
     }
 
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: #090a0d;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background-color: #2a2d36;
-      border-radius: 3px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background-color: var(--red);
-    }
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #090a0d; }
+    ::-webkit-scrollbar-thumb { background: #262933; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--red); }
 
-    /* Prose Styling */
-    .prose {
-      color: #cbd5e1;
-      max-width: 100%;
-      line-height: 1.85;
-      font-size: 0.95rem;
-    }
-    .prose h1, .prose h2, .prose h3, .prose h4 {
-      color: #fff;
-      font-weight: 700;
-      margin-top: 1.8em;
-      margin-bottom: 0.6em;
-      letter-spacing: 0.05em;
-    }
-    .prose h1 { font-size: 1.9em; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; color: var(--red); }
-    .prose h2 { font-size: 1.5em; color: #f3f4f6; }
-    .prose h3 { font-size: 1.25em; color: #e5e7eb; }
+    /* Prose */
+    .prose { color: #cbd5e1; font-size: 0.95rem; line-height: 1.85; }
+    .prose h1, .prose h2, .prose h3 { color: #fff; margin: 1.8em 0 0.6em; }
+    .prose h1 { font-size: 1.8em; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; color: var(--red); }
+    .prose h2 { font-size: 1.4em; }
     .prose p { margin: 1.2em 0; }
     .prose blockquote {
       border-left: 3px solid var(--red);
-      padding-left: 1.2em;
-      color: #9ca3af;
       background: var(--red-dim);
-      padding-top: 0.4em;
-      padding-bottom: 0.4em;
+      padding: 0.5rem 1rem;
       margin: 1.5em 0;
       font-style: italic;
     }
-    .prose pre {
-      background-color: #0f1015;
-      border: 1px solid var(--border);
-      padding: 1rem;
-      border-radius: 4px;
-      overflow-x: auto;
-      color: #e2e8f0;
-    }
-    .prose code {
-      background-color: #171821;
-      color: var(--red);
-      padding: 0.2em 0.4em;
-      border-radius: 3px;
-      font-size: 0.9em;
-    }
+    .prose code { background: #171821; color: var(--red); padding: 0.2em 0.4em; }
 
-    /* Modal */
+    /* Modals */
     .analytics-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.85);
-      z-index: 50;
-      backdrop-filter: blur(2px);
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); z-index: 50; backdrop-filter: blur(2px);
     }
     .analytics-modal {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 90%;
-      max-width: 680px;
-      background: #0f1015;
-      border: 1px solid var(--red);
-      box-shadow: 0 0 25px rgba(255, 51, 68, 0.25);
-      padding: 1.5rem;
-      z-index: 51;
-      border-radius: 2px;
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 90%; max-width: 680px; background: #0f1015; border: 1px solid var(--red);
+      box-shadow: 0 0 25px rgba(255, 51, 68, 0.25); padding: 1.5rem; z-index: 51;
     }
+    .flex-wrap { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
   </style>
 </head>
-<body class="p-3 sm:p-6 md:p-8 antialiased selection:bg-red-500 selection:text-black">
-  <div class="max-w-4xl mx-auto">
+<body>
+  <div class="container">
 
     <!-- HEADER -->
-    <header class="mb-6 pb-4 border-b border-gray-800">
-      <div class="flex justify-between items-center flex-wrap gap-2">
-        <h1 class="text-2xl sm:text-3xl font-bold voodoo" style="color:var(--red)">
+    <header style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+        <h1 class="voodoo" style="font-size: 1.6rem; font-weight: bold; color: var(--red);">
           ⚡ R/W LITERARY WORKS ⚡
         </h1>
-        <div class="flex items-center gap-3 text-xs">
-          <button id="guideToggle" class="text-gray-400 hover:text-red-400 transition-colors">⚡ Search Guide</button>
+        <div class="flex-wrap">
+          <button id="guideToggle">⚡ Search Guide</button>
+          <button id="authToggle" style="border-color:#4b5563;">⚙️ Repo Auth</button>
+        </div>
+      </div>
+
+      <!-- PRIVATE REPO AUTH DRAWER -->
+      <div id="authDrawer" style="display:none; margin-top: 0.75rem; padding: 0.75rem; background: #0c0d12; border: 1px solid var(--border);">
+        <p style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 0.5rem;">
+          <strong>Private Repo Access:</strong> Provide a fine-grained GitHub Personal Access Token (read-only) to access private repositories. Stored locally in your browser.
+        </p>
+        <div style="display:flex; gap:0.5rem;">
+          <input type="password" id="ghTokenInput" placeholder="github_pat_... or ghp_..." style="flex:1;" />
+          <button id="saveGhTokenBtn" style="white-space:nowrap; border-color:var(--red);">SAVE & RELOAD</button>
         </div>
       </div>
 
       <!-- SEARCH GUIDE DRAWER -->
-      <div id="searchGuide" class="hidden mt-3 p-3 bg-gray-950 border border-gray-800 text-xs text-gray-400 leading-relaxed font-mono">
-        <div class="font-bold text-gray-200 mb-1" style="color:var(--red)">⚡ Search Reference:</div>
-        <div><strong class="text-gray-200">Exact:</strong> Plain text, <code class="text-red-400">"quoted phrase"</code>, <code class="text-red-400">word1 or word2</code>, <code class="text-red-400">-exclude</code></div>
-        <div><strong class="text-gray-200">Fuzzy:</strong> Typo-tolerant search powered by Fuse.js</div>
-        <div><strong class="text-gray-200">Shortcuts:</strong> <kbd class="px-1 border border-gray-700">←</kbd> <kbd class="px-1 border border-gray-700">→</kbd> entries • <kbd class="px-1 border border-gray-700">R</kbd> random • <kbd class="px-1 border border-gray-700">N</kbd>/<kbd class="px-1 border border-gray-700">P</kbd> hits • <kbd class="px-1 border border-gray-700">/</kbd> search • <kbd class="px-1 border border-gray-700">Esc</kbd> close index</div>
+      <div id="searchGuide" style="display:none; margin-top: 0.75rem; padding: 0.75rem; background: #0c0d12; border: 1px solid var(--border); font-size: 0.75rem; color: #9ca3af;">
+        <div style="color:var(--red); font-weight:bold; margin-bottom:0.25rem;">⚡ Search Guide:</div>
+        <div>• <strong>Exact:</strong> plain text, <code style="color:var(--red)">"exact phrase"</code>, <code style="color:var(--red)">word1 or word2</code>, <code style="color:var(--red)">-exclude</code></div>
+        <div>• <strong>Fuzzy:</strong> typo-tolerant search powered by Fuse.js</div>
+        <div>• <strong>Keys:</strong> <kbd>←</kbd> <kbd>→</kbd> Navigate • <kbd>R</kbd> Random • <kbd>N</kbd>/<kbd>P</kbd> Next/Prev hit • <kbd>/</kbd> Focus search • <kbd>Esc</kbd> Close modal</div>
       </div>
     </header>
 
-    <!-- CONTROLS & SEARCH -->
-    <div id="controls" class="sticky top-0 bg-[#070709] pt-2 pb-4 border-b border-gray-800 z-30">
+    <!-- SEARCH & CONTROLS TOOLBAR -->
+    <div style="position:sticky; top:0; background:var(--bg); padding: 0.5rem 0 1rem 0; border-bottom: 1px solid var(--border); z-index: 30;">
       
-      <!-- Search Input -->
-      <div class="relative mb-2">
-        <input
-          type="text"
-          id="searchBox"
-          class="w-full bg-[#101116] border border-gray-700 text-gray-100 p-2.5 text-sm focus:outline-none transition-all duration-200 rounded-none placeholder-gray-600"
-          placeholder="Search entries (e.g. water AND night, &quot;exact phrase&quot;, -dream)..."
-          aria-label="Search"
-        />
-        <div id="searchStats" class="absolute right-3 top-3 text-[11px] text-gray-500 font-mono pointer-events-none"></div>
+      <div style="position:relative; margin-bottom: 0.5rem;">
+        <input type="text" id="searchBox" placeholder="Search entries (e.g. water AND night, &quot;exact phrase&quot;, -dream)..." />
+        <span id="searchStats" style="position:absolute; right:10px; top:8px; font-size:0.7rem; color:var(--text-muted); pointer-events:none;"></span>
       </div>
 
-      <!-- Navigation & Mode Rows -->
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <!-- Main Nav -->
-        <div class="flex flex-wrap items-center gap-1.5">
-          <button id="prevBtn" class="bg-[#121318] border border-gray-700 text-gray-300 py-1.5 px-3 text-xs hover:border-red-500 transition-colors" title="Previous Entry">← Prev</button>
-          <button id="randomBtn" class="bg-[#121318] border border-gray-700 text-red-400 py-1.5 px-3 text-xs hover:border-red-500 transition-colors" title="Random (R)">⚡ Random ⚡</button>
-          <button id="nextBtn" class="bg-[#121318] border border-gray-700 text-gray-300 py-1.5 px-3 text-xs hover:border-red-500 transition-colors" title="Next Entry">Next →</button>
-          <button id="jumpStart" class="bg-[#121318] border border-gray-700 text-gray-400 py-1.5 px-2 text-xs hover:text-white" title="First Entry">⇤</button>
-          <button id="jumpEnd" class="bg-[#121318] border border-gray-700 text-gray-400 py-1.5 px-2 text-xs hover:text-white" title="Last Entry">⇥</button>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem;">
+        <div class="flex-wrap">
+          <button id="prevBtn" title="Previous Entry">← Prev</button>
+          <button id="randomBtn" style="color:var(--red);" title="Random (R)">⚡ Random ⚡</button>
+          <button id="nextBtn" title="Next Entry">Next →</button>
+          <button id="jumpStart" title="First Entry">⇤</button>
+          <button id="jumpEnd" title="Last Entry">⇥</button>
         </div>
 
-        <!-- Mode Buttons & Index Drawer Toggle -->
-        <div class="flex items-center gap-1.5">
-          <button id="exactBtn" data-mode="exact" class="mode-btn mode-active bg-[#121318] border border-gray-700 text-gray-300 py-1.5 px-2.5 text-xs transition-colors">Exact</button>
-          <button id="fuzzyBtn" data-mode="fuzzy" class="mode-btn bg-[#121318] border border-gray-700 text-gray-300 py-1.5 px-2.5 text-xs transition-colors">Fuzzy</button>
-          <button id="indexBtn" class="bg-[#121318] border border-gray-700 text-gray-300 py-1.5 px-3 text-xs hover:border-red-500 transition-colors">Index</button>
+        <div class="flex-wrap">
+          <button id="exactBtn" class="mode-active" data-mode="exact">Exact</button>
+          <button id="fuzzyBtn" data-mode="fuzzy">Fuzzy</button>
+          <button id="indexBtn">Index</button>
         </div>
       </div>
 
-      <!-- In-Page Match Stepper (Hits) -->
-      <div id="matchNav" class="hidden items-center gap-2 mb-3 px-2 py-1 bg-red-950/20 border border-red-900/50 text-xs">
-        <span class="text-red-400 font-mono" id="matchCounter">hit 0/0</span>
-        <button id="prevMatchBtn" class="px-2 py-0.5 border border-gray-700 hover:border-red-500 text-gray-300">↑ hit</button>
-        <button id="nextMatchBtn" class="px-2 py-0.5 border border-gray-700 hover:border-red-500 text-gray-300">hit ↓</button>
-        <span class="text-gray-600 text-[10px] ml-auto">Use [N] or [P]</span>
+      <!-- Match navigation bar -->
+      <div id="matchNav" style="display:none; align-items:center; gap:0.5rem; padding:0.25rem 0.5rem; background:rgba(255,51,68,0.08); border:1px solid rgba(255,51,68,0.3); font-size:0.75rem; margin-bottom:0.5rem;">
+        <span id="matchCounter" style="color:var(--red);">hit 0/0</span>
+        <button id="prevMatchBtn" style="padding:0.1rem 0.4rem;">↑ hit</button>
+        <button id="nextMatchBtn" style="padding:0.1rem 0.4rem;">hit ↓</button>
+        <span style="color:#6b7280; font-size:0.65rem; margin-left:auto;">[N] / [P]</span>
       </div>
 
       <!-- Analytics Toolbar -->
-      <div class="flex flex-wrap items-center gap-1.5 mb-3 text-xs">
-        <button id="anaWordsBtn" class="bg-[#0f1015] border border-gray-800 text-gray-400 hover:text-gray-200 px-2 py-1 hover:border-gray-600">📊 Words</button>
-        <button id="anaCharsBtn" class="bg-[#0f1015] border border-gray-800 text-gray-400 hover:text-gray-200 px-2 py-1 hover:border-gray-600">👤 Chars</button>
-        <button id="anaRepsBtn" class="bg-[#0f1015] border border-gray-800 text-gray-400 hover:text-gray-200 px-2 py-1 hover:border-gray-600">🔁 Reps</button>
-        <button id="anaTimeBtn" class="bg-[#0f1015] border border-gray-800 text-gray-400 hover:text-gray-200 px-2 py-1 hover:border-gray-600">⏰ Timeline</button>
-        <span id="analyticsStatus" class="text-[11px] text-gray-500 ml-2"></span>
+      <div class="flex-wrap" style="margin-bottom:0.5rem;">
+        <button id="anaWordsBtn">📊 Words</button>
+        <button id="anaCharsBtn">👤 Chars</button>
+        <button id="anaRepsBtn">🔁 Reps</button>
+        <button id="anaTimeBtn">⏰ Timeline</button>
       </div>
 
-      <!-- Tag Filters -->
-      <div id="filterBtns" class="flex flex-wrap items-center gap-1.5">
-        <button class="filter-btn py-1 px-2.5 text-[11px] uppercase border border-gray-700 text-gray-400 hover:border-red-500 transition-colors" data-filter="all">All</button>
-        <button class="filter-btn py-1 px-2.5 text-[11px] uppercase border border-gray-700 text-gray-400 hover:border-red-500 transition-colors" data-filter="chapters">Chapters</button>
-        <button class="filter-btn py-1 px-2.5 text-[11px] uppercase border border-gray-700 text-gray-400 hover:border-red-500 transition-colors" data-filter="annotations">Annotations</button>
-        <button class="filter-btn py-1 px-2.5 text-[11px] uppercase border border-gray-700 text-gray-400 hover:border-red-500 transition-colors" data-filter="hypothesis">Hypothesis</button>
-        <button class="filter-btn py-1 px-2.5 text-[11px] uppercase border border-gray-700 text-gray-400 hover:border-red-500 transition-colors" data-filter="interlude">Interlude</button>
-        <button class="filter-btn py-1 px-2.5 text-[11px] uppercase border border-gray-700 text-gray-400 hover:border-red-500 transition-colors" data-filter="chronology">Chronology</button>
+      <!-- Filter Badges -->
+      <div id="filterBtns" class="flex-wrap">
+        <button class="filter-btn filter-active" data-filter="all">ALL</button>
+        <button class="filter-btn" data-filter="chapters">CHAPTERS</button>
+        <button class="filter-btn" data-filter="annotations">ANNOTATIONS</button>
+        <button class="filter-btn" data-filter="hypothesis">HYPOTHESIS</button>
+        <button class="filter-btn" data-filter="interlude">INTERLUDE</button>
+        <button class="filter-btn" data-filter="chronology">CHRONOLOGY</button>
       </div>
 
-      <!-- Date / Entry Index Drawer -->
-      <div id="dateNav" class="mt-3 max-h-72 overflow-y-auto border border-gray-800 bg-[#0c0d12] p-2 hidden custom-scrollbar"></div>
+      <!-- Collapsible Index -->
+      <div id="dateNav" style="display:none; max-height:260px; overflow-y:auto; margin-top:0.5rem; background:#0c0d12; border:1px solid var(--border); padding:0.5rem;"></div>
     </div>
 
-    <!-- ENTRY METADATA HEADER -->
-    <div id="entryInfo" class="mt-4 pb-2 border-b border-gray-800 text-xs text-gray-400"></div>
+    <!-- ENTRY INFO -->
+    <div id="entryInfo" style="margin-top:1rem; padding-bottom:0.5rem; border-bottom:1px solid var(--border); font-size:0.75rem; color:#9ca3af;"></div>
 
     <!-- MAIN READER CONTENT -->
-    <main class="py-6">
-      <div id="loading" class="text-center py-20 text-gray-500 font-mono animate-pulse">
+    <main style="padding: 1.5rem 0;">
+      <div id="loading" style="text-align:center; padding: 4rem 1rem; color:#6b7280;">
         ⚡ ACCESSING REPOSITORY ARCHIVES... ⚡
       </div>
-      <article id="content" class="prose custom-scrollbar" style="display:none;"></article>
+      <article id="content" class="prose" style="display:none;"></article>
     </main>
 
-    <!-- AI EDITOR PANEL (WORDSTAR NEXUS REPLACEMENT FOR PUTER) -->
-    <section class="mt-12 pt-6 border-t border-gray-800" id="aiSection">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-bold voodoo" style="color:var(--red)">## AI EDITOR</h2>
-        <span class="text-[10px] text-gray-500 font-mono tracking-widest">NVIDIA / OPENAI / OPENROUTER COMPATIBLE</span>
+    <!-- AI EDITOR PANEL -->
+    <section id="aiSection" style="margin-top:2.5rem; padding-top:1.5rem; border-top:1px solid var(--border);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap;">
+        <h2 class="voodoo" style="color:var(--red); font-size:1.2rem; font-weight:bold;">## AI EDITOR</h2>
+        <span style="font-size:0.65rem; color:#6b7280; letter-spacing:0.1em;">WORDSTAR / OPENAI COMPATIBLE</span>
       </div>
 
-      <!-- API Configuration & Key Storage -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+      <!-- Config -->
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:0.75rem; margin-bottom:0.75rem;">
         <div>
-          <label class="block text-[11px] text-gray-400 uppercase font-mono mb-1">API Key (Saved locally):</label>
-          <input 
-            type="password" 
-            id="apiKeyInput" 
-            placeholder="nvapi-... or sk-or-... or sk-..." 
-            class="w-full bg-[#101116] border border-gray-800 p-2 text-xs text-gray-200 focus:outline-none focus:border-red-500 font-mono"
-          />
+          <label style="display:block; font-size:0.7rem; color:#9ca3af; margin-bottom:0.25rem;">API KEY (SAVED LOCALLY):</label>
+          <input type="password" id="apiKeyInput" placeholder="nvapi-... or sk-or-... or sk-..." />
         </div>
         <div>
-          <label class="block text-[11px] text-gray-400 uppercase font-mono mb-1">Model & Provider:</label>
-          <select id="modelSelect" class="w-full bg-[#101116] border border-gray-800 p-2 text-xs text-gray-200 focus:outline-none focus:border-red-500 font-mono">
+          <label style="display:block; font-size:0.7rem; color:#9ca3af; margin-bottom:0.25rem;">MODEL & PROVIDER:</label>
+          <select id="modelSelect">
             <option value="nvidia:nvidia/nemotron-3.5-lightning-30b-a3b">NVIDIA Nemotron 30B (Default)</option>
             <option value="nvidia:nvidia/llama-3.3-nemotron-super-49b-v1.5">NVIDIA Nemotron 49B</option>
             <option value="openrouter:deepseek/deepseek-chat">OpenRouter • DeepSeek Chat (V3)</option>
@@ -269,45 +244,34 @@
         </div>
       </div>
 
-      <!-- AI Context Selector -->
-      <div class="mb-3">
-        <div class="flex items-center gap-2 mb-1">
-          <span class="text-xs text-gray-400 font-mono">Context:</span>
-          <button class="context-btn px-2.5 py-1 text-xs border border-gray-700 bg-red-600 text-black font-bold" data-context="current">Current</button>
-          <button class="context-btn px-2.5 py-1 text-xs border border-gray-700 bg-[#14151b] text-gray-400 hover:text-white" data-context="all">Outline</button>
-          <button class="context-btn px-2.5 py-1 text-xs border border-gray-700 bg-[#14151b] text-gray-400 hover:text-white" data-context="none">None</button>
+      <!-- Context Selector -->
+      <div style="margin-bottom:0.75rem;">
+        <div class="flex-wrap" style="margin-bottom:0.25rem;">
+          <span style="font-size:0.75rem; color:#9ca3af;">Context:</span>
+          <button class="context-btn filter-active" data-context="current">Current</button>
+          <button class="context-btn" data-context="all">Outline</button>
+          <button class="context-btn" data-context="none">None</button>
         </div>
-        <p class="text-[11px] text-gray-500 font-mono" id="contextInfo">Target: Current Entry</p>
+        <p id="contextInfo" style="font-size:0.7rem; color:#6b7280;">Target: Current Entry</p>
       </div>
 
-      <!-- AI Prompt Area -->
-      <div class="mb-3">
-        <textarea 
-          id="aiInput" 
-          rows="3" 
-          placeholder=":: Awaiting Input :: (Ask for analysis, symbolism, themes, or critiques...)"
-          class="w-full bg-[#101116] border border-gray-800 p-2.5 text-xs text-gray-200 focus:outline-none focus:border-red-500 font-mono leading-relaxed"
-        ></textarea>
+      <!-- Prompt Input -->
+      <div style="margin-bottom:0.75rem;">
+        <textarea id="aiInput" rows="3" placeholder=":: Awaiting Input :: (Ask for analysis, symbolism, summaries, or critiques...)"></textarea>
       </div>
 
-      <!-- Transmit Button -->
-      <div class="flex items-center gap-3">
-        <button 
-          id="askAiBtn" 
-          class="px-6 py-2 bg-transparent border border-red-500 text-red-500 hover:bg-red-500 hover:text-black font-bold text-xs tracking-widest voodoo transition-colors duration-200 disabled:opacity-40"
-        >
+      <!-- Action -->
+      <div class="flex-wrap">
+        <button id="askAiBtn" class="voodoo" style="padding:0.5rem 1.5rem; font-weight:bold; color:var(--red); border-color:var(--red);">
           TRANSMIT
         </button>
-        <span id="aiSubStatus" class="text-xs text-gray-500 font-mono"></span>
+        <span id="aiSubStatus" style="font-size:0.75rem; color:#6b7280;"></span>
       </div>
 
-      <!-- AI Response Output -->
-      <div class="mt-4 mb-10">
-        <div 
-          id="aiResponse" 
-          class="w-full bg-[#0a0b0e] border border-gray-800 p-4 text-xs font-mono min-h-[100px] max-h-[500px] overflow-y-auto custom-scrollbar text-gray-300 whitespace-pre-wrap leading-relaxed"
-        >
-          <span class="text-gray-600 italic">:: Transmit a query to receive terminal output ::</span>
+      <!-- Terminal Output -->
+      <div style="margin-top:1rem; margin-bottom:3rem;">
+        <div id="aiResponse" style="background:#090a0d; border:1px solid var(--border); padding:1rem; min-height:80px; max-height:480px; overflow-y:auto; font-size:0.75rem; white-space:pre-wrap; color:#e2e8f0; line-height:1.7;">
+          <span style="color:#6b7280; font-style:italic;">:: Transmit a query to receive terminal output ::</span>
         </div>
       </div>
     </section>
@@ -316,7 +280,10 @@
 
   <script>
     // --- CONTENT SOURCE SETUP ---
-    const CONTENT_BASE_URL = 'https://raw.githubusercontent.com/ghostm68/literary-works/refs/heads/main/red-white-ai-rewrite/';
+    const REPO_OWNER = 'ghostm68';
+    const REPO_NAME = 'literary-works';
+    const REPO_BRANCH = 'main';
+    const REPO_PATH = 'red-white-ai-rewrite';
     const CONTENT_FILES = [
       '11-chapter-expanded.md',
       'ADDENDUM_1945_hypothesis.md',
@@ -332,7 +299,7 @@
       chronology: /\[chronology\]|\bchronology(ies)?\b|\bdream(s)?\b|\bdreamt\b/i
     };
 
-    // --- APPLICATION STATE ---
+    // --- STATE ---
     let entries = [];
     let currentIndex = -1;
     let currentFilter = 'all';
@@ -340,14 +307,14 @@
     let searchResults = [];
     let isSearching = false;
     let isIndexVisible = false;
-    let searchMode = 'exact'; // 'exact' | 'fuzzy'
+    let searchMode = 'exact';
     let fuse = null;
     let matchIndex = 0;
     let matchEls = [];
     let searchTimeout = null;
     let aiContext = 'current';
 
-    // --- DOM REFERENCES ---
+    // --- DOM ---
     const searchBox = document.getElementById('searchBox');
     const searchStats = document.getElementById('searchStats');
     const prevBtn = document.getElementById('prevBtn');
@@ -369,7 +336,10 @@
     const nextMatchBtn = document.getElementById('nextMatchBtn');
     const guideToggle = document.getElementById('guideToggle');
     const searchGuide = document.getElementById('searchGuide');
-    const analyticsStatus = document.getElementById('analyticsStatus');
+    const authToggle = document.getElementById('authToggle');
+    const authDrawer = document.getElementById('authDrawer');
+    const ghTokenInput = document.getElementById('ghTokenInput');
+    const saveGhTokenBtn = document.getElementById('saveGhTokenBtn');
     const apiKeyInput = document.getElementById('apiKeyInput');
     const modelSelect = document.getElementById('modelSelect');
     const aiInput = document.getElementById('aiInput');
@@ -378,138 +348,99 @@
     const contextInfo = document.getElementById('contextInfo');
     const aiSubStatus = document.getElementById('aiSubStatus');
 
-    // Load saved API Key from localStorage
+    // Load saved tokens
+    if (localStorage.getItem('rw_gh_token')) {
+      ghTokenInput.value = localStorage.getItem('rw_gh_token');
+    }
     if (localStorage.getItem('rw_ai_key')) {
       apiKeyInput.value = localStorage.getItem('rw_ai_key');
     }
-    apiKeyInput.addEventListener('input', (e) => {
-      localStorage.setItem('rw_ai_key', e.target.value.trim());
+    apiKeyInput.addEventListener('input', (e) => localStorage.setItem('rw_ai_key', e.target.value.trim()));
+
+    saveGhTokenBtn.addEventListener('click', () => {
+      localStorage.setItem('rw_gh_token', ghTokenInput.value.trim());
+      loadAndParseContent();
     });
 
-    // --- ANALYTICS MODAL & TOOLS ---
-    function showAnalyticsModal(title, text) {
-      document.querySelector('.analytics-modal')?.remove();
-      document.querySelector('.analytics-overlay')?.remove();
-      
-      const overlay = document.createElement('div');
-      overlay.className = 'analytics-overlay';
-      overlay.onclick = () => { overlay.remove(); modal.remove(); };
-
-      const modal = document.createElement('div');
-      modal.className = 'analytics-modal custom-scrollbar';
-      modal.innerHTML = `
-        <div class="flex justify-between items-center mb-3 border-b border-gray-800 pb-2">
-          <h3 class="text-sm font-bold voodoo" style="color:var(--red)">📊 ${title}</h3>
-          <button onclick="this.closest('.analytics-modal').remove(); document.querySelector('.analytics-overlay')?.remove();" class="text-xs border border-gray-700 px-2 py-0.5 hover:border-red-500 text-gray-300">ESC / CLOSE</button>
-        </div>
-        <div class="text-xs font-mono whitespace-pre-wrap max-h-[60vh] overflow-y-auto leading-relaxed text-gray-200">${text}</div>
-      `;
-      document.body.appendChild(overlay);
-      document.body.appendChild(modal);
-    }
-
-    document.getElementById('anaWordsBtn').addEventListener('click', () => {
-      if (!entries.length) return;
-      let totalWords = 0;
-      let longest = { title: '', words: 0 };
-      let shortest = { title: '', words: Infinity };
-      const tagCounts = {};
-
-      entries.forEach(e => {
-        const words = e.content.trim().split(/\s+/).length;
-        totalWords += words;
-        if (words > longest.words) longest = { title: e.date, words };
-        if (words < shortest.words) shortest = { title: e.date, words };
-        e.tags.forEach(t => tagCounts[t] = (tagCounts[t] || 0) + words);
-      });
-
-      const avg = Math.round(totalWords / entries.length);
-      const tagBreakdown = Object.entries(tagCounts).map(([t, c]) => `• ${t.toUpperCase()}: ${c.toLocaleString()} words`).join('\n');
-
-      const report = `TOTAL ENTRIES: ${entries.length}\nTOTAL WORD COUNT: ${totalWords.toLocaleString()} words\nAVERAGE WORDS/ENTRY: ${avg.toLocaleString()} words\n\nLONGEST: "${longest.title}" (${longest.words.toLocaleString()} words)\nSHORTEST: "${shortest.title}" (${shortest.words.toLocaleString()} words)\n\nBREAKDOWN BY TAG:\n${tagBreakdown}`;
-      showAnalyticsModal('WORD COUNT ANALYSIS', report);
+    authToggle.addEventListener('click', () => {
+      authDrawer.style.display = authDrawer.style.display === 'none' ? 'block' : 'none';
+    });
+    guideToggle.addEventListener('click', () => {
+      searchGuide.style.display = searchGuide.style.display === 'none' ? 'block' : 'none';
     });
 
-    document.getElementById('anaCharsBtn').addEventListener('click', () => {
-      if (!entries.length) return;
-      const nameRegex = /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g;
-      const counts = new Map();
-      const sample = entries.slice(0, 50);
+    // --- REPO FETCHER WITH PRIVATE REPO & FALLBACK SUPPORT ---
+    async function fetchFileContent(filename) {
+      const ghToken = localStorage.getItem('rw_gh_token');
 
-      sample.forEach(e => {
-        const matches = e.content.match(nameRegex);
-        if (matches) {
-          matches.forEach(name => {
-            if (name.length > 2 && !['The', 'And', 'But', 'For', 'Not', 'You', 'She', 'He', 'They', 'This', 'That', 'Chapter'].includes(name)) {
-              counts.set(name, (counts.get(name) || 0) + 1);
-            }
-          });
-        }
-      });
-
-      const sorted = Array.from(counts.entries()).sort((a,b) => b[1] - a[1]).slice(0, 25);
-      const report = `PROMINENT CAPITALIZED TERMS & ENTITIES:\n\n` + sorted.map(([name, count], i) => `${i+1}. ${name}: ${count} mentions`).join('\n');
-      showAnalyticsModal('CHARACTER & ENTITY SCAN', report);
-    });
-
-    document.getElementById('anaRepsBtn').addEventListener('click', () => {
-      if (!entries.length) return;
-      const words = entries.map(e => e.content.toLowerCase()).join(' ').replace(/[^\w\s]/g, ' ').split(/\s+/).filter(w => w.length > 3);
-      const phraseCounts = new Map();
-
-      for (let i = 0; i <= words.length - 3; i++) {
-        const phrase = words.slice(i, i + 3).join(' ');
-        phraseCounts.set(phrase, (phraseCounts.get(phrase) || 0) + 1);
+      // Attempt 1: If user supplied GitHub token, fetch via GitHub API (supports private repos)
+      if (ghToken) {
+        const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${REPO_PATH}/${filename}?ref=${REPO_BRANCH}`;
+        const res = await fetch(apiUrl, {
+          headers: {
+            'Authorization': `Bearer ${ghToken}`,
+            'Accept': 'application/vnd.github.raw+json'
+          }
+        });
+        if (res.ok) return await res.text();
       }
 
-      const topPhrases = Array.from(phraseCounts.entries()).filter(([, c]) => c >= 3).sort((a,b) => b[1] - a[1]).slice(0, 18);
-      const report = `RECURRENT 3-WORD PHRASES:\n\n` + topPhrases.map(([p, c], i) => `${i+1}. "${p}": ${c} repetitions`).join('\n');
-      showAnalyticsModal('PHRASE REPETITION ANALYSIS', report || 'No recurrent phrases discovered.');
-    });
+      // Attempt 2: Public raw URL
+      const rawUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/${REPO_PATH}/${filename}`;
+      const rawRes = await fetch(rawUrl);
+      if (rawRes.ok) return await rawRes.text();
 
-    document.getElementById('anaTimeBtn').addEventListener('click', () => {
-      if (!entries.length) return;
-      const report = `ENTRY MANIFEST:\n\n` + entries.map((e, idx) => `${idx + 1}. [${e.tags.join('/') || 'UNCATEGORIZED'}] ${e.date} (${e.content.trim().split(/\s+/).length} words)`).join('\n');
-      showAnalyticsModal('TIMELINE & MANIFEST', report);
-    });
+      // Attempt 3: Relative local path (if running locally or from relative build)
+      const relRes = await fetch(`./${REPO_PATH}/${filename}`).catch(() => null);
+      if (relRes && relRes.ok) return await relRes.text();
 
-    // --- REPO PARSING & INITIALIZATION ---
+      return null;
+    }
+
     async function loadAndParseContent() {
+      loadingDiv.style.display = 'block';
+      contentDiv.style.display = 'none';
+      loadingDiv.innerHTML = '⚡ ACCESSING REPOSITORY ARCHIVES... ⚡';
+
       try {
         const fetched = [];
         let counter = 0;
 
         for (const filename of CONTENT_FILES) {
-          const res = await fetch(CONTENT_BASE_URL + filename);
-          if (!res.ok) continue;
-          const text = await res.text();
-          const cleanName = filename.replace('.md', '').split(/[-_]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+          const text = await fetchFileContent(filename);
+          if (!text) continue;
 
-          const entry = {
-            id: counter++,
-            date: cleanName,
-            content: text,
-            tags: []
-          };
+          const cleanName = filename.replace('.md', '').split(/[-_]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+          const entry = { id: counter++, date: cleanName, content: text, tags: [] };
           detectTags(entry);
           fetched.push(entry);
         }
 
-        entries = fetched;
-        loadingDiv.style.display = 'none';
-        contentDiv.style.display = 'block';
-
-        rebuildFuse();
-
-        if (entries.length > 0) {
+        if (fetched.length > 0) {
+          entries = fetched;
+          loadingDiv.style.display = 'none';
+          contentDiv.style.display = 'block';
+          rebuildFuse();
           showEntry(entries[0].id);
           buildDateIndex();
         } else {
-          loadingDiv.innerHTML = '<p class="text-red-500 font-mono">No entries could be parsed.</p>';
-          loadingDiv.style.display = 'block';
+          // If 404 because repo is private
+          loadingDiv.innerHTML = `
+            <div style="color:var(--red); font-size:0.85rem; max-width:600px; margin:0 auto; text-align:left; border:1px solid rgba(255,51,68,0.4); background:#0c0d12; padding:1.25rem;">
+              <p style="font-weight:bold; margin-bottom:0.5rem;">⚡ 404 NOT FOUND: REPOSITORY ACCESS REQUIRED</p>
+              <p style="color:#9ca3af; margin-bottom:0.75rem;">GitHub returns a 404 when <code>${REPO_OWNER}/${REPO_NAME}</code> is <strong>Private</strong>.</p>
+              <p style="color:#d1d5db; margin-bottom:0.5rem;">To view your private files:</p>
+              <ol style="margin-left:1.25rem; margin-bottom:1rem; color:#9ca3af;">
+                <li>Click <strong>⚙️ Repo Auth</strong> above.</li>
+                <li>Enter a GitHub Personal Access Token (PAT) with read permission.</li>
+                <li>Click <strong>SAVE & RELOAD</strong>.</li>
+              </ol>
+              <p style="color:#6b7280; font-size:0.75rem;">Alternatively, switch the repository to Public in GitHub Settings.</p>
+            </div>
+          `;
         }
       } catch (err) {
-        loadingDiv.innerHTML = `<p class="text-red-500 font-mono">Error: ${err.message}</p>`;
+        loadingDiv.innerHTML = `<p style="color:var(--red);">Error loading content: ${err.message}</p>`;
       }
     }
 
@@ -528,6 +459,7 @@
     }
 
     function rebuildFuse() {
+      if (!entries.length) return;
       fuse = new Fuse(getFilteredEntries(), {
         keys: [{ name: 'date', weight: 0.3 }, { name: 'content', weight: 0.7 }],
         threshold: 0.4,
@@ -565,55 +497,46 @@
       const wordCount = e.content.trim().split(/\s+/).length;
 
       const tagsHtml = e.tags.map(t => 
-        `<span class="px-2 py-0.5 border text-[10px] uppercase ${t === currentFilter ? 'border-red-500 text-red-400' : 'border-gray-800 text-gray-500'}">${t}</span>`
+        `<span style="padding:0.1rem 0.4rem; border:1px solid ${t === currentFilter ? 'var(--red)' : '#262933'}; color:${t === currentFilter ? 'var(--red)' : '#6b7280'}; font-size:0.65rem;">${t.toUpperCase()}</span>`
       ).join(' ');
 
       entryInfo.innerHTML = `
-        <div class="flex flex-col gap-1">
-          <div class="flex items-center flex-wrap gap-2">
-            <span class="text-[10px] text-gray-500 uppercase tracking-widest font-mono">R/W ARCHIVE</span>
-            ${currentFilter !== 'all' ? `<span class="text-[10px] uppercase text-red-400 border border-red-900 bg-red-950/30 px-1.5 py-0.2 rounded font-mono">FILTER: ${currentFilter}</span>` : ''}
-            <span class="ml-1 font-bold text-sm voodoo" style="color:var(--red)">${e.date}</span>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+          <div>
+            <span style="font-size:0.65rem; color:#6b7280; letter-spacing:0.1em;">R/W ARCHIVE • </span>
+            <span style="color:var(--red); font-weight:bold; font-size:0.9rem;" class="voodoo">${e.date}</span>
           </div>
-          <div class="text-[11px] text-gray-400 flex items-center gap-2 flex-wrap font-mono">
+          <div style="display:flex; align-items:center; gap:0.5rem;">
             <span>${isSearching ? `Match ${currentPos + 1} of ${searchResults.length}` : `Entry ${currentPos + 1} of ${pool.length}`}</span>
             <span>•</span>
             <span>${wordCount.toLocaleString()} words</span>
-            <span class="ml-2 flex gap-1">${tagsHtml}</span>
+            <span>${tagsHtml}</span>
           </div>
         </div>
       `;
 
       prevBtn.disabled = currentPos <= 0;
       nextBtn.disabled = currentPos >= pool.length - 1;
-      prevBtn.style.opacity = prevBtn.disabled ? '0.3' : '1';
-      nextBtn.style.opacity = nextBtn.disabled ? '0.3' : '1';
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      // Match navigation
       matchEls = Array.from(contentDiv.querySelectorAll('.highlight'));
       matchIndex = 0;
       updateMatchUI();
       if (matchEls.length) {
         requestAnimationFrame(() => scrollToMatch(0));
       }
-
-      if (isIndexVisible) buildDateIndex();
     }
 
     function updateMatchUI() {
       if (isSearching && matchEls.length > 0) {
-        matchNav.classList.remove('hidden');
-        matchNav.classList.add('flex');
+        matchNav.style.display = 'flex';
         matchCounter.textContent = `hit ${matchIndex + 1}/${matchEls.length}`;
       } else if (isSearching) {
-        matchNav.classList.remove('hidden');
-        matchNav.classList.add('flex');
+        matchNav.style.display = 'flex';
         matchCounter.textContent = 'hit 0/0';
       } else {
-        matchNav.classList.add('hidden');
-        matchNav.classList.remove('flex');
+        matchNav.style.display = 'none';
       }
     }
 
@@ -641,7 +564,7 @@
       }
     }
 
-    // --- SEARCH MODES & LOGIC ---
+    // --- SEARCH MODES ---
     function parseSearchQuery(query) {
       const terms = { and: [], or: [], not: [], exact: [] };
       const exactMatches = query.match(/"([^"]+)"/g);
@@ -671,6 +594,7 @@
     }
 
     function performSearch(query) {
+      if (!entries.length) return;
       searchQuery = query.trim();
       searchBox.classList.toggle('search-active', searchQuery.length > 0);
 
@@ -699,7 +623,7 @@
         searchResults = pool.filter(e => matchesExact(e, terms));
       }
 
-      searchStats.textContent = `${searchResults.length} hits (${searchMode})`;
+      searchStats.textContent = `${searchResults.length} hits`;
       buildDateIndex();
 
       if (searchResults.length > 0) {
@@ -707,7 +631,7 @@
       } else {
         matchEls = [];
         updateMatchUI();
-        contentDiv.innerHTML = `<div class="text-center py-20 text-gray-500 font-mono">:: NO MATCHES FOUND FOR "${searchQuery}" ::</div>`;
+        contentDiv.innerHTML = `<div style="text-align:center; padding:4rem 0; color:#6b7280;">:: NO MATCHES FOUND FOR "${searchQuery}" ::</div>`;
       }
     }
 
@@ -717,28 +641,24 @@
       const pool = isSearching ? searchResults : getFilteredEntries();
 
       if (!pool.length) {
-        dateNav.innerHTML = '<div class="p-3 text-xs text-gray-500 font-mono">No matching entries in index.</div>';
+        dateNav.innerHTML = '<div style="padding:0.5rem; color:#6b7280; font-size:0.75rem;">No matching entries in index.</div>';
         return;
       }
 
       pool.forEach(e => {
         const div = document.createElement('div');
-        div.className = 'p-2 border-b border-gray-800/60 cursor-pointer hover:bg-gray-900 transition-colors';
-        if (e.id === currentIndex) {
-          div.style.background = '#15161d';
-          div.style.borderLeft = '3px solid var(--red)';
-        }
-        const snippet = e.content.replace(/<[^>]*>/g, '').substring(0, 80).replace(/\n/g, ' ') + '...';
+        div.style.cssText = `padding:0.5rem; border-bottom:1px solid #1a1c24; cursor:pointer; font-size:0.75rem; ${e.id === currentIndex ? 'background:#13151c; border-left:3px solid var(--red);' : ''}`;
+        const snippet = e.content.replace(/<[^>]*>/g, '').substring(0, 75).replace(/\n/g, ' ') + '...';
         div.innerHTML = `
-          <div class="flex justify-between items-center mb-0.5">
-            <span class="text-xs font-bold text-gray-300 font-mono">${e.date}</span>
-            <span class="text-[10px] text-gray-600 uppercase">${e.tags[0] || 'entry'}</span>
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.2rem;">
+            <strong style="color:#e5e7eb;">${e.date}</strong>
+            <span style="font-size:0.65rem; color:#6b7280;">${e.tags[0] || 'ENTRY'}</span>
           </div>
-          <div class="text-[11px] text-gray-500 font-mono truncate">${snippet}</div>
+          <div style="color:#6b7280; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${snippet}</div>
         `;
         div.addEventListener('click', () => {
           showEntry(e.id);
-          dateNav.classList.add('hidden');
+          dateNav.style.display = 'none';
           isIndexVisible = false;
         });
         dateNav.appendChild(div);
@@ -746,6 +666,7 @@
     }
 
     function navigateEntries(dir) {
+      if (!entries.length) return;
       const pool = isSearching ? searchResults : getFilteredEntries();
       const pos = pool.findIndex(x => x.id === currentIndex);
       const target = dir === 'next' ? pos + 1 : pos - 1;
@@ -755,6 +676,7 @@
     }
 
     function showRandomEntry() {
+      if (!entries.length) return;
       const pool = isSearching ? searchResults : getFilteredEntries();
       if (!pool.length) return;
       let rand;
@@ -764,48 +686,115 @@
       showEntry(pool[rand].id);
     }
 
-    // --- AI EDITOR (WORDSTAR COMPATIBLE, NO PUTER) ---
+    // --- ANALYTICS MODALS ---
+    function showAnalyticsModal(title, text) {
+      document.querySelector('.analytics-modal')?.remove();
+      document.querySelector('.analytics-overlay')?.remove();
+      
+      const overlay = document.createElement('div');
+      overlay.className = 'analytics-overlay';
+      overlay.onclick = () => { overlay.remove(); modal.remove(); };
+
+      const modal = document.createElement('div');
+      modal.className = 'analytics-modal';
+      modal.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; border-bottom:1px solid #242731; padding-bottom:0.5rem;">
+          <h3 style="font-size:0.8rem; font-weight:bold; color:var(--red);" class="voodoo">📊 ${title}</h3>
+          <button onclick="this.closest('.analytics-modal').remove(); document.querySelector('.analytics-overlay')?.remove();">CLOSE</button>
+        </div>
+        <div style="font-size:0.75rem; white-space:pre-wrap; max-height:60vh; overflow-y:auto; line-height:1.7;">${text}</div>
+      `;
+      document.body.appendChild(overlay);
+      document.body.appendChild(modal);
+    }
+
+    document.getElementById('anaWordsBtn').addEventListener('click', () => {
+      if (!entries.length) return;
+      let totalWords = 0;
+      let longest = { title: '', words: 0 };
+      let shortest = { title: '', words: Infinity };
+
+      entries.forEach(e => {
+        const words = e.content.trim().split(/\s+/).length;
+        totalWords += words;
+        if (words > longest.words) longest = { title: e.date, words };
+        if (words < shortest.words) shortest = { title: e.date, words };
+      });
+
+      const avg = Math.round(totalWords / entries.length);
+      showAnalyticsModal('WORD COUNT ANALYSIS', `TOTAL ENTRIES: ${entries.length}\nTOTAL WORDS: ${totalWords.toLocaleString()}\nAVERAGE / ENTRY: ${avg.toLocaleString()}\n\nLONGEST: "${longest.title}" (${longest.words.toLocaleString()} words)\nSHORTEST: "${shortest.title}" (${shortest.words.toLocaleString()} words)`);
+    });
+
+    document.getElementById('anaCharsBtn').addEventListener('click', () => {
+      if (!entries.length) return;
+      const counts = new Map();
+      entries.forEach(e => {
+        const matches = e.content.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g);
+        if (matches) {
+          matches.forEach(name => {
+            if (name.length > 2 && !['The', 'And', 'But', 'For', 'Not', 'You', 'She', 'He', 'They', 'Chapter'].includes(name)) {
+              counts.set(name, (counts.get(name) || 0) + 1);
+            }
+          });
+        }
+      });
+      const top = Array.from(counts.entries()).sort((a,b) => b[1] - a[1]).slice(0, 20);
+      showAnalyticsModal('ENTITY & CHARACTER SCAN', top.map(([k,v], i) => `${i+1}. ${k}: ${v} mentions`).join('\n') || 'None found.');
+    });
+
+    document.getElementById('anaRepsBtn').addEventListener('click', () => {
+      if (!entries.length) return;
+      const words = entries.map(e => e.content.toLowerCase()).join(' ').replace(/[^\w\s]/g, ' ').split(/\s+/).filter(w => w.length > 3);
+      const counts = new Map();
+      for (let i = 0; i <= words.length - 3; i++) {
+        const phrase = words.slice(i, i + 3).join(' ');
+        counts.set(phrase, (counts.get(phrase) || 0) + 1);
+      }
+      const top = Array.from(counts.entries()).filter(([, c]) => c >= 2).sort((a,b) => b[1] - a[1]).slice(0, 15);
+      showAnalyticsModal('3-WORD REPETITIONS', top.map(([p, c], i) => `${i+1}. "${p}": ${c}x`).join('\n') || 'No recurrent phrases found.');
+    });
+
+    document.getElementById('anaTimeBtn').addEventListener('click', () => {
+      if (!entries.length) return;
+      const list = entries.map((e, i) => `${i+1}. [${e.tags.join('/') || 'ENTRY'}] ${e.date} (${e.content.trim().split(/\s+/).length} words)`).join('\n');
+      showAnalyticsModal('TIMELINE & MANIFEST', list);
+    });
+
+    // --- AI TRANSMIT ---
     askAiBtn.addEventListener('click', async () => {
       const apiKey = apiKeyInput.value.trim();
       const prompt = aiInput.value.trim();
 
       if (!apiKey) {
-        aiResponseDiv.innerHTML = '<span class="text-red-400 font-mono">❌ ERROR: Please enter an API Key. Stored safely in localStorage.</span>';
+        aiResponseDiv.innerHTML = '<span style="color:var(--red);">❌ Please enter an API key.</span>';
         apiKeyInput.focus();
         return;
       }
       if (!prompt) {
-        aiResponseDiv.innerHTML = '<span class="text-red-400 font-mono">❌ ERROR: Please enter a query.</span>';
+        aiResponseDiv.innerHTML = '<span style="color:var(--red);">❌ Please enter a prompt.</span>';
         return;
       }
 
       askAiBtn.disabled = true;
       askAiBtn.textContent = 'TRANSMITTING...';
       aiSubStatus.textContent = 'Connecting...';
-      aiResponseDiv.innerHTML = '<span class="text-red-400 animate-pulse font-mono">manifesting response from archive...</span>';
+      aiResponseDiv.innerHTML = '<span style="color:var(--red);" class="voodoo">manifesting response from archive...</span>';
 
       try {
         let contextText = '';
-        if (aiContext === 'current') {
+        if (aiContext === 'current' && entries.length) {
           const cur = entries.find(x => x.id === currentIndex);
           if (cur) contextText = `CURRENT ENTRY (${cur.date}):\n${cur.content.substring(0, 4500)}\n\n---\n\n`;
-        } else if (aiContext === 'all') {
+        } else if (aiContext === 'all' && entries.length) {
           const list = entries.map(e => `- ${e.date} (Tags: ${e.tags.join(', ')})`).join('\n');
           contextText = `ARCHIVE OUTLINE:\n${list}\n\n---\n\n`;
         }
 
-        const modelChoice = modelSelect.value;
-        const [provider, modelName] = modelChoice.split(':');
-
+        const [provider, modelName] = modelSelect.value.split(':');
         let endpoint = '';
-        let headers = {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        };
+        let headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
 
-        // WordStar-style proxy or direct endpoints
         if (provider === 'nvidia') {
-          // Uses Inkrealm Cloudflare proxy to bypass CORS
           endpoint = 'https://lively-limitless.inkrealm.workers.dev/?url=' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
         } else if (provider === 'openrouter') {
           endpoint = 'https://openrouter.ai/api/v1/chat/completions';
@@ -815,44 +804,32 @@
           endpoint = 'https://api.openai.com/v1/chat/completions';
         }
 
-        const response = await fetch(endpoint, {
+        const res = await fetch(endpoint, {
           method: 'POST',
           headers: headers,
           body: JSON.stringify({
             model: modelName,
             messages: [
-              {
-                role: 'system',
-                content: 'You are an analytical assistant for this literary collection. Provide thoughtful, concise, and articulate analysis based on the context.'
-              },
-              {
-                role: 'user',
-                content: contextText + 'User Question: ' + prompt
-              }
+              { role: 'system', content: 'You are an analytical literary assistant. Respond with clear, direct insights.' },
+              { role: 'user', content: contextText + prompt }
             ],
             temperature: 0.6,
             max_tokens: 1500
           })
         });
 
-        if (!response.ok) {
-          const errData = await response.text();
-          let msg = errData;
-          try { msg = JSON.parse(errData).error?.message || errData; } catch {}
-          throw new Error(`API Status ${response.status}: ${msg}`);
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`API Status ${res.status}: ${text}`);
         }
 
-        const data = await response.json();
+        const data = await res.json();
         let reply = data.choices[0].message.content;
-
-        // WordStar formatting: highlight **bold** tags with crimson
         reply = reply.replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--red)">$1</strong>').replace(/\n/g, '<br>');
         aiResponseDiv.innerHTML = reply;
         aiSubStatus.textContent = 'Transmission complete.';
-
       } catch (err) {
-        console.error('AI Request Error:', err);
-        aiResponseDiv.innerHTML = `<span class="text-red-400 font-mono">❌ TRANSMISSION FAILED:\n${err.message}\n\nTip: For NVIDIA models, use your NVIDIA NIM key. For OpenRouter/OpenAI, use your respective key.</span>`;
+        aiResponseDiv.innerHTML = `<span style="color:var(--red);">❌ TRANSMISSION FAILED:\n${err.message}</span>`;
         aiSubStatus.textContent = 'Error occurred.';
       } finally {
         askAiBtn.disabled = false;
@@ -861,8 +838,6 @@
     });
 
     // --- EVENT LISTENERS ---
-    guideToggle.addEventListener('click', () => searchGuide.classList.toggle('hidden'));
-    
     searchBox.addEventListener('input', (e) => {
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(() => performSearch(e.target.value), 250);
@@ -879,7 +854,7 @@
 
     indexBtn.addEventListener('click', () => {
       isIndexVisible = !isIndexVisible;
-      dateNav.classList.toggle('hidden');
+      dateNav.style.display = isIndexVisible ? 'block' : 'none';
       if (isIndexVisible) buildDateIndex();
     });
 
@@ -895,21 +870,13 @@
       if (pool.length) showEntry(pool[pool.length - 1].id);
     });
 
-    if (prevMatchBtn) prevMatchBtn.addEventListener('click', () => navigateMatch('prev'));
-    if (nextMatchBtn) nextMatchBtn.addEventListener('click', () => navigateMatch('next'));
+    prevMatchBtn.addEventListener('click', () => navigateMatch('prev'));
+    nextMatchBtn.addEventListener('click', () => navigateMatch('next'));
 
-    // Tag filtering
     filterBtns.addEventListener('click', (e) => {
       if (!e.target.classList.contains('filter-btn')) return;
-      document.querySelectorAll('.filter-btn').forEach(b => {
-        b.style.background = 'transparent';
-        b.style.borderColor = '#374151';
-        b.style.color = '#9ca3af';
-      });
-      e.target.style.background = 'var(--red)';
-      e.target.style.borderColor = 'var(--red)';
-      e.target.style.color = '#000';
-
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('filter-active'));
+      e.target.classList.add('filter-active');
       currentFilter = e.target.dataset.filter;
       rebuildFuse();
       searchBox.value = '';
@@ -918,57 +885,44 @@
       if (filtered.length) {
         showEntry(filtered[0].id);
         buildDateIndex();
-      } else {
-        contentDiv.innerHTML = `<div class="text-center py-20 text-gray-500 font-mono">No entries found under tag [${currentFilter}].</div>`;
       }
     });
 
-    // AI context buttons
     document.addEventListener('click', (e) => {
       if (!e.target.classList.contains('context-btn')) return;
-      document.querySelectorAll('.context-btn').forEach(b => {
-        b.classList.remove('bg-red-600', 'text-black', 'font-bold');
-        b.classList.add('bg-[#14151b]', 'text-gray-400');
-      });
-      e.target.classList.add('bg-red-600', 'text-black', 'font-bold');
-      e.target.classList.remove('bg-[#14151b]', 'text-gray-400');
-
+      document.querySelectorAll('.context-btn').forEach(b => b.classList.remove('filter-active'));
+      e.target.classList.add('filter-active');
       aiContext = e.target.dataset.context;
       const desc = {
         current: 'Target: Current Entry (Sends content up to 4.5k chars)',
-        all: 'Target: Archive Outline (All titles and tags)',
-        none: 'Target: Standalone query without archive context'
+        all: 'Target: Archive Outline (Titles and tags)',
+        none: 'Target: Standalone query without context'
       };
       contextInfo.textContent = desc[aiContext];
     });
 
-    // Keyboard Shortcuts
+    // KEYBOARD LISTENER (Guarded against undefined e.key)
     document.addEventListener('keydown', (e) => {
+      if (!e || !e.key) return; // Guard: prevents "undefined (reading 'toLowerCase')"
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+
+      const key = e.key.toLowerCase();
       if (e.key === 'ArrowLeft') navigateEntries('prev');
-      if (e.key === 'ArrowRight') navigateEntries('next');
-      if (e.key.toLowerCase() === 'r') showRandomEntry();
-      if (e.key.toLowerCase() === 'n') navigateMatch('next');
-      if (e.key.toLowerCase() === 'p') navigateMatch('prev');
-      if (e.key === '/') { e.preventDefault(); searchBox.focus(); }
-      if (e.key === 'Escape') {
+      else if (e.key === 'ArrowRight') navigateEntries('next');
+      else if (key === 'r') showRandomEntry();
+      else if (key === 'n') navigateMatch('next');
+      else if (key === 'p') navigateMatch('prev');
+      else if (e.key === '/') { e.preventDefault(); searchBox.focus(); }
+      else if (e.key === 'Escape') {
         document.querySelector('.analytics-modal')?.remove();
         document.querySelector('.analytics-overlay')?.remove();
-        dateNav.classList.add('hidden');
+        dateNav.style.display = 'none';
         isIndexVisible = false;
       }
     });
 
     // Boot
-    document.addEventListener('DOMContentLoaded', () => {
-      loadAndParseContent();
-      const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
-      if (allBtn) {
-        allBtn.style.background = 'var(--red)';
-        allBtn.style.borderColor = 'var(--red)';
-        allBtn.style.color = '#000';
-      }
-    });
+    document.addEventListener('DOMContentLoaded', loadAndParseContent);
   </script>
 </body>
 </html>
