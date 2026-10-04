@@ -612,9 +612,6 @@
       will-change: transform;
       transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), text-shadow 0.45s ease;
     }
-    .warp-line.bio-text .char { font-weight: 300; }
-    .warp-line .char.is-strong { font-weight: 600; }
-    .warp-line .char.is-em { font-style: italic; }
     .archive-mark {
       width: 52px;
       height: 52px;
@@ -1849,10 +1846,9 @@
   <div class="bio-video-overlay"></div>
 
   <!-- Foreground Content -->
-  <div id="archiveWarp">
-  <div class="bio-label warp-line">Subject Profile // Archive Entry</div>
-  <div class="warp-head">
-    <h2 class="bio-name warp-line">Marta Kessler</h2>
+  <div class="bio-label">Subject Profile // Archive Entry</div>
+  <div class="warp-head" id="archiveWarp">
+    <h2 class="bio-name warp-line" id="archiveName">Marta Kessler</h2>
     <svg class="archive-mark" viewBox="0 0 64 64" aria-hidden="true">
       <circle cx="32" cy="32" r="22" />
       <circle cx="32" cy="32" r="8" />
@@ -1860,16 +1856,15 @@
       <circle class="mark-core" cx="32" cy="32" r="2.2" />
     </svg>
   </div>
-  <p class="bio-text warp-line">
+  <p class="bio-text">
     Born in Russia, Marta Kessler began her career in film and television at a young age, quickly establishing herself as a versatile performer with an international presence. She is best known globally for her starring role as the stubborn, brilliant <strong>Constance Contraire</strong> in the Disney+ series <em>The Mysterious Benedict Society</em>, as well as playing <strong>Young Jane</strong> (the younger version of Sophie Turner’s character) in the survival thriller series <em>Survive</em>.
   </p>
-  <p class="bio-text warp-line">
+  <p class="bio-text">
     With dozens of film and television projects to her name, her extensive body of work includes prominent roles in feature films and series such as the thriller <em>Row 19</em>, Disney’s <em>The Santa Clauses</em>, the sci-fi epic <em>Cosmoball</em>, and the horror-thriller <em>Welcome to Mercy</em>.
   </p>
-  <p class="bio-text warp-line">
+  <p class="bio-text">
     Beyond acting, she maintains an active presence in modeling and digital media, collaborating with brands and causes that align with her values. This archive documents some of her professional trajectory, campaign work, and ongoing creative output.
   </p>
-  </div>
   <div class="bio-stats">
     <div class="bio-stats">
       <div class="bio-stat">
@@ -2252,31 +2247,20 @@
 
     function initArchiveWarp() {
       const zone = document.getElementById('archiveWarp');
+      const line = document.getElementById('archiveName');
       const mark = zone && zone.querySelector('.archive-mark');
-      if (!zone || !mark) return;
+      if (!zone || !line || !mark) return;
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-      zone.querySelectorAll('.warp-line').forEach(line => {
-        const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
-        const nodes = [];
-        while (walker.nextNode()) nodes.push(walker.currentNode);
-        nodes.forEach(node => {
-          const parent = node.parentNode;
-          const emphasis = parent.tagName === 'STRONG' ? ' is-strong' : parent.tagName === 'EM' ? ' is-em' : '';
-          const frag = document.createDocumentFragment();
-          Array.from(node.textContent).forEach(ch => {
-            if (ch === '\n') return;
-            const span = document.createElement('span');
-            span.className = 'char' + emphasis;
-            span.textContent = ch === ' ' ? '\u00a0' : ch;
-            frag.appendChild(span);
-          });
-          parent.replaceChild(frag, node);
-        });
+      const source = line.textContent;
+      line.textContent = '';
+      Array.from(source).forEach(ch => {
+        const span = document.createElement('span');
+        span.className = 'char';
+        span.textContent = ch === ' ' ? '\u00a0' : ch;
+        line.appendChild(span);
       });
-
-      const chars = Array.from(zone.querySelectorAll('.char'));
-      let frame = 0;
+      const chars = Array.from(line.querySelectorAll('.char'));
 
       function warp(clientX, clientY) {
         const markBox = mark.getBoundingClientRect();
@@ -2286,19 +2270,17 @@
           const box = ch.getBoundingClientRect();
           const cx = box.left + box.width / 2;
           const cy = box.top + box.height / 2;
-          const tx = ax * 0.62 + clientX * 0.38;
-          const ty = ay * 0.62 + clientY * 0.38;
+          const tx = ax * 0.7 + clientX * 0.3;
+          const ty = ay * 0.7 + clientY * 0.3;
           const dx = tx - cx;
           const dy = ty - cy;
           const dist = Math.hypot(dx, dy) || 1;
-          const reach = ch.closest('.bio-name') ? 240 : 160;
-          const strength = ch.closest('.bio-name') ? 16 : 7;
-          const pull = Math.max(0, 1 - dist / reach);
-          const x = (dx / dist) * pull * strength;
-          const y = (dy / dist) * pull * (strength * 0.65);
-          ch.style.transform = 'translate(' + x.toFixed(2) + 'px,' + y.toFixed(2) + 'px) rotate(' + (x * 0.3).toFixed(2) + 'deg)';
-          ch.style.textShadow = pull > 0.22
-            ? (-pull * 3).toFixed(1) + 'px 0 rgba(255,0,51,0.7), ' + (pull * 3).toFixed(1) + 'px 0 rgba(44,90,139,0.7)'
+          const pull = Math.max(0, 1 - dist / 220);
+          const x = (dx / dist) * pull * 16;
+          const y = (dy / dist) * pull * 10;
+          ch.style.transform = 'translate(' + x.toFixed(2) + 'px,' + y.toFixed(2) + 'px) rotate(' + (x * 0.35).toFixed(2) + 'deg)';
+          ch.style.textShadow = pull > 0.18
+            ? (-pull * 4).toFixed(1) + 'px 0 rgba(255,0,51,0.75), ' + (pull * 4).toFixed(1) + 'px 0 rgba(44,90,139,0.75)'
             : 'none';
         });
       }
@@ -2310,13 +2292,7 @@
         });
       }
 
-      zone.addEventListener('pointermove', (event) => {
-        if (frame) return;
-        frame = requestAnimationFrame(() => {
-          frame = 0;
-          warp(event.clientX, event.clientY);
-        });
-      });
+      zone.addEventListener('pointermove', (event) => warp(event.clientX, event.clientY));
       zone.addEventListener('pointerleave', reset);
     }
 
