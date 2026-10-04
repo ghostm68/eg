@@ -1,675 +1,1077 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <base href="https://wordstar-online.com/">
-    <meta name="viewport" content="width=1024">
-    <meta name="keywords" content="typewriter, writing, retro, vintage, text editor, AI, generative, creative writing">
-    <meta name="description" content="Experience the nostalgia of a classic typewriter with Wordstar, a web-based app that combines vintage aesthetics with modern AI-powered writing tools. Generate creative text, experiment with different writing styles, and rediscover the joy of putting words on paper (virtually!).">
-    <title>WordStar Nexus - Modern Text Editor</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
-    <!-- Add Puter.js for AI capabilities -->
-    <script src="https://js.puter.com/v2/"></script>
-    <style>
-        body, html {
-            height: 100%;
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: #2d2d2d;
-            color: #f0f0f0;
-        }
-        .container {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-        #toolbar {
-            background-color: #1e1e1e;
-            padding: 10px;
-            display: flex;
-            justify-content: space-between;
-        }
-        #editor {
-            flex-grow: 1;
-            padding: 20px;
-            font-size: 16px;
-            line-height: 1.6;
-            background-color: #1e1e1e;
-            color: #f0f0f0;
-            border: none;
-            resize: none;
-        }
-        #statusbar {
-            background-color: #cc0000;
-            color: white;
-            padding: 5px 10px;
-            font-size: 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        button {
-            background-color: #cc0000;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            margin-right: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #990000;
-        }
-        button:disabled {
-            background-color: #666;
-            cursor: not-allowed;
-        }
-        #notebook {
-            background-color: #cc0000;
-            padding: 10px;
-            border-radius: 5px;
-            margin-left: 10px;
-        }
-        #notebookText {
-            width: 200px;
-            background-color: #1e1e1e;
-            color: #f0f0f0;
-            border: 1px solid black;
-            padding: 5px;
-        }
-        #ace-editor {
-            width: 80%;
-            height: 100%;
-        }
-        #main-text-area {
-            width: 100%;
-            height: 100%;
-            background-color: #1e1e1e;
-            color: #f0f0f0;
-            border: none;
-            resize: none;
-            font-family: 'Courier New', monospace;
-            font-size: 16pt;
-            font-weight: bold;
-            padding: 10px;
-        }
-        #dictionary-results {
-            flex-grow: 1;
-            overflow-y: auto;
-            background-color: #2d2d2d;
-            padding: 10px;
-            border: 1px solid #444;
-            font-size: 12px;
-        }
-        #ai-response {
-            white-space: pre-wrap;
-            min-height: 200px;
-            line-height: 1.4;
-        }
-        select, textarea {
-            background-color: #2d2d2d;
-            color: white;
-            border: 1px solid #444;
-        }
-        .loading {
-            color: #cc0000;
-            font-style: italic;
-        }
-        .error {
-            color: #ff6666;
-            background-color: #3a2a2a;
-            padding: 10px;
-            border-radius: 4px;
-        }
-        .success {
-            color: #aaffaa;
-            background-color: #2a3a2a;
-            padding: 10px;
-            border-radius: 4px;
-        }
-        .ai-section {
-            margin-bottom: 15px;
-        }
-        .insert-buttons {
-            margin-top: 10px;
-            display: flex;
-            gap: 5px;
-        }
-        .insert-buttons button {
-            font-size: 11px;
-            padding: 3px 6px;
-            margin-right: 3px;
-            flex: 1;
-        }
-        .model-category {
-            color: #cc0000;
-            font-weight: bold;
-            margin-top: 5px;
-            font-size: 11px;
-        }
-        .footer-content {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            align-items: center;
-        }
-        .footer-left {
-            display: flex;
-            flex-direction: column;
-        }
-        .footer-right iframe {
-            border: none;
-        }
-        .working-model {
-            color: #00ff00 !important;
-            font-weight: bold;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WordStar Nexus // Minraud Lexical Terminal</title>
+  
+  <!-- Rare & Vintage Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Almendra:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&family=Major+Mono+Display&family=Share+Tech+Mono&family=VT323&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+  
+  <!-- Ace Editor & jsPDF CDNs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    /* =====================================================================
+       1. ROOT COLOR SCHEMES & DOMAIN ROOT STYLE
+       ===================================================================== */
+    :root {
+      /* CITADELLE RED (Default Root) */
+      --bg-color: #050505;
+      --bg-card: rgba(5, 5, 5, 0.85);
+      --bg-panel: #0a0a0a;
+      --primary: #ff0000;
+      --secondary: #550000;
+      --text-main: #ffffff;
+      --text-muted: #888888;
+      --border-color: #222222;
+      --scanline-tint: rgba(255, 0, 0, 0.06);
+      --font-tech: 'Share Tech Mono', monospace;
+      --font-seg: 'Almendra', serif;
+      --font-mono: 'VT323', monospace;
+      --font-antique: 'IM Fell English', serif;
+      --font-avant: 'Major Mono Display', monospace;
+      --white: #ffffff;
+      --grey: #333333;
+      --red: #ff0000;
+      --dark-grey: #111111;
+      --selection-bg: #ff0033;  
+      --selection-color: #0a0a0a;
+      --accent-highlight: #ff3333;
+    }
+
+    /* WORDSTAR BLUE (Classic Mode) */
+    body.classic-mode {
+      --bg-color: #0000AA;
+      --bg-card: rgba(0, 0, 170, 0.85);
+      --bg-panel: #000088;
+      --primary: #FFFF00;
+      --secondary: #00FFFF;
+      --text-main: #FFFFFF;
+      --text-muted: #a0c4ff;
+      --border-color: #0000ff;
+      --scanline-tint: rgba(255, 255, 255, 0.08);
+      --white: #ffffff;
+      --grey: #1e3a8a;
+      --red: #FFFF00;
+      --dark-grey: #000055;
+      --selection-bg: #FFFF00;  
+      --selection-color: #0000AA;
+      --accent-highlight: #00FFFF;
+    }
+
+    /* CRT GREEN PHOSPHOR */
+    body.theme-green {
+      --bg-color: #030a04;
+      --bg-card: rgba(3, 10, 4, 0.9);
+      --bg-panel: #051408;
+      --primary: #33ff33;
+      --secondary: #006600;
+      --text-main: #66ff66;
+      --text-muted: #1e7e34;
+      --border-color: #0a3311;
+      --scanline-tint: rgba(51, 255, 51, 0.06);
+      --selection-bg: #33ff33;
+      --selection-color: #001100;
+      --accent-highlight: #a3ffa3;
+    }
+
+    /* CRT AMBER TERMINAL */
+    body.theme-amber {
+      --bg-color: #0b0701;
+      --bg-card: rgba(11, 7, 1, 0.9);
+      --bg-panel: #170e03;
+      --primary: #ffb000;
+      --secondary: #664400;
+      --text-main: #ffcc66;
+      --text-muted: #996600;
+      --border-color: #3d2404;
+      --scanline-tint: rgba(255, 176, 0, 0.06);
+      --selection-bg: #ffb000;
+      --selection-color: #1a0f00;
+      --accent-highlight: #ffe099;
+    }
+
+    /* === SELECTION STYLES === */
+    ::selection {
+      background: var(--selection-bg);
+      color: var(--selection-color);
+      text-shadow: none;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: var(--font-tech);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* SCANLINE CATHODE EFFECT */
+    body::after {
+      content: " ";
+      display: block;
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%), 
+                  linear-gradient(90deg, var(--scanline-tint), var(--scanline-tint));
+      z-index: 999;
+      background-size: 100% 3px, 6px 100%;
+      pointer-events: none;
+      opacity: 0.65;
+    }
+
+    /* TOP BAR / CONTROL TERMINAL */
+    header {
+      background: var(--bg-panel);
+      border-bottom: 2px solid var(--secondary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 14px;
+      font-size: 12px;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand h1 {
+      font-family: var(--font-seg);
+      font-size: 18px;
+      letter-spacing: 2px;
+      color: var(--primary);
+      text-transform: uppercase;
+      text-shadow: 0 0 6px var(--secondary);
+    }
+
+    .brand-sub {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+    }
+
+    .btn-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button, select {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 4px 10px;
+      font-family: var(--font-tech);
+      font-size: 11px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    button:hover, select:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    button.active {
+      background: var(--secondary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    /* WORKSPACE */
+    .workspace {
+      display: grid;
+      grid-template-columns: 1fr 370px;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+
+    .editor-column {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      border-right: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    #ace-editor {
+      flex: 1;
+      width: 100%;
+      font-size: 15px;
+      line-height: 1.6;
+      background: transparent !important;
+    }
+
+    .ace_gutter {
+      background: var(--dark-grey) !important;
+      color: var(--text-muted) !important;
+      border-right: 1px solid var(--border-color);
+    }
+
+    .ace_cursor {
+      color: var(--primary) !important;
+      border-left: 2px solid var(--primary) !important;
+    }
+
+    /* OPTION D: SENTENCE CADENCE & RADAR */
+    .inspector-deck {
+      background: var(--bg-card);
+      border-top: 1px solid var(--border-color);
+      padding: 8px 12px;
+      max-height: 190px;
+      min-height: 170px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .inspector-head {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      letter-spacing: 1px;
+    }
+
+    .cadence-canvas-box {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: 2px;
+      position: relative;
+    }
+
+    #cadenceCanvas {
+      width: 100%;
+      height: 52px;
+      display: block;
+    }
+
+    .cadence-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 9px;
+      color: var(--text-muted);
+      padding: 2px 4px;
+    }
+
+    .inspector-footer {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr) 2fr;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .stat-pill {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border-color);
+      padding: 3px 5px;
+      text-align: center;
+      border-radius: 2px;
+    }
+
+    .stat-pill .label {
+      display: block;
+      font-size: 8px;
+      color: var(--text-muted);
+    }
+
+    .stat-pill .val {
+      font-size: 11px;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    .echo-box {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow-x: auto;
+      white-space: nowrap;
+      padding: 4px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid var(--border-color);
+      font-size: 10px;
+    }
+
+    .echo-badge {
+      background: var(--dark-grey);
+      border: 1px solid var(--secondary);
+      color: var(--accent-highlight);
+      padding: 1px 4px;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    /* RIGHT PANEL: MINRAUD MULTI-LEXICON */
+    .lexicon-panel {
+      background: var(--bg-panel);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .panel-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--dark-grey);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 8px 2px;
+      font-size: 10px;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      font-family: var(--font-tech);
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      background: var(--bg-panel);
+    }
+
+    .tab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      display: none;
+    }
+
+    .tab-content.active { display: block; }
+
+    /* SEARCH BAR & LANGUAGE SELECTOR */
+    .lex-control-bar {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+
+    .lex-control-bar input {
+      flex: 1;
+      background: var(--dark-grey);
+      border: 1px solid var(--border-color);
+      color: #fff;
+      padding: 6px;
+      font-family: var(--font-tech);
+      font-size: 12px;
+    }
+
+    .lex-lang-select {
+      background: var(--dark-grey);
+      color: var(--primary);
+      border: 1px solid var(--border-color);
+      font-size: 11px;
+    }
+
+    .lex-result-group {
+      margin-bottom: 12px;
+    }
+
+    .lex-result-group h4 {
+      font-size: 10px;
+      color: var(--primary);
+      border-bottom: 1px dashed var(--secondary);
+      padding-bottom: 3px;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .word-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .word-tag {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 2px 6px;
+      border-radius: 2px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .word-tag:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .def-entry {
+      font-size: 11px;
+      line-height: 1.4;
+      margin-bottom: 6px;
+      padding-left: 6px;
+      border-left: 2px solid var(--primary);
+      color: var(--text-main);
+    }
+
+    .etym-entry {
+      font-family: var(--font-antique);
+      font-size: 13px;
+      line-height: 1.5;
+      color: #ffcccc;
+      background: rgba(85, 0, 0, 0.2);
+      border-left: 2px solid var(--primary);
+      padding: 6px;
+      margin-bottom: 8px;
+    }
+
+    /* SCRATCHPAD TAB */
+    #scratchpad {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 8px;
+      font-family: var(--font-tech);
+      font-size: 12px;
+      resize: none;
+      outline: none;
+    }
+
+    /* VAULT & GENERATOR */
+    .vault-btn {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 8px;
+      text-align: left;
+      border: 1px solid var(--border-color);
+      background: var(--dark-grey);
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    .vault-quote {
+      font-family: var(--font-seg);
+      font-size: 14px;
+      line-height: 1.4;
+      color: var(--text-main);
+      background: rgba(0, 0, 0, 0.5);
+      border-left: 3px solid var(--primary);
+      padding: 8px;
+      margin-top: 8px;
+    }
+  </style>
 </head>
 <body>
-<div class="container">
-    <div id="toolbar">
-        <div>
-            <button onclick="newDocument()">New</button>
-            <button onclick="saveDocument()">Save</button>
-            <button onclick="exportTxt()">Export TXT</button>
-            <button onclick="exportRtf()">Export RTF</button>
-            <button onclick="exportPdf()">Export PDF</button>
-            <button onclick="insertPoeticParagraph()">Insert Random Poetic Paragraph</button>
-            <button onclick="insertRandomScientificWord()">Random Word</button>
-        </div>
-        <div id="notebook">
-            <textarea id="notebookText" rows="3" placeholder="Write your note here..."></textarea>
-            <div>
-                <button onclick="insertNoteToEditor()" style="background-color: black; color: #cc0000; border: none; padding: 5px 10px; margin-top: 5px; cursor: pointer;">Insert Note</button>
-            </div>
-        </div>
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand">
+      <h1>WORDSTAR NEXUS</h1>
+      <span class="brand-sub">// MINRAUD-7 //</span>
     </div>
-    
-    <div id="editor" style="display: flex; justify-content: space-between;">
-        <div id="ace-editor" style="width: 80%; height: 100%;">
-            <textarea id="main-text-area" style="width: 100%; height: 100%; background-color: #1e1e1e; color: #f0f0f0; border: none; resize: none; font-family: 'Courier New', monospace; font-size: 16pt; font-weight: bold; padding: 10px;" placeholder="Start typing your document here..."></textarea>
+
+    <div class="btn-group">
+      <!-- Unconventional Typography Selector -->
+      <select id="fontSelect" onchange="switchFont(this.value)" title="Choose Typography">
+        <option value="'Share Tech Mono', monospace">Share Tech Mono (Industrial)</option>
+        <option value="'Almendra', serif">Almendra (Dark Gothic)</option>
+        <option value="'VT323', monospace">VT323 (CRT Phosphor)</option>
+        <option value="'IM Fell English', serif">IM Fell English (17th Cent)</option>
+        <option value="'Major Mono Display', monospace">Major Mono (Avant-Garde)</option>
+      </select>
+
+      <!-- Theme Selector with Citadelle Red as Default -->
+      <select id="themeSelect" onchange="switchTheme(this.value)">
+        <option value="default">Citadelle Red (Root)</option>
+        <option value="classic-mode">WordStar Blue (Classic)</option>
+        <option value="theme-green">CRT Green</option>
+        <option value="theme-amber">CRT Amber</option>
+      </select>
+
+      <button id="btnSound" onclick="toggleAudio()">🔊 AUDIO: OFF</button>
+      <button onclick="downloadTXT()">TXT</button>
+      <button onclick="downloadRTF()">RTF</button>
+      <button onclick="downloadPDF()">PDF</button>
+      <button onclick="clearEditor()" style="color: var(--primary);">CLEAR</button>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <div class="workspace">
+    <!-- LEFT: ACE EDITOR + OPTION D PROSE RADAR -->
+    <div class="editor-column">
+      <div id="ace-editor"></div>
+
+      <!-- OPTION D: SENTENCE CADENCE & REPETITION RADAR -->
+      <div class="inspector-deck">
+        <div class="inspector-head">
+          <span style="color: var(--primary); font-weight: bold;">CADENCE & PROSE MUSIC [GARY PROVOST RHYTHM HORIZON]</span>
+          <span id="stat-diversity" style="color: var(--accent-highlight);">DIVERSITY: 100%</span>
         </div>
-        <div style="width: 18%; display: flex; flex-direction: column;">
-            <div class="ai-section">
-                <select id="ai-model-select" style="width: 100%; padding: 5px; margin-bottom: 5px;">
-                    <optgroup label="✅ WORKING MODELS">
-                        <option value="google/gemma-2-9b-it:free" class="working-model">Gemma 2 9B  ✅</option>
-                        <option value="google/gemma-3-4b-it:free" class="working-model">Gemma 3 4B  ✅</option>
-                        <option value="google/gemma-3-12b-it:free" class="working-model">Gemma 3 12B  ✅</option>
-                    </optgroup>
-                        <optgroup label="🚀 DeepSeek Models (Recommended)">
-                        <option value="deepseek-chat">DeepSeek Chat (V3)</option>
-                        <option value="deepseek-reasoner">DeepSeek Reasoner (R1)</option>
-                    </optgroup>
-                    <optgroup label="🤖 Google Gemini Flash">
-                        <option value="google/gemini-2.0-flash-001">Gemini 2.0 Flash</option>
-                        <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash Exp</option>
-                        <option value="google/gemini-2.0-flash-lite-001">Gemini 2.0 Flash Lite</option>
-                        <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
-                        <option value="google/gemini-2.5-flash-image-preview">Gemini 2.5 FI</option>
-                        <option value="google/gemini-2.5-flash-image-preview:free">Gemini 2.5 FI</option>
-                        <option value="google/gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
-                        <option value="google/gemini-2.5-flash-lite-preview-06-17">Gemini 2.5 Preview</option>
-                    </optgroup>
-                     <optgroup label="🚀 Liquid AI Models">
-                        <option value="liquid/lfm-7b">Liquid LFM-7B</option>
-                        <option value="liquid/lfm-3b">Liquid LFM-3B</option>
-                    </optgroup>
-                    <optgroup label="🎯 Google Gemini Pro">
-                        <option value="google/gemini-2.5-pro">Gemini 2.5 Pro</option>
-                        <option value="google/gemini-2.5-pro-exp-03-25">Gemini 2.5 Pro Exp</option>
-                        <option value="google/gemini-2.5-pro-preview">Gemini 2.5 Pro Preview</option>
-                        <option value="google/gemini-2.5-pro-preview-05-06">Gemini 2.5 Pro Preview 05-06</option>
-                        <option value="google/gemini-flash-1.5">Gemini Flash 1.5</option>
-                        <option value="google/gemini-flash-1.5-8b">Gemini Flash 1.5 8B</option>
-                        <option value="google/gemini-pro-1.5">Gemini Pro 1.5</option>
-                    </optgroup>
-                    <optgroup label="💎 Google Gemma">
-                        <option value="google/gemma-2-27b-it">Gemma 2 27B</option>
-                        <option value="google/gemma-2-9b-it">Gemma 2 9B</option>
-                        <option value="google/gemma-3-12b-it">Gemma 3 12B</option>
-                        <option value="google/gemma-3-27b-it">Gemma 3 27B</option>
-                        <option value="google/gemma-3-27b-it:free">Gemma 3 27B Free</option>
-                        <option value="google/gemma-3-4b-it">Gemma 3 4B</option>
-                        <option value="google/gemma-3n-e2b-it:free">Gemma 3n E2B Free</option>
-                        <option value="google/gemma-3n-e4b-it">Gemma 3n E4B</option>
-                    </optgroup>
-                    <optgroup label="🔧 Other Models">
-                        <option value="gpt2">GPT-2</option>
-                        <option value="bert">BERT</option>
-                        <option value="t5">T5</option>
-                        <option value="roberta">RoBERTa</option>
-                        <option value="xlnet">XLNet</option>
-                        <option value="elmo">ELMo</option>
-                        <option value="distilbert">DistilBERT</option>
-                        <option value="albert">ALBERT</option>
-                        <option value="electra">ELECTRA</option>
-                        <option value="markov">Markov Chain</option>
-                        <option value="wordassociation">Word Association</option>
-                        <option value="randomsentence">Random Sentence Generator</option>
-                        <option value="gpt-neo">GPT-Neo</option>
-                        <option value="gpt-j">GPT-J</option>
-                        <option value="bloom">BLOOM</option>
-                        <option value="opt">OPT</option>
-                        <option value="llama">LLaMA</option>
-                        <option value="tensorflow">TensorFlow</option>
-                        <option value="pytorch">PyTorch</option>
-                        <option value="huggingface">HF Transformers</option>
-                        <option value="palm">PaLM</option>
-                        <option value="bard">Bard</option>
-                    </optgroup>
-                </select>
-                <textarea id="ai-prompt" placeholder="Enter your prompt here" style="width: 100%; padding: 5px; margin-bottom: 5px; height: 60px;"></textarea>
-                <button onclick="generateText()" id="generate-btn" style="width: 100%; background-color: #cc0000; color: white; border: none; padding: 5px 10px; cursor: pointer; font-size: 12px;">Create Text</button>
-            </div>
-            <div id="dictionary-results" style="flex-grow: 1; overflow-y: auto; background-color: #2d2d2d; padding: 10px; border: 1px solid #444; font-size: 12px;">
-                <div id="word-info" style="display: none;">
-                    <h3 id="word-title" style="color: #cc0000; margin-bottom: 10px;"></h3>
-                    <div id="word-definition" style="margin-bottom: 10px;"></div>
-                    <div id="word-etymology" style="margin-bottom: 10px; font-style: italic;"></div>
-                    <div id="word-thesaurus">
-                        <h4 style="color: #cc0000; margin-bottom: 5px;">Synonyms:</h4>
-                        <ul id="word-synonyms" style="list-style-type: none; padding-left: 0;"></ul>
-                    </div>
-                </div>
-                <div id="ai-response" style="white-space: pre-wrap;">🚀 **AI Text Gen**
- 1. Choose a language model from the dropdown menu.
-2. Enter a prompt in the text area.
-3. Click the "Create Text" button.
 
- Here's a brief overview of the working models:
+        <div class="cadence-canvas-box">
+          <canvas id="cadenceCanvas"></canvas>
+          <div class="cadence-meta">
+            <span>SHORT (STACCATO)</span>
+            <span>GAUGING SENTENCE LENGTH VARIATION</span>
+            <span>LONG (LYRICAL)</span>
+          </div>
+        </div>
 
-1. Markov Chain: Generates text based on statistical patterns from a predefined dataset.
-2. Word Association: Creates text by following word associations from a custom dictionary.
-3. Random Sentence Generator: Constructs simple sentences using predefined components.
+        <div class="inspector-footer">
+          <div class="stat-pill">
+            <span class="label">WORDS</span>
+            <span id="stat-words" class="val">0</span>
+          </div>
+          <div class="stat-pill">
+            <span class="label">AVG LENGTH</span>
+            <span id="stat-asl" class="val">0 wps</span>
+          </div>
+          <div class="stat-pill">
+            <span class="label">READ TIME</span>
+            <span id="stat-readtime" class="val">0m 0s</span>
+          </div>
+          <div class="stat-pill">
+            <span class="label">SENTENCES</span>
+            <span id="stat-sentences" class="val">0</span>
+          </div>
+          <div class="echo-box" id="echo-box">
+            <span style="color: var(--text-muted);">Echo Radar: Tracking repeated words...</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-The other AI models listed are currently offline simulations except for;                 
+    <!-- RIGHT: MINRAUD MULTI-LEXICON & ETYMOLOGY -->
+    <div class="lexicon-panel">
+      <div class="panel-tabs">
+        <button class="tab-btn active" onclick="openTab('tab-lexicon', this)">MINRAUD LEXICON</button>
+        <button class="tab-btn" onclick="openTab('tab-etym', this)">ETYMOLOGY</button>
+        <button class="tab-btn" onclick="openTab('tab-vault', this)">WORD VAULT</button>
+        <button class="tab-btn" onclick="openTab('tab-notes', this)">SCRATCHPAD</button>
+      </div>
 
-✅ **Working Models:**
-• DeepSeek Chat & Reasoner (Recommended!)
-• Google Gemma 2 & 3  models
+      <!-- TAB 1: MULTI-LEXICON (EN / DE GERMAN) -->
+      <div id="tab-lexicon" class="tab-content active">
+        <div class="lex-control-bar">
+          <input type="text" id="lex-query" placeholder="Type or double-click a word..." onkeydown="if(event.key==='Enter') executeLookup()">
+          <select id="lex-lang" class="lex-lang-select" onchange="executeLookup()">
+            <option value="EN">EN</option>
+            <option value="DE">DE (Deutsch)</option>
+          </select>
+          <button onclick="executeLookup()">SEARCH</button>
+        </div>
 
-💡 **How to use:**
-1. Choose a model (DeepSeek models are fastest)
-2. Enter your prompt
-3. Click "Create Text"
+        <div id="lex-loading" style="display:none; font-size:11px; color:var(--primary); margin-bottom:8px;">Accessing lexicons...</div>
 
-📝 **Note:** Puter.js models might require email confirmation for full access.
+        <div id="lex-results">
+          <div class="lex-result-group">
+            <h4 id="lex-def-heading">DEFINITIONS</h4>
+            <div id="lex-defs"><span style="color:var(--text-muted); font-size:11px;">Search or highlight text in the editor to interrogate meanings.</span></div>
+          </div>
+          <div class="lex-result-group">
+            <h4 id="lex-syn-heading">SYNONYMS & RELATIONS</h4>
+            <div id="lex-syns" class="word-cloud"><span style="color:var(--text-muted); font-size:11px;">—</span></div>
+          </div>
+          <div class="lex-result-group" id="group-rhymes">
+            <h4>RHYMES & SOUNDS</h4>
+            <div id="lex-rhymes" class="word-cloud"><span style="color:var(--text-muted); font-size:11px;">—</span></div>
+          </div>
+          <div class="lex-result-group" id="group-triggers">
+            <h4>TRIGGERS & ASSOCIATIONS</h4>
+            <div id="lex-triggers" class="word-cloud"><span style="color:var(--text-muted); font-size:11px;">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: ETYMOLOGY & LINGUISTIC ORIGIN -->
+      <div id="tab-etym" class="tab-content">
+        <h4 style="font-size: 10px; color: var(--primary); margin-bottom: 8px;">HISTORICAL LINGUISTICS & PROTO-ROOTS</h4>
+        <div id="etym-loading" style="display:none; font-size:11px; color:var(--primary); margin-bottom:8px;">Deconstructing linguistic roots...</div>
+        <div id="etym-results">
+          <div class="etym-entry">Double-click any word or search in Lexicon to trace its Proto-Indo-European, Germanic, or Latin heritage.</div>
+        </div>
+      </div>
+
+      <!-- TAB 3: WORD VAULT & POETIC SPARKS -->
+      <div id="tab-vault" class="tab-content">
+        <button class="vault-btn" onclick="generatePoeticSpark()">⚡ GENERATE POETIC CUT-UP</button>
+        <div id="poetic-output" class="vault-quote">"The insect brains of Minraud pulse beneath heavy metal circuits."</div>
+        
+        <div style="margin-top: 14px;">
+          <h4 style="font-size: 10px; color: var(--primary); margin-bottom: 6px;">SCIENTIFIC & ESOTERIC LEXICON</h4>
+          <div id="vault-words" class="word-cloud"></div>
+        </div>
+        <div style="margin-top: 14px;">
+          <h4 style="font-size: 10px; color: var(--primary); margin-bottom: 6px;">DEUTSCHE WORTLISTE (GERMAN EXPANSION)</h4>
+          <div id="vault-german" class="word-cloud"></div>
+        </div>
+      </div>
+
+      <!-- TAB 4: PERSISTENT SCRATCHPAD -->
+      <div id="tab-notes" class="tab-content" style="height: calc(100% - 30px);">
+        <textarea id="scratchpad" placeholder="Drafts, scene sketches, cut-up notes (auto-saved)..."></textarea>
+      </div>
+    </div>
   </div>
-                <div class="insert-buttons">
-                    <button onclick="insertAIResponse()" style="background-color: #00cc00;">Insert into Document</button>
-                    <button onclick="copyAIResponse()" style="background-color: #0066cc;">Copy to Clipboard</button>
+
+  <script>
+    /* =====================================================================
+       1. ACE EDITOR SETUP & MANUSCRIPT MEMORY
+       ===================================================================== */
+    let editor = ace.edit("ace-editor");
+    editor.setTheme("ace/theme/terminal");
+    editor.session.setMode("ace/mode/markdown");
+    editor.setShowPrintMargin(false);
+    editor.setFontSize(15);
+    editor.session.setUseWrapMode(true);
+    editor.setOptions({ fontFamily: "'Share Tech Mono', monospace" });
+
+    const STORAGE_KEY = "ws_nexus_manuscript_citadelle";
+    const SCRATCH_KEY = "ws_nexus_scratch_citadelle";
+
+    const savedDoc = localStorage.getItem(STORAGE_KEY);
+    if (savedDoc) {
+      editor.setValue(savedDoc, -1);
+    } else {
+      editor.setValue(`Write with rhythm. This sentence has five words. Here are five more words. Five-word sentences are okay. Bad sentences are not okay. But listen to what happens when you vary the length of your prose.\n\nNow listen. I vary the sentence length, and I create music. Music. The writing sings. It has a pleasant lilt, a harmony, an undeniable cadence. I use short sentences. And I use sentences of medium length. And sometimes, when I see that the reader is resting, I will engage him with a sentence of considerable length, a sentence that burns with energy and builds with all the impetus of a crescendo.\n\n[Double-click any English or German word to open the Minraud Lexicon & Etymology engine.]`, -1);
+    }
+
+    const scratchpad = document.getElementById("scratchpad");
+    scratchpad.value = localStorage.getItem(SCRATCH_KEY) || "";
+    scratchpad.addEventListener("input", () => {
+      localStorage.setItem(SCRATCH_KEY, scratchpad.value);
+    });
+
+    let debounceTimer;
+    editor.session.on('change', () => {
+      playTypewriterSound();
+      localStorage.setItem(STORAGE_KEY, editor.getValue());
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        analyzeCadenceAndProse(editor.getValue());
+      }, 250);
+    });
+
+    editor.on("click", () => {
+      const selected = editor.getSelectedText().trim();
+      if (selected && selected.length > 1 && !selected.includes(" ")) {
+        document.getElementById('lex-query').value = selected;
+        executeLookup();
+      }
+    });
+
+    /* =====================================================================
+       2. OPTION D: CADENCE & REPETITION INSPECTOR
+       ===================================================================== */
+    const STOP_WORDS = new Set([
+      'the','be','to','of','and','a','in','that','have','i','it','for','not','on','with',
+      'he','as','you','do','at','this','but','his','by','from','they','we','say','her',
+      'she','or','an','will','my','one','all','would','there','their','what','so','up',
+      'out','if','about','who','get','which','go','me','when','make','can','like','time',
+      'der','die','das','und','in','zu','den','das','von','sie','ist','des','sich','mit',
+      'dem','dass','er','es','ein','ich','auf','so','eine','auch','als','an','nach','wie'
+    ]);
+
+    function analyzeCadenceAndProse(text) {
+      if (!text || text.trim().length === 0) {
+        drawCadenceGraph([]);
+        updateMetrics(0, 0, 0, 100, []);
+        return;
+      }
+
+      const rawSentences = text.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
+      const sentenceLengths = rawSentences.map(s => {
+        const words = s.match(/\b[a-zA-Z0-9äöüÄÖÜß'-]+\b/g);
+        return words ? words.length : 0;
+      }).filter(len => len > 0);
+
+      const allWords = (text.match(/\b[a-zA-Z0-9äöüÄÖÜß'-]+\b/g) || []).map(w => w.toLowerCase());
+      const totalWords = allWords.length;
+      const uniqueWords = new Set(allWords).size;
+
+      const diversity = totalWords > 0 ? Math.round((uniqueWords / totalWords) * 100) : 100;
+
+      const freqMap = {};
+      allWords.forEach(w => {
+        if (!STOP_WORDS.has(w) && w.length > 2) {
+          freqMap[w] = (freqMap[w] || 0) + 1;
+        }
+      });
+
+      const echoes = Object.entries(freqMap)
+        .filter(([_, count]) => count > 1)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6);
+
+      const asl = sentenceLengths.length > 0 ? (totalWords / sentenceLengths.length).toFixed(1) : 0;
+      const totalSeconds = Math.round((totalWords / 225) * 60);
+      const readTime = `${Math.floor(totalSeconds / 60)}m ${totalSeconds % 60}s`;
+
+      updateMetrics(totalWords, asl, readTime, sentenceLengths.length, diversity, echoes);
+      drawCadenceGraph(sentenceLengths);
+    }
+
+    function updateMetrics(words, asl, readTime, sentences, diversity, echoes) {
+      document.getElementById('stat-words').innerText = words;
+      document.getElementById('stat-asl').innerText = `${asl} wps`;
+      document.getElementById('stat-readtime').innerText = readTime;
+      document.getElementById('stat-sentences').innerText = sentences;
+      document.getElementById('stat-diversity').innerText = `DIVERSITY: ${diversity}%`;
+
+      const echoBox = document.getElementById('echo-box');
+      if (echoes.length === 0) {
+        echoBox.innerHTML = '<span style="color:var(--text-muted);">Echo Radar: No recurring words detected.</span>';
+      } else {
+        echoBox.innerHTML = echoes
+          .map(([word, count]) => `<span class="echo-badge" onclick="lookupSpecific('${word}')">${word} <small>×${count}</small></span>`)
+          .join('');
+      }
+    }
+
+    function drawCadenceGraph(lengths) {
+      const canvas = document.getElementById('cadenceCanvas');
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+
+      canvas.width = rect.width * dpr;
+      canvas.height = 52 * dpr;
+      ctx.scale(dpr, dpr);
+
+      const w = rect.width;
+      const h = 52;
+      ctx.clearRect(0, 0, w, h);
+
+      // Sweet spot band
+      ctx.fillStyle = 'rgba(255, 0, 0, 0.08)';
+      const yLow = h - (24 / 45) * h;
+      const yHigh = h - (10 / 45) * h;
+      ctx.fillRect(0, yLow, w, yHigh - yLow);
+
+      if (lengths.length === 0) return;
+
+      const recent = lengths.slice(-45);
+      const barWidth = Math.max(3, (w / recent.length) - 2);
+
+      recent.forEach((len, idx) => {
+        const barHeight = Math.min(h - 2, (len / 40) * h);
+        const x = idx * (barWidth + 2);
+        const y = h - barHeight;
+
+        if (len > 28) ctx.fillStyle = '#ff8800'; 
+        else if (len < 6) ctx.fillStyle = '#38bdf8'; 
+        else ctx.fillStyle = '#ff0000'; 
+
+        ctx.fillRect(x, y, barWidth, barHeight);
+      });
+    }
+
+    /* =====================================================================
+       3. MINRAUD MULTI-LEXICON (EN + DE GERMAN) & ETYMOLOGY ENGINE
+       ===================================================================== */
+    function openTab(tabId, btn) {
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    function executeLookup() {
+      const word = document.getElementById('lex-query').value.trim();
+      const lang = document.getElementById('lex-lang').value;
+      if (word) {
+        if (lang === "DE") lookupGerman(word);
+        else lookupEnglish(word);
+        lookupEtymology(word);
+      }
+    }
+
+    function lookupSpecific(word) {
+      document.getElementById('lex-query').value = word;
+      executeLookup();
+    }
+
+    // ENGLISH LEXICON (FreeDictionary + Datamuse)
+    async function lookupEnglish(word) {
+      document.getElementById('lex-loading').style.display = 'block';
+      document.getElementById('group-rhymes').style.display = 'block';
+      document.getElementById('group-triggers').style.display = 'block';
+      document.getElementById('lex-def-heading').innerText = "DEFINITIONS";
+      document.getElementById('lex-syn-heading').innerText = "SYNONYMS & RELATIONS";
+
+      try {
+        const [defRes, synRes, rhyRes, trgRes] = await Promise.all([
+          fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`).catch(() => null),
+          fetch(`https://api.datamuse.com/words?rel_syn=${word}&max=15`).catch(() => null),
+          fetch(`https://api.datamuse.com/words?rel_rhy=${word}&max=15`).catch(() => null),
+          fetch(`https://api.datamuse.com/words?rel_trg=${word}&max=15`).catch(() => null)
+        ]);
+
+        const defContainer = document.getElementById('lex-defs');
+        if (defRes && defRes.ok) {
+          const data = await defRes.json();
+          const meanings = data[0]?.meanings?.slice(0, 3) || [];
+          defContainer.innerHTML = meanings.map(m => `
+            <div class="def-entry">
+              <strong>${m.partOfSpeech}:</strong> ${m.definitions[0]?.definition || ''}
+            </div>
+          `).join('');
+        } else {
+          defContainer.innerHTML = `<span style="color:var(--text-muted); font-size:11px;">No exact English definition located.</span>`;
+        }
+
+        const renderTags = async (res, elemId) => {
+          const container = document.getElementById(elemId);
+          if (res && res.ok) {
+            const list = await res.json();
+            if (list.length > 0) {
+              container.innerHTML = list.map(item => `
+                <span class="word-tag" onclick="insertAtCursor('${item.word}')">${item.word}</span>
+              `).join('');
+              return;
+            }
+          }
+          container.innerHTML = `<span style="color:var(--text-muted); font-size:11px;">None found</span>`;
+        };
+
+        await renderTags(synRes, 'lex-syns');
+        await renderTags(rhyRes, 'lex-rhymes');
+        await renderTags(trgRes, 'lex-triggers');
+      } catch (err) {
+        console.error(err);
+      } finally {
+        document.getElementById('lex-loading').style.display = 'none';
+      }
+    }
+
+    // GERMAN LEXICON (OpenThesaurus API + Wiktionary de)
+    async function lookupGerman(word) {
+      document.getElementById('lex-loading').style.display = 'block';
+      document.getElementById('group-rhymes').style.display = 'none';
+      document.getElementById('group-triggers').style.display = 'none';
+      document.getElementById('lex-def-heading').innerText = "BEDEUTUNG / GERMAN TRANSLATION";
+      document.getElementById('lex-syn-heading').innerText = "DEUTSCHE SYNONYME (OPENTHESAURUS)";
+
+      try {
+        const [openThesRes, wiktiRes] = await Promise.all([
+          fetch(`https://api.openthesaurus.de/synonyme/search?q=${encodeURIComponent(word)}&format=application/json`).catch(() => null),
+          fetch(`https://de.wiktionary.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(word)}&origin=*&format=json`).catch(() => null)
+        ]);
+
+        // Parse German synonyms from OpenThesaurus
+        const synContainer = document.getElementById('lex-syns');
+        if (openThesRes && openThesRes.ok) {
+          const data = await openThesRes.json();
+          if (data.synsets && data.synsets.length > 0) {
+            const allTerms = [];
+            data.synsets.forEach(set => {
+              set.terms.forEach(t => allTerms.push(t.term));
+            });
+            synContainer.innerHTML = allTerms.slice(0, 20).map(term => `
+              <span class="word-tag" onclick="insertAtCursor('${term}')">${term}</span>
+            `).join('');
+          } else {
+            synContainer.innerHTML = `<span style="color:var(--text-muted); font-size:11px;">Keine Synonyme gefunden.</span>`;
+          }
+        }
+
+        // Parse German definition from Wiktionary
+        const defContainer = document.getElementById('lex-defs');
+        if (wiktiRes && wiktiRes.ok) {
+          const wData = await wiktiRes.json();
+          const pages = wData.query?.pages || {};
+          const page = Object.values(pages)[0];
+          if (page && page.extract) {
+            // Find "Bedeutungen" section
+            const match = page.extract.match(/Bedeutungen:([\s\S]*?)(?=Herkunft:|Synonyme:|Beispiele:|$)/i);
+            const text = match ? match[1].trim() : page.extract.slice(0, 280);
+            defContainer.innerHTML = `<div class="def-entry">${text.replace(/\n/g, '<br>')}</div>`;
+          } else {
+            defContainer.innerHTML = `<span style="color:var(--text-muted); font-size:11px;">Keine deutsche Definition verfügbar.</span>`;
+          }
+        }
+      } catch (err) {
+        console.error("German lookup error", err);
+      } finally {
+        document.getElementById('lex-loading').style.display = 'none';
+      }
+    }
+
+    // ETYMOLOGY ENGINE (Wiktionary REST / MediaWiki API)
+    async function lookupEtymology(word) {
+      const etymContainer = document.getElementById('etym-results');
+      document.getElementById('etym-loading').style.display = 'block';
+
+      try {
+        const res = await fetch(`https://en.wiktionary.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(word)}&origin=*&format=json`);
+        if (res.ok) {
+          const data = await res.json();
+          const pages = data.query?.pages || {};
+          const page = Object.values(pages)[0];
+          
+          if (page && page.extract) {
+            // Match Etymology section using regex
+            const match = page.extract.match(/(?:Etymology|Etymology 1)\s*={2,4}\s*([^=]+)/i);
+            if (match && match[1]) {
+              etymContainer.innerHTML = `
+                <div class="etym-entry">
+                  <strong>${word.toUpperCase()}:</strong><br>
+                  ${match[1].trim()}
                 </div>
-            </div>
-        </div>
-    </div>
-    
-    <div id="statusbar">
-        <div class="footer-content">
-            <div class="footer-left">
-                <span>WordStar Online - Ready</span>
-                <span id="word-count" style="font-size: 12px;">Words: 0</span>
-                <span style="font-size: 12px;">© MMXXIV www.inkrealm.info</span>
-            </div>
-            <div class="footer-right">
-                <iframe width="600" height="600" src="https://inkrealm.info/x2" title="My Site"></iframe>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    let editor;
-
-    // Initialize editor when the page loads
-    window.onload = function() {
-        editor = ace.edit("ace-editor");
-        editor.setTheme("ace/theme/monokai");
-        editor.session.setMode("ace/mode/text");
-        updateWordCount();
-        
-        // Add event listener for content changes
-        if (editor) {
-            editor.session.on('change', function() {
-                updateWordCount();
-            });
-        }
-        
-        // Apply working model styling
-        setTimeout(() => {
-            const workingOptions = document.querySelectorAll('.working-model');
-            workingOptions.forEach(option => {
-                option.style.color = '#00ff00';
-                option.style.fontWeight = 'bold';
-            });
-        }, 100);
-    };
-
-    function newDocument() {
-        if (editor) {
-            editor.setValue("");
-            updateStatusBar("New document created");
-            updateWordCount();
-        }
-    }
-
-    function saveDocument() {
-        if (editor) {
-            const content = editor.getValue();
-            const blob = new Blob([content], {type: "text/plain;charset=utf-8"});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "document.txt";
-            a.click();
-            URL.revokeObjectURL(url);
-            updateStatusBar("Document saved");
-        }
-    }
-
-    function exportTxt() {
-        saveDocument();
-    }
-
-    function exportRtf() {
-        if (editor) {
-            const content = editor.getValue();
-            const rtfContent = "{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0 Times New Roman;}}\n\n" + content.replace(/\n/g, "\\par\n") + "}";
-            const blob = new Blob([rtfContent], {type: "application/rtf"});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "document.rtf";
-            a.click();
-            URL.revokeObjectURL(url);
-            updateStatusBar("Document exported as RTF");
-        }
-    }
-
-    function exportPdf() {
-        if (editor && window.jspdf) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const content = editor.getValue();
-            doc.text(content, 10, 10);
-            doc.save("document.pdf");
-            updateStatusBar("Document exported as PDF");
-        } else {
-            console.error("jsPDF is not available or editor is not initialized");
-        }
-    }
-
-    function insertPoeticParagraph() {
-        if (editor) {
-          const poeticParagraphs = [
-    // Original ones preserved
-    "Whispers of twilight dance on autumn leaves,\nAs golden hues paint the sky's canvas,\nNature's symphony echoes through the trees,\nA moment of beauty, forever to last.",
-    "Moonlit waves caress the shore,\nStars above, a cosmic dance,\nIn this quiet, forevermore,\nWe find life's gentle romance.",
-    "Sunflowers reach for azure skies,\nTheir petals, a sea of gold,\nIn fields where summer never dies,\nAnd stories of light unfold.",
-    
-    // New additions - Nature & Seasons
-    "Crimson leaves descend in silent ballet,\nA tapestry woven by autumn's hand,\nThe forest holds its breath today,\nAs seasons shift across the land.",
-    "Winter's breath on windowpane,\nCrystal fractals, silver lace,\nSilent world beneath the rain,\nOf snowflakes finding their own space.",
-    "Spring arrives on whispered breeze,\nDaffodils in golden rows,\nAwakening from winter's freeze,\nThe secret that the crocus knows.",
-    
-    // Cosmic & Mystical
-    "Nebulae spin their silver threads,\nAcross the velvet dark of space,\nWhere silent constellations spread,\nTheir ancient light with gentle grace.",
-    "Northern lights in emerald waves,\nDance across the polar night,\nA spectral show the heavens gave,\nIn shimmering celestial light.",
-    
-    // Urban & Modern
-    "City lights like fallen stars,\nReflect on rain-slicked avenue,\nThe distant hum of passing cars,\nBeneath the moon's pale, watchful view.",
-    "Steam rises from the subway grate,\nIn ghostly patterns toward the sky,\nWhile neon signs communicate,\nWith those who silently walk by.",
-    
-    // Emotional & Reflective
-    "Memories like faded ink,\nOn pages time cannot erase,\nEach moment balanced on the brink,\nOf finding its appointed place.",
-    "Hope is the compass in the storm,\nThe anchor in the rising tide,\nThe fire that keeps the spirit warm,\nWhen all the other lights have died.",
-    
-    // Mythical & Fantasy
-    "Dragons sleep on mountains high,\nTheir dreams of flight and ancient fire,\nBeneath a starlit, midnight sky,\nFulfilling every heart's desire.",
-    "Unicorns in silver groves,\nWhere moonlight filters through the trees,\nGuard the magic nature loves,\nAnd dance upon the evening breeze.",
-    
-    // Science & Technology
-    "Binary stars in circuits gleam,\nWhere silicon dreams awake,\nA river made of data streams,\nFor humanity's own sake.",
-    "Quantum fields where particles dance,\nIn probabilities unknown,\nReality's uncertain trance,\nIn dimensions newly shown.",
-    
-    // Short & Haiku-like
-    "Cherry blossoms fall,\nPink snow on the garden wall,\nSpring's ephemeral call.",
-    "Ocean's deep embrace,\nWhales sing in the darkling space,\nTime leaves no trace.",
-    
-    // Romantic
-    "Your laughter is the summer rain,\nThat washes all my cares away,\nA sweet, refreshing, gentle strain,\nThat brightens even the grayest day.",
-    "In your eyes I see the stars,\nAnd galaxies yet unexplored,\nYou've healed my ancient, hidden scars,\nAnd all my happiness restored."
-];
-            const randomParagraph = poeticParagraphs[Math.floor(Math.random() * poeticParagraphs.length)];
-            editor.insert(randomParagraph + "\n\n");
-            updateStatusBar("Poetic paragraph inserted");
-            updateWordCount();
-        }
-    }
-
-    function insertRandomScientificWord() {
-        if (editor) {
-       const scientificWords = [
-    // Original preserved
-    "Quantum", "Photosynthesis", "Entropy", "Mitochondria", "Neuroplasticity",
-    "Genome", "Algorithm", "Nanotechnology", "Thermodynamics", "Synapse",
-    
-    // Physics & Quantum
-    "Superposition", "Relativity", "String Theory", "Dark Matter", "Boson",
-    "Entanglement", "Photon", "Graviton", "Multiverse", "Singularity",
-    
-    // Biology & Genetics
-    "Epigenetics", "CRISPR", "Proteomics", "Metabolism", "Homeostasis",
-    "Biodiversity", "Phylogeny", "Cellular", "Enzyme", "Pathogen",
-    
-    // Chemistry
-    "Catalyst", "Polymer", "Isotope", "Electrolyte", "Nanoparticle",
-    "Covalent", "Hydrocarbon", "Chromatography", "Spectroscopy", "Fermentation",
-    
-    // Neuroscience
-    "Dopamine", "Amygdala", "Hippocampus", "Neurotransmitter", "Plasticity",
-    "Connectome", "fMRI", "Electroencephalogram", "Myelin", "Axon",
-    
-    // Computer Science & AI
-    "Blockchain", "Tensor", "Blockchain", "Cryptography", "Blockchain",
-    "Machine Learning", "Neural Network", "Blockchain", "API", "Blockchain",
-    
-    // Astronomy & Space
-    "Exoplanet", "Nebula", "Redshift", "Pulsar", "Cosmology",
-    "Event Horizon", "Supernova", "Dark Energy", "Asteroid", "Galaxy",
-    
-    // Earth & Environmental
-    "Biosphere", "Geothermal", "Carbon Cycle", "Ecosystem", "Permafrost",
-    "Hydrology", "Atmosphere", "Biodiversity", "Sustainability", "Climate",
-    
-    // Mathematics
-    "Fractal", "Algorithm", "Topology", "Calculus", "Probability",
-    "Logarithm", "Geometry", "Statistics", "Variable", "Equation",
-    
-    // Medicine & Health
-    "Immunology", "Vaccine", "Antibiotic", "Placebo", "Epidemiology",
-    "Oncology", "Genomics", "Proteomics", "Metabolomics", "Bioinformatics",
-    
-    // Engineering
-    "Robotics", "Biomechanics", "Aerodynamics", "Semiconductor", "Transistor",
-    "Renewable", "Sustainable", "Nanofabrication", "Biomimicry", "Cybernetics",
-    
-    // Psychology & Cognitive
-    "Cognition", "Perception", "Consciousness", "Behaviorism", "Psychometrics",
-    "Heuristic", "Metacognition", "Neurodiversity", "Flow State", "Mindfulness",
-    
-    // Emerging Technologies
-    "CRISPR", "Blockchain", "Quantum Computing", "Synthetic Biology", "IoT",
-    "Augmented Reality", "Biometrics", "Wearables", "Autonomous", "Drone",
-    
-    // Classic Discoveries
-    "Evolution", "Gravity", "Electromagnetism", "DNA", "Periodic Table",
-    "Big Bang", "Germ Theory", "Plate Tectonics", "Radioactivity", "Vaccination"
-];
-            const randomWord = scientificWords[Math.floor(Math.random() * scientificWords.length)];
-            editor.insert(randomWord + " ");
-            updateStatusBar("Random scientific word inserted");
-            updateWordCount();
-        }
-    }
-
-    function insertNoteToEditor() {
-        if (editor) {
-            const noteContent = document.getElementById('notebookText').value;
-            if (noteContent.trim() === '') {
-                alert('Note is empty. Please write something before inserting.');
-                return;
+              `;
+              return;
             }
-            editor.insert(noteContent + '\n');
-            updateStatusBar("Note inserted into main text area");
-            updateWordCount();
+          }
         }
+        etymContainer.innerHTML = `<div class="etym-entry" style="color:var(--text-muted);">Root trace unavailable for "${word}".</div>`;
+      } catch (err) {
+        etymContainer.innerHTML = `<div class="etym-entry" style="color:var(--text-muted);">Etymology connection failed.</div>`;
+      } finally {
+        document.getElementById('etym-loading').style.display = 'none';
+      }
     }
 
-    function updateStatusBar(message) {
-        const statusBarElement = document.querySelector('#statusbar .footer-left span');
-        if (statusBarElement) {
-            statusBarElement.textContent = "WordStar Online - " + message;
-        }
+    function insertAtCursor(text) {
+      editor.insert(text + " ");
+      editor.focus();
     }
 
-    function updateWordCount() {
-        if (editor) {
-            const content = editor.getValue();
-            const wordCount = content.trim().split(/\s+/).length;
-            const wordCountElement = document.getElementById('word-count');
-            if (wordCountElement) {
-                wordCountElement.textContent = `Words: ${wordCount}`;
-            }
-        }
+    /* =====================================================================
+       4. WORD VAULT & BURROUGHS-STYLE CUT-UPS
+       ===================================================================== */
+    const SCIENTIFIC_WORDS = [
+      "singularity", "event horizon", "entropy", "cybernetics", "superposition",
+      "osmosis", "symbiosis", "parallax", "crystallography", "luminosity",
+      "aphelion", "chrysalis", "penumbra", "petrichor", "quarks", "tessellation"
+    ];
+
+    const GERMAN_VAULT = [
+      "Weltschmerz", "Zeitgeist", "Schadenfreude", "Fernweh", "Kummerspeck",
+      "Wanderlust", "Sturm und Drang", "Götterdämmerung", "Sehnsucht", "Unheimlich"
+    ];
+
+    const CUTUP_SUBJECTS = ["The control heads of Minraud", "Cold insect brains", "A titanium typewriter", "The Nova Mob", "Vaporized tape", "An obsidian reflector"];
+    const CUTUP_VERBS = ["carve through", "scramble", "broadcast into", "dissolve", "interrogate", "mutate"];
+    const CUTUP_OBJECTS = ["the silent frequencies.", "the oven guards.", "the forgotten archive.", "the Burroughs terminal.", "the broken broadcast."];
+
+    function generatePoeticSpark() {
+      const s = CUTUP_SUBJECTS[Math.floor(Math.random() * CUTUP_SUBJECTS.length)];
+      const v = CUTUP_VERBS[Math.floor(Math.random() * CUTUP_VERBS.length)];
+      const o = CUTUP_OBJECTS[Math.floor(Math.random() * CUTUP_OBJECTS.length)];
+      document.getElementById('poetic-output').innerText = `"${s} ${v} ${o}"`;
     }
 
-    // Enhanced AI generation with Puter.js integration
-    async function generateText() {
-        const aiPrompt = document.getElementById('ai-prompt').value;
-        const aiModel = document.getElementById('ai-model-select').value;
-        const aiResponse = document.getElementById('ai-response');
-        const generateBtn = document.getElementById('generate-btn');
-        
-        // Clear previous state
-        aiResponse.className = '';
-        
-        if (!aiPrompt.trim()) {
-            aiResponse.textContent = "Please enter a prompt.";
-            aiResponse.className = 'error';
-            return;
-        }
-        
-        // Disable button during generation
-        generateBtn.disabled = true;
-        generateBtn.textContent = 'Generating...';
-        
-        try {
-            // Check if this is a Puter.js model
-            const isPuterModel = aiModel.includes('google/') || aiModel === 'deepseek-chat' || aiModel === 'deepseek-reasoner';
-            
-            if (isPuterModel) {
-                await generateWithPuterAI(aiPrompt, aiModel, aiResponse);
-            } else {
-                // For all other models, use the original placeholder response
-                aiResponse.textContent = `Generated text using ${aiModel} model based on prompt: "${aiPrompt}"\n\nThis is a placeholder response. In a full implementation, this would connect to an AI model to generate text.\n\nTry the working models for real AI responses!`;
-                aiResponse.className = 'success';
-                updateStatusBar("Text generated (placeholder)");
-            }
-        } catch (error) {
-            console.error("Generation error:", error);
-            aiResponse.textContent = `An error occurred: ${error.message}\n\nTry using one of the confirmed working models.`;
-            aiResponse.className = 'error';
-            updateStatusBar("Error generating text");
-        } finally {
-            // Re-enable button
-            generateBtn.disabled = false;
-            generateBtn.textContent = 'Create Text';
-        }
+    document.getElementById('vault-words').innerHTML = SCIENTIFIC_WORDS.map(w => `
+      <span class="word-tag" onclick="insertAtCursor('${w}')">${w}</span>
+    `).join('');
+
+    document.getElementById('vault-german').innerHTML = GERMAN_VAULT.map(w => `
+      <span class="word-tag" onclick="insertAtCursor('${w}')">${w}</span>
+    `).join('');
+
+    /* =====================================================================
+       5. SYNTHESIZED TYPEWRITER AUDIO
+       ===================================================================== */
+    let audioCtx = null;
+    let soundEnabled = false;
+
+    function toggleAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      soundEnabled = !soundEnabled;
+      const btn = document.getElementById('btnSound');
+      btn.innerText = soundEnabled ? "🔊 AUDIO: ON" : "🔇 AUDIO: OFF";
+      btn.classList.toggle('active', soundEnabled);
     }
 
-   async function generateWithPuterAI(prompt, model, responseElement) {
-    responseElement.textContent = `Connecting to ${model}... Please wait.`;
-    responseElement.className = 'loading';
-    
-    try {
-        // For DeepSeek models, use the specific API format
-        if (model.includes('deepseek')) {
-            const response = await puter.ai.chat(prompt, { 
-                model: model,
-                temperature: 0.7,
-                max_tokens: 1000
-            });
-            responseElement.textContent = `✅ ${model} Response:\n\n${response}`;
-        } 
-        // For Liquid AI models
-        else if (model.includes('liquid')) {
-            const response = await puter.ai.chat(prompt, { 
-                model: model,
-                stream: false,
-                temperature: 0.8
-            });
-            responseElement.textContent = `✅ ${model} Response:\n\n${response}`;
-        }
-        // For Gemma models (your current working implementation)
-        else {
-            const response = await puter.ai.chat(prompt, { 
-                model: model
-            });
-            responseElement.textContent = `✅ ${model} Response:\n\n${response}`;
-        }
-        
-        responseElement.className = 'success';
-        updateStatusBar(`Text generated with ${model}`);
-        
-    } catch (error) {
-        console.error("API error:", error);
-        
-        // More specific error handling
-        if (error.message.includes('rate limit') || error.message.includes('quota')) {
-            responseElement.textContent = `Rate limit exceeded for ${model}. Try again in a few moments or use a different model.`;
-        } else if (error.message.includes('auth') || error.message.includes('login')) {
-            responseElement.textContent = `Authentication required for ${model}.\n\nPuter.js requires email confirmation for full API access. Some models may have additional requirements.`;
-        } else {
-            responseElement.textContent = `Error with ${model}: ${error.message}\n\nThis model might require specific configuration or may be temporarily unavailable.`;
-        }
-        responseElement.className = 'error';
-        updateStatusBar("API error - try Gemma models");
-    }
-}
+    function playTypewriterSound() {
+      if (!soundEnabled || !audioCtx) return;
+      if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    // Utility functions for the AI response
-    function insertAIResponse() {
-        if (editor) {
-            const aiResponse = document.getElementById('ai-response').textContent;
-            const defaultText = "🚀 **AI Text Generator Powered by Puter.js**";
-            
-            if (aiResponse && !aiResponse.includes(defaultText)) {
-                editor.insert('\n\n' + aiResponse + '\n\n');
-                updateStatusBar("AI response inserted into document");
-                updateWordCount();
-            } else {
-                alert('No AI response available to insert. Generate some text first.');
-            }
-        }
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(340 + Math.random() * 90, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.09, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.035);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.035);
     }
 
-    function copyAIResponse() {
-        const aiResponse = document.getElementById('ai-response').textContent;
-        const defaultText = "🚀 **AI Text Generator Powered by Puter.js**";
-        
-        if (aiResponse && !aiResponse.includes(defaultText)) {
-            navigator.clipboard.writeText(aiResponse).then(() => {
-                updateStatusBar("AI response copied to clipboard");
-            }).catch(err => {
-                console.error('Failed to copy: ', err);
-                alert('Failed to copy to clipboard');
-            });
-        } else {
-            alert('No AI response available to copy. Generate some text first.');
-        }
+    /* =====================================================================
+       6. THEME, TYPOGRAPHY & EXPORTS
+       ===================================================================== */
+    function switchTheme(mode) {
+      document.body.className = mode === 'default' ? '' : mode;
+      if (mode === 'classic-mode') {
+        editor.setTheme("ace/theme/cobalt");
+      } else if (mode === 'theme-green') {
+        editor.setTheme("ace/theme/terminal");
+      } else if (mode === 'theme-amber') {
+        editor.setTheme("ace/theme/ambiance");
+      } else {
+        editor.setTheme("ace/theme/terminal");
+      }
     }
-</script>
+
+    function switchFont(fontFamily) {
+      editor.setOptions({ fontFamily: fontFamily });
+    }
+
+    function clearEditor() {
+      if (confirm("Purge manuscript buffer?")) editor.setValue("", -1);
+    }
+
+    function downloadTXT() {
+      const blob = new Blob([editor.getValue()], { type: "text/plain;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "manuscript_minraud.txt";
+      a.click();
+    }
+
+    function downloadRTF() {
+      const text = editor.getValue().replace(/\n/g, "\\par\n");
+      const rtf = `{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0\\fnil\\fcharset0 Courier New;}}\\viewkind4\\uc1\\pard\\lang1033\\f0\\fs22 ${text}\\par}`;
+      const blob = new Blob([rtf], { type: "application/rtf" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "manuscript_minraud.rtf";
+      a.click();
+    }
+
+    function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const splitText = doc.splitTextToSize(editor.getValue(), 180);
+      doc.setFont("courier", "normal");
+      doc.setFontSize(10);
+      doc.text(splitText, 15, 15);
+      doc.save("manuscript_minraud.pdf");
+    }
+
+    // Initialize telemetry
+    window.addEventListener('resize', () => analyzeCadenceAndProse(editor.getValue()));
+    analyzeCadenceAndProse(editor.getValue());
+  </script>
 </body>
 </html>
