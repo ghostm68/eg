@@ -600,6 +600,34 @@
       line-height: 1.1;
       font-weight: 400;
     }
+    .warp-head {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      width: fit-content;
+      max-width: 100%;
+    }
+    .warp-line .char {
+      display: inline-block;
+      will-change: transform;
+      transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), text-shadow 0.45s ease;
+    }
+    .archive-mark {
+      width: 52px;
+      height: 52px;
+      flex-shrink: 0;
+      overflow: visible;
+    }
+    .archive-mark circle,
+    .archive-mark path {
+      fill: none;
+      stroke: var(--red);
+      stroke-width: 1.2;
+    }
+    .archive-mark .mark-core { fill: var(--red); stroke: none; }
+    @media (hover: none), (prefers-reduced-motion: reduce) {
+      .warp-line .char { transition: none; }
+    }
     .bio-text {
       font-size: 1.05rem;
       color: var(--muted-ivory);
@@ -1819,7 +1847,15 @@
 
   <!-- Foreground Content -->
   <div class="bio-label">Subject Profile // Archive Entry</div>
-  <h2 class="bio-name">Marta Kessler</h2>
+  <div class="warp-head" id="archiveWarp">
+    <h2 class="bio-name warp-line" id="archiveName">Marta Kessler</h2>
+    <svg class="archive-mark" viewBox="0 0 64 64" aria-hidden="true">
+      <circle cx="32" cy="32" r="22" />
+      <circle cx="32" cy="32" r="8" />
+      <path d="M32 6 V18 M32 46 V58 M6 32 H18 M46 32 H58" />
+      <circle class="mark-core" cx="32" cy="32" r="2.2" />
+    </svg>
+  </div>
   <p class="bio-text">
     Born in Russia, Marta Kessler began her career in film and television at a young age, quickly establishing herself as a versatile performer with an international presence. She is best known globally for her starring role as the stubborn, brilliant <strong>Constance Contraire</strong> in the Disney+ series <em>The Mysterious Benedict Society</em>, as well as playing <strong>Young Jane</strong> (the younger version of Sophie Turner’s character) in the survival thriller series <em>Survive</em>.
   </p>
@@ -2205,7 +2241,60 @@
         });
       }
 
+      initArchiveWarp();
+
     });
+
+    function initArchiveWarp() {
+      const zone = document.getElementById('archiveWarp');
+      const line = document.getElementById('archiveName');
+      const mark = zone && zone.querySelector('.archive-mark');
+      if (!zone || !line || !mark) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      const source = line.textContent;
+      line.textContent = '';
+      Array.from(source).forEach(ch => {
+        const span = document.createElement('span');
+        span.className = 'char';
+        span.textContent = ch === ' ' ? '\u00a0' : ch;
+        line.appendChild(span);
+      });
+      const chars = Array.from(line.querySelectorAll('.char'));
+
+      function warp(clientX, clientY) {
+        const markBox = mark.getBoundingClientRect();
+        const ax = markBox.left + markBox.width / 2;
+        const ay = markBox.top + markBox.height / 2;
+        chars.forEach(ch => {
+          const box = ch.getBoundingClientRect();
+          const cx = box.left + box.width / 2;
+          const cy = box.top + box.height / 2;
+          const tx = ax * 0.7 + clientX * 0.3;
+          const ty = ay * 0.7 + clientY * 0.3;
+          const dx = tx - cx;
+          const dy = ty - cy;
+          const dist = Math.hypot(dx, dy) || 1;
+          const pull = Math.max(0, 1 - dist / 220);
+          const x = (dx / dist) * pull * 16;
+          const y = (dy / dist) * pull * 10;
+          ch.style.transform = 'translate(' + x.toFixed(2) + 'px,' + y.toFixed(2) + 'px) rotate(' + (x * 0.35).toFixed(2) + 'deg)';
+          ch.style.textShadow = pull > 0.18
+            ? (-pull * 4).toFixed(1) + 'px 0 rgba(255,0,51,0.75), ' + (pull * 4).toFixed(1) + 'px 0 rgba(44,90,139,0.75)'
+            : 'none';
+        });
+      }
+
+      function reset() {
+        chars.forEach(ch => {
+          ch.style.transform = '';
+          ch.style.textShadow = 'none';
+        });
+      }
+
+      zone.addEventListener('pointermove', (event) => warp(event.clientX, event.clientY));
+      zone.addEventListener('pointerleave', reset);
+    }
 
     // ===== TELEMETRY HUD DATA BANK =====
     const telemetryData = [
