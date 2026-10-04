@@ -289,6 +289,19 @@
       border-left: 2px solid var(--primary) !important;
     }
 
+    .footer-cmd {
+      background: transparent;
+      border: none;
+      padding: 0;
+      font-size: inherit;
+      letter-spacing: 0.8px;
+    }
+
+    .footer-cmd.active {
+      background: transparent;
+      color: var(--accent-highlight);
+    }
+
     /* OPTION D: SENTENCE CADENCE & RADAR */
     .inspector-deck {
       background: var(--bg-card);
@@ -932,6 +945,9 @@
       <span class="status-indicator">● BUFFER SAVED</span>
       <span class="footer-sep">|</span>
       <span id="footer-cursor">L: 1  C: 1</span>
+      <span class="footer-sep">|</span>
+      <button id="footer-ws" class="footer-link footer-cmd" type="button" onclick="toggleWordStar()" title="Diamond off keeps Ctrl+A/S/F. On: ^S^E^D^X move, ^A^F word, ^G^T^Y delete. Always: ^Q S/D/R/C and ^K B/K/C/V/Y/S">WS</button>
+      <button id="footer-undo" class="footer-link footer-cmd" type="button" onclick="restorePurge()" hidden>UNDO</button>
     </div>
     <div class="footer-center">
       <span id="footer-pages">PAGE ~1.0</span>
@@ -1026,9 +1042,11 @@
     editor.setFontSize(15);
     editor.session.setUseWrapMode(true);
     editor.setOptions({ fontFamily: "'Share Tech Mono', monospace" });
+    applyAceTheme();
 
     const STORAGE_KEY = "ws_nexus_manuscript_citadelle";
     const SCRATCH_KEY = "ws_nexus_scratch_citadelle";
+    const PURGE_KEY = "ws_nexus_purge_recovery";
 
     const savedDoc = localStorage.getItem(STORAGE_KEY);
     if (savedDoc) {
@@ -1663,21 +1681,53 @@
     }
 
     /* =====================================================================
-       8. THEMES, FONTS & EXPORTS
+       8. THEMES, FONTS, WORDSTAR & EXPORTS
        ===================================================================== */
-   function switchTheme(mode) {
-      document.body.className = mode === 'default' ? '' : mode;
-      if (mode === 'classic-mode') {
-        editor.setTheme("ace/theme/cobalt");
-      } else if (mode === 'theme-green') {
-        editor.setTheme("ace/theme/terminal");
-      } else if (mode === 'theme-amber') {
-        editor.setTheme("ace/theme/ambiance");
-      } else if (mode === 'theme-mono') {
-        editor.setTheme("ace/theme/terminal"); // Clean stark mono terminal
-      } else {
-        editor.setTheme("ace/theme/terminal");
+    function applyAceTheme() {
+      let style = document.getElementById('ace-theme-bridge');
+      if (!style) {
+        style = document.createElement('style');
+        style.id = 'ace-theme-bridge';
+        document.head.appendChild(style);
       }
+      const cs = getComputedStyle(document.body);
+      const pick = (name, fallback) => cs.getPropertyValue(name).trim() || fallback;
+      const bg = pick('--bg-color', '#050505');
+      const panel = pick('--bg-panel', '#0a0a0a');
+      const gutter = pick('--dark-grey', '#111111');
+      const fg = pick('--text-main', '#ffffff');
+      const muted = pick('--text-muted', '#888888');
+      const primary = pick('--primary', '#ff0000');
+      const accent = pick('--accent-highlight', '#ff4444');
+      const sel = pick('--selection-bg', '#ff0033');
+      const border = pick('--border-color', '#222222');
+      style.textContent = `
+        .ace_editor, .ace_editor .ace_scroller, .ace_editor .ace_content {
+          background: ${bg} !important;
+          color: ${fg} !important;
+        }
+        .ace_gutter {
+          background: ${gutter} !important;
+          color: ${muted} !important;
+          border-right: 1px solid ${border} !important;
+        }
+        .ace_gutter-active-line { background: ${panel} !important; color: ${primary} !important; }
+        .ace_cursor { color: ${primary} !important; border-left-color: ${primary} !important; }
+        .ace_marker-layer .ace_selection { background: ${sel} !important; }
+        .ace_marker-layer .ace_selected-word { border: 1px solid ${primary} !important; }
+        .ace_marker-layer .ace_active-line { background: color-mix(in srgb, ${primary} 10%, transparent) !important; }
+        .ace_line, .ace_text-layer { color: ${fg} !important; }
+        .ace_heading, .ace_keyword { color: ${primary} !important; }
+        .ace_string, .ace_constant { color: ${accent} !important; }
+        .ace_comment, .ace_invisible { color: ${muted} !important; }
+        .ace_fold { background: ${primary} !important; border-color: ${primary} !important; }
+      `;
+    }
+
+    function switchTheme(mode) {
+      document.body.className = mode === 'default' ? '' : mode;
+      editor.setTheme('ace/theme/terminal');
+      applyAceTheme();
       requestAnimationFrame(() => drawCadenceGraph(lastCadenceLengths));
     }
 
@@ -1685,8 +1735,138 @@
       editor.setOptions({ fontFamily: fontFamily });
     }
 
+    let wsDiamond = false;
+    let wsPrefix = '';
+    let blockStart = null;
+    let blockEnd = null;
+
+    function setWordStarStatus() {
+      const el = document.getElementById('footer-ws');
+      if (!el) return;
+      el.classList.toggle('active', wsDiamond || !!wsPrefix);
+      el.textContent = wsPrefix ? ('^' + wsPrefix) : (wsDiamond ? 'WS ON' : 'WS');
+    }
+
+    function toggleWordStar() {
+      wsDiamond = !wsDiamond;
+      wsPrefix = '';
+      setWordStarStatus();
+      editor.focus();
+    }
+
+    function wordStarRange() {
+      if (!blockStart || !blockEnd) return null;
+      const Range = ace.require('ace/range').Range;
+      const start = (blockStart.row < blockEnd.row || (blockStart.row === blockEnd.row && blockStart.column <= blockEnd.column))
+        ? blockStart : blockEnd;
+      const end = start === blockStart ? blockEnd : blockStart;
+      return new Range(start.row, start.column, end.row, end.column);
+    }
+
+    function runWordStarPrefix(prefix, key) {
+      const session = editor.session;
+      if (prefix === 'Q') {
+        if (key === 's') editor.navigateLineStart();
+        else if (key === 'd') editor.navigateLineEnd();
+        else if (key === 'r') editor.navigateFileStart();
+        else if (key === 'c') editor.navigateFileEnd();
+        else if (key === 'y') editor.removeToLineEnd();
+      } else if (prefix === 'K') {
+        const pos = editor.getCursorPosition();
+        if (key === 'b') blockStart = Object.assign({}, pos);
+        else if (key === 'k') blockEnd = Object.assign({}, pos);
+        else if (key === 's') {
+          saveLocal(STORAGE_KEY, editor.getValue());
+          const statusEl = document.querySelector('.status-indicator');
+          if (statusEl) statusEl.innerText = '● BUFFER SAVED';
+        } else if (key === 'c' || key === 'v' || key === 'y') {
+          const range = wordStarRange();
+          const text = range ? session.getTextRange(range) : editor.getSelectedText();
+          if (key === 'y' && range) session.remove(range);
+          if (key === 'v' && range) session.remove(range);
+          if ((key === 'c' || key === 'v') && text) session.insert(editor.getCursorPosition(), text);
+          if (key === 'y') {
+            blockStart = null;
+            blockEnd = null;
+          }
+        }
+        const marked = wordStarRange();
+        if (marked && (key === 'b' || key === 'k')) editor.selection.setRange(marked);
+      }
+      editor.renderer.scrollCursorIntoView();
+    }
+
+    document.addEventListener('keydown', (event) => {
+      if (!editor.isFocused()) return;
+      if (event.key === 'Escape' && wsPrefix) {
+        wsPrefix = '';
+        setWordStarStatus();
+        event.preventDefault();
+        return;
+      }
+      if (wsPrefix && !event.ctrlKey && !event.metaKey && !event.altKey && event.key.length === 1) {
+        event.preventDefault();
+        event.stopPropagation();
+        runWordStarPrefix(wsPrefix, event.key.toLowerCase());
+        wsPrefix = '';
+        setWordStarStatus();
+        return;
+      }
+      if (!event.ctrlKey || event.metaKey || event.altKey) return;
+      const key = event.key.toLowerCase();
+      if (key === 'k' || key === 'q') {
+        event.preventDefault();
+        event.stopPropagation();
+        wsPrefix = key.toUpperCase();
+        setWordStarStatus();
+        return;
+      }
+      if (!wsDiamond) return;
+      const diamond = {
+        s: () => editor.navigateLeft(1),
+        d: () => editor.navigateRight(1),
+        e: () => editor.navigateUp(1),
+        x: () => editor.navigateDown(1),
+        a: () => editor.navigateWordLeft(),
+        f: () => editor.navigateWordRight(),
+        g: () => editor.remove('right'),
+        t: () => editor.removeWordRight(),
+        y: () => editor.removeLines()
+      };
+      if (!diamond[key]) return;
+      event.preventDefault();
+      event.stopPropagation();
+      diamond[key]();
+      editor.renderer.scrollCursorIntoView();
+    }, true);
+
+    function showPurgeUndo(visible) {
+      const btn = document.getElementById('footer-undo');
+      if (btn) btn.hidden = !visible;
+    }
+
     function clearEditor() {
-      if (confirm("Purge manuscript buffer?")) editor.setValue("", -1);
+      const current = editor.getValue();
+      const recovery = localStorage.getItem(PURGE_KEY) || '';
+      if (!current.trim() && recovery) {
+        if (confirm('Buffer is empty. Restore the last purge?')) restorePurge();
+        return;
+      }
+      if (!current.trim()) return;
+      if (!confirm('Purge manuscript buffer? The last purge stays recoverable.')) return;
+      saveLocal(PURGE_KEY, current);
+      editor.setValue('', -1);
+      showPurgeUndo(true);
+    }
+
+    function restorePurge() {
+      const recovery = localStorage.getItem(PURGE_KEY) || '';
+      if (!recovery) return;
+      const current = editor.getValue();
+      if (current.trim() && current !== recovery) saveLocal(PURGE_KEY, current);
+      else localStorage.removeItem(PURGE_KEY);
+      editor.setValue(recovery, -1);
+      showPurgeUndo(!!localStorage.getItem(PURGE_KEY));
     }
 
     function downloadTXT() {
@@ -1697,25 +1877,68 @@
       a.click();
     }
 
-    function downloadPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      const margin = 15;
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const lineHeight = 5;
-      const lines = doc.splitTextToSize(editor.getValue() || '', 180);
-      let y = margin;
-      doc.setFont("courier", "normal");
-      doc.setFontSize(10);
-      lines.forEach(line => {
-        if (y > pageHeight - margin) {
-          doc.addPage();
-          y = margin;
-        }
-        doc.text(line, margin, y);
-        y += lineHeight;
-      });
-      doc.save("manuscript_minraud.pdf");
+    const PDF_FONTS = {
+      latin: 'https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@main/hinted/ttf/NotoSans/NotoSans-Regular.ttf',
+      cjk: 'https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-sc@5.2.5/chinese-simplified-400-normal.ttf'
+    };
+    const pdfFontCache = {};
+
+    function bufferToBase64(buffer) {
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+      }
+      return btoa(binary);
+    }
+
+    async function loadPdfFont(kind) {
+      if (pdfFontCache[kind]) return pdfFontCache[kind];
+      const res = await fetch(PDF_FONTS[kind]);
+      if (!res.ok) throw new Error('Font fetch failed: ' + kind);
+      pdfFontCache[kind] = bufferToBase64(await res.arrayBuffer());
+      return pdfFontCache[kind];
+    }
+
+    async function downloadPDF() {
+      const statusEl = document.querySelector('.status-indicator');
+      const previous = statusEl ? statusEl.innerText : '';
+      if (statusEl) statusEl.innerText = '○ PDF FONT...';
+      try {
+        const text = editor.getValue() || '';
+        const needsCjk = /[\u3400-\u9fff]/.test(text);
+        const fontName = needsCjk ? 'NotoSansSC' : 'NotoSans';
+        const fontB64 = await loadPdfFont(needsCjk ? 'cjk' : 'latin');
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.addFileToVFS(fontName + '.ttf', fontB64);
+        doc.addFont(fontName + '.ttf', fontName, 'normal');
+        doc.setFont(fontName, 'normal');
+        doc.setFontSize(11);
+        const margin = 15;
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const lineHeight = 6;
+        const lines = doc.splitTextToSize(text, 180);
+        let y = margin;
+        lines.forEach(line => {
+          if (y > pageHeight - margin) {
+            doc.addPage();
+            doc.setFont(fontName, 'normal');
+            y = margin;
+          }
+          doc.text(line, margin, y);
+          y += lineHeight;
+        });
+        doc.save('manuscript_minraud.pdf');
+        if (statusEl) statusEl.innerText = '● PDF WRITTEN';
+      } catch (err) {
+        console.warn(err);
+        if (statusEl) statusEl.innerText = '○ PDF FAILED';
+      }
+      setTimeout(() => {
+        if (statusEl && /PDF/.test(statusEl.innerText)) statusEl.innerText = previous || '● BUFFER SAVED';
+      }, 1600);
     }
 
    // Resize & initial telemetry run
