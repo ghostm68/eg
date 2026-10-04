@@ -858,7 +858,7 @@
 
       <div class="panel-tabs">
         <button class="tab-btn active" onclick="openTab('tab-lexicon', this)">MINRAUD LEXICON</button>
-        <button class="tab-btn" onclick="openTab('tab-etym', this)">ETYMOLOGY</button>
+        <button class="tab-btn" onclick="openTab('tab-etym', this)">ANAGRAMS</button>
         <button class="tab-btn" onclick="openTab('tab-vault', this)">WORD VAULT</button>
         <button class="tab-btn" onclick="openTab('tab-notes', this)">SCRATCHPAD</button>
       </div>
@@ -898,13 +898,17 @@
         </div>
       </div>
 
-      <!-- TAB 2: ETYMOLOGY & LINGUISTIC ORIGIN -->
+      <!-- TAB 2: WORD OF THE DAY & ANAGRAMS -->
       <div id="tab-etym" class="tab-content">
-        <h4 style="font-size: 10px; color: var(--primary); margin-bottom: 8px;">HISTORICAL LINGUISTICS & PROTO-ROOTS</h4>
-        <div id="etym-loading" style="display:none; font-size:11px; color:var(--primary); margin-bottom:8px;">Deconstructing linguistic roots...</div>
-        <div id="etym-results">
-          <div class="etym-entry">Tap any word or search in Lexicon to trace its historical lineage.</div>
+        <h4 style="font-size: 10px; color: var(--primary); margin-bottom: 8px;">WORD OF THE DAY</h4>
+        <div id="day-word" class="etym-entry">Loading the day's word...</div>
+        <div style="display: flex; gap: 4px; margin-bottom: 12px;">
+          <button onclick="insertDayWord()" style="flex: 1; font-size: 10px; color: var(--primary);">[+] INSERT</button>
+          <button onclick="lookupDayWord()" style="flex: 1; font-size: 10px;">LOOKUP</button>
         </div>
+        <h4 style="font-size: 10px; color: var(--primary); margin-bottom: 8px;">ANAGRAMS <span class="lex-source-tag">LOCAL CORPUS</span></h4>
+        <div id="anagram-meta" class="muted" style="margin-bottom: 6px;">Highlight a word to scramble it against the loaded lexicon.</div>
+        <div id="anagram-cloud" class="word-cloud"></div>
       </div>
 
       <!-- TAB 3: WORD VAULT & POETIC SPARKS (REPAIRED) -->
@@ -1026,6 +1030,8 @@
         ? `READY: ${STATIC_SOURCE_COUNT}/${STATIC_SOURCE_COUNT} CORPUS + LIVE LEXICONS`
         : `SYNCED: ${loadedSourcesCount}/${STATIC_SOURCE_COUNT} CORPUS + LIVE LEXICONS`;
       statusEl.style.color = 'var(--accent-highlight)';
+      anagramIndex = null;
+      if (typeof renderSparkPanel === 'function') renderSparkPanel(currentEtymologyWord);
     }
     
     window.addEventListener('DOMContentLoaded', () => {
@@ -1248,9 +1254,7 @@
       document.getElementById(tabId).classList.add('active');
       btn.classList.add('active');
 
-      if (tabId === 'tab-etym' && currentEtymologyWord) {
-        fetchEtymologyLazy(currentEtymologyWord);
-      }
+      if (tabId === 'tab-etym') renderSparkPanel(currentEtymologyWord);
     }
 
     function executeLookup(opts) {
@@ -1266,10 +1270,7 @@
       }
 
       dispatchUnifiedSearch(query, lang);
-
-      if (document.getElementById('tab-etym').classList.contains('active')) {
-        fetchEtymologyLazy(query);
-      }
+      renderSparkPanel(query);
     }
 
     function lookupSpecific(word) {
@@ -1482,93 +1483,90 @@
       }
     }
 
-    function extractEtymology(extract) {
-      const lines = String(extract).split(/\n/);
-      let start = -1;
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (/^Etymology(?:\s+\d+)?$/.test(line) || /^={2,}\s*Etymology/i.test(line)) {
-          start = i + 1;
-          break;
-        }
-      }
-      if (start >= 0) {
-        const buf = [];
-        for (let i = start; i < lines.length; i++) {
-          const line = lines[i].trim();
-          if (!line) {
-            if (buf.length) break;
-            continue;
-          }
-          if (/^(Pronunciation|Noun|Verb|Adjective|Adverb|Etymology(?:\s+\d+)?|References|Further reading|Derived terms)$/.test(line)) break;
-          if (/^={2,}/.test(line)) break;
-          buf.push(line);
-          if (buf.join(' ').length > 480) break;
-        }
-        if (buf.length) return buf.join(' ');
-      }
-      const fallback = extract.match(/(?:^|\n)(From [^\n]{12,420})/);
-      return fallback ? fallback[1].trim() : '';
+    const DAY_WORDS = [
+      "cadence", "penumbra", "petrichor", "aphelion", "tessellation", "luminosity",
+      "chrysalis", "palimpsest", "threshold", "vellum", "obsidian", "cipher",
+      "meridian", "eclipse", "harbor", "lantern", "archive", "vector", "quartz",
+      "nocturne", "filament", "brine", "compass", "echo", "lattice", "omen",
+      "phosphor", "reliquary", "signal", "turbine", "velvet", "wintering"
+    ];
+    let currentDayWord = DAY_WORDS[0];
+    let anagramIndex = null;
+
+    function dayStamp() {
+      const now = new Date();
+      return now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
     }
 
-    async function fetchEtymologyLazy(word) {
-      const etymContainer = document.getElementById('etym-results');
-      document.getElementById('etym-loading').style.display = 'block';
+    function hashStamp(text) {
+      let hash = 0;
+      for (let i = 0; i < text.length; i++) hash = (hash * 33 + text.charCodeAt(i)) >>> 0;
+      return hash;
+    }
 
-      try {
-        const res = await fetch('https://en.wiktionary.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=' + encodeURIComponent(word) + '&origin=*&format=json');
-        if (res.ok) {
-          const data = await res.json();
-          const pages = data.query?.pages || {};
-          const page = Object.values(pages)[0];
-          const root = page && page.extract ? extractEtymology(page.extract) : '';
-          if (root) {
-            currentEtymRoot = root;
-            etymContainer.innerHTML = '';
-            const card = document.createElement('div');
-            card.className = 'etym-entry';
-            const head = document.createElement('div');
-            head.style.display = 'flex';
-            head.style.justifyContent = 'space-between';
-            head.style.alignItems = 'center';
-            head.style.gap = '8px';
-            head.style.marginBottom = '6px';
-            const title = document.createElement('strong');
-            title.textContent = word.toUpperCase();
-            const btn = document.createElement('button');
-            btn.textContent = '[+] INSERT ROOT';
-            btn.style.padding = '2px 6px';
-            btn.style.fontSize = '9px';
-            btn.style.color = 'var(--primary)';
-            btn.addEventListener('click', insertCurrentEtymology);
-            const body = document.createElement('div');
-            body.textContent = currentEtymRoot;
-            head.appendChild(title);
-            head.appendChild(btn);
-            card.appendChild(head);
-            card.appendChild(body);
-            etymContainer.appendChild(card);
-            return;
-          }
-        }
-        currentEtymRoot = '';
-        etymContainer.innerHTML = '';
-        const miss = document.createElement('div');
-        miss.className = 'etym-entry';
-        miss.style.color = 'var(--text-muted)';
-        miss.textContent = 'Root trace unavailable for "' + word + '".';
-        etymContainer.appendChild(miss);
-      } catch (err) {
-        currentEtymRoot = '';
-        etymContainer.innerHTML = '';
-        const fail = document.createElement('div');
-        fail.className = 'etym-entry';
-        fail.style.color = 'var(--text-muted)';
-        fail.textContent = 'Etymology query failed.';
-        etymContainer.appendChild(fail);
-      } finally {
-        document.getElementById('etym-loading').style.display = 'none';
+    function wordOfTheDay() {
+      currentDayWord = DAY_WORDS[hashStamp(dayStamp()) % DAY_WORDS.length];
+      return currentDayWord;
+    }
+
+    function insertDayWord() {
+      insertAtCursor(wordOfTheDay());
+    }
+
+    function lookupDayWord() {
+      lookupSpecific(wordOfTheDay());
+    }
+
+    function letterKey(word) {
+      return String(word).toLowerCase().replace(/[^a-z]/g, "").split("").sort().join("");
+    }
+
+    function buildAnagramIndex() {
+      if (anagramIndex) return anagramIndex;
+      const index = new Map();
+      [minraudStore.webster, minraudStore.concise].forEach(dict => {
+        if (!dict || typeof dict !== "object") return;
+        Object.keys(dict).forEach(word => {
+          if (!word || word.length < 3 || word.length > 16 || /\s/.test(word)) return;
+          const key = letterKey(word);
+          if (key.length < 3) return;
+          if (!index.has(key)) index.set(key, []);
+          const bucket = index.get(key);
+          const lower = word.toLowerCase();
+          if (bucket.length < 16 && bucket.indexOf(lower) === -1) bucket.push(lower);
+        });
+      });
+      anagramIndex = index;
+      return index;
+    }
+
+    function findAnagrams(word) {
+      const key = letterKey(word);
+      if (key.length < 3) return [];
+      const index = buildAnagramIndex();
+      const hits = (index.get(key) || []).filter(item => item !== key && item !== word.toLowerCase());
+      return hits;
+    }
+
+    function renderSparkPanel(word) {
+      const dayEl = document.getElementById("day-word");
+      const meta = document.getElementById("anagram-meta");
+      const cloud = document.getElementById("anagram-cloud");
+      if (!dayEl || !cloud) return;
+      const day = wordOfTheDay();
+      dayEl.textContent = day.toUpperCase() + "  ·  " + dayStamp();
+      const query = (word || currentEtymologyWord || "").trim();
+      if (!query) {
+        meta.textContent = "Highlight a word to scramble it against the loaded lexicon.";
+        renderWordCloud(cloud, [], "—");
+        return;
       }
+      const ready = !!(minraudStore.webster || minraudStore.concise);
+      const hits = ready ? findAnagrams(query) : [];
+      meta.textContent = ready
+        ? (hits.length ? query.toUpperCase() + " · " + hits.length + " in corpus" : "No anagrams for " + query + " in the loaded corpus.")
+        : "Corpus still syncing. Anagrams appear when Webster or Concise is ready.";
+      renderWordCloud(cloud, hits, "—");
     }
 
         function insertAtCursor(text) {
@@ -1948,6 +1946,7 @@
     });
 
     analyzeCadenceAndProse(editor.getValue());
+    renderSparkPanel("");
 
     // 1. Live Line & Column Tracker in Footer
     editor.selection.on('changeCursor', () => {
