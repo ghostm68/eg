@@ -557,7 +557,60 @@
       padding: 8px;
       margin-top: 8px;
     }
+/* =====================================================================
+       8. TERMINAL FOOTER & SAFE AREA BASELINE
+       ===================================================================== */
+    #terminal-footer {
+      background: var(--bg-panel);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 12px;
+      /* Respects iPhone swipe bar & Android navigation notches */
+      padding-bottom: max(4px, env(safe-area-inset-bottom));
+      font-size: 10px;
+      font-family: var(--font-tech);
+      color: var(--text-muted);
+      flex-shrink: 0;
+      z-index: 10;
+      letter-spacing: 0.5px;
+      user-select: none;
+    }
 
+    .footer-left, .footer-center, .footer-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-indicator {
+      color: var(--primary);
+      font-weight: bold;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .footer-sep {
+      color: var(--secondary);
+      opacity: 0.6;
+    }
+
+    /* Clean mobile adjustment: hides center badge to prevent squishing */
+    @media (max-width: 768px) {
+      #terminal-footer {
+        padding: 5px 8px;
+        padding-bottom: max(6px, env(safe-area-inset-bottom));
+        font-size: 9px;
+      }
+      .footer-center {
+        display: none;
+      }
+      .footer-mode {
+        display: none;
+      }
+    }
     /* =====================================================================
        7. MOBILE OPTIMIZATIONS (@media <= 768px)
        ===================================================================== */
@@ -831,7 +884,22 @@
       </div>
     </div>
   </div>
-
+  <!-- TERMINAL FOOTER / STATUS BASELINE -->
+  <footer id="terminal-footer">
+    <div class="footer-left">
+      <span class="status-indicator">● BUFFER SAVED</span>
+      <span class="footer-sep">|</span>
+      <span id="footer-cursor">L: 1  C: 1</span>
+    </div>
+    <div class="footer-center">
+      <span id="footer-pages">PAGE ~1.0</span>
+    </div>
+    <div class="footer-right">
+      <span id="footer-words">0 WDS</span>
+      <span class="footer-sep">|</span>
+      <span class="footer-mode">WORDSTAR-NEXUS</span>
+    </div>
+  </footer>
   <script>
     /* =====================================================================
        1. MINRAUD 6-SOURCE STATIC CORPUS ENGINE (LOCAL & INSTANT)
@@ -1017,6 +1085,12 @@
       document.getElementById('stat-readtime').innerText = readTime;
       document.getElementById('stat-sentences').innerText = sentences;
       document.getElementById('stat-diversity').innerText = `DIVERSITY: ${diversity}%`;
+
+       const pageEst = Math.max(1, (words / 250)).toFixed(1);
+      const footerWords = document.getElementById('footer-words');
+      const footerPages = document.getElementById('footer-pages');
+      if (footerWords) footerWords.innerText = `${words} WDS`;
+      if (footerPages) footerPages.innerText = `PAGE ~${pageEst}`;
 
       const echoBox = document.getElementById('echo-box');
       if (echoes.length === 0) {
@@ -1433,12 +1507,36 @@
       doc.save("manuscript_minraud.pdf");
     }
 
+   // Resize & initial telemetry run
     window.addEventListener('resize', () => {
       editor.resize();
       analyzeCadenceAndProse(editor.getValue());
     });
 
     analyzeCadenceAndProse(editor.getValue());
+
+    // 1. Live Line & Column Tracker in Footer
+    editor.selection.on('changeCursor', () => {
+      const pos = editor.getCursorPosition();
+      const cursorEl = document.getElementById('footer-cursor');
+      if (cursorEl) {
+        cursorEl.innerText = `L: ${pos.row + 1}  C: ${pos.column + 1}`;
+      }
+    });
+
+    // 2. Pulse "SYNCING..." / "BUFFER SAVED" on keystrokes
+    editor.session.on('change', () => {
+      const statusEl = document.querySelector('.status-indicator');
+      if (statusEl) {
+        statusEl.innerText = "○ SYNCING...";
+        statusEl.style.opacity = "0.6";
+        clearTimeout(window._savePulseTimer);
+        window._savePulseTimer = setTimeout(() => {
+          statusEl.innerText = "● BUFFER SAVED";
+          statusEl.style.opacity = "1";
+        }, 400);
+      }
+    });
   </script>
 </body>
 </html>
