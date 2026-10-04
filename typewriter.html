@@ -725,7 +725,7 @@
     <div class="lexicon-panel">
       <!-- 6-SOURCE CORPUS SYNC STATUS -->
       <div class="corpus-status-bar">
-        <span>MINRAUD CORPUS (6 SOURCES)</span>
+        <span>MINRAUD CORPUS (6 STATIC + DATAMUSE LIVE)</span>
         <span id="corpus-status" class="corpus-status-badge">INITIALIZING MEMORY...</span>
       </div>
 
@@ -860,13 +860,13 @@
           console.warn(`Minraud source [${src.name}] deferred or blocked by network:`, e);
         }
       }
-
-      statusEl.innerText = loadedSourcesCount === 6 
-        ? `READY: 6/6 SOURCES IN MEMORY` 
-        : `READY: ${loadedSourcesCount}/6 SOURCES`;
+      
+statusEl.innerText = loadedSourcesCount === 6 
+        ? `READY: 6/6 CORPUS + DATAMUSE ONLINE` 
+        : `SYNCED: ${loadedSourcesCount}/6 CORPUS + DATAMUSE ONLINE`;
       statusEl.style.color = 'var(--accent-highlight)';
     }
-
+    
     // Launch corpus loader non-blockingly after initial paint
     window.addEventListener('DOMContentLoaded', () => {
       setTimeout(initMinraudCorpus, 300);
@@ -1182,11 +1182,22 @@
           ]);
 
           // If local dictionary had no definition, use Datamuse definition
-          if (defEntries.length === 0 && dmDef.length > 0 && dmDef[0].defs) {
-            defContainer.innerHTML = dmDef[0].defs.map(d => {
+     // Append Datamuse definitions alongside Webster/Adambom/etc.
+          if (dmDef.length > 0 && dmDef[0].defs) {
+            dmDef[0].defs.forEach(d => {
               const parts = d.split('\t');
-              return `<div class="def-entry"><span class="def-source-label">[DATAMUSE]</span> <strong>${parts[0]}:</strong> ${parts[1]}</div>`;
-            }).join('');
+              defEntries.push({
+                source: "DATAMUSE",
+                text: `<strong>${parts[0]}:</strong> ${parts[1] || ''}`
+              });
+            });
+
+            // Re-render so all sources display together:
+            defContainer.innerHTML = defEntries.map(e => `
+              <div class="def-entry">
+                <span class="def-source-label">[${e.source}]</span> ${e.text}
+              </div>
+            `).join('');
           }
 
           dmSyn.forEach(i => synList.add(i.word));
