@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>WordStar Nexus // Minraud Lexical Terminal</title>
   
   <!-- Rare & Vintage Fonts -->
@@ -144,7 +144,7 @@
 
     /* TOP BAR / CONTROL TERMINAL */
     header {
-      background: var(--bg-panel);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 8%, var(--bg-panel)), var(--bg-panel));
       border-bottom: 2px solid var(--secondary);
       display: flex;
       align-items: center;
@@ -168,8 +168,18 @@
       letter-spacing: 1.5px;
       color: var(--primary);
       text-transform: uppercase;
-      text-shadow: 0 0 5px var(--secondary);
+      text-shadow: 0 0 8px color-mix(in srgb, var(--primary) 55%, transparent);
       white-space: nowrap;
+    }
+
+    .brand::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 8px var(--primary);
+      flex-shrink: 0;
     }
 
     .brand-sub {
@@ -202,6 +212,11 @@
     button:hover, select:hover {
       border-color: var(--primary);
       color: var(--primary);
+    }
+
+    button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible {
+      outline: 1px solid var(--primary);
+      outline-offset: 1px;
     }
 
     button.active {
@@ -340,6 +355,7 @@
       font-size: 11px;
       font-weight: bold;
       color: var(--primary);
+      font-variant-numeric: tabular-nums;
     }
 
     .echo-box {
@@ -487,6 +503,7 @@
       border-radius: 2px;
       font-size: 11px;
       cursor: pointer;
+      transition: border-color 0.12s ease, color 0.12s ease;
     }
 
     .word-tag:hover, .word-tag:active {
@@ -514,8 +531,8 @@
       font-family: var(--font-antique);
       font-size: 13px;
       line-height: 1.5;
-      color: #ffcccc;
-      background: rgba(85, 0, 0, 0.25);
+      color: var(--text-main);
+      background: color-mix(in srgb, var(--primary) 12%, transparent);
       border-left: 2px solid var(--primary);
       padding: 8px;
       margin-bottom: 8px;
@@ -563,6 +580,7 @@
     #terminal-footer {
       background: var(--bg-panel);
       border-top: 1px solid var(--border-color);
+      box-shadow: inset 0 1px 0 color-mix(in srgb, var(--primary) 25%, transparent);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -597,6 +615,33 @@
       opacity: 0.6;
     }
 
+    .footer-link {
+      color: var(--primary);
+      text-decoration: none;
+      letter-spacing: 0.8px;
+      border-bottom: 1px solid transparent;
+    }
+
+    .footer-link:hover {
+      border-bottom-color: var(--primary);
+    }
+
+    .muted {
+      color: var(--text-muted);
+      font-size: 11px;
+    }
+
+    #tab-notes.tab-content {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      height: 100%;
+    }
+
+    #tab-notes.tab-content.active {
+      display: flex;
+    }
+
     /* Clean mobile adjustment: hides center badge to prevent squishing */
     @media (max-width: 768px) {
       #terminal-footer {
@@ -605,9 +650,6 @@
         font-size: 9px;
       }
       .footer-center {
-        display: none;
-      }
-      .footer-mode {
         display: none;
       }
     }
@@ -797,7 +839,7 @@
     <div class="lexicon-panel">
       <!-- 6-SOURCE CORPUS SYNC STATUS -->
       <div class="corpus-status-bar">
-        <span>MINRAUD CORPUS (6 STATIC + DATAMUSE LIVE)</span>
+        <span>MINRAUD CORPUS (5 STATIC + LIVE LEXICONS)</span>
         <span id="corpus-status" class="corpus-status-badge">INITIALIZING MEMORY...</span>
       </div>
 
@@ -826,7 +868,7 @@
         <div id="lex-results">
           <div class="lex-result-group">
             <h4 id="lex-def-heading">DEFINITIONS & TRANSLATIONS <span class="lex-source-tag" id="lex-source-name"></span></h4>
-            <div id="lex-defs"><span style="color:var(--text-muted); font-size:11px;">Search or tap text in editor to interrogate meanings across 6 sources.</span></div>
+            <div id="lex-defs"><span style="color:var(--text-muted); font-size:11px;">Search or highlight a word to interrogate the corpus and live lexicons.</span></div>
           </div>
           <div class="lex-result-group">
             <h4>SYNONYMS & RELATIONS</h4>
@@ -871,7 +913,7 @@
       </div>
 
       <!-- TAB 4: PERSISTENT SCRATCHPAD WITH INSERT CONTROLS -->
-      <div id="tab-notes" class="tab-content" style="height: calc(100% - 30px); display: flex; flex-direction: column; gap: 6px;">
+      <div id="tab-notes" class="tab-content">
         <div style="display: flex; gap: 4px; flex-shrink: 0;">
           <button onclick="insertFromScratchpad('selection')" title="Insert only highlighted text in scratchpad" style="flex: 1; font-size: 10px; color: var(--primary);">
             [+] INSERT SELECTION
@@ -897,7 +939,7 @@
     <div class="footer-right">
       <span id="footer-words">0 WDS</span>
       <span class="footer-sep">|</span>
-      <span class="footer-mode">WORDSTAR-NEXUS</span>
+      <a class="footer-link" href="https://wordstar.nexus/trs80" target="_blank" rel="noopener noreferrer">TRS-80 WORDSTAR</a>
     </div>
   </footer>
   <script>
@@ -905,9 +947,8 @@
        1. MINRAUD 6-SOURCE STATIC CORPUS ENGINE (LOCAL & INSTANT)
        ===================================================================== */
     const MINRAUD_SOURCES = [
-      { id: 'webster', name: "Webster's Unabridged", url: 'https://raw.githubusercontent.com/matthewreagan/WebstersEnglishDictionary/master/dictionary.json', type: 'dict' },
-      { id: 'adambom', name: 'Standard (adambom)', url: 'https://raw.githubusercontent.com/adambom/dictionary/master/dictionary.json', type: 'dict' },
-      { id: 'bideo', name: 'Concise English', url: 'https://gist.githubusercontent.com/BideoWego/60fbd40d5d1f0f1beca11ba95221dd38/raw/58fb4cce910fbf5fa67a2f0f1f619c09d7b1b373/dictionary.json', type: 'dict' },
+      { id: 'webster', name: "Webster's Unabridged", url: 'https://raw.githubusercontent.com/matthewreagan/WebstersEnglishDictionary/master/dictionary_compact.json', type: 'dict' },
+      { id: 'concise', name: 'Concise English', url: 'https://gist.githubusercontent.com/BideoWego/60fbd40d5d1f0f1beca11ba95221dd38/raw/58fb4cce910fbf5fa67a2f0f1f619c09d7b1b373/dictionary.json', type: 'dict' },
       { id: 'german', name: 'German-English', url: 'https://raw.githubusercontent.com/hathibelagal/German-English-JSON-Dictionary/master/german_english.json', type: 'de' },
       { id: 'synonym', name: 'Synonym Dictionary', url: 'https://raw.githubusercontent.com/egorkaru/synonym_dictionary/master/dictionary.json', type: 'syn' },
       { id: 'pinyin', name: 'Pinyin Corpus', url: 'https://raw.githubusercontent.com/letiantian/mini-pinyin/master/pinyin.json', type: 'pinyin' }
@@ -915,14 +956,22 @@
 
     const minraudStore = {
       webster: null,
-      adambom: null,
-      bideo: null,
+      concise: null,
       german: null,
       synonym: null,
       pinyin: null
     };
 
+    const STATIC_SOURCE_COUNT = MINRAUD_SOURCES.length;
     let loadedSourcesCount = 0;
+
+    function saveLocal(key, value) {
+      try {
+        localStorage.setItem(key, value);
+      } catch (err) {
+        console.warn('Local buffer write skipped:', err);
+      }
+    }
 
     async function initMinraudCorpus() {
       const statusEl = document.getElementById('corpus-status');
@@ -950,16 +999,16 @@
           if (json) {
             minraudStore[src.id] = json;
             loadedSourcesCount++;
-            statusEl.innerText = `SYNCING: ${loadedSourcesCount}/6 READY`;
+            statusEl.innerText = `SYNCING: ${loadedSourcesCount}/${STATIC_SOURCE_COUNT} READY`;
           }
         } catch (e) {
           console.warn(`Minraud source [${src.name}] deferred or blocked by network:`, e);
         }
       }
-      
-      statusEl.innerText = loadedSourcesCount === 6 
-        ? `READY: 6/6 CORPUS + DATAMUSE ONLINE` 
-        : `SYNCED: ${loadedSourcesCount}/6 CORPUS + DATAMUSE ONLINE`;
+
+      statusEl.innerText = loadedSourcesCount === STATIC_SOURCE_COUNT
+        ? `READY: ${STATIC_SOURCE_COUNT}/${STATIC_SOURCE_COUNT} CORPUS + LIVE LEXICONS`
+        : `SYNCED: ${loadedSourcesCount}/${STATIC_SOURCE_COUNT} CORPUS + LIVE LEXICONS`;
       statusEl.style.color = 'var(--accent-highlight)';
     }
     
@@ -985,32 +1034,36 @@
     if (savedDoc) {
       editor.setValue(savedDoc, -1);
     } else {
-      editor.setValue(`Write with rhythm. This sentence has five words. Here are five more words. Five-word sentences are okay. Bad sentences are not okay. But listen to what happens when you vary the length of your prose.\n\nNow listen. I vary the sentence length, and I create music. Music. The writing sings. It has a pleasant lilt, a harmony, an undeniable cadence. I use short sentences. And I use sentences of medium length. And sometimes, when I see that the reader is resting, I will engage him with a sentence of considerable length, a sentence that burns with energy and builds with all the impetus of a crescendo.\n\n[Double-click or highlight any English, German, or Chinese word to query all 6 Minraud sources + Etymology.]`, -1);
+      editor.setValue(`Write with rhythm. This sentence has five words. Here are five more words. Five-word sentences are okay. Bad sentences are not okay. But listen to what happens when you vary the length of your prose.\n\nNow listen. I vary the sentence length, and I create music. Music. The writing sings. It has a pleasant lilt, a harmony, an undeniable cadence. I use short sentences. And I use sentences of medium length. And sometimes, when I see that the reader is resting, I will engage him with a sentence of considerable length, a sentence that burns with energy and builds with all the impetus of a crescendo.\n\n[Highlight a word to query the Minraud corpus, Free Dictionary, and etymology.]`, -1);
     }
 
     const scratchpad = document.getElementById("scratchpad");
     scratchpad.value = localStorage.getItem(SCRATCH_KEY) || "";
     scratchpad.addEventListener("input", () => {
-      localStorage.setItem(SCRATCH_KEY, scratchpad.value);
+      saveLocal(SCRATCH_KEY, scratchpad.value);
     });
 
     let debounceTimer;
     editor.session.on('change', () => {
       playTypewriterSound();
-      localStorage.setItem(STORAGE_KEY, editor.getValue());
+      saveLocal(STORAGE_KEY, editor.getValue());
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
         analyzeCadenceAndProse(editor.getValue());
       }, 250);
     });
 
-    editor.on("click", () => {
-      const selected = editor.getSelectedText().trim();
-      if (selected && selected.length > 0 && !selected.includes(" ")) {
-        document.getElementById('lex-query').value = selected;
-        executeLookup();
-      }
+    editor.selection.on('changeSelection', () => {
+      clearTimeout(window._selTimer);
+      window._selTimer = setTimeout(lookupFromSelection, 180);
     });
+
+    function lookupFromSelection() {
+      const selected = editor.getSelectedText().trim();
+      if (!selected || /\s/.test(selected) || selected.length > 48) return;
+      document.getElementById('lex-query').value = selected;
+      executeLookup({ switchMobile: false });
+    }
 
     /* =====================================================================
        3. MOBILE VIEW CONTROLLER
@@ -1041,7 +1094,7 @@
     function analyzeCadenceAndProse(text) {
       if (!text || text.trim().length === 0) {
         drawCadenceGraph([]);
-        updateMetrics(0, 0, 0, 100, []);
+        updateMetrics(0, 0, '0m 0s', 0, 100, []);
         return;
       }
 
@@ -1055,9 +1108,10 @@
 
       const allWords = (text.match(/\b[a-zA-Z0-9äöüÄÖÜß'-]+\b/g) || []).map(w => w.toLowerCase());
       const totalWords = allWords.length;
-      const uniqueWords = new Set(allWords).size;
-
-      const diversity = totalWords > 0 ? Math.round((uniqueWords / totalWords) * 100) : 100;
+      const contentWords = allWords.filter(w => !STOP_WORDS.has(w) && w.length > 2);
+      const diversityBase = contentWords.length || totalWords;
+      const diversityUnique = new Set(contentWords.length ? contentWords : allWords).size;
+      const diversity = diversityBase > 0 ? Math.round((diversityUnique / diversityBase) * 100) : 100;
 
       const freqMap = {};
       allWords.forEach(w => {
@@ -1093,12 +1147,20 @@
       if (footerPages) footerPages.innerText = `PAGE ~${pageEst}`;
 
       const echoBox = document.getElementById('echo-box');
-      if (echoes.length === 0) {
-        echoBox.innerHTML = '<span style="color:var(--text-muted);">Echo Radar: Tracking repeated words...</span>';
+      if (!echoes || echoes.length === 0) {
+        echoBox.innerHTML = '<span class="muted">Echo Radar: Tracking repeated words...</span>';
       } else {
-        echoBox.innerHTML = echoes
-          .map(([word, count]) => `<span class="echo-badge" onclick="lookupSpecific('${word}')">${word} <small>×${count}</small></span>`)
-          .join('');
+        echoBox.innerHTML = '';
+        echoes.forEach(([word, count]) => {
+          const badge = document.createElement('span');
+          badge.className = 'echo-badge';
+          badge.append(document.createTextNode(word + ' '));
+          const small = document.createElement('small');
+          small.textContent = '×' + count;
+          badge.appendChild(small);
+          badge.addEventListener('click', () => lookupSpecific(word));
+          echoBox.appendChild(badge);
+        });
       }
     }
 
@@ -1118,7 +1180,7 @@
       const h = rect.height;
       ctx.clearRect(0, 0, w, h);
 
-      ctx.fillStyle = 'rgba(255, 0, 0, 0.08)';
+      ctx.fillStyle = cssColor('--primary', 0.1);
       const yLow = h - (24 / 45) * h;
       const yHigh = h - (10 / 45) * h;
       ctx.fillRect(0, yLow, w, yHigh - yLow);
@@ -1127,18 +1189,32 @@
 
       const recent = lengths.slice(-45);
       const barWidth = Math.max(3, (w / recent.length) - 2);
+      const shortColor = cssColor('--secondary') || '#38bdf8';
+      const midColor = cssColor('--primary') || '#ff0000';
+      const longColor = cssColor('--accent-highlight') || '#ff8800';
 
       recent.forEach((len, idx) => {
         const barHeight = Math.min(h - 2, (len / 40) * h);
         const x = idx * (barWidth + 2);
         const y = h - barHeight;
 
-        if (len > 28) ctx.fillStyle = '#ff8800'; 
-        else if (len < 6) ctx.fillStyle = '#38bdf8'; 
-        else ctx.fillStyle = '#ff0000'; 
+        if (len > 28) ctx.fillStyle = longColor;
+        else if (len < 6) ctx.fillStyle = shortColor;
+        else ctx.fillStyle = midColor;
 
         ctx.fillRect(x, y, barWidth, barHeight);
       });
+    }
+
+    function cssColor(name, alpha) {
+      const raw = getComputedStyle(document.body).getPropertyValue(name).trim() || '#ff0000';
+      if (alpha == null) return raw;
+      const hex = raw.replace('#', '');
+      if (hex.length !== 6) return raw;
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 
     /* =====================================================================
@@ -1159,14 +1235,15 @@
       }
     }
 
-    function executeLookup() {
+    function executeLookup(opts) {
       const query = document.getElementById('lex-query').value.trim();
       const lang = document.getElementById('lex-lang').value;
       if (!query) return;
 
       currentEtymologyWord = query;
+      const switchMobile = !opts || opts.switchMobile !== false;
 
-      if (window.innerWidth <= 768) {
+      if (switchMobile && window.innerWidth <= 768) {
         setMobileView('lexicon', document.querySelectorAll('.mobile-nav-btn')[1]);
       }
 
@@ -1182,22 +1259,102 @@
       executeLookup();
     }
 
-    // Consolidated rendering for all definitions with [+] button
+    function renderWordCloud(container, words, emptyLabel) {
+      container.innerHTML = '';
+      const list = Array.from(words || []).filter(Boolean).slice(0, 24);
+      if (!list.length) {
+        const empty = document.createElement('span');
+        empty.className = 'muted';
+        empty.textContent = emptyLabel || 'None';
+        container.appendChild(empty);
+        return;
+      }
+      list.forEach(word => {
+        const tag = document.createElement('span');
+        tag.className = 'word-tag';
+        tag.textContent = word;
+        tag.addEventListener('click', () => insertAtCursor(word));
+        container.appendChild(tag);
+      });
+    }
+
+    function glossText(val) {
+      if (val == null) return '';
+      if (typeof val === 'string') return val;
+      if (Array.isArray(val)) return val.map(glossText).filter(Boolean).join('; ');
+      if (typeof val === 'object') {
+        return Object.values(val).map(glossText).filter(Boolean).join('; ');
+      }
+      return String(val);
+    }
+
+    function collectSynonyms(val, into) {
+      if (!val) return;
+      if (Array.isArray(val)) {
+        val.forEach(item => collectSynonyms(item, into));
+        return;
+      }
+      if (typeof val === 'string') {
+        val.split(/[,;|/]/).map(s => s.trim()).filter(s => s && s.length < 40).forEach(s => into.add(s));
+        return;
+      }
+      if (typeof val === 'object') {
+        Object.values(val).forEach(item => collectSynonyms(item, into));
+      }
+    }
+
+    function formatPinyin(val) {
+      if (Array.isArray(val)) return val.join('/');
+      return glossText(val);
+    }
+
+    function lookupPinyin(query) {
+      const store = minraudStore.pinyin;
+      if (!store) return '';
+      if (store[query]) return formatPinyin(store[query]);
+      const hits = Array.from(query).filter(ch => store[ch]);
+      if (!hits.length) return '';
+      return hits.map(ch => ch + ': ' + formatPinyin(store[ch])).join(' · ');
+    }
+
     function renderDefinitions(entries) {
       window.lastRenderedDefs = entries;
       const defContainer = document.getElementById('lex-defs');
-      if (entries.length > 0) {
-        defContainer.innerHTML = entries.map((e, idx) => `
-          <div class="def-entry" style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px;">
-            <span><span class="def-source-label">[${e.source}]</span> ${e.text}</span>
-            <button onclick="insertDefinitionByIndex(${idx})" title="Insert definition into text" style="padding:1px 5px; font-size:9px; flex-shrink:0;">
-              [+]
-            </button>
-          </div>
-        `).join('');
-      } else {
-        defContainer.innerHTML = `<span style="color:var(--text-muted); font-size:11px;">Searching lexical engines...</span>`;
+      defContainer.innerHTML = '';
+      if (!entries.length) {
+        const empty = document.createElement('span');
+        empty.className = 'muted';
+        empty.textContent = 'No gloss in the selected sources.';
+        defContainer.appendChild(empty);
+        return;
       }
+      entries.forEach((entry, idx) => {
+        const row = document.createElement('div');
+        row.className = 'def-entry';
+        row.style.display = 'flex';
+        row.style.justifyContent = 'space-between';
+        row.style.alignItems = 'flex-start';
+        row.style.gap = '6px';
+
+        const body = document.createElement('span');
+        const label = document.createElement('span');
+        label.className = 'def-source-label';
+        label.textContent = '[' + entry.source + ']';
+        body.appendChild(label);
+        body.appendChild(document.createTextNode(' ' + entry.text));
+
+        const btn = document.createElement('button');
+        btn.textContent = '[+]';
+        btn.title = 'Insert definition into text';
+        btn.style.padding = '1px 5px';
+        btn.style.fontSize = '9px';
+        btn.style.flexShrink = '0';
+        btn.addEventListener('click', () => insertDefinitionByIndex(idx));
+
+        row.appendChild(body);
+        row.appendChild(btn);
+        defContainer.appendChild(row);
+      });
     }
 
     async function dispatchUnifiedSearch(query, filterMode) {
@@ -1206,72 +1363,62 @@
       const synContainer = document.getElementById('lex-syns');
       const rhyContainer = document.getElementById('lex-rhymes');
       const trgContainer = document.getElementById('lex-triggers');
+      const wantEN = filterMode === 'ALL' || filterMode === 'EN';
+      const wantDE = filterMode === 'ALL' || filterMode === 'DE';
+      const wantPY = filterMode === 'ALL' || filterMode === 'PINYIN';
 
       let defEntries = [];
-      let synList = new Set();
+      const synList = new Set();
 
-      // 1. LOCAL MINRAUD CORPUS LOOKUP (0ms)
-      if (minraudStore.webster) {
+      if (wantEN && minraudStore.webster) {
         const val = minraudStore.webster[lower] || minraudStore.webster[query] || minraudStore.webster[upper];
-        if (val) defEntries.push({ source: "WEBSTER'S", text: typeof val === 'string' ? val : JSON.stringify(val) });
+        const text = glossText(val);
+        if (text) defEntries.push({ source: "WEBSTER'S", text });
       }
 
-      if (minraudStore.adambom) {
-        const val = minraudStore.adambom[upper] || minraudStore.adambom[lower];
-        if (val) defEntries.push({ source: "ADAMBOM", text: val });
+      if (wantEN && minraudStore.concise) {
+        const val = minraudStore.concise[lower] || minraudStore.concise[query] || minraudStore.concise[upper];
+        const text = glossText(val);
+        if (text) defEntries.push({ source: 'CONCISE', text });
       }
 
-      if (minraudStore.bideo) {
-        const val = minraudStore.bideo[lower] || minraudStore.bideo[query];
-        if (val) defEntries.push({ source: "CONCISE", text: val });
+      if (wantDE && minraudStore.german) {
+        const val = minraudStore.german[lower] || minraudStore.german[query] || minraudStore.german[upper];
+        const text = glossText(val);
+        if (text) defEntries.push({ source: 'GERMAN-EN', text });
       }
 
-      if (minraudStore.german) {
-        const val = minraudStore.german[lower] || minraudStore.german[query];
-        if (val) defEntries.push({ source: "GERMAN-EN", text: val });
+      if (wantEN && minraudStore.synonym) {
+        collectSynonyms(minraudStore.synonym[lower] || minraudStore.synonym[query], synList);
       }
 
-      if (minraudStore.synonym) {
-        const syns = minraudStore.synonym[lower] || minraudStore.synonym[query];
-        if (syns) {
-          if (Array.isArray(syns)) syns.forEach(s => synList.add(s));
-          else if (typeof syns === 'string') synList.add(syns);
-        }
+      if (wantPY) {
+        const pinyinText = lookupPinyin(query);
+        if (pinyinText) defEntries.push({ source: 'PINYIN', text: 'Pronunciation / phonetics: ' + pinyinText });
       }
 
-      if (minraudStore.pinyin) {
-        const pinyinVal = minraudStore.pinyin[query];
-        if (pinyinVal) defEntries.push({ source: "PINYIN", text: `Pronunciation / Phonetics: ${pinyinVal}` });
-      }
-
-      // Render local definitions with [+] buttons
       renderDefinitions(defEntries);
-
-      if (synList.size > 0) {
-        synContainer.innerHTML = Array.from(synList).slice(0, 20).map(w => `
-          <span class="word-tag" onclick="insertAtCursor('${w}')">${w}</span>
-        `).join('');
+      renderWordCloud(synContainer, synList, '—');
+      if (filterMode === 'DE' || filterMode === 'PINYIN') {
+        renderWordCloud(rhyContainer, [], '—');
+        renderWordCloud(trgContainer, [], '—');
       }
 
-      // 2. LIVE APIS (Datamuse & OpenThesaurus)
       try {
-        if (filterMode === "DE") {
-          const otRes = await fetch(`https://api.openthesaurus.de/synonyme/search?q=${encodeURIComponent(query)}&format=application/json`).catch(() => null);
+        if (filterMode === 'DE') {
+          const otRes = await fetch('https://api.openthesaurus.de/synonyme/search?q=' + encodeURIComponent(query) + '&format=application/json').catch(() => null);
           if (otRes && otRes.ok) {
             const data = await otRes.json();
-            if (data.synsets) {
-              data.synsets.forEach(set => set.terms.forEach(t => synList.add(t.term)));
-              synContainer.innerHTML = Array.from(synList).slice(0, 24).map(w => `
-                <span class="word-tag" onclick="insertAtCursor('${w}')">${w}</span>
-              `).join('');
-            }
+            (data.synsets || []).forEach(set => (set.terms || []).forEach(t => synList.add(t.term)));
+            renderWordCloud(synContainer, synList, 'None');
           }
-        } else {
-          const [dmDefRes, dmSynRes, dmRhyRes, dmTrgRes] = await Promise.all([
-            fetch(`https://api.datamuse.com/words?sp=${encodeURIComponent(query)}&md=d&max=1`),
-            fetch(`https://api.datamuse.com/words?rel_syn=${encodeURIComponent(query)}&max=16`),
-            fetch(`https://api.datamuse.com/words?rel_rhy=${encodeURIComponent(query)}&max=14`),
-            fetch(`https://api.datamuse.com/words?rel_trg=${encodeURIComponent(query)}&max=14`)
+        } else if (filterMode !== 'PINYIN') {
+          const [dmDefRes, dmSynRes, dmRhyRes, dmTrgRes, freeRes] = await Promise.all([
+            fetch('https://api.datamuse.com/words?sp=' + encodeURIComponent(query) + '&md=d&max=1'),
+            fetch('https://api.datamuse.com/words?rel_syn=' + encodeURIComponent(query) + '&max=16'),
+            fetch('https://api.datamuse.com/words?rel_rhy=' + encodeURIComponent(query) + '&max=14'),
+            fetch('https://api.datamuse.com/words?rel_trg=' + encodeURIComponent(query) + '&max=14'),
+            fetch('https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(query)).catch(() => null)
           ]);
 
           const [dmDef, dmSyn, dmRhy, dmTrg] = await Promise.all([
@@ -1281,86 +1428,132 @@
             dmTrgRes.ok ? dmTrgRes.json() : []
           ]);
 
-          // Append Datamuse definitions and re-render with [+] buttons intact
-          if (dmDef.length > 0 && dmDef[0].defs) {
-            dmDef[0].defs.forEach(d => {
-              const parts = d.split('\t');
-              defEntries.push({
-                source: "DATAMUSE",
-                text: `<strong>${parts[0]}:</strong> ${parts[1] || ''}`
+          if (freeRes && freeRes.ok) {
+            const freeData = await freeRes.json();
+            (Array.isArray(freeData) ? freeData : []).slice(0, 1).forEach(entry => {
+              (entry.meanings || []).slice(0, 3).forEach(meaning => {
+                const def = meaning.definitions && meaning.definitions[0];
+                if (!def) return;
+                const example = def.example ? ' — ' + def.example : '';
+                defEntries.push({
+                  source: 'FREE DICT',
+                  text: (meaning.partOfSpeech || 'def') + ': ' + def.definition + example
+                });
               });
             });
-            renderDefinitions(defEntries);
           }
+
+          if (dmDef.length > 0 && dmDef[0].defs) {
+            dmDef[0].defs.forEach(d => {
+              const parts = String(d).split('\t');
+              defEntries.push({
+                source: 'DATAMUSE',
+                text: (parts[0] || 'def') + ': ' + (parts[1] || '')
+              });
+            });
+          }
+          renderDefinitions(defEntries);
 
           dmSyn.forEach(i => synList.add(i.word));
-          if (synList.size > 0) {
-            synContainer.innerHTML = Array.from(synList).slice(0, 24).map(w => `
-              <span class="word-tag" onclick="insertAtCursor('${w}')">${w}</span>
-            `).join('');
-          }
-
-          rhyContainer.innerHTML = dmRhy.length > 0
-            ? dmRhy.map(i => `<span class="word-tag" onclick="insertAtCursor('${i.word}')">${i.word}</span>`).join('')
-            : `<span style="color:var(--text-muted); font-size:11px;">None</span>`;
-
-          trgContainer.innerHTML = dmTrg.length > 0
-            ? dmTrg.map(i => `<span class="word-tag" onclick="insertAtCursor('${i.word}')">${i.word}</span>`).join('')
-            : `<span style="color:var(--text-muted); font-size:11px;">None</span>`;
+          renderWordCloud(synContainer, synList, 'None');
+          renderWordCloud(rhyContainer, dmRhy.map(i => i.word), 'None');
+          renderWordCloud(trgContainer, dmTrg.map(i => i.word), 'None');
         }
       } catch (err) {
-        console.warn("Live API pass completed with partials:", err);
+        console.warn('Live API pass completed with partials:', err);
       }
     }
 
-    // ETYMOLOGY: Safe Lazy-Loading and Root Insertion
+    function extractEtymology(extract) {
+      const lines = String(extract).split(/\n/);
+      let start = -1;
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (/^Etymology(?:\s+\d+)?$/.test(line) || /^={2,}\s*Etymology/i.test(line)) {
+          start = i + 1;
+          break;
+        }
+      }
+      if (start >= 0) {
+        const buf = [];
+        for (let i = start; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) {
+            if (buf.length) break;
+            continue;
+          }
+          if (/^(Pronunciation|Noun|Verb|Adjective|Adverb|Etymology(?:\s+\d+)?|References|Further reading|Derived terms)$/.test(line)) break;
+          if (/^={2,}/.test(line)) break;
+          buf.push(line);
+          if (buf.join(' ').length > 480) break;
+        }
+        if (buf.length) return buf.join(' ');
+      }
+      const fallback = extract.match(/(?:^|\n)(From [^\n]{12,420})/);
+      return fallback ? fallback[1].trim() : '';
+    }
+
     async function fetchEtymologyLazy(word) {
       const etymContainer = document.getElementById('etym-results');
       document.getElementById('etym-loading').style.display = 'block';
 
       try {
-        const res = await fetch(`https://en.wiktionary.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(word)}&origin=*&format=json`);
+        const res = await fetch('https://en.wiktionary.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=' + encodeURIComponent(word) + '&origin=*&format=json');
         if (res.ok) {
           const data = await res.json();
           const pages = data.query?.pages || {};
           const page = Object.values(pages)[0];
-          
-          if (page && page.extract) {
-            const match = page.extract.match(/(?:Etymology|Etymology 1)\s*={2,4}\s*([^=]+)/i);
-            if (match && match[1]) {
-              currentEtymRoot = match[1].trim();
-              etymContainer.innerHTML = `
-                <div class="etym-entry">
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <strong>${word.toUpperCase()}:</strong>
-                    <button onclick="insertCurrentEtymology()" style="padding:2px 6px; font-size:9px; color:var(--primary);">
-                      [+] INSERT ROOT
-                    </button>
-                  </div>
-                  <div>${currentEtymRoot}</div>
-                </div>
-              `;
-              return;
-            }
+          const root = page && page.extract ? extractEtymology(page.extract) : '';
+          if (root) {
+            currentEtymRoot = root;
+            etymContainer.innerHTML = '';
+            const card = document.createElement('div');
+            card.className = 'etym-entry';
+            const head = document.createElement('div');
+            head.style.display = 'flex';
+            head.style.justifyContent = 'space-between';
+            head.style.alignItems = 'center';
+            head.style.gap = '8px';
+            head.style.marginBottom = '6px';
+            const title = document.createElement('strong');
+            title.textContent = word.toUpperCase();
+            const btn = document.createElement('button');
+            btn.textContent = '[+] INSERT ROOT';
+            btn.style.padding = '2px 6px';
+            btn.style.fontSize = '9px';
+            btn.style.color = 'var(--primary)';
+            btn.addEventListener('click', insertCurrentEtymology);
+            const body = document.createElement('div');
+            body.textContent = currentEtymRoot;
+            head.appendChild(title);
+            head.appendChild(btn);
+            card.appendChild(head);
+            card.appendChild(body);
+            etymContainer.appendChild(card);
+            return;
           }
         }
-        currentEtymRoot = "";
-        etymContainer.innerHTML = `<div class="etym-entry" style="color:var(--text-muted);">Root trace unavailable for "${word}".</div>`;
+        currentEtymRoot = '';
+        etymContainer.innerHTML = '';
+        const miss = document.createElement('div');
+        miss.className = 'etym-entry';
+        miss.style.color = 'var(--text-muted)';
+        miss.textContent = 'Root trace unavailable for "' + word + '".';
+        etymContainer.appendChild(miss);
       } catch (err) {
-        currentEtymRoot = "";
-        etymContainer.innerHTML = `<div class="etym-entry" style="color:var(--text-muted);">Etymology query failed.</div>`;
+        currentEtymRoot = '';
+        etymContainer.innerHTML = '';
+        const fail = document.createElement('div');
+        fail.className = 'etym-entry';
+        fail.style.color = 'var(--text-muted)';
+        fail.textContent = 'Etymology query failed.';
+        etymContainer.appendChild(fail);
       } finally {
         document.getElementById('etym-loading').style.display = 'none';
       }
     }
 
-    function insertCurrentEtymology() {
-      if (currentEtymRoot) {
-        insertAtCursor(` [Etym: ${currentEtymRoot}] `);
-      }
-    }
-
-    function insertAtCursor(text) {
+        function insertAtCursor(text) {
       editor.insert(text + " ");
       if (window.innerWidth <= 768) {
         setMobileView('editor', document.querySelectorAll('.mobile-nav-btn')[0]);
@@ -1381,7 +1574,6 @@
         const start = pad.selectionStart;
         const end = pad.selectionEnd;
         textToInsert = pad.value.substring(start, end).trim();
-        if (!textToInsert) textToInsert = pad.value.trim();
       } else {
         textToInsert = pad.value.trim();
       }
@@ -1423,13 +1615,8 @@
       document.getElementById('poetic-output').innerText = `"${s} ${v} ${o}"`;
     }
 
-    document.getElementById('vault-words').innerHTML = SCIENTIFIC_WORDS.map(w => `
-      <span class="word-tag" onclick="insertAtCursor('${w}')">${w}</span>
-    `).join('');
-
-    document.getElementById('vault-german').innerHTML = GERMAN_VAULT.map(w => `
-      <span class="word-tag" onclick="insertAtCursor('${w}')">${w}</span>
-    `).join('');
+    renderWordCloud(document.getElementById('vault-words'), SCIENTIFIC_WORDS, '—');
+    renderWordCloud(document.getElementById('vault-german'), GERMAN_VAULT, '—');
 
     /* =====================================================================
        7. TYPEWRITER AUDIO
@@ -1437,9 +1624,21 @@
     let audioCtx = null;
     let soundEnabled = true;
 
+    function ensureAudio() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return null;
+      if (!audioCtx) audioCtx = new AudioContextClass();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    document.addEventListener('pointerdown', () => {
+      if (soundEnabled) ensureAudio();
+    }, { passive: true });
+
     function toggleAudio() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       soundEnabled = !soundEnabled;
+      if (soundEnabled) ensureAudio();
       const btn = document.getElementById('btnSound');
       btn.innerText = soundEnabled ? "♪ ON" : "♪ OFF";
       btn.classList.toggle('active', soundEnabled);
@@ -1479,6 +1678,7 @@
       } else {
         editor.setTheme("ace/theme/terminal");
       }
+      requestAnimationFrame(() => drawCadenceGraph(lastCadenceLengths));
     }
 
     function switchFont(fontFamily) {
@@ -1500,10 +1700,21 @@
     function downloadPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
-      const splitText = doc.splitTextToSize(editor.getValue(), 180);
+      const margin = 15;
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const lineHeight = 5;
+      const lines = doc.splitTextToSize(editor.getValue() || '', 180);
+      let y = margin;
       doc.setFont("courier", "normal");
       doc.setFontSize(10);
-      doc.text(splitText, 15, 15);
+      lines.forEach(line => {
+        if (y > pageHeight - margin) {
+          doc.addPage();
+          y = margin;
+        }
+        doc.text(line, margin, y);
+        y += lineHeight;
+      });
       doc.save("manuscript_minraud.pdf");
     }
 
