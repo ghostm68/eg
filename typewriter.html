@@ -848,7 +848,7 @@
       </div>
     </div>
 
-    <!-- RIGHT: MINRAUD MULTI-LEXICON & ETYMOLOGY -->
+    <!-- RIGHT: MINRAUD LEXICON -->
     <div class="lexicon-panel">
       <!-- 6-SOURCE CORPUS SYNC STATUS -->
       <div class="corpus-status-bar">
@@ -858,7 +858,7 @@
 
       <div class="panel-tabs">
         <button class="tab-btn active" onclick="openTab('tab-lexicon', this)">MINRAUD LEXICON</button>
-        <button class="tab-btn" onclick="openTab('tab-etym', this)">ANAGRAMS</button>
+        <button class="tab-btn" onclick="openTab('tab-spark', this)">ANAGRAMS</button>
         <button class="tab-btn" onclick="openTab('tab-vault', this)">WORD VAULT</button>
         <button class="tab-btn" onclick="openTab('tab-notes', this)">SCRATCHPAD</button>
       </div>
@@ -899,14 +899,14 @@
       </div>
 
       <!-- TAB 2: WORD OF THE DAY & ANAGRAMS -->
-      <div id="tab-etym" class="tab-content">
+      <div id="tab-spark" class="tab-content">
         <h4 style="font-size: 10px; color: var(--primary); margin-bottom: 8px;">WORD OF THE DAY</h4>
         <div id="day-word" class="etym-entry">Loading the day's word...</div>
         <div style="display: flex; gap: 4px; margin-bottom: 12px;">
           <button onclick="insertDayWord()" style="flex: 1; font-size: 10px; color: var(--primary);">[+] INSERT</button>
           <button onclick="lookupDayWord()" style="flex: 1; font-size: 10px;">LOOKUP</button>
         </div>
-        <h4 style="font-size: 10px; color: var(--primary); margin-bottom: 8px;">ANAGRAMS <span class="lex-source-tag">LOCAL CORPUS</span></h4>
+        <h4 style="font-size: 10px; color: var(--primary); margin-bottom: 8px;">ANAGRAMS <span class="lex-source-tag">LOCAL</span></h4>
         <div id="anagram-meta" class="muted" style="margin-bottom: 6px;">Highlight a word to scramble it against the loaded lexicon.</div>
         <div id="anagram-cloud" class="word-cloud"></div>
       </div>
@@ -1058,7 +1058,7 @@
     if (savedDoc) {
       editor.setValue(savedDoc, -1);
     } else {
-      editor.setValue(`Write with rhythm. This sentence has five words. Here are five more words. Five-word sentences are okay. Bad sentences are not okay. But listen to what happens when you vary the length of your prose.\n\nNow listen. I vary the sentence length, and I create music. Music. The writing sings. It has a pleasant lilt, a harmony, an undeniable cadence. I use short sentences. And I use sentences of medium length. And sometimes, when I see that the reader is resting, I will engage him with a sentence of considerable length, a sentence that burns with energy and builds with all the impetus of a crescendo.\n\n[Highlight a word to query the Minraud corpus, Free Dictionary, and etymology.]`, -1);
+      editor.setValue(`Write with rhythm. This sentence has five words. Here are five more words. Five-word sentences are okay. Bad sentences are not okay. But listen to what happens when you vary the length of your prose.\n\nNow listen. I vary the sentence length, and I create music. Music. The writing sings. It has a pleasant lilt, a harmony, an undeniable cadence. I use short sentences. And I use sentences of medium length. And sometimes, when I see that the reader is resting, I will engage him with a sentence of considerable length, a sentence that burns with energy and builds with all the impetus of a crescendo.\n\n[Highlight a word for definitions, anagrams, and the word of the day.]`, -1);
     }
 
     const scratchpad = document.getElementById("scratchpad");
@@ -1254,7 +1254,7 @@
       document.getElementById(tabId).classList.add('active');
       btn.classList.add('active');
 
-      if (tabId === 'tab-etym') renderSparkPanel(currentEtymologyWord);
+      if (tabId === 'tab-spark') renderSparkPanel(currentEtymologyWord);
     }
 
     function executeLookup(opts) {
@@ -1521,20 +1521,37 @@
       return String(word).toLowerCase().replace(/[^a-z]/g, "").split("").sort().join("");
     }
 
+    const ANAGRAM_LEXICON = [
+      "listen", "silent", "enlist", "tinsel", "inlets", "stone", "notes", "tones",
+      "onset", "steno", "cadence", "decane", "earth", "heart", "hater", "rathe",
+      "night", "thing", "angel", "angle", "glean", "least", "slate", "stale",
+      "steal", "tales", "teals", "rescue", "secure", "recuse", "ceruse",
+      "dusty", "study", "lamp", "palm", "grin", "ring", "post", "stop", "spot",
+      "tops", "opts", "pots", "art", "rat", "tar", "tea", "eat", "ate", "eta",
+      "bark", "brak", "part", "trap", "tarp", "prat", "rapt", "flow", "wolf",
+      "fowl", "form", "from", "mile", "lime", "evil", "live", "veil", "vile",
+      "rope", "pore", "repo", "care", "race", "acre", "team", "meat", "mate",
+      "tame", "meta", "saber", "bears", "bares", "baser", "braes", "arbs",
+      "stress", "sters", "archive", "signal", "vector", "quartz", "omen"
+    ];
+
+    function addAnagramWord(index, word) {
+      if (!word || word.length < 3 || word.length > 16 || /\s/.test(word)) return;
+      const key = letterKey(word);
+      if (key.length < 3) return;
+      if (!index.has(key)) index.set(key, []);
+      const bucket = index.get(key);
+      const lower = word.toLowerCase();
+      if (bucket.length < 24 && bucket.indexOf(lower) === -1) bucket.push(lower);
+    }
+
     function buildAnagramIndex() {
       if (anagramIndex) return anagramIndex;
       const index = new Map();
+      ANAGRAM_LEXICON.forEach(word => addAnagramWord(index, word));
       [minraudStore.webster, minraudStore.concise].forEach(dict => {
         if (!dict || typeof dict !== "object") return;
-        Object.keys(dict).forEach(word => {
-          if (!word || word.length < 3 || word.length > 16 || /\s/.test(word)) return;
-          const key = letterKey(word);
-          if (key.length < 3) return;
-          if (!index.has(key)) index.set(key, []);
-          const bucket = index.get(key);
-          const lower = word.toLowerCase();
-          if (bucket.length < 16 && bucket.indexOf(lower) === -1) bucket.push(lower);
-        });
+        Object.keys(dict).forEach(word => addAnagramWord(index, word));
       });
       anagramIndex = index;
       return index;
@@ -1544,8 +1561,8 @@
       const key = letterKey(word);
       if (key.length < 3) return [];
       const index = buildAnagramIndex();
-      const hits = (index.get(key) || []).filter(item => item !== key && item !== word.toLowerCase());
-      return hits;
+      const lower = word.toLowerCase();
+      return (index.get(key) || []).filter(item => item !== lower);
     }
 
     function renderSparkPanel(word) {
@@ -1557,15 +1574,15 @@
       dayEl.textContent = day.toUpperCase() + "  ·  " + dayStamp();
       const query = (word || currentEtymologyWord || "").trim();
       if (!query) {
-        meta.textContent = "Highlight a word to scramble it against the loaded lexicon.";
+        meta.textContent = "Highlight a word. Try listen, earth, or least.";
         renderWordCloud(cloud, [], "—");
         return;
       }
-      const ready = !!(minraudStore.webster || minraudStore.concise);
-      const hits = ready ? findAnagrams(query) : [];
-      meta.textContent = ready
-        ? (hits.length ? query.toUpperCase() + " · " + hits.length + " in corpus" : "No anagrams for " + query + " in the loaded corpus.")
-        : "Corpus still syncing. Anagrams appear when Webster or Concise is ready.";
+      const hits = findAnagrams(query);
+      const corpusReady = !!(minraudStore.webster || minraudStore.concise);
+      meta.textContent = hits.length
+        ? query.toUpperCase() + " · " + hits.length + (corpusReady ? " in corpus" : " local")
+        : "No anagrams for " + query + ".";
       renderWordCloud(cloud, hits, "—");
     }
 
