@@ -661,7 +661,7 @@
         <option value="theme-amber">CRT Amber</option>
       </select>
 
-      <button id="btnSound" onclick="toggleAudio()">🔊</button>
+      <button id="btnSound" onclick="toggleAudio()">♪ ON</button>
       <button onclick="downloadTXT()">TXT</button>
       <button onclick="downloadPDF()">PDF</button>
       <button onclick="clearEditor()" style="color: var(--primary);">CLR</button>
@@ -670,9 +670,9 @@
 
   <!-- MOBILE NAVIGATION SWITCHER (Appears on screens < 768px) -->
   <div class="mobile-nav-bar">
-    <button class="mobile-nav-btn active" onclick="setMobileView('editor', this)">✍️ WRITE</button>
-    <button class="mobile-nav-btn" onclick="setMobileView('lexicon', this)">📖 LEXICON</button>
-    <button class="mobile-nav-btn" onclick="setMobileView('radar', this)">📊 CADENCE</button>
+  <button class="mobile-nav-btn active" onclick="setMobileView('editor', this)">✎ WRITE</button>
+  <button class="mobile-nav-btn" onclick="setMobileView('lexicon', this)">⌕ LEXICON</button>
+  <button class="mobile-nav-btn" onclick="setMobileView('radar', this)">∿ CADENCE</button>
   </div>
 
   <!-- MAIN WORKSPACE -->
@@ -784,7 +784,14 @@
       <div id="tab-vault" class="tab-content">
         <button class="vault-btn" onclick="generatePoeticSpark()">⚡ GENERATE POETIC CUT-UP</button>
         <div id="poetic-output" class="vault-quote">"The insect brains of Minraud pulse beneath heavy metal circuits."</div>
-        
+        <!-- TAB 3: WORD VAULT & POETIC SPARKS -->
+<div id="tab-vault" class="tab-content">
+  <div style="display: flex; gap: 4px; margin-bottom: 8px;">
+    <button class="vault-btn" onclick="generatePoeticSpark()" style="flex: 2; margin-bottom: 0;">⚡ GENERATE CUT-UP</button>
+    <button onclick="insertCurrentSpark()" style="flex: 1; font-size: 10px; color: var(--primary); font-weight: bold;">[+] INSERT</button>
+  </div>
+  <div id="poetic-output" class="vault-quote">"The insect brains of Minraud pulse beneath heavy metal circuits."</div>
+  ...
         <div style="margin-top: 14px;">
           <h4 style="font-size: 10px; color: var(--primary); margin-bottom: 6px;">SCIENTIFIC & ESOTERIC LEXICON</h4>
           <div id="vault-words" class="word-cloud"></div>
@@ -796,9 +803,18 @@
       </div>
 
       <!-- TAB 4: PERSISTENT SCRATCHPAD -->
-      <div id="tab-notes" class="tab-content" style="height: calc(100% - 30px);">
-        <textarea id="scratchpad" placeholder="Drafts, scene sketches, cut-up notes (auto-saved)..."></textarea>
-      </div>
+   <!-- TAB 4: PERSISTENT SCRATCHPAD WITH INSERT CONTROLS -->
+<div id="tab-notes" class="tab-content" style="height: calc(100% - 30px); display: flex; flex-direction: column; gap: 6px;">
+  <div style="display: flex; gap: 4px; flex-shrink: 0;">
+    <button onclick="insertFromScratchpad('selection')" title="Insert only highlighted text in scratchpad" style="flex: 1; font-size: 10px; color: var(--primary);">
+      [+] INSERT SELECTION
+    </button>
+    <button onclick="insertFromScratchpad('all')" title="Insert entire scratchpad buffer" style="flex: 1; font-size: 10px;">
+      [+] INSERT ALL
+    </button>
+  </div>
+  <textarea id="scratchpad" placeholder="Drafts, scene sketches, cut-up notes (auto-saved)..." style="flex: 1; resize: none;"></textarea>
+</div>
     </div>
   </div>
 
@@ -1150,7 +1166,19 @@ statusEl.innerText = loadedSourcesCount === 6
           <span class="word-tag" onclick="insertAtCursor('${w}')">${w}</span>
         `).join('');
       }
+// Keep track of entries in memory for insertion
+      window.lastRenderedDefs = defEntries;
 
+      if (defEntries.length > 0) {
+        defContainer.innerHTML = defEntries.map((e, idx) => `
+          <div class="def-entry" style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px;">
+            <span><span class="def-source-label">[${e.source}]</span> ${e.text}</span>
+            <button onclick="insertDefinitionByIndex(${idx})" title="Insert definition into text" style="padding:1px 5px; font-size:9px; flex-shrink:0;">
+              [+]
+            </button>
+          </div>
+        `).join('');
+      }
       // 3. SUPPLEMENT WITH LIVE ENGINES (Datamuse & OpenThesaurus)
       try {
         if (filterMode === "DE") {
@@ -1221,6 +1249,7 @@ statusEl.innerText = loadedSourcesCount === 6
     }
 
     // ETYMOLOGY: Lazy-loaded on demand
+ // ETYMOLOGY: Lazy-loaded on demand with insert button
     async function fetchEtymologyLazy(word) {
       const etymContainer = document.getElementById('etym-results');
       document.getElementById('etym-loading').style.display = 'block';
@@ -1235,10 +1264,16 @@ statusEl.innerText = loadedSourcesCount === 6
           if (page && page.extract) {
             const match = page.extract.match(/(?:Etymology|Etymology 1)\s*={2,4}\s*([^=]+)/i);
             if (match && match[1]) {
+              const cleanRoot = match[1].trim();
               etymContainer.innerHTML = `
                 <div class="etym-entry">
-                  <strong>${word.toUpperCase()}:</strong><br>
-                  ${match[1].trim()}
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <strong>${word.toUpperCase()}:</strong>
+                    <button onclick="insertAtCursor(' [Etym: ' + decodeURIComponent('${encodeURIComponent(cleanRoot)}') + '] ')" style="padding:2px 6px; font-size:9px; color:var(--primary);">
+                      [+] INSERT ROOT
+                    </button>
+                  </div>
+                  <div>${cleanRoot}</div>
                 </div>
               `;
               return;
@@ -1304,7 +1339,7 @@ statusEl.innerText = loadedSourcesCount === 6
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       soundEnabled = !soundEnabled;
       const btn = document.getElementById('btnSound');
-      btn.innerText = soundEnabled ? "🔊 ON" : "🔇 OFF";
+       btn.innerText = soundEnabled ? "♪ ON" : "♪ OFF";
       btn.classList.toggle('active', soundEnabled);
     }
 
@@ -1374,6 +1409,37 @@ statusEl.innerText = loadedSourcesCount === 6
     });
 
     analyzeCadenceAndProse(editor.getValue());
+  </script>
+  <script>
+    function insertCurrentSpark() {
+  const quote = document.getElementById('poetic-output').innerText.trim();
+  if (quote) insertAtCursor("\n" + quote + "\n");
+}
+    function insertFromScratchpad(mode) {
+  const pad = document.getElementById("scratchpad");
+  let textToInsert = "";
+
+  if (mode === 'selection') {
+    const start = pad.selectionStart;
+    const end = pad.selectionEnd;
+    textToInsert = pad.value.substring(start, end).trim();
+    // Fallback to full pad if user hasn't highlighted anything
+    if (!textToInsert) textToInsert = pad.value.trim();
+  } else {
+    textToInsert = pad.value.trim();
+  }
+
+  if (textToInsert) {
+    insertAtCursor("\n\n" + textToInsert + "\n\n");
+  }
+}
+    function insertDefinitionByIndex(idx) {
+  if (window.lastRenderedDefs && window.lastRenderedDefs[idx]) {
+    // Strip HTML tags for clean text insertion
+    const cleanText = window.lastRenderedDefs[idx].text.replace(/<[^>]*>/g, '').trim();
+    insertAtCursor(` (${cleanText}) `);
+  }
+}    
   </script>
 </body>
 </html>
