@@ -670,9 +670,9 @@
 
   <!-- MOBILE NAVIGATION SWITCHER (Appears on screens < 768px) -->
   <div class="mobile-nav-bar">
-  <button class="mobile-nav-btn active" onclick="setMobileView('editor', this)">✎ WRITE</button>
-  <button class="mobile-nav-btn" onclick="setMobileView('lexicon', this)">⌕ LEXICON</button>
-  <button class="mobile-nav-btn" onclick="setMobileView('radar', this)">∿ CADENCE</button>
+    <button class="mobile-nav-btn active" onclick="setMobileView('editor', this)">✎ WRITE</button>
+    <button class="mobile-nav-btn" onclick="setMobileView('lexicon', this)">⌕ LEXICON</button>
+    <button class="mobile-nav-btn" onclick="setMobileView('radar', this)">∿ CADENCE</button>
   </div>
 
   <!-- MAIN WORKSPACE -->
@@ -780,18 +780,14 @@
         </div>
       </div>
 
-      <!-- TAB 3: WORD VAULT & POETIC SPARKS -->
+      <!-- TAB 3: WORD VAULT & POETIC SPARKS (REPAIRED) -->
       <div id="tab-vault" class="tab-content">
-        <button class="vault-btn" onclick="generatePoeticSpark()">⚡ GENERATE POETIC CUT-UP</button>
+        <div style="display: flex; gap: 4px; margin-bottom: 8px;">
+          <button class="vault-btn" onclick="generatePoeticSpark()" style="flex: 2; margin-bottom: 0;">⚡ GENERATE CUT-UP</button>
+          <button onclick="insertCurrentSpark()" style="flex: 1; font-size: 10px; color: var(--primary); font-weight: bold;">[+] INSERT</button>
+        </div>
         <div id="poetic-output" class="vault-quote">"The insect brains of Minraud pulse beneath heavy metal circuits."</div>
-        <!-- TAB 3: WORD VAULT & POETIC SPARKS -->
-<div id="tab-vault" class="tab-content">
-  <div style="display: flex; gap: 4px; margin-bottom: 8px;">
-    <button class="vault-btn" onclick="generatePoeticSpark()" style="flex: 2; margin-bottom: 0;">⚡ GENERATE CUT-UP</button>
-    <button onclick="insertCurrentSpark()" style="flex: 1; font-size: 10px; color: var(--primary); font-weight: bold;">[+] INSERT</button>
-  </div>
-  <div id="poetic-output" class="vault-quote">"The insect brains of Minraud pulse beneath heavy metal circuits."</div>
-  ...
+        
         <div style="margin-top: 14px;">
           <h4 style="font-size: 10px; color: var(--primary); margin-bottom: 6px;">SCIENTIFIC & ESOTERIC LEXICON</h4>
           <div id="vault-words" class="word-cloud"></div>
@@ -802,19 +798,18 @@
         </div>
       </div>
 
-      <!-- TAB 4: PERSISTENT SCRATCHPAD -->
-   <!-- TAB 4: PERSISTENT SCRATCHPAD WITH INSERT CONTROLS -->
-<div id="tab-notes" class="tab-content" style="height: calc(100% - 30px); display: flex; flex-direction: column; gap: 6px;">
-  <div style="display: flex; gap: 4px; flex-shrink: 0;">
-    <button onclick="insertFromScratchpad('selection')" title="Insert only highlighted text in scratchpad" style="flex: 1; font-size: 10px; color: var(--primary);">
-      [+] INSERT SELECTION
-    </button>
-    <button onclick="insertFromScratchpad('all')" title="Insert entire scratchpad buffer" style="flex: 1; font-size: 10px;">
-      [+] INSERT ALL
-    </button>
-  </div>
-  <textarea id="scratchpad" placeholder="Drafts, scene sketches, cut-up notes (auto-saved)..." style="flex: 1; resize: none;"></textarea>
-</div>
+      <!-- TAB 4: PERSISTENT SCRATCHPAD WITH INSERT CONTROLS -->
+      <div id="tab-notes" class="tab-content" style="height: calc(100% - 30px); display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: flex; gap: 4px; flex-shrink: 0;">
+          <button onclick="insertFromScratchpad('selection')" title="Insert only highlighted text in scratchpad" style="flex: 1; font-size: 10px; color: var(--primary);">
+            [+] INSERT SELECTION
+          </button>
+          <button onclick="insertFromScratchpad('all')" title="Insert entire scratchpad buffer" style="flex: 1; font-size: 10px;">
+            [+] INSERT ALL
+          </button>
+        </div>
+        <textarea id="scratchpad" placeholder="Drafts, scene sketches, cut-up notes (auto-saved)..." style="flex: 1; resize: none;"></textarea>
+      </div>
     </div>
   </div>
 
@@ -842,14 +837,12 @@
 
     let loadedSourcesCount = 0;
 
-    // Background loader using Cache API for zero-lag subsequent reloads
     async function initMinraudCorpus() {
       const statusEl = document.getElementById('corpus-status');
       
       for (const src of MINRAUD_SOURCES) {
         try {
           let json = null;
-          // Check browser cache if available
           if ('caches' in window) {
             const cache = await caches.open('minraud-corpus-v1');
             let cachedResp = await cache.match(src.url);
@@ -877,13 +870,12 @@
         }
       }
       
-statusEl.innerText = loadedSourcesCount === 6 
+      statusEl.innerText = loadedSourcesCount === 6 
         ? `READY: 6/6 CORPUS + DATAMUSE ONLINE` 
         : `SYNCED: ${loadedSourcesCount}/6 CORPUS + DATAMUSE ONLINE`;
       statusEl.style.color = 'var(--accent-highlight)';
     }
     
-    // Launch corpus loader non-blockingly after initial paint
     window.addEventListener('DOMContentLoaded', () => {
       setTimeout(initMinraudCorpus, 300);
     });
@@ -925,7 +917,6 @@ statusEl.innerText = loadedSourcesCount === 6
       }, 250);
     });
 
-    // Touch and click selection lookup
     editor.on("click", () => {
       const selected = editor.getSelectedText().trim();
       if (selected && selected.length > 0 && !selected.includes(" ")) {
@@ -1034,7 +1025,6 @@ statusEl.innerText = loadedSourcesCount === 6
       const h = rect.height;
       ctx.clearRect(0, 0, w, h);
 
-      // Sweet spot band
       ctx.fillStyle = 'rgba(255, 0, 0, 0.08)';
       const yLow = h - (24 / 45) * h;
       const yHigh = h - (10 / 45) * h;
@@ -1059,9 +1049,11 @@ statusEl.innerText = loadedSourcesCount === 6
     }
 
     /* =====================================================================
-       5. HIGH-SPEED MULTI-SOURCE SEARCH DISPATCHER
+       5. HIGH-SPEED MULTI-SOURCE SEARCH & INSERT DISPATCHER
        ===================================================================== */
     let currentEtymologyWord = "";
+    let currentEtymRoot = "";
+    window.lastRenderedDefs = [];
 
     function openTab(tabId, btn) {
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -1097,11 +1089,27 @@ statusEl.innerText = loadedSourcesCount === 6
       executeLookup();
     }
 
-    // Unified dispatcher checking local 6-source JSON corpus first, then network APIs
+    // Consolidated rendering for all definitions with [+] button
+    function renderDefinitions(entries) {
+      window.lastRenderedDefs = entries;
+      const defContainer = document.getElementById('lex-defs');
+      if (entries.length > 0) {
+        defContainer.innerHTML = entries.map((e, idx) => `
+          <div class="def-entry" style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px;">
+            <span><span class="def-source-label">[${e.source}]</span> ${e.text}</span>
+            <button onclick="insertDefinitionByIndex(${idx})" title="Insert definition into text" style="padding:1px 5px; font-size:9px; flex-shrink:0;">
+              [+]
+            </button>
+          </div>
+        `).join('');
+      } else {
+        defContainer.innerHTML = `<span style="color:var(--text-muted); font-size:11px;">Searching lexical engines...</span>`;
+      }
+    }
+
     async function dispatchUnifiedSearch(query, filterMode) {
       const lower = query.toLowerCase();
       const upper = query.toUpperCase();
-      const defContainer = document.getElementById('lex-defs');
       const synContainer = document.getElementById('lex-syns');
       const rhyContainer = document.getElementById('lex-rhymes');
       const trgContainer = document.getElementById('lex-triggers');
@@ -1109,33 +1117,27 @@ statusEl.innerText = loadedSourcesCount === 6
       let defEntries = [];
       let synList = new Set();
 
-      // 1. CHECK LOCAL MINRAUD CORPUS FIRST (Instant, 0ms)
-      
-      // Webster's Unabridged
+      // 1. LOCAL MINRAUD CORPUS LOOKUP (0ms)
       if (minraudStore.webster) {
         const val = minraudStore.webster[lower] || minraudStore.webster[query] || minraudStore.webster[upper];
         if (val) defEntries.push({ source: "WEBSTER'S", text: typeof val === 'string' ? val : JSON.stringify(val) });
       }
 
-      // Standard (Adambom)
       if (minraudStore.adambom) {
         const val = minraudStore.adambom[upper] || minraudStore.adambom[lower];
         if (val) defEntries.push({ source: "ADAMBOM", text: val });
       }
 
-      // Concise English (BideoWego)
       if (minraudStore.bideo) {
         const val = minraudStore.bideo[lower] || minraudStore.bideo[query];
         if (val) defEntries.push({ source: "CONCISE", text: val });
       }
 
-      // German-English (hathibelagal)
       if (minraudStore.german) {
         const val = minraudStore.german[lower] || minraudStore.german[query];
         if (val) defEntries.push({ source: "GERMAN-EN", text: val });
       }
 
-      // Synonym Lexicon (egorkaru)
       if (minraudStore.synonym) {
         const syns = minraudStore.synonym[lower] || minraudStore.synonym[query];
         if (syns) {
@@ -1144,45 +1146,23 @@ statusEl.innerText = loadedSourcesCount === 6
         }
       }
 
-      // Pinyin Corpus (letiantian)
       if (minraudStore.pinyin) {
         const pinyinVal = minraudStore.pinyin[query];
         if (pinyinVal) defEntries.push({ source: "PINYIN", text: `Pronunciation / Phonetics: ${pinyinVal}` });
       }
 
-      // 2. RENDER LOCAL RESULTS INSTANTLY
-      if (defEntries.length > 0) {
-        defContainer.innerHTML = defEntries.map(e => `
-          <div class="def-entry">
-            <span class="def-source-label">[${e.source}]</span> ${e.text}
-          </div>
-        `).join('');
-      } else {
-        defContainer.innerHTML = `<span style="color:var(--text-muted); font-size:11px;">Searching live lexical fallbacks...</span>`;
-      }
+      // Render local definitions with [+] buttons
+      renderDefinitions(defEntries);
 
       if (synList.size > 0) {
         synContainer.innerHTML = Array.from(synList).slice(0, 20).map(w => `
           <span class="word-tag" onclick="insertAtCursor('${w}')">${w}</span>
         `).join('');
       }
-// Keep track of entries in memory for insertion
-      window.lastRenderedDefs = defEntries;
 
-      if (defEntries.length > 0) {
-        defContainer.innerHTML = defEntries.map((e, idx) => `
-          <div class="def-entry" style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px;">
-            <span><span class="def-source-label">[${e.source}]</span> ${e.text}</span>
-            <button onclick="insertDefinitionByIndex(${idx})" title="Insert definition into text" style="padding:1px 5px; font-size:9px; flex-shrink:0;">
-              [+]
-            </button>
-          </div>
-        `).join('');
-      }
-      // 3. SUPPLEMENT WITH LIVE ENGINES (Datamuse & OpenThesaurus)
+      // 2. LIVE APIS (Datamuse & OpenThesaurus)
       try {
         if (filterMode === "DE") {
-          // German OpenThesaurus
           const otRes = await fetch(`https://api.openthesaurus.de/synonyme/search?q=${encodeURIComponent(query)}&format=application/json`).catch(() => null);
           if (otRes && otRes.ok) {
             const data = await otRes.json();
@@ -1194,7 +1174,6 @@ statusEl.innerText = loadedSourcesCount === 6
             }
           }
         } else {
-          // English Datamuse (Synonyms, Rhymes, Triggers, & Instant Metadata Defs)
           const [dmDefRes, dmSynRes, dmRhyRes, dmTrgRes] = await Promise.all([
             fetch(`https://api.datamuse.com/words?sp=${encodeURIComponent(query)}&md=d&max=1`),
             fetch(`https://api.datamuse.com/words?rel_syn=${encodeURIComponent(query)}&max=16`),
@@ -1209,8 +1188,7 @@ statusEl.innerText = loadedSourcesCount === 6
             dmTrgRes.ok ? dmTrgRes.json() : []
           ]);
 
-          // If local dictionary had no definition, use Datamuse definition
-     // Append Datamuse definitions alongside Webster/Adambom/etc.
+          // Append Datamuse definitions and re-render with [+] buttons intact
           if (dmDef.length > 0 && dmDef[0].defs) {
             dmDef[0].defs.forEach(d => {
               const parts = d.split('\t');
@@ -1219,13 +1197,7 @@ statusEl.innerText = loadedSourcesCount === 6
                 text: `<strong>${parts[0]}:</strong> ${parts[1] || ''}`
               });
             });
-
-            // Re-render so all sources display together:
-            defContainer.innerHTML = defEntries.map(e => `
-              <div class="def-entry">
-                <span class="def-source-label">[${e.source}]</span> ${e.text}
-              </div>
-            `).join('');
+            renderDefinitions(defEntries);
           }
 
           dmSyn.forEach(i => synList.add(i.word));
@@ -1248,8 +1220,7 @@ statusEl.innerText = loadedSourcesCount === 6
       }
     }
 
-    // ETYMOLOGY: Lazy-loaded on demand
- // ETYMOLOGY: Lazy-loaded on demand with insert button
+    // ETYMOLOGY: Safe Lazy-Loading and Root Insertion
     async function fetchEtymologyLazy(word) {
       const etymContainer = document.getElementById('etym-results');
       document.getElementById('etym-loading').style.display = 'block';
@@ -1264,27 +1235,35 @@ statusEl.innerText = loadedSourcesCount === 6
           if (page && page.extract) {
             const match = page.extract.match(/(?:Etymology|Etymology 1)\s*={2,4}\s*([^=]+)/i);
             if (match && match[1]) {
-              const cleanRoot = match[1].trim();
+              currentEtymRoot = match[1].trim();
               etymContainer.innerHTML = `
                 <div class="etym-entry">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                     <strong>${word.toUpperCase()}:</strong>
-                    <button onclick="insertAtCursor(' [Etym: ' + decodeURIComponent('${encodeURIComponent(cleanRoot)}') + '] ')" style="padding:2px 6px; font-size:9px; color:var(--primary);">
+                    <button onclick="insertCurrentEtymology()" style="padding:2px 6px; font-size:9px; color:var(--primary);">
                       [+] INSERT ROOT
                     </button>
                   </div>
-                  <div>${cleanRoot}</div>
+                  <div>${currentEtymRoot}</div>
                 </div>
               `;
               return;
             }
           }
         }
+        currentEtymRoot = "";
         etymContainer.innerHTML = `<div class="etym-entry" style="color:var(--text-muted);">Root trace unavailable for "${word}".</div>`;
       } catch (err) {
+        currentEtymRoot = "";
         etymContainer.innerHTML = `<div class="etym-entry" style="color:var(--text-muted);">Etymology query failed.</div>`;
       } finally {
         document.getElementById('etym-loading').style.display = 'none';
+      }
+    }
+
+    function insertCurrentEtymology() {
+      if (currentEtymRoot) {
+        insertAtCursor(` [Etym: ${currentEtymRoot}] `);
       }
     }
 
@@ -1296,9 +1275,39 @@ statusEl.innerText = loadedSourcesCount === 6
       editor.focus();
     }
 
+    function insertCurrentSpark() {
+      const quote = document.getElementById('poetic-output').innerText.trim();
+      if (quote) insertAtCursor("\n" + quote + "\n");
+    }
+
+    function insertFromScratchpad(mode) {
+      const pad = document.getElementById("scratchpad");
+      let textToInsert = "";
+
+      if (mode === 'selection') {
+        const start = pad.selectionStart;
+        const end = pad.selectionEnd;
+        textToInsert = pad.value.substring(start, end).trim();
+        if (!textToInsert) textToInsert = pad.value.trim();
+      } else {
+        textToInsert = pad.value.trim();
+      }
+
+      if (textToInsert) {
+        insertAtCursor("\n\n" + textToInsert + "\n\n");
+      }
+    }
+
+    function insertDefinitionByIndex(idx) {
+      if (window.lastRenderedDefs && window.lastRenderedDefs[idx]) {
+        const cleanText = window.lastRenderedDefs[idx].text.replace(/<[^>]*>/g, '').trim();
+        insertAtCursor(` (${cleanText}) `);
+      }
+    }
+
     /* =====================================================================
        6. WORD VAULT & BURROUGHS CUT-UPS
-       ===================================================================== */
+       ==================================================================== */
     const SCIENTIFIC_WORDS = [
       "singularity", "event horizon", "entropy", "cybernetics", "superposition",
       "osmosis", "symbiosis", "parallax", "crystallography", "luminosity",
@@ -1330,16 +1339,16 @@ statusEl.innerText = loadedSourcesCount === 6
     `).join('');
 
     /* =====================================================================
-       7. TYPEWRITER AUDIO (Zero Audio Files)
+       7. TYPEWRITER AUDIO
        ===================================================================== */
     let audioCtx = null;
-    let soundEnabled = false;
+    let soundEnabled = true;
 
     function toggleAudio() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       soundEnabled = !soundEnabled;
       const btn = document.getElementById('btnSound');
-       btn.innerText = soundEnabled ? "♪ ON" : "♪ OFF";
+      btn.innerText = soundEnabled ? "♪ ON" : "♪ OFF";
       btn.classList.toggle('active', soundEnabled);
     }
 
@@ -1409,37 +1418,6 @@ statusEl.innerText = loadedSourcesCount === 6
     });
 
     analyzeCadenceAndProse(editor.getValue());
-  </script>
-  <script>
-    function insertCurrentSpark() {
-  const quote = document.getElementById('poetic-output').innerText.trim();
-  if (quote) insertAtCursor("\n" + quote + "\n");
-}
-    function insertFromScratchpad(mode) {
-  const pad = document.getElementById("scratchpad");
-  let textToInsert = "";
-
-  if (mode === 'selection') {
-    const start = pad.selectionStart;
-    const end = pad.selectionEnd;
-    textToInsert = pad.value.substring(start, end).trim();
-    // Fallback to full pad if user hasn't highlighted anything
-    if (!textToInsert) textToInsert = pad.value.trim();
-  } else {
-    textToInsert = pad.value.trim();
-  }
-
-  if (textToInsert) {
-    insertAtCursor("\n\n" + textToInsert + "\n\n");
-  }
-}
-    function insertDefinitionByIndex(idx) {
-  if (window.lastRenderedDefs && window.lastRenderedDefs[idx]) {
-    // Strip HTML tags for clean text insertion
-    const cleanText = window.lastRenderedDefs[idx].text.replace(/<[^>]*>/g, '').trim();
-    insertAtCursor(` (${cleanText}) `);
-  }
-}    
   </script>
 </body>
 </html>
