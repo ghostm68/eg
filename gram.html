@@ -751,6 +751,24 @@
         <button type="button" id="modeSets">Sets &amp; Partitions</button>
       </div>
 
+      <div class="semantic-strip">
+        <div class="semantic-head">
+          <span>Semantic rerank · all-MiniLM-L6-v2</span>
+          <button type="button" id="btnToggleSemantic" style="padding: 0.15rem 0.5rem; font-size: 0.65rem; border-color: var(--ok); color: var(--ok);">
+            Enable AI
+          </button>
+        </div>
+        <div id="semanticControls" style="display: none;">
+          <div class="semantic-inputs">
+            <input type="text" id="semanticTheme" placeholder="Theme: occult, cyberpunk, sorrow, stars…" autocomplete="off" spellcheck="false" />
+            <button type="button" id="btnRerank" class="primary" style="white-space: nowrap;">Rerank</button>
+          </div>
+          <div class="hint" id="semanticStatus" style="color: var(--muted); margin-top: 0.2rem;">
+            Local model, off-thread. First load is about 23MB, then it stays in the browser. No API key.
+          </div>
+        </div>
+      </div>
+
       <div class="filters-grid">
         <div>
           <label for="minLen">Min length</label>
@@ -877,6 +895,7 @@
           Export .txt produces a Wordstar Nexus marked file.<br>
           Sets mode inspects clean 2-word split partitions & +1 hooks.<br>
           Perfect cover keeps only zero-waste results.<br>
+          Semantic rerank reorders the current list by meaning. It runs locally after one model download.<br>
           Click inventory letter chips to insert directly into live build.
         </div>
         <details style="margin-top:0.55rem;">
@@ -893,8 +912,9 @@
             <p style="margin:0 0 0.35rem;"><strong>4. Filters</strong> — Min/Max length · Prefix · Suffix · Must contain · Must not · Rank by · Max results</p>
             <p style="margin:0 0 0.35rem;"><strong>5. Dictionary</strong> — switch source or Import… your own .txt / .json list (one word per line or JSON array). Custom list is remembered.</p>
             <p style="margin:0 0 0.35rem;"><strong>6. Cover</strong> — Perfect only keeps zero-waste results. Words, phrases, and clean splits all honor it.</p>
-            <p style="margin:0 0 0.35rem;"><strong>7. Claiming</strong> — click suggestions or Claim this. ✕ unclaims one item, Undo removes last.</p>
-            <p style="margin:0;"><strong>8. Export</strong> — Export .txt or Copy build for the marked Wordstar Nexus file. Scratch auto-saves.</p>
+            <p style="margin:0 0 0.35rem;"><strong>7. Semantic rerank</strong> — Enable AI, type a theme, Rerank. all-MiniLM reorders the current word or phrase list in a worker. First run downloads the model; after that it is cached. Sets mode is not reranked.</p>
+            <p style="margin:0 0 0.35rem;"><strong>8. Claiming</strong> — click suggestions or Claim this. ✕ unclaims one item, Undo removes last.</p>
+            <p style="margin:0;"><strong>9. Export</strong> — Export .txt or Copy build for the marked Wordstar Nexus file. Scratch auto-saves.</p>
           </div>
         </details>
       </div>
@@ -1641,6 +1661,7 @@
         `Must      : ${$("must").value.trim() || "(none)"}`,
         `Must not  : ${$("mustNot").value.trim() || "(none)"}`,
         `Rank      : ${$("rankBy").value}`,
+        `Theme     : ${($("semanticTheme") && $("semanticTheme").value.trim()) || "(none)"}`,
         "",
         "Claimed",
         sub,
@@ -1789,6 +1810,115 @@
         localStorage.setItem(SCRATCH_KEY, $("scratch").value);
       } catch (_) {}
     }
+
+
+    // Local semantic rerank. all-MiniLM-L6-v2 runs in a worker. No API key.
+    const workerScript = `
+      self.embedder = null;
+      self.onmessage = async (e) => {
+        const { type, payload } = e.data;
+        if (type === 'INIT') {
+          try {
+            self.postMessage({ type: 'STATUS', msg: 'Fetching all-MiniLM-L6-v2 (~23MB)...' });
+            const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2');
+            env.allowLocalModels = false;
+            env.useBrowserCache = true;
+            self.embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', { quantized: true });
+            self.postMessage({ type: 'READY' });
+          } catch (err) {
+            self.postMessage({ type: 'ERROR', msg: err.message || String(err) });
+          }
+        }
+        if (type === 'RERANK') {
+          if (!self.embedder) return;
+          try {
+            const { theme, candidates } = payload;
+            const targetOut = await self.embedder(theme, { pooling: 'mean', normalize: true });
+            const targetVec = targetOut.data;
+            const candOut = await self.embedder(candidates, { pooling: 'mean', normalize: true });
+            const dim = targetVec.length;
+            const scored = candidates.map((cand, idx) => {
+              let dot = 0;
+              const offset = idx * dim;
+              for (let d = 0; d < dim; d++) dot += targetVec[d] * candOut.data[offset + d];
+              return { index: idx, score: dot };
+            });
+            scored.sort((a, b) => b.score - a.score);
+            self.postMessage({ type: 'RERANK_DONE', scored });
+          } catch (err) {
+            self.postMessage({ type: 'ERROR', msg: err.message || String(err) });
+          }
+        }
+      };
+    `;
+
+    let semanticWorker = null;
+    let modelReady = false;
+    let modelLoading = false;
+
+    try {
+      const blob = new Blob([workerScript], { type: 'application/javascript' });
+      semanticWorker = new Worker(URL.createObjectURL(blob), { type: 'module' });
+      semanticWorker.onmessage = (e) => {
+        const { type, msg, scored } = e.data;
+        if (type === 'STATUS') {
+          $("semanticStatus").textContent = msg;
+        } else if (type === 'READY') {
+          modelReady = true;
+          modelLoading = false;
+          $("btnToggleSemantic").textContent = "AI Active";
+          $("semanticStatus").textContent = "Model cached in this browser. Type a theme and hit Rerank.";
+          runSemanticRerank();
+        } else if (type === 'RERANK_DONE') {
+          $("semanticStatus").textContent = "Reranked " + scored.length + " by meaning. Local model, no API.";
+          if (lastGeneratedCandidates.length && scored) {
+            const sorted = scored.map((item) => {
+              const row = lastGeneratedCandidates[item.index];
+              if (!row) return null;
+              const score = Math.round(item.score * 1000) / 1000;
+              return Object.assign({}, row, { meta: String(score) });
+            }).filter(Boolean);
+            lastGeneratedCandidates = sorted;
+            renderSuggestions(sorted);
+          }
+        } else if (type === 'ERROR') {
+          $("semanticStatus").textContent = "Error: " + msg;
+          modelLoading = false;
+        }
+      };
+    } catch (_) {}
+
+    $("btnToggleSemantic").addEventListener("click", () => {
+      const controls = $("semanticControls");
+      const isClosed = controls.style.display === "none";
+      controls.style.display = isClosed ? "block" : "none";
+      $("btnToggleSemantic").textContent = isClosed ? (modelReady ? "AI Active" : "Load Model") : "Enable AI";
+      if (isClosed && !modelReady && !modelLoading && semanticWorker) {
+        modelLoading = true;
+        $("semanticStatus").textContent = "Initializing background worker...";
+        semanticWorker.postMessage({ type: 'INIT' });
+      }
+    });
+
+    function runSemanticRerank() {
+      const theme = $("semanticTheme").value.trim();
+      if (!theme || !modelReady) return;
+      if (mode === "sets" || !lastGeneratedCandidates.length) {
+        $("semanticStatus").textContent = "Rerank needs a word or phrase list. Run Find first.";
+        return;
+      }
+      const candidateStrings = lastGeneratedCandidates.map((c) => c.phrase || c.word);
+      $("semanticStatus").textContent = "Embedding candidates off-thread...";
+      semanticWorker.postMessage({ type: 'RERANK', payload: { theme, candidates: candidateStrings } });
+    }
+
+    $("btnRerank").addEventListener("click", runSemanticRerank);
+    $("semanticTheme").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        runSemanticRerank();
+      }
+    });
 
     // ── Wire up ──
     $("btnFind").addEventListener("click", findSuggestions);
