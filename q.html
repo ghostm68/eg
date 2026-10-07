@@ -105,6 +105,8 @@
                             <option value="gemma-2-2b-it-q4f16_1-MLC">GEMMA 2 (2B) - CREATIVE</option>
                             <option value="stablelm-2-zephyr-1_6b-q4f16_1-MLC">STABLE ZEPHYR (1.6B) - BALANCED</option>
                             <option value="RedPajama-INCITE-Chat-3B-v1-q4f16_1-MLC-1k">RED PAJAMA (3B) - RELIC</option>
+							<!-- NEW: transformers.js backend -->
+                            <option value="tjs:onnx-community/Qwen3-0.6B-ONNX">QWEN 3 (0.6B) - LIGHT · tjs</option>
                         </select>
                     </div>
                     <button id="connect-btn" class="terminal-btn" type="button">INITIALIZE LINK</button>
@@ -253,8 +255,79 @@
         </div>
     </div>
 
-    <!-- External Scripts -->
+
+	<!-- External Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+    <!-- Transformers.js (for Qwen3-0.6B light path) -->
+    <!-- Transformers.js (for Qwen3-0.6B light path) -->
+<script type="module">
+    import {
+        AutoTokenizer,
+        AutoModelForCausalLM,
+        TextStreamer
+    } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0";
+
+    window.INK_TJS = {
+        TextStreamer,
+        modelId: "onnx-community/Qwen3-0.6B-ONNX",
+
+        isTjsModel: (value) => value && value.startsWith("tjs:"),
+        getModelId: (value) => value?.startsWith("tjs:") ? value.slice(4) : null,
+
+        async createGenerator(progress_callback) {
+            const model_id = "onnx-community/Qwen3-0.6B-ONNX";
+
+            const tokenizer = await AutoTokenizer.from_pretrained(model_id, {
+                progress_callback
+            });
+
+            const model = await AutoModelForCausalLM.from_pretrained(model_id, {
+                dtype: "q4f16",
+                device: "webgpu",
+                progress_callback
+            });
+
+            // Return an object that has both generate + tokenizer
+            // so the existing maisew.js streaming code keeps working
+            const generator = async function (messages, options = {}) {
+                const inputs = tokenizer.apply_chat_template(messages, {
+                    add_generation_prompt: true,
+                    return_dict: true,
+                });
+
+                const streamer = options.streamer || undefined;
+
+                const output = await model.generate({
+                    ...inputs,
+                    max_new_tokens: options.max_new_tokens ?? 512,
+                    do_sample: options.do_sample ?? true,
+                    temperature: options.temperature ?? 0.7,
+                    top_k: 20,
+                    streamer,
+                });
+
+                const decoded = tokenizer.batch_decode(output, {
+                    skip_special_tokens: true
+                });
+
+                // Mimic pipeline return shape
+                return [{
+                    generated_text: [
+                        ...messages,
+                        { role: "assistant", content: decoded[0] }
+                    ]
+                }];
+            };
+
+            // Attach tokenizer so TextStreamer can find it
+            generator.tokenizer = tokenizer;
+            return generator;
+        }
+    };
+
+    console.log("[INK] transformers.js v4 ready — Qwen3-0.6B available");
+</script>
        <script src="https://cdn.jsdelivr.net/gh/ghostm68/inktwo@main/js/custom-maise.js"></script>
     <script type="module" src="https://cdn.jsdelivr.net/gh/ghostm68/inktwo@main/js/maisew.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/ghostm68/inktwo@main/js/maise.js"></script>
