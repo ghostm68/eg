@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>CRAFTSTAR v/370sx • Red Phosphor PDF Console</title>
+  <!-- Curated Font Rack: Mainframe Monospace, Editorial Serif & Clean Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;600&family=VT323&display=swap" rel="stylesheet">
+  <!-- PDF.js for robust client-side text extraction -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+
+  <style>
+    :root {
+      --bg-chassis: #121517;
+      --bg-panel: #1a1e22;
+      --border-panel: #2a3138;
+      --knob-base: #252b31;
+      --knob-top: #15191d;
+      --indicator: #ff3333;
+
+      /* Phosphor default: Red (P22R / classic red CRT) */
+      --glow-color: rgba(255, 51, 51, 0.28);
+      --phosphor-text: #ff3333;
+      --phosphor-dim: #aa2222;
+      --crt-bg: #0d0404;
+      --font-active: 'IBM Plex Mono', monospace;
+    }
+
+    body.phosphor-red {
+      --glow-color: rgba(255, 51, 51, 0.28);
+      --phosphor-text: #ff3333;
+      --phosphor-dim: #aa2222;
+      --crt-bg: #0d0404;
+    }
+
+    body.phosphor-green {
+      --glow-color: rgba(51, 255, 102, 0.25);
+      --phosphor-text: #33ff66;
+      --phosphor-dim: #1f993d;
+      --crt-bg: #050d07;
+    }
+
+    body.phosphor-amber {
+      --glow-color: rgba(255, 176, 0, 0.25);
+      --phosphor-text: #ffb000;
+      --phosphor-dim: #996900;
+      --crt-bg: #0f0a02;
+    }
+
+    body.phosphor-white {
+      --glow-color: rgba(220, 240, 255, 0.22);
+      --phosphor-text: #e1effa;
+      --phosphor-dim: #738390;
+      --crt-bg: #080c10;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    
+    body {
+      background-color: var(--bg-chassis);
+      color: var(--phosphor-text);
+      font-family: 'IBM Plex Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px;
+      user-select: none;
+    }
+
+    /* Main Console Chassis */
+    .console-chassis {
+      width: 100%;
+      max-width: 1100px;
+      background: var(--bg-panel);
+      border: 3px solid var(--border-panel);
+      border-radius: 8px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header Bar */
+    .header-bar {
+      background: #111417;
+      padding: 10px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 2px solid var(--border-panel);
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+    }
+    .header-title { font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .header-title span { color: var(--phosphor-text); }
+    .header-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+    /* Buttons */
+    .btn {
+      background: #252b31;
+      border: 1px solid #3c4650;
+      color: #cfd8dc;
+      padding: 5px 11px;
+      border-radius: 4px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      text-transform: uppercase;
+      box-shadow: 0 2px 0 #101418;
+      transition: all 0.1s;
+    }
+    .btn:active { transform: translateY(1px); box-shadow: 0 1px 0 #101418; }
+    .btn-action { border-color: var(--phosphor-dim); color: var(--phosphor-text); }
+    .btn-action:hover { background: #291a1a; }
+    input[type="file"] { display: none; }
+
+    /* Knob Bay / Controls */
+    .knobs-rack {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+      gap: 12px;
+      padding: 14px;
+      background: #161a1e;
+      border-bottom: 2px solid var(--border-panel);
+    }
+    .knob-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .knob-label {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #8da1b2;
+      text-align: center;
+      font-weight: 600;
+    }
+    .knob-dial-container {
+      position: relative;
+      width: 48px;
+      height: 48px;
+      cursor: ns-resize;
+      touch-action: none;
+    }
+    .knob-dial {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #38424d, #14181c);
+      border: 2px solid #4a5663;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.6), inset 0 2px 3px rgba(255,255,255,0.2);
+      position: relative;
+      transition: transform 0.05s ease-out;
+    }
+    .knob-pip {
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 3px;
+      height: 10px;
+      background: var(--phosphor-text);
+      box-shadow: 0 0 5px var(--phosphor-text);
+      border-radius: 2px;
+    }
+    .knob-readout {
+      font-size: 0.70rem;
+      color: var(--phosphor-text);
+      background: #0d1012;
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid #232b33;
+      min-width: 50px;
+      text-align: center;
+    }
+
+    /* Sub-Controls: Toggles & Font Rack */
+    .subcontrols-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      background: #111518;
+      border-bottom: 1px solid var(--border-panel);
+      font-size: 0.72rem;
+    }
+    .selector-group { display: flex; align-items: center; gap: 6px; }
+    .selector-group select {
+      background: #1c2228;
+      border: 1px solid #36414c;
+      color: var(--phosphor-text);
+      font-family: inherit;
+      font-size: 0.72rem;
+      padding: 3px 6px;
+      border-radius: 3px;
+      outline: none;
+    }
+
+    /* CRT Monitor Frame */
+    .crt-screen-frame {
+      position: relative;
+      background: var(--crt-bg);
+      padding: 16px;
+      box-shadow: inset 0 0 40px rgba(0,0,0,0.9);
+      min-height: 480px;
+      display: flex;
+      flex-direction: column;
+    }
+    /* CRT Scanline & Phosphor Flicker effect */
+    .crt-screen-frame::before {
+      content: " ";
+      display: block;
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+      background-size: 100% 3px, 6px 100%;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    /* WordStar Ruler */
+    .ws-ruler {
+      font-family: 'IBM Plex Mono', monospace;
+      color: var(--phosphor-dim);
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+      overflow-x: hidden;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    /* Editable Text Field */
+    .editor-viewport {
+      flex: 1;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      overflow: auto;
+    }
+    .page-sheet {
+      width: 100%;
+      max-width: 800px;
+      min-height: 520px;
+      background: transparent;
+      outline: none;
+      border: none;
+      color: var(--phosphor-text);
+      text-shadow: 0 0 6px var(--glow-color);
+      font-family: var(--font-active);
+      font-size: 1.05rem;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-break: break-word;
+      user-select: text;
+    }
+
+    /* Mainframe Status Line (Bottom) */
+    .status-bar {
+      background: #0d1012;
+      border-top: 2px solid var(--border-panel);
+      padding: 8px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 0.72rem;
+      color: var(--phosphor-dim);
+      font-weight: 600;
+    }
+    .status-bar span { color: var(--phosphor-text); }
+
+    /* Document Info + Find + Export Options strip */
+    .tools-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      padding: 6px 14px;
+      background: #0f1316;
+      border-bottom: 1px solid var(--border-panel);
+      font-size: 0.72rem;
+    }
+    .tools-strip input[type="text"],
+    .tools-strip input[type="number"],
+    .tools-strip select {
+      background: #1c2228;
+      border: 1px solid #36414c;
+      color: var(--phosphor-text);
+      font-family: inherit;
+      font-size: 0.72rem;
+      padding: 3px 6px;
+      border-radius: 3px;
+      outline: none;
+    }
+    .tools-strip label { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+    .info-panel {
+      display: none;
+      background: #111518;
+      border-bottom: 1px solid var(--border-panel);
+      padding: 8px 14px;
+      font-size: 0.72rem;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .info-panel.visible { display: flex; }
+    .info-field { display: flex; flex-direction: column; gap: 2px; min-width: 140px; }
+    .info-field input { background: #0d1012; border: 1px solid #232b33; color: var(--phosphor-text); font-family: inherit; padding: 2px 6px; border-radius: 3px; }
+
+    /* ===== Mobile Optimizations ===== */
+    @media (max-width: 768px) {
+      body { padding: 6px; }
+      .console-chassis { max-width: 100%; border-width: 2px; border-radius: 6px; }
+      .header-bar { padding: 8px 10px; gap: 8px; }
+      .header-title { font-size: 0.7rem; }
+      .header-actions { width: 100%; justify-content: space-between; }
+      .btn { padding: 8px 10px; font-size: 0.68rem; min-height: 36px; } /* better touch targets */
+      .knobs-rack {
+        grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+        gap: 8px;
+        padding: 10px 8px;
+      }
+      .knob-dial-container { width: 44px; height: 44px; }
+      .knob-label { font-size: 0.58rem; }
+      .knob-readout { font-size: 0.65rem; min-width: 44px; }
+      .subcontrols-bar { flex-direction: column; align-items: stretch; gap: 8px; padding: 8px 10px; }
+      .selector-group { justify-content: space-between; }
+      .selector-group select { flex: 1; max-width: 70%; }
+      .crt-screen-frame { padding: 10px; min-height: 380px; }
+      .ws-ruler { font-size: 0.68rem; letter-spacing: 1.2px; margin-bottom: 8px; }
+      .page-sheet { font-size: 0.98rem; min-height: 420px; line-height: 1.35; }
+      .status-bar { font-size: 0.65rem; padding: 6px 10px; gap: 6px; }
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 4px; }
+      .header-bar { flex-direction: column; align-items: stretch; }
+      .header-actions { flex-wrap: wrap; justify-content: center; }
+      .knobs-rack { grid-template-columns: repeat(3, 1fr); }
+      .crt-screen-frame { min-height: 320px; padding: 8px; }
+      .page-sheet { font-size: 0.92rem; min-height: 360px; }
+      .ws-ruler { display: none; } /* hide ruler on very small screens to save space */
+    }
+  </style>
+</head>
+<body class="phosphor-red">
+
+<div class="console-chassis">
+  <!-- Top Command Bay -->
+  <div class="header-bar">
+    <div class="header-title">
+      <span>IBM S/370 • CRAFTSTAR</span> [PDF PROCESSOR]
+    </div>
+    <div class="header-actions">
+      <label class="btn btn-action" title="Import PDF using client-side parser">
+        [ LOAD PDF ]
+        <input type="file" id="pdfFileInput" accept="application/pdf,.pdf,text/plain">
+      </label>
+      <button class="btn btn-action" id="btnExportPdf" title="Compile document into standard PDF via WASM/JS engine">[ STORE / PDF ]</button>
+      <button class="btn" id="btnPageBreak" title="Insert WordStar page split (.pa)">[ +PAGE ]</button>
+      <button class="btn" id="btnClear">[ IPL / CLR ]</button>
+    </div>
+  </div>
+
+  <!-- Physical Knob Deck (Touch & Drag Enabled) -->
+  <div class="knobs-rack">
+    <div class="knob-cell">
+      <span class="knob-label">BEAM GAIN</span>
+      <div class="knob-dial-container" data-knob="zoom" data-val="1.0" data-min="0.6" data-max="2.0" data-step="0.05">
+        <div class="knob-dial"><div class="knob-pip"></div></div>
+      </div>
+      <div class="knob-readout" id="readout-zoom">1.0x</div>
+    </div>
+
+    <div class="knob-cell">
+      <span class="knob-label">LINE PITCH</span>
+      <div class="knob-dial-container" data-knob="pitch" data-val="1.4" data-min="1.0" data-max="2.4" data-step="0.1">
+        <div class="knob-dial"><div class="knob-pip"></div></div>
+      </div>
+      <div class="knob-readout" id="readout-pitch">1.4x</div>
+    </div>
+
+    <div class="knob-cell">
+      <span class="knob-label">KERNING</span>
+      <div class="knob-dial-container" data-knob="kerning" data-val="0" data-min="-2" data-max="6" data-step="0.5">
+        <div class="knob-dial"><div class="knob-pip"></div></div>
+      </div>
+      <div class="knob-readout" id="readout-kerning">0px</div>
+    </div>
+
+    <div class="knob-cell">
+      <span class="knob-label">L-MARGIN</span>
+      <div class="knob-dial-container" data-knob="margin" data-val="20" data-min="0" data-max="90" data-step="5">
+        <div class="knob-dial"><div class="knob-pip"></div></div>
+      </div>
+      <div class="knob-readout" id="readout-margin">20px</div>
+    </div>
+
+    <div class="knob-cell">
+      <span class="knob-label">ORIENTATION</span>
+      <div class="knob-dial-container" data-knob="rot" data-val="0" data-min="0" data-max="270" data-step="90">
+        <div class="knob-dial"><div class="knob-pip"></div></div>
+      </div>
+      <div class="knob-readout" id="readout-rot">000°</div>
+    </div>
+  </div>
+
+  <!-- Sub-Control Ribbon: Phosphors, Fonts, Audio -->
+  <div class="subcontrols-bar">
+    <div class="selector-group">
+      <label>FONT RACK:</label>
+      <select id="fontSelect">
+        <option value="'IBM Plex Mono', monospace">IBM Plex Mono (Mainframe S/370)</option>
+        <option value="'VT323', monospace">VT323 (CRT Cathode Phosphor)</option>
+        <option value="'Courier Prime', monospace">Courier Prime (WordStar Strike)</option>
+        <option value="'EB Garamond', serif">EB Garamond (Editorial / Book)</option>
+        <option value="'Inter', sans-serif">Inter (Clean Technical Sans)</option>
+      </select>
+    </div>
+
+    <div class="selector-group">
+      <label>PHOSPHOR:</label>
+      <select id="phosphorSelect">
+        <option value="phosphor-red" selected>P22R (Red Phosphor)</option>
+        <option value="phosphor-green">P39 (Green Phosphor)</option>
+        <option value="phosphor-amber">P20 (Amber Phosphor)</option>
+        <option value="phosphor-white">P4 (Paper White)</option>
+      </select>
+    </div>
+
+    <div class="selector-group">
+      <button class="btn" id="btnAudioToggle">AUDIO: [ON]</button>
+    </div>
+  </div>
+
+  <!-- Find / Export Options / Info strip -->
+  <div class="tools-strip">
+    <label>FIND: <input type="text" id="findInput" placeholder="search text…" style="width:140px"></label>
+    <button class="btn" id="btnFindNext">[ FIND ]</button>
+    <button class="btn" id="btnInfoToggle">[ INFO ]</button>
+    <label>PAGE: 
+      <select id="pageSizeSelect">
+        <option value="letter" selected>Letter</option>
+        <option value="a4">A4</option>
+      </select>
+    </label>
+    <label>FONT PT: <input type="number" id="exportFontSize" value="11" min="6" max="24" style="width:48px"></label>
+    <label><input type="checkbox" id="headerFirstOnly"> Header only p.1</label>
+  </div>
+
+  <!-- Document Info Panel -->
+  <div class="info-panel" id="infoPanel">
+    <div class="info-field"><label>Title</label><input id="infoTitle" placeholder="Title"></div>
+    <div class="info-field"><label>Author</label><input id="infoAuthor" placeholder="Author"></div>
+    <div class="info-field"><label>Subject</label><input id="infoSubject" placeholder="Subject"></div>
+    <div class="info-field"><label>Keywords</label><input id="infoKeywords" placeholder="Keywords"></div>
+    <div class="info-field"><label>Pages</label><span id="infoPages">1</span></div>
+    <div class="info-field"><label>Words</label><span id="infoWords">0</span></div>
+  </div>
+
+  <!-- CRT Monitor & Document Viewport -->
+  <div class="crt-screen-frame">
+    <!-- WordStar Ruler Display -->
+    <div class="ws-ruler" id="wsRuler">
+      L----!----!----!----!----!----!----!----!----!----!----!----!----!----!----!----R
+    </div>
+
+    <div class="editor-viewport" id="viewport">
+      <div class="page-sheet" id="editor" contenteditable="true" spellcheck="false">.he CRAFTSTAR SYSTEM/370 • RED PHOSPHOR CONSOLE
+.fo PAGE %P% OF CRAFTSTAR ARCHIVES
+.meta Title: Mainframe Document Specification
+.meta Author: IBM S/370 CraftStar Console
+
+1.0 INTRODUCTION TO CLIENT-SIDE PDF COMPOSITION
+-------------------------------------------------
+This terminal processes PDF documents inside browser storage.
+All typography, stream reconstruction, and page splitting occur locally.
+
+Default phosphor is now P22R Red. Switch themes via the PHOSPHOR selector.
+WordStar dot commands are supported at the left margin:
+  .pa        Forces a Page Break
+  .he [text] Sets dynamic Running Header
+  .fo [text] Sets dynamic Running Footer
+  .lm [pts]  Sets Left Margin boundary
+  .meta [k]  Injects PDF Document Info Dictionary
+
+Rotate the rotary knobs on the console rack to modify BEAM GAIN,
+LINE PITCH, or KERNING parameters. Tap [STORE / PDF] to compile.</div>
+    </div>
+  </div>
+
+  <!-- Mainframe Hardware Registers & Telemetry -->
+  <div class="status-bar">
+    <div>SYS_REG: <span id="regStatus">0x7E3 / ARMED</span></div>
+    <div>PAGES: <span id="statPages">1</span></div>
+    <div>WORDS: <span id="statWords">0</span></div>
+    <div>CHARS: <span id="statChars">0</span></div>
+    <div>CODEPAGE: <span>IBM-037/UTF-8</span></div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   1. WEBAUDIO MECHANICAL RELAY SYNTHESIZER
+   ===================================================================== */
+let audioCtx = null;
+let audioEnabled = true;
+
+function playMechanicalClick(frequency = 650, duration = 0.018) {
+  if (!audioEnabled) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + duration);
+    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  } catch (e) {}
+}
+
+document.getElementById('btnAudioToggle').addEventListener('click', (e) => {
+  audioEnabled = !audioEnabled;
+  e.target.textContent = `AUDIO: [${audioEnabled ? 'ON' : 'MUTED'}]`;
+  playMechanicalClick(900, 0.03);
+});
+
+/* =====================================================================
+   2. TACTILE ROTARY KNOB CONTROLLER (TOUCH & MOUSE DRAGGABLE)
+   ===================================================================== */
+const editor = document.getElementById('editor');
+const knobs = document.querySelectorAll('.knob-dial-container');
+
+knobs.forEach(container => {
+  let isDragging = false;
+  let startY = 0;
+  let currentVal = parseFloat(container.dataset.val);
+  const min = parseFloat(container.dataset.min);
+  const max = parseFloat(container.dataset.max);
+  const step = parseFloat(container.dataset.step);
+  const type = container.dataset.knob;
+  const dial = container.querySelector('.knob-dial');
+  const readout = document.getElementById(`readout-${type}`);
+
+  function updateVisuals(val) {
+    const range = max - min;
+    const pct = (val - min) / range;
+    const angle = (pct * 270) - 135; // -135deg to +135deg
+    dial.style.transform = `rotate(${angle}deg)`;
+
+    if (type === 'zoom') {
+      readout.textContent = `${val.toFixed(2)}x`;
+      editor.style.transform = `scale(${val})`;
+      editor.style.transformOrigin = 'top center';
+    } else if (type === 'pitch') {
+      readout.textContent = `${val.toFixed(1)}x`;
+      editor.style.lineHeight = val;
+    } else if (type === 'kerning') {
+      readout.textContent = `${val}px`;
+      editor.style.letterSpacing = `${val}px`;
+    } else if (type === 'margin') {
+      readout.textContent = `${val}px`;
+      editor.style.paddingLeft = `${val}px`;
+    } else if (type === 'rot') {
+      readout.textContent = `${String(val).padStart(3, '0')}°`;
+      editor.style.rotate = `${val}deg`;
+    }
+  }
+
+  updateVisuals(currentVal);
+
+  function onPointerDown(e) {
+    isDragging = true;
+    startY = e.clientY || (e.touches && e.touches[0].clientY);
+    playMechanicalClick(800, 0.015);
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('mouseup', onPointerUp);
+    window.addEventListener('touchmove', onPointerMove, { passive: false });
+    window.addEventListener('touchend', onPointerUp);
+  }
+
+  function onPointerMove(e) {
+    if (!isDragging) return;
+    if (e.cancelable) e.preventDefault();
+    const y = e.clientY || (e.touches && e.touches[0].clientY);
+    const deltaY = startY - y;
+    if (Math.abs(deltaY) >= 4) {
+      const steps = Math.round(deltaY / 6);
+      let newVal = currentVal + (steps * step);
+      newVal = Math.max(min, Math.min(max, newVal));
+      if (newVal !== currentVal) {
+        currentVal = newVal;
+        container.dataset.val = currentVal;
+        updateVisuals(currentVal);
+        playMechanicalClick(500 + (currentVal * 100), 0.01);
+        startY = y;
+      }
+    }
+  }
+
+  function onPointerUp() {
+    if (!isDragging) return;
+    isDragging = false;
+    window.removeEventListener('mousemove', onPointerMove);
+    window.removeEventListener('mouseup', onPointerUp);
+    window.removeEventListener('touchmove', onPointerMove);
+    window.removeEventListener('touchend', onPointerUp);
+  }
+
+  container.addEventListener('mousedown', onPointerDown);
+  container.addEventListener('touchstart', onPointerDown, { passive: false });
+});
+
+/* =====================================================================
+   3. FONT RACK & PHOSPHOR THEMES
+   ===================================================================== */
+document.getElementById('fontSelect').addEventListener('change', (e) => {
+  document.documentElement.style.setProperty('--font-active', e.target.value);
+  playMechanicalClick(750, 0.02);
+});
+
+document.getElementById('phosphorSelect').addEventListener('change', (e) => {
+  document.body.className = e.target.value;
+  playMechanicalClick(820, 0.025);
+});
+
+/* =====================================================================
+   4. DOCUMENT TELEMETRY & WORDSTAR RULER
+   ===================================================================== */
+function updateTelemetry() {
+  const text = editor.innerText || '';
+  const chars = text.length;
+  const words = (text.trim().match(/\S+/g) || []).length;
+  
+  // Detect WordStar page splits (.pa commands)
+  const pageMatches = text.split(/\n\.pa\b/).length;
+  document.getElementById('statPages').textContent = pageMatches;
+  document.getElementById('statWords').textContent = words;
+  document.getElementById('statChars').textContent = chars;
+}
+
+updateTelemetry();
+// Initial info sync (in case panel opens)
+if (typeof syncInfoFromEditor === 'function') syncInfoFromEditor();
+
+document.getElementById('btnPageBreak').addEventListener('click', () => {
+  editor.focus();
+  document.execCommand('insertText', false, '\n.pa\n');
+  updateTelemetry();
+  playMechanicalClick(950, 0.03);
+});
+
+document.getElementById('btnClear').addEventListener('click', () => {
+  if (confirm("IPL RESET: Clear working terminal memory?")) {
+    editor.innerText = '';
+    updateTelemetry();
+    playMechanicalClick(300, 0.05);
+  }
+});
+
+/* =====================================================================
+   5. PDF IMPORT ENGINE (PDF.js + text fallback)
+   ===================================================================== */
+document.getElementById('pdfFileInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  playMechanicalClick(900, 0.04);
+
+  // Plain text fallback
+  if (file.type === "text/plain" || file.name.endsWith('.txt')) {
+    const text = await file.text();
+    editor.innerText = text;
+    updateTelemetry();
+    syncInfoFromEditor();
+    return;
+  }
+
+  // PDF via PDF.js
+  if (!window.pdfjsLib) {
+    alert("PDF.js not loaded. Falling back to basic scanner.");
+    return basicPdfScan(file);
+  }
+
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+    const pdf = await loadingTask.promise;
+    let fullText = `.he IMPORTED: ${file.name.toUpperCase()}\n.fo CRAFTSTAR EXTRACTED\n.meta Title: ${file.name}\n\n`;
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const pageText = content.items.map(item => item.str).join(' ').replace(/\s+/g, ' ').trim();
+      if (pageText) fullText += pageText + '\n';
+      if (i < pdf.numPages) fullText += '\n.pa\n';
+    }
+
+    editor.innerText = fullText.trim();
+    alert(`SUCCESS: Extracted ${pdf.numPages} page(s) from [${file.name}] via PDF.js.`);
+    updateTelemetry();
+    syncInfoFromEditor();
+  } catch (err) {
+    console.warn(err);
+    alert("PDF.js failed, trying basic scanner…");
+    basicPdfScan(file);
+  }
+});
+
+function basicPdfScan(file) {
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const rawData = evt.target.result;
+    let extractedText = "";
+    try {
+      const btMatches = rawData.match(/BT[\s\S]*?ET/g);
+      if (btMatches) {
+        btMatches.forEach(block => {
+          const strMatches = block.match(/\((.*?)\)\s*(?:Tj|'|")/g) || block.match(/\[(.*?)\]\s*TJ/g);
+          if (strMatches) {
+            strMatches.forEach(item => {
+              const clean = item.replace(/[\(\)\[\]]/g, '').replace(/\\n/g, '\n').replace(/\\/g, '');
+              extractedText += clean + " ";
+            });
+            extractedText += "\n";
+          }
+        });
+      }
+      if (!extractedText.trim()) {
+        const tokens = rawData.match(/[A-Za-z0-9\.,;:\-\(\)\/]{4,}/g);
+        if (tokens) extractedText = tokens.slice(0, 200).join(' ');
+      }
+      if (extractedText.trim()) {
+        editor.innerText = `.he IMPORTED PDF ARCHIVE: ${file.name.toUpperCase()}\n.fo CRAFTSTAR EXTRACTED STREAM\n\n` + extractedText;
+        alert(`SUCCESS: Recovered text stream from [${file.name}] (basic scanner).`);
+      } else {
+        alert("NOTICE: Could not extract text (compressed or image-based PDF).");
+      }
+    } catch (err) {
+      alert("Error parsing PDF: " + err.message);
+    }
+    updateTelemetry();
+    syncInfoFromEditor();
+  };
+  reader.readAsBinaryString(file);
+}
+
+/* =====================================================================
+   6a. FIND / SEARCH
+   ===================================================================== */
+let lastFindIndex = 0;
+document.getElementById('btnFindNext').addEventListener('click', () => {
+  const term = document.getElementById('findInput').value.trim();
+  if (!term) return;
+  const text = editor.innerText || '';
+  const lower = text.toLowerCase();
+  const needle = term.toLowerCase();
+  let idx = lower.indexOf(needle, lastFindIndex);
+  if (idx === -1 && lastFindIndex > 0) {
+    idx = lower.indexOf(needle, 0); // wrap
+  }
+  if (idx === -1) {
+    alert("Not found.");
+    lastFindIndex = 0;
+    return;
+  }
+  lastFindIndex = idx + needle.length;
+
+  // Select the match
+  const range = document.createRange();
+  const sel = window.getSelection();
+  // Approximate by walking text nodes (simple for contenteditable pre-wrap)
+  let pos = 0;
+  let startNode, startOffset, endNode, endOffset;
+  const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+  let node;
+  while ((node = walker.nextNode())) {
+    const len = node.textContent.length;
+    if (pos + len > idx && !startNode) {
+      startNode = node;
+      startOffset = idx - pos;
+    }
+    if (pos + len >= idx + needle.length && !endNode) {
+      endNode = node;
+      endOffset = (idx + needle.length) - pos;
+      break;
+    }
+    pos += len;
+  }
+  if (startNode && endNode) {
+    range.setStart(startNode, startOffset);
+    range.setEnd(endNode, endOffset);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    startNode.parentElement?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+  playMechanicalClick(700, 0.015);
+});
+
+document.getElementById('findInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('btnFindNext').click();
+});
+
+/* =====================================================================
+   6b. DOCUMENT INFO PANEL
+   ===================================================================== */
+function syncInfoFromEditor() {
+  const text = editor.innerText || '';
+  const lines = text.split('\n');
+  let title = '', author = '', subject = '', keywords = '';
+  lines.forEach(line => {
+    const t = line.trim();
+    if (t.toLowerCase().startsWith('.meta title:')) title = t.substring(12).trim();
+    else if (t.toLowerCase().startsWith('.meta author:')) author = t.substring(13).trim();
+    else if (t.toLowerCase().startsWith('.meta subject:')) subject = t.substring(14).trim();
+    else if (t.toLowerCase().startsWith('.meta keywords:')) keywords = t.substring(15).trim();
+  });
+  document.getElementById('infoTitle').value = title;
+  document.getElementById('infoAuthor').value = author;
+  document.getElementById('infoSubject').value = subject;
+  document.getElementById('infoKeywords').value = keywords;
+  document.getElementById('infoPages').textContent = document.getElementById('statPages').textContent;
+  document.getElementById('infoWords').textContent = document.getElementById('statWords').textContent;
+}
+
+document.getElementById('btnInfoToggle').addEventListener('click', () => {
+  const panel = document.getElementById('infoPanel');
+  panel.classList.toggle('visible');
+  if (panel.classList.contains('visible')) syncInfoFromEditor();
+  playMechanicalClick(800, 0.02);
+});
+
+// Keep info live when typing
+editor.addEventListener('input', () => {
+  updateTelemetry();
+  if (document.getElementById('infoPanel').classList.contains('visible')) {
+    syncInfoFromEditor();
+  }
+  playMechanicalClick(420 + Math.random() * 80, 0.008);
+});
+
+/* =====================================================================
+   7. PDF SYNTHESIZER & EXPORT ENGINE (REFINED)
+   ===================================================================== */
+document.getElementById('btnExportPdf').addEventListener('click', () => {
+  playMechanicalClick(1100, 0.04);
+
+  const rawText = editor.innerText || '';
+  const inputLines = rawText.split('\n');
+
+  let headerText = "CRAFTSTAR DOCUMENT";
+  let footerText = "PAGE %P%";
+  let title = document.getElementById('infoTitle').value.trim() || "CraftStar Document";
+  let author = document.getElementById('infoAuthor').value.trim() || "System/370 Operator";
+  let subject = document.getElementById('infoSubject').value.trim() || "";
+  let keywords = document.getElementById('infoKeywords').value.trim() || "";
+
+  const pageSize = document.getElementById('pageSizeSelect').value;
+  const fontSize = parseInt(document.getElementById('exportFontSize').value, 10) || 11;
+  const headerFirstOnly = document.getElementById('headerFirstOnly').checked;
+
+  // Knob Parameters extracted into PDF Engine
+  const rotVal = parseInt(document.querySelector('[data-knob="rot"]').dataset.val, 10) || 0;
+  const kerningVal = parseFloat(document.querySelector('[data-knob="kerning"]').dataset.val) || 0;
+  const marginPt = Math.max(36, Math.round(parseFloat(document.querySelector('[data-knob="margin"]').dataset.val) * 1.5) || 54);
+
+  // Map Rack Font to Standard 14 PDF BaseFont
+  const fontFam = document.getElementById('fontSelect').value;
+  let baseFont = '/Courier';
+  if (fontFam.includes('Garamond')) baseFont = '/Times-Roman';
+  else if (fontFam.includes('Inter')) baseFont = '/Helvetica';
+
+  const isA4 = pageSize === 'a4';
+  const pageW = isA4 ? 595 : 612;
+  const pageH = isA4 ? 842 : 792;
+  const headerY = isA4 ? 800 : 750;
+  const bodyStartY = isA4 ? 750 : 700;
+  const footerY = 50;
+
+  // Estimate maximum characters per line based on margin & font size
+  const printableWidth = pageW - (marginPt * 2);
+  const avgCharWidth = fontSize * 0.6;
+  const maxLineChars = Math.max(40, Math.floor(printableWidth / avgCharWidth));
+
+  // Word wrapping helper
+  function wrapLine(str, limit) {
+    if (str.length <= limit) return [str];
+    const words = str.split(' ');
+    const out = [];
+    let cur = '';
+    words.forEach(w => {
+      if ((cur + ' ' + w).trim().length <= limit) {
+        cur = (cur + ' ' + w).trim();
+      } else {
+        if (cur) out.push(cur);
+        cur = w;
+      }
+    });
+    if (cur) out.push(cur);
+    return out;
+  }
+
+  // Parse WordStar Dot Commands and wrap text
+  const documentPages = [[]];
+  inputLines.forEach(line => {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('.he ')) {
+      headerText = trimmed.substring(4).trim();
+    } else if (trimmed.startsWith('.fo ')) {
+      footerText = trimmed.substring(4).trim();
+    } else if (trimmed.startsWith('.meta ')) {
+      const rest = trimmed.substring(6);
+      if (rest.toLowerCase().startsWith('title:')) title = rest.substring(6).trim();
+      else if (rest.toLowerCase().startsWith('author:')) author = rest.substring(7).trim();
+      else if (rest.toLowerCase().startsWith('subject:')) subject = rest.substring(8).trim();
+      else if (rest.toLowerCase().startsWith('keywords:')) keywords = rest.substring(9).trim();
+    } else if (trimmed === '.pa') {
+      documentPages.push([]);
+    } else {
+      // Auto-wrap regular lines to keep them inside margins
+      const wrapped = wrapLine(line, maxLineChars);
+      wrapped.forEach(wLine => documentPages[documentPages.length - 1].push(wLine));
+    }
+  });
+
+  // Compile PDF 1.4
+  let pdf = "%PDF-1.4\n%âãÏÓ\n";
+  const xref = [];
+
+  function addObj(content) {
+    xref.push(pdf.length);
+    pdf += `${xref.length} 0 obj\n${content}\nendobj\n`;
+  }
+
+  addObj(`<< /Type /Catalog /Pages 2 0 R >>`);
+
+  const numPages = documentPages.length;
+  const pageObjStart = 4;
+  const pageKids = [];
+  for (let i = 0; i < numPages; i++) {
+    pageKids.push(`${pageObjStart + (i * 2)} 0 R`);
+  }
+
+  addObj(`<< /Type /Pages /Kids [ ${pageKids.join(' ')} ] /Count ${numPages} >>`);
+  addObj(`<< /Type /Font /Subtype /Type1 /BaseFont ${baseFont} >>`);
+
+  for (let i = 0; i < numPages; i++) {
+    const pageNum = i + 1;
+    const pageLines = documentPages[i];
+    const showHeader = !headerFirstOnly || pageNum === 1;
+
+    let streamData = "BT\n";
+    // Inject Character Kerning / Spacing from console knob
+    if (kerningVal !== 0) {
+      streamData += `${kerningVal.toFixed(2)} Tc\n`;
+    }
+
+    if (showHeader) {
+      streamData += `/F1 ${Math.max(8, fontSize - 1)} Tf\n`;
+      streamData += `1 0 0 1 ${marginPt} ${headerY} Tm (${headerText.replace(/[()]/g, '')}) Tj\n`;
+      streamData += `0 -16 Td (${"-".repeat(Math.min(70, maxLineChars))}) Tj\n`;
+    }
+
+    let y = showHeader ? bodyStartY - 10 : bodyStartY;
+    streamData += `1 0 0 1 ${marginPt} ${y} Tm\n/F1 ${fontSize} Tf\n`;
+    
+    pageLines.forEach((ln, idx) => {
+      if (idx > 0) streamData += `0 -${Math.round(fontSize * 1.35)} Td\n`;
+      const cleanLn = ln.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+      streamData += `(${cleanLn}) Tj\n`;
+    });
+
+    const currentFooter = footerText.replace('%P%', `${pageNum}/${numPages}`);
+    streamData += `1 0 0 1 ${marginPt} ${footerY} Tm\n/F1 ${Math.max(8, fontSize - 2)} Tf\n(${currentFooter.replace(/[()]/g, '')}) Tj\nET\n`;
+
+    const streamLength = streamData.length;
+    const contentObjId = pageObjStart + (i * 2) + 1;
+
+    // Apply orientation rotation to the page dictionary
+    addObj(`<< /Type /Page /Parent 2 0 R /Rotate ${rotVal} /MediaBox [0 0 ${pageW} ${pageH}] /Resources << /Font << /F1 3 0 R >> >> /Contents ${contentObjId} 0 R >>`);
+    addObj(`<< /Length ${streamLength} >>\nstream\n${streamData}endstream`);
+  }
+
+  const infoParts = [
+    `/Title (${title.replace(/[()]/g, '')})`,
+    `/Author (${author.replace(/[()]/g, '')})`,
+    `/Creator (CraftStar S/370 Engine)`
+  ];
+  if (subject) infoParts.push(`/Subject (${subject.replace(/[()]/g, '')})`);
+  if (keywords) infoParts.push(`/Keywords (${keywords.replace(/[()]/g, '')})`);
+
+  const infoObjId = xref.length + 1;
+  addObj(`<< ${infoParts.join(' ')} >>`);
+
+  const startXref = pdf.length;
+  pdf += `xref\n0 ${xref.length + 1}\n0000000000 65535 f \n`;
+  xref.forEach(pos => {
+    pdf += `${String(pos).padStart(10, '0')} 00000 n \n`;
+  });
+
+  pdf += `trailer\n<< /Size ${xref.length + 1} /Root 1 0 R /Info ${infoObjId} 0 R >>\nstartxref\n${startXref}\n%%EOF`;
+
+  const blob = new Blob([pdf], { type: 'application/pdf' });
+  const downloadUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = downloadUrl;
+  a.download = `CRAFTSTAR_EXPORT_${Date.now()}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(downloadUrl);
+});
+</script>
+</body>
+</html>
