@@ -871,7 +871,31 @@ body::after {
         </div>
     </div>
 </section>
+<!-- ========================================================================== -->
+<!--                   HYPERSIGIL FORGE (SECTION MARKUP)                        -->
+<!-- ========================================================================== -->
+<section class="ed-section" style="margin-top: 40px;">
+    <div class="hypersigil-forge reveal" style="border: 1px solid var(--ed-accent, #ff0033); background: #050505; padding: 30px 20px; max-width: 500px; margin: 0 auto; text-align: center; position: relative;">
+        <div style="position: absolute; top: 10px; left: 15px; font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: 2px;">Hypersigil_Forge_v1.0</div>
+        
+        <h2 style="font-family: 'Almendra', serif; color: var(--ed-accent, #ff0033); font-size: 1.2rem; margin-bottom: 15px; letter-spacing: 2px;">HYPERSIGIL</h2>
+        
+        <!-- Hypersigil Canvas with direct click binding -->
+        <canvas id="hypersigil-canvas" width="360" height="360" onclick="forgeHypersigil()" style="cursor: crosshair; filter: drop-shadow(0 0 12px rgba(255, 0, 51, 0.5)); display: block; margin: 0 auto; background: #020202; border: 1px solid #1a1a1a;"></canvas>
+        
+        <!-- Interactive status trigger -->
+        <div id="hypersigil-status" onclick="forgeHypersigil()" style="margin-top: 15px; font-size: 10px; color: var(--ed-accent, #ff0033); font-weight: bold; text-transform: uppercase; cursor: pointer; letter-spacing: 1px;">
+            [ click canvas or text to forge new hypersigil ]
+        </div>
 
+        <!-- Built-in Export Button -->
+        <div style="margin-top: 15px;">
+            <button type="button" class="btn-hypersigil-export" onclick="event.stopPropagation(); exportHypersigil();" style="padding: 6px 14px; background: #050505; color: var(--ed-accent, #ff0033); border: 1px solid var(--ed-accent, #ff0033); font-family: var(--font-mono, monospace); font-size: 11px; letter-spacing: 1px; cursor: pointer; transition: all 0.2s ease;">
+                EXPORT HYPERSIGIL DATA (PNG + TXT)
+            </button>
+        </div>
+    </div>
+</section>
 <section class="ed-section" style="align-items: flex-start; max-width: 65%;">
     <div style="text-align: center; margin-bottom: 30px;">
         <h1 class="headline" style="font-size: 3rem;">THE <span style="color: var(--red);">MEMEX</span></h1>
@@ -1807,7 +1831,367 @@ if (document.readyState === 'loading') {
     initSigilEngine();
 }
 </script>
+<!-- ========================================================================== -->
+<!--            HYPERSIGIL: PROCEDURAL ANIME & ARCHITECTURE ENGINE              -->
+<!-- ========================================================================== -->
+<script>
+/* ========================================================================== */
+/*                OFFLINE HYPERSIGIL SYNTHESIS ENGINE (v1.0)                  */
+/* ========================================================================== */
 
+let currentHypersigilMeta = {};
+
+// PRNG Linear Congruential Generator
+function createRNG(seed) {
+    let s = seed % 2147483647;
+    if (s <= 0) s += 2147483646;
+    return function() {
+        s = (s * 16807) % 2147483647;
+        return (s - 1) / 2147483646;
+    };
+}
+
+function forgeHypersigil() {
+    const canvas = document.getElementById('hypersigil-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const seed = Math.floor(Math.random() * 1000000);
+    const rng = createRNG(seed);
+    const W = canvas.width;
+    const H = canvas.height;
+    const cx = W / 2;
+    const cy = H / 2;
+
+    const accent = "#ff0033";
+    const white = "#ffffff";
+    const dim = "rgba(255, 0, 51, 0.25)";
+
+    // Clear canvas
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "#020202";
+    ctx.fillRect(0, 0, W, H);
+
+    // -------------------------------------------------------------
+    // LAYER 1: ARCHITECTURAL MATRIX & BLUEPRINT SCHEMATIC
+    // -------------------------------------------------------------
+    const archStyles = ["BRUTALIST_TORII", "GOTHIC_PORTAL", "ISOMETRIC_SANCTUM"];
+    const chosenArch = archStyles[Math.floor(rng() * archStyles.length)];
+
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = dim;
+
+    // Technical Blueprint Gridlines & Measurement ticks
+    for (let x = 20; x < W; x += 30) {
+        ctx.beginPath();
+        ctx.moveTo(x, 10); ctx.lineTo(x, H - 10);
+        ctx.stroke();
+    }
+    for (let y = 20; y < H; y += 30) {
+        ctx.beginPath();
+        ctx.moveTo(10, y); ctx.lineTo(W - 10, y);
+        ctx.stroke();
+    }
+
+    // Architectural Pillars / Shrines
+    ctx.strokeStyle = rng() > 0.4 ? accent : white;
+    ctx.lineWidth = 1.5;
+
+    // Stepped plinth base (isometric stairs)
+    const baseWidth = 140 + rng() * 60;
+    const steps = 3 + Math.floor(rng() * 3);
+    for (let i = 0; i < steps; i++) {
+        const stepW = baseWidth - (i * 24);
+        const stepY = cy + 90 + (i * 12);
+        ctx.strokeRect(cx - stepW / 2, stepY, stepW, 8);
+    }
+
+    if (chosenArch === "BRUTALIST_TORII") {
+        // Monolithic Torii lintel and twin uprights
+        const pillarW = 16;
+        const pillarH = 180;
+        const span = 130 + rng() * 30;
+
+        // Pillars with hatch shading
+        [cx - span / 2, cx + span / 2 - pillarW].forEach(px => {
+            ctx.strokeRect(px, cy - 90, pillarW, pillarH);
+            for (let hy = cy - 80; hy < cy + 80; hy += 8) {
+                ctx.beginPath();
+                ctx.moveTo(px, hy);
+                ctx.lineTo(px + pillarW, hy + 5);
+                ctx.stroke();
+            }
+        });
+        // Floating Top Lintels
+        ctx.strokeRect(cx - span / 2 - 25, cy - 105, span + 50, 14);
+        ctx.strokeRect(cx - span / 2 - 15, cy - 85, span + 30, 8);
+
+    } else if (chosenArch === "GOTHIC_PORTAL") {
+        // Vaulted cathedral arch
+        const archR = 75 + rng() * 20;
+        ctx.beginPath();
+        ctx.arc(cx, cy - 10, archR, Math.PI, 0);
+        ctx.lineTo(cx + archR, cy + 110);
+        ctx.lineTo(cx - archR, cy + 110);
+        ctx.closePath();
+        ctx.stroke();
+
+        // Inner nested archway
+        ctx.beginPath();
+        ctx.arc(cx, cy - 10, archR - 18, Math.PI, 0);
+        ctx.lineTo(cx + archR - 18, cy + 110);
+        ctx.lineTo(cx - archR - 18, cy + 110);
+        ctx.stroke();
+
+    } else {
+        // Isometric crystalline scaffolding
+        const isoH = 100;
+        const isoW = 80;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - isoH);
+        ctx.lineTo(cx + isoW, cy - 20);
+        ctx.lineTo(cx + isoW, cy + 90);
+        ctx.lineTo(cx, cy + 130);
+        ctx.lineTo(cx - isoW, cy + 90);
+        ctx.lineTo(cx - isoW, cy - 20);
+        ctx.closePath();
+        ctx.stroke();
+        // Inner axis
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - isoH); ctx.lineTo(cx, cy + 130);
+        ctx.moveTo(cx - isoW, cy - 20); ctx.lineTo(cx, cy + 20); ctx.lineTo(cx + isoW, cy - 20);
+        ctx.stroke();
+    }
+
+    // -------------------------------------------------------------
+    // LAYER 2: PROCEDURAL GRAPHIC COMIC / ANIME CHARACTER
+    // -------------------------------------------------------------
+    const poses = ["SUMMONER_HOOD", "KATANA_STANCE", "ASTRAL_LEVITATE"];
+    const chosenPose = poses[Math.floor(rng() * poses.length)];
+
+    ctx.save();
+    ctx.fillStyle = "#050505";
+    ctx.strokeStyle = white;
+    ctx.lineWidth = 1.6;
+
+    // Character center of mass
+    const charY = cy + 20;
+    const facing = rng() > 0.5 ? 1 : -1;
+
+    // 1. Torso / Dynamic Cloak (Graphic Manga silhouette)
+    ctx.beginPath();
+    ctx.moveTo(cx - 14 * facing, charY - 35);
+    // Shoulder & blowing coat
+    ctx.lineTo(cx + 25 * facing, charY - 25);
+    ctx.lineTo(cx + (35 + rng() * 20) * facing, charY + 50);
+    ctx.lineTo(cx + 8 * facing, charY + 55);
+    ctx.lineTo(cx - (30 + rng() * 15) * facing, charY + 50);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Manga ink hatching on shaded flank of cloak
+    ctx.beginPath();
+    for (let l = 0; l < 5; l++) {
+        ctx.moveTo(cx - 10 * facing, charY - 10 + (l * 8));
+        ctx.lineTo(cx - 24 * facing, charY + (l * 10));
+    }
+    ctx.stroke();
+
+    // 2. Anime Head / Hair Silhouette
+    const headY = charY - 48;
+    ctx.beginPath();
+    ctx.arc(cx, headY, 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Windswept Spiky Anime Hair Strokes
+    ctx.fillStyle = white;
+    ctx.strokeStyle = white;
+    for (let h = 0; h < 6; h++) {
+        const spikeLen = 14 + rng() * 12;
+        const spikeAngle = -Math.PI / 2 + (h * 0.35 * facing) - (0.4 * facing);
+        ctx.beginPath();
+        ctx.moveTo(cx, headY - 4);
+        ctx.lineTo(cx + Math.cos(spikeAngle) * spikeLen, headY + Math.sin(spikeAngle) * spikeLen);
+        ctx.lineTo(cx + Math.cos(spikeAngle + 0.2) * (spikeLen * 0.5), headY + Math.sin(spikeAngle + 0.2) * (spikeLen * 0.5));
+        ctx.fill();
+        ctx.stroke();
+    }
+
+    // Glowing Eyes / Manga Visor
+    ctx.fillStyle = accent;
+    ctx.fillRect(cx - 4 * facing, headY - 2, 5, 2);
+
+    // 3. Pose-Specific Arms / Relics
+    if (chosenPose === "KATANA_STANCE") {
+        // Diagonal Blade cutting across composition
+        ctx.strokeStyle = white;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx - 35 * facing, charY + 40);
+        ctx.lineTo(cx + 50 * facing, charY - 70);
+        ctx.stroke();
+        // Hilt
+        ctx.strokeStyle = accent;
+        ctx.beginPath();
+        ctx.moveTo(cx - 40 * facing, charY + 47);
+        ctx.lineTo(cx - 32 * facing, charY + 36);
+        ctx.stroke();
+
+    } else if (chosenPose === "SUMMONER_HOOD") {
+        // Outstretched Casting Arms with focal orbs
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(cx + 8 * facing, charY - 20);
+        ctx.lineTo(cx + 38 * facing, charY - 30);
+        ctx.stroke();
+        // Catalyst focal point
+        ctx.strokeStyle = accent;
+        ctx.beginPath();
+        ctx.arc(cx + 42 * facing, charY - 32, 6, 0, Math.PI * 2);
+        ctx.stroke();
+
+    } else { // ASTRAL_LEVITATE
+        // Levitating ribbon bindings
+        ctx.strokeStyle = accent;
+        for (let r = 0; r < 2; r++) {
+            ctx.beginPath();
+            ctx.moveTo(cx, charY + 50);
+            ctx.bezierCurveTo(cx - 40, charY + 80, cx + 40, charY + 95, cx, charY + 120);
+            ctx.stroke();
+        }
+    }
+    ctx.restore();
+
+    // -------------------------------------------------------------
+    // LAYER 3: SACRED GEOMETRY HYPERSIGIL BINDINGS
+    // -------------------------------------------------------------
+    ctx.save();
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 1.2;
+
+    // Outer Celestial Ring with runic ticks
+    const sigilR = 145;
+    ctx.beginPath();
+    ctx.arc(cx, cy, sigilR, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, sigilR - 8, 0, Math.PI * 2);
+    ctx.setLineDash([3, 5]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Radial Runic Ticks
+    const numTicks = 24;
+    for (let t = 0; t < numTicks; t++) {
+        const rad = (t / numTicks) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(rad) * (sigilR - 8), cy + Math.sin(rad) * (sigilR - 8));
+        ctx.lineTo(cx + Math.cos(rad) * sigilR, cy + Math.sin(rad) * sigilR);
+        ctx.stroke();
+    }
+
+    // Interlocking Polygon Sigil Geometry
+    const polyPoints = 5 + Math.floor(rng() * 4);
+    const polyR = 85 + rng() * 30;
+    const pts = [];
+    for (let p = 0; p < polyPoints; p++) {
+        const rad = (p / polyPoints) * Math.PI * 2 - Math.PI / 2;
+        pts.push({ x: cx + Math.cos(rad) * polyR, y: cy + Math.sin(rad) * polyR });
+    }
+
+    ctx.beginPath();
+    for (let i = 0; i < pts.length; i++) {
+        const next = (i * 2) % pts.length;
+        if (i === 0) ctx.moveTo(pts[0].x, pts[0].y);
+        ctx.lineTo(pts[next].x, pts[next].y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+
+    // Chaos nodal circles at vertices
+    pts.forEach(pt => {
+        ctx.fillStyle = rng() > 0.5 ? accent : white;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    ctx.restore();
+
+    // Metadata Cache
+    currentHypersigilMeta = {
+        seed: seed,
+        timestamp: new Date().toLocaleString(),
+        archClass: chosenArch,
+        entityPose: chosenPose,
+        polyGeometry: `${polyPoints}-POINT_RESONATOR`
+    };
+
+    const status = document.getElementById('hypersigil-status');
+    if (status) {
+        status.innerHTML = `hypersigil forged • [${chosenArch} // ${chosenPose}]`;
+    }
+}
+
+// -----------------------------------------------------------------
+// EXPORT ENGINE (PNG + TXT)
+// -----------------------------------------------------------------
+function exportHypersigil() {
+    const canvas = document.getElementById('hypersigil-canvas');
+    if (!canvas) return;
+    const sessionId = Math.random().toString(36).substring(2, 15);
+
+    // PNG Download
+    const imageData = canvas.toDataURL('image/png');
+    const pngLink = document.createElement('a');
+    pngLink.download = `hypersigil_${sessionId}.png`;
+    pngLink.href = imageData;
+    document.body.appendChild(pngLink);
+    pngLink.click();
+    document.body.removeChild(pngLink);
+
+    // TXT Manifest
+    const content = `╔═══════════════════════════════════════════════════════════════════════╗
+║                        HYPERSIGIL FORGE v1.0                          ║
+║            PROCEDURAL MANGA & ARCHITECTURAL MANIFEST                  ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+TIMESTAMP        : ${currentHypersigilMeta.timestamp || new Date().toLocaleString()}
+SESSION ID       : ${sessionId}
+SEED HASH        : ${currentHypersigilMeta.seed || 'N/A'}
+ARCHITECTURE     : ${currentHypersigilMeta.archClass || 'SCHEMATIC_NODE'}
+ENTITY CLASS     : ${currentHypersigilMeta.entityPose || 'ASTRAL_AVATAR'}
+SIGIL MATRIX     : ${currentHypersigilMeta.polyGeometry || 'SACRED_RING'}
+CANVAS RESOLUTION: ${canvas.width}x${canvas.height}
+IMAGE FILE       : hypersigil_${sessionId}.png
+`;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `hypersigil_${sessionId}_metadata.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Global scope registration
+window.forgeHypersigil = forgeHypersigil;
+window.exportHypersigil = exportHypersigil;
+
+// Init on load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', forgeHypersigil);
+} else {
+    forgeHypersigil();
+}
+</script>
 <!-- HERMES AI (WebLLM) -->
 <script type="module">
 import * as webllm from "https://esm.run/@mlc-ai/web-llm";
