@@ -126,18 +126,18 @@
     <header style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
         <h1 class="voodoo" style="font-size: 1.6rem; font-weight: bold; color: var(--red);">
-          ⚡ R/W LITERARY WORK ⚡ text coming soon @ wordstar.nexus/city
+          ⚡ R/W LITERARY WORK ⚡ live from wordstar.nexus/city
         </h1>
         <div class="flex-wrap">
           <button id="guideToggle">⚡ Search Guide</button>
-          <button id="authToggle" style="border-color:#4b5563;">⚙️ Repo Auth</button>
+          <button id="authToggle" style="border-color:#4b5563;">⚙️ Legacy Auth</button>
         </div>
       </div>
 
       <!-- PRIVATE REPO AUTH DRAWER -->
       <div id="authDrawer" style="display:none; margin-top: 0.75rem; padding: 0.75rem; background: #0c0d12; border: 1px solid var(--border);">
         <p style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 0.5rem;">
-          <strong>Private Repo :</strong> Provide a fine-grained GitHub Key (read-only) to reach private repositories. Stored locally in your browser.
+          <strong>Legacy / unused:</strong> Town now loads from the city page. This drawer is kept only for future optional sources.
         </p>
         <div style="display:flex; gap:0.5rem;">
           <input type="password" id="ghTokenInput" placeholder="github_pat_... or ghp_..." style="flex:1;" />
@@ -280,11 +280,11 @@
 
   <script>
     // --- CONTENT SOURCE SETUP ---
-    const REPO_OWNER = 'ghostm68';
-    const REPO_NAME = 'literary-works';
-    const REPO_BRANCH = 'main';
-    const REPO_PATH = 'red-white-ai-rewrite';
-    const CONTENT_FILES = [
+    // Town populates from the city page (spritz textarea).
+    // Local .md files are an optional offline fallback only.
+    const CITY_URL = 'https://wordstar.nexus/city';
+    const LOCAL_PATH = './';   // optional fallback directory for .md files
+    const CONTENT_FILES = [    // only used if city fetch fails
       '11-chapter-expanded.md',
       'ADDENDUM_1945_hypothesis.md',
       '43-51_batch_chapters.md'
@@ -369,76 +369,111 @@
       searchGuide.style.display = searchGuide.style.display === 'none' ? 'block' : 'none';
     });
 
-    // --- REPO FETCHER WITH PRIVATE REPO & FALLBACK SUPPORT ---
-    async function fetchFileContent(filename) {
-      const ghToken = localStorage.getItem('rw_gh_token');
+    // --- CONTENT FETCHER: city page first, local .md as fallback ---
+    async function fetchCityManuscript() {
+      try {
+        const res = await fetch(CITY_URL);
+        if (!res.ok) return null;
+        const html = await res.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const ta = doc.querySelector('#spritz_words');
+        if (ta && ta.textContent.trim()) return ta.textContent;
+        // fallback: look for any large textarea
+        const any = doc.querySelector('textarea');
+        if (any && any.textContent.trim().length > 200) return any.textContent;
+      } catch (_) { /* ignore */ }
+      return null;
+    }
 
-      // Attempt 1: If user supplied GitHub token, fetch via GitHub API (supports private repos)
-      if (ghToken) {
-        const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${REPO_PATH}/${filename}?ref=${REPO_BRANCH}`;
-        const res = await fetch(apiUrl, {
-          headers: {
-            'Authorization': `Bearer ${ghToken}`,
-            'Accept': 'application/vnd.github.raw+json'
-          }
-        });
+    async function fetchLocalFile(filename) {
+      try {
+        const localUrl = `${LOCAL_PATH}${filename}`.replace(/\/\//g, '/');
+        const res = await fetch(localUrl);
         if (res.ok) return await res.text();
+      } catch (_) { /* ignore */ }
+      return null;
+    }
+
+    // Split raw manuscript text into entries by chapter headings or end-of-chapter markers
+    function parseManuscript(raw) {
+      if (!raw || !raw.trim()) return [];
+      const text = raw.replace(/\r\n/g, '\n').trim();
+
+      // Prefer splitting on headings like "# Red White – Chapter ..."
+      const chapterRegex = /(?=^#\s+Red\s+White\s*[–-]\s*Chapter\s+.+$)/gim;
+      let parts = text.split(chapterRegex).map(p => p.trim()).filter(Boolean);
+
+      // If no chapter headings, try end-of-chapter markers
+      if (parts.length <= 1) {
+        parts = text.split(/—\s*end of chapter\s+[^—]+\s*—/i).map(p => p.trim()).filter(Boolean);
       }
 
-      // Attempt 2: Public raw URL
-      const rawUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/${REPO_PATH}/${filename}`;
-      const rawRes = await fetch(rawUrl);
-      if (rawRes.ok) return await rawRes.text();
+      // If still one block, treat the whole thing as a single entry
+      if (parts.length === 0) parts = [text];
 
-      // Attempt 3: Relative local path (if running locally or from relative build)
-      const relRes = await fetch(`./${REPO_PATH}/${filename}`).catch(() => null);
-      if (relRes && relRes.ok) return await relRes.text();
-
-      return null;
+      return parts.map((content, i) => {
+        // Extract a title from the first heading or first line
+        let title = `Chapter ${i + 1}`;
+        const firstLine = content.split('\n').find(l => l.trim());
+        if (firstLine) {
+          const m = firstLine.match(/^#\s+(.+)/);
+          if (m) title = m[1].trim();
+          else if (firstLine.length < 80) title = firstLine.trim();
+        }
+        return { id: i, date: title, content, tags: [] };
+      });
     }
 
     async function loadAndParseContent() {
       loadingDiv.style.display = 'block';
       contentDiv.style.display = 'none';
-      loadingDiv.innerHTML = '⚡ ACCESSING REPOSITORY ARCHIVES... ⚡';
+      loadingDiv.innerHTML = '⚡ FETCHING FROM CITY... ⚡';
 
       try {
-        const fetched = [];
-        let counter = 0;
+        let raw = await fetchCityManuscript();
+        let source = 'city';
 
-        for (const filename of CONTENT_FILES) {
-          const text = await fetchFileContent(filename);
-          if (!text) continue;
-
-          const cleanName = filename.replace('.md', '').split(/[-_]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-          const entry = { id: counter++, date: cleanName, content: text, tags: [] };
-          detectTags(entry);
-          fetched.push(entry);
+        if (!raw) {
+          // Fallback: try local markdown files
+          loadingDiv.innerHTML = '⚡ CITY UNAVAILABLE — TRYING LOCAL FILES... ⚡';
+          const localParts = [];
+          for (const filename of CONTENT_FILES) {
+            const t = await fetchLocalFile(filename);
+            if (t) localParts.push(t);
+          }
+          if (localParts.length) {
+            raw = localParts.join('\n\n---\n\n');
+            source = 'local';
+          }
         }
 
-        if (fetched.length > 0) {
-          entries = fetched;
-          loadingDiv.style.display = 'none';
-          contentDiv.style.display = 'block';
-          rebuildFuse();
-          showEntry(entries[0].id);
-          buildDateIndex();
-        } else {
-          // If 404 because repo is private
+        if (!raw) {
           loadingDiv.innerHTML = `
             <div style="color:var(--red); font-size:0.85rem; max-width:600px; margin:0 auto; text-align:left; border:1px solid rgba(255,51,68,0.4); background:#0c0d12; padding:1.25rem;">
-              <p style="font-weight:bold; margin-bottom:0.5rem;">⚡ 404 NOT FOUND: REPOSITORY KEY REQUIRED</p>
-              <p style="color:#9ca3af; margin-bottom:0.75rem;">GitHub returns a 404 when the target repository is <strong>Private</strong>.</p>
-              <p style="color:#d1d5db; margin-bottom:0.5rem;">To view your private files:</p>
-              <ol style="margin-left:1.25rem; margin-bottom:1rem; color:#9ca3af;">
-                <li>Click <strong>⚙️ Repo Auth</strong> above.</li>
-                <li>Enter a GitHub KEY (PAT) with read permission.</li>
-                <li>Click <strong>SAVE & RELOAD</strong>.</li>
-              </ol>
-              <p style="color:#6b7280; font-size:0.75rem;">Alternatively, switch the repository to Public in GitHub Settings.</p>
-            </div>
-          `;
+              <p style="font-weight:bold; margin-bottom:0.5rem;">⚡ NO MANUSCRIPT FOUND</p>
+              <p style="color:#9ca3af; margin-bottom:0.75rem;">Could not load content from <code>${CITY_URL}</code> and no local markdown files were present.</p>
+              <p style="color:#6b7280; font-size:0.75rem;">Add the chapter text to the city page’s spritz textarea, or place .md files next to this reader.</p>
+            </div>`;
+          return;
         }
+
+        const parsed = parseManuscript(raw);
+        if (!parsed.length) {
+          loadingDiv.innerHTML = '<p style="color:var(--red);">Manuscript loaded but no chapters could be parsed.</p>';
+          return;
+        }
+
+        entries = parsed;
+        entries.forEach(detectTags);
+
+        loadingDiv.style.display = 'none';
+        contentDiv.style.display = 'block';
+        rebuildFuse();
+        showEntry(entries[0].id);
+        buildDateIndex();
+
+        // Subtle source indicator in the entry info area later if desired
+        console.log(`Loaded ${entries.length} entries from ${source}`);
       } catch (err) {
         loadingDiv.innerHTML = `<p style="color:var(--red);">Error loading content: ${err.message}</p>`;
       }
