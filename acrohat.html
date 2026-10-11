@@ -811,7 +811,7 @@ document.getElementById('imgFileInput').addEventListener('change', async (e) => 
   playMechanicalClick(850, 0.03);
   try {
     const arrayBuffer = await file.arrayBuffer();
-    const type = file.type || 'image/png';
+    const type = file.type || (file.name.toLowerCase().endsWith('.png') ? 'image/png' : file.name.toLowerCase().endsWith('.jpg') || file.name.toLowerCase().endsWith('.jpeg') ? 'image/jpeg' : 'image/png');
     const id = `img${++imageCounter}`;
     imageStore[id] = { bytes: arrayBuffer, type, name: file.name };
     // Insert placeholder at cursor or end
@@ -1243,16 +1243,20 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
       if (!isNaN(n) && n > 0) leftMarginOverride = n;
     } else if (lower.startsWith('.ig ') || lower.startsWith('..')) {
       // ignore comment
-    } else if (lower.startsWith('.img ')) {
-      const rest = trimmed.substring(5).trim();
-      const parts = rest.split(/\s+/);
-      const id = parts[0];
+    } else if (lower.startsWith('.img')) {
+      // Robust .img parsing: ".img id" or ".img id 250" or ".img id w=250"
+      const rest = trimmed.replace(/^\.img\s*/i, '').trim();
+      const parts = rest.split(/\s+/).filter(Boolean);
+      const id = parts[0] || '';
       let width = '';
       if (parts[1]) {
-        const w = parseFloat(parts[1]);
+        const wStr = parts[1].replace(/^w=/i, '');
+        const w = parseFloat(wStr);
         if (!isNaN(w) && w > 10) width = w;
       }
-      documentPages[documentPages.length - 1].push(`__IMG__:${id}:${width}`);
+      if (id) {
+        documentPages[documentPages.length - 1].push(`__IMG__:${id}:${width}`);
+      }
     } else if (lower.startsWith('.fs ')) {
       const n = parseInt(trimmed.substring(4).trim(), 10);
       if (!isNaN(n) && n >= 6 && n <= 36) fontSize = n;
@@ -1311,15 +1315,46 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
       const imgData = imageStore[id];
       if (imgData) {
         try {
+          let emb = null;
           const t = (imgData.type || '').toLowerCase();
-          let emb;
-          if (t.includes('png')) emb = await pdfDoc.embedPng(imgData.bytes);
-          else if (t.includes('jpg') || t.includes('jpeg')) emb = await pdfDoc.embedJpg(imgData.bytes);
-          else {
-            try { emb = await pdfDoc.embedPng(imgData.bytes); }
-            catch { emb = await pdfDoc.embedJpg(imgData.bytes); }
+          const bytes = imgData.bytes;
+
+          // Try native pdf-lib formats first
+          if (t.includes('png') || (!t && bytes.byteLength > 0)) {
+            try { emb = await pdfDoc.embedPng(bytes); } catch (e) {}
           }
-          embeddedImages[id] = emb;
+          if (!emb && (t.includes('jpg') || t.includes('jpeg'))) {
+            try { emb = await pdfDoc.embedJpg(bytes); } catch (e) {}
+          }
+          // Fallback: convert any image to PNG via canvas
+          if (!emb) {
+            try {
+              const blob = new Blob([bytes], { type: imgData.type || 'image/png' });
+              const url = URL.createObjectURL(blob);
+              const img = await new Promise((resolve, reject) => {
+                const i = new Image();
+                i.onload = () => resolve(i);
+                i.onerror = () => reject(new Error('Image decode failed'));
+                i.src = url;
+              });
+              const canvas = document.createElement('canvas');
+              canvas.width = img.naturalWidth || img.width;
+              canvas.height = img.naturalHeight || img.height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0);
+              URL.revokeObjectURL(url);
+              const pngDataUrl = canvas.toDataURL('image/png');
+              const base64 = pngDataUrl.split(',')[1];
+              const bin = atob(base64);
+              const arr = new Uint8Array(bin.length);
+              for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+              emb = await pdfDoc.embedPng(arr);
+            } catch (e) {
+              console.warn('Canvas conversion failed for', id, e);
+            }
+          }
+          if (emb) embeddedImages[id] = emb;
+          else console.warn('Could not embed image', id);
         } catch (e) {
           console.warn('Failed to embed image', id, e);
         }
@@ -1378,7 +1413,7 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
             });
             y -= dims.height + 8;
           } else {
-            page.drawText(`[missing/failed image ${id}]`, {
+            page.drawText(`[image not found: ${id}]`, {
               x: marginPt,
               y,
               size: fontSize,
