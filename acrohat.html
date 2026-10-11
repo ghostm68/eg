@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
  <title>acrohat v/370sx • PDF Console</title>
-  <meta name="description" content="ACROHAT — клиентский PDF-процессор в стиле мейнфрейма. Russian UI + WordStar help panel.">
+  <meta name="description" content="ACROHAT — клиентский PDF-процессор в стиле мейнфрейма. Russian UI + acrohat command panel.">
 <link rel="icon" type="image/png" href="/svg/favicon-96x96.png" sizes="96x96" />
 <link rel="icon" type="image/svg+xml" href="/svg/favicon.svg" />
 <link rel="shortcut icon" href="/svg/favicon.ico" />
 <link rel="apple-touch-icon" sizes="180x180" href="/svg/apple-touch-icon.png" />
-<meta name="apple-mobile-web-app-title" content="wordstar" />
+<meta name="apple-mobile-web-app-title" content="acrohat" />
 <link rel="manifest" href="/svg/site.webmanifest" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -244,7 +244,7 @@
       z-index: 20;
     }
 
-    /* WordStar Ruler */
+    /* acrohat Ruler */
     .ws-ruler {
       font-family: 'IBM Plex Mono', monospace;
       color: var(--phosphor-dim);
@@ -422,9 +422,13 @@
         <span data-i18n="btnLoad">[ LOAD PDF ]</span>
         <input type="file" id="pdfFileInput" accept="application/pdf,.pdf,text/plain">
       </label>
+      <label class="btn" id="btnLoadImgLabel" title="Load image for .img embedding">
+        <span data-i18n="btnLoadImg">[ LOAD IMG ]</span>
+        <input type="file" id="imgFileInput" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp">
+      </label>
       <button class="btn btn-action" id="btnExportPdf" title="Compile document into standard PDF via WASM/JS engine" data-i18n="btnExport">[ STORE / PDF ]</button>
-      <button class="btn" id="btnPageBreak" title="Insert WordStar page split (.pa)" data-i18n="btnPage">[ +PAGE ]</button>
-      <button class="btn" id="btnHelp" title="Show / hide WordStar dot-command reference" data-i18n="btnHelp">[ HELP ]</button>
+      <button class="btn" id="btnPageBreak" title="Insert acrohat page split (.pa)" data-i18n="btnPage">[ +PAGE ]</button>
+      <button class="btn" id="btnHelp" title="Show / hide acrohat dot-command reference" data-i18n="btnHelp">[ HELP ]</button>
       <button class="btn" id="btnClear" data-i18n="btnClear">[ IPL / CLR ]</button>
     </div>
   </div>
@@ -530,7 +534,7 @@
     <label><input type="checkbox" id="headerFirstOnly"> <span data-i18n="labelHeaderFirst">Header only p.1</span></label>
   </div>
 
-  <!-- Collapsible WordStar help panel -->
+  <!-- Collapsible acrohat help panel -->
   <div class="help-panel" id="helpPanel">
     <button class="help-close" id="btnHelpClose">×</button>
     <div id="helpContent"></div>
@@ -548,16 +552,17 @@
 
   <!-- CRT Monitor & Document Viewport -->
   <div class="crt-screen-frame">
-    <!-- WordStar Ruler Display -->
+    <!-- acrohat Ruler Display -->
     <div class="ws-ruler" id="wsRuler">
       L----!----!----!----!----!----!----!----!----!----!----!----!----!----!----!----R
     </div>
 
     <div class="editor-viewport" id="viewport">
       <div class="page-sheet" id="editor" contenteditable="true" spellcheck="false">.he ACROHAT S/370 • RED PHOSPHOR CONSOLE
-.fo PAGE %P% OF CRAFTSTAR ARCHIVES
+.fo PAGE %P% OF ACROHAT ARCHIVES
 .meta Title: Mainframe Document Specification
 .meta Author: IBM S/370 Acrohat
+.lm 54
 
 1.0 INTRODUCTION TO CLIENT-SIDE PDF COMPOSITION
 -------------------------------------------------
@@ -565,18 +570,22 @@ This terminal processes PDF documents inside browser storage.
 All typography, stream reconstruction, and page splitting occur locally.
 
 Default phosphor is now P22R Red. Switch themes via the PHOSPHOR selector.
-WordStar dot commands are supported at the left margin:
+acrohat dot commands are supported at the left margin:
   .pa        Forces a Page Break
   .he [text] Sets dynamic Running Header
   .fo [text] Sets dynamic Running Footer
-  .lm [pts]  Sets Left Margin boundary
+  .lm [pts]  Sets Left Margin (points)
+  .op        Omit footer / page numbers
+  .ig [text] Comment (ignored on export)
+  .img id    Embed a previously loaded image
   .meta [k]  Injects PDF Document Info Dictionary
 
+Use [ LOAD IMG ] to import an image, then place .img id where it should appear.
 Rotate the rotary knobs on the console rack to modify BEAM GAIN,
 LINE PITCH, or KERNING parameters. Tap [STORE / PDF] to compile.</div>
   
 
-(Press [ HELP ] for WordStar dot-command reference & options)
+(Press [ HELP ] for acrohat dot-command reference & options)
 </div>
     </div>
   </div>
@@ -600,6 +609,7 @@ const I18N = {
   en: {
     titleSuffix: "[PDF wordPROCESSOR]",
     btnLoad: "[ LOAD PDF ]",
+    btnLoadImg: "[ LOAD IMG ]",
     btnExport: "[ STORE / PDF ]",
     btnPage: "[ +PAGE ]",
     btnHelp: "[ HELP ]",
@@ -641,21 +651,28 @@ const I18N = {
     alertNoText: "NOTICE: Could not extract text (compressed or image-based PDF).",
     alertExportFail: "Export failed: ",
     alertPdfLibMissing: "pdf-lib or fontkit failed to load. Check network.",
-    helpHtml: `<h4>WORDSTAR DOT COMMANDS</h4>
+    helpHtml: `<h4>ACROHAT DOT COMMANDS</h4>
 <p>Type these as ordinary lines at the left margin (not keyboard shortcuts):</p>
 <div class="cmd-row"><code>.he Your header text</code> — running header on exported pages</div>
 <div class="cmd-row"><code>.fo Footer text %P%</code> — running footer (%P% = page number)</div>
 <div class="cmd-row"><code>.pa</code> — force a page break</div>
+<div class="cmd-row"><code>.lm 54</code> — left margin in points (overrides knob)</div>
+<div class="cmd-row"><code>.op</code> — omit footer and page numbers</div>
+<div class="cmd-row"><code>.ig comment text</code> or <code>..</code> — ignored comment</div>
+<div class="cmd-row"><code>.img img1</code> — embed image previously loaded via [ LOAD IMG ]</div>
+<div class="cmd-row"><code>.fs 12</code> — set export font size in points (6–36)</div>
 <div class="cmd-row"><code>.meta Title: …</code> / <code>Author:</code> / <code>Subject:</code> / <code>Keywords:</code> — PDF document info</div>
 <p style="margin-top:8px"><b>EXPORT NOTES</b><br>
 • FONT PT controls size in the exported PDF only (not on-screen).<br>
 • On-screen zoom = BEAM GAIN knob. Selected FONT RACK face is embedded on STORE.<br>
-• PAGE size, header-only-on-first-page, margin, kerning and rotation also affect the PDF.</p>
+• PAGE size, header-only-on-first-page, margin, kerning and rotation also affect the PDF.<br>
+• Images are stored client-side and embedded on export when referenced by .img id.</p>
 <p>Press [ HELP ] again to hide this panel.</p>`
   },
   ru: {
     titleSuffix: "[PDF текстовый ПРОЦЕССОР]",
     btnLoad: "[ ЗАГРУЗКА PDF ]",
+    btnLoadImg: "[ ЗАГРУЗКА IMG ]",
     btnExport: "[ ЗАПИСЬ / PDF ]",
     btnPage: "[ +СТР ]",
     btnHelp: "[ СПРАВКА ]",
@@ -697,21 +714,31 @@ const I18N = {
     alertNoText: "ВНИМАНИЕ: Не удалось извлечь текст (сжатый или сканированный PDF).",
     alertExportFail: "Ошибка экспорта: ",
     alertPdfLibMissing: "pdf-lib или fontkit не загрузились. Проверьте сеть.",
-    helpHtml: `<h4>КОМАНДЫ WORDSTAR (ТОЧЕЧНЫЕ)</h4>
+    helpHtml: `<h4>КОМАНДЫ ACROHAT (ТОЧЕЧНЫЕ)</h4>
 <p>Вводите эти строки с левого края (это не горячие клавиши):</p>
 <div class="cmd-row"><code>.he Текст колонтитула</code> — верхний колонтитул на страницах PDF</div>
 <div class="cmd-row"><code>.fo Текст подвала %P%</code> — нижний колонтитул (%P% = номер страницы)</div>
 <div class="cmd-row"><code>.pa</code> — принудительный разрыв страницы</div>
+<div class="cmd-row"><code>.lm 54</code> — левое поле в пунктах (переопределяет ручку)</div>
+<div class="cmd-row"><code>.op</code> — скрыть подвал и номера страниц</div>
+<div class="cmd-row"><code>.ig текст</code> или <code>..</code> — комментарий (игнорируется)</div>
+<div class="cmd-row"><code>.img img1</code> — вставить изображение, загруженное через [ ЗАГРУЗКА IMG ]</div>
+<div class="cmd-row"><code>.fs 12</code> — задать кегль экспорта в пунктах (6–36)</div>
 <div class="cmd-row"><code>.meta Title: …</code> / <code>Author:</code> / <code>Subject:</code> / <code>Keywords:</code> — сведения о документе PDF</div>
 <p style="margin-top:8px"><b>ЗАМЕЧАНИЯ ПО ЭКСПОРТУ</b><br>
 • КЕГЛЬ управляет размером шрифта только в PDF (не на экране).<br>
 • Масштаб на экране = ручка УСИЛЕНИЕ. Выбранный ШРИФТ встраивается при ЗАПИСИ.<br>
-• Формат страницы, «колонтитул только на 1 стр.», поля, кернинг и поворот тоже влияют на PDF.</p>
+• Формат страницы, «колонтитул только на 1 стр.», поля, кернинг и поворот тоже влияют на PDF.<br>
+• Изображения хранятся на клиенте и встраиваются при экспорте по команде .img id.</p>
 <p>Нажмите [ СПРАВКА ] ещё раз, чтобы скрыть эту панель.</p>`
   }
 };
 
 let currentLang = localStorage.getItem('acrohat-lang') || 'en';
+
+// Image store for .img commands (client-side only)
+let imageStore = {};
+let imageCounter = 0;
 
 function t(key) {
   return (I18N[currentLang] && I18N[currentLang][key]) || I18N.en[key] || key;
@@ -774,6 +801,28 @@ document.getElementById('btnAudioToggle').addEventListener('click', (e) => {
   audioEnabled = !audioEnabled;
   e.target.textContent = audioEnabled ? t('audioOn') : t('audioMuted');
   playMechanicalClick(900, 0.03);
+});
+
+// Image loader
+document.getElementById('imgFileInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  playMechanicalClick(850, 0.03);
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const type = file.type || 'image/png';
+    const id = `img${++imageCounter}`;
+    imageStore[id] = { bytes: arrayBuffer, type, name: file.name };
+    // Insert placeholder at cursor or end
+    editor.focus();
+    const marker = `\n.img ${id}\n`;
+    document.execCommand('insertText', false, marker);
+    updateTelemetry();
+    alert(`Image loaded as .img ${id} (${file.name})`);
+  } catch (err) {
+    alert('Image load failed: ' + err.message);
+  }
+  e.target.value = '';
 });
 
 // Language selector
@@ -893,14 +942,14 @@ document.getElementById('phosphorSelect').addEventListener('change', (e) => {
 });
 
 /* =====================================================================
-   4. DOCUMENT TELEMETRY & WORDSTAR RULER
+   4. DOCUMENT TELEMETRY & ACROHAT RULER
    ===================================================================== */
 function updateTelemetry() {
   const text = editor.innerText || '';
   const chars = text.length;
   const words = (text.trim().match(/\S+/g) || []).length;
   
-  // Detect WordStar page splits (.pa commands)
+  // Detect acrohat page splits (.pa commands)
   const pageMatches = text.split(/\n\.pa\b/).length;
   document.getElementById('statPages').textContent = pageMatches;
   document.getElementById('statWords').textContent = words;
@@ -921,6 +970,8 @@ document.getElementById('btnPageBreak').addEventListener('click', () => {
 document.getElementById('btnClear').addEventListener('click', () => {
   if (confirm(t('confirmClear'))) {
     editor.innerText = '';
+    imageStore = {};
+    imageCounter = 0;
     updateTelemetry();
     playMechanicalClick(300, 0.05);
   }
@@ -954,7 +1005,7 @@ document.getElementById('pdfFileInput').addEventListener('change', async (e) => 
     const arrayBuffer = await file.arrayBuffer();
     const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
     const pdf = await loadingTask.promise;
-    let fullText = `.he IMPORTED: ${file.name.toUpperCase()}\n.fo CRAFTSTAR EXTRACTED\n.meta Title: ${file.name}\n\n`;
+    let fullText = `.he IMPORTED: ${file.name.toUpperCase()}\n.fo ACROHAT EXTRACTED\n.meta Title: ${file.name}\n\n`;
 
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
@@ -999,7 +1050,7 @@ function basicPdfScan(file) {
         if (tokens) extractedText = tokens.slice(0, 200).join(' ');
       }
       if (extractedText.trim()) {
-        editor.innerText = `.he IMPORTED PDF ARCHIVE: ${file.name.toUpperCase()}\n.fo CRAFTSTAR EXTRACTED STREAM\n\n` + extractedText;
+        editor.innerText = `.he IMPORTED PDF ARCHIVE: ${file.name.toUpperCase()}\n.fo ACROHAT EXTRACTED STREAM\n\n` + extractedText;
         alert(t('alertBasicOk').replace('{name}', file.name));
       } else {
         alert(t('alertNoText'));
@@ -1121,20 +1172,22 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
   const rawText = editor.innerText || '';
   const inputLines = rawText.split('\n');
 
-  let headerText = "CRAFTSTAR DOCUMENT";
+  let headerText = "ACROHAT DOCUMENT";
   let footerText = "PAGE %P%";
-  let title = document.getElementById('infoTitle').value.trim() || "CraftStar Document";
+  let title = document.getElementById('infoTitle').value.trim() || "acrohat Document";
   let author = document.getElementById('infoAuthor').value.trim() || "System/370 Operator";
   let subject = document.getElementById('infoSubject').value.trim() || "";
   let keywords = document.getElementById('infoKeywords').value.trim() || "";
+  let omitFooter = false;
+  let leftMarginOverride = null;
 
   const pageSize = document.getElementById('pageSizeSelect').value;
-  const fontSize = parseInt(document.getElementById('exportFontSize').value, 10) || 11;
+  let fontSize = parseInt(document.getElementById('exportFontSize').value, 10) || 11;
   const headerFirstOnly = document.getElementById('headerFirstOnly').checked;
 
   const rotVal = parseInt(document.querySelector('[data-knob="rot"]').dataset.val, 10) || 0;
   const kerningVal = parseFloat(document.querySelector('[data-knob="kerning"]').dataset.val) || 0;
-  const marginPt = Math.max(36, Math.round(parseFloat(document.querySelector('[data-knob="margin"]').dataset.val) * 1.5) || 54);
+  let marginPt = Math.max(36, Math.round(parseFloat(document.querySelector('[data-knob="margin"]').dataset.val) * 1.5) || 54);
 
   // Selected font + its TTF URL
   const fontSelect = document.getElementById('fontSelect');
@@ -1170,20 +1223,37 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
 
   inputLines.forEach(line => {
     const trimmed = line.trim();
-    if (trimmed.startsWith('.he ')) headerText = trimmed.substring(4).trim();
-    else if (trimmed.startsWith('.fo ')) footerText = trimmed.substring(4).trim();
-    else if (trimmed.startsWith('.meta ')) {
+    const lower = trimmed.toLowerCase();
+    if (lower.startsWith('.he ')) headerText = trimmed.substring(4).trim();
+    else if (lower.startsWith('.fo ')) footerText = trimmed.substring(4).trim();
+    else if (lower.startsWith('.meta ')) {
       const rest = trimmed.substring(6);
-      if (rest.toLowerCase().startsWith('title:')) title = rest.substring(6).trim();
-      else if (rest.toLowerCase().startsWith('author:')) author = rest.substring(7).trim();
-      else if (rest.toLowerCase().startsWith('subject:')) subject = rest.substring(8).trim();
-      else if (rest.toLowerCase().startsWith('keywords:')) keywords = rest.substring(9).trim();
-    } else if (trimmed === '.pa') {
+      const restLower = rest.toLowerCase();
+      if (restLower.startsWith('title:')) title = rest.substring(6).trim();
+      else if (restLower.startsWith('author:')) author = rest.substring(7).trim();
+      else if (restLower.startsWith('subject:')) subject = rest.substring(8).trim();
+      else if (restLower.startsWith('keywords:')) keywords = rest.substring(9).trim();
+    } else if (lower === '.pa') {
       documentPages.push([]);
+    } else if (lower === '.op') {
+      omitFooter = true;
+    } else if (lower.startsWith('.lm ')) {
+      const n = parseFloat(trimmed.substring(4).trim());
+      if (!isNaN(n) && n > 0) leftMarginOverride = n;
+    } else if (lower.startsWith('.ig ') || lower.startsWith('..')) {
+      // ignore comment
+    } else if (lower.startsWith('.img ')) {
+      const id = trimmed.substring(5).trim();
+      documentPages[documentPages.length - 1].push(`__IMG__:${id}`);
+    } else if (lower.startsWith('.fs ')) {
+      const n = parseInt(trimmed.substring(4).trim(), 10);
+      if (!isNaN(n) && n >= 6 && n <= 36) fontSize = n;
     } else {
       wrapLine(line, roughMax).forEach(w => documentPages[documentPages.length - 1].push(w));
     }
   });
+
+  if (leftMarginOverride !== null) marginPt = Math.max(18, leftMarginOverride);
 
   try {
     const { PDFDocument, rgb, degrees } = PDFLib;
@@ -1202,6 +1272,11 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
     const betterPages = documentPages.map(pageLines => {
       const out = [];
       pageLines.forEach(ln => {
+        // skip re-wrap for image markers
+        if (typeof ln === 'string' && ln.startsWith('__IMG__:')) {
+          out.push(ln);
+          return;
+        }
         // simple re-wrap by measuring if needed
         if (customFont.widthOfTextAtSize(ln, fontSize) <= measureLimit) {
           out.push(ln);
@@ -1211,6 +1286,35 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
       });
       return out;
     });
+
+    // Pre-embed any referenced images
+    const embeddedImages = {};
+    const imageIds = new Set();
+    betterPages.forEach(pageLines => {
+      pageLines.forEach(ln => {
+        if (typeof ln === 'string' && ln.startsWith('__IMG__:')) {
+          imageIds.add(ln.substring(8));
+        }
+      });
+    });
+    for (const id of imageIds) {
+      const imgData = imageStore[id];
+      if (imgData) {
+        try {
+          const t = (imgData.type || '').toLowerCase();
+          let emb;
+          if (t.includes('png')) emb = await pdfDoc.embedPng(imgData.bytes);
+          else if (t.includes('jpg') || t.includes('jpeg')) emb = await pdfDoc.embedJpg(imgData.bytes);
+          else {
+            try { emb = await pdfDoc.embedPng(imgData.bytes); }
+            catch { emb = await pdfDoc.embedJpg(imgData.bytes); }
+          }
+          embeddedImages[id] = emb;
+        } catch (e) {
+          console.warn('Failed to embed image', id, e);
+        }
+      }
+    }
 
     const lineHeight = fontSize * 1.35;
     const headerSize = Math.max(8, fontSize - 1);
@@ -1245,41 +1349,70 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
 
       betterPages[i].forEach(ln => {
         if (y < marginPt + 40) return; // simple overflow guard
-        page.drawText(ln || ' ', {
-          x: marginPt,
-          y,
-          size: fontSize,
-          font: customFont,
-          color: rgb(0, 0, 0),
-          characterSpacing: kerningVal
-        });
-        y -= lineHeight;
+        if (typeof ln === 'string' && ln.startsWith('__IMG__:')) {
+          const id = ln.substring(8);
+          const embedded = embeddedImages[id];
+          if (embedded) {
+            const maxW = pageW - marginPt * 2;
+            const maxH = 200;
+            const dims = embedded.scaleToFit(maxW, maxH);
+            if (y - dims.height < marginPt + 40) return;
+            page.drawImage(embedded, {
+              x: marginPt,
+              y: y - dims.height,
+              width: dims.width,
+              height: dims.height
+            });
+            y -= dims.height + 8;
+          } else {
+            page.drawText(`[missing/failed image ${id}]`, {
+              x: marginPt,
+              y,
+              size: fontSize,
+              font: customFont,
+              color: rgb(0.5, 0, 0)
+            });
+            y -= lineHeight;
+          }
+        } else {
+          page.drawText(ln || ' ', {
+            x: marginPt,
+            y,
+            size: fontSize,
+            font: customFont,
+            color: rgb(0, 0, 0),
+            characterSpacing: kerningVal
+          });
+          y -= lineHeight;
+        }
       });
 
       // Footer
-      const footer = footerText.replace('%P%', `${pageNum}/${betterPages.length}`);
-      page.drawText(footer, {
-        x: marginPt,
-        y: marginPt / 2,
-        size: footerSize,
-        font: customFont,
-        color: rgb(0.2, 0.2, 0.2),
-        characterSpacing: kerningVal
-      });
+      if (!omitFooter) {
+        const footer = footerText.replace('%P%', `${pageNum}/${betterPages.length}`);
+        page.drawText(footer, {
+          x: marginPt,
+          y: marginPt / 2,
+          size: footerSize,
+          font: customFont,
+          color: rgb(0.2, 0.2, 0.2),
+          characterSpacing: kerningVal
+        });
+      }
     }
 
     pdfDoc.setTitle(title);
     pdfDoc.setAuthor(author);
     if (subject) pdfDoc.setSubject(subject);
     if (keywords) pdfDoc.setKeywords([keywords]);
-    pdfDoc.setCreator('CraftStar S/370 Engine');
+    pdfDoc.setCreator('acrohat S/370 Engine');
 
     const pdfBytes = await pdfDoc.save();
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `CRAFTSTAR_EXPORT_${Date.now()}.pdf`;
+    a.download = `ACROHAT_EXPORT_${Date.now()}.pdf`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
