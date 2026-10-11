@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
  <title>acrohat v/370sx • PDF Console</title>
-  <meta name="description" content="ACROHAT — клиентский PDF-процессор в стиле мейнфрейма: импорт через PDF.js, поиск, метаданные, экспорт с настройками страницы и шрифта, WordStar-команды и ретро-интерфейс с красным фосфором.">
+  <meta name="description" content="ACROHAT — клиентский PDF-процессор в стиле мейнфрейма. Russian UI + WordStar help panel.">
 <link rel="icon" type="image/png" href="/svg/favicon-96x96.png" sizes="96x96" />
 <link rel="icon" type="image/svg+xml" href="/svg/favicon.svg" />
 <link rel="shortcut icon" href="/svg/favicon.ico" />
@@ -333,6 +333,45 @@
     .info-field { display: flex; flex-direction: column; gap: 2px; min-width: 140px; }
     .info-field input { background: #0d1012; border: 1px solid #232b33; color: var(--phosphor-text); font-family: inherit; padding: 2px 6px; border-radius: 3px; }
 
+
+    /* Help / Dot-commands panel */
+    .help-panel {
+      display: none;
+      background: #0d1012;
+      border-bottom: 1px solid var(--border-panel);
+      padding: 10px 14px;
+      font-size: 0.72rem;
+      line-height: 1.45;
+      color: var(--phosphor-dim);
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .help-panel.visible { display: block; }
+    .help-panel h4 {
+      color: var(--phosphor-text);
+      margin-bottom: 6px;
+      font-size: 0.78rem;
+      letter-spacing: 1px;
+    }
+    .help-panel code {
+      color: var(--phosphor-text);
+      background: #161a1e;
+      padding: 1px 4px;
+      border-radius: 2px;
+    }
+    .help-panel .cmd-row { margin: 3px 0; }
+    .help-close {
+      float: right;
+      background: transparent;
+      border: 1px solid var(--phosphor-dim);
+      color: var(--phosphor-text);
+      font-family: inherit;
+      font-size: 0.68rem;
+      padding: 2px 8px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+
     /* ===== Mobile Optimizations ===== */
     @media (max-width: 768px) {
       body { padding: 6px; }
@@ -356,6 +395,7 @@
       .ws-ruler { font-size: 0.68rem; letter-spacing: 1.2px; margin-bottom: 8px; }
       .page-sheet { font-size: 0.98rem; min-height: 420px; line-height: 1.35; }
       .status-bar { font-size: 0.65rem; padding: 6px 10px; gap: 6px; }
+      .help-panel { max-height: 180px; font-size: 0.68rem; }
     }
 
     @media (max-width: 480px) {
@@ -375,23 +415,24 @@
   <!-- Top Command Bay -->
   <div class="header-bar">
     <div class="header-title">
-      <span>ACROHAT S/370 • </span> [PDF wordPROCESSOR]
+      <span id="titlePrefix">ACROHAT S/370 • </span><span id="titleSuffix">[PDF wordPROCESSOR]</span>
     </div>
     <div class="header-actions">
-      <label class="btn btn-action" title="Import PDF using client-side parser">
-        [ LOAD PDF ]
+      <label class="btn btn-action" id="btnLoadLabel" title="Import PDF using client-side parser">
+        <span data-i18n="btnLoad">[ LOAD PDF ]</span>
         <input type="file" id="pdfFileInput" accept="application/pdf,.pdf,text/plain">
       </label>
-      <button class="btn btn-action" id="btnExportPdf" title="Compile document into standard PDF via WASM/JS engine">[ STORE / PDF ]</button>
-      <button class="btn" id="btnPageBreak" title="Insert WordStar page split (.pa)">[ +PAGE ]</button>
-      <button class="btn" id="btnClear">[ IPL / CLR ]</button>
+      <button class="btn btn-action" id="btnExportPdf" title="Compile document into standard PDF via WASM/JS engine" data-i18n="btnExport">[ STORE / PDF ]</button>
+      <button class="btn" id="btnPageBreak" title="Insert WordStar page split (.pa)" data-i18n="btnPage">[ +PAGE ]</button>
+      <button class="btn" id="btnHelp" title="Show / hide WordStar dot-command reference" data-i18n="btnHelp">[ HELP ]</button>
+      <button class="btn" id="btnClear" data-i18n="btnClear">[ IPL / CLR ]</button>
     </div>
   </div>
 
   <!-- Physical Knob Deck (Touch & Drag Enabled) -->
   <div class="knobs-rack">
     <div class="knob-cell">
-      <span class="knob-label">BEAM GAIN</span>
+      <span class="knob-label" data-i18n="knobZoom">BEAM GAIN</span>
       <div class="knob-dial-container" data-knob="zoom" data-val="1.0" data-min="0.6" data-max="2.0" data-step="0.05">
         <div class="knob-dial"><div class="knob-pip"></div></div>
       </div>
@@ -399,7 +440,7 @@
     </div>
 
     <div class="knob-cell">
-      <span class="knob-label">LINE PITCH</span>
+      <span class="knob-label" data-i18n="knobPitch">LINE PITCH</span>
       <div class="knob-dial-container" data-knob="pitch" data-val="1.4" data-min="1.0" data-max="2.4" data-step="0.1">
         <div class="knob-dial"><div class="knob-pip"></div></div>
       </div>
@@ -407,7 +448,7 @@
     </div>
 
     <div class="knob-cell">
-      <span class="knob-label">KERNING</span>
+      <span class="knob-label" data-i18n="knobKern">KERNING</span>
       <div class="knob-dial-container" data-knob="kerning" data-val="0" data-min="-2" data-max="6" data-step="0.5">
         <div class="knob-dial"><div class="knob-pip"></div></div>
       </div>
@@ -415,7 +456,7 @@
     </div>
 
     <div class="knob-cell">
-      <span class="knob-label">L-MARGIN</span>
+      <span class="knob-label" data-i18n="knobMargin">L-MARGIN</span>
       <div class="knob-dial-container" data-knob="margin" data-val="20" data-min="0" data-max="90" data-step="5">
         <div class="knob-dial"><div class="knob-pip"></div></div>
       </div>
@@ -423,7 +464,7 @@
     </div>
 
     <div class="knob-cell">
-      <span class="knob-label">ORIENTATION</span>
+      <span class="knob-label" data-i18n="knobRot">ORIENTATION</span>
       <div class="knob-dial-container" data-knob="rot" data-val="0" data-min="0" data-max="270" data-step="90">
         <div class="knob-dial"><div class="knob-pip"></div></div>
       </div>
@@ -431,10 +472,10 @@
     </div>
   </div>
 
-  <!-- Sub-Control Ribbon: Phosphors, Fonts, Audio -->
+  <!-- Sub-Control Ribbon: Phosphors, Fonts, Audio, Language -->
   <div class="subcontrols-bar">
     <div class="selector-group">
-      <label>FONT RACK:</label>
+      <label data-i18n="labelFont">FONT RACK:</label>
       <select id="fontSelect">
         <option value="'IBM Plex Mono', monospace" data-ttf="https://cdn.jsdelivr.net/fontsource/fonts/ibm-plex-mono@latest/latin-400-normal.ttf">IBM Plex Mono (Mainframe)</option>
         <option value="'VT323', monospace" data-ttf="https://cdn.jsdelivr.net/fontsource/fonts/vt323@latest/latin-400-normal.ttf">VT323 (CRT Phosphor)</option>
@@ -452,12 +493,20 @@
     </div>
 
     <div class="selector-group">
-      <label>PHOSPHOR:</label>
+      <label data-i18n="labelPhosphor">PHOSPHOR:</label>
       <select id="phosphorSelect">
         <option value="phosphor-red" selected>P22R (Red Phosphor)</option>
         <option value="phosphor-green">P39 (Green Phosphor)</option>
         <option value="phosphor-amber">P20 (Amber Phosphor)</option>
         <option value="phosphor-white">P4 (Paper White)</option>
+      </select>
+    </div>
+
+    <div class="selector-group">
+      <label data-i18n="labelLang">LANG:</label>
+      <select id="langSelect">
+        <option value="en" selected>EN</option>
+        <option value="ru">RU</option>
       </select>
     </div>
 
@@ -468,27 +517,33 @@
 
   <!-- Find / Export Options / Info strip -->
   <div class="tools-strip">
-    <label>FIND: <input type="text" id="findInput" placeholder="search text…" style="width:140px"></label>
-    <button class="btn" id="btnFindNext">[ FIND ]</button>
-    <button class="btn" id="btnInfoToggle">[ INFO ]</button>
-    <label>PAGE: 
+    <label><span data-i18n="labelFind">FIND:</span> <input type="text" id="findInput" placeholder="search text…" style="width:140px"></label>
+    <button class="btn" id="btnFindNext" data-i18n="btnFind">[ FIND ]</button>
+    <button class="btn" id="btnInfoToggle" data-i18n="btnInfo">[ INFO ]</button>
+    <label><span data-i18n="labelPage">PAGE:</span> 
       <select id="pageSizeSelect">
         <option value="letter" selected>Letter</option>
         <option value="a4">A4</option>
       </select>
     </label>
-    <label>FONT PT: <input type="number" id="exportFontSize" value="11" min="6" max="24" style="width:48px"></label>
-    <label><input type="checkbox" id="headerFirstOnly"> Header only p.1</label>
+    <label><span data-i18n="labelFontPt">FONT PT:</span> <input type="number" id="exportFontSize" value="11" min="6" max="24" style="width:48px"></label>
+    <label><input type="checkbox" id="headerFirstOnly"> <span data-i18n="labelHeaderFirst">Header only p.1</span></label>
+  </div>
+
+  <!-- Collapsible WordStar help panel -->
+  <div class="help-panel" id="helpPanel">
+    <button class="help-close" id="btnHelpClose">×</button>
+    <div id="helpContent"></div>
   </div>
 
   <!-- Document Info Panel -->
   <div class="info-panel" id="infoPanel">
-    <div class="info-field"><label>Title</label><input id="infoTitle" placeholder="Title"></div>
-    <div class="info-field"><label>Author</label><input id="infoAuthor" placeholder="Author"></div>
-    <div class="info-field"><label>Subject</label><input id="infoSubject" placeholder="Subject"></div>
-    <div class="info-field"><label>Keywords</label><input id="infoKeywords" placeholder="Keywords"></div>
-    <div class="info-field"><label>Pages</label><span id="infoPages">1</span></div>
-    <div class="info-field"><label>Words</label><span id="infoWords">0</span></div>
+    <div class="info-field"><label data-i18n="infoTitle">Title</label><input id="infoTitle" placeholder="Title"></div>
+    <div class="info-field"><label data-i18n="infoAuthor">Author</label><input id="infoAuthor" placeholder="Author"></div>
+    <div class="info-field"><label data-i18n="infoSubject">Subject</label><input id="infoSubject" placeholder="Subject"></div>
+    <div class="info-field"><label data-i18n="infoKeywords">Keywords</label><input id="infoKeywords" placeholder="Keywords"></div>
+    <div class="info-field"><label data-i18n="infoPages">Pages</label><span id="infoPages">1</span></div>
+    <div class="info-field"><label data-i18n="infoWords">Words</label><span id="infoWords">0</span></div>
   </div>
 
   <!-- CRT Monitor & Document Viewport -->
@@ -504,50 +559,176 @@
 .meta Title: ACROHAT Document
 .meta Author: Operator
 
-QUICK HELP
-----------
-WordStar commands are ordinary lines you type at the left margin
-(not keyboard shortcuts — no Shift/Alt/Ctrl):
-
-  .he Your header text here
-      → sets the running header on exported pages
-
-  .fo Footer text  %P%
-      → sets the running footer (%P% becomes page number)
-
-  .pa
-      → forces a page break
-
-  .meta Title: ...
-  .meta Author: ...
-  .meta Subject: ...
-  .meta Keywords: ...
-      → fills the PDF document info dictionary
-
-EXPORT NOTES
-------------
-• FONT PT (tools strip) controls text size in the exported PDF only.
-  It does not change the on-screen editor size.
-• On-screen zoom is the BEAM GAIN knob.
-• Selected FONT RACK face is embedded in the PDF on [STORE / PDF].
-• PAGE size, header-only-on-first-page, margin, kerning and rotation
-  knobs also affect the exported file.
-
-Rotate the knobs, pick a font, then [STORE / PDF] to compile.</div>
+(Press [ HELP ] for WordStar dot-command reference)
+</div>
     </div>
   </div>
 
   <!-- Mainframe Hardware Registers & Telemetry -->
   <div class="status-bar">
-    <div>SYS_REG: <span id="regStatus">0x7E3 / ARMED</span></div>
-    <div>PAGES: <span id="statPages">1</span></div>
-    <div>WORDS: <span id="statWords">0</span></div>
-    <div>CHARS: <span id="statChars">0</span></div>
-    <div>CODEPAGE: <span>IBM-037/UTF-8</span></div>
+    <div><span data-i18n="statSys">SYS_REG:</span> <span id="regStatus">0x7E3 / ARMED</span></div>
+    <div><span data-i18n="statPages">PAGES:</span> <span id="statPages">1</span></div>
+    <div><span data-i18n="statWords">WORDS:</span> <span id="statWords">0</span></div>
+    <div><span data-i18n="statChars">CHARS:</span> <span id="statChars">0</span></div>
+    <div><span data-i18n="statCode">CODEPAGE:</span> <span>IBM-037/UTF-8</span></div>
   </div>
 </div>
 
 <script>
+
+/* =====================================================================
+   0. LOCALIZATION (EN / RU)
+   ===================================================================== */
+const I18N = {
+  en: {
+    titleSuffix: "[PDF wordPROCESSOR]",
+    btnLoad: "[ LOAD PDF ]",
+    btnExport: "[ STORE / PDF ]",
+    btnPage: "[ +PAGE ]",
+    btnHelp: "[ HELP ]",
+    btnClear: "[ IPL / CLR ]",
+    knobZoom: "BEAM GAIN",
+    knobPitch: "LINE PITCH",
+    knobKern: "KERNING",
+    knobMargin: "L-MARGIN",
+    knobRot: "ORIENTATION",
+    labelFont: "FONT RACK:",
+    labelPhosphor: "PHOSPHOR:",
+    labelLang: "LANG:",
+    labelFind: "FIND:",
+    btnFind: "[ FIND ]",
+    btnInfo: "[ INFO ]",
+    labelPage: "PAGE:",
+    labelFontPt: "FONT PT:",
+    labelHeaderFirst: "Header only p.1",
+    infoTitle: "Title",
+    infoAuthor: "Author",
+    infoSubject: "Subject",
+    infoKeywords: "Keywords",
+    infoPages: "Pages",
+    infoWords: "Words",
+    statSys: "SYS_REG:",
+    statPages: "PAGES:",
+    statWords: "WORDS:",
+    statChars: "CHARS:",
+    statCode: "CODEPAGE:",
+    audioOn: "AUDIO: [ON]",
+    audioMuted: "AUDIO: [MUTED]",
+    findPlaceholder: "search text…",
+    confirmClear: "IPL RESET: Clear working terminal memory?",
+    alertNotFound: "Not found.",
+    alertPdfjsMissing: "PDF.js not loaded. Falling back to basic scanner.",
+    alertExtractOk: "SUCCESS: Extracted {n} page(s) from [{name}] via PDF.js.",
+    alertPdfjsFail: "PDF.js failed, trying basic scanner…",
+    alertBasicOk: "SUCCESS: Recovered text stream from [{name}] (basic scanner).",
+    alertNoText: "NOTICE: Could not extract text (compressed or image-based PDF).",
+    alertExportFail: "Export failed: ",
+    alertPdfLibMissing: "pdf-lib or fontkit failed to load. Check network.",
+    helpHtml: `<h4>WORDSTAR DOT COMMANDS</h4>
+<p>Type these as ordinary lines at the left margin (not keyboard shortcuts):</p>
+<div class="cmd-row"><code>.he Your header text</code> — running header on exported pages</div>
+<div class="cmd-row"><code>.fo Footer text %P%</code> — running footer (%P% = page number)</div>
+<div class="cmd-row"><code>.pa</code> — force a page break</div>
+<div class="cmd-row"><code>.meta Title: …</code> / <code>Author:</code> / <code>Subject:</code> / <code>Keywords:</code> — PDF document info</div>
+<p style="margin-top:8px"><b>EXPORT NOTES</b><br>
+• FONT PT controls size in the exported PDF only (not on-screen).<br>
+• On-screen zoom = BEAM GAIN knob. Selected FONT RACK face is embedded on STORE.<br>
+• PAGE size, header-only-on-first-page, margin, kerning and rotation also affect the PDF.</p>
+<p>Press [ HELP ] again to hide this panel.</p>`
+  },
+  ru: {
+    titleSuffix: "[PDF текстовый ПРОЦЕССОР]",
+    btnLoad: "[ ЗАГРУЗКА PDF ]",
+    btnExport: "[ ЗАПИСЬ / PDF ]",
+    btnPage: "[ +СТР ]",
+    btnHelp: "[ СПРАВКА ]",
+    btnClear: "[ СБРОС ]",
+    knobZoom: "УСИЛЕНИЕ",
+    knobPitch: "ИНТЕРВАЛ",
+    knobKern: "КЕРНИНГ",
+    knobMargin: "ЛЕВ. ПОЛЕ",
+    knobRot: "ПОВОРОТ",
+    labelFont: "ШРИФТ:",
+    labelPhosphor: "ФОСФОР:",
+    labelLang: "ЯЗЫК:",
+    labelFind: "ПОИСК:",
+    btnFind: "[ НАЙТИ ]",
+    btnInfo: "[ ИНФО ]",
+    labelPage: "ФОРМАТ:",
+    labelFontPt: "КЕГЛЬ:",
+    labelHeaderFirst: "Колонтитул только на 1 стр.",
+    infoTitle: "Заголовок",
+    infoAuthor: "Автор",
+    infoSubject: "Тема",
+    infoKeywords: "Ключевые слова",
+    infoPages: "Страниц",
+    infoWords: "Слов",
+    statSys: "РЕГИСТР:",
+    statPages: "СТР:",
+    statWords: "СЛОВ:",
+    statChars: "СИМВ:",
+    statCode: "КОД.СТР:",
+    audioOn: "ЗВУК: [ВКЛ]",
+    audioMuted: "ЗВУК: [ВЫКЛ]",
+    findPlaceholder: "искать текст…",
+    confirmClear: "СБРОС IPL: Очистить рабочую память терминала?",
+    alertNotFound: "Не найдено.",
+    alertPdfjsMissing: "PDF.js не загружен. Переход на базовый сканер.",
+    alertExtractOk: "УСПЕХ: Извлечено {n} стр. из [{name}] через PDF.js.",
+    alertPdfjsFail: "PDF.js не смог, пробуем базовый сканер…",
+    alertBasicOk: "УСПЕХ: Восстановлен текстовый поток из [{name}] (базовый сканер).",
+    alertNoText: "ВНИМАНИЕ: Не удалось извлечь текст (сжатый или сканированный PDF).",
+    alertExportFail: "Ошибка экспорта: ",
+    alertPdfLibMissing: "pdf-lib или fontkit не загрузились. Проверьте сеть.",
+    helpHtml: `<h4>КОМАНДЫ WORDSTAR (ТОЧЕЧНЫЕ)</h4>
+<p>Вводите эти строки с левого края (это не горячие клавиши):</p>
+<div class="cmd-row"><code>.he Текст колонтитула</code> — верхний колонтитул на страницах PDF</div>
+<div class="cmd-row"><code>.fo Текст подвала %P%</code> — нижний колонтитул (%P% = номер страницы)</div>
+<div class="cmd-row"><code>.pa</code> — принудительный разрыв страницы</div>
+<div class="cmd-row"><code>.meta Title: …</code> / <code>Author:</code> / <code>Subject:</code> / <code>Keywords:</code> — сведения о документе PDF</div>
+<p style="margin-top:8px"><b>ЗАМЕЧАНИЯ ПО ЭКСПОРТУ</b><br>
+• КЕГЛЬ управляет размером шрифта только в PDF (не на экране).<br>
+• Масштаб на экране = ручка УСИЛЕНИЕ. Выбранный ШРИФТ встраивается при ЗАПИСИ.<br>
+• Формат страницы, «колонтитул только на 1 стр.», поля, кернинг и поворот тоже влияют на PDF.</p>
+<p>Нажмите [ СПРАВКА ] ещё раз, чтобы скрыть эту панель.</p>`
+  }
+};
+
+let currentLang = localStorage.getItem('acrohat-lang') || 'en';
+
+function t(key) {
+  return (I18N[currentLang] && I18N[currentLang][key]) || I18N.en[key] || key;
+}
+
+function applyLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('acrohat-lang', lang);
+  document.documentElement.lang = lang === 'ru' ? 'ru' : 'en';
+
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (I18N[lang][key]) el.textContent = I18N[lang][key];
+  });
+
+  const titleSuffix = document.getElementById('titleSuffix');
+  if (titleSuffix) titleSuffix.textContent = t('titleSuffix');
+
+  const findInput = document.getElementById('findInput');
+  if (findInput) findInput.placeholder = t('findPlaceholder');
+
+  const audioBtn = document.getElementById('btnAudioToggle');
+  if (audioBtn) {
+    audioBtn.textContent = audioEnabled ? t('audioOn') : t('audioMuted');
+  }
+
+  const helpContent = document.getElementById('helpContent');
+  if (helpContent) helpContent.innerHTML = t('helpHtml');
+
+  const langSelect = document.getElementById('langSelect');
+  if (langSelect) langSelect.value = lang;
+}
+
+
 /* =====================================================================
    1. WEBAUDIO MECHANICAL RELAY SYNTHESIZER
    ===================================================================== */
@@ -574,8 +755,25 @@ function playMechanicalClick(frequency = 650, duration = 0.018) {
 
 document.getElementById('btnAudioToggle').addEventListener('click', (e) => {
   audioEnabled = !audioEnabled;
-  e.target.textContent = `AUDIO: [${audioEnabled ? 'ON' : 'MUTED'}]`;
+  e.target.textContent = audioEnabled ? t('audioOn') : t('audioMuted');
   playMechanicalClick(900, 0.03);
+});
+
+// Language selector
+document.getElementById('langSelect').addEventListener('change', (e) => {
+  applyLanguage(e.target.value);
+  playMechanicalClick(700, 0.02);
+});
+
+// Help panel toggle
+const helpPanel = document.getElementById('helpPanel');
+document.getElementById('btnHelp').addEventListener('click', () => {
+  helpPanel.classList.toggle('visible');
+  playMechanicalClick(780, 0.02);
+});
+document.getElementById('btnHelpClose').addEventListener('click', () => {
+  helpPanel.classList.remove('visible');
+  playMechanicalClick(500, 0.015);
 });
 
 /* =====================================================================
@@ -704,7 +902,7 @@ document.getElementById('btnPageBreak').addEventListener('click', () => {
 });
 
 document.getElementById('btnClear').addEventListener('click', () => {
-  if (confirm("IPL RESET: Clear working terminal memory?")) {
+  if (confirm(t('confirmClear'))) {
     editor.innerText = '';
     updateTelemetry();
     playMechanicalClick(300, 0.05);
@@ -731,7 +929,7 @@ document.getElementById('pdfFileInput').addEventListener('change', async (e) => 
 
   // PDF via PDF.js
   if (!window.pdfjsLib) {
-    alert("PDF.js not loaded. Falling back to basic scanner.");
+    alert(t('alertPdfjsMissing'));
     return basicPdfScan(file);
   }
 
@@ -750,12 +948,12 @@ document.getElementById('pdfFileInput').addEventListener('change', async (e) => 
     }
 
     editor.innerText = fullText.trim();
-    alert(`SUCCESS: Extracted ${pdf.numPages} page(s) from [${file.name}] via PDF.js.`);
+    alert(t('alertExtractOk').replace('{n}', pdf.numPages).replace('{name}', file.name));
     updateTelemetry();
     syncInfoFromEditor();
   } catch (err) {
     console.warn(err);
-    alert("PDF.js failed, trying basic scanner…");
+    alert(t('alertPdfjsFail'));
     basicPdfScan(file);
   }
 });
@@ -785,9 +983,9 @@ function basicPdfScan(file) {
       }
       if (extractedText.trim()) {
         editor.innerText = `.he IMPORTED PDF ARCHIVE: ${file.name.toUpperCase()}\n.fo CRAFTSTAR EXTRACTED STREAM\n\n` + extractedText;
-        alert(`SUCCESS: Recovered text stream from [${file.name}] (basic scanner).`);
+        alert(t('alertBasicOk').replace('{name}', file.name));
       } else {
-        alert("NOTICE: Could not extract text (compressed or image-based PDF).");
+        alert(t('alertNoText'));
       }
     } catch (err) {
       alert("Error parsing PDF: " + err.message);
@@ -813,7 +1011,7 @@ document.getElementById('btnFindNext').addEventListener('click', () => {
     idx = lower.indexOf(needle, 0); // wrap
   }
   if (idx === -1) {
-    alert("Not found.");
+    alert(t('alertNotFound'));
     lastFindIndex = 0;
     return;
   }
@@ -899,7 +1097,7 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
   playMechanicalClick(1100, 0.04);
 
   if (!window.PDFLib || !window.fontkit) {
-    alert("pdf-lib or fontkit failed to load. Check network.");
+    alert(t('alertPdfLibMissing'));
     return;
   }
 
@@ -1071,9 +1269,12 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
     URL.revokeObjectURL(url);
   } catch (err) {
     console.error(err);
-    alert("Export failed: " + (err.message || err));
+    alert(t('alertExportFail') + (err.message || err));
   }
 });
+
+// Apply saved language on load
+applyLanguage(currentLang);
 </script>
 </body>
 </html>
