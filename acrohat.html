@@ -119,16 +119,16 @@
       background: #252b31;
       border: 1px solid #3c4650;
       color: #cfd8dc;
-      padding: 5px 11px;
-      border-radius: 4px;
+      padding: 3px 7px;
+      border-radius: 3px;
       font-family: 'IBM Plex Mono', monospace;
-      font-size: 0.75rem;
+      font-size: 0.65rem;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 3px;
       text-transform: uppercase;
-      box-shadow: 0 2px 0 #101418;
+      box-shadow: 0 1px 0 #101418;
       transition: all 0.1s;
     }
     .btn:active { transform: translateY(1px); box-shadow: 0 1px 0 #101418; }
@@ -277,6 +277,7 @@
       font-size: 1.05rem;
       line-height: 1.4;
       white-space: pre-wrap;
+      overflow-wrap: break-word;
       word-break: break-word;
       user-select: text;
     }
@@ -379,7 +380,7 @@
       .header-bar { padding: 8px 10px; gap: 8px; }
       .header-title { font-size: 0.7rem; }
       .header-actions { width: 100%; justify-content: space-between; }
-      .btn { padding: 8px 10px; font-size: 0.68rem; min-height: 36px; } /* better touch targets */
+      .btn { padding: 4px 6px; font-size: 0.6rem; min-height: 28px; } /* better touch targets but smaller */
       .knobs-rack {
         grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
         gap: 8px;
@@ -393,7 +394,7 @@
       .selector-group select { flex: 1; max-width: 70%; }
       .crt-screen-frame { padding: 10px; min-height: 380px; }
       .ws-ruler { font-size: 0.68rem; letter-spacing: 1.2px; margin-bottom: 8px; }
-      .page-sheet { font-size: 0.98rem; min-height: 420px; line-height: 1.35; }
+      .page-sheet { font-size: 0.98rem; min-height: 420px; line-height: 1.35; overflow-wrap: anywhere; word-break: break-word; }
       .status-bar { font-size: 0.65rem; padding: 6px 10px; gap: 6px; }
       .help-panel { max-height: 180px; font-size: 0.68rem; }
     }
@@ -404,7 +405,7 @@
       .header-actions { flex-wrap: wrap; justify-content: center; }
       .knobs-rack { grid-template-columns: repeat(3, 1fr); }
       .crt-screen-frame { min-height: 320px; padding: 8px; }
-      .page-sheet { font-size: 0.92rem; min-height: 360px; }
+      .page-sheet { font-size: 0.92rem; min-height: 360px; overflow-wrap: anywhere; word-break: break-word; }
       .ws-ruler { display: none; } /* hide ruler on very small screens to save space */
     }
   </style>
@@ -426,7 +427,7 @@
         <span data-i18n="btnLoadImg">[ LOAD IMG ]</span>
         <input type="file" id="imgFileInput" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp">
       </label>
-      <button class="btn btn-action" id="btnExportPdf" title="Compile document into standard PDF via WASM/JS engine" data-i18n="btnExport">[ STORE / PDF ]</button>
+      <button class="btn btn-action" id="btnExportPdf" title="Export / save the current document as a PDF file" data-i18n="btnExport">[ EXPORT PDF ]</button>
       <button class="btn" id="btnPageBreak" title="Insert acrohat page split (.pa)" data-i18n="btnPage">[ +PAGE ]</button>
       <button class="btn" id="btnHelp" title="Show / hide acrohat dot-command reference" data-i18n="btnHelp">[ HELP ]</button>
       <button class="btn" id="btnClear" data-i18n="btnClear">[ IPL / CLR ]</button>
@@ -580,7 +581,7 @@ acrohat dot commands are supported at the left margin:
   .img id    Embed a previously loaded image
   .meta [k]  Injects PDF Document Info Dictionary
 
-Use [ LOAD IMG ] to import an image, then place .img id where it should appear.
+Use [ LOAD IMG ] to import an image, then place .img id [width] where it should appear.
 Rotate the rotary knobs on the console rack to modify BEAM GAIN,
 LINE PITCH, or KERNING parameters. Tap [STORE / PDF] to compile.</div>
   
@@ -610,7 +611,7 @@ const I18N = {
     titleSuffix: "[PDF wordPROCESSOR]",
     btnLoad: "[ LOAD PDF ]",
     btnLoadImg: "[ LOAD IMG ]",
-    btnExport: "[ STORE / PDF ]",
+    btnExport: "[ EXPORT PDF ]",
     btnPage: "[ +PAGE ]",
     btnHelp: "[ HELP ]",
     btnClear: "[ IPL / CLR ]",
@@ -659,7 +660,7 @@ const I18N = {
 <div class="cmd-row"><code>.lm 54</code> — left margin in points (overrides knob)</div>
 <div class="cmd-row"><code>.op</code> — omit footer and page numbers</div>
 <div class="cmd-row"><code>.ig comment text</code> or <code>..</code> — ignored comment</div>
-<div class="cmd-row"><code>.img img1</code> — embed image previously loaded via [ LOAD IMG ]</div>
+<div class="cmd-row"><code>.img img1</code> or <code>.img img1 250</code> — embed image (optional width in points)</div>
 <div class="cmd-row"><code>.fs 12</code> — set export font size in points (6–36)</div>
 <div class="cmd-row"><code>.meta Title: …</code> / <code>Author:</code> / <code>Subject:</code> / <code>Keywords:</code> — PDF document info</div>
 <p style="margin-top:8px"><b>EXPORT NOTES</b><br>
@@ -673,7 +674,7 @@ const I18N = {
     titleSuffix: "[PDF текстовый ПРОЦЕССОР]",
     btnLoad: "[ ЗАГРУЗКА PDF ]",
     btnLoadImg: "[ ЗАГРУЗКА IMG ]",
-    btnExport: "[ ЗАПИСЬ / PDF ]",
+    btnExport: "[ ЭКСПОРТ PDF ]",
     btnPage: "[ +СТР ]",
     btnHelp: "[ СПРАВКА ]",
     btnClear: "[ СБРОС ]",
@@ -722,7 +723,7 @@ const I18N = {
 <div class="cmd-row"><code>.lm 54</code> — левое поле в пунктах (переопределяет ручку)</div>
 <div class="cmd-row"><code>.op</code> — скрыть подвал и номера страниц</div>
 <div class="cmd-row"><code>.ig текст</code> или <code>..</code> — комментарий (игнорируется)</div>
-<div class="cmd-row"><code>.img img1</code> — вставить изображение, загруженное через [ ЗАГРУЗКА IMG ]</div>
+<div class="cmd-row"><code>.img img1</code> или <code>.img img1 250</code> — вставить изображение (необяз. ширина в пунктах)</div>
 <div class="cmd-row"><code>.fs 12</code> — задать кегль экспорта в пунктах (6–36)</div>
 <div class="cmd-row"><code>.meta Title: …</code> / <code>Author:</code> / <code>Subject:</code> / <code>Keywords:</code> — сведения о документе PDF</div>
 <p style="margin-top:8px"><b>ЗАМЕЧАНИЯ ПО ЭКСПОРТУ</b><br>
@@ -818,7 +819,7 @@ document.getElementById('imgFileInput').addEventListener('change', async (e) => 
     const marker = `\n.img ${id}\n`;
     document.execCommand('insertText', false, marker);
     updateTelemetry();
-    alert(`Image loaded as .img ${id} (${file.name})`);
+    alert(`Image loaded as .img ${id} (${file.name}). Edit the line to add optional width, e.g. .img ${id} 200`);
   } catch (err) {
     alert('Image load failed: ' + err.message);
   }
@@ -1243,8 +1244,15 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
     } else if (lower.startsWith('.ig ') || lower.startsWith('..')) {
       // ignore comment
     } else if (lower.startsWith('.img ')) {
-      const id = trimmed.substring(5).trim();
-      documentPages[documentPages.length - 1].push(`__IMG__:${id}`);
+      const rest = trimmed.substring(5).trim();
+      const parts = rest.split(/\s+/);
+      const id = parts[0];
+      let width = '';
+      if (parts[1]) {
+        const w = parseFloat(parts[1]);
+        if (!isNaN(w) && w > 10) width = w;
+      }
+      documentPages[documentPages.length - 1].push(`__IMG__:${id}:${width}`);
     } else if (lower.startsWith('.fs ')) {
       const n = parseInt(trimmed.substring(4).trim(), 10);
       if (!isNaN(n) && n >= 6 && n <= 36) fontSize = n;
@@ -1293,7 +1301,9 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
     betterPages.forEach(pageLines => {
       pageLines.forEach(ln => {
         if (typeof ln === 'string' && ln.startsWith('__IMG__:')) {
-          imageIds.add(ln.substring(8));
+          const parts = ln.substring(8).split(':');
+          const id = parts[0];
+          imageIds.add(id);
         }
       });
     });
@@ -1350,12 +1360,15 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
       betterPages[i].forEach(ln => {
         if (y < marginPt + 40) return; // simple overflow guard
         if (typeof ln === 'string' && ln.startsWith('__IMG__:')) {
-          const id = ln.substring(8);
+          const parts = ln.substring(8).split(':');
+          const id = parts[0];
+          const requestedW = parts[1] ? parseFloat(parts[1]) : null;
           const embedded = embeddedImages[id];
           if (embedded) {
             const maxW = pageW - marginPt * 2;
-            const maxH = 200;
-            const dims = embedded.scaleToFit(maxW, maxH);
+            const targetW = (requestedW && requestedW > 0) ? Math.min(requestedW, maxW) : maxW;
+            const maxH = 280;
+            const dims = embedded.scaleToFit(targetW, maxH);
             if (y - dims.height < marginPt + 40) return;
             page.drawImage(embedded, {
               x: marginPt,
