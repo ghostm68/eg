@@ -229,14 +229,21 @@
       <div id="dateNav" style="display:none; max-height:260px; overflow-y:auto; margin-top:0.5rem; background:#0c0d12; border:1px solid var(--border); padding:0.5rem;"></div>
     </div>
 
-    <!-- ENTRY INFO -->
+    <!-- ENTRY INFO + RESEARCH TOGGLE -->
     <div id="entryInfo" style="margin-top:1rem; padding-bottom:0.5rem; border-bottom:1px solid var(--border); font-size:0.75rem; color:#9ca3af;"></div>
 
-    <!-- MAIN READER CONTENT -->
-    <main style="padding: 1.5rem 0;">
-      <div id="loading" style="text-align:center; padding: 4rem 1rem; color:#6b7280;">
-        <span class="mark"></span> fetching from city…
-      </div>
+    <div style="margin:0.75rem 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+      <span style="font-size:0.7rem; color:var(--text-muted); font-family:'Share Tech Mono', monospace;">research view · full text hidden</span>
+      <button id="textToggle" title="Show or hide the manuscript text">Show text</button>
+    </div>
+
+    <!-- Status (always visible) -->
+    <div id="loading" style="text-align:center; padding: 2rem 1rem; color:#6b7280; font-size:0.85rem;">
+      <span class="mark"></span> fetching from city…
+    </div>
+
+    <!-- MAIN READER CONTENT (hidden by default for research use) -->
+    <main id="readerMain" style="padding: 0.5rem 0 1.5rem; display:none;">
       <article id="content" class="prose" style="display:none;"></article>
     </main>
 
@@ -388,6 +395,20 @@
     });
     guideToggle.addEventListener('click', () => {
       searchGuide.style.display = searchGuide.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // Research mode: full manuscript text hidden by default
+    const textToggle = document.getElementById('textToggle');
+    const readerMain = document.getElementById('readerMain');
+    let textVisible = false;
+    textToggle.addEventListener('click', () => {
+      textVisible = !textVisible;
+      readerMain.style.display = textVisible ? 'block' : 'none';
+      textToggle.textContent = textVisible ? 'Hide text' : 'Show text';
+      // Keep the content article itself visible once loaded
+      if (textVisible && contentDiv.innerHTML.trim()) {
+        contentDiv.style.display = 'block';
+      }
     });
 
     // --- CONTENT FETCHER: city page first, local .md as fallback ---
