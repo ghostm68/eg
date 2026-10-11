@@ -363,6 +363,46 @@
       border-radius: 3px;
     }
 
+    /* Floating Phosphor Thumbnail Bay */
+    .image-status-bay {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      background: var(--crt-bg);
+      border: 1px solid var(--phosphor-dim);
+      padding: 6px 8px;
+      z-index: 25;
+      display: none;
+      box-shadow: 0 0 12px var(--glow-color), inset 0 0 8px rgba(0,0,0,0.6);
+      font-size: 0.58rem;
+      color: var(--phosphor-text);
+      text-align: center;
+      letter-spacing: 0.5px;
+      min-width: 110px;
+      pointer-events: none;
+    }
+    .image-status-bay.visible { display: block; }
+    .image-status-bay .bay-label {
+      margin-bottom: 4px;
+      color: var(--phosphor-dim);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    #thumbCanvas {
+      display: block;
+      margin: 0 auto 4px;
+      border: 1px solid var(--phosphor-dim);
+      background: #000;
+      image-rendering: pixelated;
+      box-shadow: 0 0 6px var(--glow-color);
+    }
+    #thumbLabel {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100px;
+    }
+
     /* Mobile Optimizations */
     @media (max-width: 768px) {
       body { padding: 6px; }
@@ -548,23 +588,26 @@
 .meta Author: IBM S/370 Acrohat
 .lm 54
 
-1.0 INTRODUCTION TO CLIENT-SIDE PDF COMPOSITION
--------------------------------------------------
+.h1 1.0 INTRODUCTION TO PDF COMPOSITION
+.hr
 This terminal processes PDF documents inside browser storage.
 All typography, stream reconstruction, and page splitting occur locally.
 
 Default phosphor is now P22R Red. Switch themes via the PHOSPHOR selector.
 acrohat dot commands are supported at the left margin:
   .pa                          Forces a Page Break
+  .h1 [text]                   Level-1 Heading (Large, Faux-Bold)
+  .h2 [text]                   Level-2 Subheading
+  .hr                          Horizontal Divider Rule
   .he [text]                   Sets dynamic Running Header
-  .fo [text]                   Sets dynamic Running Footer
+  .fo [text]                   Sets dynamic Running Footer (%P% = page)
   .lm [pts]                    Sets Left Margin (points)
   .op                          Omit footer / page numbers
   .ig [text]                   Comment (ignored on export)
   .img id [w] [align] [shape]  Embed, align and mask image
   .meta [k]                    Injects PDF Document Info Dictionary
 
-IMAGE SHAPES SUPPORTED:
+.h2 IMAGE SHAPES SUPPORTED:
   .img img1 200 center circle  -> circular profile/badge
   .img img1 300 center rounded -> card with soft corners
   .img img1 220 right square   -> 1:1 square center-crop
@@ -574,6 +617,13 @@ Rotate the rotary knobs on the console rack to modify BEAM GAIN,
 LINE PITCH, or KERNING parameters. Tap [EXPORT PDF] to compile.
 
 (Press [ HELP ] for complete acrohat dot-command reference & options)</div>
+    </div>
+
+    <!-- Floating phosphor thumbnail bay for loaded / hovered images -->
+    <div class="image-status-bay" id="imageStatusBay">
+      <div class="bay-label">IMG BAY</div>
+      <canvas id="thumbCanvas" width="96" height="72"></canvas>
+      <div id="thumbLabel">NO IMAGE</div>
     </div>
   </div>
 
@@ -641,6 +691,9 @@ const I18N = {
 <div class="cmd-row"><code>.he Your header text</code> — running header on exported pages</div>
 <div class="cmd-row"><code>.fo Footer text %P%</code> — running footer (%P% = page number)</div>
 <div class="cmd-row"><code>.pa</code> — force a page break</div>
+<div class="cmd-row"><code>.h1 Heading text</code> — level-1 heading (fontSize × 1.5, bold)</div>
+<div class="cmd-row"><code>.h2 Subheading text</code> — level-2 heading (fontSize × 1.2)</div>
+<div class="cmd-row"><code>.hr</code> — horizontal rule across printable width</div>
 <div class="cmd-row"><code>.lm 54</code> — left margin in points (overrides knob)</div>
 <div class="cmd-row"><code>.op</code> — omit footer and page numbers</div>
 <div class="cmd-row"><code>.ig comment text</code> or <code>..</code> — ignored comment</div>
@@ -703,6 +756,9 @@ const I18N = {
 <div class="cmd-row"><code>.he Текст колонтитула</code> — верхний колонтитул на страницах PDF</div>
 <div class="cmd-row"><code>.fo Текст подвала %P%</code> — нижний колонтитул (%P% = номер страницы)</div>
 <div class="cmd-row"><code>.pa</code> — принудительный разрыв страницы</div>
+<div class="cmd-row"><code>.h1 Заголовок</code> — заголовок 1 уровня (кегль × 1.5, жирный)</div>
+<div class="cmd-row"><code>.h2 Подзаголовок</code> — заголовок 2 уровня (кегль × 1.2)</div>
+<div class="cmd-row"><code>.hr</code> — горизонтальная линия на ширину поля</div>
 <div class="cmd-row"><code>.lm 54</code> — левое поле в пунктах (переопределяет ручку)</div>
 <div class="cmd-row"><code>.op</code> — скрыть подвал и номера страниц</div>
 <div class="cmd-row"><code>.ig текст</code> или <code>..</code> — комментарий (игнорируется)</div>
@@ -800,6 +856,7 @@ document.getElementById('imgFileInput').addEventListener('change', async (e) => 
     const marker = `\n.img ${id} 220 center rect\n`;
     document.execCommand('insertText', false, marker);
     updateTelemetry();
+    showPhosphorThumbnail(id);
     alert(`Image loaded: .img ${id}\nCustomise with: .img ${id} [width] [left|center|right] [rect|circle|rounded|square|hex]`);
   } catch (err) {
     alert('Image load failed: ' + err.message);
@@ -808,7 +865,7 @@ document.getElementById('imgFileInput').addEventListener('change', async (e) => 
 });
 
 /**
- * Off-screen canvas mask generator for shapes and crops
+ * Off-screen canvas mask generator for shapes and crops (Async Native Blob Transfer)
  */
 async function processImageMask(bytes, mimeType, shape = 'rect') {
   const blob = new Blob([bytes], { type: mimeType || 'image/png' });
@@ -824,25 +881,12 @@ async function processImageMask(bytes, mimeType, shape = 'rect') {
   const origW = img.naturalWidth || img.width;
   const origH = img.naturalHeight || img.height;
 
-  // Direct return for plain unshaped rectangles
-  if (shape === 'rect' || !shape) {
-    // Canvas conversion ensures clean PNG for pdf-lib
-    const c = document.createElement('canvas');
-    c.width = origW; c.height = origH;
-    const ctx = c.getContext('2d');
-    ctx.drawImage(img, 0, 0);
-    const dataUrl = c.toDataURL('image/png');
-    const b64 = dataUrl.split(',')[1];
-    return Uint8Array.from(atob(b64), ch => ch.charCodeAt(0));
-  }
-
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
 
   let sX = 0, sY = 0, sW = origW, sH = origH;
   let targetW = origW, targetH = origH;
 
-  // Center-crop to 1:1 square for circular, square, and hex shapes
   if (shape === 'circle' || shape === 'square' || shape === 'hex') {
     const minDim = Math.min(origW, origH);
     sX = (origW - minDim) / 2;
@@ -891,9 +935,60 @@ async function processImageMask(bytes, mimeType, shape = 'rect') {
   ctx.drawImage(img, sX, sY, sW, sH, 0, 0, targetW, targetH);
   ctx.restore();
 
-  const dataUrl = canvas.toDataURL('image/png');
-  const b64 = dataUrl.split(',')[1];
-  return Uint8Array.from(atob(b64), ch => ch.charCodeAt(0));
+  // High-performance asynchronous binary extraction (avoids large base64 memory spikes)
+  const blobOut = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+  const buf = await blobOut.arrayBuffer();
+  return new Uint8Array(buf);
+}
+
+/* =====================================================================
+   PHOSPHOR-TINTED THUMBNAIL BAY
+   ===================================================================== */
+const thumbBay = document.getElementById('imageStatusBay');
+const thumbCanvas = document.getElementById('thumbCanvas');
+const thumbLabel = document.getElementById('thumbLabel');
+const thumbCtx = thumbCanvas.getContext('2d');
+
+function getPhosphorColor() {
+  return getComputedStyle(document.body).getPropertyValue('--phosphor-text').trim() || '#ff3333';
+}
+
+async function showPhosphorThumbnail(id) {
+  const data = imageStore[id];
+  if (!data) {
+    thumbBay.classList.remove('visible');
+    return;
+  }
+  try {
+    const blob = new Blob([data.bytes], { type: data.type || 'image/png' });
+    const url = URL.createObjectURL(blob);
+    const img = await new Promise((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = reject;
+      el.src = url;
+    });
+    URL.revokeObjectURL(url);
+
+    thumbCtx.clearRect(0, 0, thumbCanvas.width, thumbCanvas.height);
+    thumbCtx.drawImage(img, 0, 0, thumbCanvas.width, thumbCanvas.height);
+
+    thumbCtx.globalCompositeOperation = 'multiply';
+    thumbCtx.fillStyle = getPhosphorColor();
+    thumbCtx.fillRect(0, 0, thumbCanvas.width, thumbCanvas.height);
+    thumbCtx.globalCompositeOperation = 'source-over';
+
+    thumbCtx.globalCompositeOperation = 'multiply';
+    thumbCtx.fillStyle = 'rgba(0,0,0,0.25)';
+    thumbCtx.fillRect(0, 0, thumbCanvas.width, thumbCanvas.height);
+    thumbCtx.globalCompositeOperation = 'source-over';
+
+    thumbLabel.textContent = id.toUpperCase();
+    thumbBay.classList.add('visible');
+  } catch (err) {
+    console.warn('Thumbnail failed', err);
+    thumbBay.classList.remove('visible');
+  }
 }
 
 // Language selector
@@ -1010,6 +1105,43 @@ document.getElementById('fontSelect').addEventListener('change', (e) => {
 document.getElementById('phosphorSelect').addEventListener('change', (e) => {
   document.body.className = e.target.value;
   playMechanicalClick(820, 0.025);
+  const current = thumbLabel.textContent.toLowerCase();
+  if (current && current !== 'no image' && imageStore[current]) {
+    showPhosphorThumbnail(current);
+  }
+});
+
+let hoverTimer = null;
+editor.addEventListener('mousemove', (e) => {
+  clearTimeout(hoverTimer);
+  hoverTimer = setTimeout(() => {
+    let range = null;
+    if (document.caretRangeFromPoint) {
+      range = document.caretRangeFromPoint(e.clientX, e.clientY);
+    } else if (document.caretPositionFromPoint) {
+      const pos = document.caretPositionFromPoint(e.clientX, e.clientY);
+      if (pos) {
+        range = document.createRange();
+        range.setStart(pos.offsetNode, pos.offset);
+      }
+    }
+    if (!range || !editor.contains(range.startContainer)) return;
+
+    const fullRange = document.createRange();
+    fullRange.selectNodeContents(editor);
+    fullRange.setEnd(range.startContainer, range.startOffset);
+    const textBefore = fullRange.toString();
+    const lines = textBefore.split('\n');
+    const currentLine = (lines[lines.length - 1] || '').trim();
+
+    const m = currentLine.match(/^\.img\s+(\S+)/i);
+    if (m) {
+      const id = m[1];
+      if (imageStore[id]) {
+        showPhosphorThumbnail(id);
+      }
+    }
+  }, 60);
 });
 
 /* =====================================================================
@@ -1040,6 +1172,8 @@ document.getElementById('btnClear').addEventListener('click', () => {
     editor.innerText = '';
     imageStore = {};
     imageCounter = 0;
+    thumbBay.classList.remove('visible');
+    thumbLabel.textContent = 'NO IMAGE';
     updateTelemetry();
     playMechanicalClick(300, 0.05);
   }
@@ -1219,7 +1353,7 @@ editor.addEventListener('input', () => {
 });
 
 /* =====================================================================
-   8. PDF SYNTHESIZER & EXPORT ENGINE WITH SHAPED IMAGE MASKING
+   8. PDF SYNTHESIZER & EXPORT ENGINE (TWO-PASS PAGINATION ARCHITECTURE)
    ===================================================================== */
 document.getElementById('btnExportPdf').addEventListener('click', async () => {
   playMechanicalClick(1100, 0.04);
@@ -1278,7 +1412,7 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
     return out.length ? out : [''];
   }
 
-  // Parse lines & dot commands
+  // Parse lines & dot commands (including wrap-aware headings)
   inputLines.forEach(line => {
     const trimmed = line.trim();
     const lower = trimmed.toLowerCase();
@@ -1299,9 +1433,18 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
       const n = parseFloat(trimmed.substring(4).trim());
       if (!isNaN(n) && n > 0) leftMarginOverride = n;
     } else if (lower.startsWith('.ig ') || lower.startsWith('..')) {
-      // ignore comment
+      // ignored comment
+    } else if (lower.startsWith('.h1 ')) {
+      const text = trimmed.substring(4).trim();
+      const hLimit = Math.max(16, Math.floor(roughMax / 1.5));
+      wrapLine(text, hLimit).forEach(h => documentPages[documentPages.length - 1].push(`__H1__:${h}`));
+    } else if (lower.startsWith('.h2 ')) {
+      const text = trimmed.substring(4).trim();
+      const hLimit = Math.max(20, Math.floor(roughMax / 1.2));
+      wrapLine(text, hLimit).forEach(h => documentPages[documentPages.length - 1].push(`__H2__:${h}`));
+    } else if (lower === '.hr') {
+      documentPages[documentPages.length - 1].push('__HR__');
     } else if (lower.startsWith('.img')) {
-      // Syntax: .img <id> [width] [align] [shape]
       const rest = trimmed.replace(/^\.img\s*/i, '').trim();
       const parts = rest.split(/\s+/).filter(Boolean);
       const id = parts[0] || '';
@@ -1341,7 +1484,7 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
     const betterPages = documentPages.map(pageLines => {
       const out = [];
       pageLines.forEach(ln => {
-        if (typeof ln === 'string' && ln.startsWith('__IMG__:')) {
+        if (typeof ln === 'string' && (ln.startsWith('__IMG__:') || ln.startsWith('__H1__:') || ln.startsWith('__H2__:') || ln === '__HR__')) {
           out.push(ln);
           return;
         }
@@ -1383,36 +1526,42 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
     const headerSize = Math.max(8, fontSize - 1);
     const footerSize = Math.max(8, fontSize - 2);
 
-    for (let i = 0; i < betterPages.length; i++) {
-      let page = pdfDoc.addPage([pageW, pageH]);
+    let activePage = null;
+    let y = 0;
+
+    // Helper: Safely creates physical pages and manages running headers
+    function createPage() {
+      const page = pdfDoc.addPage([pageW, pageH]);
       if (rotVal) page.setRotation(degrees(rotVal));
+      const pageIndex = pdfDoc.getPageCount();
+      const showHeader = !headerFirstOnly || pageIndex === 1;
+      let topY = pageH - marginPt - 20;
 
-      const pageNum = i + 1;
-      const showHeader = !headerFirstOnly || pageNum === 1;
-      let y = pageH - marginPt - 20;
-
-      function drawPageHeader() {
-        if (showHeader) {
-          page.drawText(headerText, {
-            x: marginPt,
-            y,
-            size: headerSize,
-            font: customFont,
-            color: rgb(0, 0, 0),
-            characterSpacing: kerningVal
-          });
-          y -= 14;
-          page.drawLine({
-            start: { x: marginPt, y },
-            end: { x: pageW - marginPt, y },
-            thickness: 0.5,
-            color: rgb(0.3, 0.3, 0.3)
-          });
-          y -= 20;
-        }
+      if (showHeader) {
+        page.drawText(headerText, {
+          x: marginPt,
+          y: topY,
+          size: headerSize,
+          font: customFont,
+          color: rgb(0, 0, 0),
+          characterSpacing: kerningVal
+        });
+        topY -= 14;
+        page.drawLine({
+          start: { x: marginPt, y: topY },
+          end: { x: pageW - marginPt, y: topY },
+          thickness: 0.5,
+          color: rgb(0.3, 0.3, 0.3)
+        });
+        topY -= 20;
       }
+      activePage = page;
+      y = topY;
+    }
 
-      drawPageHeader();
+    // PASS 1: Content Layout Stream
+    for (let i = 0; i < betterPages.length; i++) {
+      createPage(); // New page per manual section (.pa)
 
       betterPages[i].forEach(ln => {
         if (typeof ln === 'string' && ln.startsWith('__IMG__:')) {
@@ -1426,12 +1575,8 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
             const maxH = pageH * 0.45;
             const dims = embedded.scaleToFit(targetW, maxH);
 
-            // Auto-break page if image overflows bottom margin (avoids silent dropping)
             if (y - dims.height < marginPt + 30) {
-              page = pdfDoc.addPage([pageW, pageH]);
-              if (rotVal) page.setRotation(degrees(rotVal));
-              y = pageH - marginPt - 20;
-              drawPageHeader();
+              createPage();
             }
 
             let drawX = marginPt;
@@ -1441,7 +1586,7 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
               drawX = pageW - marginPt - dims.width;
             }
 
-            page.drawImage(embedded, {
+            activePage.drawImage(embedded, {
               x: drawX,
               y: y - dims.height,
               width: dims.width,
@@ -1449,7 +1594,7 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
             });
             y -= dims.height + 10;
           } else {
-            page.drawText(`[image missing: ${id}]`, {
+            activePage.drawText(`[image missing: ${id}]`, {
               x: marginPt,
               y,
               size: fontSize,
@@ -1458,16 +1603,42 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
             });
             y -= lineHeight;
           }
-        } else {
-          // Standard text rendering
-          if (y < marginPt + 25) {
-            page = pdfDoc.addPage([pageW, pageH]);
-            if (rotVal) page.setRotation(degrees(rotVal));
-            y = pageH - marginPt - 20;
-            drawPageHeader();
+        } else if (typeof ln === 'string' && ln.startsWith('__H1__:')) {
+          const text = ln.substring(6);
+          const hSize = fontSize * 1.5;
+          if (y < marginPt + hSize + 10) {
+            createPage();
           }
-
-          page.drawText(ln || ' ', {
+          // Faux-bold by double-drawing with slight kerning offset
+          activePage.drawText(text, { x: marginPt, y, size: hSize, font: customFont, color: rgb(0,0,0), characterSpacing: kerningVal });
+          activePage.drawText(text, { x: marginPt + 0.6, y, size: hSize, font: customFont, color: rgb(0,0,0), characterSpacing: kerningVal });
+          y -= hSize * 1.25;
+        } else if (typeof ln === 'string' && ln.startsWith('__H2__:')) {
+          const text = ln.substring(6);
+          const hSize = fontSize * 1.2;
+          if (y < marginPt + hSize + 10) {
+            createPage();
+          }
+          activePage.drawText(text, { x: marginPt, y, size: hSize, font: customFont, color: rgb(0,0,0), characterSpacing: kerningVal });
+          y -= hSize * 1.2;
+        } else if (ln === '__HR__') {
+          if (y < marginPt + 20) {
+            createPage();
+          }
+          y -= 8;
+          activePage.drawLine({
+            start: { x: marginPt, y },
+            end: { x: pageW - marginPt, y },
+            thickness: 0.8,
+            color: rgb(0.2, 0.2, 0.2)
+          });
+          y -= 12;
+        } else {
+          // Standard text line
+          if (y < marginPt + 25) {
+            createPage();
+          }
+          activePage.drawText(ln || ' ', {
             x: marginPt,
             y,
             size: fontSize,
@@ -1478,11 +1649,15 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
           y -= lineHeight;
         }
       });
+    }
 
-      // Footer
-      if (!omitFooter) {
-        const footer = footerText.replace('%P%', `${pageNum}/${betterPages.length}`);
-        page.drawText(footer, {
+    // PASS 2: Universal Running Footer Stamping
+    if (!omitFooter) {
+      const allPages = pdfDoc.getPages();
+      const totalPhysicalPages = allPages.length;
+      allPages.forEach((p, idx) => {
+        const footer = footerText.replace('%P%', `${idx + 1}/${totalPhysicalPages}`);
+        p.drawText(footer, {
           x: marginPt,
           y: marginPt / 2,
           size: footerSize,
@@ -1490,7 +1665,7 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
           color: rgb(0.2, 0.2, 0.2),
           characterSpacing: kerningVal
         });
-      }
+      });
     }
 
     pdfDoc.setTitle(title);
