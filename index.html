@@ -896,6 +896,214 @@ body::after {
         </div>
     </div>
 </section>
+ <!-- ==========================================
+     MODULE: POP ART SIGIL / COUNTER_SIGIL_03
+     ========================================== -->
+<section class="ed-section" id="pop-sigil-forge">
+  <div class="ed-label reveal">Glyph // Engine 03</div>
+  <h2 class="ed-h2 reveal" style="margin-bottom: 25px;">POP ART SIGIL</h2>
+
+  <div style="max-width: 860px; margin: 0 auto; border: 1px solid var(--ed-accent, #ff0033); background: #050505; padding: 25px; box-shadow: 0 0 25px rgba(255,0,51,0.15);" class="reveal">
+    
+    <!-- Controls Header -->
+    <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; align-items: center; justify-content: space-between; border-bottom: 1px dashed #222; padding-bottom: 15px;">
+      <div style="font-family: var(--ed-mono, 'VT323', monospace); font-size: 13px; color: #888;">
+        PALETTE: <span style="color:#FFF;">[W]</span> <span style="color:#888;">[G]</span> <span style="color:#FFE500;">[Y]</span> <span style="color:#FF0033;">[R]</span> <span style="color:#444;">[B]</span>
+      </div>
+      <div style="font-family: var(--ed-mono, 'VT323', monospace); font-size: 11px; color: var(--ed-accent, #ff0033);">
+        // OPTIC_COUNTER_V1.0
+      </div>
+    </div>
+
+    <!-- Canvas Preview Box -->
+    <div style="display: flex; justify-content: center; align-items: center; background: #000; border: 1px solid #222; padding: 15px; margin-bottom: 20px;">
+      <canvas id="pop-sigil-canvas" width="600" height="600" style="width: 100%; max-width: 480px; aspect-ratio: 1/1; image-rendering: pixelated; border: 1px solid #111;"></canvas>
+    </div>
+
+    <!-- Input and Action Deck -->
+    <div style="display: grid; grid-template-columns: 1fr auto auto; gap: 10px; margin-bottom: 15px;">
+      <input type="text" id="sigil-intent" placeholder="ENTER INTENT / RUNE SEED..." value="WILL TO ESCAPE THE ORDINARY" 
+             style="background: #000; border: 1px solid #333; color: #fff; padding: 10px 14px; font-family: var(--ed-mono, monospace); font-size: 13px; outline: none;">
+      <button onclick="reforgePopSigil()" class="export-btn" style="width: auto; margin: 0; padding: 10px 20px;">[ REFORGE ]</button>
+      <button onclick="exportSigilPNG()" class="export-btn" style="width: auto; margin: 0; padding: 10px 20px; border-color: #FFE500; color: #FFE500;">[ EXPORT PNG ]</button>
+    </div>
+
+    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+      <button onclick="exportSigilSVG()" style="background: transparent; border: 1px dashed #666; color: #888; font-family: var(--ed-mono, monospace); font-size: 10px; padding: 6px 12px; cursor: pointer;">
+        [ EXPORT SCALABLE SVG ]
+      </button>
+    </div>
+  </div>
+</section>
+
+<script>
+(() => {
+  const canvas = document.getElementById('pop-sigil-canvas');
+  const ctx = canvas.getContext('2d');
+  const PALETTE = {
+    BLACK: '#0a0a0a',
+    WHITE: '#f8f8f5',
+    GREY:  '#7a7a7a',
+    RED:   '#ff0033',
+    YELLOW:'#ffe500'
+  };
+
+  let currentSeed = 1337;
+
+  // Linear Congruential Generator for reproducible seed randomness
+  function rng() {
+    currentSeed = (currentSeed * 1664525 + 1013904223) % 4294967296;
+    return currentSeed / 4294967296;
+  }
+
+  function hashString(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = Math.imul(31, hash) + str.charCodeAt(i) | 0;
+    }
+    return Math.abs(hash);
+  }
+
+  // Draw snapped optical stripes
+  function drawStripes(c, colorBg, colorFg, pitch, barW, angle = 0, phase = 0) {
+    c.save();
+    c.fillStyle = colorBg;
+    c.fillRect(-600, -600, 1200, 1200);
+
+    c.rotate(angle);
+    c.fillStyle = colorFg;
+    const bound = 600;
+    for (let x = -bound; x <= bound; x += pitch) {
+      const rx = Math.round(x + phase);
+      c.fillRect(rx, -bound, barW, bound * 2);
+    }
+    c.restore();
+  }
+
+  // Shapes for the sigil clipping masks
+  function traceShape(c, type, size) {
+    c.beginPath();
+    if (type === 'diamond') {
+      c.moveTo(0, -size);
+      c.lineTo(size, 0);
+      c.lineTo(0, size);
+      c.lineTo(-size, 0);
+    } else if (type === 'triangle') {
+      const h = size * Math.sqrt(3) / 2;
+      c.moveTo(0, -size);
+      c.lineTo(size, h);
+      c.lineTo(-size, h);
+    } else if (type === 'hexagram') {
+      for (let i = 0; i < 6; i++) {
+        const rad = (i * 60) * Math.PI / 180;
+        const r = (i % 2 === 0) ? size : size * 0.55;
+        const x = Math.cos(rad) * r;
+        const y = Math.sin(rad) * r;
+        if (i === 0) c.moveTo(x, y); else c.lineTo(x, y);
+      }
+    } else {
+      // Circle
+      c.arc(0, 0, size, 0, Math.PI * 2);
+    }
+    c.closePath();
+  }
+
+  window.reforgePopSigil = function() {
+    const intent = document.getElementById('sigil-intent').value || 'POP SIGIL';
+    currentSeed = hashString(intent) || 42;
+
+    const W = canvas.width, H = canvas.height;
+    ctx.save();
+    ctx.clearRect(0, 0, W, H);
+    ctx.translate(W / 2, H / 2);
+
+    // Dynamic pitch based on intent
+    const pitch = 16 + Math.floor(rng() * 12); // 16 to 28px
+    const barW = Math.floor(pitch / 2);
+
+    // 1. BASE FIELD (Ground): Snapped Black & White
+    drawStripes(ctx, PALETTE.BLACK, PALETTE.WHITE, pitch, barW, 0, 0);
+
+    // 2. LAYER 1: OUTER SIGIL AURA (Red & Grey / 45-deg tilt)
+    const shapes = ['diamond', 'triangle', 'hexagram', 'circle'];
+    const s1 = shapes[Math.floor(rng() * shapes.length)];
+    ctx.save();
+    traceShape(ctx, s1, 230);
+    ctx.clip();
+    drawStripes(ctx, PALETTE.GREY, PALETTE.RED, pitch, barW, Math.PI / 4, pitch / 2);
+    ctx.restore();
+
+    // 3. LAYER 2: MID SHIELD (Yellow & Black / 90-deg cross)
+    const s2 = shapes[Math.floor(rng() * shapes.length)];
+    ctx.save();
+    traceShape(ctx, s2, 140);
+    ctx.clip();
+    drawStripes(ctx, PALETTE.BLACK, PALETTE.YELLOW, pitch, barW, Math.PI / 2, 0);
+    ctx.restore();
+
+    // 4. LAYER 3: INNER OCULAR CORE (Red & White inverted)
+    ctx.save();
+    traceShape(ctx, 'circle', 65);
+    ctx.clip();
+    drawStripes(ctx, PALETTE.WHITE, PALETTE.RED, pitch, barW, 0, pitch / 2);
+    ctx.restore();
+
+    // 5. EMBODIED SIGIL NODES (Accent binding marks)
+    ctx.strokeStyle = PALETTE.YELLOW;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    ctx.fillStyle = PALETTE.BLACK;
+    ctx.beginPath();
+    ctx.arc(0, 0, 16, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = PALETTE.WHITE;
+    ctx.beginPath();
+    ctx.arc(0, 0, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  };
+
+  // High-res PNG Export
+  window.exportSigilPNG = function() {
+    const link = document.createElement('a');
+    link.download = `pop-sigil-${Date.now()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  };
+
+  // Scalable SVG Export
+  window.exportSigilSVG = function() {
+    const intent = document.getElementById('sigil-intent').value || 'sigil';
+    const pitch = 20, barW = 10;
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">\n`;
+    svg += `<defs>\n`;
+    svg += `  <pattern id="pat1" width="${pitch}" height="${pitch}" patternUnits="userSpaceOnUse"><rect width="${barW}" height="${pitch}" fill="${PALETTE.WHITE}"/></pattern>\n`;
+    svg += `  <pattern id="pat2" width="${pitch}" height="${pitch}" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="${barW}" height="${pitch}" fill="${PALETTE.RED}"/></pattern>\n`;
+    svg += `  <pattern id="pat3" width="${pitch}" height="${pitch}" patternUnits="userSpaceOnUse" patternTransform="rotate(90)"><rect width="${barW}" height="${pitch}" fill="${PALETTE.YELLOW}"/></pattern>\n`;
+    svg += `</defs>\n`;
+    svg += `<rect width="600" height="600" fill="${PALETTE.BLACK}"/>\n`;
+    svg += `<rect width="600" height="600" fill="url(#pat1)"/>\n`;
+    svg += `<polygon points="300,70 530,300 300,530 70,300" fill="${PALETTE.GREY}"/>\n`;
+    svg += `<polygon points="300,70 530,300 300,530 70,300" fill="url(#pat2)"/>\n`;
+    svg += `<circle cx="300" cy="300" r="140" fill="${PALETTE.BLACK}"/>\n`;
+    svg += `<circle cx="300" cy="300" r="140" fill="url(#pat3)"/>\n`;
+    svg += `<circle cx="300" cy="300" r="60" fill="${PALETTE.RED}"/>\n`;
+    svg += `<circle cx="300" cy="300" r="16" fill="${PALETTE.YELLOW}"/>\n`;
+    svg += `</svg>`;
+
+    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `pop-sigil-${intent.toLowerCase().replace(/\\s+/g, '_')}.svg`;
+    link.click();
+  };
+
+  // Initial Forge on Load
+  reforgePopSigil();
+})();
+</script>
 <section class="ed-section" style="align-items: flex-start; max-width: 65%;">
     <div style="text-align: center; margin-bottom: 30px;">
         <h1 class="headline" style="font-size: 3rem;">THE <span style="color: var(--red);">MEMEX</span></h1>
