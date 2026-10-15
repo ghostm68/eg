@@ -897,7 +897,7 @@ body::after {
     </div>
 </section>
 <!-- =======================================================
-     MODULE 03: POP ART SIGIL // COMPACT + ROTARY DIAL
+     MODULE 03: POP ART SIGIL // COMPACT + ROTARY + HIGH VARIETY
      ======================================================= -->
 <section class="ed-section" id="pop-sigil-forge">
   <div class="ed-label reveal">Glyph // Engine 03</div>
@@ -924,13 +924,13 @@ body::after {
     <!-- Controls Row: Dropdowns + Hardware Rotary Knob -->
     <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: center; margin-bottom: 15px; background: #090909; padding: 10px 14px; border: 1px solid #1a1a1a;">
       <div>
-        <label style="font-family: var(--ed-mono, monospace); font-size: 10px; color: #666; display: block; margin-bottom: 4px; text-transform: uppercase;">Pattern</label>
+        <label style="font-family: var(--ed-mono, monospace); font-size: 10px; color: #666; display: block; margin-bottom: 4px; text-transform: uppercase;">Pattern Blend</label>
         <select id="sigil-pattern-mode" onchange="reforgePopSigil()" style="width: 100%; background: #000; border: 1px solid #333; color: #ddd; font-family: var(--ed-mono, monospace); font-size: 11px; padding: 6px;">
-          <option value="AUTO">AUTO (BY INTENT)</option>
-          <option value="STRIPES">OP_STRIPES</option>
-          <option value="BENDAY">BENDAY_DOTS</option>
-          <option value="RAYS">SOLAR_RAYS</option>
-          <option value="RINGS">TARGET_RINGS</option>
+          <option value="COLLAGE">COLLAGE (MULTI-LAYER)</option>
+          <option value="STRIPES">ALL OP_STRIPES</option>
+          <option value="BENDAY">ALL BENDAY_DOTS</option>
+          <option value="RAYS">ALL SOLAR_RAYS</option>
+          <option value="RINGS">ALL TARGET_RINGS</option>
         </select>
       </div>
 
@@ -944,6 +944,9 @@ body::after {
           <option value="OCTAGRAM">CHAOS 8</option>
           <option value="DIAMOND">VALKNUT</option>
           <option value="CROSSHAIR">CYBER CROSS</option>
+          <option value="LIGHTNING">LIGHTNING BOLT</option>
+          <option value="CRESCENT">LUNAR HORNS</option>
+          <option value="SPLIT_FIELD">SPLIT MONAD</option>
         </select>
       </div>
 
@@ -952,20 +955,20 @@ body::after {
         <span style="font-family: var(--ed-mono, monospace); font-size: 9px; color: #777; margin-bottom: 3px; text-transform: uppercase;">DENSITY</span>
         <div id="rotary-knob" title="Drag up/down or scroll wheel to tune frequency" 
              style="width: 40px; height: 40px; border-radius: 50%; background: radial-gradient(circle, #222 0%, #0a0a0a 100%); border: 2px solid #444; position: relative; cursor: ns-resize; box-shadow: 0 0 8px rgba(0,0,0,0.8), inset 0 0 4px #000;">
-          <!-- Pointer tick inside knob -->
           <div id="rotary-pointer" style="position: absolute; top: 3px; left: 50%; width: 2px; height: 10px; background: var(--ed-accent, #ff0033); transform: translateX(-50%); box-shadow: 0 0 5px var(--ed-accent, #ff0033);"></div>
         </div>
         <span id="rotary-value" style="font-family: var(--ed-mono, monospace); font-size: 10px; color: #aaa; margin-top: 3px;">20 PX</span>
       </div>
     </div>
 
-    <!-- Intent Input & Mutate -->
-    <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 14px;">
+    <!-- Intent Input & Action Buttons (Mutate + Styled Chaos Random) -->
+    <div style="display: grid; grid-template-columns: 1fr auto auto; gap: 8px; margin-bottom: 14px;">
       <input type="text" id="sigil-intent" placeholder="ENTER INTENT..." value="TRANSMUTE THE SIGNAL INTO FORM" 
              style="background: #000; border: 1px solid #333; color: #fff; padding: 8px 12px; font-family: var(--ed-mono, monospace); font-size: 12px; outline: none;">
-      <button onclick="randomizeIntentAndForge()" class="export-btn" style="width: auto; margin: 0; padding: 8px 14px; font-size: 10px;">[ MUTATE ]</button>
+      <button onclick="randomizeIntentAndForge()" class="export-btn" style="width: auto; margin: 0; padding: 8px 12px; font-size: 10px;">[ MUTATE ]</button>
+      <button onclick="randomizeFullChaos()" class="export-btn" style="width: auto; margin: 0; padding: 8px 12px; font-size: 10px; border-color: var(--ed-accent, #ff0033); color: var(--ed-accent, #ff0033);">[ RANDOM ]</button>
     </div>
-<button onclick="randomizeFullChaos()">[ RANDOM ]</button>
+
     <!-- Export Action Deck -->
     <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; border-top: 1px dashed #222; padding-top: 12px;">
       <button onclick="exportSigilPNG()" class="export-btn" style="width: auto; margin: 0; padding: 6px 12px; font-size: 10px; border-color: #ff0033; color: #ff0033;">
@@ -982,7 +985,6 @@ body::after {
 </section>
 
 <script>
-
 (() => {
   const canvas = document.getElementById('pop-sigil-canvas');
   const ctx = canvas.getContext('2d');
@@ -995,7 +997,7 @@ body::after {
     YELLOW: '#ffe500'
   };
 
-  let currentPitch = 20; // Default frequency (range: 12 to 36)
+  let currentPitch = 20;
   let currentSeed = 1337;
   let lastState = null;
 
@@ -1034,7 +1036,6 @@ body::after {
 
   function updateKnob(val) {
     currentPitch = Math.max(12, Math.min(36, val));
-    // Map pitch [12, 36] to angle [-135deg, 135deg]
     const percent = (currentPitch - 12) / (36 - 12);
     const angle = -135 + (percent * 270);
     pointer.style.transform = `translateX(-50%) rotate(${angle}deg)`;
@@ -1064,13 +1065,11 @@ body::after {
     }
   });
 
-  // Mouse wheel support for fine precision tuning
   knob.addEventListener('wheel', (e) => {
     e.preventDefault();
     updateKnob(currentPitch + (e.deltaY < 0 ? 1 : -1));
   }, { passive: false });
 
-  // Touch support for mobile devices
   knob.addEventListener('touchstart', (e) => {
     isDragging = true;
     startY = e.touches[0].clientY;
@@ -1095,7 +1094,7 @@ body::after {
     c.fillStyle = fg;
 
     if (mode === 'BENDAY') {
-      const dotR = (pitch / 2) * 0.72;
+      const dotR = (pitch / 2) * 0.75;
       for (let x = -500; x <= 500; x += pitch) {
         for (let y = -500; y <= 500; y += pitch) {
           c.beginPath();
@@ -1104,7 +1103,7 @@ body::after {
         }
       }
     } else if (mode === 'RAYS') {
-      const spokes = Math.max(12, Math.floor(pitch * 1.5));
+      const spokes = Math.max(12, Math.floor((38 - pitch) * 1.6));
       const step = (Math.PI * 2) / spokes;
       for (let i = 0; i < spokes; i += 2) {
         c.beginPath();
@@ -1131,7 +1130,7 @@ body::after {
     c.restore();
   }
 
-  // --- GLYPH ARCHETYPES ---
+  // --- GLYPH ARCHETYPES (EXPANDED TO 9 DISTINCT SILHOUETTES) ---
   function traceShape(c, type, size) {
     c.beginPath();
     if (type === 'CRUCIBLE') {
@@ -1167,32 +1166,73 @@ body::after {
       c.lineTo(size, -arm); c.lineTo(size, arm); c.lineTo(arm, arm);
       c.lineTo(arm, size); c.lineTo(-arm, size); c.lineTo(-arm, arm);
       c.lineTo(-size, arm); c.lineTo(-size, -arm); c.lineTo(-arm, -arm);
+    } else if (type === 'LIGHTNING') {
+      // Aggressive Constructivist Bolt
+      c.moveTo(-size * 0.2, -size);
+      c.lineTo(size * 0.5, -size);
+      c.lineTo(0, -size * 0.1);
+      c.lineTo(size * 0.6, -size * 0.1);
+      c.lineTo(-size * 0.5, size);
+      c.lineTo(-size * 0.1, size * 0.15);
+      c.lineTo(-size * 0.6, size * 0.15);
+    } else if (type === 'CRESCENT') {
+      // Lunar Alchemical Horns
+      c.arc(0, 0, size, -Math.PI * 0.7, Math.PI * 0.7, false);
+      c.quadraticCurveTo(-size * 0.2, 0, Math.cos(-Math.PI * 0.7) * size, Math.sin(-Math.PI * 0.7) * size);
+    } else if (type === 'SPLIT_FIELD') {
+      // Sliced Monad Shield
+      c.arc(0, 0, size, -Math.PI / 2, Math.PI / 2, false);
+      c.lineTo(-size * 0.4, size);
+      c.lineTo(0, 0);
+      c.lineTo(-size * 0.4, -size);
     } else {
       c.arc(0, 0, size, 0, Math.PI * 2);
     }
     c.closePath();
   }
 
-window.reforgePopSigil = function() {
+  window.reforgePopSigil = function() {
     const intent = document.getElementById('sigil-intent').value.trim() || 'DIVINE POP ART';
     currentSeed = hashString(intent);
 
-    let patternMode = document.getElementById('sigil-pattern-mode').value;
+    let patternSelect = document.getElementById('sigil-pattern-mode').value;
     let shapeMode = document.getElementById('sigil-shape-mode').value;
 
-    const patterns = ['STRIPES', 'BENDAY', 'RAYS', 'RINGS'];
-    const shapes = ['CRUCIBLE', 'EYE', 'SOLOMON', 'OCTAGRAM', 'DIAMOND', 'CROSSHAIR'];
+    const allPatterns = ['STRIPES', 'BENDAY', 'RAYS', 'RINGS'];
+    const allShapes   = ['CRUCIBLE', 'EYE', 'SOLOMON', 'OCTAGRAM', 'DIAMOND', 'CROSSHAIR', 'LIGHTNING', 'CRESCENT', 'SPLIT_FIELD'];
 
-    if (patternMode === 'AUTO') patternMode = patterns[Math.floor(rng() * patterns.length)];
-    if (shapeMode === 'AUTO') shapeMode = shapes[Math.floor(rng() * shapes.length)];
+    if (shapeMode === 'AUTO') shapeMode = allShapes[Math.floor(rng() * allShapes.length)];
 
+    // CROSS-LAYER PATTERN COLLAGING (The game-changer for visual diversity)
+    let groundPat, mantlePat, corePat;
+    if (patternSelect === 'COLLAGE') {
+      groundPat = allPatterns[Math.floor(rng() * allPatterns.length)];
+      mantlePat = allPatterns[Math.floor(rng() * allPatterns.length)];
+      corePat   = allPatterns[Math.floor(rng() * allPatterns.length)];
+    } else {
+      groundPat = mantlePat = corePat = patternSelect;
+    }
+
+    // Dynamic Scale / Pitch Disparity (Macro Ground, Standard Mantle, Micro Core)
+    const groundPitch = Math.round(currentPitch * (1.3 + rng() * 0.4));  // Chunky macro background
+    const mantlePitch = currentPitch;                                     // Standard
+    const corePitch   = Math.max(10, Math.round(currentPitch * 0.65));   // Dense micro core
+
+    // Dynamic Angles (Beyond standard 0 and 45)
+    const angleOptions = [0, Math.PI / 6, Math.PI / 4, Math.PI / 3, Math.PI / 2, (3 * Math.PI) / 4];
+    const groundAngle = angleOptions[Math.floor(rng() * angleOptions.length)];
+    const mantleAngle = angleOptions[Math.floor(rng() * angleOptions.length)];
+    const coreAngle   = angleOptions[Math.floor(rng() * angleOptions.length)];
+
+    // Color Permutation Pairs
     const colorPairs = [
       { bg: PALETTE.BLACK,  fg: PALETTE.WHITE },
       { bg: PALETTE.RED,    fg: PALETTE.YELLOW },
       { bg: PALETTE.GREY,   fg: PALETTE.WHITE },
       { bg: PALETTE.BLACK,  fg: PALETTE.YELLOW },
       { bg: PALETTE.GREY,   fg: PALETTE.RED },
-      { bg: PALETTE.WHITE,  fg: PALETTE.RED }
+      { bg: PALETTE.WHITE,  fg: PALETTE.RED },
+      { bg: PALETTE.YELLOW, fg: PALETTE.BLACK }
     ];
 
     const shuffled = [...colorPairs].sort(() => rng() - 0.5);
@@ -1200,82 +1240,71 @@ window.reforgePopSigil = function() {
     const mantleColors = shuffled[1];
     const coreColors   = shuffled[2];
 
-    // --- POSITIONAL & SCALE VARIETY ---
-    // Outer shape scale (was fixed 235)
-    const outerScale = 210 + Math.floor(rng() * 50);          // 210–259
+    // Positional Offset & Scale Displacements
+    const outerScale = 205 + Math.floor(rng() * 55);
+    const outerOffX  = (rng() - 0.5) * 50;
+    const outerOffY  = (rng() - 0.5) * 50;
+    const outerRot   = (rng() - 0.5) * 0.45;
 
-    // Outer shape slight offset from center (gives breathing room)
-    const outerOffX = (rng() - 0.5) * 48;                     // ±24 px
-    const outerOffY = (rng() - 0.5) * 48;
+    const coreScale  = 85 + Math.floor(rng() * 60);
+    const coreOffX   = (rng() - 0.5) * 75;
+    const coreOffY   = (rng() - 0.5) * 75;
+    const coreRot    = (rng() - 0.5) * 0.8;
 
-    // Outer shape rotation (subtle)
-    const outerRot = (rng() - 0.5) * 0.35;                    // ± ~20 degrees
+    const eccentric = rng() < 0.35;
+    const eyeOffX = eccentric ? (rng() - 0.5) * 110 : (rng() - 0.5) * 35;
+    const eyeOffY = eccentric ? (rng() - 0.5) * 110 : (rng() - 0.5) * 35;
 
-    // Inner core scale (was fixed 120)
-    const coreScale = 95 + Math.floor(rng() * 55);            // 95–149
-
-    // Inner core offset relative to outer (this is the main "spacing" feel)
-    const coreOffX = (rng() - 0.5) * 70;                      // ±35 px
-    const coreOffY = (rng() - 0.5) * 70;
-
-    // Core rotation independent of outer
-    const coreRot = (rng() - 0.5) * 0.6;
-
-    // Occasional stronger eccentricity (20% chance the eye drifts more)
-    const eccentric = rng() < 0.20;
-    const eyeOffX = eccentric ? (rng() - 0.5) * 90 : (rng() - 0.5) * 28;
-    const eyeOffY = eccentric ? (rng() - 0.5) * 90 : (rng() - 0.5) * 28;
-
-    // Oculus size variation
-    const oculusOuter = 18 + Math.floor(rng() * 12);          // 18–29
-    const oculusInner = Math.max(5, Math.floor(oculusOuter * 0.32));
+    const oculusOuter = 18 + Math.floor(rng() * 16);
+    const oculusInner = Math.max(5, Math.floor(oculusOuter * 0.35));
 
     const W = canvas.width, H = canvas.height;
     ctx.save();
     ctx.clearRect(0, 0, W, H);
     ctx.translate(W / 2, H / 2);
 
-    // 1. GROUND FIELD (full bleed, no offset)
-    renderPattern(ctx, patternMode, groundColors.bg, groundColors.fg, currentPitch, 0, 0);
+    // 1. MACRO GROUND PATTERN
+    renderPattern(ctx, groundPat, groundColors.bg, groundColors.fg, groundPitch, groundAngle, 0);
 
-    // 2. MANTLE (Outer Shield) — now with offset + rotation + variable scale
+    // 2. MANTLE SHIELD
     ctx.save();
     ctx.translate(outerOffX, outerOffY);
     ctx.rotate(outerRot);
     traceShape(ctx, shapeMode, outerScale);
     ctx.clip();
-    renderPattern(ctx, patternMode, mantleColors.bg, mantleColors.fg, currentPitch, Math.PI / 4, currentPitch / 2);
+    renderPattern(ctx, mantlePat, mantleColors.bg, mantleColors.fg, mantlePitch, mantleAngle, mantlePitch / 2);
     ctx.restore();
 
-    // 3. CORE (Inner Focal Layer) — offset from the outer shape
+    // 3. INNER CORE (Swaps archetype to create geometric interplay)
+    const coreShapes = ['CRUCIBLE', 'EYE', 'DIAMOND', 'LIGHTNING', 'CRESCENT'];
+    const innerShape = coreShapes[Math.floor(rng() * coreShapes.length)];
     ctx.save();
     ctx.translate(outerOffX + coreOffX, outerOffY + coreOffY);
     ctx.rotate(coreRot);
-    const innerShape = shapeMode === 'EYE' ? 'CRUCIBLE' : 'EYE';
     traceShape(ctx, innerShape, coreScale);
     ctx.clip();
-    renderPattern(ctx, patternMode === 'BENDAY' ? 'STRIPES' : patternMode, coreColors.bg, coreColors.fg, currentPitch, Math.PI / 2, 0);
+    renderPattern(ctx, corePat, coreColors.bg, coreColors.fg, corePitch, coreAngle, 0);
     ctx.restore();
 
-    // 4. EMBODIED HIGHLIGHT BOUNDARIES + FOCAL OCULUS
+    // 4. POP ART ACCENT BOUNDARY (Bold screen-print borders)
     ctx.save();
     ctx.translate(outerOffX, outerOffY);
     ctx.rotate(outerRot);
-    ctx.strokeStyle = PALETTE.YELLOW;
-    ctx.lineWidth = 5;
+    ctx.strokeStyle = (rng() > 0.4) ? PALETTE.YELLOW : PALETTE.RED;
+    ctx.lineWidth = 6;
     traceShape(ctx, shapeMode, outerScale);
     ctx.stroke();
     ctx.restore();
 
-    // Focal Oculus — can now drift
+    // 5. EMBODIED OCULUS
     ctx.save();
     ctx.translate(outerOffX + coreOffX + eyeOffX * 0.4, outerOffY + coreOffY + eyeOffY * 0.4);
-    ctx.fillStyle = PALETTE.RED;
+    ctx.fillStyle = (rng() > 0.5) ? PALETTE.RED : PALETTE.YELLOW;
     ctx.beginPath();
     ctx.arc(0, 0, oculusOuter, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = PALETTE.WHITE;
+    ctx.fillStyle = (ctx.fillStyle === PALETTE.RED) ? PALETTE.WHITE : PALETTE.BLACK;
     ctx.beginPath();
     ctx.arc(0, 0, oculusInner, 0, Math.PI * 2);
     ctx.fill();
@@ -1286,28 +1315,21 @@ window.reforgePopSigil = function() {
     lastState = {
       intent,
       reducedLetters: spareLetterReduction(intent),
-      patternMode,
+      patternMode: (patternSelect === 'COLLAGE') ? `${groundPat}+${mantlePat}+${corePat}` : patternSelect,
       shapeMode,
       pitch: currentPitch,
       groundColors,
       mantleColors,
       coreColors,
       seedHex: '0x' + currentSeed.toString(16).toUpperCase().padStart(8, '0'),
-      timestamp: new Date().toISOString(),
-      // store layout params so SVG export can stay consistent if desired later
-      layout: {
-        outerScale, outerOffX, outerOffY, outerRot,
-        coreScale, coreOffX, coreOffY, coreRot,
-        eyeOffX, eyeOffY, oculusOuter, oculusInner
-      }
+      timestamp: new Date().toISOString()
     };
 
     document.getElementById('sigil-glyph-readout').innerText = 
-      `// [${shapeMode}] • [${patternMode}] • [${lastState.seedHex}]`;
+      `// [${shapeMode}] • [${lastState.patternMode}] • [${lastState.seedHex}]`;
   };
 
-
-// --- RANDOM OPTIONS (enhanced) ---
+  // --- RANDOMIZERS ---
   const INTENT_FRAGMENTS = [
     'PIERCE THE VEIL OF ILLUSION',
     'ORDER SURRENDERS TO FORM',
@@ -1318,88 +1340,40 @@ window.reforgePopSigil = function() {
     'TRANSMUTE THE SIGNAL INTO FORM',
     'THE EYE OPENS IN THE GRID',
     'COUNTERCHANGE THE VOID',
-    'RADIANT GEOMETRY ASCENDS'
+    'RADIANT GEOMETRY ASCENDS',
+    'DISSOLVE CONFLICT INTO SIGIL',
+    'ELECTRIC SHADOW WALKS BEHIND'
   ];
 
-  const PATTERN_OPTIONS = ['AUTO', 'STRIPES', 'BENDAY', 'RAYS', 'RINGS'];
-  const SHAPE_OPTIONS   = ['AUTO', 'CRUCIBLE', 'EYE', 'SOLOMON', 'OCTAGRAM', 'DIAMOND', 'CROSSHAIR'];
-
-  function randomizeDensity(min = 14, max = 32) {
-    let value = Math.floor(Math.random() * (max - min + 1)) + min;
-    if (value % 2 !== 0) value += 1; // prefer even for cleaner bars
-    updateKnob(value);
-    return value;
-  }
-
-  // Light random: random intent + force AUTO modes
   window.randomizeIntentAndForge = function() {
     const intentEl = document.getElementById('sigil-intent');
-    const patternEl = document.getElementById('sigil-pattern-mode');
-    const shapeEl   = document.getElementById('sigil-shape-mode');
-
-    if (intentEl)  intentEl.value  = INTENT_FRAGMENTS[Math.floor(Math.random() * INTENT_FRAGMENTS.length)];
-    if (patternEl) patternEl.value = 'AUTO';
-    if (shapeEl)   shapeEl.value   = 'AUTO';
-
+    if (intentEl) intentEl.value = INTENT_FRAGMENTS[Math.floor(Math.random() * INTENT_FRAGMENTS.length)];
+    document.getElementById('sigil-pattern-mode').value = 'COLLAGE';
+    document.getElementById('sigil-shape-mode').value   = 'AUTO';
     reforgePopSigil();
   };
 
-  // FULL CHAOS — recommended primary Random button
-  // Random intent + random Pattern + random Archetype + random density
+  // FULL CHAOS RANDOM
   window.randomizeFullChaos = function() {
     const intentEl  = document.getElementById('sigil-intent');
     const patternEl = document.getElementById('sigil-pattern-mode');
     const shapeEl   = document.getElementById('sigil-shape-mode');
 
-    if (intentEl) {
-      intentEl.value = INTENT_FRAGMENTS[Math.floor(Math.random() * INTENT_FRAGMENTS.length)];
-    }
-
+    if (intentEl) intentEl.value = INTENT_FRAGMENTS[Math.floor(Math.random() * INTENT_FRAGMENTS.length)];
+    
+    // 70% chance of collage, 30% uniform
     if (patternEl) {
-      if (Math.random() < 0.30) {
-        patternEl.value = 'AUTO';
-      } else {
-        const opts = PATTERN_OPTIONS.filter(o => o !== 'AUTO');
-        patternEl.value = opts[Math.floor(Math.random() * opts.length)];
-      }
+      patternEl.value = Math.random() < 0.70 ? 'COLLAGE' : ['STRIPES','BENDAY','RAYS','RINGS'][Math.floor(Math.random() * 4)];
     }
 
     if (shapeEl) {
-      if (Math.random() < 0.30) {
-        shapeEl.value = 'AUTO';
-      } else {
-        // Prefer real options that exist in the select
-        const available = Array.from(shapeEl.options).map(o => o.value).filter(v => v && v !== 'AUTO');
-        if (available.length) {
-          shapeEl.value = available[Math.floor(Math.random() * available.length)];
-        } else {
-          shapeEl.value = 'AUTO';
-        }
-      }
+      const opts = ['CRUCIBLE', 'EYE', 'SOLOMON', 'OCTAGRAM', 'DIAMOND', 'CROSSHAIR', 'LIGHTNING', 'CRESCENT', 'SPLIT_FIELD'];
+      shapeEl.value = opts[Math.floor(Math.random() * opts.length)];
     }
 
-    randomizeDensity(14, 32);
-    reforgePopSigil();
-  };
-
-  // Visual-only random (keeps current intent)
-  window.randomizeVisualOnly = function() {
-    const patternEl = document.getElementById('sigil-pattern-mode');
-    const shapeEl   = document.getElementById('sigil-shape-mode');
-
-    if (patternEl) {
-      const opts = PATTERN_OPTIONS.filter(o => o !== 'AUTO');
-      patternEl.value = opts[Math.floor(Math.random() * opts.length)];
-    }
-    if (shapeEl) {
-      const available = Array.from(shapeEl.options).map(o => o.value).filter(v => v && v !== 'AUTO');
-      if (available.length) {
-        shapeEl.value = available[Math.floor(Math.random() * available.length)];
-      }
-    }
-
-    randomizeDensity(14, 32);
-    reforgePopSigil();
+    // Randomize rotary pitch
+    const rPitch = 14 + Math.floor(Math.random() * 20);
+    updateKnob(rPitch);
   };
 
   // --- EXPORTS ---
@@ -1429,7 +1403,7 @@ window.reforgePopSigil = function() {
     svg += `  </pattern>\n`;
     svg += `</defs>\n`;
     svg += `<rect width="600" height="600" fill="url(#pat-ground)"/>\n`;
-    svg += `<circle cx="300" cy="300" r="230" fill="url(#pat-mantle)" stroke="${PALETTE.YELLOW}" stroke-width="4"/>\n`;
+    svg += `<circle cx="300" cy="300" r="230" fill="url(#pat-mantle)" stroke="${PALETTE.YELLOW}" stroke-width="6"/>\n`;
     svg += `<circle cx="300" cy="300" r="22" fill="${PALETTE.RED}"/>\n`;
     svg += `<circle cx="300" cy="300" r="7" fill="${PALETTE.WHITE}"/>\n`;
     svg += `</svg>`;
@@ -1520,8 +1494,6 @@ WORDSTAR.NEXUS // POP ART SIGIL // ALL RIGHTS RESERVED
   // Init
   updateKnob(20);
 })();
-
-
 </script>
 <section class="ed-section" style="align-items: flex-start; max-width: 65%;">
     <div style="text-align: center; margin-bottom: 30px;">
