@@ -982,6 +982,7 @@ body::after {
 </section>
 
 <script>
+
 (() => {
   const canvas = document.getElementById('pop-sigil-canvas');
   const ctx = canvas.getContext('2d');
@@ -1259,18 +1260,98 @@ body::after {
       `// [${shapeMode}] • [${patternMode}] • [${lastState.seedHex}]`;
   };
 
+// --- RANDOM OPTIONS (enhanced) ---
+  const INTENT_FRAGMENTS = [
+    'PIERCE THE VEIL OF ILLUSION',
+    'ORDER SURRENDERS TO FORM',
+    'FIRE WITHIN THE GEOMETRY',
+    'SILENCE BINDS THE MATRIX',
+    'UNSEEN HAND TURNS THE WHEEL',
+    'ABSORB THE RADIANT SIGNAL',
+    'TRANSMUTE THE SIGNAL INTO FORM',
+    'THE EYE OPENS IN THE GRID',
+    'COUNTERCHANGE THE VOID',
+    'RADIANT GEOMETRY ASCENDS'
+  ];
+
+  const PATTERN_OPTIONS = ['AUTO', 'STRIPES', 'BENDAY', 'RAYS', 'RINGS'];
+  const SHAPE_OPTIONS   = ['AUTO', 'CRUCIBLE', 'EYE', 'SOLOMON', 'OCTAGRAM', 'DIAMOND', 'CROSSHAIR'];
+
+  function randomizeDensity(min = 14, max = 32) {
+    let value = Math.floor(Math.random() * (max - min + 1)) + min;
+    if (value % 2 !== 0) value += 1; // prefer even for cleaner bars
+    updateKnob(value);
+    return value;
+  }
+
+  // Light random: random intent + force AUTO modes
   window.randomizeIntentAndForge = function() {
-    const fragments = [
-      'PIERCE THE VEIL OF ILLUSION',
-      'ORDER SURRENDERS TO FORM',
-      'FIRE WITHIN THE GEOMETRY',
-      'SILENCE BINDS THE MATRIX',
-      'UNSEEN HAND TURNS THE WHEEL',
-      'ABSORB THE RADIANT SIGNAL'
-    ];
-    document.getElementById('sigil-intent').value = fragments[Math.floor(Math.random() * fragments.length)];
-    document.getElementById('sigil-pattern-mode').value = 'AUTO';
-    document.getElementById('sigil-shape-mode').value = 'AUTO';
+    const intentEl = document.getElementById('sigil-intent');
+    const patternEl = document.getElementById('sigil-pattern-mode');
+    const shapeEl   = document.getElementById('sigil-shape-mode');
+
+    if (intentEl)  intentEl.value  = INTENT_FRAGMENTS[Math.floor(Math.random() * INTENT_FRAGMENTS.length)];
+    if (patternEl) patternEl.value = 'AUTO';
+    if (shapeEl)   shapeEl.value   = 'AUTO';
+
+    reforgePopSigil();
+  };
+
+  // FULL CHAOS — recommended primary Random button
+  // Random intent + random Pattern + random Archetype + random density
+  window.randomizeFullChaos = function() {
+    const intentEl  = document.getElementById('sigil-intent');
+    const patternEl = document.getElementById('sigil-pattern-mode');
+    const shapeEl   = document.getElementById('sigil-shape-mode');
+
+    if (intentEl) {
+      intentEl.value = INTENT_FRAGMENTS[Math.floor(Math.random() * INTENT_FRAGMENTS.length)];
+    }
+
+    if (patternEl) {
+      if (Math.random() < 0.30) {
+        patternEl.value = 'AUTO';
+      } else {
+        const opts = PATTERN_OPTIONS.filter(o => o !== 'AUTO');
+        patternEl.value = opts[Math.floor(Math.random() * opts.length)];
+      }
+    }
+
+    if (shapeEl) {
+      if (Math.random() < 0.30) {
+        shapeEl.value = 'AUTO';
+      } else {
+        // Prefer real options that exist in the select
+        const available = Array.from(shapeEl.options).map(o => o.value).filter(v => v && v !== 'AUTO');
+        if (available.length) {
+          shapeEl.value = available[Math.floor(Math.random() * available.length)];
+        } else {
+          shapeEl.value = 'AUTO';
+        }
+      }
+    }
+
+    randomizeDensity(14, 32);
+    reforgePopSigil();
+  };
+
+  // Visual-only random (keeps current intent)
+  window.randomizeVisualOnly = function() {
+    const patternEl = document.getElementById('sigil-pattern-mode');
+    const shapeEl   = document.getElementById('sigil-shape-mode');
+
+    if (patternEl) {
+      const opts = PATTERN_OPTIONS.filter(o => o !== 'AUTO');
+      patternEl.value = opts[Math.floor(Math.random() * opts.length)];
+    }
+    if (shapeEl) {
+      const available = Array.from(shapeEl.options).map(o => o.value).filter(v => v && v !== 'AUTO');
+      if (available.length) {
+        shapeEl.value = available[Math.floor(Math.random() * available.length)];
+      }
+    }
+
+    randomizeDensity(14, 32);
     reforgePopSigil();
   };
 
@@ -1392,6 +1473,7 @@ WORDSTAR.NEXUS // POP ART SIGIL // ALL RIGHTS RESERVED
   // Init
   updateKnob(20);
 })();
+
 </script>
 <section class="ed-section" style="align-items: flex-start; max-width: 65%;">
     <div style="text-align: center; margin-bottom: 30px;">
