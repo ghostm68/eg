@@ -1173,7 +1173,7 @@ body::after {
     c.closePath();
   }
 
-  window.reforgePopSigil = function() {
+window.reforgePopSigil = function() {
     const intent = document.getElementById('sigil-intent').value.trim() || 'DIVINE POP ART';
     currentSeed = hashString(intent);
 
@@ -1200,44 +1200,84 @@ body::after {
     const mantleColors = shuffled[1];
     const coreColors   = shuffled[2];
 
+    // --- POSITIONAL & SCALE VARIETY ---
+    // Outer shape scale (was fixed 235)
+    const outerScale = 210 + Math.floor(rng() * 50);          // 210–259
+
+    // Outer shape slight offset from center (gives breathing room)
+    const outerOffX = (rng() - 0.5) * 48;                     // ±24 px
+    const outerOffY = (rng() - 0.5) * 48;
+
+    // Outer shape rotation (subtle)
+    const outerRot = (rng() - 0.5) * 0.35;                    // ± ~20 degrees
+
+    // Inner core scale (was fixed 120)
+    const coreScale = 95 + Math.floor(rng() * 55);            // 95–149
+
+    // Inner core offset relative to outer (this is the main "spacing" feel)
+    const coreOffX = (rng() - 0.5) * 70;                      // ±35 px
+    const coreOffY = (rng() - 0.5) * 70;
+
+    // Core rotation independent of outer
+    const coreRot = (rng() - 0.5) * 0.6;
+
+    // Occasional stronger eccentricity (20% chance the eye drifts more)
+    const eccentric = rng() < 0.20;
+    const eyeOffX = eccentric ? (rng() - 0.5) * 90 : (rng() - 0.5) * 28;
+    const eyeOffY = eccentric ? (rng() - 0.5) * 90 : (rng() - 0.5) * 28;
+
+    // Oculus size variation
+    const oculusOuter = 18 + Math.floor(rng() * 12);          // 18–29
+    const oculusInner = Math.max(5, Math.floor(oculusOuter * 0.32));
+
     const W = canvas.width, H = canvas.height;
     ctx.save();
     ctx.clearRect(0, 0, W, H);
     ctx.translate(W / 2, H / 2);
 
-    // 1. GROUND FIELD
+    // 1. GROUND FIELD (full bleed, no offset)
     renderPattern(ctx, patternMode, groundColors.bg, groundColors.fg, currentPitch, 0, 0);
 
-    // 2. MANTLE (Outer Shield)
+    // 2. MANTLE (Outer Shield) — now with offset + rotation + variable scale
     ctx.save();
-    traceShape(ctx, shapeMode, 235);
+    ctx.translate(outerOffX, outerOffY);
+    ctx.rotate(outerRot);
+    traceShape(ctx, shapeMode, outerScale);
     ctx.clip();
     renderPattern(ctx, patternMode, mantleColors.bg, mantleColors.fg, currentPitch, Math.PI / 4, currentPitch / 2);
     ctx.restore();
 
-    // 3. CORE (Inner Focal Layer)
+    // 3. CORE (Inner Focal Layer) — offset from the outer shape
     ctx.save();
-    traceShape(ctx, shapeMode === 'EYE' ? 'CRUCIBLE' : 'EYE', 120);
+    ctx.translate(outerOffX + coreOffX, outerOffY + coreOffY);
+    ctx.rotate(coreRot);
+    const innerShape = shapeMode === 'EYE' ? 'CRUCIBLE' : 'EYE';
+    traceShape(ctx, innerShape, coreScale);
     ctx.clip();
     renderPattern(ctx, patternMode === 'BENDAY' ? 'STRIPES' : patternMode, coreColors.bg, coreColors.fg, currentPitch, Math.PI / 2, 0);
     ctx.restore();
 
-    // 4. EMBODIED HIGHLIGHT BOUNDARIES
+    // 4. EMBODIED HIGHLIGHT BOUNDARIES + FOCAL OCULUS
     ctx.save();
+    ctx.translate(outerOffX, outerOffY);
+    ctx.rotate(outerRot);
     ctx.strokeStyle = PALETTE.YELLOW;
     ctx.lineWidth = 5;
-    traceShape(ctx, shapeMode, 235);
+    traceShape(ctx, shapeMode, outerScale);
     ctx.stroke();
+    ctx.restore();
 
-    // Focal Oculus
+    // Focal Oculus — can now drift
+    ctx.save();
+    ctx.translate(outerOffX + coreOffX + eyeOffX * 0.4, outerOffY + coreOffY + eyeOffY * 0.4);
     ctx.fillStyle = PALETTE.RED;
     ctx.beginPath();
-    ctx.arc(0, 0, 22, 0, Math.PI * 2);
+    ctx.arc(0, 0, oculusOuter, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = PALETTE.WHITE;
     ctx.beginPath();
-    ctx.arc(0, 0, 7, 0, Math.PI * 2);
+    ctx.arc(0, 0, oculusInner, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
 
@@ -1253,12 +1293,19 @@ body::after {
       mantleColors,
       coreColors,
       seedHex: '0x' + currentSeed.toString(16).toUpperCase().padStart(8, '0'),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      // store layout params so SVG export can stay consistent if desired later
+      layout: {
+        outerScale, outerOffX, outerOffY, outerRot,
+        coreScale, coreOffX, coreOffY, coreRot,
+        eyeOffX, eyeOffY, oculusOuter, oculusInner
+      }
     };
 
     document.getElementById('sigil-glyph-readout').innerText = 
       `// [${shapeMode}] • [${patternMode}] • [${lastState.seedHex}]`;
   };
+
 
 // --- RANDOM OPTIONS (enhanced) ---
   const INTENT_FRAGMENTS = [
@@ -1473,6 +1520,7 @@ WORDSTAR.NEXUS // POP ART SIGIL // ALL RIGHTS RESERVED
   // Init
   updateKnob(20);
 })();
+
 
 </script>
 <section class="ed-section" style="align-items: flex-start; max-width: 65%;">
