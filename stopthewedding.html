@@ -1033,6 +1033,8 @@ Turn the crescent moon to change the hand of the letters.</div>
         let currentSynList = [];
         let currentSynIdx = 0;
         let selectedBaseWord = "";
+        // Saved Range so button/slider clicks cannot collapse the selection
+        let savedRange = null;
 
         const synonymPreview = document.getElementById('synonymPreview');
 
@@ -1046,20 +1048,35 @@ Turn the crescent moon to change the hand of the letters.</div>
         }
 
         function updateStats() {
-            const text = editor.innerText || '';
+            // Prefer zenPaper content when the focus popup is open
+            const source = (zenOverlay.classList.contains('active') ? zenPaper : editor);
+            const text = source.innerText || '';
             const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
             wordCountBadge.innerText = `${words} Words`;
+        }
+
+        // Capture the current selection Range so later focus changes cannot destroy it
+        function captureSelectionRange() {
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount > 0 && !sel.isCollapsed && editor.contains(sel.anchorNode)) {
+                savedRange = sel.getRangeAt(0).cloneRange();
+                return true;
+            }
+            return false;
         }
 
         // Capture selection and load synonyms into the Sundial
         function loadSynonymsFromSelection() {
             const sel = window.getSelection();
             if (!sel || sel.isCollapsed || !editor.contains(sel.anchorNode)) {
-                synonymPreview.innerText = "Select a word in the manuscript, then drag the shadow.";
-                currentSynList = [];
-                sundialSlider.max = 0;
-                sundialSlider.value = 0;
-                shadowStepVal.innerText = "—";
+                // Only clear if we truly have nothing saved
+                if (!savedRange) {
+                    synonymPreview.innerText = "Select a word in the manuscript, then drag the shadow.";
+                    currentSynList = [];
+                    sundialSlider.max = 0;
+                    sundialSlider.value = 0;
+                    shadowStepVal.innerText = "—";
+                }
                 return;
             }
             const word = sel.toString().trim().replace(/[^a-zA-Z'-]/g, "");
@@ -1067,6 +1084,10 @@ Turn the crescent moon to change the hand of the letters.</div>
                 synonymPreview.innerText = "Select a longer word.";
                 return;
             }
+
+            // Keep the Range alive for later injection
+            captureSelectionRange();
+
             selectedBaseWord = word;
             currentSynList = getSynonyms(word);
             if (currentSynList.length === 0) {
@@ -1074,7 +1095,7 @@ Turn the crescent moon to change the hand of the letters.</div>
                 currentSynList = [word, ...OFFLINE_WORDLIST.filter(w => w[0] === word[0].toLowerCase()).slice(0, 6)];
             }
             // Always include the original as first option
-            if (!currentSynList.includes(word.toLowerCase())) {
+            if (!currentSynList.map(s => s.toLowerCase()).includes(word.toLowerCase())) {
                 currentSynList = [word, ...currentSynList];
             }
             sundialSlider.max = Math.max(0, currentSynList.length - 1);
@@ -1107,13 +1128,31 @@ Turn the crescent moon to change the hand of the letters.</div>
                 }
             }
             const syn = currentSynList[currentSynIdx];
+
+            // Restore the previously captured Range (button click would have collapsed the live selection)
+            if (savedRange) {
+                try {
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(savedRange);
+                    // Replace the restored selection
+                    document.execCommand('insertText', false, syn);
+                    savedRange = null; // consumed
+                    saveHistory();
+                    updateStats();
+                    notify(`Injected synonym: ${syn}`);
+                    return;
+                } catch (e) {
+                    // fall through
+                }
+            }
+
+            // Fallback: try live selection or append
             const sel = window.getSelection();
             if (sel && !sel.isCollapsed && editor.contains(sel.anchorNode)) {
-                // Replace the selected text
                 document.execCommand('insertText', false, syn);
             } else {
-                // Append at end of current paragraph / cursor
-                editor.focus();
+                editor.focus({ preventScroll: true });
                 document.execCommand('insertText', false, " " + syn);
             }
             saveHistory();
@@ -1121,14 +1160,35 @@ Turn the crescent moon to change the hand of the letters.</div>
             notify(`Injected synonym: ${syn}`);
         }
 
+        // Prevent the Inject button itself from stealing focus / collapsing selection
+        // (mousedown + preventDefault keeps the selection intact long enough for capture)
+        document.querySelector('button[onclick="injectCurrentSynonym()"]')
+            ?.addEventListener('mousedown', e => {
+                e.preventDefault();          // stop focus transfer
+                captureSelectionRange();     // refresh the saved range just in case
+            });
+
+        // Same for the slider — mousedown would otherwise collapse selection
+        sundialSlider.addEventListener('mousedown', e => {
+            captureSelectionRange();
+        });
+        sundialSlider.addEventListener('touchstart', e => {
+            captureSelectionRange();
+        }, { passive: true });
+
         // Auto-load synonyms when user finishes a selection inside the editor
         editor.addEventListener('mouseup', () => {
-            setTimeout(loadSynonymsFromSelection, 30);
+            setTimeout(loadSynonymsFromSelection, 20);
         });
         editor.addEventListener('keyup', e => {
-            if (e.key === 'Shift' || e.shiftKey) {
-                setTimeout(loadSynonymsFromSelection, 30);
+            if (e.shiftKey || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                setTimeout(loadSynonymsFromSelection, 20);
             }
+        });
+
+        // Live word-count while typing inside the Zen popup
+        zenPaper.addEventListener('input', () => {
+            updateStats();
         });
 
         editor.addEventListener('input', () => { updateStats(); saveHistory(); });
