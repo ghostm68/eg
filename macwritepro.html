@@ -532,7 +532,52 @@
     flex-shrink: 0;
     cursor: pointer;
   }
+/* ANIMATED WORDSTAR.NEXUS SIGIL BADGE */
+  .qt-nexus-badge {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    background: radial-gradient(circle at 8px 8px, #ffffff, #cfcfcf 60%, #888888 100%);
+    border: 1px solid #222;
+    border-radius: 50%;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.5), inset 1px 1px 1px #ffffff;
+    cursor: pointer;
+    overflow: hidden;
+  }
 
+  .qt-nexus-badge img {
+    width: 18px;
+    height: 18px;
+    display: block;
+    /* Gentle cosmic idle spin */
+    animation: nexus-spin 12s linear infinite;
+    transition: filter 0.3s ease, transform 0.3s ease;
+  }
+
+  /* Faster spin and subtle glow on hover */
+  .qt-nexus-badge:hover img {
+    animation-duration: 2.5s;
+    filter: drop-shadow(0 0 3px #00ffff);
+  }
+
+  /* Active hyper-spin while video is playing */
+  .qt-nexus-badge.playing img {
+    animation-duration: 4s;
+    filter: drop-shadow(0 0 2px rgba(0, 150, 255, 0.8));
+  }
+
+  @keyframes nexus-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
   /* =========================================
      MOBILE & TOUCH SCREEN OPTIMIZATIONS
      ========================================= */
@@ -876,17 +921,9 @@
           </div>
         </div>
 
-        <svg class="qt-badge" viewBox="0 0 100 100" id="qt-logo" title="QuickTime 4.0">
-          <circle cx="50" cy="50" r="46" fill="url(#q-grad)" stroke="#222" stroke-width="3"/>
-          <path d="M50 20 A30 30 0 1 0 76 68 L88 88 L72 82 A30 30 0 0 0 50 20 Z M50 36 A14 14 0 1 1 50 64 A14 14 0 1 1 50 36 Z" fill="#ffffff" opacity="0.9"/>
-          <defs>
-            <radialGradient id="q-grad" cx="35%" cy="30%">
-              <stop offset="0%" stop-color="#4aa5ff"/>
-              <stop offset="60%" stop-color="#0055bb"/>
-              <stop offset="100%" stop-color="#002266"/>
-            </radialGradient>
-          </defs>
-        </svg>
+       <a href="https://wordstar.nexus" target="_blank" class="qt-nexus-badge" id="qt-nexus-badge" title="wordstar.nexus">
+        <img src="/svg/favicon.svg" onerror="this.src='https://wordstar.nexus/svg/favicon.svg'" alt="wordstar.nexus">
+      </a>
       </div>
     </div>
   </div>
@@ -1181,7 +1218,7 @@
     clearPaint();
   });
 
-  // --- QUICKTIME PLAYER ENGINE ---
+ // --- QUICKTIME PLAYER ENGINE ---
   const qtDialog = document.getElementById('quicktime-dialog');
   const qtVideo = document.getElementById('qt-video');
   const qtPlay = document.getElementById('qt-play');
@@ -1190,6 +1227,7 @@
   const qtDial = document.getElementById('qt-dial');
   const qtDialNotch = document.getElementById('qt-dial-notch');
   const qtFileInput = document.getElementById('qt-file-input');
+  const qtBadge = document.getElementById('qt-nexus-badge'); // <-- Wordstar Nexus badge
 
   function openQuickTime() {
     qtDialog.style.display = 'flex';
@@ -1204,6 +1242,7 @@
     qtDialog.style.display = 'none';
   });
 
+  // Play / Pause toggle
   qtPlay.addEventListener('click', () => {
     if (qtVideo.paused) {
       qtVideo.play();
@@ -1214,6 +1253,18 @@
     }
   });
 
+  // Speed up badge spin when playing, slow down when paused
+  qtVideo.addEventListener('play', () => {
+    qtPlay.textContent = '❚❚';
+    if (qtBadge) qtBadge.classList.add('playing');
+  });
+
+  qtVideo.addEventListener('pause', () => {
+    qtPlay.textContent = '▶';
+    if (qtBadge) qtBadge.classList.remove('playing');
+  });
+
+  // Timeline Scrubber
   qtVideo.addEventListener('timeupdate', () => {
     if (!qtVideo.duration) return;
     const pct = (qtVideo.currentTime / qtVideo.duration) * 100;
@@ -1226,18 +1277,18 @@
     qtVideo.currentTime = pos * qtVideo.duration;
   });
 
+  // Step Frame-by-Frame
   document.getElementById('qt-step-back').addEventListener('click', () => {
     qtVideo.pause();
-    qtPlay.textContent = '▶';
     qtVideo.currentTime = Math.max(0, qtVideo.currentTime - (1 / 30));
   });
 
   document.getElementById('qt-step-fwd').addEventListener('click', () => {
     qtVideo.pause();
-    qtPlay.textContent = '▶';
     qtVideo.currentTime = Math.min(qtVideo.duration, qtVideo.currentTime + (1 / 30));
   });
 
+  // Rotary Volume Dial
   let currentAngle = 0;
   qtDial.addEventListener('click', () => {
     currentAngle = (currentAngle + 45) % 360;
@@ -1245,16 +1296,17 @@
     qtVideo.volume = (currentAngle / 360);
   });
 
+  // Open Custom User Video
   document.getElementById('qt-open-file').addEventListener('click', () => qtFileInput.click());
   qtFileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
     qtVideo.src = URL.createObjectURL(file);
     qtVideo.play();
-    qtPlay.textContent = '❚❚';
     document.getElementById('qt-doc-title').textContent = file.name;
   });
 
+  // Paste Snapshot Frame into Document
   document.getElementById('qt-paste-doc').addEventListener('click', () => {
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = qtVideo.videoWidth || 320;
@@ -1269,7 +1321,6 @@
       alert('Unable to capture remote video frame due to browser security. Load a local video file with 📂 to paste frames.');
     }
   });
-
   // --- ABOUT DIALOG ---
   const aboutDialog = document.getElementById('about-dialog');
   document.getElementById('menu-about').addEventListener('click', () => {
