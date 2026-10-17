@@ -335,7 +335,7 @@
                     <div class="w-full h-1 bg-gradient-to-r from-black/80 to-transparent mt-1 transform skew-x-12 origin-left"></div>
                 </div>
                 <p id="synonymPreview" class="text-[11px] text-amber-100/90 mt-1 font-mono leading-snug min-h-[2.4em]">Select a word in the manuscript, then drag the shadow.</p>
-                <button onclick="injectCurrentSynonym()" class="mt-2 w-full text-[10px] py-1.5 rounded bg-black/40 border border-amber-400/40 hover:border-amber-300 hover:text-amber-200 transition font-mono tracking-wider">INJECT SYNONYM</button>
+                <button id="injectSynBtn" class="mt-2 w-full text-[10px] py-1.5 rounded bg-black/40 border border-amber-400/40 hover:border-amber-300 hover:text-amber-200 transition font-mono tracking-wider">INJECT SYNONYM</button>
             </div>
 
             <!-- 4. THE LISTENER'S EAR -->
@@ -556,11 +556,19 @@ Turn the crescent moon to change the hand of the letters.</div>
             if (zenOverlay.classList.contains('active')) {
                 closeZenFocus();
             } else {
-                // Sync content
+                // Sync content + current typography from the main editor
                 zenPaper.innerHTML = editor.innerHTML;
+                const cs = window.getComputedStyle(editor);
+                zenPaper.style.fontFamily = cs.fontFamily;
+                zenPaper.style.fontSize = cs.fontSize;
+                zenPaper.style.fontWeight = cs.fontWeight;
+                zenPaper.style.fontStyle = cs.fontStyle;
+                zenPaper.style.lineHeight = cs.lineHeight;
+                zenPaper.style.letterSpacing = cs.letterSpacing;
+                zenPaper.style.color = cs.color;
                 zenOverlay.classList.add('active');
-                // Keep editing in sync on close
                 zenPaper.focus();
+                updateStats();
                 notify("Zen Focus: Manuscript expanded");
             }
         }
@@ -1161,12 +1169,15 @@ Turn the crescent moon to change the hand of the letters.</div>
         }
 
         // Prevent the Inject button itself from stealing focus / collapsing selection
-        // (mousedown + preventDefault keeps the selection intact long enough for capture)
-        document.querySelector('button[onclick="injectCurrentSynonym()"]')
-            ?.addEventListener('mousedown', e => {
+        // (mousedown + preventDefault keeps the selection intact)
+        const injectSynBtn = document.getElementById('injectSynBtn');
+        if (injectSynBtn) {
+            injectSynBtn.addEventListener('mousedown', e => {
                 e.preventDefault();          // stop focus transfer
                 captureSelectionRange();     // refresh the saved range just in case
             });
+            injectSynBtn.addEventListener('click', () => injectCurrentSynonym());
+        }
 
         // Same for the slider — mousedown would otherwise collapse selection
         sundialSlider.addEventListener('mousedown', e => {
