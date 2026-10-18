@@ -186,14 +186,58 @@
             border: 1px solid var(--pda-dark);
             padding: 4px;
             border-radius: 3px;
+            align-items: center;
         }
 
-        .ink-tools button, .ink-tools input {
+        .ink-tools button {
             font-size: 10px;
             padding: 3px 6px;
             border: 1px solid var(--pda-dark);
             background: var(--pda-card);
             cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Rotary Knob */
+        .knob-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1px;
+            margin: 0 2px;
+        }
+
+        .knob {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 40%, #d8e0d4, #a8b2a4);
+            border: 2px solid var(--pda-dark);
+            position: relative;
+            cursor: pointer;
+            box-shadow: inset 1px 1px 2px rgba(255,255,255,0.4), 0 1px 2px rgba(0,0,0,0.3);
+            user-select: none;
+            touch-action: none;
+        }
+
+        .knob::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 50%;
+            width: 2px;
+            height: 8px;
+            background: var(--pda-dark);
+            border-radius: 1px;
+            transform-origin: center 11px;
+            transform: translateX(-50%) rotate(var(--knob-angle, -120deg));
+        }
+
+        .knob-label {
+            font-size: 7px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            color: #444;
         }
 
         #hud-panel {
@@ -351,7 +395,10 @@
                     <button onclick="setInkColor('#1a3a6a')" style="background:#1a3a6a; color:#fff;">Blue</button>
                     <button onclick="setInkColor('#6a1a1a')" style="background:#6a1a1a; color:#fff;">Red</button>
                     <button onclick="setEraser()">Eraser</button>
-                    <input type="range" id="brush-size" min="1" max="8" value="2" style="width:60px;" oninput="setBrushSize(this.value)">
+                    <div class="knob-container">
+                        <div class="knob" id="brush-knob"></div>
+                        <div class="knob-label" id="knob-value">2</div>
+                    </div>
                     <button onclick="undoStroke()">Undo</button>
                     <button onclick="clearInk()">Clear</button>
                 </div>
@@ -436,6 +483,7 @@
                     <option value="txt">Plain Text (.txt)</option>
                     <option value="redacted">Redacted (.txt)</option>
                     <option value="json">AI Payload (.json)</option>
+                    <option value="chunks">Chunked Tokens (.json)</option>
                     <option value="png">Ink Sketch (.png)</option>
                     <option value="html">HTML Note (.html)</option>
                 </select>
@@ -453,6 +501,8 @@ let currentMemoId = memos.current || 'DRAFT_01';
 let sessionStart = Date.now();
 let strokes = []; // for undo
 let isEraser = false;
+let currentBrushColor = '#1d211b';
+let brushSize = 2;
 
 // === INIT ===
 function init() {
@@ -463,6 +513,8 @@ function init() {
     analyzeProse();
     renderNotesList();
     resizeCanvas();
+    initKnob();
+    setBrushSize(brushSize);
 }
 
 function updateClock() {
@@ -492,7 +544,10 @@ function switchTab(panelId, btn) {
 function loadMemo(id) {
     currentMemoId = id;
     document.getElementById('memo-name').value = id;
-    const data = memos.notes[id] || { text: '', strokes: [] };
+    if (!memos.notes[id]) {
+        memos.notes[id] = { text: '', strokes: [], updated: Date.now() };
+    }
+    const data = memos.notes[id];
     document.getElementById('editor').value = data.text || '';
     strokes = data.strokes || [];
     redrawStrokes();
@@ -506,9 +561,6 @@ function saveCurrentMemo() {
     const name = document.getElementById('memo-name').value.trim() || 'UNTITLED';
     const text = document.getElementById('editor').value;
     memos.notes[name] = { text, strokes: [...strokes], updated: Date.now() };
-    if (name !== currentMemoId && memos.notes[currentMemoId]) {
-        // optional: keep old or rename
-    }
     currentMemoId = name;
     memos.current = name;
     saveState();
@@ -558,7 +610,7 @@ function renderNotesList() {
     });
 }
 
-// Auto-save on input (debounced)
+// Auto-save on input
 let saveTimeout;
 document.getElementById('editor').addEventListener('input', () => {
     clearTimeout(saveTimeout);
@@ -611,16 +663,14 @@ function analyzeProse() {
     const contextPct = ((tokenCount / 8192) * 100).toFixed(1);
     document.getElementById('context-pct').textContent = `${contextPct}% of 8k`;
 
-    // Rough costs (input tokens)
-    const costMini = (tokenCount * 0.00000015).toFixed(6); // ~$0.15 / 1M
-    const costClaude = (tokenCount * 0.000003).toFixed(6); // ~$3 / 1M
+    const costMini = (tokenCount * 0.00000015).toFixed(6);
+    const costClaude = (tokenCount * 0.000003).toFixed(6);
     document.getElementById('stat-cost').textContent = `$${costMini}`;
     document.getElementById('stat-cost2').textContent = `$${costClaude}`;
 
     const readMin = Math.max(1, Math.round(wordCount / 230));
     document.getElementById('read-time').textContent = `${readMin} min`;
 
-    // Sentences
     const rawSentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [];
     const sentences = rawSentences.map(s => (s.match(/\b\w+\b/g) || []).length).filter(l => l > 0);
     document.getElementById('cadence-summary').textContent = `${sentences.length} sentences`;
@@ -638,7 +688,6 @@ function analyzeProse() {
         stream.appendChild(bar);
     });
 
-    // Readability
     if (wordCount > 0 && sentences.length > 0) {
         const totalSyllables = words.reduce((sum, w) => sum + countSyllables(w), 0);
         const avgSent = wordCount / sentences.length;
@@ -661,7 +710,6 @@ function analyzeProse() {
         document.getElementById('readability-score').textContent = '--';
     }
 
-    // Repetition
     const freq = {};
     words.forEach(w => {
         const low = w.toLowerCase();
@@ -674,7 +722,6 @@ function analyzeProse() {
         .map(([w, c]) => `"${w}" (${c}×)`);
     document.getElementById('repeat-radar').textContent = repeats.length ? repeats.join(', ') : 'Clean — no frequent repeats';
 
-    // Redaction
     const redacted = text
         .replace(/\b[A-Z][a-z]+\b(?!\.\s)/g, '[ENTITY]')
         .replace(/\b\d{3,}\b/g, '[NUM]')
@@ -682,7 +729,7 @@ function analyzeProse() {
     document.getElementById('redacted-preview').textContent = redacted.slice(0, 300) + (redacted.length > 300 ? '...' : '');
 }
 
-// === FIND / REPLACE ===
+// === FIND / REPLACE WITH WRAP-AROUND ===
 function toggleFind() {
     const bar = document.getElementById('find-bar');
     bar.classList.toggle('active');
@@ -693,7 +740,10 @@ function doFind() {
     const term = document.getElementById('find-input').value;
     if (!term) return;
     const ta = document.getElementById('editor');
-    const idx = ta.value.toLowerCase().indexOf(term.toLowerCase(), ta.selectionEnd || 0);
+    let idx = ta.value.toLowerCase().indexOf(term.toLowerCase(), ta.selectionEnd || 0);
+    if (idx === -1) {
+        idx = ta.value.toLowerCase().indexOf(term.toLowerCase(), 0);
+    }
     if (idx >= 0) {
         ta.focus();
         ta.setSelectionRange(idx, idx + term.length);
@@ -715,7 +765,7 @@ function doReplace() {
     doFind();
 }
 
-// === INK CANVAS ===
+// === INK CANVAS WITH TRUE TRANSPARENT ERASING ===
 const canvas = document.getElementById('ink-canvas');
 const ctx = canvas.getContext('2d');
 let drawing = false;
@@ -723,6 +773,7 @@ let currentStroke = null;
 
 function resizeCanvas() {
     const rect = canvas.parentElement.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
     const dpr = window.devicePixelRatio || 1;
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
@@ -736,17 +787,19 @@ function resizeCanvas() {
 
 function setInkColor(c) {
     isEraser = false;
+    currentBrushColor = c;
     ctx.strokeStyle = c;
-    document.documentElement.style.setProperty('--ink-color', c);
 }
 
 function setEraser() {
     isEraser = true;
-    ctx.strokeStyle = '#c4ccbf'; // match background roughly
 }
 
 function setBrushSize(v) {
-    ctx.lineWidth = parseInt(v);
+    brushSize = Math.max(1, Math.min(8, parseInt(v)));
+    ctx.lineWidth = brushSize;
+    document.getElementById('knob-value').textContent = brushSize;
+    updateKnobVisual();
 }
 
 function getCoords(e) {
@@ -760,7 +813,12 @@ function startDraw(e) {
     if (e.target.closest('.ink-tools')) return;
     drawing = true;
     const { x, y } = getCoords(e);
-    currentStroke = { points: [{x,y}], color: ctx.strokeStyle, width: ctx.lineWidth, eraser: isEraser };
+    currentStroke = { 
+        points: [{x, y}], 
+        color: currentBrushColor, 
+        width: ctx.lineWidth || 2, 
+        eraser: isEraser 
+    };
     ctx.beginPath();
     ctx.moveTo(x, y);
 }
@@ -768,15 +826,20 @@ function startDraw(e) {
 function moveDraw(e) {
     if (!drawing || !currentStroke) return;
     const { x, y } = getCoords(e);
-    currentStroke.points.push({x,y});
+    currentStroke.points.push({x, y});
+    
+    ctx.globalCompositeOperation = currentStroke.eraser ? 'destination-out' : 'source-over';
+    ctx.strokeStyle = currentStroke.color;
+    ctx.lineWidth = currentStroke.width * (currentStroke.eraser ? 4 : 1);
     ctx.lineTo(x, y);
     ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
 }
 
 function stopDraw() {
     if (drawing && currentStroke && currentStroke.points.length > 1) {
         strokes.push(currentStroke);
-        // auto-save strokes
         const name = currentMemoId;
         if (memos.notes[name]) {
             memos.notes[name].strokes = [...strokes];
@@ -789,18 +852,24 @@ function stopDraw() {
 }
 
 function redrawStrokes() {
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+
     strokes.forEach(stroke => {
         if (!stroke.points.length) return;
         ctx.beginPath();
-        ctx.strokeStyle = stroke.eraser ? '#c4ccbf' : stroke.color;
-        ctx.lineWidth = stroke.width;
+        ctx.globalCompositeOperation = stroke.eraser ? 'destination-out' : 'source-over';
+        ctx.strokeStyle = stroke.color;
+        ctx.lineWidth = stroke.width * (stroke.eraser ? 4 : 1);
         ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
         for (let i = 1; i < stroke.points.length; i++) {
             ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
         }
         ctx.stroke();
     });
+    ctx.globalCompositeOperation = 'source-over';
 }
 
 function undoStroke() {
@@ -831,7 +900,51 @@ canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e);
 canvas.addEventListener('touchmove', (e) => { e.preventDefault(); moveDraw(e); }, { passive: false });
 window.addEventListener('touchend', stopDraw);
 
-// === DOWNLOAD ===
+// === ROTARY KNOB ===
+function updateKnobVisual() {
+    const angle = -120 + ((brushSize - 1) / 7) * 240;
+    document.getElementById('brush-knob').style.setProperty('--knob-angle', angle + 'deg');
+}
+
+function initKnob() {
+    const knob = document.getElementById('brush-knob');
+    let dragging = false;
+    let startY = 0;
+    let startSize = 2;
+
+    function onPointerDown(e) {
+        dragging = true;
+        startY = e.touches ? e.touches[0].clientY : e.clientY;
+        startSize = brushSize;
+        e.preventDefault();
+    }
+
+    function onPointerMove(e) {
+        if (!dragging) return;
+        const y = e.touches ? e.touches[0].clientY : e.clientY;
+        const delta = startY - y;
+        const newSize = Math.round(startSize + delta / 12);
+        setBrushSize(newSize);
+        e.preventDefault();
+    }
+
+    function onPointerUp() {
+        dragging = false;
+    }
+
+    knob.addEventListener('mousedown', onPointerDown);
+    knob.addEventListener('touchstart', onPointerDown, { passive: false });
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('touchmove', onPointerMove, { passive: false });
+    window.addEventListener('mouseup', onPointerUp);
+    window.addEventListener('touchend', onPointerUp);
+}
+
+// === DOWNLOAD & EXPORT (WITH SAFE HTML ESCAPING) ===
+function escapeHtml(str) {
+    return str.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>').replace(/"/g, '"');
+}
+
 function handleDownload() {
     const mode = document.getElementById('export-mode').value;
     const text = document.getElementById('editor').value;
@@ -842,6 +955,11 @@ function handleDownload() {
         link.download = name + '_sketch.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
+        return;
+    }
+
+    if (mode === 'chunks') {
+        exportChunks(text, name);
         return;
     }
 
@@ -868,7 +986,7 @@ function handleDownload() {
         filename = name + '_payload.json';
         mime = 'application/json';
     } else if (mode === 'html') {
-        content = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${name}</title><style>body{font-family:Georgia,serif;max-width:680px;margin:40px auto;line-height:1.6;}</style></head><body><h1>${name}</h1><pre style="white-space:pre-wrap;font-family:inherit;">${text.replace(/</g,'<')}</pre></body></html>`;
+        content = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(name)}</title><style>body{font-family:Georgia,serif;max-width:680px;margin:40px auto;line-height:1.6;padding:0 20px;}</style></head><body><h1>${escapeHtml(name)}</h1><pre style="white-space:pre-wrap;font-family:inherit;">${escapeHtml(text)}</pre></body></html>`;
         filename = name + '.html';
         mime = 'text/html';
     }
@@ -878,6 +996,66 @@ function handleDownload() {
     const a = document.createElement('a');
     a.href = url;
     a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function exportChunks(text, name) {
+    const tokens = text.match(/\b\w+\b|[^\w\s]/g) || [];
+    if (tokens.length === 0) {
+        alert('No text to chunk.');
+        return;
+    }
+
+    let chunkSize = parseInt(prompt('Chunk size in tokens (approx):', '500'), 10);
+    if (isNaN(chunkSize) || chunkSize < 50) chunkSize = 500;
+
+    let overlap = parseInt(prompt('Overlap in tokens:', '50'), 10);
+    if (isNaN(overlap) || overlap < 0) overlap = 50;
+    if (overlap >= chunkSize) overlap = Math.floor(chunkSize / 5);
+
+    const chunks = [];
+    let start = 0;
+    let chunkIndex = 1;
+
+    while (start < tokens.length) {
+        const end = Math.min(start + chunkSize, tokens.length);
+        const chunkTokens = tokens.slice(start, end);
+
+        // Approximate text reconstruction for the chunk
+        const chunkText = chunkTokens.join(' ').replace(/ ([.,!?;:])/g, '$1');
+
+        chunks.push({
+            index: chunkIndex,
+            start_token: start,
+            end_token: end,
+            token_count: chunkTokens.length,
+            tokens: chunkTokens,
+            text: chunkText
+        });
+
+        if (end >= tokens.length) break;
+        start = end - overlap;
+        chunkIndex++;
+    }
+
+    const payload = {
+        device: "Wordstar PDA Supersized",
+        memo: name,
+        timestamp: new Date().toISOString(),
+        total_tokens: tokens.length,
+        chunk_size: chunkSize,
+        overlap: overlap,
+        chunk_count: chunks.length,
+        chunks: chunks
+    };
+
+    const content = JSON.stringify(payload, null, 2);
+    const blob = new Blob([content], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name + '_chunks.json';
     a.click();
     URL.revokeObjectURL(url);
 }
@@ -918,13 +1096,19 @@ function seedSample() {
     analyzeProse();
 }
 
+// === FOCUS MODE WITH SAFE UN-TRAP ===
 function toggleFocus() {
-    document.querySelectorAll('.tab-bar, .bottom-bar, .title-bar .sys-info').forEach(el => el.classList.toggle('hidden'));
-    document.getElementById('pda-chassis').style.maxWidth = document.getElementById('pda-chassis').style.maxWidth === '100%' ? '920px' : '100%';
+    const isNowFocus = !document.body.classList.contains('in-focus');
+    document.body.classList.toggle('in-focus', isNowFocus);
+    document.querySelectorAll('.tab-bar, .bottom-bar, .title-bar .sys-info').forEach(el => el.classList.toggle('hidden', isNowFocus));
+    document.getElementById('pda-chassis').style.maxWidth = isNowFocus ? '100%' : '920px';
 }
 
-// Keyboard shortcuts
+// Keyboard shortcuts (Escape exits focus mode!)
 document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.body.classList.contains('in-focus')) {
+        toggleFocus();
+    }
     if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
         e.preventDefault();
         toggleFind();
