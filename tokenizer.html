@@ -1,213 +1,943 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <base href="https:wordstar.nexus">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wordstar Tokenizer</title>
-    	       <style>
-/* === DEFINE VARIABLES FIRST === */
-:root {
-    --red: #ff0033;
-    --black: #0a0a0a;
-}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Wordstar PDA: Writer's Lens SUPERSIZED</title>
+    <style>
+        :root {
+            --pda-bg: #c4ccbf;
+            --pda-dark: #1d211b;
+            --pda-border: #7d8579;
+            --pda-card: #d3dbcf;
+            --pda-btn-bevel: #eef5ea;
+            --pda-highlight: #465340;
+            --ink-color: #1d211b;
+        }
 
-/* === NOW selection can use them === */
-::selection {
-    background: var(--red);
-    color: var(--black);
-    text-shadow: none;
-}
-</style>
-     <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body {
-            font-family: 'Courier New', monospace;
-            background-color: #111; /* Dark Grey background */
-            color: #eee;
+            background-color: #111;
+            font-family: -apple-system, "Chicago", "Geneva", "Courier New", monospace;
             margin: 0;
-            padding: 20px;
+            padding: 8px;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-        }
-        #container {
-            max-width: 800px;
-            width: 100%;
-            background-color: #0a0a0a; /* Deep Black */
-            border: 1px solid #333;
-            border-top: 4px solid #cc0000; /* Red Accent Top */
-            border-radius: 4px; /* Slightly sharper corners */
-            padding: 2rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
-        }
-        h1 {
-            color: #fff;
-            text-align: center;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-shadow: 2px 2px 4px #000;
-            border-bottom: 1px solid #333;
-            padding-bottom: 15px;
-        }
-        textarea {
-            width: 100%;
-            height: 150px;
-            background-color: #000;
-            color: #ccc;
-            border: 1px solid #444;
-            border-radius: 0; /* Industrial square edges */
-            padding: 15px;
-            margin-bottom: 20px;
-            resize: vertical;
-            font-family: 'Courier New', monospace;
-            box-sizing: border-box;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-        textarea:focus {
-            border-color: #cc0000; /* Red focus */
-        }
-        #output {
-            background-color: #000;
-            border: 1px solid #444;
-            border-radius: 0;
-            padding: 15px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            min-height: 100px;
-            color: #fff;
-        }
-        /* Token Styling */
-        .token {
-            display: inline-block;
-            margin: 3px;
-            padding: 4px 8px;
-            background-color: #222; /* Dark Grey Token */
-            border: 1px solid #333;
-            border-radius: 0;
-            font-size: 0.9em;
-        }
-        /* Visualizing Spaces with Red */
-        .space {
-            background-color: #5c0000; /* Dark Red for spaces */
-            border-color: #cc0000;
-        }
-        .leading-space::before,
-        .trailing-space::after {
-            content: '·';
-            color: #ff0000; /* Bright Red dots */
-            font-weight: bold;
-        }
-        sup {
-            color: #666;
-            margin-right: 4px;
-        }
-        
-        /* Action Button */
-        #tokenize-btn {
-            background-color: #cc0000; /* Red Button */
-            color: #fff;
-            border: none;
-            padding: 12px 24px;
-            margin-bottom: 20px;
-            cursor: pointer;
-            border-radius: 0;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.2s ease;
-        }
-        #tokenize-btn:hover {
-            background-color: #ff0000;
-            box-shadow: 0 0 10px rgba(204, 0, 0, 0.4);
+            color: var(--pda-dark);
         }
 
-        .download-link {
-            text-decoration: none;
+        #pda-chassis {
+            width: 100%;
+            max-width: 920px;
+            background: linear-gradient(145deg, #4a4e49, #2a2e29);
+            border-radius: 18px;
+            padding: 14px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.9), inset 0 3px 5px #666, inset 0 -2px 4px #111;
+            border: 3px solid #1a1c18;
+            position: relative;
+        }
+
+        #pda-chassis::before {
+            content: "WORDSTAR";
+            position: absolute;
+            top: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 9px;
+            letter-spacing: 3px;
             color: #888;
-            margin-left: 8px;
-            font-size: 1em;
-            transition: all 0.2s ease;
-            filter: grayscale(100%);
+            font-weight: bold;
         }
-        .download-link:hover {
-            color: #fff;
-            filter: grayscale(0%);
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+
+        #pda-screen {
+            background-color: var(--pda-bg);
+            border: 3px solid var(--pda-dark);
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            box-shadow: inset 2px 2px 6px rgba(0,0,0,0.4);
+            min-height: 520px;
         }
-        #footer {
-            margin-top: 20px;
-            text-align: center;
-            font-size: 0.8em;
-            color: #666;
-            border-top: 1px solid #222;
-            padding-top: 10px;
+
+        .title-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--pda-dark);
+            padding-bottom: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
         }
+
+        #memo-name {
+            background: transparent;
+            border: none;
+            font-weight: bold;
+            font-family: inherit;
+            font-size: 11px;
+            width: 140px;
+            color: inherit;
+            outline: none;
+        }
+
+        .sys-info {
+            display: flex;
+            gap: 10px;
+            font-size: 10px;
+        }
+
+        .tab-bar {
+            display: flex;
+            gap: 3px;
+            border-bottom: 1px solid var(--pda-dark);
+            padding-bottom: 4px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: var(--pda-card);
+            border: 1px solid var(--pda-dark);
+            border-bottom-color: #555;
+            border-right-color: #555;
+            font-family: inherit;
+            font-size: 10px;
+            padding: 7px 2px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .tab-btn.active {
+            background: var(--pda-dark);
+            color: var(--pda-bg);
+            border-color: var(--pda-dark);
+        }
+
+        #workspace {
+            position: relative;
+            background: var(--pda-card);
+            border: 1px solid var(--pda-dark);
+            min-height: 340px;
+            height: 52vh;
+            overflow: hidden;
+        }
+
+        .panel {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+        }
+
+        .panel.active {
+            display: flex;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            border: none;
+            padding: 12px;
+            font-family: "Courier New", monospace;
+            font-size: 14px;
+            line-height: 1.65;
+            color: var(--pda-dark);
+            resize: none;
+            outline: none;
+        }
+
+        #sketch-panel {
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 19px,
+                #b8c2b3 20px
+            );
+            touch-action: none;
+            position: relative;
+        }
+
+        #ink-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: crosshair;
+        }
+
+        .ink-tools {
+            position: absolute;
+            bottom: 6px;
+            left: 6px;
+            right: 6px;
+            display: flex;
+            gap: 4px;
+            background: rgba(211, 219, 207, 0.92);
+            border: 1px solid var(--pda-dark);
+            padding: 4px;
+            border-radius: 3px;
+        }
+
+        .ink-tools button, .ink-tools input {
+            font-size: 10px;
+            padding: 3px 6px;
+            border: 1px solid var(--pda-dark);
+            background: var(--pda-card);
+            cursor: pointer;
+        }
+
+        #hud-panel {
+            padding: 10px;
+            overflow-y: auto;
+            font-size: 11px;
+            height: 100%;
+        }
+
+        .hud-metric-box {
+            background: rgba(0,0,0,0.06);
+            border: 1px solid var(--pda-border);
+            padding: 7px;
+            margin-bottom: 7px;
+            border-radius: 2px;
+        }
+
+        .hud-metric-title {
+            font-weight: bold;
+            font-size: 10px;
+            border-bottom: 1px solid var(--pda-border);
+            padding-bottom: 2px;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            text-transform: uppercase;
+        }
+
+        #cadence-stream {
+            display: flex;
+            gap: 2px;
+            align-items: flex-end;
+            height: 36px;
+            background: rgba(0,0,0,0.05);
+            padding: 4px;
+            border: 1px solid var(--pda-border);
+            overflow-x: auto;
+        }
+
+        .rhythm-bar {
+            background: var(--pda-dark);
+            min-width: 7px;
+            border-radius: 1px 1px 0 0;
+            flex-shrink: 0;
+            transition: height 0.15s;
+        }
+
+        .bottom-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: space-between;
+            border-top: 2px solid var(--pda-dark);
+            padding-top: 6px;
+            align-items: center;
+        }
+
+        button.pda-btn, select.pda-select, input.pda-input {
+            background: var(--pda-card);
+            border: 1px solid var(--pda-dark);
+            border-right-color: #444;
+            border-bottom-color: #444;
+            font-family: inherit;
+            font-size: 10px;
+            padding: 5px 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button.pda-btn:active {
+            box-shadow: inset 1px 1px 2px rgba(0,0,0,0.5);
+            transform: translateY(1px);
+        }
+
+        .notes-list {
+            max-height: 120px;
+            overflow-y: auto;
+            font-size: 10px;
+            border: 1px solid var(--pda-border);
+            margin-top: 4px;
+        }
+
+        .note-item {
+            padding: 4px 6px;
+            border-bottom: 1px solid #ccc;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .note-item:hover { background: rgba(0,0,0,0.08); }
+        .note-item.active { background: var(--pda-highlight); color: #fff; }
+
+        #find-bar {
+            display: none;
+            padding: 4px;
+            background: #e8eee5;
+            border-bottom: 1px solid var(--pda-dark);
+            font-size: 10px;
+            gap: 4px;
+            align-items: center;
+        }
+
+        #find-bar.active { display: flex; }
+
+        @media (min-width: 768px) {
+            #workspace { height: 460px; }
+            .tab-btn { font-size: 11px; }
+        }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
-    <div id="container">
-        <h1>Wordstar Tokenizer</h1>
-        <textarea id="input" placeholder="INPUT DATA STREAM..."></textarea>
-        <button id="tokenize-btn">Tokenize</button>
-        <div id="output"></div>
-        <div id="footer">
-            SYSTEM: Splits text into sentences, encrypts tokens, and generates download links.
+
+<div id="pda-chassis">
+    <div id="pda-screen">
+        <div class="title-bar">
+            <div style="display:flex; align-items:center; gap:6px;">
+                <input type="text" id="memo-name" value="DRAFT_01" title="Memo name">
+                <button class="pda-btn" style="padding:2px 5px; font-size:9px;" onclick="saveCurrentMemo()">💾</button>
+            </div>
+            <div class="sys-info">
+                <span id="clock">--:--</span>
+                <span id="quick-stats">W:0 T:0</span>
+                <span id="session-time">0:00</span>
+            </div>
+        </div>
+
+        <div class="tab-bar">
+            <button class="tab-btn active" onclick="switchTab('editor-panel', this)">1. EDITOR</button>
+            <button class="tab-btn" onclick="switchTab('sketch-panel', this)">2. INK PAD</button>
+            <button class="tab-btn" onclick="switchTab('hud-panel', this)">3. PROSE LENS</button>
+            <button class="tab-btn" onclick="switchTab('notes-panel', this)">4. MEMOS</button>
+        </div>
+
+        <div id="workspace">
+            <!-- Editor -->
+            <div id="editor-panel" class="panel active">
+                <div id="find-bar">
+                    <input type="text" id="find-input" placeholder="Find..." class="pda-input" style="flex:1; padding:3px;">
+                    <input type="text" id="replace-input" placeholder="Replace..." class="pda-input" style="flex:1; padding:3px;">
+                    <button class="pda-btn" onclick="doFind()">Find</button>
+                    <button class="pda-btn" onclick="doReplace()">Replace</button>
+                    <button class="pda-btn" onclick="toggleFind()">✕</button>
+                </div>
+                <textarea id="editor" placeholder="Write your manuscript... Instant-on local buffer. Auto-saves."></textarea>
+            </div>
+
+            <!-- Ink Pad -->
+            <div id="sketch-panel" class="panel">
+                <canvas id="ink-canvas"></canvas>
+                <div class="ink-tools">
+                    <button onclick="setInkColor('#1d211b')" style="background:#1d211b; color:#fff;">Black</button>
+                    <button onclick="setInkColor('#1a3a6a')" style="background:#1a3a6a; color:#fff;">Blue</button>
+                    <button onclick="setInkColor('#6a1a1a')" style="background:#6a1a1a; color:#fff;">Red</button>
+                    <button onclick="setEraser()">Eraser</button>
+                    <input type="range" id="brush-size" min="1" max="8" value="2" style="width:60px;" oninput="setBrushSize(this.value)">
+                    <button onclick="undoStroke()">Undo</button>
+                    <button onclick="clearInk()">Clear</button>
+                </div>
+            </div>
+
+            <!-- Prose Lens -->
+            <div id="hud-panel" class="panel">
+                <div class="hud-metric-box">
+                    <div class="hud-metric-title">
+                        <span>1. AI CONTEXT & COST</span>
+                        <span id="context-pct">0.0% of 8k</span>
+                    </div>
+                    <div>Est. Tokens: <b id="stat-tokens">0</b> | Words: <b id="stat-words">0</b> | Chars: <b id="stat-chars">0</b></div>
+                    <div style="font-size:10px; margin-top:3px;">
+                        GPT-4o mini: <span id="stat-cost">$0.00000</span> &nbsp;|&nbsp; Claude 3.5: <span id="stat-cost2">$0.00000</span>
+                    </div>
+                    <div style="font-size:10px; margin-top:2px;">Reading time: <b id="read-time">0 min</b></div>
+                </div>
+
+                <div class="hud-metric-box">
+                    <div class="hud-metric-title">
+                        <span>2. SENTENCE RHYTHM</span>
+                        <span id="cadence-summary">0 sentences</span>
+                    </div>
+                    <div id="cadence-stream"></div>
+                    <div style="font-size:9px; margin-top:3px; color:#444;">
+                        Short (<8w) | Med (8-20w) | Long (>20w) — taller = longer sentence
+                    </div>
+                </div>
+
+                <div class="hud-metric-box">
+                    <div class="hud-metric-title">
+                        <span>3. READABILITY</span>
+                        <span id="readability-score">--</span>
+                    </div>
+                    <div>Flesch Reading Ease: <b id="flesch">--</b> (higher = easier)</div>
+                    <div>Avg words/sentence: <b id="avg-sent">--</b> | Unique words: <b id="unique-pct">--</b>%</div>
+                </div>
+
+                <div class="hud-metric-box">
+                    <div class="hud-metric-title">
+                        <span>4. REPETITION RADAR</span>
+                    </div>
+                    <div id="repeat-radar">No overused words detected.</div>
+                </div>
+
+                <div class="hud-metric-box">
+                    <div class="hud-metric-title">
+                        <span>5. PRIVACY REDACTION</span>
+                        <button class="pda-btn" style="padding:1px 5px; font-size:8px;" onclick="copyRedacted()">Copy</button>
+                    </div>
+                    <div id="redacted-preview" style="font-style:italic; max-height:70px; overflow-y:auto; color:#333; font-size:10px;"></div>
+                </div>
+            </div>
+
+            <!-- Memos Manager -->
+            <div id="notes-panel" class="panel">
+                <div style="padding:8px; height:100%; display:flex; flex-direction:column;">
+                    <div style="font-weight:bold; font-size:11px; margin-bottom:6px;">SAVED MEMOS</div>
+                    <div id="notes-list" class="notes-list" style="flex:1;"></div>
+                    <div style="margin-top:6px; display:flex; gap:4px;">
+                        <button class="pda-btn" onclick="newMemo()">+ New</button>
+                        <button class="pda-btn" onclick="deleteCurrentMemo()">Delete</button>
+                        <button class="pda-btn" onclick="exportAllMemos()">Export All</button>
+                    </div>
+                    <div style="font-size:9px; margin-top:6px; color:#555;">
+                        All memos auto-saved locally in your browser. No cloud, no accounts.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-bar">
+            <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                <button class="pda-btn" onclick="clearCurrent()">Clear</button>
+                <button class="pda-btn" onclick="seedSample()">Sample</button>
+                <button class="pda-btn" onclick="toggleFind()">Find</button>
+                <button class="pda-btn" onclick="toggleFocus()">Focus</button>
+            </div>
+            <div style="display:flex; gap:4px; align-items:center;">
+                <select id="export-mode" class="pda-select">
+                    <option value="txt">Plain Text (.txt)</option>
+                    <option value="redacted">Redacted (.txt)</option>
+                    <option value="json">AI Payload (.json)</option>
+                    <option value="png">Ink Sketch (.png)</option>
+                    <option value="html">HTML Note (.html)</option>
+                </select>
+                <button class="pda-btn" onclick="handleDownload()">Export ↓</button>
+            </div>
         </div>
     </div>
+</div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
-    <script>
-    const input = document.getElementById('input');
-    const output = document.getElementById('output');
-    const tokenizeBtn = document.getElementById('tokenize-btn');
+<script>
+// === STATE ===
+let memos = JSON.parse(localStorage.getItem('wordstar_memos') || '{"current":"DRAFT_01","notes":{}}');
+if (!memos.notes) memos.notes = {};
+let currentMemoId = memos.current || 'DRAFT_01';
+let sessionStart = Date.now();
+let strokes = []; // for undo
+let isEraser = false;
 
-    function tokenize(text) {
-        // Split the text into sentences
-        return text.match(/[^.!?]+[.!?]+|\s+/g) || [];
+// === INIT ===
+function init() {
+    loadMemo(currentMemoId);
+    updateClock();
+    setInterval(updateClock, 10000);
+    setInterval(updateSessionTime, 1000);
+    analyzeProse();
+    renderNotesList();
+    resizeCanvas();
+}
+
+function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+function updateSessionTime() {
+    const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+    const m = Math.floor(elapsed / 60);
+    const s = elapsed % 60;
+    document.getElementById('session-time').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+// === TABS ===
+function switchTab(panelId, btn) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(panelId).classList.add('active');
+    btn.classList.add('active');
+    if (panelId === 'sketch-panel') resizeCanvas();
+    if (panelId === 'hud-panel') analyzeProse();
+    if (panelId === 'notes-panel') renderNotesList();
+}
+
+// === MEMO MANAGEMENT ===
+function loadMemo(id) {
+    currentMemoId = id;
+    document.getElementById('memo-name').value = id;
+    const data = memos.notes[id] || { text: '', strokes: [] };
+    document.getElementById('editor').value = data.text || '';
+    strokes = data.strokes || [];
+    redrawStrokes();
+    memos.current = id;
+    saveState();
+    analyzeProse();
+    renderNotesList();
+}
+
+function saveCurrentMemo() {
+    const name = document.getElementById('memo-name').value.trim() || 'UNTITLED';
+    const text = document.getElementById('editor').value;
+    memos.notes[name] = { text, strokes: [...strokes], updated: Date.now() };
+    if (name !== currentMemoId && memos.notes[currentMemoId]) {
+        // optional: keep old or rename
     }
+    currentMemoId = name;
+    memos.current = name;
+    saveState();
+    renderNotesList();
+    alert('Memo saved: ' + name);
+}
 
-    function encryptToken(token) {
-        // Simple encryption: take first and last character, and length in between
-        if (token.length <= 2) return token;
-        return `${token[0]}${token.length - 2}${token[token.length - 1]}`;
+function newMemo() {
+    const name = prompt('New memo name:', 'MEMO_' + (Object.keys(memos.notes).length + 1));
+    if (!name) return;
+    memos.notes[name] = { text: '', strokes: [], updated: Date.now() };
+    loadMemo(name);
+}
+
+function deleteCurrentMemo() {
+    if (!confirm('Delete "' + currentMemoId + '"?')) return;
+    delete memos.notes[currentMemoId];
+    const remaining = Object.keys(memos.notes);
+    if (remaining.length) {
+        loadMemo(remaining[0]);
+    } else {
+        memos.notes['DRAFT_01'] = { text: '', strokes: [] };
+        loadMemo('DRAFT_01');
     }
+    saveState();
+}
 
-    function visualizeTokens(tokens) {
-        return tokens.map((token, index) => {
-            let classes = ['token'];
-            if (token.trim() === '') {
-                classes.push('space');
-            }
-            if (index === 0 && token.startsWith(' ')) {
-                classes.push('leading-space');
-            }
-            if (index === tokens.length - 1 && token.endsWith(' ')) {
-                classes.push('trailing-space');
-            }
-            const encryptedToken = encryptToken(token);
-            const downloadLink = createDownloadLink(token, index);
-            return `<span class="${classes.join(' ')}"><sup>${index + 1}</sup>${_.escape(encryptedToken)}${downloadLink}</span>`;
-        }).join('');
+function saveState() {
+    localStorage.setItem('wordstar_memos', JSON.stringify(memos));
+}
+
+function renderNotesList() {
+    const list = document.getElementById('notes-list');
+    list.innerHTML = '';
+    const ids = Object.keys(memos.notes).sort((a,b) => (memos.notes[b].updated||0) - (memos.notes[a].updated||0));
+    if (!ids.length) {
+        list.innerHTML = '<div style="padding:8px; color:#666;">No memos yet</div>';
+        return;
     }
+    ids.forEach(id => {
+        const item = document.createElement('div');
+        item.className = 'note-item' + (id === currentMemoId ? ' active' : '');
+        const preview = (memos.notes[id].text || '').slice(0, 40).replace(/\n/g, ' ');
+        item.innerHTML = `<span>${id}</span><span style="opacity:0.6; font-size:9px;">${preview}...</span>`;
+        item.onclick = () => loadMemo(id);
+        list.appendChild(item);
+    });
+}
 
-    function createDownloadLink(token, index) {
-        const blob = new Blob([token], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        return `<a href="${url}" download="token_${index + 1}.txt" class="download-link" title="Download Token">📥</a>`;
+// Auto-save on input (debounced)
+let saveTimeout;
+document.getElementById('editor').addEventListener('input', () => {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        const name = document.getElementById('memo-name').value.trim() || currentMemoId;
+        memos.notes[name] = memos.notes[name] || {};
+        memos.notes[name].text = document.getElementById('editor').value;
+        memos.notes[name].updated = Date.now();
+        memos.current = name;
+        saveState();
+    }, 800);
+    analyzeProse();
+});
+
+document.getElementById('memo-name').addEventListener('change', () => {
+    const newName = document.getElementById('memo-name').value.trim();
+    if (newName && newName !== currentMemoId && memos.notes[currentMemoId]) {
+        memos.notes[newName] = memos.notes[currentMemoId];
+        delete memos.notes[currentMemoId];
+        currentMemoId = newName;
+        memos.current = newName;
+        saveState();
+        renderNotesList();
     }
+});
 
-    tokenizeBtn.addEventListener('click', () => {
-        const text = input.value;
-        const tokens = tokenize(text);
-        output.innerHTML = visualizeTokens(tokens);
+// === PROSE ANALYTICS ===
+function countSyllables(word) {
+    word = word.toLowerCase().replace(/[^a-z]/g, '');
+    if (word.length <= 3) return 1;
+    word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '').replace(/^y/, '');
+    const matches = word.match(/[aeiouy]{1,2}/g);
+    return matches ? matches.length : 1;
+}
+
+function analyzeProse() {
+    const text = document.getElementById('editor').value;
+    const words = text.match(/\b[a-zA-Z0-9'-]+\b/g) || [];
+    const tokens = text.match(/\b\w+\b|[^\w\s]/g) || [];
+    const chars = text.length;
+
+    const tokenCount = tokens.length;
+    const wordCount = words.length;
+
+    document.getElementById('quick-stats').textContent = `W:${wordCount} T:${tokenCount}`;
+    document.getElementById('stat-words').textContent = wordCount;
+    document.getElementById('stat-tokens').textContent = tokenCount;
+    document.getElementById('stat-chars').textContent = chars;
+
+    const contextPct = ((tokenCount / 8192) * 100).toFixed(1);
+    document.getElementById('context-pct').textContent = `${contextPct}% of 8k`;
+
+    // Rough costs (input tokens)
+    const costMini = (tokenCount * 0.00000015).toFixed(6); // ~$0.15 / 1M
+    const costClaude = (tokenCount * 0.000003).toFixed(6); // ~$3 / 1M
+    document.getElementById('stat-cost').textContent = `$${costMini}`;
+    document.getElementById('stat-cost2').textContent = `$${costClaude}`;
+
+    const readMin = Math.max(1, Math.round(wordCount / 230));
+    document.getElementById('read-time').textContent = `${readMin} min`;
+
+    // Sentences
+    const rawSentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [];
+    const sentences = rawSentences.map(s => (s.match(/\b\w+\b/g) || []).length).filter(l => l > 0);
+    document.getElementById('cadence-summary').textContent = `${sentences.length} sentences`;
+
+    const stream = document.getElementById('cadence-stream');
+    stream.innerHTML = '';
+    sentences.forEach(len => {
+        const bar = document.createElement('div');
+        bar.className = 'rhythm-bar';
+        const h = Math.min(32, Math.max(4, len * 1.4));
+        bar.style.height = h + 'px';
+        if (len < 8) bar.style.background = '#2a4a2a';
+        else if (len > 20) bar.style.background = '#4a2a2a';
+        bar.title = len + ' words';
+        stream.appendChild(bar);
     });
 
-    input.addEventListener('input', _.debounce(() => {
-        // Optional: clear output on type, or auto-tokenize
-        // output.innerHTML = ''; 
-    }, 300));
-    </script>
+    // Readability
+    if (wordCount > 0 && sentences.length > 0) {
+        const totalSyllables = words.reduce((sum, w) => sum + countSyllables(w), 0);
+        const avgSent = wordCount / sentences.length;
+        const avgSyl = totalSyllables / wordCount;
+        const flesch = 206.835 - 1.015 * avgSent - 84.6 * avgSyl;
+        const fleschRounded = Math.max(0, Math.min(100, flesch)).toFixed(1);
+        document.getElementById('flesch').textContent = fleschRounded;
+        document.getElementById('avg-sent').textContent = avgSent.toFixed(1);
+        const unique = new Set(words.map(w => w.toLowerCase())).size;
+        document.getElementById('unique-pct').textContent = ((unique / wordCount) * 100).toFixed(0);
+        
+        let ease = 'Standard';
+        if (flesch > 80) ease = 'Easy';
+        else if (flesch > 60) ease = 'Plain';
+        else if (flesch > 40) ease = 'Difficult';
+        else ease = 'Very Hard';
+        document.getElementById('readability-score').textContent = ease;
+    } else {
+        document.getElementById('flesch').textContent = '--';
+        document.getElementById('readability-score').textContent = '--';
+    }
+
+    // Repetition
+    const freq = {};
+    words.forEach(w => {
+        const low = w.toLowerCase();
+        if (low.length > 3) freq[low] = (freq[low] || 0) + 1;
+    });
+    const repeats = Object.entries(freq)
+        .filter(([_, c]) => c >= 3)
+        .sort((a,b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([w, c]) => `"${w}" (${c}×)`);
+    document.getElementById('repeat-radar').textContent = repeats.length ? repeats.join(', ') : 'Clean — no frequent repeats';
+
+    // Redaction
+    const redacted = text
+        .replace(/\b[A-Z][a-z]+\b(?!\.\s)/g, '[ENTITY]')
+        .replace(/\b\d{3,}\b/g, '[NUM]')
+        .replace(/\b[A-Z]{2,}\b/g, '[ACRONYM]');
+    document.getElementById('redacted-preview').textContent = redacted.slice(0, 300) + (redacted.length > 300 ? '...' : '');
+}
+
+// === FIND / REPLACE ===
+function toggleFind() {
+    const bar = document.getElementById('find-bar');
+    bar.classList.toggle('active');
+    if (bar.classList.contains('active')) document.getElementById('find-input').focus();
+}
+
+function doFind() {
+    const term = document.getElementById('find-input').value;
+    if (!term) return;
+    const ta = document.getElementById('editor');
+    const idx = ta.value.toLowerCase().indexOf(term.toLowerCase(), ta.selectionEnd || 0);
+    if (idx >= 0) {
+        ta.focus();
+        ta.setSelectionRange(idx, idx + term.length);
+    } else {
+        alert('Not found');
+    }
+}
+
+function doReplace() {
+    const find = document.getElementById('find-input').value;
+    const repl = document.getElementById('replace-input').value;
+    if (!find) return;
+    const ta = document.getElementById('editor');
+    const start = ta.selectionStart;
+    if (ta.value.slice(start, start + find.length).toLowerCase() === find.toLowerCase()) {
+        ta.setRangeText(repl, start, start + find.length, 'end');
+        analyzeProse();
+    }
+    doFind();
+}
+
+// === INK CANVAS ===
+const canvas = document.getElementById('ink-canvas');
+const ctx = canvas.getContext('2d');
+let drawing = false;
+let currentStroke = null;
+
+function resizeCanvas() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    ctx.scale(dpr, dpr);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    redrawStrokes();
+}
+
+function setInkColor(c) {
+    isEraser = false;
+    ctx.strokeStyle = c;
+    document.documentElement.style.setProperty('--ink-color', c);
+}
+
+function setEraser() {
+    isEraser = true;
+    ctx.strokeStyle = '#c4ccbf'; // match background roughly
+}
+
+function setBrushSize(v) {
+    ctx.lineWidth = parseInt(v);
+}
+
+function getCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: clientX - rect.left, y: clientY - rect.top };
+}
+
+function startDraw(e) {
+    if (e.target.closest('.ink-tools')) return;
+    drawing = true;
+    const { x, y } = getCoords(e);
+    currentStroke = { points: [{x,y}], color: ctx.strokeStyle, width: ctx.lineWidth, eraser: isEraser };
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+}
+
+function moveDraw(e) {
+    if (!drawing || !currentStroke) return;
+    const { x, y } = getCoords(e);
+    currentStroke.points.push({x,y});
+    ctx.lineTo(x, y);
+    ctx.stroke();
+}
+
+function stopDraw() {
+    if (drawing && currentStroke && currentStroke.points.length > 1) {
+        strokes.push(currentStroke);
+        // auto-save strokes
+        const name = currentMemoId;
+        if (memos.notes[name]) {
+            memos.notes[name].strokes = [...strokes];
+            saveState();
+        }
+    }
+    drawing = false;
+    currentStroke = null;
+    ctx.beginPath();
+}
+
+function redrawStrokes() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    strokes.forEach(stroke => {
+        if (!stroke.points.length) return;
+        ctx.beginPath();
+        ctx.strokeStyle = stroke.eraser ? '#c4ccbf' : stroke.color;
+        ctx.lineWidth = stroke.width;
+        ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+        for (let i = 1; i < stroke.points.length; i++) {
+            ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+        }
+        ctx.stroke();
+    });
+}
+
+function undoStroke() {
+    strokes.pop();
+    redrawStrokes();
+    const name = currentMemoId;
+    if (memos.notes[name]) {
+        memos.notes[name].strokes = [...strokes];
+        saveState();
+    }
+}
+
+function clearInk() {
+    if (confirm('Clear ink pad?')) {
+        strokes = [];
+        redrawStrokes();
+        if (memos.notes[currentMemoId]) {
+            memos.notes[currentMemoId].strokes = [];
+            saveState();
+        }
+    }
+}
+
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('mousemove', moveDraw);
+window.addEventListener('mouseup', stopDraw);
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); }, { passive: false });
+canvas.addEventListener('touchmove', (e) => { e.preventDefault(); moveDraw(e); }, { passive: false });
+window.addEventListener('touchend', stopDraw);
+
+// === DOWNLOAD ===
+function handleDownload() {
+    const mode = document.getElementById('export-mode').value;
+    const text = document.getElementById('editor').value;
+    const name = document.getElementById('memo-name').value || 'memo';
+
+    if (mode === 'png') {
+        const link = document.createElement('a');
+        link.download = name + '_sketch.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        return;
+    }
+
+    let content = text;
+    let filename = name + '.txt';
+    let mime = 'text/plain';
+
+    if (mode === 'redacted') {
+        content = text.replace(/\b[A-Z][a-z]+\b(?!\.\s)/g, '[ENTITY]')
+                      .replace(/\b\d{3,}\b/g, '[NUM]')
+                      .replace(/\b[A-Z]{2,}\b/g, '[ACRONYM]');
+        filename = name + '_redacted.txt';
+    } else if (mode === 'json') {
+        const tokens = text.match(/\b\w+\b|[^\w\s]/g) || [];
+        content = JSON.stringify({
+            device: "Wordstar PDA Supersized",
+            memo: name,
+            timestamp: new Date().toISOString(),
+            token_count: tokens.length,
+            word_count: (text.match(/\b\w+\b/g) || []).length,
+            tokens,
+            raw_text: text
+        }, null, 2);
+        filename = name + '_payload.json';
+        mime = 'application/json';
+    } else if (mode === 'html') {
+        content = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${name}</title><style>body{font-family:Georgia,serif;max-width:680px;margin:40px auto;line-height:1.6;}</style></head><body><h1>${name}</h1><pre style="white-space:pre-wrap;font-family:inherit;">${text.replace(/</g,'<')}</pre></body></html>`;
+        filename = name + '.html';
+        mime = 'text/html';
+    }
+
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function exportAllMemos() {
+    const blob = new Blob([JSON.stringify(memos, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'wordstar_all_memos.json';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function copyRedacted() {
+    const text = document.getElementById('redacted-preview').textContent;
+    navigator.clipboard.writeText(text).then(() => alert('Redacted text copied!'));
+}
+
+function clearCurrent() {
+    if (document.getElementById('editor-panel').classList.contains('active')) {
+        if (confirm("Clear editor text?")) {
+            document.getElementById('editor').value = '';
+            analyzeProse();
+        }
+    } else if (document.getElementById('sketch-panel').classList.contains('active')) {
+        clearInk();
+    }
+}
+
+function seedSample() {
+    const samples = [
+        "The rain hammered the tin roof. Outside, the neon sign flickered, sputtering red against the wet asphalt. He paused under the awning, breathing in the smell of wet dust. Marcus looked at his watch. 340 minutes had passed since he left Chicago. Had he left the key in the hotel?",
+        "She opened the notebook slowly. The pages smelled of old paper and something metallic. Every sentence she wrote seemed to rewrite the previous one. By midnight the city had gone quiet except for the distant trains.",
+        "In the year 2147 the last Palm Pilot was found in a museum basement. Its battery still held a charge. When the curator powered it on, a single memo appeared: 'Do not forget the human cadence.'"
+    ];
+    document.getElementById('editor').value = samples[Math.floor(Math.random() * samples.length)];
+    analyzeProse();
+}
+
+function toggleFocus() {
+    document.querySelectorAll('.tab-bar, .bottom-bar, .title-bar .sys-info').forEach(el => el.classList.toggle('hidden'));
+    document.getElementById('pda-chassis').style.maxWidth = document.getElementById('pda-chassis').style.maxWidth === '100%' ? '920px' : '100%';
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        toggleFind();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        saveCurrentMemo();
+    }
+});
+
+// Start
+window.addEventListener('load', init);
+window.addEventListener('resize', resizeCanvas);
+</script>
 </body>
 </html>
