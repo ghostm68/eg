@@ -382,6 +382,73 @@
         body.in-focus #exit-focus {
             display: block;
         }
+
+        /* Custom Select for red highlight control */
+        .custom-select-container {
+            position: relative;
+            display: inline-block;
+            min-width: 160px;
+        }
+
+        .custom-select-container select {
+            display: none;
+        }
+
+        .select-selected {
+            background: var(--pda-card);
+            border: 1px solid var(--pda-dark);
+            border-right-color: #444;
+            border-bottom-color: #444;
+            font-family: inherit;
+            font-size: 10px;
+            padding: 5px 8px;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--pda-dark);
+            user-select: none;
+        }
+
+        .select-selected:after {
+            content: "▼";
+            position: absolute;
+            right: 6px;
+            top: 5px;
+            font-size: 8px;
+        }
+
+        .select-selected.select-arrow-active:after {
+            content: "▲";
+        }
+
+        .select-items {
+            position: absolute;
+            background: var(--pda-card);
+            border: 1px solid var(--pda-dark);
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 99;
+            max-height: 160px;
+            overflow-y: auto;
+        }
+
+        .select-hide {
+            display: none;
+        }
+
+        .select-items div {
+            padding: 5px 8px;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: bold;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .select-items div:hover,
+        .select-items div.same-as-selected {
+            background: var(--red);
+            color: var(--black);
+        }
     </style>
 </head>
 <body>
@@ -512,14 +579,16 @@
                 <button class="pda-btn" onclick="toggleFocus()">Focus</button>
             </div>
             <div style="display:flex; gap:4px; align-items:center;">
-                <select id="export-mode" class="pda-select">
-                    <option value="txt">Plain Text (.txt)</option>
-                    <option value="redacted">Redacted (.txt)</option>
-                    <option value="json">AI Payload (.json)</option>
-                    <option value="chunks">Chunked Tokens (.json)</option>
-                    <option value="png">Ink Sketch (.png)</option>
-                    <option value="html">HTML Note (.html)</option>
-                </select>
+                <div class="custom-select-container">
+                    <select id="export-mode" class="pda-select">
+                        <option value="txt">Plain Text (.txt)</option>
+                        <option value="redacted">Redacted (.txt)</option>
+                        <option value="json">AI Payload (.json)</option>
+                        <option value="chunks">Chunked Tokens (.json)</option>
+                        <option value="png">Ink Sketch (.png)</option>
+                        <option value="html">HTML Note (.html)</option>
+                    </select>
+                </div>
                 <button class="pda-btn" onclick="handleDownload()">Export ↓</button>
             </div>
         </div>
@@ -550,6 +619,7 @@ function init() {
     resizeCanvas();
     initKnob();
     setBrushSize(brushSize);
+    initCustomSelect();
 }
 
 function updateClock() {
@@ -1180,6 +1250,69 @@ document.addEventListener('keydown', (e) => {
 // Start
 window.addEventListener('load', init);
 window.addEventListener('resize', resizeCanvas);
+
+// === CUSTOM SELECT (red highlight) ===
+function initCustomSelect() {
+    const containers = document.querySelectorAll(".custom-select-container");
+    
+    containers.forEach(container => {
+        const selElmnt = container.querySelector("select");
+        if (!selElmnt || container.querySelector(".select-selected")) return;
+
+        const selectedDiv = document.createElement("DIV");
+        selectedDiv.className = "select-selected";
+        selectedDiv.innerHTML = selElmnt.options[selElmnt.selectedIndex].innerHTML;
+        container.appendChild(selectedDiv);
+
+        const itemsDiv = document.createElement("DIV");
+        itemsDiv.className = "select-items select-hide";
+
+        Array.from(selElmnt.options).forEach((opt, idx) => {
+            const item = document.createElement("DIV");
+            item.innerHTML = opt.innerHTML;
+            if (idx === selElmnt.selectedIndex) {
+                item.classList.add("same-as-selected");
+            }
+
+            item.addEventListener("click", function(e) {
+                selElmnt.selectedIndex = idx;
+                selectedDiv.innerHTML = this.innerHTML;
+                
+                const sameSelected = itemsDiv.querySelectorAll(".same-as-selected");
+                sameSelected.forEach(el => el.classList.remove("same-as-selected"));
+                this.classList.add("same-as-selected");
+
+                selElmnt.dispatchEvent(new Event("change"));
+                selectedDiv.click();
+            });
+
+            itemsDiv.appendChild(item);
+        });
+
+        container.appendChild(itemsDiv);
+
+        selectedDiv.addEventListener("click", function(e) {
+            e.stopPropagation();
+            closeAllSelect(this);
+            this.nextElementSibling.classList.toggle("select-hide");
+            this.classList.toggle("select-arrow-active");
+        });
+    });
+}
+
+function closeAllSelect(elmnt) {
+    const items = document.querySelectorAll(".select-items");
+    const selects = document.querySelectorAll(".select-selected");
+    
+    selects.forEach((sel, i) => {
+        if (elmnt !== sel) {
+            sel.classList.remove("select-arrow-active");
+            if (items[i]) items[i].classList.add("select-hide");
+        }
+    });
+}
+
+document.addEventListener("click", closeAllSelect);
 </script>
 </body>
 </html>
