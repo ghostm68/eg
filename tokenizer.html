@@ -349,6 +349,26 @@
         }
 
         .hidden { display: none !important; }
+
+        #exit-focus {
+            display: none;
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 9999;
+            background: var(--pda-dark);
+            color: var(--pda-bg);
+            border: 2px solid #fff;
+            padding: 6px 10px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        body.in-focus #exit-focus {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -492,6 +512,8 @@
         </div>
     </div>
 </div>
+
+<button id="exit-focus" onclick="toggleFocus()">✕ Exit Focus</button>
 
 <script>
 // === STATE ===
@@ -838,7 +860,12 @@ function moveDraw(e) {
 }
 
 function stopDraw() {
-    if (drawing && currentStroke && currentStroke.points.length > 1) {
+    if (drawing && currentStroke && currentStroke.points.length >= 1) {
+        // Ensure single taps become visible dots
+        if (currentStroke.points.length === 1) {
+            const p = currentStroke.points[0];
+            currentStroke.points.push({ x: p.x + 0.1, y: p.y + 0.1 });
+        }
         strokes.push(currentStroke);
         const name = currentMemoId;
         if (memos.notes[name]) {
@@ -849,6 +876,7 @@ function stopDraw() {
     drawing = false;
     currentStroke = null;
     ctx.beginPath();
+    redrawStrokes();
 }
 
 function redrawStrokes() {
@@ -863,11 +891,19 @@ function redrawStrokes() {
         ctx.globalCompositeOperation = stroke.eraser ? 'destination-out' : 'source-over';
         ctx.strokeStyle = stroke.color;
         ctx.lineWidth = stroke.width * (stroke.eraser ? 4 : 1);
-        ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
-        for (let i = 1; i < stroke.points.length; i++) {
-            ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+        if (stroke.points.length === 1) {
+            // Draw a dot for single taps
+            const p = stroke.points[0];
+            ctx.arc(p.x, p.y, Math.max(1, stroke.width / 2), 0, Math.PI * 2);
+            ctx.fillStyle = stroke.eraser ? '#c4ccbf' : stroke.color;
+            ctx.fill();
+        } else {
+            ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+            for (let i = 1; i < stroke.points.length; i++) {
+                ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+            }
+            ctx.stroke();
         }
-        ctx.stroke();
     });
     ctx.globalCompositeOperation = 'source-over';
 }
@@ -942,7 +978,12 @@ function initKnob() {
 
 // === DOWNLOAD & EXPORT (WITH SAFE HTML ESCAPING) ===
 function escapeHtml(str) {
-    return str.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>').replace(/"/g, '"');
+    return str
+        .replace(/&/g, '&')
+        .replace(/</g, '<')
+        .replace(/>/g, '>')
+        .replace(/"/g, '"')
+        .replace(/'/g, '&#39;');
 }
 
 function handleDownload() {
@@ -1007,10 +1048,14 @@ function exportChunks(text, name) {
         return;
     }
 
-    let chunkSize = parseInt(prompt('Chunk size in tokens (approx):', '500'), 10);
+    const sizeInput = prompt('Chunk size in tokens (approx):', '500');
+    if (sizeInput === null) return; // user cancelled
+    let chunkSize = parseInt(sizeInput, 10);
     if (isNaN(chunkSize) || chunkSize < 50) chunkSize = 500;
 
-    let overlap = parseInt(prompt('Overlap in tokens:', '50'), 10);
+    const overlapInput = prompt('Overlap in tokens:', '50');
+    if (overlapInput === null) return; // user cancelled
+    let overlap = parseInt(overlapInput, 10);
     if (isNaN(overlap) || overlap < 0) overlap = 50;
     if (overlap >= chunkSize) overlap = Math.floor(chunkSize / 5);
 
