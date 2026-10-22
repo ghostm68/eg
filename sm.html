@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WORDSTAR NEXUS // AR SITEMAP</title>
+
+  <!-- GSAP CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --hud-white: rgba(255, 255, 255, 0.92);
+      --hud-dim: rgba(255, 255, 255, 0.48);
+      --hud-faint: rgba(255, 255, 255, 0.16);
+      --hud-border: rgba(255, 255, 255, 0.28);
+      --hud-accent: rgba(180, 220, 255, 0.9);
+      --hud-zec: #f4b728;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background: #000;
+      color: var(--hud-white);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* 1. HERO BACKGROUND VIDEO */
+    .video-viewport {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .bg-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: grayscale(88%) contrast(120%) brightness(0.82);
+    }
+
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background: linear-gradient(
+        to bottom,
+        transparent 50%,
+        rgba(0, 0, 0, 0.35) 51%
+      );
+      background-size: 100% 3px;
+      opacity: 0.4;
+    }
+
+    .vignette {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      background: radial-gradient(
+        ellipse at center,
+        transparent 45%,
+        rgba(0, 0, 0, 0.6) 100%
+      );
+    }
+
+    /* 2. HUD INTERFACE */
+    .hud-canvas {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 240px 1fr 260px;
+      grid-template-rows: auto 1fr auto;
+      pointer-events: none;
+    }
+
+    /* Corner Framing */
+    .corner-tl, .corner-tr, .corner-bl, .corner-br {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-color: #fff;
+      border-style: solid;
+      border-width: 0;
+    }
+    .corner-tl { top: 8px; left: 8px; border-top-width: 1px; border-left-width: 1px; }
+    .corner-tr { top: 8px; right: 8px; border-top-width: 1px; border-right-width: 1px; }
+    .corner-bl { bottom: 8px; left: 8px; border-bottom-width: 1px; border-left-width: 1px; }
+    .corner-br { bottom: 8px; right: 8px; border-bottom-width: 1px; border-right-width: 1px; }
+
+    /* Top Telemetry Bar with Live MET Clock */
+    .hud-topbar {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--hud-border);
+      padding-bottom: 6px;
+      font-size: 10px;
+      color: var(--hud-dim);
+      letter-spacing: 0.05em;
+    }
+    .hud-topbar span { color: #fff; }
+
+    .topbar-left, .topbar-center, .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 6px #fff;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.25; }
+    }
+
+    /* Zcash Trigger Button */
+    .zec-trigger {
+      pointer-events: auto;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid var(--hud-border);
+      padding: 2px 7px;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.4);
+      transition: all 0.2s ease;
+      font-size: 9px;
+    }
+    .zec-trigger:hover {
+      border-color: #fff;
+      background: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+    }
+    .zec-trigger .icon {
+      color: var(--hud-zec);
+      font-weight: bold;
+    }
+
+    /* Left Telemetry */
+    .hud-gutter-left {
+      grid-column: 1;
+      grid-row: 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 10px;
+      font-size: 9px;
+      pointer-events: none;
+    }
+
+    .telemetry-block {
+      border-left: 1px solid #fff;
+      padding-left: 8px;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+    }
+    .telemetry-block .label {
+      color: var(--hud-dim);
+      font-size: 8px;
+      letter-spacing: 0.06em;
+      margin-bottom: 1px;
+    }
+    .telemetry-block .value {
+      color: #fff;
+      font-size: 11px;
+    }
+    .telemetry-block .sub {
+      color: var(--hud-dim);
+      font-size: 8px;
+      margin-top: 1px;
+    }
+
+    /* Right Telemetry */
+    .hud-gutter-right {
+      grid-column: 3;
+      grid-row: 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-end;
+      text-align: right;
+      gap: 9px;
+      font-size: 9px;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+    }
+
+    .event-line {
+      color: var(--hud-dim);
+      transition: color 0.25s ease;
+      max-width: 230px;
+    }
+    .event-line.flash { color: #fff; }
+
+    .subject-box {
+      border: 1px solid var(--hud-border);
+      padding: 7px 9px;
+      margin-top: 4px;
+      background: rgba(0,0,0,0.4);
+      text-align: left;
+      width: 100%;
+      max-width: 220px;
+    }
+    .subject-box .id {
+      font-size: 10px;
+      color: #fff;
+      letter-spacing: 0.05em;
+    }
+    .subject-box .meta {
+      font-size: 8px;
+      color: var(--hud-dim);
+      margin-top: 2px;
+    }
+    .confidence {
+      display: flex;
+      gap: 4px;
+      margin-top: 5px;
+      font-size: 8px;
+    }
+    .confidence span {
+      border: 1px solid var(--hud-faint);
+      padding: 1px 4px;
+      color: var(--hud-dim);
+    }
+    .confidence span.active {
+      border-color: #fff;
+      color: #fff;
+    }
+
+    /* 3. SITEMAP TRAY & 50 MICRO-THUMBNAILS */
+    .sitemap-tray {
+      grid-column: 1 / -1;
+      grid-row: 3;
+      pointer-events: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      max-width: 760px;
+    }
+
+    .tray-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 9px;
+      color: var(--hud-dim);
+      border-bottom: 1px solid var(--hud-border);
+      padding-bottom: 3px;
+      letter-spacing: 0.05em;
+    }
+
+    /* Sector Filter Tags */
+    .cat-filters {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 2px;
+    }
+    .cat-filter-btn {
+      background: transparent;
+      border: 1px solid var(--hud-faint);
+      color: var(--hud-dim);
+      font-family: inherit;
+      font-size: 8px;
+      padding: 1px 5px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .cat-filter-btn:hover, .cat-filter-btn.active {
+      border-color: #fff;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .micro-grid {
+      display: grid;
+      grid-template-columns: repeat(25, 1fr);
+      gap: 2px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 4px;
+      border: 1px solid var(--hud-faint);
+    }
+
+    .micro-thumb {
+      aspect-ratio: 4/3;
+      background: #0a0a0a;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .micro-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: grayscale(100%) brightness(0.55);
+      transition: filter 0.15s, transform 0.15s;
+    }
+
+    .micro-thumb:hover,
+    .micro-thumb.active {
+      border-color: #fff;
+      box-shadow: 0 0 0 1px #fff;
+      z-index: 5;
+    }
+
+    .micro-thumb:hover img,
+    .micro-thumb.active img {
+      filter: grayscale(0%) brightness(1.15);
+      transform: scale(1.18);
+    }
+
+    .micro-thumb.dimmed {
+      opacity: 0.18;
+      pointer-events: none;
+    }
+
+    /* Hover Callout */
+    .callout {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.92);
+      border: 1px solid #fff;
+      padding: 5px 8px;
+      font-size: 8px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 20;
+      text-align: left;
+      min-width: 110px;
+    }
+    .callout::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: #fff;
+    }
+    .micro-thumb:hover .callout { opacity: 1; }
+    .callout .cat {
+      color: var(--hud-dim);
+      font-size: 7px;
+      letter-spacing: 0.06em;
+    }
+    .callout .name {
+      color: #fff;
+      font-size: 9px;
+      margin-top: 1px;
+    }
+    .callout .uri {
+      color: var(--hud-accent);
+      font-size: 7px;
+      margin-top: 2px;
+    }
+
+    /* 4. MODALS (AR Popup & Zcash Deposit) */
+    .hud-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.92);
+      width: 640px;
+      max-width: 94vw;
+      height: 440px;
+      max-height: 78vh;
+      background: rgba(4, 4, 7, 0.93);
+      backdrop-filter: blur(14px);
+      border: 1px solid #fff;
+      z-index: 100;
+      display: none;
+      opacity: 0;
+      flex-direction: column;
+      pointer-events: auto;
+      box-shadow: 0 0 40px rgba(0,0,0,0.85);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--hud-border);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .modal-title {
+      font-size: 11px;
+      font-weight: bold;
+      color: #fff;
+      letter-spacing: 0.08em;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: 1px solid var(--hud-border);
+      color: #fff;
+      font-family: inherit;
+      font-size: 10px;
+      padding: 3px 8px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .modal-close:hover {
+      background: #fff;
+      color: #000;
+    }
+
+    .modal-body {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #000;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 12px;
+      border-top: 1px solid var(--hud-border);
+      font-size: 9px;
+      color: var(--hud-dim);
+    }
+
+    .modal-btn {
+      color: #fff;
+      text-decoration: none;
+      border: 1px solid var(--hud-border);
+      padding: 3px 10px;
+      font-size: 9px;
+      transition: background 0.15s, color 0.15s;
+      cursor: pointer;
+      background: transparent;
+      font-family: inherit;
+    }
+    .modal-btn:hover {
+      background: #fff;
+      color: #000;
+    }
+
+    /* 5. ZCASH SPECIFIC MODAL */
+    .zec-modal-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 12px;
+    }
+
+    .zec-qr-frame {
+      border: 1px solid #fff;
+      padding: 8px;
+      background: #000;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.2s;
+    }
+    .zec-qr-frame:hover {
+      transform: scale(1.03);
+    }
+    .zec-qr-img {
+      width: 140px;
+      height: 140px;
+      display: block;
+      image-rendering: pixelated;
+    }
+    .zec-expand-cue {
+      font-size: 7px;
+      color: var(--hud-dim);
+      margin-top: 4px;
+      letter-spacing: 0.05em;
+    }
+
+    .zec-instructions {
+      font-size: 9px;
+      line-height: 1.4;
+      color: var(--hud-dim);
+      max-width: 380px;
+    }
+    .zec-instructions strong {
+      color: #fff;
+    }
+
+    .zec-address-box {
+      font-family: monospace;
+      font-size: 10px;
+      color: #fff;
+      border: 1px solid var(--hud-border);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 7px 12px;
+      word-break: break-all;
+      max-width: 440px;
+      letter-spacing: 0.06em;
+    }
+
+    /* Lightbox for Expanded QR */
+    .qr-lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 120;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+      cursor: pointer;
+    }
+    .qr-lightbox img {
+      width: 280px;
+      height: 280px;
+      border: 2px solid #fff;
+      image-rendering: pixelated;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .hud-canvas {
+        padding: 10px;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr auto;
+      }
+      .hud-gutter-left,
+      .hud-gutter-right {
+        display: none;
+      }
+      .sitemap-tray {
+        max-width: 100%;
+      }
+      .cat-filters {
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+      .micro-grid {
+        grid-template-columns: repeat(25, 30px);
+        overflow-x: auto;
+        padding-bottom: 8px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .micro-thumb {
+        width: 30px;
+        height: 23px;
+      }
+      .hud-modal {
+        width: 96vw;
+        height: 72vh;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Fullscreen Looping Background Video from wordstar.nexus -->
+  <div class="video-viewport">
+    <video class="bg-video" autoplay muted loop playsinline>
+      <source src="https://github.com/ghostm68/pantheon/raw/main/wordstar_001924914.mp4" type="video/mp4" />
+      <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4" type="video/mp4" />
+    </video>
+  </div>
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+
+  <!-- HUD Interface Layer -->
+  <div class="hud-canvas">
+    <div class="corner-tl"></div>
+    <div class="corner-tr"></div>
+    <div class="corner-bl"></div>
+    <div class="corner-br"></div>
+
+    <!-- Top Telemetry with Live MET Clock & Zcash Button -->
+    <div class="hud-topbar">
+      <div class="topbar-left">
+        <div><span class="status-dot"></span> STREAM ONLINE</div>
+        <div>WORDSTAR // <span>NEXUS</span></div>
+      </div>
+      
+      <div class="topbar-center">
+        <div>NODES: <span>50</span></div>
+        <div>FREQ: <span>60 Hz</span></div>
+        <div id="liveMetClock">MET: <span>1103:00:00:00:00</span></div>
+      </div>
+
+      <div class="topbar-right">
+        <!-- Exact Zcash Trigger -->
+        <div class="zec-trigger" id="zecTrigger">
+          <span class="icon">ⓩ</span>
+          <span>ZCASH DEPOSIT</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Left Gutter Telemetry -->
+    <div class="hud-gutter-left">
+      <div class="telemetry-block">
+        <div class="label">// SIGNAL LIVE</div>
+        <div class="value">50 INDEXED</div>
+      </div>
+      <div class="telemetry-block">
+        <div class="label">LINK QUALITY</div>
+        <div class="value" id="linkVal">98%</div>
+      </div>
+      <div class="telemetry-block">
+        <div class="label">SYNC DEPTH</div>
+        <div class="value" id="syncVal">0.86</div>
+      </div>
+      <div class="telemetry-block">
+        <div class="label">BUFFER</div>
+        <div class="value">65</div>
+      </div>
+      <div class="telemetry-block">
+        <div class="label">QUAKES 24H</div>
+        <div class="value" id="quakeVal">—</div>
+        <div class="sub" id="quakeSub">USGS // LOADING</div>
+      </div>
+      <div class="telemetry-block">
+        <div class="label">K-INDEX</div>
+        <div class="value" id="kIndexVal">—</div>
+        <div class="sub" id="kIndexSub">NOAA // LOADING</div>
+      </div>
+    </div>
+
+    <!-- Right Gutter Telemetry -->
+    <div class="hud-gutter-right">
+      <div class="event-line flash" id="eventLine1">SIGNAL LOCK // 60Hz</div>
+      <div class="event-line" id="eventLine2">INDEX: 50 NODES</div>
+      <div class="event-line" id="eventLine3">CIPHER READY</div>
+      <div class="event-line" id="eventLine4">ARCHIVE ONLINE</div>
+
+      <div class="subject-box">
+        <div class="id">INKREALM // INKY</div>
+        <div class="meta">WRITER / MUSICIAN / ARTIST</div>
+        <div class="meta" style="color:var(--hud-accent);">ORIGIN: INKREALM.INFO</div>
+        <div class="confidence">
+          <span class="active">LIVE MAP</span>
+          <span>AR OVERLAY</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Sitemap Tray -->
+    <div class="sitemap-tray">
+      <div class="cat-filters">
+        <button class="cat-filter-btn active" data-cat="all">ALL (50)</button>
+        <button class="cat-filter-btn" data-cat="Word Play">[I] WORD PLAY (6)</button>
+        <button class="cat-filter-btn" data-cat="Word Processors">[II] WORD PROCESSORS (27)</button>
+        <button class="cat-filter-btn" data-cat="Stories">[III] STORIES (12)</button>
+        <button class="cat-filter-btn" data-cat="Places">[IV] PLACES (3)</button>
+        <button class="cat-filter-btn" data-cat="Restricted">[V] RESTRICTED (2)</button>
+      </div>
+
+      <div class="tray-header">
+        <span>ARCHIVE_INDEX // SITEMAP</span>
+        <span id="inspectReadout">TAP / HOVER NODE TO PREVIEW</span>
+      </div>
+      <div class="micro-grid" id="microGrid"></div>
+    </div>
+  </div>
+
+  <!-- In-Page AR Site Preview Modal -->
+  <div class="hud-modal" id="hudModal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">SECTOR // NODE</div>
+      <button type="button" class="modal-close" id="modalClose">✕ CLOSE</button>
+    </div>
+    <div class="modal-body">
+      <iframe class="modal-iframe" id="modalFrame" src="about:blank" title="Node preview"></iframe>
+    </div>
+    <div class="modal-footer">
+      <span id="modalMeta">CAT: WORD PLAY | URI: /cipher</span>
+      <a href="#" target="_blank" rel="noopener" class="modal-btn" id="modalExtLink">OPEN FULL ↗</a>
+    </div>
+  </div>
+
+  <!-- Zcash Deposit Protocol Modal -->
+  <div class="hud-modal" id="zecModal" style="height: auto; max-width: 520px;">
+    <div class="modal-header">
+      <div class="modal-title">// ZCASH DEPOSIT PROTOCOL</div>
+      <button type="button" class="modal-close" id="zecModalClose">✕ CLOSE</button>
+    </div>
+    <div class="modal-body zec-modal-body">
+      <div class="zec-qr-frame" id="zecQrFrame" title="Click to enlarge">
+        <img class="zec-qr-img" id="zecQrImg" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=tex1lvyaszdx43vafekmqr8f2xqmn9qzllu8w99mm9&color=ffffff&bgcolor=000000" alt="Zcash QR" />
+        <div class="zec-expand-cue">[CLICK TO EXPAND]</div>
+      </div>
+
+      <div class="zec-instructions">
+        <strong>Support wordstar.nexus via Zcash</strong><br>
+        Minimum deposit: 0.00004 ZEC<br>
+        Transparent address — shielded deposits not accepted.
+      </div>
+
+      <div class="zec-address-box" id="zecAddr">tex1lvyaszdx43vafekmqr8f2xqmn9qzllu8w99mm9</div>
+
+      <button type="button" class="modal-btn" id="copyZecBtn">SAVE ADDRESS</button>
+    </div>
+    <div class="modal-footer">
+      <span>NETWORK // ZCASH MAINNET</span>
+      <span>TRANSPARENT T-ADDR</span>
+    </div>
+  </div>
+
+  <!-- Expanded Lightbox for Zcash QR -->
+  <div class="qr-lightbox" id="qrLightbox">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=tex1lvyaszdx43vafekmqr8f2xqmn9qzllu8w99mm9&color=ffffff&bgcolor=000000" alt="Enlarged Zcash QR" />
+    <div style="font-size: 10px; color: #fff;">ENLARGED ZCASH QR ✕ (CLICK TO CLOSE)</div>
+  </div>
+
+  <script>
+    // 50 EXACT NODES FROM WORDSTAR.NEXUS
+    const nodes = [
+      { id: "01", name: "Cipher", cat: "Word Play", url: "/cipher" },
+      { id: "02", name: "Cut & Rune", cat: "Word Play", url: "/cut-and-rune" },
+      { id: "03", name: "Gram", cat: "Word Play", url: "/gram" },
+      { id: "04", name: "Leviticus", cat: "Word Play", url: "/leviticus" },
+      { id: "05", name: "Lex", cat: "Word Play", url: "/lex" },
+      { id: "06", name: "Tmura", cat: "Word Play", url: "/tmura" },
+      { id: "07", name: "0ctopus", cat: "Word Processors", url: "/0ctopus" },
+      { id: "08", name: "14", cat: "Word Processors", url: "/14" },
+      { id: "09", name: "16", cat: "Word Processors", url: "/16" },
+      { id: "10", name: "acrohat", cat: "Word Processors", url: "/acrohat" },
+      { id: "11", name: "AI", cat: "Word Processors", url: "/ai" },
+      { id: "12", name: "Ataraxia", cat: "Word Processors", url: "/ataraxia" },
+      { id: "13", name: "Birch", cat: "Word Processors", url: "/birch" },
+      { id: "14", name: "Citadelle", cat: "Word Processors", url: "/citadelle" },
+      { id: "15", name: "Conceptweave", cat: "Word Processors", url: "/conceptweave" },
+      { id: "16", name: "CustomPad", cat: "Word Processors", url: "/custompad" },
+      { id: "17", name: "Displaywriter 2", cat: "Word Processors", url: "/displaywriter-2" },
+      { id: "18", name: "EBCDIC", cat: "Word Processors", url: "/ebcdic" },
+      { id: "19", name: "Everex", cat: "Word Processors", url: "/everex" },
+      { id: "20", name: "MacWritePro", cat: "Word Processors", url: "/macwritepro" },
+      { id: "21", name: "Q", cat: "Word Processors", url: "/q" },
+      { id: "22", name: "Quantum Muse", cat: "Word Processors", url: "/quantum-muse" },
+      { id: "23", name: "Queer", cat: "Word Processors", url: "/queer" },
+      { id: "24", name: "Seven", cat: "Word Processors", url: "/seven" },
+      { id: "25", name: "Six", cat: "Word Processors", url: "/six" },
+      { id: "26", name: "Tokenizer", cat: "Word Processors", url: "/tokenizer" },
+      { id: "27", name: "Triad", cat: "Word Processors", url: "/triad" },
+      { id: "28", name: "TRS-80", cat: "Word Processors", url: "/trs-80" },
+      { id: "29", name: "Typecast", cat: "Word Processors", url: "/typecast" },
+      { id: "30", name: "Typespace", cat: "Word Processors", url: "/typespace" },
+      { id: "31", name: "Typewriter", cat: "Word Processors", url: "/typewriter" },
+      { id: "32", name: "wedding", cat: "Word Processors", url: "/wedding" },
+      { id: "33", name: "Z-Spin", cat: "Word Processors", url: "/z-spin" },
+      { id: "34", name: "15", cat: "Stories", url: "/15" },
+      { id: "35", name: "Baked Alaska", cat: "Stories", url: "/baked-alaska" },
+      { id: "36", name: "City", cat: "Stories", url: "/city" },
+      { id: "37", name: "Debrief", cat: "Stories", url: "/debrief" },
+      { id: "38", name: "Deja Vu Glitches", cat: "Stories", url: "/deja-vu-glitches" },
+      { id: "39", name: "Directory", cat: "Stories", url: "/directory" },
+      { id: "40", name: "Dreamweaver", cat: "Stories", url: "/dreamweaver" },
+      { id: "41", name: "Notes 27", cat: "Stories", url: "/notes-27" },
+      { id: "42", name: "Notes 38", cat: "Stories", url: "/notes-38" },
+      { id: "43", name: "Slutpuppy", cat: "Stories", url: "/slutpuppy" },
+      { id: "44", name: "Town", cat: "Stories", url: "/town" },
+      { id: "45", name: "Work in Progress", cat: "Stories", url: "/work-in-progress" },
+      { id: "46", name: "90263", cat: "Places", url: "/90263" },
+      { id: "47", name: "Home", cat: "Places", url: "/home" },
+      { id: "48", name: "Netherlands", cat: "Places", url: "/netherlands" },
+      { id: "49", name: "404", cat: "Restricted", url: "/404" },
+      { id: "50", name: "NC-17", cat: "Restricted", url: "/nc-17" }
+    ];
+
+    const microGrid = document.getElementById("microGrid");
+    const inspectReadout = document.getElementById("inspectReadout");
+    const modal = document.getElementById("hudModal");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalFrame = document.getElementById("modalFrame");
+    const modalMeta = document.getElementById("modalMeta");
+    const modalExtLink = document.getElementById("modalExtLink");
+    const modalClose = document.getElementById("modalClose");
+
+    // Zcash Modals & Triggers
+    const zecTrigger = document.getElementById("zecTrigger");
+    const zecModal = document.getElementById("zecModal");
+    const zecModalClose = document.getElementById("zecModalClose");
+    const zecQrFrame = document.getElementById("zecQrFrame");
+    const qrLightbox = document.getElementById("qrLightbox");
+    const copyZecBtn = document.getElementById("copyZecBtn");
+    const zecAddr = document.getElementById("zecAddr").textContent.trim();
+
+    // RENDER 50 MICRO-THUMBNAILS
+    nodes.forEach((n) => {
+      const thumb = document.createElement("div");
+      thumb.className = "micro-thumb";
+      thumb.title = n.name;
+      thumb.dataset.id = n.id;
+      thumb.dataset.cat = n.cat;
+
+      const seed = n.name.replace(/\s+/g, '');
+      thumb.innerHTML = `
+        <img src="https://picsum.photos/seed/${seed}/64/48" alt="${n.name}" loading="lazy" />
+        <div class="callout">
+          <div class="cat">${n.cat.toUpperCase()}</div>
+          <div class="name">${n.name.toUpperCase()}</div>
+          <div class="uri">${n.url}</div>
+        </div>
+      `;
+
+      thumb.addEventListener("mouseenter", () => {
+        inspectReadout.textContent = `[${n.cat.toUpperCase()}] // ${n.name.toUpperCase()} // ${n.url}`;
+      });
+
+      thumb.addEventListener("mouseleave", () => {
+        inspectReadout.textContent = "TAP / HOVER NODE TO PREVIEW";
+      });
+
+      thumb.addEventListener("click", () => openModal(n));
+
+      microGrid.appendChild(thumb);
+    });
+
+    // CATEGORY FILTERS
+    document.querySelectorAll(".cat-filter-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".cat-filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        const selectedCat = btn.dataset.cat;
+        const allThumbs = document.querySelectorAll(".micro-thumb");
+
+        allThumbs.forEach((thumb) => {
+          if (selectedCat === "all" || thumb.dataset.cat === selectedCat) {
+            thumb.classList.remove("dimmed");
+          } else {
+            thumb.classList.add("dimmed");
+          }
+        });
+
+        gsap.fromTo(".micro-thumb:not(.dimmed)", 
+          { scale: 0.8 }, 
+          { scale: 1, duration: 0.25, stagger: 0.015, ease: "power1.out" }
+        );
+      });
+    });
+
+    // GSAP AR SITE MODAL
+    function openModal(node) {
+      const fullUrl = `https://wordstar.nexus${node.url}`;
+      modalTitle.textContent = `NODE // ${node.name.toUpperCase()}`;
+      modalMeta.textContent = `CAT: [${node.cat.toUpperCase()}] | URI: ${node.url}`;
+      modalExtLink.href = fullUrl;
+      modalFrame.src = fullUrl;
+
+      document.querySelectorAll('.micro-thumb.active').forEach(el => el.classList.remove('active'));
+      const activeThumb = document.querySelector(`.micro-thumb[data-id="${node.id}"]`);
+      if (activeThumb) activeThumb.classList.add('active');
+
+      modal.style.display = "flex";
+      gsap.fromTo(modal,
+        { opacity: 0, scale: 0.88, y: "-46%" },
+        { opacity: 1, scale: 1, y: "-50%", duration: 0.32, ease: "power2.out" }
+      );
+    }
+
+    function closeModal() {
+      gsap.to(modal, {
+        opacity: 0,
+        scale: 0.88,
+        duration: 0.22,
+        ease: "power2.in",
+        onComplete: () => {
+          modal.style.display = "none";
+          modalFrame.src = "about:blank";
+          document.querySelectorAll('.micro-thumb.active').forEach(el => el.classList.remove('active'));
+        }
+      });
+    }
+
+    modalClose.addEventListener("click", closeModal);
+    modalExtLink.addEventListener("click", (e) => e.stopPropagation());
+
+    // GSAP ZCASH MODAL
+    function openZecModal() {
+      zecModal.style.display = "flex";
+      gsap.fromTo(zecModal,
+        { opacity: 0, scale: 0.9, y: "-46%" },
+        { opacity: 1, scale: 1, y: "-50%", duration: 0.3, ease: "power2.out" }
+      );
+    }
+
+    function closeZecModal() {
+      gsap.to(zecModal, {
+        opacity: 0,
+        scale: 0.9,
+        duration: 0.2,
+        ease: "power2.in",
+        onComplete: () => { zecModal.style.display = "none"; }
+      });
+    }
+
+    zecTrigger.addEventListener("click", openZecModal);
+    zecModalClose.addEventListener("click", closeZecModal);
+
+    // Copy Address Button
+    copyZecBtn.addEventListener("click", () => {
+      navigator.clipboard.writeText(zecAddr).then(() => {
+        const orig = copyZecBtn.textContent;
+        copyZecBtn.textContent = "✓ COPIED TO CLIPBOARD";
+        copyZecBtn.style.background = "#fff";
+        copyZecBtn.style.color = "#000";
+        setTimeout(() => {
+          copyZecBtn.textContent = orig;
+          copyZecBtn.style.background = "transparent";
+          copyZecBtn.style.color = "#fff";
+        }, 2200);
+      });
+    });
+
+    // Expand QR Lightbox
+    zecQrFrame.addEventListener("click", () => {
+      qrLightbox.style.display = "flex";
+      gsap.fromTo(qrLightbox, { opacity: 0 }, { opacity: 1, duration: 0.2 });
+    });
+    qrLightbox.addEventListener("click", () => {
+      gsap.to(qrLightbox, {
+        opacity: 0,
+        duration: 0.15,
+        onComplete: () => { qrLightbox.style.display = "none"; }
+      });
+    });
+
+    // ESC Key Closes Any Active Modal
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        if (qrLightbox.style.display === "flex") {
+          qrLightbox.click();
+        } else if (zecModal.style.display === "flex") {
+          closeZecModal();
+        } else if (modal.style.display === "flex") {
+          closeModal();
+        }
+      }
+    });
+
+    // BOOTUP TIMELINE
+    window.addEventListener("DOMContentLoaded", () => {
+      gsap.from(".micro-thumb", {
+        scale: 0,
+        opacity: 0,
+        duration: 0.28,
+        stagger: { grid: [2, 25], from: "random", amount: 0.45 },
+        ease: "power1.out"
+      });
+      fetchLiveData();
+    });
+
+    // LIVE MET CLOCK (Format: 1103:HH:MM:SS:MS)
+    function updateMetClock() {
+      const now = new Date();
+      const hrs = String(now.getUTCHours()).padStart(2, '0');
+      const min = String(now.getUTCMinutes()).padStart(2, '0');
+      const sec = String(now.getUTCSeconds()).padStart(2, '0');
+      const ms = String(Math.floor(now.getUTCMilliseconds() / 10)).padStart(2, '0');
+      document.getElementById("liveMetClock").innerHTML = `MET: <span>1103:${hrs}:${min}:${sec}:${ms}</span>`;
+    }
+    setInterval(updateMetClock, 30);
+    updateMetClock();
+
+    // LIVE SATELLITE & GEOPHYSICAL TELEMETRY
+    async function fetchLiveData() {
+      // 1. USGS Earthquakes
+      try {
+        const quakeRes = await fetch("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson");
+        const quakeData = await quakeRes.json();
+        const count = quakeData.features ? quakeData.features.length : 0;
+        document.getElementById("quakeVal").textContent = count;
+        document.getElementById("quakeSub").textContent = "USGS // 2.5+ 24H";
+      } catch (err) {
+        document.getElementById("quakeVal").textContent = "—";
+        document.getElementById("quakeSub").textContent = "USGS // OFFLINE";
+      }
+
+      // 2. NOAA K-Index
+      try {
+        const kRes = await fetch("https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json");
+        const kData = await kRes.json();
+        if (Array.isArray(kData) && kData.length > 1) {
+          const last = kData[kData.length - 1];
+          const kp = last[last.length - 1];
+          document.getElementById("kIndexVal").textContent = kp;
+          document.getElementById("kIndexSub").textContent = "NOAA // PLANETARY";
+        }
+      } catch (err) {
+        document.getElementById("kIndexVal").textContent = "—";
+        document.getElementById("kIndexSub").textContent = "NOAA // OFFLINE";
+      }
+    }
+    setInterval(fetchLiveData, 90000);
+  </script>
+</body>
+</html>
