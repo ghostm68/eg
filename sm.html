@@ -2,25 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WORDSTAR NEXUS // AR HUD SITEMAP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>WORDSTAR NEXUS // LIVE MAP</title>
 
   <!-- GSAP CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 
-  <!-- Fonts -->
+  <!-- Monospace Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --hud-white: rgba(255, 255, 255, 0.94);
-      --hud-dim: rgba(255, 255, 255, 0.46);
+      --hud-white: #ffffff;
+      --hud-dim: rgba(255, 255, 255, 0.5);
       --hud-faint: rgba(255, 255, 255, 0.16);
-      --hud-border: rgba(255, 255, 255, 0.26);
-      --hud-accent: rgba(180, 220, 255, 0.9);
-      --hud-zec: #f4b728;
+      --hud-border: rgba(255, 255, 255, 0.28);
+      --hud-accent: #b4dcff;
+      --hud-bg: rgba(6, 6, 9, 0.94);
     }
 
     * {
@@ -31,17 +31,17 @@
       user-select: none;
     }
 
-    body {
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
       background: #000;
       color: var(--hud-white);
       font-family: 'Share Tech Mono', monospace;
       font-size: 11px;
-      overflow: hidden;
-      height: 100vh;
-      width: 100vw;
     }
 
-    /* 1. BACKGROUND VIDEO (WORDSTAR REPOSITORY LOOP) */
+    /* 1. HERO BACKGROUND VIDEO */
     .video-viewport {
       position: absolute;
       inset: 0;
@@ -53,7 +53,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      filter: grayscale(88%) contrast(125%) brightness(0.85);
+      filter: grayscale(88%) contrast(120%) brightness(0.85);
     }
 
     .scanlines {
@@ -61,289 +61,171 @@
       inset: 0;
       z-index: 2;
       pointer-events: none;
-      background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.38) 51%);
+      background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.4) 51%);
       background-size: 100% 3px;
-      opacity: 0.38;
+      opacity: 0.35;
     }
 
-    .vignette {
-      position: absolute;
-      inset: 0;
-      z-index: 3;
-      pointer-events: none;
-      background: radial-gradient(ellipse at center, transparent 48%, rgba(0, 0, 0, 0.65) 100%);
-    }
-
-    /* 2. HUD INTERFACE GRID */
-    .hud-canvas {
+    /* 2. HUD MAIN WRAPPER */
+    .hud-wrapper {
       position: absolute;
       inset: 0;
       z-index: 10;
-      padding: 16px;
-      display: grid;
-      grid-template-columns: 240px 1fr 240px;
-      grid-template-rows: auto 1fr auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 14px;
       pointer-events: none;
     }
 
-    /* Framing Crosshairs */
-    .corner-tl { position: absolute; top: 8px; left: 8px; width: 12px; height: 12px; border-top: 1px solid #fff; border-left: 1px solid #fff; }
-    .corner-tr { position: absolute; top: 8px; right: 8px; width: 12px; height: 12px; border-top: 1px solid #fff; border-right: 1px solid #fff; }
-    .corner-bl { position: absolute; bottom: 8px; left: 8px; width: 12px; height: 12px; border-bottom: 1px solid #fff; border-left: 1px solid #fff; }
-    .corner-br { position: absolute; bottom: 8px; right: 8px; width: 12px; height: 12px; border-bottom: 1px solid #fff; border-right: 1px solid #fff; }
+    /* Crosshairs */
+    .bracket-tl { position: absolute; top: 8px; left: 8px; width: 10px; height: 10px; border-top: 1px solid #fff; border-left: 1px solid #fff; }
+    .bracket-tr { position: absolute; top: 8px; right: 8px; width: 10px; height: 10px; border-top: 1px solid #fff; border-right: 1px solid #fff; }
+    .bracket-bl { position: absolute; bottom: 8px; left: 8px; width: 10px; height: 10px; border-bottom: 1px solid #fff; border-left: 1px solid #fff; }
+    .bracket-br { position: absolute; bottom: 8px; right: 8px; width: 10px; height: 10px; border-bottom: 1px solid #fff; border-right: 1px solid #fff; }
 
     /* Top Telemetry Header */
-    .hud-topbar {
-      grid-column: 1 / -1;
+    .hud-header {
+      width: 100%;
+      border-bottom: 1px solid var(--hud-border);
+      padding-bottom: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .header-line-1 {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid var(--hud-border);
-      padding-bottom: 6px;
       font-size: 10px;
-      color: var(--hud-dim);
-      letter-spacing: 0.05em;
     }
-    .hud-topbar span { color: #fff; }
 
-    .topbar-left, .topbar-center, .topbar-right {
+    .header-line-2 {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 10px;
+      font-size: 9px;
+      color: var(--hud-dim);
+    }
+
+    .header-line-2 a, .header-line-2 span.btn {
+      color: #fff;
+      text-decoration: underline;
+      cursor: pointer;
+      pointer-events: auto;
     }
 
     .status-dot {
       display: inline-block;
-      width: 6px;
-      height: 6px;
+      width: 5px;
+      height: 5px;
       border-radius: 50%;
       background: #fff;
-      box-shadow: 0 0 6px #fff;
-      animation: pulse 1.8s infinite;
+      margin-right: 4px;
+      animation: pulse 1.6s infinite;
     }
 
     @keyframes pulse {
       0%, 100% { opacity: 1; }
-      50% { opacity: 0.25; }
+      50% { opacity: 0.3; }
     }
 
-    /* Mobile Side Drawer Toggle */
-    .mobile-hud-toggle {
-      display: none;
-      pointer-events: auto;
-      background: rgba(0, 0, 0, 0.7);
-      border: 1px solid #fff;
-      color: #fff;
-      font-family: inherit;
-      font-size: 9px;
-      padding: 3px 7px;
-      cursor: pointer;
-    }
-
-    /* --- LEFT GUTTER: CLOCK & SYSTEM TELEMETRY --- */
-    .hud-gutter-left {
-      grid-column: 1;
-      grid-row: 2;
+    /* Center Middle Flanks (Desktop Only) */
+    .hud-mid-flanks {
+      flex: 1;
       display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 12px;
-      font-size: 9px;
-      pointer-events: auto;
-    }
-
-    .telemetry-card {
-      border-left: 1px solid #fff;
-      padding-left: 8px;
-      background: rgba(0, 0, 0, 0.25);
-      backdrop-filter: blur(2px);
-      text-shadow: 0 1px 4px rgba(0,0,0,0.9);
-    }
-
-    .telemetry-card .label {
-      color: var(--hud-dim);
-      font-size: 8px;
-      letter-spacing: 0.06em;
-      margin-bottom: 2px;
-    }
-
-    .telemetry-card .clock-val {
-      font-size: 12px;
-      font-weight: bold;
-      color: #fff;
-      letter-spacing: 0.04em;
-    }
-
-    .telemetry-card .val {
-      font-size: 11px;
-      color: #fff;
-    }
-
-    /* --- RIGHT GUTTER: ZCASH GIF + QR + ADDRESS --- */
-    .hud-gutter-right {
-      grid-column: 3;
-      grid-row: 2;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: flex-end;
-      text-align: right;
-      gap: 10px;
-      font-size: 9px;
-      pointer-events: auto;
-    }
-
-    .zec-side-card {
-      border: 1px solid var(--hud-border);
-      background: rgba(4, 4, 7, 0.65);
-      backdrop-filter: blur(4px);
-      padding: 9px;
-      width: 220px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.6);
-    }
-
-    .zec-card-header {
-      font-size: 9px;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      width: 100%;
       justify-content: space-between;
-      border-bottom: 1px solid var(--hud-faint);
-      padding-bottom: 4px;
+      align-items: center;
+      pointer-events: none;
+      padding: 0 4px;
     }
 
-    .zec-visual-strip {
+    .flank-left, .flank-right {
       display: flex;
-      align-items: center;
-      justify-content: center;
+      flex-direction: column;
       gap: 8px;
-      width: 100%;
-      margin: 3px 0;
+      font-size: 9px;
     }
 
-    /* Animated GIF from Pantheon */
-    .zec-gif {
-      width: 58px;
-      height: 58px;
-      object-fit: cover;
-      border: 1px solid var(--hud-border);
-      filter: grayscale(40%) contrast(120%);
+    .flank-right {
+      text-align: right;
+      align-items: flex-end;
     }
 
-    /* Clickable QR Frame */
-    .zec-qr-thumb {
-      width: 58px;
-      height: 58px;
-      border: 1px solid #fff;
-      cursor: pointer;
-      position: relative;
-      background: #000;
+    .tele-item {
+      border-left: 1px solid #fff;
+      padding-left: 6px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
     }
-    .zec-qr-thumb img {
-      width: 100%;
-      height: 100%;
-      image-rendering: pixelated;
-    }
-    .zec-qr-thumb:hover {
-      box-shadow: 0 0 8px rgba(255,255,255,0.8);
+    .flank-right .tele-item {
+      border-left: none;
+      border-right: 1px solid #fff;
+      padding-left: 0;
+      padding-right: 6px;
     }
 
-    .zec-side-info {
-      font-size: 8px;
-      color: var(--hud-dim);
-      line-height: 1.3;
-    }
+    .tele-item .lbl { color: var(--hud-dim); font-size: 8px; }
+    .tele-item .val { color: #fff; font-size: 10px; }
 
-    .zec-addr-short {
-      font-family: monospace;
-      font-size: 8px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--hud-faint);
-      padding: 3px 6px;
-      color: #fff;
-      word-break: break-all;
-      width: 100%;
-    }
-
-    .zec-copy-btn {
-      width: 100%;
-      background: transparent;
-      border: 1px solid var(--hud-border);
-      color: #fff;
-      font-family: inherit;
-      font-size: 8px;
-      padding: 3px 0;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-    .zec-copy-btn:hover {
-      background: #fff;
-      color: #000;
-    }
-
-    /* 3. SITEMAP BOTTOM TRAY & 50 NATIVE MICRO-TERMINALS */
+    /* 3. BOTTOM SITEMAP TRAY */
     .sitemap-tray {
-      grid-column: 1 / -1;
-      grid-row: 3;
+      width: 100%;
+      max-width: 820px;
       pointer-events: auto;
       display: flex;
       flex-direction: column;
-      gap: 5px;
-      max-width: 780px;
-    }
-
-    .tray-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 9px;
-      color: var(--hud-dim);
-      border-bottom: 1px solid var(--hud-border);
-      padding-bottom: 3px;
-      letter-spacing: 0.05em;
-    }
-
-    .cat-filters {
-      display: flex;
       gap: 4px;
     }
 
-    .cat-btn {
-      background: transparent;
+    .filter-bar {
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+    .filter-bar::-webkit-scrollbar { display: none; }
+
+    .filter-btn {
+      background: rgba(0, 0, 0, 0.4);
       border: 1px solid var(--hud-faint);
       color: var(--hud-dim);
       font-family: inherit;
       font-size: 8px;
-      padding: 1px 5px;
+      padding: 2px 6px;
       cursor: pointer;
       transition: all 0.15s ease;
     }
-    .cat-btn:hover, .cat-btn.active {
+    .filter-btn:hover, .filter-btn.active {
       border-color: #fff;
       color: #fff;
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.15);
     }
 
+    .tray-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 8px;
+      color: var(--hud-dim);
+      border-bottom: 1px solid var(--hud-faint);
+      padding-bottom: 2px;
+    }
+
+    /* 50 NODE CATHODE MICRO-GRID */
     .micro-grid {
       display: grid;
       grid-template-columns: repeat(25, 1fr);
       gap: 2px;
-      background: rgba(0, 0, 0, 0.5);
-      padding: 4px;
-      border: 1px solid var(--hud-faint);
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid var(--hud-border);
+      padding: 3px;
     }
 
-    /* AUTHENTIC CATHODE MICRO-TERMINAL TILES (No generic photos) */
     .micro-thumb {
       aspect-ratio: 4/3;
-      background: #08080a;
+      background: #09090c;
       border: 1px solid rgba(255, 255, 255, 0.2);
       cursor: pointer;
       position: relative;
@@ -351,33 +233,25 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 2px 3px;
-      transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
-    }
-
-    .micro-thumb::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 60%);
-      pointer-events: none;
+      padding: 2px;
+      transition: border-color 0.15s, transform 0.12s;
     }
 
     .micro-thumb:hover, .micro-thumb.active {
       border-color: #fff;
-      box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
-      transform: translateY(-2px);
+      background: #14141a;
+      transform: scale(1.08);
       z-index: 5;
     }
 
-    .thumb-id {
-      font-size: 6px;
-      color: var(--hud-dim);
-      letter-spacing: 0.05em;
+    .micro-thumb.dimmed {
+      opacity: 0.15;
+      pointer-events: none;
     }
 
-    .thumb-mono {
-      font-size: 7px;
+    .thumb-id { font-size: 5px; color: var(--hud-dim); }
+    .thumb-name {
+      font-size: 6px;
       font-weight: bold;
       color: #fff;
       white-space: nowrap;
@@ -385,8 +259,7 @@
       text-overflow: ellipsis;
       text-transform: uppercase;
     }
-
-    .thumb-status {
+    .thumb-sub {
       font-size: 5px;
       color: var(--hud-accent);
       white-space: nowrap;
@@ -394,20 +267,15 @@
       text-overflow: ellipsis;
     }
 
-    .micro-thumb.dimmed {
-      opacity: 0.2;
-      pointer-events: none;
-    }
-
-    /* Hover Callout Tag */
+    /* Hover Callout */
     .callout {
       position: absolute;
-      bottom: calc(100% + 7px);
+      bottom: calc(100% + 6px);
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.94);
+      background: #000;
       border: 1px solid #fff;
-      padding: 5px 8px;
+      padding: 4px 6px;
       font-size: 8px;
       white-space: nowrap;
       pointer-events: none;
@@ -415,8 +283,6 @@
       transition: opacity 0.15s;
       z-index: 30;
       text-align: left;
-      min-width: 120px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.8);
     }
     .callout::after {
       content: '';
@@ -428,22 +294,15 @@
       border-top-color: #fff;
     }
     .micro-thumb:hover .callout { opacity: 1; }
-    .callout .cat { color: var(--hud-dim); font-size: 7px; letter-spacing: 0.06em; }
-    .callout .name { color: #fff; font-size: 9px; margin-top: 1px; font-weight: bold; }
-    .callout .status { color: var(--hud-accent); font-size: 7px; margin-top: 1px; }
 
-    /* 4. MODALS & POPUPS */
+    /* 4. MODALS (AR SITE PREVIEW & EXACT WORDSTAR ZCASH MODAL) */
     .hud-modal {
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%) scale(0.92);
-      width: 640px;
-      max-width: 94vw;
-      height: 440px;
-      max-height: 78vh;
-      background: rgba(4, 4, 7, 0.94);
-      backdrop-filter: blur(14px);
+      background: var(--hud-bg);
+      backdrop-filter: blur(12px);
       border: 1px solid #fff;
       z-index: 100;
       display: none;
@@ -453,389 +312,395 @@
       box-shadow: 0 0 40px rgba(0,0,0,0.9);
     }
 
-    .modal-header {
+    #siteModal {
+      width: 680px;
+      max-width: 94vw;
+      height: 440px;
+      max-height: 75vh;
+    }
+
+    /* Exact wordstar.nexus/sitemap Zcash styling */
+    #zecModal {
+      width: 360px;
+      max-width: 90vw;
+    }
+
+    .modal-head {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 8px 12px;
       border-bottom: 1px solid var(--hud-border);
-      background: rgba(255, 255, 255, 0.04);
-    }
-
-    .modal-title {
+      background: rgba(255, 255, 255, 0.05);
       font-size: 11px;
       font-weight: bold;
-      color: #fff;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.06em;
     }
 
-    .modal-close {
+    .modal-close-btn {
       background: transparent;
-      border: 1px solid var(--hud-border);
+      border: none;
       color: #fff;
       font-family: inherit;
-      font-size: 10px;
-      padding: 3px 8px;
+      font-size: 12px;
       cursor: pointer;
+      padding: 2px 6px;
     }
-    .modal-close:hover { background: #fff; color: #000; }
-
-    .modal-body {
-      flex: 1;
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
+    .modal-close-btn:hover { background: #fff; color: #000; }
 
     .modal-iframe {
+      flex: 1;
       width: 100%;
-      height: 100%;
       border: none;
       background: #000;
     }
 
-    .modal-footer {
+    .modal-foot {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 7px 12px;
+      padding: 6px 12px;
       border-top: 1px solid var(--hud-border);
       font-size: 9px;
       color: var(--hud-dim);
     }
 
-    .modal-btn {
+    .modal-ext-btn {
       color: #fff;
-      text-decoration: none;
       border: 1px solid var(--hud-border);
-      padding: 3px 10px;
-      font-size: 9px;
-      transition: background 0.15s, color 0.15s;
+      padding: 2px 8px;
+      text-decoration: none;
     }
-    .modal-btn:hover { background: #fff; color: #000; }
+    .modal-ext-btn:hover { background: #fff; color: #000; }
 
-    /* Enlarged Zcash Lightbox */
+    /* EXACT ZCASH CONTENT STYLING FROM WORDSTAR.NEXUS */
+    .zec-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 10px;
+    }
+
+    .zec-qr-wrap {
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border: 1px solid var(--hud-border);
+      padding: 8px;
+      background: #000;
+    }
+
+    .zec-qr-img {
+      width: 140px;
+      height: 140px;
+      display: block;
+      image-rendering: pixelated;
+    }
+
+    .zec-expand-lbl {
+      font-size: 8px;
+      color: var(--hud-dim);
+      margin-top: 4px;
+    }
+
+    .zec-text {
+      font-size: 9px;
+      line-height: 1.4;
+      color: var(--hud-dim);
+    }
+    .zec-text strong { color: #fff; }
+
+    .zec-addr-box {
+      font-size: 9px;
+      border: 1px solid var(--hud-border);
+      padding: 6px 8px;
+      width: 100%;
+      word-break: break-all;
+      background: rgba(255, 255, 255, 0.04);
+      color: #fff;
+    }
+
+    .zec-save-btn {
+      width: 100%;
+      background: transparent;
+      border: 1px solid #fff;
+      color: #fff;
+      font-family: inherit;
+      font-size: 10px;
+      padding: 5px 0;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: all 0.15s ease;
+    }
+    .zec-save-btn:hover {
+      background: #fff;
+      color: #000;
+    }
+
+    /* Lightbox for Enlarged QR */
     .qr-lightbox {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.95);
+      background: rgba(0, 0, 0, 0.96);
       z-index: 120;
       display: none;
       align-items: center;
       justify-content: center;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       cursor: pointer;
     }
     .qr-lightbox img {
-      width: 280px;
-      height: 280px;
-      border: 2px solid #fff;
+      width: 260px;
+      height: 260px;
+      border: 1px solid #fff;
       image-rendering: pixelated;
     }
 
-    /* 5. RESPONSIVE MOBILE LAYOUT (Side Content Accessible) */
-    @media (max-width: 900px) {
-      .hud-canvas {
+    /* 5. RESPONSIVE MOBILE OVERRIDES */
+    @media (max-width: 768px) {
+      .hud-wrapper {
         padding: 8px;
-        grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr auto;
       }
 
-      .mobile-hud-toggle {
-        display: block;
-      }
-
-      .topbar-center {
+      /* Hide mid-screen flank clutter so mobile screen is clean */
+      .hud-mid-flanks {
         display: none;
       }
 
-      /* Gutters become an expandable overlay on mobile */
-      .hud-gutter-left,
-      .hud-gutter-right {
-        position: fixed;
-        z-index: 50;
-        background: rgba(0, 0, 0, 0.88);
-        backdrop-filter: blur(10px);
-        padding: 12px;
-        border: 1px solid var(--hud-border);
-        display: none;
-        flex-direction: column;
-        width: 240px;
-      }
-
-      .hud-gutter-left {
-        top: 45px;
-        left: 8px;
-      }
-
-      .hud-gutter-right {
-        top: 45px;
-        right: 8px;
-        align-items: center;
-      }
-
-      .hud-gutter-left.mobile-open,
-      .hud-gutter-right.mobile-open {
-        display: flex;
-      }
-
-      .sitemap-tray {
-        max-width: 100%;
-      }
-
-      .cat-filters {
-        overflow-x: auto;
-        white-space: nowrap;
-        padding-bottom: 2px;
-      }
-
+      /* 10 columns x 5 rows = 50 nodes cleanly on any phone */
       .micro-grid {
-        grid-template-columns: repeat(25, 32px);
-        overflow-x: auto;
-        padding-bottom: 8px;
-        -webkit-overflow-scrolling: touch;
+        grid-template-columns: repeat(10, 1fr);
+        gap: 2px;
+      }
+
+      .thumb-sub {
+        display: none; /* Keep clean on small mobile screens */
       }
 
       .micro-thumb {
-        width: 32px;
-        height: 25px;
+        padding: 2px;
+        height: 24px;
       }
 
-      .hud-modal {
-        width: 96vw;
-        height: 72vh;
+      .thumb-name {
+        font-size: 5.5px;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- Fullscreen WordStar Background Video Loop -->
+  <!-- Background Video -->
   <div class="video-viewport">
     <video class="bg-video" autoplay muted loop playsinline>
       <source src="https://raw.githubusercontent.com/ghostm68/pantheon/main/wordstar.nexus._1766492668785.mp4" type="video/mp4" />
     </video>
   </div>
   <div class="scanlines"></div>
-  <div class="vignette"></div>
 
   <!-- HUD Interface Canvas -->
-  <div class="hud-canvas">
-    <div class="corner-tl"></div>
-    <div class="corner-tr"></div>
-    <div class="corner-bl"></div>
-    <div class="corner-br"></div>
+  <div class="hud-wrapper">
+    <div class="bracket-tl"></div>
+    <div class="bracket-tr"></div>
+    <div class="bracket-bl"></div>
+    <div class="bracket-br"></div>
 
     <!-- Top Telemetry Header -->
-    <div class="hud-topbar">
-      <div class="topbar-left">
-        <div><span class="status-dot"></span> STREAM ONLINE</div>
-        <div>WORDSTAR // <span>NEXUS</span></div>
+    <header class="hud-header">
+      <div class="header-line-1">
+        <div><span class="status-dot"></span>STREAM ONLINE</div>
+        <div>NODES: 50 FREQ: 60 Hz <span id="metClock">MET: 1103:00:00:05</span></div>
+      </div>
+      <div class="header-line-2">
+        <div>Inky is a writer, musician, and artist.</div>
+        <div>
+          <!-- Exact Zcash Trigger -->
+          <span class="btn" id="openZecTrigger">Zcash</span> • <a href="https://inkrealm.info" target="_blank" style="color:var(--hud-dim);">inkrealm.info</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Mid Screen Telemetry Flanks (Desktop) -->
+    <div class="hud-mid-flanks">
+      <div class="flank-left">
+        <div class="tele-item">
+          <div class="lbl">// SIGNAL LIVE</div>
+          <div class="val">50 INDEXED</div>
+        </div>
+        <div class="tele-item">
+          <div class="lbl">LINK QUALITY</div>
+          <div class="val">98%</div>
+        </div>
+        <div class="tele-item">
+          <div class="lbl">SYNC DEPTH</div>
+          <div class="val">0.86</div>
+        </div>
+        <div class="tele-item">
+          <div class="lbl">BUFFER</div>
+          <div class="val">65</div>
+        </div>
       </div>
 
-      <div class="topbar-center">
-        <div>NODES: <span>50</span></div>
-        <div>FREQ: <span>60 Hz</span></div>
-      </div>
-
-      <div class="topbar-right">
-        <!-- Mobile Toggle to view side telemetry without blocking video -->
-        <button type="button" class="mobile-hud-toggle" id="mobileHudToggle">◈ TELEMETRY / ZEC</button>
-        <div>FEED // <span>ACTIVE</span></div>
+      <div class="flank-right">
+        <div class="tele-item">
+          <div class="lbl">EPOCH_ID</div>
+          <div class="val">1103_WS</div>
+        </div>
+        <div class="tele-item">
+          <div class="lbl">SYS_STATUS</div>
+          <div class="val">NOMINAL</div>
+        </div>
+        <div class="tele-item">
+          <div class="lbl">SECURITY</div>
+          <div class="val">TLS_1.3</div>
+        </div>
       </div>
     </div>
 
-    <!-- LEFT GUTTER: Prominent MET Mission Clock & Signal Metrics -->
-    <div class="hud-gutter-left" id="gutterLeft">
-      <div class="telemetry-card">
-        <div class="label">// MISSION ELAPSED TIME</div>
-        <div class="clock-val" id="metClockVal">1103:00:00:00:00</div>
-        <div class="label" style="margin-top:2px;">EPOCH // WORDSTAR_SYNC</div>
+    <!-- Bottom Sitemap Tray -->
+    <footer class="sitemap-tray">
+      <div class="filter-bar">
+        <button class="filter-btn active" data-cat="all">All</button>
+        <button class="filter-btn" data-cat="Word Play">Word Play (6)</button>
+        <button class="filter-btn" data-cat="Word Processors">Word Processors (27)</button>
+        <button class="filter-btn" data-cat="Stories">Stories (12)</button>
+        <button class="filter-btn" data-cat="Places">Places (3)</button>
+        <button class="filter-btn" data-cat="Restricted">Restricted (2)</button>
       </div>
 
-      <div class="telemetry-card">
-        <div class="label">// SIGNAL LIVE</div>
-        <div class="val">50 INDEXED</div>
-      </div>
-
-      <div class="telemetry-card">
-        <div class="label">LINK QUALITY</div>
-        <div class="val" id="linkVal">98.4%</div>
-      </div>
-
-      <div class="telemetry-card">
-        <div class="label">SYNC DEPTH</div>
-        <div class="val" id="syncVal">0.86</div>
-      </div>
-
-      <div class="telemetry-card">
-        <div class="label">BUFFER</div>
-        <div class="val">65 MB</div>
-      </div>
-
-      <div class="telemetry-card">
-        <div class="label">QUAKES 24H</div>
-        <div class="val" id="quakeVal">—</div>
-        <div class="label" id="quakeSub">USGS // LOADING</div>
-      </div>
-    </div>
-
-    <!-- RIGHT GUTTER: Zcash GIF + QR Code + Address -->
-    <div class="hud-gutter-right" id="gutterRight">
-      <div class="zec-side-card">
-        <div class="zec-card-header">
-          <span>// ZCASH DEPOSIT</span>
-          <span style="color:var(--hud-zec);">[ZEC]</span>
-        </div>
-
-        <div class="zec-visual-strip">
-          <!-- GIF from Pantheon Repo -->
-          <img class="zec-gif" src="https://raw.githubusercontent.com/ghostm68/pantheon/main/Milk_240602_wordstar.nexus.gif" alt="ZEC Gif" />
-          <!-- Clickable Monochrome QR -->
-          <div class="zec-qr-thumb" id="zecQrThumb" title="[CLICK TO EXPAND]">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=tex1lvyaszdx43vafekmqr8f2xqmn9qzllu8w99mm9&color=ffffff&bgcolor=000000" alt="Zcash QR" />
-          </div>
-        </div>
-
-        <div class="zec-side-info">
-          Support wordstar.nexus<br>
-          Min: 0.00004 ZEC (Transparent)
-        </div>
-
-        <div class="zec-addr-short">tex1lvyaszdx43...9mm9</div>
-
-        <button type="button" class="zec-copy-btn" id="copyZecBtn">SAVE ADDRESS</button>
-      </div>
-
-      <div class="telemetry-card" style="width:220px; text-align:left;">
-        <div class="label">DOMAIN ARCHIVE</div>
-        <div class="val">INKREALM // INKY</div>
-        <div class="label" style="color:var(--hud-accent);">ORIGIN: INKREALM.INFO</div>
-      </div>
-    </div>
-
-    <!-- BOTTOM SITEMAP TRAY: Authentic 50 Cathode Micro-Terminals -->
-    <div class="sitemap-tray">
-      <div class="tray-header">
-        <div class="cat-filters">
-          <button class="cat-btn active" data-cat="all">ALL (50)</button>
-          <button class="cat-btn" data-cat="Word Play">[I] WORD PLAY</button>
-          <button class="cat-btn" data-cat="Word Processors">[II] PROCESSORS</button>
-          <button class="cat-btn" data-cat="Stories">[III] STORIES</button>
-          <button class="cat-btn" data-cat="Places">[IV] PLACES</button>
-          <button class="cat-btn" data-cat="Restricted">[V] RESTRICTED</button>
-        </div>
+      <div class="tray-meta">
+        <span>ARCHIVE_INDEX // SITEMAP</span>
         <span id="inspectReadout">TAP / HOVER NODE TO PREVIEW</span>
       </div>
 
+      <!-- 50 Cathode Micro-Terminals -->
       <div class="micro-grid" id="microGrid"></div>
+    </footer>
+  </div>
+
+  <!-- In-Page AR Site Preview Modal -->
+  <div class="hud-modal" id="siteModal">
+    <div class="modal-head">
+      <span id="siteModalTitle">NODE // PREVIEW</span>
+      <button class="modal-close-btn" id="siteModalClose">✕</button>
+    </div>
+    <iframe class="modal-iframe" id="siteModalFrame" src="about:blank" title="Node preview"></iframe>
+    <div class="modal-foot">
+      <span id="siteModalMeta">CAT: WORD PLAY | URI: /cipher</span>
+      <a href="#" target="_blank" rel="noopener" class="modal-ext-btn" id="siteModalExt">OPEN FULL ↗</a>
     </div>
   </div>
 
-  <!-- In-Page GSAP AR Modal -->
-  <div class="hud-modal" id="hudModal">
-    <div class="modal-header">
-      <div class="modal-title" id="modalTitle">SECTOR // NODE</div>
-      <button type="button" class="modal-close" id="modalClose">✕ CLOSE</button>
+  <!-- EXACT WORDSTAR ZCASH DEPOSIT MODAL -->
+  <div class="hud-modal" id="zecModal">
+    <div class="modal-head">
+      <span>// ZCASH DEPOSIT</span>
+      <button class="modal-close-btn" id="zecModalClose">✕</button>
     </div>
-    <div class="modal-body">
-      <iframe class="modal-iframe" id="modalFrame" src="about:blank" title="Node preview"></iframe>
-    </div>
-    <div class="modal-footer">
-      <span id="modalMeta">CAT: WORD PLAY | URI: /cipher</span>
-      <a href="#" target="_blank" rel="noopener" class="modal-btn" id="modalExtLink">OPEN FULL ↗</a>
+    <div class="zec-body">
+      <div class="zec-qr-wrap" id="zecQrWrap" title="Click to expand">
+        <img class="zec-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=tex1lvyaszdx43vafekmqr8f2xqmn9qzllu8w99mm9&color=ffffff&bgcolor=000000" alt="Zcash QR" />
+        <div class="zec-expand-lbl">[CLICK TO EXPAND]</div>
+      </div>
+
+      <div class="zec-text">
+        Support wordstar.nexus via Zcash<br>
+        Minimum deposit: 0.00004 ZEC<br>
+        Transparent address — shielded deposits not accepted
+      </div>
+
+      <div class="zec-addr-box" id="zecAddress">tex1lvyaszdx43vafekmqr8f2xqmn9qzllu8w99mm9</div>
+
+      <button class="zec-save-btn" id="zecSaveBtn">SAVE ADDRESS</button>
     </div>
   </div>
 
-  <!-- Expanded Zcash QR Lightbox -->
+  <!-- Enlarged Zcash QR Lightbox -->
   <div class="qr-lightbox" id="qrLightbox">
-    <img src="https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=tex1lvyaszdx43vafekmqr8f2xqmn9qzllu8w99mm9&color=ffffff&bgcolor=000000" alt="Enlarged Zcash QR" />
-    <div style="font-size: 10px; color: #fff;">ENLARGED ZCASH QR ✕ (CLICK TO CLOSE)</div>
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=tex1lvyaszdx43vafekmqr8f2xqmn9qzllu8w99mm9&color=ffffff&bgcolor=000000" alt="Enlarged Zcash QR" />
+    <div style="font-size: 10px; color: #fff;">Enlarged Zcash QR ✕</div>
   </div>
 
   <script>
-    // 50 EXACT NODES & TRUE SYSTEM LABELS FROM WORDSTAR.NEXUS
+    // 50 EXACT NODES & SUBLABELS FROM WORDSTAR.NEXUS/SITEMAP
     const nodes = [
-      { id: "01", name: "Cipher", cat: "Word Play", url: "/cipher", status: "ACTIVE" },
-      { id: "02", name: "Cut & Rune", cat: "Word Play", url: "/cut-and-rune", status: "ACTIVE" },
-      { id: "03", name: "Gram", cat: "Word Play", url: "/gram", status: "ACTIVE" },
-      { id: "04", name: "Leviticus", cat: "Word Play", url: "/leviticus", status: "ACTIVE" },
-      { id: "05", name: "Lex", cat: "Word Play", url: "/lex", status: "ACTIVE" },
-      { id: "06", name: "Tmura", cat: "Word Play", url: "/tmura", status: "ACTIVE" },
-      { id: "07", name: "0ctopus", cat: "Word Processors", url: "/0ctopus", status: "OFFLINE / INVITE" },
-      { id: "08", name: "14", cat: "Word Processors", url: "/14", status: "ACTIVE" },
-      { id: "09", name: "16", cat: "Word Processors", url: "/16", status: "ACTIVE" },
-      { id: "10", name: "acrohat", cat: "Word Processors", url: "/acrohat", status: "ACTIVE" },
-      { id: "11", name: "AI", cat: "Word Processors", url: "/ai", status: "ACTIVE" },
-      { id: "12", name: "Ataraxia", cat: "Word Processors", url: "/ataraxia", status: "ACTIVE" },
-      { id: "13", name: "Birch", cat: "Word Processors", url: "/birch", status: "STANDALONE EXE" },
-      { id: "14", name: "Citadelle", cat: "Word Processors", url: "/citadelle", status: "RED THEME" },
-      { id: "15", name: "Conceptweave", cat: "Word Processors", url: "/conceptweave", status: "ACTIVE" },
-      { id: "16", name: "CustomPad", cat: "Word Processors", url: "/custompad", status: "ACTIVE" },
-      { id: "17", name: "Displaywriter 2", cat: "Word Processors", url: "/displaywriter-2", status: "IBM OS" },
-      { id: "18", name: "EBCDIC", cat: "Word Processors", url: "/ebcdic", status: "MAINFRAME" },
-      { id: "19", name: "Everex", cat: "Word Processors", url: "/everex", status: "ACTIVE" },
-      { id: "20", name: "MacWritePro", cat: "Word Processors", url: "/macwritepro", status: "CLASSIC" },
-      { id: "21", name: "Q", cat: "Word Processors", url: "/q", status: "ACTIVE" },
-      { id: "22", name: "Quantum Muse", cat: "Word Processors", url: "/quantum-muse", status: "ACTIVE" },
-      { id: "23", name: "Queer", cat: "Word Processors", url: "/queer", status: "ACTIVE" },
-      { id: "24", name: "Seven", cat: "Word Processors", url: "/seven", status: "ACTIVE" },
-      { id: "25", name: "Six", cat: "Word Processors", url: "/six", status: "ACTIVE" },
-      { id: "26", name: "Tokenizer", cat: "Word Processors", url: "/tokenizer", status: "ACTIVE" },
-      { id: "27", name: "Triad", cat: "Word Processors", url: "/triad", status: "ACTIVE" },
-      { id: "28", name: "TRS-80", cat: "Word Processors", url: "/trs-80", status: "TANDY M1" },
-      { id: "29", name: "Typecast", cat: "Word Processors", url: "/typecast", status: "ACTIVE" },
-      { id: "30", name: "Typespace", cat: "Word Processors", url: "/typespace", status: "ACTIVE" },
-      { id: "31", name: "Typewriter", cat: "Word Processors", url: "/typewriter", status: "TACTILE" },
-      { id: "32", name: "wedding", cat: "Word Processors", url: "/wedding", status: "ACTIVE" },
-      { id: "33", name: "Z-Spin", cat: "Word Processors", url: "/z-spin", status: "ACTIVE" },
-      { id: "34", name: "15", cat: "Stories", url: "/15", status: "SUITCASES" },
-      { id: "35", name: "Baked Alaska", cat: "Stories", url: "/baked-alaska", status: "FLASH" },
-      { id: "36", name: "City", cat: "Stories", url: "/city", status: "AVAIL 2027" },
-      { id: "37", name: "Debrief", cat: "Stories", url: "/debrief", status: "ACTIVE" },
-      { id: "38", name: "Deja Vu Glitches", cat: "Stories", url: "/deja-vu-glitches", status: "ACTIVE" },
-      { id: "39", name: "Directory", cat: "Stories", url: "/directory", status: "MANIFEST" },
-      { id: "40", name: "Dreamweaver", cat: "Stories", url: "/dreamweaver", status: "ACTIVE" },
-      { id: "41", name: "Notes 27", cat: "Stories", url: "/notes-27", status: "ACTIVE" },
-      { id: "42", name: "Notes 38", cat: "Stories", url: "/notes-38", status: "ACTIVE" },
-      { id: "43", name: "Slutpuppy", cat: "Stories", url: "/slutpuppy", status: "ACTIVE" },
-      { id: "44", name: "Town", cat: "Stories", url: "/town", status: "PROGRESS 2027" },
-      { id: "45", name: "Work in Progress", cat: "Stories", url: "/work-in-progress", status: "ACTIVE" },
-      { id: "46", name: "90263", cat: "Places", url: "/90263", status: "SECTOR" },
-      { id: "47", name: "Home", cat: "Places", url: "/home", status: "ORIGIN" },
-      { id: "48", name: "Netherlands", cat: "Places", url: "/netherlands", status: "REMOTE" },
-      { id: "49", name: "404", cat: "Restricted", url: "/404", status: "LOCKED" },
-      { id: "50", name: "NC-17", cat: "Restricted", url: "/nc-17", status: "RESTRICTED" }
+      { id: "01", name: "Cipher", cat: "Word Play", url: "/cipher", sub: "Cipher" },
+      { id: "02", name: "Cut & Rune", cat: "Word Play", url: "/cut-and-rune", sub: "Cut & Rune" },
+      { id: "03", name: "Gram", cat: "Word Play", url: "/gram", sub: "Gram" },
+      { id: "04", name: "Leviticus", cat: "Word Play", url: "/leviticus", sub: "Leviticus" },
+      { id: "05", name: "Lex", cat: "Word Play", url: "/lex", sub: "Lex" },
+      { id: "06", name: "Tmura", cat: "Word Play", url: "/tmura", sub: "Tmura" },
+      { id: "07", name: "0ctopus", cat: "Word Processors", url: "/0ctopus", sub: "offline / invite only" },
+      { id: "08", name: "14", cat: "Word Processors", url: "/14", sub: "14" },
+      { id: "09", name: "16", cat: "Word Processors", url: "/16", sub: "16" },
+      { id: "10", name: "acrohat", cat: "Word Processors", url: "/acrohat", sub: "acrohat" },
+      { id: "11", name: "AI", cat: "Word Processors", url: "/ai", sub: "AI" },
+      { id: "12", name: "Ataraxia", cat: "Word Processors", url: "/ataraxia", sub: "Ataraxia" },
+      { id: "13", name: "Birch", cat: "Word Processors", url: "/birch", sub: "Birch" },
+      { id: "14", name: "Citadelle", cat: "Word Processors", url: "/citadelle", sub: "Citadelle" },
+      { id: "15", name: "Conceptweave", cat: "Word Processors", url: "/conceptweave", sub: "Conceptweave" },
+      { id: "16", name: "CustomPad", cat: "Word Processors", url: "/custompad", sub: "CustomPad" },
+      { id: "17", name: "Displaywriter 2", cat: "Word Processors", url: "/displaywriter-2", sub: "Displaywriter 2" },
+      { id: "18", name: "EBCDIC", cat: "Word Processors", url: "/ebcdic", sub: "EBCDIC" },
+      { id: "19", name: "Everex", cat: "Word Processors", url: "/everex", sub: "Everex" },
+      { id: "20", name: "MacWritePro", cat: "Word Processors", url: "/macwritepro", sub: "MacWritePro" },
+      { id: "21", name: "Q", cat: "Word Processors", url: "/q", sub: "Q" },
+      { id: "22", name: "Quantum Muse", cat: "Word Processors", url: "/quantum-muse", sub: "Quantum Muse" },
+      { id: "23", name: "Queer", cat: "Word Processors", url: "/queer", sub: "Queer" },
+      { id: "24", name: "Seven", cat: "Word Processors", url: "/seven", sub: "Seven" },
+      { id: "25", name: "Six", cat: "Word Processors", url: "/six", sub: "Six" },
+      { id: "26", name: "Tokenizer", cat: "Word Processors", url: "/tokenizer", sub: "Tokenizer" },
+      { id: "27", name: "Triad", cat: "Word Processors", url: "/triad", sub: "Triad" },
+      { id: "28", name: "TRS-80", cat: "Word Processors", url: "/trs-80", sub: "TRS-80" },
+      { id: "29", name: "Typecast", cat: "Word Processors", url: "/typecast", sub: "Typecast" },
+      { id: "30", name: "Typespace", cat: "Word Processors", url: "/typespace", sub: "Typespace" },
+      { id: "31", name: "Typewriter", cat: "Word Processors", url: "/typewriter", sub: "Typewriter" },
+      { id: "32", name: "wedding", cat: "Word Processors", url: "/wedding", sub: "wedding" },
+      { id: "33", name: "Z-Spin", cat: "Word Processors", url: "/z-spin", sub: "Z-Spin" },
+      { id: "34", name: "15", cat: "Stories", url: "/15", sub: "15" },
+      { id: "35", name: "Baked Alaska", cat: "Stories", url: "/baked-alaska", sub: "Baked Alaska" },
+      { id: "36", name: "City", cat: "Stories", url: "/city", sub: "available / 2027" },
+      { id: "37", name: "Debrief", cat: "Stories", url: "/debrief", sub: "Debrief" },
+      { id: "38", name: "Deja Vu Glitches", cat: "Stories", url: "/deja-vu-glitches", sub: "Deja Vu Glitches" },
+      { id: "39", name: "Directory", cat: "Stories", url: "/directory", sub: "Directory" },
+      { id: "40", name: "Dreamweaver", cat: "Stories", url: "/dreamweaver", sub: "Dreamweaver" },
+      { id: "41", name: "Notes 27", cat: "Stories", url: "/notes-27", sub: "Notes 27" },
+      { id: "42", name: "Notes 38", cat: "Stories", url: "/notes-38", sub: "Notes 38" },
+      { id: "43", name: "Slutpuppy", cat: "Stories", url: "/slutpuppy", sub: "Slutpuppy" },
+      { id: "44", name: "Town", cat: "Stories", url: "/town", sub: "in progress / 2027" },
+      { id: "45", name: "Work in Progress", cat: "Stories", url: "/work-in-progress", sub: "Work in Progress" },
+      { id: "46", name: "90263", cat: "Places", url: "/90263", sub: "90263" },
+      { id: "47", name: "Home", cat: "Places", url: "/home", sub: "Home" },
+      { id: "48", name: "Netherlands", cat: "Places", url: "/netherlands", sub: "Netherlands" },
+      { id: "49", name: "404", cat: "Restricted", url: "/404", sub: "404" },
+      { id: "50", name: "NC-17", cat: "Restricted", url: "/nc-17", sub: "NC-17" }
     ];
 
     const microGrid = document.getElementById("microGrid");
     const inspectReadout = document.getElementById("inspectReadout");
-    const modal = document.getElementById("hudModal");
-    const modalTitle = document.getElementById("modalTitle");
-    const modalFrame = document.getElementById("modalFrame");
-    const modalMeta = document.getElementById("modalMeta");
-    const modalExtLink = document.getElementById("modalExtLink");
-    const modalClose = document.getElementById("modalClose");
+
+    // Modal elements
+    const siteModal = document.getElementById("siteModal");
+    const siteModalTitle = document.getElementById("siteModalTitle");
+    const siteModalFrame = document.getElementById("siteModalFrame");
+    const siteModalMeta = document.getElementById("siteModalMeta");
+    const siteModalExt = document.getElementById("siteModalExt");
+    const siteModalClose = document.getElementById("siteModalClose");
 
     // Zcash elements
-    const zecQrThumb = document.getElementById("zecQrThumb");
+    const openZecTrigger = document.getElementById("openZecTrigger");
+    const zecModal = document.getElementById("zecModal");
+    const zecModalClose = document.getElementById("zecModalClose");
+    const zecQrWrap = document.getElementById("zecQrWrap");
     const qrLightbox = document.getElementById("qrLightbox");
-    const copyZecBtn = document.getElementById("copyZecBtn");
-    const fullZecAddr = "tex1lvyaszdx43vafekmqr8f2xqmn9qzllu8w99mm9";
+    const zecSaveBtn = document.getElementById("zecSaveBtn");
+    const zecAddress = document.getElementById("zecAddress").textContent.trim();
 
-    // Mobile telemetry toggle
-    const mobileHudToggle = document.getElementById("mobileHudToggle");
-    const gutterLeft = document.getElementById("gutterLeft");
-    const gutterRight = document.getElementById("gutterRight");
-
-    mobileHudToggle.addEventListener("click", () => {
-      gutterLeft.classList.toggle("mobile-open");
-      gutterRight.classList.toggle("mobile-open");
-    });
-
-    // RENDER TRUE CATHODE MICRO-TILES
+    // RENDER 50 CATHODE TILES
     nodes.forEach((n) => {
       const cell = document.createElement("div");
       cell.className = "micro-thumb";
@@ -844,32 +709,32 @@
 
       cell.innerHTML = `
         <div class="thumb-id">${n.id}</div>
-        <div class="thumb-mono">${n.name}</div>
-        <div class="thumb-status">${n.status}</div>
+        <div class="thumb-name">${n.name}</div>
+        <div class="thumb-sub">${n.sub}</div>
         <div class="callout">
-          <div class="cat">[${n.cat.toUpperCase()}] // NODE_${n.id}</div>
-          <div class="name">${n.name.toUpperCase()}</div>
-          <div class="status">STATUS: ${n.status}</div>
+          <div style="color:var(--hud-dim); font-size:7px;">[${n.cat.toUpperCase()}] // ${n.id}</div>
+          <div style="color:#fff; font-weight:bold;">${n.name}</div>
+          <div style="color:var(--hud-accent); font-size:7px;">${n.sub}</div>
         </div>
       `;
 
       cell.addEventListener("mouseenter", () => {
-        inspectReadout.textContent = `[${n.cat.toUpperCase()}] // ${n.name.toUpperCase()} // ${n.status} // ${n.url}`;
+        inspectReadout.textContent = `[${n.cat.toUpperCase()}] // ${n.name.toUpperCase()} // ${n.sub}`;
       });
 
       cell.addEventListener("mouseleave", () => {
         inspectReadout.textContent = "TAP / HOVER NODE TO PREVIEW";
       });
 
-      cell.addEventListener("click", () => openModal(n));
+      cell.addEventListener("click", () => openSiteModal(n));
 
       microGrid.appendChild(cell);
     });
 
     // CATEGORY FILTERS
-    document.querySelectorAll(".cat-btn").forEach((btn) => {
+    document.querySelectorAll(".filter-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
-        document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
 
         const selectedCat = btn.dataset.cat;
@@ -888,62 +753,83 @@
       });
     });
 
-    // GSAP AR POPUP MODAL
-    function openModal(node) {
+    // SITE PREVIEW MODAL
+    function openSiteModal(node) {
       const fullUrl = `https://wordstar.nexus${node.url}`;
-      modalTitle.textContent = `NODE // ${node.name.toUpperCase()}`;
-      modalMeta.textContent = `CAT: [${node.cat.toUpperCase()}] | STATUS: ${node.status} | URI: ${node.url}`;
-      modalExtLink.href = fullUrl;
-      modalFrame.src = fullUrl;
+      siteModalTitle.textContent = `NODE // ${node.name.toUpperCase()}`;
+      siteModalMeta.textContent = `CAT: [${node.cat.toUpperCase()}] | STATUS: ${node.sub} | URI: ${node.url}`;
+      siteModalExt.href = fullUrl;
+      siteModalFrame.src = fullUrl;
 
       document.querySelectorAll('.micro-thumb.active').forEach(el => el.classList.remove('active'));
       const activeThumb = document.querySelector(`.micro-thumb[data-id="${node.id}"]`);
       if (activeThumb) activeThumb.classList.add('active');
 
-      modal.style.display = "flex";
-      gsap.fromTo(modal,
-        { opacity: 0, scale: 0.88, y: "-46%" },
-        { opacity: 1, scale: 1, y: "-50%", duration: 0.32, ease: "power2.out" }
+      siteModal.style.display = "flex";
+      gsap.fromTo(siteModal,
+        { opacity: 0, scale: 0.9, y: "-47%" },
+        { opacity: 1, scale: 1, y: "-50%", duration: 0.28, ease: "power2.out" }
       );
     }
 
-    function closeModal() {
-      gsap.to(modal, {
+    function closeSiteModal() {
+      gsap.to(siteModal, {
         opacity: 0,
-        scale: 0.88,
-        duration: 0.22,
+        scale: 0.9,
+        duration: 0.2,
         ease: "power2.in",
         onComplete: () => {
-          modal.style.display = "none";
-          modalFrame.src = "about:blank";
+          siteModal.style.display = "none";
+          siteModalFrame.src = "about:blank";
           document.querySelectorAll('.micro-thumb.active').forEach(el => el.classList.remove('active'));
         }
       });
     }
 
-    modalClose.addEventListener("click", closeModal);
-    modalExtLink.addEventListener("click", (e) => e.stopPropagation());
+    siteModalClose.addEventListener("click", closeSiteModal);
 
-    // ZCASH COPY & QR LIGHTBOX
-    copyZecBtn.addEventListener("click", () => {
-      navigator.clipboard.writeText(fullZecAddr).then(() => {
-        const orig = copyZecBtn.textContent;
-        copyZecBtn.textContent = "✓ COPIED";
-        copyZecBtn.style.background = "#fff";
-        copyZecBtn.style.color = "#000";
+    // ZCASH MODAL LOGIC (Authentic to wordstar.nexus)
+    function openZecModal() {
+      zecModal.style.display = "flex";
+      gsap.fromTo(zecModal,
+        { opacity: 0, scale: 0.9, y: "-47%" },
+        { opacity: 1, scale: 1, y: "-50%", duration: 0.28, ease: "power2.out" }
+      );
+    }
+
+    function closeZecModal() {
+      gsap.to(zecModal, {
+        opacity: 0,
+        scale: 0.9,
+        duration: 0.2,
+        ease: "power2.in",
+        onComplete: () => { zecModal.style.display = "none"; }
+      });
+    }
+
+    openZecTrigger.addEventListener("click", openZecModal);
+    zecModalClose.addEventListener("click", closeZecModal);
+
+    // Copy Address Button
+    zecSaveBtn.addEventListener("click", () => {
+      navigator.clipboard.writeText(zecAddress).then(() => {
+        const orig = zecSaveBtn.textContent;
+        zecSaveBtn.textContent = "COPIED TO CLIPBOARD";
+        zecSaveBtn.style.background = "#fff";
+        zecSaveBtn.style.color = "#000";
         setTimeout(() => {
-          copyZecBtn.textContent = orig;
-          copyZecBtn.style.background = "transparent";
-          copyZecBtn.style.color = "#fff";
-        }, 2000);
+          zecSaveBtn.textContent = orig;
+          zecSaveBtn.style.background = "transparent";
+          zecSaveBtn.style.color = "#fff";
+        }, 2200);
       });
     });
 
-    zecQrThumb.addEventListener("click", () => {
+    // Expand QR Lightbox
+    zecQrWrap.addEventListener("click", () => {
       qrLightbox.style.display = "flex";
       gsap.fromTo(qrLightbox, { opacity: 0 }, { opacity: 1, duration: 0.2 });
     });
-
     qrLightbox.addEventListener("click", () => {
       gsap.to(qrLightbox, {
         opacity: 0,
@@ -952,50 +838,40 @@
       });
     });
 
+    // ESC Key Closes
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         if (qrLightbox.style.display === "flex") qrLightbox.click();
-        else if (modal.style.display === "flex") closeModal();
+        else if (zecModal.style.display === "flex") closeZecModal();
+        else if (siteModal.style.display === "flex") closeSiteModal();
       }
     });
 
-    // BOOTUP TIMELINE
+    // GSAP BOOT SEQUENCE
     window.addEventListener("DOMContentLoaded", () => {
       gsap.from(".micro-thumb", {
         scale: 0,
         opacity: 0,
-        duration: 0.26,
-        stagger: { grid: [2, 25], from: "random", amount: 0.4 },
+        duration: 0.25,
+        stagger: {
+          grid: [2, 25],
+          from: "random",
+          amount: 0.35
+        },
         ease: "power1.out"
       });
-      fetchLiveData();
     });
 
-    // LIVE MET CLOCK (Format: 1103:HH:MM:SS:MS)
+    // LIVE MET MISSION CLOCK (Format: 1103:HH:MM:SS)
     function updateClock() {
       const now = new Date();
       const hrs = String(now.getUTCHours()).padStart(2, '0');
       const min = String(now.getUTCMinutes()).padStart(2, '0');
       const sec = String(now.getUTCSeconds()).padStart(2, '0');
-      const ms = String(Math.floor(now.getUTCMilliseconds() / 10)).padStart(2, '0');
-      document.getElementById("metClockVal").textContent = `1103:${hrs}:${min}:${sec}:${ms}`;
+      document.getElementById("metClock").textContent = `MET: 1103:${hrs}:${min}:${sec}`;
     }
-    setInterval(updateClock, 30);
+    setInterval(updateClock, 1000);
     updateClock();
-
-    // LIVE GEOPHYSICAL TELEMETRY
-    async function fetchLiveData() {
-      try {
-        const quakeRes = await fetch("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson");
-        const quakeData = await quakeRes.json();
-        document.getElementById("quakeVal").textContent = quakeData.features ? quakeData.features.length : "0";
-        document.getElementById("quakeSub").textContent = "USGS // 2.5+ 24H";
-      } catch (err) {
-        document.getElementById("quakeVal").textContent = "—";
-        document.getElementById("quakeSub").textContent = "USGS // OFFLINE";
-      }
-    }
-    setInterval(fetchLiveData, 90000);
   </script>
 </body>
 </html>
