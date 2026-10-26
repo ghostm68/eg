@@ -47,14 +47,13 @@
     .selector-group { display: flex; align-items: center; gap: 6px; }
     .selector-group select { background: #1c2228; border: 1px solid #36414c; color: var(--phosphor-text); font-family: inherit; font-size: 0.72rem; padding: 3px 6px; border-radius: 3px; outline: none; }
     
+    .pf-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 6px 14px; background: #14191d; border-bottom: 1px solid var(--border-panel); font-size: 0.72rem; }
+    .pf-label { color: #8da1b2; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; margin-right: 2px; }
+
     .tools-strip { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 6px 14px; background: #0f1316; border-bottom: 1px solid var(--border-panel); font-size: 0.72rem; }
     .tools-strip input[type="text"], .tools-strip input[type="number"], .tools-strip select { background: #1c2228; border: 1px solid #36414c; color: var(--phosphor-text); font-family: inherit; font-size: 0.72rem; padding: 3px 6px; border-radius: 3px; outline: none; }
     .tools-strip label { display: flex; align-items: center; gap: 4px; }
     
-    /* Dedicated Format Action Bar */
-    .pf-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 6px 14px; background: #14191d; border-bottom: 1px solid var(--border-panel); font-size: 0.72rem; }
-    .pf-label { color: #8da1b2; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; margin-right: 2px; }
-
     .info-panel { display: none; background: #111518; border-bottom: 1px solid var(--border-panel); padding: 8px 14px; font-size: 0.72rem; gap: 12px; flex-wrap: wrap; }
     .info-panel.visible { display: flex; }
     .info-field { display: flex; flex-direction: column; gap: 2px; min-width: 140px; }
@@ -74,10 +73,11 @@
     .page-sheet { width: 100%; max-width: 800px; min-height: 520px; outline: none; border: none; color: var(--phosphor-text); text-shadow: 0 0 6px var(--glow-color); font-family: var(--font-active); font-size: 1.05rem; line-height: 1.4; white-space: pre-wrap; overflow-wrap: break-word; user-select: text; }
     
     /* Direct Optics & Floating Cathode HUD */
-    .optics-wrapper { display: block; margin: 16px 0; user-select: none; position: relative; max-width: 100%; text-align: center; }
+    .optics-wrapper { display: block; margin: 16px 0; user-select: none; position: relative; max-width: 100%; text-align: center; cursor: move; }
     .optics-wrapper.align-center { text-align: center; }
     .optics-wrapper.align-left   { text-align: left; }
     .optics-wrapper.align-right  { text-align: right; }
+    .optics-wrapper.drag-over    { outline: 2px dashed var(--phosphor-text); }
     .optics-img { display: inline-block; vertical-align: middle; border: 1px solid var(--phosphor-dim); box-shadow: 0 0 10px var(--glow-color); background: #000; cursor: pointer; transition: box-shadow 0.15s ease, border-color 0.15s ease; max-width: 100%; }
     .optics-wrapper.selected .optics-img { border-color: var(--phosphor-text); box-shadow: 0 0 18px var(--phosphor-text); }
     .optics-img.shape-circle { border-radius: 50%; aspect-ratio: 1 / 1; object-fit: cover; }
@@ -90,6 +90,13 @@
     .hud-btn.active { background: var(--phosphor-dim); color: #fff; border-color: var(--phosphor-text); }
     .hud-btn.purge:hover { background: #aa1111; color: #fff; }
     .hud-readout { color: var(--phosphor-text); min-width: 44px; text-align: center; font-weight: 700; font-size: 0.62rem; }
+
+    /* CRT Bottom-Right Image Status Bay */
+    .image-status-bay { position: absolute; bottom: 12px; right: 12px; background: var(--crt-bg); border: 1px solid var(--phosphor-dim); padding: 6px 8px; z-index: 25; display: none; box-shadow: 0 0 12px var(--glow-color); font-size: 0.58rem; color: var(--phosphor-text); text-align: center; pointer-events: none; }
+    .image-status-bay.visible { display: block; }
+    .image-status-bay .bay-label { margin-bottom: 4px; color: var(--phosphor-dim); font-weight: 600; text-transform: uppercase; }
+    #thumbCanvas { display: block; margin: 0 auto 4px; border: 1px solid var(--phosphor-dim); background: #000; image-rendering: pixelated; }
+    #thumbLabel { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; }
 
     .status-bar { background: #0d1012; border-top: 2px solid var(--border-panel); padding: 8px 14px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; font-size: 0.72rem; color: var(--phosphor-dim); font-weight: 600; }
     .status-bar span { color: var(--phosphor-text); }
@@ -201,7 +208,7 @@
     </div>
   </div>
 
-  <!-- Format Action Bar -->
+  <!-- Touch Format Bar -->
   <div class="pf-bar">
     <span class="pf-label">TOUCH FORMAT:</span>
     <button class="btn btn-action" id="btnPfH1" title="Heading 1">[ H1 TITLE ]</button>
@@ -245,16 +252,22 @@
 This terminal operates entirely inside browser memory.
 All typography, optics rendering, and stream construction occur locally.
 
-DIRECT INLINE OPTICS:
-• Drag & drop any image file straight into this CRT window.
-• Or press [ +IMG OPTICS ] in the top action rack.
-• Or paste images from your clipboard directly (Ctrl+V / Cmd+V).
+DIRECT INLINE OPTICS & DRAG-AND-DROP:
+• Drag & drop image files from your desktop directly into this CRT screen.
+• Drag images inside the document to reposition them.
+• Paste images from your clipboard directly (Ctrl+V / Cmd+V).
 • Click an image to pop up the CATHODE HUD (Change size, align Left/Center/Right, or toggle Circular Badge).
 
 TOUCH FORMATTING:
 • Use the [ H1 TITLE ], [ H2 SUB ], and [ ── RULE ── ] buttons to format text automatically.
 • Rotate the console dials above to regulate BEAM GAIN, PITCH, KERNING, or MARGINS.
 • Click [ EXPORT PDF ] to compile your document.</div>
+    </div>
+    <!-- Restored Bottom-Right CRT Phosphor Image Bay -->
+    <div class="image-status-bay" id="imageStatusBay">
+      <div class="bay-label">IMG BAY</div>
+      <canvas id="thumbCanvas" width="96" height="72"></canvas>
+      <div id="thumbLabel">NO IMAGE</div>
     </div>
   </div>
 
@@ -282,7 +295,7 @@ const I18N = {
     alertBasicOk: "SUCCESS: Recovered text stream from [{name}].", alertNoText: "NOTICE: Could not extract text.",
     alertExportFail: "Export failed: ", alertPdfLibMissing: "pdf-lib or fontkit failed to load.",
     helpHtml: `<h4>ACROHAT INTERACTIVE CONSOLE GUIDE</h4>
-<p><b>DIRECT OPTICS (heterogeneous mode):</b> Drop images onto this CRT screen, paste via clipboard (Ctrl+V), or click [+IMG OPTICS]. Click placed images to display the floating Cathode HUD: set alignment, toggle circular badge aperture, scale width, or purge.</p>
+<p><b>DIRECT OPTICS (heterogeneous mode):</b> Drop images onto this CRT screen, paste via clipboard (Ctrl+V), or click [+IMG OPTICS]. Click placed images to display the floating Cathode HUD: set alignment, toggle circular badge aperture, scale width, or purge. Images can also be dragged within the text buffer to reposition.</p>
 <div class="cmd-row" style="margin-top:6px;"><code>[ H1 TITLE ]</code> — Level-1 Heading (Large, Faux-Bold)</div>
 <div class="cmd-row"><code>[ H2 SUB ]</code> — Level-2 Subheading</div>
 <div class="cmd-row"><code>[ ── RULE ── ]</code> — Horizontal Divider line</div>
@@ -301,7 +314,7 @@ const I18N = {
     alertBasicOk: "УСПЕХ: Восстановлен текстовый поток из [{name}].", alertNoText: "ВНИМАНИЕ: Не удалось извлечь текст.",
     alertExportFail: "Ошибка экспорта: ", alertPdfLibMissing: "pdf-lib или fontkit не загрузились.",
     helpHtml: `<h4>ИНТЕРАКТИВНОЕ РУКОВОДСТВО ACROHAT</h4>
-<p><b>ОПТИКА (режим heterogeneous):</b> Перетащите файлы на экран CRT, вставьте из буфера (Ctrl+V) или нажмите [+ИЗОБРАЖЕНИЕ]. Кликните по изображению для вызова парящего меню: размер, выравнивание, форма круга, удаление.</p>
+<p><b>ОПТИКА (режим heterogeneous):</b> Перетащите файлы на экран CRT, вставьте из буфера (Ctrl+V) или нажмите [+ИЗОБРАЖЕНИЕ]. Кликните по изображению для вызова парящего меню: размер, выравнивание, форма круга, удаление. Картинки можно перемещать перетаскиванием внутри текста.</p>
 <div class="cmd-row" style="margin-top:6px;"><code>[ H1 TITLE ]</code> — Заголовок 1 уровня</div>
 <div class="cmd-row"><code>[ H2 SUB ]</code> — Подзаголовок 2 уровня</div>
 <div class="cmd-row"><code>[ ── RULE ── ]</code> — Горизонтальная линия</div>
@@ -348,13 +361,41 @@ document.getElementById('btnAudioToggle').addEventListener('click', (e) => {
   playMechanicalClick(900, 0.03);
 });
 
+/* --- PHOSPHOR THUMBNAIL STATUS BAY --- */
+const thumbBay = document.getElementById('imageStatusBay');
+const thumbCanvas = document.getElementById('thumbCanvas');
+const thumbLabel = document.getElementById('thumbLabel');
+const thumbCtx = thumbCanvas.getContext('2d');
+
+function getPhosphorColor() {
+  return getComputedStyle(document.body).getPropertyValue('--phosphor-text').trim() || '#ff3333';
+}
+
+function showPhosphorThumbnailFromSrc(src, labelText = "OPTIC_STREAM") {
+  if (!src) { thumbBay.classList.remove('visible'); return; }
+  const img = new Image();
+  img.onload = () => {
+    thumbCtx.clearRect(0, 0, thumbCanvas.width, thumbCanvas.height);
+    thumbCtx.drawImage(img, 0, 0, thumbCanvas.width, thumbCanvas.height);
+    thumbCtx.globalCompositeOperation = 'multiply';
+    thumbCtx.fillStyle = getPhosphorColor();
+    thumbCtx.fillRect(0, 0, thumbCanvas.width, thumbCanvas.height);
+    thumbCtx.globalCompositeOperation = 'source-over';
+    thumbLabel.textContent = labelText.toUpperCase();
+    thumbBay.classList.add('visible');
+  };
+  img.src = src;
+}
+
 /* --- DIRECT OPTICS & CATHODE HUD (heterogeneous mode) --- */
 let activeOpticsWrapper = null;
+let draggedOpticsNode = null;
 
 function createOpticsNode(dataUrl, width = 240, align = 'center', shape = 'rect') {
   const wrapper = document.createElement('div');
   wrapper.className = `optics-wrapper align-${align}`;
   wrapper.contentEditable = "false";
+  wrapper.draggable = true; // Enables in-document dragging
   wrapper.dataset.align = align;
   wrapper.dataset.shape = shape;
   wrapper.dataset.width = width;
@@ -384,6 +425,37 @@ function createOpticsNode(dataUrl, width = 240, align = 'center', shape = 'rect'
   wrapper.appendChild(hud);
   wrapper.appendChild(img);
 
+  // In-document Drag & Drop Handlers
+  wrapper.addEventListener('dragstart', (e) => {
+    draggedOpticsNode = wrapper;
+    e.dataTransfer.setData('text/plain', 'optics-node');
+    e.dataTransfer.effectAllowed = 'move';
+    wrapper.style.opacity = '0.4';
+  });
+  wrapper.addEventListener('dragend', () => {
+    wrapper.style.opacity = '1';
+    draggedOpticsNode = null;
+    document.querySelectorAll('.optics-wrapper').forEach(w => w.classList.remove('drag-over'));
+  });
+  wrapper.addEventListener('dragover', (e) => {
+    if (draggedOpticsNode && draggedOpticsNode !== wrapper) {
+      e.preventDefault();
+      wrapper.classList.add('drag-over');
+    }
+  });
+  wrapper.addEventListener('dragleave', () => wrapper.classList.remove('drag-over'));
+  wrapper.addEventListener('drop', (e) => {
+    if (draggedOpticsNode && draggedOpticsNode !== wrapper) {
+      e.preventDefault();
+      e.stopPropagation();
+      wrapper.classList.remove('drag-over');
+      editor.insertBefore(draggedOpticsNode, wrapper);
+      playMechanicalClick(880, 0.02);
+      updateTelemetry();
+    }
+  });
+
+  // Toggle selection & Floating HUD on click
   wrapper.addEventListener('click', (e) => {
     e.stopPropagation();
     if (activeOpticsWrapper && activeOpticsWrapper !== wrapper) {
@@ -391,9 +463,11 @@ function createOpticsNode(dataUrl, width = 240, align = 'center', shape = 'rect'
     }
     wrapper.classList.toggle('selected');
     activeOpticsWrapper = wrapper.classList.contains('selected') ? wrapper : null;
+    showPhosphorThumbnailFromSrc(img.src, `OPTIC_${width}PX`);
     playMechanicalClick(650, 0.015);
   });
 
+  // Floating HUD button operations
   hud.addEventListener('click', (e) => {
     e.stopPropagation();
     const btn = e.target.closest('[data-act]');
@@ -418,9 +492,11 @@ function createOpticsNode(dataUrl, width = 240, align = 'center', shape = 'rect'
       wrapper.dataset.width = curW;
       img.style.width = `${curW}px`;
       hud.querySelector('.hud-readout').textContent = `${curW}PX`;
+      showPhosphorThumbnailFromSrc(img.src, `OPTIC_${curW}PX`);
     } else if (act === 'purge') {
       wrapper.remove();
       activeOpticsWrapper = null;
+      thumbBay.classList.remove('visible');
       updateTelemetry();
     }
     playMechanicalClick(800, 0.02);
@@ -457,6 +533,7 @@ async function insertImageDirect(file) {
     } else {
       editor.appendChild(opticsNode);
     }
+    showPhosphorThumbnailFromSrc(dataUrl, file.name || "IMG_OPTIC");
     updateTelemetry();
     playMechanicalClick(950, 0.03);
   };
@@ -470,13 +547,19 @@ document.getElementById('imgFileInput').addEventListener('change', (e) => {
 
 const editor = document.getElementById('editor');
 
-editor.addEventListener('dragover', (e) => e.preventDefault());
+// External Image Drag & Drop into CRT Screen
+editor.addEventListener('dragover', (e) => {
+  if (!draggedOpticsNode) e.preventDefault();
+});
 editor.addEventListener('drop', (e) => {
-  e.preventDefault();
-  const file = e.dataTransfer.files[0];
-  if (file && file.type.startsWith('image/')) insertImageDirect(file);
+  if (!draggedOpticsNode) {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) insertImageDirect(file);
+  }
 });
 
+// Clipboard Paste (Ctrl+V)
 editor.addEventListener('paste', (e) => {
   const items = (e.clipboardData || e.originalEvent?.clipboardData)?.items;
   if (items) {
@@ -598,6 +681,10 @@ document.getElementById('fontSelect').addEventListener('change', (e) => {
 });
 document.getElementById('phosphorSelect').addEventListener('change', (e) => {
   document.body.className = e.target.value; playMechanicalClick(820, 0.025);
+  if (activeOpticsWrapper) {
+    const img = activeOpticsWrapper.querySelector('.optics-img');
+    if (img) showPhosphorThumbnailFromSrc(img.src);
+  }
 });
 
 function updateTelemetry() {
@@ -611,18 +698,43 @@ updateTelemetry();
 document.getElementById('btnClear').addEventListener('click', () => {
   if (confirm(t('confirmClear'))) {
     editor.innerHTML = '';
+    thumbBay.classList.remove('visible');
     updateTelemetry();
     playMechanicalClick(300, 0.05);
   }
 });
 
+/* --- RESTORED: FALLBACK RAW PDF STREAM RECOVERY --- */
+function basicPdfScan(file) {
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const rawData = evt.target.result;
+    let extractedText = "";
+    try {
+      const btMatches = rawData.match(/BT[\s\S]*?ET/g);
+      if (btMatches) {
+        btMatches.forEach(block => {
+          const strMatches = block.match(/\((.*?)\)\s*(?:Tj|'|")/g) || block.match(/\[(.*?)\]\s*TJ/g);
+          if (strMatches) extractedText += strMatches.map(m => m.replace(/[\(\)\[\]]/g, '')).join(' ') + "\n";
+        });
+      }
+      if (extractedText.trim()) {
+        editor.innerText = `.h1 IMPORTED: ${file.name.toUpperCase()}\n.hr\n\n` + extractedText;
+        alert(t('alertBasicOk').replace('{name}', file.name));
+      } else alert(t('alertNoText'));
+    } catch(err) { alert("Error: " + err.message); }
+    updateTelemetry(); syncInfoFromEditor();
+  };
+  reader.readAsBinaryString(file);
+}
+
 document.getElementById('pdfFileInput').addEventListener('change', async (e) => {
   const file = e.target.files[0]; if (!file) return;
   playMechanicalClick(900, 0.04);
   if (file.type === "text/plain" || file.name.endsWith('.txt')) {
-    editor.innerText = await file.text(); updateTelemetry(); return;
+    editor.innerText = await file.text(); updateTelemetry(); syncInfoFromEditor(); return;
   }
-  if (!window.pdfjsLib) { alert(t('alertPdfjsMissing')); return; }
+  if (!window.pdfjsLib) { alert(t('alertPdfjsMissing')); return basicPdfScan(file); }
   try {
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -636,9 +748,25 @@ document.getElementById('pdfFileInput').addEventListener('change', async (e) => 
     }
     editor.innerText = fullText.trim();
     alert(t('alertExtractOk').replace('{n}', pdf.numPages).replace('{name}', file.name));
-    updateTelemetry();
-  } catch (err) { alert(t('alertPdfjsFail') + err.message); }
+    updateTelemetry(); syncInfoFromEditor();
+  } catch (err) { alert(t('alertPdfjsFail')); basicPdfScan(file); }
 });
+
+/* --- RESTORED: SYNC INFO FROM EDITOR --- */
+function syncInfoFromEditor() {
+  const text = editor.innerText || '';
+  text.split('\n').forEach(line => {
+    const t = line.trim(), tl = t.toLowerCase();
+    if (tl.startsWith('.meta title:')) document.getElementById('infoTitle').value = t.substring(12).trim();
+    else if (tl.startsWith('.meta author:')) document.getElementById('infoAuthor').value = t.substring(13).trim();
+    else if (tl.startsWith('.meta subject:')) document.getElementById('infoSubject').value = t.substring(14).trim();
+    else if (tl.startsWith('.meta keywords:')) document.getElementById('infoKeywords').value = t.substring(15).trim();
+    else if (tl.startsWith('.he ')) document.getElementById('docHeader').value = t.substring(4).trim();
+    else if (tl.startsWith('.fo ')) document.getElementById('docFooter').value = t.substring(4).trim();
+  });
+  document.getElementById('infoPages').textContent = document.getElementById('statPages').textContent;
+  document.getElementById('infoWords').textContent = document.getElementById('statWords').textContent;
+}
 
 let lastFindIndex = 0;
 document.getElementById('btnFindNext').addEventListener('click', () => {
@@ -671,13 +799,13 @@ document.getElementById('findInput').addEventListener('keydown', (e) => { if (e.
 document.getElementById('btnInfoToggle').addEventListener('click', () => {
   const panel = document.getElementById('infoPanel');
   panel.classList.toggle('visible');
-  document.getElementById('infoPages').textContent = document.getElementById('statPages').textContent;
-  document.getElementById('infoWords').textContent = document.getElementById('statWords').textContent;
+  syncInfoFromEditor();
   playMechanicalClick(800, 0.02);
 });
 
 editor.addEventListener('input', () => {
   updateTelemetry();
+  if (document.getElementById('infoPanel').classList.contains('visible')) syncInfoFromEditor();
   playMechanicalClick(420 + Math.random() * 80, 0.008);
 });
 
@@ -686,12 +814,12 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
   playMechanicalClick(1100, 0.04);
   if (!window.PDFLib || !window.fontkit) { alert(t('alertPdfLibMissing')); return; }
 
-  const headerText = document.getElementById('docHeader').value || "ACROHAT DOCUMENT";
-  const footerText = document.getElementById('docFooter').value || "PAGE %P%";
-  const title = document.getElementById('infoTitle').value.trim() || "acrohat Document";
-  const author = document.getElementById('infoAuthor').value.trim() || "System/370 Operator";
-  const subject = document.getElementById('infoSubject').value.trim() || "";
-  const keywords = document.getElementById('infoKeywords').value.trim() || "";
+  let headerText = document.getElementById('docHeader').value || "ACROHAT DOCUMENT";
+  let footerText = document.getElementById('docFooter').value || "PAGE %P%";
+  let title = document.getElementById('infoTitle').value.trim() || "acrohat Document";
+  let author = document.getElementById('infoAuthor').value.trim() || "System/370 Operator";
+  let subject = document.getElementById('infoSubject').value.trim() || "";
+  let keywords = document.getElementById('infoKeywords').value.trim() || "";
 
   const pageSize = document.getElementById('pageSizeSelect').value;
   let fontSize = parseInt(document.getElementById('exportFontSize').value, 10) || 11;
@@ -699,6 +827,7 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
   const rotVal = parseInt(document.querySelector('[data-knob="rot"]').dataset.val, 10) || 0;
   const kerningVal = parseFloat(document.querySelector('[data-knob="kerning"]').dataset.val) || 0;
   let marginPt = Math.max(36, Math.round(parseFloat(document.querySelector('[data-knob="margin"]').dataset.val) * 1.5) || 54);
+  let omitFooter = false;
 
   const ttfUrl = document.getElementById('fontSelect').selectedOptions[0].dataset.ttf;
   const isA4 = pageSize === 'a4';
@@ -719,17 +848,34 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
     return out.length ? out : [''];
   }
 
-  // Parse Editor DOM Nodes directly
+  // Parse Editor DOM Nodes: supports both Direct Optics & Legacy dot commands
   const documentPages = [[]];
   Array.from(editor.childNodes).forEach(node => {
     if (node.nodeType === Node.TEXT_NODE) {
       node.textContent.split('\n').forEach(line => {
         const trimmed = line.trim(), lower = trimmed.toLowerCase();
-        if (lower === '.pa') documentPages.push([]);
-        else if (lower === '.hr') documentPages[documentPages.length - 1].push('__HR__');
-        else if (lower.startsWith('.h1 ')) wrapLine(trimmed.substring(4), Math.floor(roughMax / 1.5)).forEach(h => documentPages[documentPages.length - 1].push(`__H1__:${h}`));
-        else if (lower.startsWith('.h2 ')) wrapLine(trimmed.substring(4), Math.floor(roughMax / 1.2)).forEach(h => documentPages[documentPages.length - 1].push(`__H2__:${h}`));
-        else if (trimmed) wrapLine(line, roughMax).forEach(w => documentPages[documentPages.length - 1].push(w));
+        if (lower.startsWith('.he ')) headerText = trimmed.substring(4).trim();
+        else if (lower.startsWith('.fo ')) footerText = trimmed.substring(4).trim();
+        else if (lower === '.op') omitFooter = true;
+        else if (lower.startsWith('.lm ')) {
+          const n = parseFloat(trimmed.substring(4).trim());
+          if (!isNaN(n) && n > 0) marginPt = Math.max(18, n);
+        } else if (lower.startsWith('.fs ')) {
+          const n = parseInt(trimmed.substring(4).trim(), 10);
+          if (!isNaN(n) && n >= 6 && n <= 36) fontSize = n;
+        } else if (lower.startsWith('.ig ') || lower.startsWith('..')) {
+          // Comment line
+        } else if (lower === '.pa') {
+          documentPages.push([]);
+        } else if (lower === '.hr') {
+          documentPages[documentPages.length - 1].push('__HR__');
+        } else if (lower.startsWith('.h1 ')) {
+          wrapLine(trimmed.substring(4), Math.floor(roughMax / 1.5)).forEach(h => documentPages[documentPages.length - 1].push(`__H1__:${h}`));
+        } else if (lower.startsWith('.h2 ')) {
+          wrapLine(trimmed.substring(4), Math.floor(roughMax / 1.2)).forEach(h => documentPages[documentPages.length - 1].push(`__H2__:${h}`));
+        } else if (trimmed) {
+          wrapLine(line, roughMax).forEach(w => documentPages[documentPages.length - 1].push(w));
+        }
       });
     } else if (node.classList && node.classList.contains('optics-wrapper')) {
       const img = node.querySelector('.optics-img');
@@ -743,7 +889,10 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
     } else if (node.innerText) {
       node.innerText.split('\n').forEach(line => {
         const trimmed = line.trim(), lower = trimmed.toLowerCase();
-        if (lower === '.pa') documentPages.push([]);
+        if (lower.startsWith('.he ')) headerText = trimmed.substring(4).trim();
+        else if (lower.startsWith('.fo ')) footerText = trimmed.substring(4).trim();
+        else if (lower === '.op') omitFooter = true;
+        else if (lower === '.pa') documentPages.push([]);
         else if (lower === '.hr') documentPages[documentPages.length - 1].push('__HR__');
         else if (lower.startsWith('.h1 ')) wrapLine(trimmed.substring(4), Math.floor(roughMax / 1.5)).forEach(h => documentPages[documentPages.length - 1].push(`__H1__:${h}`));
         else if (lower.startsWith('.h2 ')) wrapLine(trimmed.substring(4), Math.floor(roughMax / 1.2)).forEach(h => documentPages[documentPages.length - 1].push(`__H2__:${h}`));
@@ -827,12 +976,14 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
       }
     }
 
-    const allPages = pdfDoc.getPages(), totalPhysicalPages = allPages.length;
-    allPages.forEach((p, idx) => {
-      p.drawText(footerText.replace('%P%', `${idx + 1}/${totalPhysicalPages}`), {
-        x: marginPt, y: marginPt / 2, size: footerSize, font: customFont, color: rgb(0.2,0.2,0.2), characterSpacing: kerningVal
+    if (!omitFooter) {
+      const allPages = pdfDoc.getPages(), totalPhysicalPages = allPages.length;
+      allPages.forEach((p, idx) => {
+        p.drawText(footerText.replace('%P%', `${idx + 1}/${totalPhysicalPages}`), {
+          x: marginPt, y: marginPt / 2, size: footerSize, font: customFont, color: rgb(0.2,0.2,0.2), characterSpacing: kerningVal
+        });
       });
-    });
+    }
 
     pdfDoc.setTitle(title);
     pdfDoc.setAuthor(author);
