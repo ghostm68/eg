@@ -844,18 +844,60 @@
     <!-- LEFT SIDEBAR -->
     <aside class="symphony-sidebar" id="sidebar">
 
-      <!-- AI + NET PORTAL -->
-      <div class="sidebar-section" id="portalSection">
-        <div class="section-title">
-          <span>AI + NET PORTAL</span>
-          <span style="color:var(--yellow);">RESEARCH</span>
-        </div>
-        <div class="browser-controls">
-          <input type="text" id="browser-url" value="https://inkrealm.created.app/" />
-          <button id="browser-go" class="btn-action" onclick="loadBrowserUrl()">GO</button>
-        </div>
-        <iframe id="browser-frame" src="https://inkrealm.created.app/"></iframe>
-      </div>
+<!-- AI + NET PORTAL (DUAL PERSISTENT DECK // RED NIGHTS DEFAULT) -->
+<div class="sidebar-section" id="portalSection">
+  <div class="section-title">
+    <span>AI + NET PORTAL</span>
+    <span style="color:var(--yellow);">MULTI-DECK</span>
+  </div>
+
+  <!-- DECK SELECTOR -->
+  <div style="display:flex; gap:4px; margin-bottom:6px;">
+    <button 
+      type="button"
+      id="deck-btn-red" 
+      class="btn-panel active" 
+      style="flex:1; font-size:10px; padding:3px 2px; border-color:var(--red); color:var(--red);"
+      onclick="setPortalDeck('rednights')">
+      ● RED NIGHTS [FRONTIER]
+    </button>
+    <button 
+      type="button"
+      id="deck-btn-ink" 
+      class="btn-panel" 
+      style="flex:1; font-size:10px; padding:3px 2px;"
+      onclick="setPortalDeck('inkrealm')">
+      INKREALM [ANYTHING]
+    </button>
+  </div>
+
+  <!-- URL BAR -->
+  <div class="browser-controls">
+    <input 
+      type="text" 
+      id="browser-url" 
+      value="https://red-nights--wordstar.on.websim.com/" 
+      onkeydown="if(event.key==='Enter') loadBrowserUrl()" 
+    />
+    <button id="browser-go" class="btn-action" onclick="loadBrowserUrl()">GO</button>
+  </div>
+
+  <!-- DECK 1: RED NIGHTS (Active & visible by default) -->
+  <iframe 
+    id="browser-frame-red" 
+    src="https://red-nights--wordstar.on.websim.com/" 
+    allow="clipboard-read; clipboard-write"
+    style="width: 100%; height: 290px; border: 1px solid var(--border); background: #000; display: block;">
+  </iframe>
+
+  <!-- DECK 2: ANYTHING / INKREALM (Pre-loaded in background, state preserved) -->
+  <iframe 
+    id="browser-frame-ink" 
+    src="https://inkrealm.created.app/" 
+    allow="clipboard-read; clipboard-write; microphone"
+    style="width: 100%; height: 290px; border: 1px solid var(--border); background: #000; display: none;">
+  </iframe>
+</div>
 
       <!-- LEXICAL DICTIONARY -->
       <div class="sidebar-section" id="dictSection">
@@ -1189,13 +1231,70 @@
     }
 
     // PORTAL URL LOADER
-    function loadBrowserUrl() {
-      let url = browserUrl.value.trim();
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = 'https://' + url;
-      }
-      browserFrame.src = url;
+   // Defaults to Red Nights
+let currentActiveDeck = 'rednights';
+
+const DECK_URLS = {
+  rednights: 'https://red-nights--wordstar.on.websim.com/',
+  inkrealm: 'https://inkrealm.created.app/'
+};
+
+// 1. SWITCHING DECKS (Preserves sessions without reloading)
+function setPortalDeck(deck) {
+  const frameRed = document.getElementById('browser-frame-red');
+  const frameInk = document.getElementById('browser-frame-ink');
+  const btnRed = document.getElementById('deck-btn-red');
+  const btnInk = document.getElementById('deck-btn-ink');
+  const urlInput = document.getElementById('browser-url');
+
+  currentActiveDeck = deck;
+
+  if (deck === 'rednights') {
+    // Reveal Red Nights, hide Anything
+    frameInk.style.display = 'none';
+    frameRed.style.display = 'block';
+    btnRed.classList.add('active');
+    btnInk.classList.remove('active');
+    urlInput.value = DECK_URLS.rednights;
+
+    // Reset back to Red Nights if visitor had browsed to a custom URL
+    if (!frameRed.src.includes('websim.com')) {
+      frameRed.src = DECK_URLS.rednights;
     }
+  } else {
+    // Reveal Anything, hide Red Nights
+    frameRed.style.display = 'none';
+    frameInk.style.display = 'block';
+    btnInk.classList.add('active');
+    btnRed.classList.remove('active');
+    urlInput.value = DECK_URLS.inkrealm;
+
+    // Reset back to Anything if visitor had browsed to a custom URL
+    if (!frameInk.src.includes('created.app')) {
+      frameInk.src = DECK_URLS.inkrealm;
+    }
+  }
+}
+
+// 2. WHEN VISITORS PASTE THEIR OWN URL
+function loadBrowserUrl() {
+  const input = document.getElementById('browser-url');
+  let url = input.value.trim();
+  if (!url) return;
+
+  // Auto-prefix https:// if visitor forgets it
+  if (!/^https?:\/\//i.test(url)) {
+    url = 'https://' + url;
+    input.value = url;
+  }
+
+  // Load into whichever deck the visitor is currently looking at
+  const activeFrame = currentActiveDeck === 'rednights' 
+    ? document.getElementById('browser-frame-red') 
+    : document.getElementById('browser-frame-ink');
+
+  activeFrame.src = url;
+}
 
     // LEXICAL DICTIONARY QUERY
     const dictionaryUrls = [
