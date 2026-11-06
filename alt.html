@@ -762,12 +762,21 @@
     </div>
 </div>
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
   /* =====================================================
-     1. AUTO-UPGRADE "THE GREAT AI HUSTLE" TO SCROLL-DECODE
+     1. AXE THE MEMEX SECTION AUTOMATICALLY
+     ===================================================== */
+  document.querySelectorAll(".ed-section").forEach((sec) => {
+    if (sec.innerHTML.includes("VANNEVAR BUSH") || sec.querySelector("#trail-display")) {
+      sec.remove();
+    }
+  });
+
+  /* =====================================================
+     2. BUILD ARCHITECTURAL STORY BLOCKS + CIPHER DECODE
      ===================================================== */
   const glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789𓅈◬↯☼◈▲/";
-  
+
   function scramble(el) {
     if (el.dataset.busy === "1") return;
     el.dataset.busy = "1";
@@ -776,68 +785,109 @@
     const timer = setInterval(() => {
       el.innerText = target
         .split("")
-        .map((c, i) => (c === " " ? " " : i < iter ? target[i] : glyphs[Math.floor(Math.random() * glyphs.length)]))
+        .map((c, i) =>
+          c === " " ? " " : i < iter ? target[i] : glyphs[Math.floor(Math.random() * glyphs.length)]
+        )
         .join("");
       if (iter >= target.length) {
         clearInterval(timer);
         el.innerText = target;
         el.dataset.busy = "0";
       }
-      iter += 0.5;
+      iter += 0.45;
     }, 25);
   }
 
-  // Target either .story-node or existing paragraphs inside your story section
-  const storyParagraphs = document.querySelectorAll(".story-node, .ed-prose p");
-  
-  // Auto-wrap quoted or ALL-CAPS tech terms in red cipher spans
-  storyParagraphs.forEach((p, index) => {
-    p.classList.add("story-node");
-    p.setAttribute("data-line", String(index + 1).padStart(2, "0"));
-    
-    // Wrap ALL-CAPS words (3+ letters) in cipher-span if not already wrapped
-    if (!p.querySelector(".cipher-span")) {
-      p.innerHTML = p.innerHTML.replace(/\b([A-Z]{3,}(?:\.[A-Z]+)?)\b/g, '<span class="cipher-span" data-value="$1">$1</span>');
+  const fluidWrapper = document.querySelector("[data-fluid]");
+  const rawInput = document.querySelector("[data-fluid-input]");
+
+  if (fluidWrapper && rawInput) {
+    const rawText = rawInput.textContent.trim().replace(/\s+/g, " ");
+    // Split into readable narrative blocks (~3 sentences per block)
+    const sentences = rawText.match(/[^.!?]+[.!?]+/g) || [rawText];
+    const chunks = [];
+    for (let i = 0; i < sentences.length; i += 4) {
+      chunks.push(sentences.slice(i, i + 4).join(" ").trim());
     }
-  });
 
-  document.querySelectorAll(".cipher-span").forEach((span) => {
-    span.addEventListener("mouseenter", () => scramble(span));
-  });
+    const streamContainer = document.createElement("div");
+    streamContainer.className = "arch-story-stream";
 
-  function updateSpotlight() {
-    if (!storyParagraphs.length) return;
-    const center = window.innerHeight * 0.48;
-    let closest = null;
-    let minDist = Infinity;
-    let activeIdx = 0;
+    const highlightTerms = [
+      "Radio Shack",
+      "CRT monitor",
+      "FIND THE EXIT TO SUCCESS",
+      "FIND THE EXIT",
+      "Yahoo Answers",
+      "ARTIFICT.IO",
+      "CALIBRACAO",
+      "ARTIE",
+      "GPT-5",
+      "CEO-GPT",
+      "EmpathyBot",
+      "CodeLord",
+      "VisionPro",
+      "QuantumPredictor",
+      "EthicsGuard",
+      "500M valuation"
+    ];
 
-    storyParagraphs.forEach((p, i) => {
-      const rect = p.getBoundingClientRect();
-      const dist = Math.abs(center - (rect.top + rect.height / 2));
-      if (dist < minDist) {
-        minDist = dist;
-        closest = p;
-        activeIdx = i;
-      }
+    chunks.forEach((chunkText, idx) => {
+      const p = document.createElement("div");
+      p.className = "story-node";
+      p.setAttribute("data-line", String(idx + 1).padStart(2, "0"));
+
+      let html = chunkText;
+      highlightTerms.forEach((term) => {
+        const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "g");
+        html = html.replace(regex, `<span class="cipher-span" data-value="$1">$1</span>`);
+      });
+
+      p.innerHTML = html;
+      streamContainer.appendChild(p);
     });
 
-    storyParagraphs.forEach((p, i) => {
-      const wasActive = p.classList.contains("active-read");
-      p.classList.remove("active-read", "passed-read");
-      if (p === closest) {
-        p.classList.add("active-read");
-        if (!wasActive) {
-          p.querySelectorAll(".cipher-span").forEach((s) => scramble(s));
+    fluidWrapper.appendChild(streamContainer);
+
+    const storyNodes = streamContainer.querySelectorAll(".story-node");
+
+    streamContainer.querySelectorAll(".cipher-span").forEach((span) => {
+      span.addEventListener("mouseenter", () => scramble(span));
+    });
+
+    function updateSpotlight() {
+      const center = window.innerHeight * 0.48;
+      let closest = null;
+      let minDist = Infinity;
+      let activeIdx = 0;
+
+      storyNodes.forEach((node, i) => {
+        const rect = node.getBoundingClientRect();
+        const dist = Math.abs(center - (rect.top + rect.height / 2));
+        if (dist < minDist) {
+          minDist = dist;
+          closest = node;
+          activeIdx = i;
         }
-      } else if (i < activeIdx) {
-        p.classList.add("passed-read");
-      }
-    });
-  }
+      });
 
-  window.addEventListener("scroll", updateSpotlight, { passive: true });
-  updateSpotlight();
+      storyNodes.forEach((node, i) => {
+        const wasActive = node.classList.contains("active-read");
+        node.classList.remove("active-read", "passed-read");
+        if (node === closest) {
+          node.classList.add("active-read");
+          if (!wasActive) {
+            node.querySelectorAll(".cipher-span").forEach((s) => scramble(s));
+          }
+        } else if (i < activeIdx) {
+          node.classList.add("passed-read");
+        }
+      });
+    }
+
+    window.addEventListener("scroll", updateSpotlight, { passive: true });
+    setTimeout(updateSpotlight, 200);
+  }
 });
 </script>
 
