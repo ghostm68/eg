@@ -1,0 +1,312 @@
+/* ==========================================================================
+   WORDSTAR.NEXUS // ARCHITECTURAL BLUEPRINT ENGINE (arch-v6.css)
+   Loads AFTER 517.css & ed-custom.css
+   ========================================================================== */
+
+:root {
+  --arch-bg: #070707;
+  --arch-surface: #0c0c0c;
+  --arch-surface-hover: #131313;
+  --arch-line: #222222;
+  --arch-line-bright: #3a3a3a;
+  --arch-red: #ff0033; /* Citadelle Red Accent */
+  --arch-text: #f2f2f2;
+  --arch-muted: #7a7a7a;
+  --arch-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 1. KILL VHS RED FLASH & SCANLINE OVERLAYS */
+body::before,
+body::after,
+#crt-overlay {
+  display: none !important;
+  animation: none !important;
+  background: none !important;
+}
+
+/* 2. AXE THE MEMEX (Safe CSS kill-switch until you delete its HTML/JS) */
+#memex,
+.memex-container,
+.microfilm-deck,
+[id*="memex"] {
+  display: none !important;
+}
+
+/* 3. UNIFY GLOBAL CONTAINER (Override 517.css 600px tunnel) */
+body {
+  background-color: var(--arch-bg) !important;
+  color: var(--arch-text);
+  overflow-x: hidden;
+}
+
+main,
+.arch-shell {
+  max-width: 1320px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  border-left: 1px solid var(--arch-line);
+  border-right: 1px solid var(--arch-line);
+  background: var(--arch-bg);
+}
+
+/* ==========================================================================
+   4. PLUG-AND-PLAY MODULAR GRID SYSTEM (Add new sections anytime)
+   Usage: <section class="arch-row arch-cols-2"> ... <div class="arch-cell">
+   ========================================================================== */
+.arch-row {
+  display: grid;
+  width: 100%;
+  border-bottom: 1px solid var(--arch-line);
+  position: relative;
+  background: var(--arch-line); /* Creates crisp 1px internal borders via gap */
+  gap: 1px;
+}
+
+/* Column Variants */
+.arch-cols-1 { grid-template-columns: 1fr; }
+.arch-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.arch-cols-3 { grid-template-columns: repeat(3, 1fr); }
+.arch-cols-4 { grid-template-columns: repeat(4, 1fr); }
+.arch-cols-sidebar { grid-template-columns: 320px 1fr; }
+.arch-cols-hero { grid-template-columns: 1.8fr 1fr; }
+
+.arch-cell {
+  background: var(--arch-bg);
+  padding: 36px 32px;
+  position: relative;
+  min-width: 0; /* Prevents canvas/pre overflow on mobile */
+  transition: background 0.25s ease;
+}
+
+.arch-cell.interactive:hover {
+  background: var(--arch-surface-hover);
+}
+
+/* Red Technical Section Bar */
+.arch-bar {
+  background: var(--arch-surface);
+  border-bottom: 1px solid var(--arch-line);
+  padding: 12px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Geist Mono', 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--arch-muted);
+  position: relative;
+}
+
+.arch-bar .accent-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--arch-red);
+  margin-right: 8px;
+  box-shadow: 0 0 8px var(--arch-red);
+}
+
+/* Corner Crosshairs (+) with Red Accent option */
+.arch-row::before,
+.arch-row::after {
+  content: "+";
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--arch-red);
+  position: absolute;
+  top: 0;
+  z-index: 15;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+.arch-row::before { left: 0; }
+.arch-row::after { left: 100%; }
+
+/* ==========================================================================
+   5. DOCKED ARCHITECTURAL HEADER (Replaces floating corner collisions)
+   ========================================================================== */
+.arch-header {
+  position: sticky;
+  top: 0;
+  z-index: 1200;
+  max-width: 1320px;
+  margin: 0 auto;
+  background: rgba(7, 7, 7, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--arch-line);
+  border-top: none;
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  min-height: 54px;
+}
+
+.arch-header-item {
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  border-right: 1px solid var(--arch-line);
+  font-family: 'Geist Mono', 'Space Mono', monospace;
+  font-size: 12px;
+  gap: 10px;
+}
+
+.arch-header-item:last-child {
+  border-right: none;
+  padding: 0;
+}
+
+/* Slide-up button inside header */
+.arch-trigger-btn {
+  width: 100%;
+  height: 100%;
+  min-height: 54px;
+  background: transparent;
+  color: var(--arch-text);
+  border: none;
+  padding: 0 24px;
+  font-family: 'Geist Mono', 'Space Mono', monospace;
+  font-size: 12px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.3s var(--arch-ease);
+}
+
+.arch-trigger-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--arch-red);
+  transform: translateY(101%);
+  transition: transform 0.35s var(--arch-ease);
+  z-index: 0;
+}
+
+.arch-trigger-btn:hover::before {
+  transform: translateY(0);
+}
+
+.arch-trigger-btn span {
+  position: relative;
+  z-index: 1;
+}
+
+/* ==========================================================================
+   6. SLIDE-UP CINEMA DRAWER (Overrides 517.css left-slide seamlessly)
+   ========================================================================== */
+#cinema-drawer {
+  position: fixed !important;
+  top: auto !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  max-height: 86vh !important;
+  background: #080808 !important;
+  border-top: 2px solid var(--arch-red) !important;
+  z-index: 2500 !important;
+  transform: translateY(104%) !important;
+  transition: transform 0.6s var(--arch-ease) !important;
+  box-shadow: 0 -24px 80px rgba(0, 0, 0, 0.95) !important;
+  overflow-y: auto !important;
+  padding: 0 !important;
+}
+
+/* Works whether your JS toggles a class OR sets inline style="left: 0px" */
+#cinema-drawer.open,
+#cinema-drawer.active,
+#cinema-drawer[style*="left: 0"] {
+  transform: translateY(0%) !important;
+}
+
+/* ==========================================================================
+   7. STORY SCROLL-SPOTLIGHT & RED CIPHER TOKENS
+   ========================================================================== */
+[data-fluid] {
+  column-count: 1 !important; /* Overrides 2-col newspaper layout */
+}
+
+.story-node {
+  font-size: clamp(1.05rem, 1.4vw, 1.22rem);
+  line-height: 1.75;
+  margin-bottom: 32px;
+  padding-left: 20px;
+  border-left: 2px solid transparent;
+  opacity: 0.18;
+  transform: translateY(4px);
+  transition: opacity 0.5s var(--arch-ease),
+              transform 0.5s var(--arch-ease),
+              border-color 0.3s ease;
+  position: relative;
+}
+
+.story-node.active-read {
+  opacity: 1;
+  transform: translateY(0);
+  border-left-color: var(--arch-red);
+}
+
+.story-node.passed-read {
+  opacity: 0.45;
+  transform: translateY(0);
+}
+
+.cipher-span {
+  font-family: 'Geist Mono', 'Space Mono', monospace;
+  font-size: 0.9em;
+  color: var(--arch-text);
+  background: rgba(255, 0, 51, 0.08);
+  border: 1px solid rgba(255, 0, 51, 0.4);
+  padding: 1px 6px;
+  cursor: crosshair;
+  display: inline-block;
+}
+
+/* ==========================================================================
+   8. BULLETPROOF MOBILE RESPONSIVENESS
+   ========================================================================== */
+@media (max-width: 960px) {
+  .arch-cols-4 { grid-template-columns: repeat(2, 1fr); }
+  .arch-cols-3 { grid-template-columns: repeat(2, 1fr); }
+  .arch-cols-hero,
+  .arch-cols-sidebar { grid-template-columns: 1fr; }
+  
+  .arch-header {
+    grid-template-columns: auto 1fr auto;
+  }
+  .hide-tablet { display: none !important; }
+}
+
+@media (max-width: 640px) {
+  .arch-cols-4,
+  .arch-cols-3,
+  .arch-cols-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .arch-cell {
+    padding: 24px 18px;
+  }
+
+  .arch-bar {
+    padding: 10px 18px;
+    font-size: 10px;
+  }
+
+  .arch-header {
+    grid-template-columns: 1fr auto;
+  }
+
+  .hide-mobile { display: none !important; }
+
+  #cinema-drawer {
+    max-height: 92vh !important;
+  }
+}
