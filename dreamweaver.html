@@ -666,20 +666,24 @@
             }
         }
 
-        // 3. FETCH THE DREAMWEAVER.TXT AUTOMATICALLY
+      // 3. FETCH DREAMWEAVER-CURRENT.TXT + DREAMWEAVER.TXT AUTOMATICALLY
         const textContainer = document.getElementById('dreamweaver-text-container');
-        fetch('https://wordstar.nexus/dreamweaver.txt')
-            .then(response => {
-                if (!response.ok) throw new Error("NETWORK_RESPONSE_ERROR");
-                return response.text();
-            })
-            .then(data => {
-                textContainer.textContent = data; 
-            })
-            .catch(error => {
-                textContainer.textContent = "SYSTEM_ERROR: UNABLE TO ESTABLISH LINK.\n\n" + error;
-            });
+        const currentUrl = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/dreamweaver-current.txt';
+        const archiveUrl = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/dreamweaver.txt';
 
+        Promise.all([
+            fetch(currentUrl).then(r => r.ok ? r.text() : ''),
+            fetch(archiveUrl).then(r => r.ok ? r.text() : '')
+        ])
+        .then(([currentText, archiveText]) => {
+            const combined = [currentText.trim(), archiveText.trim()].filter(Boolean).join('\n\n');
+            if (!combined) throw new Error("NETWORK_RESPONSE_ERROR");
+            textContainer.textContent = combined;
+        })
+        .catch(error => {
+            textContainer.textContent = "SYSTEM_ERROR: UNABLE TO ESTABLISH LINK.\n\n" + error;
+        });
+     
         // 4. TRIANGLE SLIDESHOW LOGIC
         const imageUrls =[
             
