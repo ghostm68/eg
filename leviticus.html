@@ -2,963 +2,2141 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>v/ARTIST · Anagram Atelier // Wordstar Nexus</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Wordstar PDA · v/ARTIST Anagram Atelier // Leviticus</title>
   <style>
     :root {
+      --pda-bg: #c4ccbf;
+      --pda-dark: #1d211b;
+      --pda-border: #7d8579;
+      --pda-card: #d3dbcf;
+      --pda-well: #bac3b4;
+      --pda-btn-bevel: #eef5ea;
+      --pda-highlight: #465340;
+      --ink-color: #1d211b;
       --red: #ff0033;
-      --red-glow: rgba(255, 0, 51, 0.25);
-      --black: #080808;
-      --grey-dark: #0f0f10;
-      --grey-panel: #131315;
-      --grey-mid: #1d1d20;
-      --border: #28282c;
-      --white: #f5f5f7;
-      --muted: #7e7e88;
-      --ok: #ffff00;
-      --ok-bg: rgba(255, 255, 0, 0.12);
+      --red-soft: rgba(255, 0, 51, 0.16);
+      --black: #0a0a0a;
+      --healer: #1b5e3a;
+      --healer-bg: rgba(27, 94, 58, 0.14);
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
+    body.backlight-night {
+      --pda-bg: #121712;
+      --pda-dark: #c9d6c1;
+      --pda-border: #3d4a3a;
+      --pda-card: #1a2119;
+      --pda-well: #0d110d;
+      --pda-btn-bevel: #2a3429;
+      --pda-highlight: #394b35;
+      --ink-color: #c9d6c1;
+      --red: #ff0033;
+      --red-soft: rgba(255, 0, 51, 0.22);
+      --healer: #d4ff00;
+      --healer-bg: rgba(212, 255, 0, 0.12);
     }
 
     ::selection {
       background: var(--red);
       color: var(--black);
+      text-shadow: none;
     }
-    * { scrollbar-width: thin; scrollbar-color: var(--red) var(--grey-dark); }
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--grey-panel); }
-::-webkit-scrollbar-thumb { background: var(--red); border-radius: 2px; }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      scrollbar-width: thin;
+      scrollbar-color: var(--pda-dark) var(--pda-bg);
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--pda-bg); }
+    ::-webkit-scrollbar-thumb { background: var(--pda-dark); border-radius: 1px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--red); }
 
     body {
-      font-family: "SF Mono", "Fira Code", "Consolas", "Courier New", monospace;
-      background: var(--black);
-      color: var(--white);
-      min-height: 100vh;
+      background-color: #1c1d1b;
+      font-family: -apple-system, "Chicago", "Geneva", "SF Mono", "Courier New", monospace;
+      margin: 0;
+      padding: 8px;
       display: flex;
-      flex-direction: column;
-      font-size: 12px;
-      line-height: 1.45;
-      overflow-x: hidden;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: var(--pda-dark);
     }
 
-    header {
-      background: var(--grey-dark);
-      border-bottom: 1px solid var(--border);
-      padding: 0.6rem 1.25rem;
+    #pda-chassis {
+      width: 100%;
+      max-width: 980px;
+      background: linear-gradient(145deg, #4a4e49, #2a2e29);
+      border-radius: 18px;
+      padding: 15px 14px 12px;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.92), inset 0 3px 5px #666, inset 0 -2px 4px #111;
+      border: 3px solid #1a1c18;
+      position: relative;
+    }
+
+    #pda-chassis::before {
+      content: "WORDSTAR · LEVITICUS ATELIER";
+      position: absolute;
+      top: 3px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 9px;
+      letter-spacing: 3px;
+      color: #939990;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    #pda-screen {
+      background-color: var(--pda-bg);
+      border: 3px solid var(--pda-dark);
+      border-radius: 8px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      box-shadow: inset 2px 2px 6px rgba(0,0,0,0.38);
+      min-height: 560px;
+      transition: background-color 0.15s, color 0.15s;
+    }
+
+    /* Title Bar */
+    .title-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      border-bottom: 2px solid var(--pda-dark);
+      padding-bottom: 4px;
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 0.4px;
       flex-wrap: wrap;
-      gap: 0.6rem;
-      z-index: 10;
+      gap: 6px;
     }
-    .brand-title {
-      font-size: 1rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      color: var(--red);
+
+    #folio-name {
+      background: transparent;
+      border: 1px dashed transparent;
+      font-weight: bold;
+      font-family: inherit;
+      font-size: 11px;
+      width: 135px;
+      color: inherit;
+      outline: none;
+      padding: 1px 3px;
+    }
+    #folio-name:focus {
+      border-color: var(--pda-dark);
+      background: var(--pda-card);
+    }
+
+    .sys-info {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 10px;
+      font-size: 10px;
+      flex-wrap: wrap;
     }
-    .brand-title span {
-      font-size: 0.65rem;
-      color: var(--muted);
-      letter-spacing: 0.15em;
-      font-weight: normal;
-      text-transform: uppercase;
+
+    .status-pill {
+      padding: 1px 5px;
+      border: 1px solid var(--pda-dark);
+      background: var(--pda-card);
+      font-weight: bold;
     }
-    .header-telemetry {
+    .status-pill.overdrawn {
+      background: var(--red);
+      color: #fff;
+      border-color: var(--red);
+    }
+
+    /* Tabs */
+    .tab-bar {
       display: flex;
-      gap: 1.2rem;
-      font-size: 0.7rem;
-      color: var(--muted);
+      gap: 3px;
+      border-bottom: 1px solid var(--pda-dark);
+      padding-bottom: 4px;
     }
-    .header-telemetry strong { color: var(--white); }
 
-    .workbench {
+    .tab-btn {
       flex: 1;
-      display: grid;
-      grid-template-columns: 310px 1fr 320px;
-      gap: 1px;
-      background: var(--border);
-      min-height: calc(100vh - 75px);
+      background: var(--pda-card);
+      color: var(--pda-dark);
+      border: 1px solid var(--pda-dark);
+      border-bottom-color: #555;
+      border-right-color: #555;
+      font-family: inherit;
+      font-size: 10px;
+      padding: 6px 4px;
+      cursor: pointer;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      transition: all 0.1s;
     }
 
-    @media (max-width: 1024px) {
-      .workbench { grid-template-columns: 280px 1fr; }
-      .panel-radar { grid-column: 1 / -1; }
+    .tab-btn:hover {
+      border-color: var(--red);
     }
-    @media (max-width: 768px) {
-      .workbench { grid-template-columns: 1fr; }
+
+    .tab-btn.active {
+      background: var(--pda-dark);
+      color: var(--pda-bg);
+      border-color: var(--pda-dark);
+    }
+
+    /* Workspace Container */
+    #workspace {
+      position: relative;
+      background: var(--pda-card);
+      border: 1px solid var(--pda-dark);
+      min-height: 430px;
+      height: 58vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
     .panel {
-      background: var(--grey-panel);
-      display: flex;
+      display: none;
+      width: 100%;
+      height: 100%;
       flex-direction: column;
       overflow: hidden;
     }
 
-    .panel-head {
-      background: var(--grey-dark);
-      padding: 0.5rem 0.85rem;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.65rem;
+    .panel.active {
+      display: flex;
+    }
+
+    /* === TAB 1: ATELIER (SOURCE + SPLIT CANVAS & RADAR) === */
+    .source-deck {
+      background: var(--pda-well);
+      border-bottom: 2px solid var(--pda-dark);
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .source-input-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .source-label {
+      font-size: 9px;
+      font-weight: bold;
       text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--muted);
+      letter-spacing: 0.6px;
+      white-space: nowrap;
+    }
+
+    #sourceInput {
+      flex: 1;
+      background: var(--pda-card);
+      border: 1px solid var(--pda-dark);
+      padding: 4px 7px;
+      font-family: "Courier New", monospace;
+      font-size: 12px;
+      font-weight: bold;
+      color: var(--pda-dark);
+      outline: none;
+    }
+    #sourceInput:focus {
+      outline: 2px solid var(--red);
+    }
+
+    .vowel-mini-meter {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+    .vowel-mini-track {
+      width: 64px;
+      height: 8px;
+      background: var(--pda-card);
+      border: 1px solid var(--pda-dark);
+      position: relative;
+      overflow: hidden;
+    }
+    .vowel-mini-target {
+      position: absolute;
+      left: 45%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--red);
+      z-index: 2;
+    }
+    .vowel-mini-fill {
+      height: 100%;
+      background: var(--pda-dark);
+      width: 0%;
+      transition: width 0.15s;
+    }
+    .vowel-mini-fill.danger {
+      background: var(--red);
+    }
+
+    /* Interactive Letter Strip */
+    .tile-strip-wrap {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+      min-height: 24px;
+    }
+
+    .pda-tile {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+      min-width: 24px;
+      height: 21px;
+      padding: 0 3px;
+      background: var(--pda-card);
+      border: 1px solid var(--pda-dark);
+      border-right-width: 2px;
+      border-bottom-width: 2px;
+      font-size: 10px;
+      font-weight: bold;
+      color: var(--pda-dark);
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.08s;
+    }
+    .pda-tile:hover {
+      border-color: var(--red);
+      transform: translateY(-1px);
+    }
+    .pda-tile.vowel {
+      background: var(--pda-btn-bevel);
+      border-bottom-color: var(--red);
+    }
+    .pda-tile.depleted {
+      opacity: 0.22;
+      cursor: default;
+      transform: none;
+    }
+    .pda-tile.overdrawn {
+      opacity: 1 !important;
+      background: var(--red) !important;
+      color: #fff !important;
+      border-color: var(--black) !important;
+    }
+    .pda-tile.preview-hit {
+      background: var(--healer-bg);
+      border-color: var(--healer);
+    }
+    .pda-tile sub {
+      font-size: 8px;
+      opacity: 0.85;
+    }
+    .tile-divider {
+      width: 2px;
+      height: 16px;
+      background: var(--pda-border);
+      margin: 0 2px;
+    }
+
+    /* Atelier Split Body */
+    .atelier-split {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      overflow: hidden;
+    }
+
+    @media (max-width: 720px) {
+      #workspace { height: auto; min-height: 540px; }
+      .atelier-split { grid-template-columns: 1fr; }
+    }
+
+    .canvas-pane {
+      display: flex;
+      flex-direction: column;
+      border-right: 2px solid var(--pda-dark);
+      overflow: hidden;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 23px,
+        rgba(0,0,0,0.06) 24px
+      );
+    }
+
+    .pane-subhead {
+      background: var(--pda-bg);
+      border-bottom: 1px solid var(--pda-dark);
+      padding: 4px 8px;
+      font-size: 9px;
+      font-weight: bold;
+      text-transform: uppercase;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 4px;
     }
-    .panel-head .title-tag { color: var(--white); font-weight: 600; }
-    .panel-body {
+
+    #compositionCanvas {
       flex: 1;
-      overflow-y: auto;
-      padding: 0.85rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.9rem;
-    }
-
-    input[type="text"], textarea, select {
-      background: var(--grey-dark);
-      border: 1px solid var(--border);
-      color: var(--white);
-      padding: 0.5rem 0.65rem;
-      font: inherit;
-      border-radius: 2px;
       width: 100%;
-    }
-    input:focus, textarea:focus, select:focus {
-      outline: none;
-      border-color: var(--red);
-    }
-
-    button {
-      background: var(--grey-dark);
-      border: 1px solid var(--border);
-      color: var(--white);
-      padding: 0.35rem 0.75rem;
-      font: inherit;
-      font-size: 0.7rem;
-      cursor: pointer;
-      border-radius: 2px;
-      transition: all 0.15s;
-    }
-    button:hover { border-color: var(--red); color: var(--red); }
-    button.primary {
-      background: var(--red);
-      border-color: var(--red);
-      color: var(--black);
+      background: transparent;
+      border: none;
+      padding: 8px 10px;
+      font-family: "Courier New", monospace;
+      font-size: 14px;
       font-weight: bold;
+      line-height: 24px;
+      color: var(--pda-dark);
+      resize: none;
+      outline: none;
     }
-    button.primary:hover { background: #ff2244; color: var(--black); }
 
-    .meter-block {
-      background: var(--grey-dark);
-      border: 1px solid var(--border);
-      padding: 0.65rem;
+    /* Overdraw Alert Bar */
+    .overdraw-banner {
+      display: none;
+      background: var(--red);
+      color: #fff;
+      padding: 3px 8px;
+      font-size: 10px;
+      font-weight: bold;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .overdraw-banner.visible {
+      display: flex;
+    }
+
+    /* Shuffleable Remainder Tray */
+    .remainder-tray {
+      background: var(--pda-well);
+      border-top: 1px solid var(--pda-dark);
+      padding: 5px 8px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .rem-tokens {
+      flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      align-items: center;
+      min-height: 20px;
+    }
+
+    .rem-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 19px;
+      background: var(--pda-card);
+      border: 1px solid var(--pda-dark);
+      font-family: "Courier New", monospace;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
+    }
+    .rem-chip.vowel {
+      border-bottom: 2px solid var(--red);
+    }
+    .rem-chip:hover {
+      background: var(--red);
+      color: #fff;
+    }
+
+    /* Right Split: Heuristic Steering Radar */
+    .radar-pane {
       display: flex;
       flex-direction: column;
-      gap: 0.35rem;
+      overflow: hidden;
+      background: var(--pda-card);
     }
-    .meter-label {
+
+    .radar-controls {
+      background: var(--pda-well);
+      border-bottom: 1px solid var(--pda-dark);
+      padding: 5px 7px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .radar-filter-strip {
+      display: flex;
+      gap: 4px;
+      padding: 4px 7px;
+      background: var(--pda-bg);
+      border-bottom: 1px solid var(--pda-border);
+      align-items: center;
+    }
+    .radar-filter-strip input {
+      flex: 1;
+      min-width: 0;
+      background: var(--pda-card);
+      border: 1px solid var(--pda-dark);
+      padding: 2px 5px;
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: bold;
+      color: var(--pda-dark);
+    }
+    .radar-filter-strip input:focus {
+      outline: 1px solid var(--red);
+    }
+
+    /* Rotary Knob */
+    .knob-container {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .knob {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 40%, var(--pda-btn-bevel), var(--pda-border));
+      border: 2px solid var(--pda-dark);
+      position: relative;
+      cursor: ns-resize;
+      box-shadow: inset 1px 1px 2px rgba(255,255,255,0.4), 0 1px 2px rgba(0,0,0,0.3);
+      user-select: none;
+      touch-action: none;
+    }
+
+    .knob::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 50%;
+      width: 2px;
+      height: 7px;
+      background: var(--red);
+      border-radius: 1px;
+      transform-origin: center 10px;
+      transform: translateX(-50%) rotate(var(--knob-angle, 0deg));
+    }
+
+    .knob-label {
+      font-size: 9px;
+      font-weight: bold;
+      line-height: 1.1;
+    }
+
+    /* Endgame Auto-Closeout Box */
+    .endgame-strip {
+      display: none;
+      background: var(--healer-bg);
+      border-bottom: 2px solid var(--pda-dark);
+      padding: 5px 7px;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .endgame-strip.visible {
+      display: flex;
+    }
+    .endgame-head {
       display: flex;
       justify-content: space-between;
-      font-size: 0.65rem;
-      color: var(--muted);
+      align-items: center;
+      font-size: 9px;
+      font-weight: bold;
+      text-transform: uppercase;
+      color: var(--healer);
+    }
+    .endgame-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      max-height: 68px;
+      overflow-y: auto;
+    }
+    .endgame-pill {
+      background: var(--pda-card);
+      border: 1px solid var(--pda-dark);
+      padding: 2px 6px;
+      font-size: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      color: var(--pda-dark);
+    }
+    .endgame-pill:hover {
+      background: var(--red);
+      color: #fff;
+      border-color: var(--red);
+    }
+
+    /* Word Suggestions Stream */
+    .radar-stream {
+      flex: 1;
+      overflow-y: auto;
+      padding: 5px 7px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+      gap: 4px;
+      align-content: start;
+    }
+
+    .sug-card {
+      background: var(--pda-bg);
+      border: 1px solid var(--pda-dark);
+      padding: 4px 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: bold;
+      user-select: none;
+      transition: all 0.08s;
+    }
+    .sug-card:hover {
+      background: var(--red);
+      color: #fff;
+      border-color: var(--black);
+      transform: translateY(-1px);
+    }
+    .sug-card.healer {
+      border-left: 3px solid var(--healer);
+    }
+    .sug-card.exact {
+      background: var(--healer-bg);
+      border: 2px solid var(--healer);
+    }
+    .sug-tag {
+      font-size: 8px;
+      opacity: 0.75;
+      font-weight: normal;
+    }
+
+    /* === TAB 2: LOOM HUD & PROSE LENS === */
+    #hud-panel {
+      padding: 10px;
+      overflow-y: auto;
+      font-size: 11px;
+      gap: 8px;
+    }
+
+    .hud-metric-box {
+      background: rgba(0,0,0,0.05);
+      border: 1px solid var(--pda-border);
+      padding: 7px 9px;
+      border-radius: 2px;
+    }
+
+    .hud-metric-title {
+      font-weight: bold;
+      font-size: 10px;
+      border-bottom: 1px solid var(--pda-border);
+      padding-bottom: 3px;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
       text-transform: uppercase;
     }
-    .meter-bar-track {
-      height: 6px;
-      background: var(--grey-mid);
-      border-radius: 2px;
-      overflow: hidden;
-      position: relative;
-    }
-    .meter-bar-fill {
-      height: 100%;
-      width: 0%;
-      background: var(--ok);
-      transition: width 0.2s, background 0.2s;
-    }
-    .meter-bar-fill.danger { background: var(--red); }
 
     .histogram-grid {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 0.3rem;
+      grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+      gap: 4px;
     }
+
     .hist-card {
-      background: var(--grey-dark);
-      border: 1px solid var(--border);
-      padding: 0.25rem 0.3rem;
+      background: var(--pda-card);
+      border: 1px solid var(--pda-dark);
+      padding: 3px 4px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      position: relative;
-      user-select: none;
-      transition: border-color 0.15s;
+      cursor: pointer;
     }
     .hist-card.vowel { border-bottom: 2px solid var(--red); }
-    .hist-card .ch { font-size: 0.85rem; font-weight: 700; color: var(--white); }
-    .hist-card .ct { font-size: 0.65rem; color: var(--muted); }
-    .hist-card.depleted { opacity: 0.2; }
-    .hist-card.excess { border-color: var(--ok); }
-    .hist-card.excess .ct { color: var(--ok); }
+    .hist-card.depleted { opacity: 0.25; }
+    .hist-card.excess { outline: 2px solid var(--red); }
 
-    .canvas-area {
-      flex: 1;
+    #cadence-stream {
       display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
+      gap: 3px;
+      align-items: flex-end;
+      height: 38px;
+      background: rgba(0,0,0,0.05);
+      padding: 4px;
+      border: 1px solid var(--pda-border);
+      overflow-x: auto;
     }
-    #compositionCanvas {
-      flex: 1;
-      min-height: 280px;
-      resize: none;
-      font-size: 0.95rem;
-      line-height: 1.65;
-      background: #0b0b0d;
-      border: 1px solid var(--border);
-      padding: 0.85rem;
-      color: #fff;
-    }
-    .canvas-telemetry {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.4rem 0.6rem;
-      background: var(--grey-dark);
-      border: 1px solid var(--border);
-      font-size: 0.7rem;
-    }
-    .remainder-string {
-      background: #000;
-      border: 1px solid var(--border);
-      padding: 0.45rem 0.65rem;
-      font-size: 0.75rem;
-      color: var(--ok);
-      letter-spacing: 0.08em;
-      min-height: 2.2rem;
-      display: flex;
-      align-items: center;
-      word-break: break-all;
+    .rhythm-bar {
+      background: var(--pda-dark);
+      min-width: 8px;
+      border-radius: 1px 1px 0 0;
+      flex-shrink: 0;
     }
 
-    .radar-filters {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.4rem;
+    /* === TAB 3: INK PAD === */
+    #sketch-panel {
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 19px,
+        rgba(0,0,0,0.09) 20px
+      );
+      touch-action: none;
+      position: relative;
     }
-    .suggestion-item {
+    #ink-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: crosshair;
+    }
+    .ink-tools {
+      position: absolute;
+      bottom: 6px;
+      left: 6px;
+      right: 6px;
       display: flex;
-      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 4px;
+      background: var(--pda-card);
+      border: 1px solid var(--pda-dark);
+      padding: 4px 6px;
+      border-radius: 3px;
       align-items: center;
-      padding: 0.4rem 0.65rem;
-      background: var(--grey-dark);
-      border: 1px solid var(--border);
-      border-left: 2px solid transparent;
+    }
+
+    /* === TAB 4: FOLIOS & LEXICON === */
+    #notes-panel {
+      padding: 10px;
+      overflow-y: auto;
+      gap: 10px;
+    }
+
+    .notes-list {
+      max-height: 180px;
+      overflow-y: auto;
+      font-size: 10px;
+      border: 1px solid var(--pda-dark);
+      background: var(--pda-bg);
+    }
+
+    .note-item {
+      padding: 5px 8px;
+      border-bottom: 1px solid var(--pda-border);
       cursor: pointer;
-      transition: all 0.15s;
-    }
-    .suggestion-item:hover {
-      border-left-color: var(--red);
-      background: var(--grey-mid);
-      transform: translateX(2px);
-    }
-    .suggestion-item .w-name { font-size: 0.85rem; font-weight: 600; letter-spacing: 0.04em; }
-    .suggestion-item .w-badge {
-      font-size: 0.6rem;
-      padding: 0.1rem 0.35rem;
-      background: var(--grey-mid);
-      color: var(--muted);
-      border-radius: 2px;
-    }
-    .suggestion-item.healer { border-left-color: var(--ok); }
-    .suggestion-item.healer .w-badge { color: var(--ok); background: var(--ok-bg); }
-
-    .endgame-box {
-      border: 1px solid var(--red);
-      background: rgba(255, 0, 51, 0.06);
-      padding: 0.65rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-    }
-    .endgame-header {
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      color: var(--red);
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    footer {
-      background: var(--black);
-      border-top: 1px solid var(--border);
-      padding: 0.45rem 1rem;
-      font-size: 0.65rem;
-      color: var(--muted);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    footer a { color: var(--red); text-decoration: none; }
+    .note-item:hover { background: rgba(0,0,0,0.08); }
+    .note-item.active { background: var(--pda-dark); color: var(--pda-bg); font-weight: bold; }
+
+    /* Bottom Bar & PDA Controls */
+    .bottom-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      justify-content: space-between;
+      border-top: 2px solid var(--pda-dark);
+      padding-top: 6px;
+      align-items: center;
+    }
+
+    button.pda-btn, select.pda-select, input.pda-input {
+      background: var(--pda-card);
+      border: 1px solid var(--pda-dark);
+      border-right-width: 2px;
+      border-bottom-width: 2px;
+      font-family: inherit;
+      font-size: 10px;
+      padding: 4px 7px;
+      cursor: pointer;
+      font-weight: bold;
+      color: var(--pda-dark);
+    }
+    button.pda-btn:hover, select.pda-select:hover {
+      border-color: var(--red);
+      color: var(--red);
+    }
+    button.pda-btn.primary {
+      background: var(--pda-dark);
+      color: var(--pda-bg);
+    }
+    button.pda-btn.primary:hover {
+      background: var(--red);
+      color: #fff;
+      border-color: var(--black);
+    }
+
+    .pda-footer-links {
+      display: flex;
+      justify-content: space-between;
+      font-size: 9px;
+      padding-top: 2px;
+      opacity: 0.8;
+    }
+    .pda-footer-links a {
+      color: var(--pda-dark);
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .pda-footer-links a:hover {
+      color: var(--red);
+      text-decoration: underline;
+    }
+
+    .hidden { display: none !important; }
+    #exit-focus {
+      display: none;
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 9999;
+      background: var(--pda-dark);
+      color: var(--pda-bg);
+      border: 2px solid #fff;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    body.in-focus #exit-focus { display: block; }
   </style>
 </head>
 <body>
-  <header>
-    <div class="brand-title">
-      v/ARTIST <span>Interactive Anagram Atelier // wordstar.nexus</span>
-    </div>
-    <div class="header-telemetry">
-      <div>POOL: <strong id="headTotal">0</strong></div>
-      <div>VOWEL RATIO: <strong id="headVowel">0%</strong></div>
-      <div>STATUS: <strong id="headStatus" style="color:var(--ok);">READY</strong></div>
-    </div>
-  </header>
 
-  <div style="background:var(--grey-dark); border-bottom:1px solid var(--border); padding:0.35rem 1.25rem; display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-    <label for="dictSource" style="font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em;">Dictionary</label>
-    <select id="dictSource" style="background:var(--grey-panel); border:1px solid var(--border); color:var(--white); padding:0.2rem 0.45rem; font:inherit; font-size:0.7rem; border-radius:2px;">
-      <option value="local">Local words.json</option>
-      <option value="dwyl">English Words (370k)</option>
-      <option value="fallback">Definition keys</option>
-      <option value="custom">Custom (imported)</option>
-    </select>
-    <button id="btnImportDict" style="padding:0.2rem 0.55rem; font-size:0.7rem;">Import…</button>
-    <input type="file" id="dictFile" accept=".txt,.json,text/plain,application/json" style="display:none;" />
-    <span id="dictLabel" style="font-size:0.65rem; color:var(--muted); margin-left:0.35rem;"></span>
-  </div>
-
-  <div class="workbench">
-    <!-- PANEL 1 -->
-    <div class="panel">
-      <div class="panel-head">
-        <span class="title-tag">Panel 1 · The Loom</span>
-        <span>Inventory &amp; Health</span>
+<div id="pda-chassis">
+  <div id="pda-screen">
+    <!-- TITLE BAR -->
+    <div class="title-bar">
+      <div style="display:flex; align-items:center; gap:5px;">
+        <span>FOLIO:</span>
+        <input type="text" id="folio-name" value="VERSE_01" title="Click to rename current folio" />
+        <button class="pda-btn" style="padding:2px 5px; font-size:9px;" onclick="saveCurrentFolio()" title="Save Folio (Ctrl+S)">💾</button>
       </div>
-      <div class="panel-body">
-        <div>
-          <label style="font-size:0.65rem; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:0.25rem;">Source Phrase</label>
-          <input type="text" id="sourceInput" placeholder="Enter source phrase or poem line…" autocomplete="off" spellcheck="false" />
+      <div class="sys-info">
+        <span id="dictBadge">LEX: INIT…</span>
+        <span id="poolBadge" class="status-pill">POOL: 0 (0% V)</span>
+        <span id="clock">--:--</span>
+        <button class="pda-btn" id="btnBacklight" style="padding:1px 6px; font-size:9px;" onclick="toggleBacklight()" title="Toggle LCD Backlight">💡 LCD</button>
+      </div>
+    </div>
+
+    <!-- TAB BAR -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('atelier-panel', this)">1. ATELIER (WORKBENCH)</button>
+      <button class="tab-btn" onclick="switchTab('hud-panel', this)">2. LOOM &amp; LENS HUD</button>
+      <button class="tab-btn" onclick="switchTab('sketch-panel', this)">3. INK SCRATCHPAD</button>
+      <button class="tab-btn" onclick="switchTab('notes-panel', this)">4. FOLIOS &amp; LEXICON</button>
+    </div>
+
+    <!-- WORKSPACE -->
+    <div id="workspace">
+      <!-- ================= TAB 1: ATELIER ================= -->
+      <div id="atelier-panel" class="panel active">
+        <!-- Top Source & Interactive Frequency Tiles -->
+        <div class="source-deck">
+          <div class="source-input-row">
+            <span class="source-label">SOURCE:</span>
+            <input type="text" id="sourceInput" placeholder="Type or paste source phrase / poem line here…" autocomplete="off" spellcheck="false" />
+            <div class="vowel-mini-meter" title="Target ~40% Vowel Balance">
+              <span id="vowelRatioText">V:0%</span>
+              <div class="vowel-mini-track">
+                <div class="vowel-mini-target"></div>
+                <div class="vowel-mini-fill" id="vowelMiniFill"></div>
+              </div>
+            </div>
+          </div>
+          <div class="tile-strip-wrap" id="interactiveTileStrip"></div>
         </div>
 
-        <div class="meter-block">
-          <div class="meter-label">
-            <span>Vowel Proportion</span>
-            <span id="vowelMeterVal">0% (Ideal ~40%)</span>
+        <!-- Split Body: Left = Composition Canvas, Right = Heuristic Radar -->
+        <div class="atelier-split">
+          <!-- Left: Composition Canvas -->
+          <div class="canvas-pane">
+            <div class="pane-subhead">
+              <span id="canvasTelemetry">DRAFT: 0W · 0% DONE</span>
+              <div style="display:flex; gap:3px;">
+                <button class="pda-btn" style="padding:1px 5px; font-size:9px;" onclick="popLastWord()" title="Remove last word (Alt+Backspace)">↶ Pop</button>
+                <button class="pda-btn" style="padding:1px 5px; font-size:9px;" onclick="copyCanvas()">Copy</button>
+                <button class="pda-btn" style="padding:1px 5px; font-size:9px;" onclick="clearCanvas()">Clr</button>
+              </div>
+            </div>
+
+            <div class="overdraw-banner" id="overdrawBanner">
+              <span id="overdrawText">✗ OVERDRAWN LETTERS</span>
+              <span>Remove from draft</span>
+            </div>
+
+            <textarea id="compositionCanvas" placeholder="Compose your anagram verse or prose here.&#10;&#10;• Click letter tiles above or recommendations on the right.&#10;• Hover any recommendation to preview letter depletion." spellcheck="false"></textarea>
+
+            <!-- Shuffleable Remainder Tile Bar -->
+            <div class="remainder-tray">
+              <span style="font-size:9px; font-weight:bold; text-transform:uppercase;" id="remCountLabel">LEFT (0):</span>
+              <div class="rem-tokens" id="remTokens"></div>
+              <button class="pda-btn" style="padding:2px 6px; font-size:9px;" onclick="shuffleRemainder()" title="Scramble remaining letters spatially (Alt+S)">⇄ Shuffle</button>
+            </div>
           </div>
-          <div class="meter-bar-track">
-            <div class="meter-bar-fill" id="vowelBar"></div>
+
+          <!-- Right: Heuristic Steering Radar -->
+          <div class="radar-pane">
+            <div class="radar-controls">
+              <div style="display:flex; flex-direction:column; gap:2px; flex:1;">
+                <span style="font-size:8px; font-weight:bold; text-transform:uppercase;">STEERING STRATEGY</span>
+                <select id="radarStrategy" class="pda-select" onchange="updateRadar()">
+                  <option value="heal">★ Balance Inventory (Healer)</option>
+                  <option value="vowels">Dump Vowels (A/E/I/O/U)</option>
+                  <option value="consonants">Burn Consonants</option>
+                  <option value="length">Longest Words First</option>
+                  <option value="alpha">Alphabetical (A–Z)</option>
+                </select>
+              </div>
+
+              <!-- Tactile PDA Rotary Knob for Max Word Length -->
+              <div class="knob-container" title="Drag up/down to dial Max Word Length">
+                <div class="knob" id="len-knob"></div>
+                <div class="knob-label">
+                  MAX LEN<br><span id="knob-len-val" style="font-size:11px; color:var(--red);">9L</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Prefix / Suffix / Contains Filter -->
+            <div class="radar-filter-strip">
+              <input type="text" id="fltPrefix" placeholder="Prefix…" maxlength="8" oninput="debounceRadar()" />
+              <input type="text" id="fltSuffix" placeholder="…Suffix" maxlength="8" oninput="debounceRadar()" />
+              <input type="text" id="fltContains" placeholder="Contains…" maxlength="8" oninput="debounceRadar()" />
+              <span id="sugCountBadge" style="font-size:9px; font-weight:bold; white-space:nowrap;">0W</span>
+            </div>
+
+            <!-- Auto-Endgame Zero-Waste Closeout Bar (Triggers automatically when <= 16 letters left) -->
+            <div class="endgame-strip" id="endgameStrip">
+              <div class="endgame-head">
+                <span id="endgameTitle">⚡ ENDGAME EXACT CLOSURES (0 WASTE)</span>
+                <button class="pda-btn" style="padding:0px 4px; font-size:8px;" onclick="solveEndgameNow()">Deep Scan</button>
+              </div>
+              <div class="endgame-chips" id="endgameChips"></div>
+            </div>
+
+            <!-- Recommendations Grid -->
+            <div class="radar-stream" id="suggestionsStream"></div>
           </div>
         </div>
+      </div>
 
-        <div class="meter-block">
-          <div class="meter-label">
-            <span>Surplus Gluts</span>
-            <span id="surplusSummary">Balanced</span>
+      <!-- ================= TAB 2: LOOM & PROSE LENS HUD ================= -->
+      <div id="hud-panel" class="panel">
+        <div class="hud-metric-box">
+          <div class="hud-metric-title">
+            <span>1. PHENOTYPE LOOM &amp; SURPLUS GLUTS</span>
+            <span id="hudSurplusLabel">Phenotype Balanced</span>
           </div>
-        </div>
-
-        <div>
-          <div class="meter-label" style="margin-bottom:0.35rem;">
-            <span>Letter Counts</span>
-            <span>Live Depletion</span>
+          <div style="font-size:10px; margin-bottom:6px;">
+            Ideal English vowel ratio is <b>38%–42%</b>. Click any letter card below to insert it into your draft:
           </div>
           <div class="histogram-grid" id="histogramGrid"></div>
         </div>
-      </div>
-    </div>
 
-    <!-- PANEL 2 -->
-    <div class="panel">
-      <div class="panel-head">
-        <span class="title-tag">Panel 2 · Canvas</span>
-        <span>Prose &amp; Verse Drafting</span>
-      </div>
-      <div class="panel-body canvas-area">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size:0.65rem; text-transform:uppercase; color:var(--muted);">Composition Canvas:</span>
-          <div style="display:flex; gap:0.35rem;">
-            <button id="btnCopyDraft">Copy</button>
-            <button id="btnClearDraft">Reset</button>
+        <div class="hud-metric-box">
+          <div class="hud-metric-title">
+            <span>2. VERSE CADENCE &amp; SENTENCE RHYTHM</span>
+            <span id="cadence-summary">0 lines/phrases</span>
           </div>
+          <div id="cadence-stream"></div>
         </div>
 
-        <textarea id="compositionCanvas" placeholder="Begin typing your verse or prose.&#10;&#10;As you type words, your letters in Panel 1 will drain in real time." spellcheck="false"></textarea>
-
-        <div class="canvas-telemetry">
-          <div>Words: <strong id="canvasWordCount">0</strong> · Characters: <strong id="canvasCharCount">0</strong></div>
-          <div id="canvasAlert" style="color:var(--ok);">✓ Inventory Healthy</div>
-        </div>
-
-        <div>
-          <span style="font-size:0.65rem; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:0.25rem;">Remaining Unused Letters</span>
-          <div class="remainder-string" id="remainderDisplay">—</div>
+        <div class="hud-metric-box">
+          <div class="hud-metric-title">
+            <span>3. ANAGRAM TELEMETRY &amp; READABILITY</span>
+            <span id="readability-score">--</span>
+          </div>
+          <div>Source Letters: <b id="hud-src-len">0</b> | Draft Letters: <b id="hud-draft-len">0</b> | Remaining: <b id="hud-rem-len">0</b></div>
+          <div style="margin-top:3px;">Flesch Reading Ease: <b id="flesch">--</b> | Unique Words: <b id="unique-pct">--</b>% | Est. Tokens: <b id="stat-tokens">0</b></div>
         </div>
       </div>
-    </div>
 
-    <!-- PANEL 3 -->
-    <div class="panel panel-radar">
-      <div class="panel-head">
-        <span class="title-tag">Panel 3 · Steering</span>
-        <span>Heuristic Lexicon</span>
+      <!-- ================= TAB 3: INK SCRATCHPAD ================= -->
+      <div id="sketch-panel" class="panel">
+        <canvas id="ink-canvas"></canvas>
+        <div class="ink-tools">
+          <button class="pda-btn" onclick="setInkColor('#1d211b')" style="background:#1d211b; color:#fff;">Ink</button>
+          <button class="pda-btn" onclick="setInkColor('#ff0033')" style="background:#ff0033; color:#fff;">Crimson</button>
+          <button class="pda-btn" onclick="setInkColor('#1a3a6a')" style="background:#1a3a6a; color:#fff;">Blue</button>
+          <button class="pda-btn" onclick="setEraser()">Eraser</button>
+          <button class="pda-btn primary" onclick="stampRemainderToInk()" title="Stamp remaining letters scattered onto the ink pad for visual anagramming">✦ Stamp Pool Tiles</button>
+          <button class="pda-btn" onclick="undoStroke()">Undo</button>
+          <button class="pda-btn" onclick="clearInk()">Clear</button>
+        </div>
       </div>
-      <div class="panel-body">
-        <div class="radar-filters">
-          <div>
-            <label style="font-size:0.6rem; text-transform:uppercase; color:var(--muted);">Strategy</label>
-            <select id="radarStrategy">
-              <option value="heal">Balance Inventory</option>
-              <option value="vowels">Dump Vowels</option>
-              <option value="consonants">Burn Consonants</option>
-              <option value="length">Longest Words</option>
+
+      <!-- ================= TAB 4: FOLIOS & LEXICON ================= -->
+      <div id="notes-panel" class="panel">
+        <div class="hud-metric-box">
+          <div class="hud-metric-title">
+            <span>LEXICON &amp; CORPUS ENGINE</span>
+            <span id="dictDetailLabel">Ready</span>
+          </div>
+          <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:4px;">
+            <select id="dictSource" class="pda-select" onchange="loadDict(this.value)">
+              <option value="local">Local words.json</option>
+              <option value="dwyl">English Words (370k)</option>
+              <option value="fallback">Definition Keys</option>
+              <option value="custom">Custom Only (Imported)</option>
+              <option value="blend">Custom + Base (Blend ★)</option>
             </select>
+            <button class="pda-btn primary" onclick="document.getElementById('dictFile').click()">Import .TXT / Corpus / .JSON…</button>
+            <input type="file" id="dictFile" accept=".txt,.json,.md,.csv,text/plain,application/json" style="display:none;" onchange="if(this.files[0]) handleDictImport(this.files[0]); this.value='';" />
           </div>
-          <div>
-            <label style="font-size:0.6rem; text-transform:uppercase; color:var(--muted);">Max Size</label>
-            <input type="number" id="maxLenFilter" value="8" min="3" max="15" />
+          <div style="font-size:9px; margin-top:5px; opacity:0.8;">
+            Import any 1-word-per-line list, JSON dictionary, OR raw prose/poetry/book (.txt) to extract its vocabulary. Shared with gRAM &amp; TMURA.
           </div>
         </div>
 
-        <div class="endgame-box" id="endgameContainer" style="display:none;">
-          <div class="endgame-header">
-            <span>⚡ Endgame Closeout</span>
-            <span id="endgameLettersLeft">0 left</span>
+        <div class="hud-metric-box" style="flex:1; display:flex; flex-direction:column;">
+          <div class="hud-metric-title">
+            <span>SAVED ANAGRAM FOLIOS (LOCAL PDA MEMORY)</span>
+            <span id="folioCountLabel">1 folio</span>
           </div>
-          <p style="font-size:0.65rem; color:var(--muted);">Inventory is small enough for exact 0-waste closeouts:</p>
-          <button class="primary" id="btnSolveEndgame" style="width:100%; margin-top:0.2rem;">Calculate Final Closures</button>
-          <div id="endgameResults" style="display:flex; flex-direction:column; gap:0.25rem; margin-top:0.35rem;"></div>
-        </div>
-
-        <div>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
-            <span style="font-size:0.65rem; text-transform:uppercase; color:var(--muted);">Recommendations</span>
-            <span style="font-size:0.65rem; color:var(--muted);" id="sugCount">0 found</span>
-          </div>
-          <div id="suggestionsStream" style="display:flex; flex-direction:column; gap:0.35rem;">
-            <div style="color:var(--muted); padding:1rem 0; text-align:center;">Enter source text in Panel 1.</div>
+          <div id="notes-list" class="notes-list" style="flex:1;"></div>
+          <div style="margin-top:6px; display:flex; gap:4px; flex-wrap:wrap;">
+            <button class="pda-btn primary" onclick="newFolio()">+ New Folio</button>
+            <button class="pda-btn" onclick="saveCurrentFolio()">Save Current</button>
+            <button class="pda-btn" onclick="deleteCurrentFolio()">Delete</button>
+            <button class="pda-btn" onclick="exportAllFolios()">Backup All (.JSON)</button>
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- BOTTOM HARDWARE BAR -->
+    <div class="bottom-bar">
+      <div style="display:flex; gap:4px; flex-wrap:wrap;">
+        <button class="pda-btn" onclick="seedSample()">Sample Verse</button>
+        <button class="pda-btn" onclick="shuffleRemainder()">⇄ Shuffle Pool</button>
+        <button class="pda-btn" onclick="solveEndgameNow()">⚡ Endgame Closeout</button>
+        <button class="pda-btn" onclick="toggleFocus()">Focus</button>
+      </div>
+      <div style="display:flex; gap:4px; align-items:center;">
+        <select id="export-mode" class="pda-select">
+          <option value="txt">Wordstar Dossier (.txt)</option>
+          <option value="json">Atelier Payload (.json)</option>
+          <option value="png">Ink Pad Sketch (.png)</option>
+        </select>
+        <button class="pda-btn primary" onclick="handleDownload()">Export ↓</button>
+      </div>
+    </div>
+
+    <div class="pda-footer-links">
+      <div><a href="/gram">← /gram</a> · <a href="/tmura">/tmura</a> · <a href="/tokenizer">/tokenizer</a></div>
+      <div>WORDSTAR PDA · v/ARTIST LEVITICUS // MMXXVI</div>
     </div>
   </div>
+</div>
 
-  <footer>
-    <div><a href="/gram">← /gram</a> · <a href="/tmura">/tmura</a> · <a href="/sitemap">/sitemap</a></div>
-    <div>v/ARTIST · Anagram Atelier // wordstar.nexus · MMXXVI</div>
-  </footer>
+<button id="exit-focus" onclick="toggleFocus()">✕ Exit Focus</button>
 
-  <script>
-    const VOWEL_SET = new Set("aeiou");
+<script>
+  const FREQ_ORDER = ['e','a','o','i','u','y','|','t','n','s','h','r','d','l','m','c','f','w','g','p','b','v','k','x','q','j','z'];
+  const VOWEL_SET = new Set(['a','e','i','o','u','y']);
 
-    let DICT = [];
-    let DICT_COUNTS = [];
-    let DICT_MASKS = new Int32Array(0);
+  let DICT = [];
+  let DICT_COUNTS = [];
+  let DICT_MASKS = new Int32Array(0);
+  let CUSTOM_SET = new Set();
+  let TRIE = null;
 
-    let sourceCounts = new Uint8Array(26);
-    let remaining = new Uint8Array(26);
-    let canvasCounts = new Uint8Array(26);
+  let sourceCounts = new Uint8Array(26);
+  let canvasCounts = new Uint8Array(26);
+  let remaining = new Uint8Array(26);
+  let overdrawnCounts = new Uint8Array(26);
+  let previewDelta = null;
+  let remOrder = [];
+  let maxWordLen = 9;
 
-    const $ = (id) => document.getElementById(id);
+  // PDA Folios State
+  const FOLIO_STORAGE_KEY = "wordstar_leviticus_folios_v1";
+  const CUSTOM_DICT_KEY = "gram-custom-dict-v1";
+  const DICT_SOURCE_KEY = "artist-dict-source-v1";
 
-    function countsFrom(str) {
-      const c = new Uint8Array(26);
-      for (let i = 0; i < str.length; i++) {
-        const idx = str.charCodeAt(i) - 97;
-        if (idx >= 0 && idx < 26) c[idx]++;
-      }
-      return c;
+  let folios = JSON.parse(localStorage.getItem(FOLIO_STORAGE_KEY) || '{"current":"VERSE_01","items":{}}');
+  if (!folios.items) folios.items = {};
+  let currentFolioId = folios.current || "VERSE_01";
+
+  const $ = (id) => document.getElementById(id);
+
+  function countsFrom(str) {
+    const c = new Uint8Array(26);
+    for (let i = 0; i < str.length; i++) {
+      const idx = str.charCodeAt(i) - 97;
+      if (idx >= 0 && idx < 26) c[idx]++;
     }
+    return c;
+  }
 
-    function maskFrom(str) {
-      let m = 0;
-      for (let i = 0; i < str.length; i++) {
-        const idx = str.charCodeAt(i) - 97;
-        if (idx >= 0 && idx < 26) m |= (1 << idx);
-      }
-      return m;
+  function maskFrom(str) {
+    let m = 0;
+    for (let i = 0; i < str.length; i++) {
+      const idx = str.charCodeAt(i) - 97;
+      if (idx >= 0 && idx < 26) m |= (1 << idx);
     }
+    return m;
+  }
 
-    function invMask(inv) {
-      let m = 0;
-      for (let i = 0; i < 26; i++) {
-        if (inv[i] > 0) m |= (1 << i);
-      }
-      return m;
+  function invMask(inv) {
+    let m = 0;
+    for (let i = 0; i < 26; i++) if (inv[i] > 0) m |= (1 << i);
+    return m;
+  }
+
+  function canForm(need, have) {
+    for (let i = 0; i < 26; i++) if (need[i] > have[i]) return false;
+    return true;
+  }
+
+  function subtract(inv, sub) {
+    const n = inv.slice();
+    for (let i = 0; i < 26; i++) n[i] = Math.max(0, n[i] - sub[i]);
+    return n;
+  }
+
+  function total(inv) {
+    let t = 0;
+    for (let i = 0; i < 26; i++) t += inv[i];
+    return t;
+  }
+
+  function vowelRatio(inv) {
+    let tot = 0, vows = 0;
+    for (let i = 0; i < 26; i++) {
+      tot += inv[i];
+      if (VOWEL_SET.has(String.fromCharCode(97 + i))) vows += inv[i];
     }
+    return tot === 0 ? 0 : Math.round((vows / tot) * 100);
+  }
 
-    function canForm(need, have) {
-      for (let i = 0; i < 26; i++) {
-        if (need[i] > have[i]) return false;
-      }
-      return true;
-    }
+  function cleanString(str) {
+    return (str || "").toLowerCase().replace(/[^a-z]/g, "");
+  }
 
-    function subtract(inv, sub) {
-      const n = inv.slice();
-      for (let i = 0; i < 26; i++) n[i] -= sub[i];
-      return n;
-    }
-
-    function total(inv) {
-      let t = 0;
-      for (let i = 0; i < 26; i++) t += inv[i];
-      return t;
-    }
-
-    function vowelRatio(inv) {
-      let tot = 0, vows = 0;
-      for (let i = 0; i < 26; i++) {
-        tot += inv[i];
-        if (VOWEL_SET.has(String.fromCharCode(97 + i))) vows += inv[i];
-      }
-      return tot === 0 ? 0 : Math.round((vows / tot) * 100);
-    }
-
-    function cleanString(str) {
-      return (str || "").toLowerCase().replace(/[^a-z]/g, "");
-    }
-
-    function updateAll() {
-      const srcText = cleanString($("sourceInput").value);
-      sourceCounts = countsFrom(srcText);
-
-      const draftText = cleanString($("compositionCanvas").value);
-      canvasCounts = countsFrom(draftText);
-
-      let overdraft = false;
-      remaining = new Uint8Array(26);
-      for (let i = 0; i < 26; i++) {
-        const rem = sourceCounts[i] - canvasCounts[i];
-        if (rem < 0) {
-          overdraft = true;
-          remaining[i] = 0;
-        } else {
-          remaining[i] = rem;
+  // ── Fast Count-Trie ──
+  function buildTrie() {
+    TRIE = { c: new Array(26), w: [] };
+    for (let i = 0; i < DICT.length; i++) {
+      const counts = DICT_COUNTS[i];
+      let node = TRIE;
+      for (let L = 0; L < 26; L++) {
+        const n = counts[L];
+        for (let k = 0; k < n; k++) {
+          if (!node.c[L]) node.c[L] = { c: new Array(26), w: [] };
+          node = node.c[L];
         }
       }
-
-      renderLoom();
-      renderCanvasState(overdraft);
-      debounceRadar();
+      node.w.push(i);
     }
+  }
 
-    function renderLoom() {
-      const tot = total(remaining);
-      const vr = vowelRatio(remaining);
-
-      $("headTotal").textContent = tot;
-      $("headVowel").textContent = vr + "%";
-      $("vowelMeterVal").textContent = `${vr}% (Ideal: 38–42%)`;
-
-      const bar = $("vowelBar");
-      bar.style.width = Math.min(100, vr * 2) + "%";
-      bar.className = "meter-bar-fill" + (vr < 25 || vr > 55 ? " danger" : "");
-
-      const surplusList = [];
-      for (let i = 0; i < 26; i++) {
-        const ch = String.fromCharCode(97 + i);
-        if (remaining[i] >= 3 && !"aeiortns".includes(ch)) {
-          surplusList.push(ch.toUpperCase() + ":" + remaining[i]);
-        }
+  function collectFormable(minLen, maxLen, have) {
+    const out = [];
+    if (!TRIE) return out;
+    const used = new Uint8Array(26);
+    const lo = Math.max(2, minLen);
+    const hi = Math.min(20, maxLen);
+    function walk(node, len, from) {
+      if (len >= lo && node.w.length) {
+        for (let k = 0; k < node.w.length; k++) out.push(node.w[k]);
       }
-      $("surplusSummary").textContent = surplusList.length ? surplusList.join(" ") : "Phenotype Balanced";
-
-      const grid = $("histogramGrid");
-      grid.innerHTML = "";
-      for (let i = 0; i < 26; i++) {
-        const ch = String.fromCharCode(97 + i);
-        const count = remaining[i];
-        const isVowel = VOWEL_SET.has(ch);
-
-        const card = document.createElement("div");
-        card.className = "hist-card" + (isVowel ? " vowel" : "") + (count === 0 ? " depleted" : "");
-        if (count >= 3 && !isVowel) card.classList.add("excess");
-
-        card.innerHTML = `<span class="ch">${ch.toUpperCase()}</span><span class="ct">${count}</span>`;
-        grid.appendChild(card);
+      if (len >= hi || !node.c) return;
+      for (let L = from; L < 26; L++) {
+        const child = node.c[L];
+        if (!child || used[L] >= have[L]) continue;
+        used[L]++;
+        walk(child, len + 1, L);
+        used[L]--;
       }
     }
+    walk(TRIE, 0, 0);
+    return out;
+  }
 
-    function renderCanvasState(overdraft) {
-      const rawText = $("compositionCanvas").value;
-      const words = rawText.trim().split(/\s+/).filter(Boolean);
-      $("canvasWordCount").textContent = words.length;
-      $("canvasCharCount").textContent = rawText.length;
+  // ── Hover-to-Preview Depletion ──
+  function setPreviewWord(str) {
+    previewDelta = str ? countsFrom(cleanString(str)) : null;
+    renderTopStrip();
+  }
 
-      const alertBox = $("canvasAlert");
-      if (overdraft) {
-        alertBox.textContent = "✗ OVERDRAW DETECTED";
-        alertBox.style.color = "var(--red)";
+  function updateAll() {
+    previewDelta = null;
+    const srcText = cleanString($("sourceInput").value);
+    sourceCounts = countsFrom(srcText);
+
+    const draftText = cleanString($("compositionCanvas").value);
+    canvasCounts = countsFrom(draftText);
+
+    remaining = new Uint8Array(26);
+    overdrawnCounts = new Uint8Array(26);
+    const overList = [];
+
+    for (let i = 0; i < 26; i++) {
+      const diff = sourceCounts[i] - canvasCounts[i];
+      if (diff < 0) {
+        remaining[i] = 0;
+        overdrawnCounts[i] = -diff;
+        overList.push(`${String.fromCharCode(65 + i)}(-${-diff})`);
       } else {
-        alertBox.textContent = "✓ INVENTORY HEALTHY";
-        alertBox.style.color = "var(--ok)";
-      }
-
-      let remStr = "";
-      for (let i = 0; i < 26; i++) {
-        if (remaining[i] > 0) {
-          remStr += String.fromCharCode(97 + i).repeat(remaining[i]);
-        }
-      }
-
-      // Verified fix: prevent false "PERFECT ANAGRAM" if overdrawn
-      if (overdraft) {
-        $("remainderDisplay").textContent = "(OVERDRAWN — check letter tallies)";
-      } else {
-        $("remainderDisplay").textContent = remStr || "(0 letters left — PERFECT ANAGRAM)";
-      }
-
-      const left = total(remaining);
-      const endgameBox = $("endgameContainer");
-      if (left > 0 && left <= 24 && !overdraft) {
-        endgameBox.style.display = "flex";
-        $("endgameLettersLeft").textContent = `${left} left`;
-      } else {
-        endgameBox.style.display = "none";
+        remaining[i] = diff;
       }
     }
 
-    let radarTimer = null;
-    function debounceRadar() {
-      clearTimeout(radarTimer);
-      radarTimer = setTimeout(updateRadar, 60);
+    const banner = $("overdrawBanner");
+    if (overList.length > 0) {
+      banner.classList.add("visible");
+      $("overdrawText").textContent = `✗ OVERDRAWN: ${overList.join(" ")}`;
+    } else {
+      banner.classList.remove("visible");
     }
 
-    function updateRadar() {
-      const stream = $("suggestionsStream");
-      const tot = total(remaining);
-      if (!DICT.length || tot === 0) {
-        stream.innerHTML = '<div style="color:var(--muted); padding:1rem 0; text-align:center;">Inventory depleted or no source.</div>';
-        $("sugCount").textContent = "0";
+    syncRemainderOrder();
+    renderTopStrip();
+    renderRemainderTray();
+    renderHudAndProse();
+    debounceRadar();
+    queueAutoSave();
+  }
+
+  function renderTopStrip() {
+    const activeRem = previewDelta ? subtract(remaining, previewDelta) : remaining;
+    const tot = total(activeRem);
+    const vr = vowelRatio(activeRem);
+    const srcTot = total(sourceCounts);
+    const draftTot = total(canvasCounts);
+    const anyOver = overdrawnCounts.some(v => v > 0);
+
+    const poolBadge = $("poolBadge");
+    poolBadge.textContent = anyOver ? `OVERDRAWN!` : `POOL: ${tot} (${vr}% V)`;
+    poolBadge.classList.toggle("overdrawn", anyOver);
+
+    $("vowelRatioText").textContent = `V:${vr}%`;
+    const fill = $("vowelMiniFill");
+    fill.style.width = Math.min(100, vr * 1.8) + "%";
+    fill.className = "vowel-mini-fill" + (vr < 28 || vr > 52 ? " danger" : "");
+
+    const rawWords = $("compositionCanvas").value.trim().split(/\s+/).filter(Boolean).length;
+    const pct = srcTot === 0 ? 0 : Math.min(100, Math.round((draftTot / srcTot) * 100));
+    $("canvasTelemetry").textContent = `DRAFT: ${rawWords}W · ${draftTot}/${srcTot} CH (${pct}%)`;
+
+    // Interactive Frequency-Sorted Tile Strip
+    const strip = $("interactiveTileStrip");
+    strip.innerHTML = "";
+    FREQ_ORDER.forEach(ch => {
+      if (ch === '|') {
+        const div = document.createElement("div");
+        div.className = "tile-divider";
+        strip.appendChild(div);
         return;
       }
+      const idx = ch.charCodeAt(0) - 97;
+      const base = remaining[idx];
+      const over = overdrawnCounts[idx];
+      const pUsed = previewDelta ? Math.min(base, previewDelta[idx]) : 0;
+      const count = base - pUsed;
 
-      const remMask = invMask(remaining);
-      const strat = $("radarStrategy").value;
-      const maxLen = parseInt($("maxLenFilter").value, 10) || 8;
-      const candidates = [];
+      if (base === 0 && sourceCounts[idx] === 0 && over === 0) return;
 
-      for (let i = 0; i < DICT.length; i++) {
-        const w = DICT[i];
-        if (w.length < 3 || w.length > maxLen) continue;
-        if ((DICT_MASKS[i] & ~remMask) !== 0) continue;
-        if (!canForm(DICT_COUNTS[i], remaining)) continue;
+      const tile = document.createElement("button");
+      tile.type = "button";
+      let cls = "pda-tile";
+      if (VOWEL_SET.has(ch)) cls += " vowel";
+      if (over > 0) cls += " overdrawn";
+      else if (count === 0 && pUsed === 0) cls += " depleted";
+      if (pUsed > 0) cls += " preview-hit";
+      tile.className = cls;
 
-        let score = 0;
-        const counts = DICT_COUNTS[i];
-
-        if (strat === "heal") {
-          const after = subtract(remaining, counts);
-          const afterVowel = vowelRatio(after);
-          score = 100 - Math.abs(afterVowel - 40) * 2;
-          for (const ch of "qxzjkv") {
-            const idx = ch.charCodeAt(0) - 97;
-            if (counts[idx] > 0 && remaining[idx] >= 1) score += 25;
-          }
-        } else if (strat === "vowels") {
-          for (let v of "aeiou") score += counts[v.charCodeAt(0) - 97] * 15;
-        } else if (strat === "consonants") {
-          score = w.length * 5;
-          for (let v of "aeiou") score -= counts[v.charCodeAt(0) - 97] * 10;
-        } else {
-          score = w.length;
+      if (over > 0) {
+        tile.innerHTML = `${ch.toUpperCase()}<sub>-${over}</sub>`;
+        tile.title = `Overdrawn by ${over}! Remove '${ch}' from draft`;
+      } else {
+        tile.innerHTML = `${ch.toUpperCase()}<sub>${count}</sub>`;
+        if (base > 0) {
+          tile.title = `Insert '${ch}' into canvas`;
+          tile.addEventListener("click", () => insertAtCursor(ch));
         }
-
-        candidates.push({ word: w, score, isHealer: score > 90 });
       }
+      strip.appendChild(tile);
+    });
 
-      candidates.sort((a, b) => b.score - a.score || b.word.length - a.word.length);
-      const top = candidates.slice(0, 35);
-      stream.innerHTML = "";
-      $("sugCount").textContent = top.length;
+    if (!strip.children.length) {
+      strip.innerHTML = `<span style="font-size:10px; opacity:0.65;">Enter a source phrase above to populate interactive tiles…</span>`;
+    }
+  }
 
-      top.forEach(c => {
-        const item = document.createElement("div");
-        item.className = "suggestion-item" + (c.isHealer ? " healer" : "");
-        item.innerHTML = `
-          <span class="w-name">${c.word}</span>
-          <span class="w-badge">${c.isHealer ? "★ HEALER" : c.word.length + "L"}</span>
-        `;
-        item.addEventListener("click", () => {
-          const canvas = $("compositionCanvas");
-          const val = canvas.value;
-          canvas.value = val ? val + " " + c.word : c.word;
-          updateAll();
-          canvas.focus();
-        });
-        stream.appendChild(item);
+  function insertAtCursor(text) {
+    const ta = $("compositionCanvas");
+    const start = ta.selectionStart ?? ta.value.length;
+    const end = ta.selectionEnd ?? ta.value.length;
+    ta.setRangeText(text, start, end, "end");
+    updateAll();
+    ta.focus();
+  }
+
+  function appendWordToCanvas(word) {
+    const ta = $("compositionCanvas");
+    const cur = ta.value;
+    const needsSpace = cur.length > 0 && !/\s$/.test(cur);
+    ta.value = cur + (needsSpace ? " " : "") + word;
+    updateAll();
+    ta.focus();
+  }
+
+  function popLastWord() {
+    const ta = $("compositionCanvas");
+    const trimmed = ta.value.trimEnd();
+    if (!trimmed) return;
+    const idx = Math.max(trimmed.lastIndexOf(" "), trimmed.lastIndexOf("\n"));
+    ta.value = idx === -1 ? "" : trimmed.slice(0, idx);
+    updateAll();
+    ta.focus();
+  }
+
+  // ── Shuffleable Remainder Tokens ──
+  function syncRemainderOrder() {
+    const have = remaining.slice();
+    const next = [];
+    for (const ch of remOrder) {
+      const idx = ch.charCodeAt(0) - 97;
+      if (idx >= 0 && idx < 26 && have[idx] > 0) {
+        next.push(ch);
+        have[idx]--;
+      }
+    }
+    for (let i = 0; i < 26; i++) {
+      while (have[i] > 0) {
+        next.push(String.fromCharCode(97 + i));
+        have[i]--;
+      }
+    }
+    remOrder = next;
+  }
+
+  function shuffleRemainder() {
+    for (let i = remOrder.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = remOrder[i];
+      remOrder[i] = remOrder[j];
+      remOrder[j] = tmp;
+    }
+    renderRemainderTray();
+  }
+
+  function renderRemainderTray() {
+    const box = $("remTokens");
+    const left = remOrder.length;
+    $("remCountLabel").textContent = `LEFT (${left}):`;
+    box.innerHTML = "";
+
+    const anyOver = overdrawnCounts.some(v => v > 0);
+    if (anyOver) {
+      box.innerHTML = `<span style="font-size:10px; color:var(--red); font-weight:bold;">Fix overdrawn letters above</span>`;
+      return;
+    }
+    if (left === 0) {
+      const hasSource = total(sourceCounts) > 0;
+      box.innerHTML = `<span style="font-size:10px; font-weight:bold; color:var(--healer);">${
+        hasSource ? "✓ 0 LETTERS LEFT — PERFECT ANAGRAM!" : "—"
+      }</span>`;
+      return;
+    }
+
+    const frag = document.createDocumentFragment();
+    remOrder.slice(0, 48).forEach(ch => {
+      const chip = document.createElement("span");
+      chip.className = "rem-chip" + (VOWEL_SET.has(ch) ? " vowel" : "");
+      chip.textContent = ch.toUpperCase();
+      chip.title = `Click to insert '${ch}'`;
+      chip.addEventListener("click", () => insertAtCursor(ch));
+      frag.appendChild(chip);
+    });
+    if (left > 48) {
+      const more = document.createElement("span");
+      more.style.cssText = "font-size:9px; opacity:0.7;";
+      more.textContent = `+${left - 48}`;
+      frag.appendChild(more);
+    }
+    box.appendChild(frag);
+  }
+
+  // ── Heuristic Radar & Auto-Endgame Solver ──
+  let radarTimer = null;
+  function debounceRadar() {
+    clearTimeout(radarTimer);
+    radarTimer = setTimeout(updateRadar, 45);
+  }
+
+  function scoreCandidate(idx) {
+    const strat = $("radarStrategy").value;
+    const w = DICT[idx];
+    const counts = DICT_COUNTS[idx];
+    let score = 0;
+
+    if (strat === "heal") {
+      const after = subtract(remaining, counts);
+      const afterTot = total(after);
+      if (afterTot === 0) {
+        score = 250;
+      } else {
+        const afterV = vowelRatio(after);
+        score = 100 - Math.abs(afterV - 40) * 2.2;
+      }
+      for (const ch of "qxzjkv") {
+        const cIdx = ch.charCodeAt(0) - 97;
+        if (counts[cIdx] > 0 && remaining[cIdx] >= 1) score += 24;
+      }
+      for (let i = 0; i < 26; i++) {
+        if (remaining[i] >= 3 && counts[i] > 0) score += (remaining[i] - 2) * 6;
+      }
+      if (CUSTOM_SET.has(w)) score += 30;
+    } else if (strat === "vowels") {
+      for (const v of "aeiouy") score += counts[v.charCodeAt(0) - 97] * 16;
+    } else if (strat === "consonants") {
+      score = w.length * 6;
+      for (const v of "aeiouy") score -= counts[v.charCodeAt(0) - 97] * 10;
+    } else {
+      score = w.length;
+    }
+    return score;
+  }
+
+  function updateRadar() {
+    const stream = $("suggestionsStream");
+    const left = total(remaining);
+    const anyOver = overdrawnCounts.some(v => v > 0);
+
+    // Auto-Endgame check (when 2..16 letters remain and not overdrawn)
+    const endgameStrip = $("endgameStrip");
+    if (left >= 2 && left <= 16 && !anyOver && DICT.length > 0) {
+      endgameStrip.classList.add("visible");
+      autoComputeQuickEndgame(left);
+    } else {
+      endgameStrip.classList.remove("visible");
+    }
+
+    if (!DICT.length || left === 0) {
+      stream.innerHTML = `<div style="grid-column:1/-1; padding:12px; font-size:10px; opacity:0.7; text-align:center;">${
+        left === 0 && total(sourceCounts) > 0 && !anyOver ? "All letters used! Perfect closure." : "Enter source text above to scan lexicon."
+      }</div>`;
+      $("sugCountBadge").textContent = "0W";
+      return;
+    }
+
+    const pfx = cleanString($("fltPrefix").value);
+    const sfx = cleanString($("fltSuffix").value);
+    const sub = cleanString($("fltContains").value);
+    const strat = $("radarStrategy").value;
+
+    const idxs = collectFormable(2, Math.min(maxWordLen, left), remaining);
+    const candidates = [];
+
+    for (let n = 0; n < idxs.length; n++) {
+      const i = idxs[n];
+      const w = DICT[i];
+      if (pfx && !w.startsWith(pfx)) continue;
+      if (sfx && !w.endsWith(sfx)) continue;
+      if (sub && !w.includes(sub)) continue;
+      const score = scoreCandidate(i);
+      candidates.push({
+        word: w,
+        score,
+        isHealer: score >= 92,
+        isExact: w.length === left
       });
     }
 
-    // Safe 400ms time-budgeted endgame solver
-    $("btnSolveEndgame").addEventListener("click", () => {
-      const resultsBox = $("endgameResults");
-      resultsBox.innerHTML = "<div style='color:var(--muted); font-size:0.65rem;'>Searching complete closures…</div>";
+    if (strat === "alpha") {
+      candidates.sort((a, b) => a.word.localeCompare(b.word));
+    } else {
+      candidates.sort((a, b) => b.score - a.score || b.word.length - a.word.length || a.word.localeCompare(b.word));
+    }
 
-      setTimeout(() => {
-        const rem = remaining.slice();
-        const tot = total(rem);
-        const remMask = invMask(rem);
+    $("sugCountBadge").textContent = `${candidates.length}W`;
+    const top = candidates.slice(0, 90);
+    stream.innerHTML = "";
 
-        const pool = [];
-        for (let i = 0; i < DICT.length; i++) {
-          if (DICT[i].length < 3 || DICT[i].length > tot) continue;
-          if ((DICT_MASKS[i] & ~remMask) !== 0) continue;
-          if (canForm(DICT_COUNTS[i], rem)) {
-            pool.push({ word: DICT[i], counts: DICT_COUNTS[i], len: DICT[i].length, mask: DICT_MASKS[i] });
+    const frag = document.createDocumentFragment();
+    top.forEach(c => {
+      const card = document.createElement("div");
+      card.className = "sug-card" + (c.isExact ? " exact" : (c.isHealer ? " healer" : ""));
+      const tag = c.isExact ? "EXACT" : (CUSTOM_SET.has(c.word) ? "★" : `${c.word.length}L`);
+      card.innerHTML = `<span>${c.word}</span><span class="sug-tag">${tag}</span>`;
+      card.addEventListener("mouseenter", () => setPreviewWord(c.word));
+      card.addEventListener("mouseleave", () => setPreviewWord(null));
+      card.addEventListener("click", () => appendWordToCanvas(c.word));
+      frag.appendChild(card);
+    });
+    stream.appendChild(frag);
+  }
+
+  // Fast 1-word & 2-word exact split finder for Auto-Endgame
+  function autoComputeQuickEndgame(left) {
+    const chips = $("endgameChips");
+    $("endgameTitle").textContent = `⚡ ENDGAME CLOSURES (${left}L LEFT)`;
+    const idxs = collectFormable(2, left, remaining);
+    const byLen = {};
+    const exact1 = [];
+
+    for (let n = 0; n < idxs.length; n++) {
+      const i = idxs[n];
+      const len = DICT[i].length;
+      if (len === left) exact1.push(DICT[i]);
+      if (!byLen[len]) byLen[len] = [];
+      if (byLen[len].length < 80) byLen[len].push(i);
+    }
+
+    const pairs = [];
+    const seen = new Set();
+    for (let l1 = Math.ceil(left / 2); l1 <= left - 2; l1++) {
+      const l2 = left - l1;
+      const list1 = byLen[l1] || [];
+      const list2 = byLen[l2] || [];
+      for (let a = 0; a < list1.length; a++) {
+        const i1 = list1[a];
+        const remAfter1 = subtract(remaining, DICT_COUNTS[i1]);
+        const remM = invMask(remAfter1);
+        for (let b = 0; b < list2.length; b++) {
+          const i2 = list2[b];
+          if ((DICT_MASKS[i2] & ~remM) !== 0) continue;
+          if (!canForm(DICT_COUNTS[i2], remAfter1)) continue;
+          const key = [DICT[i1], DICT[i2]].sort().join(" ");
+          if (!seen.has(key)) {
+            seen.add(key);
+            pairs.push(`${DICT[i1]} ${DICT[i2]}`);
           }
+          if (pairs.length >= 10) break;
         }
+        if (pairs.length >= 10) break;
+      }
+      if (pairs.length >= 10) break;
+    }
 
-        const solutions = [];
-        const seen = new Set();
-        const startT = performance.now();
+    chips.innerHTML = "";
+    const combined = [...exact1.slice(0, 6), ...pairs];
+    if (!combined.length) {
+      chips.innerHTML = `<span style="font-size:9px; opacity:0.75;">No 1–2 word exact split. Click "Deep Scan" for 3+ word closures.</span>`;
+      return;
+    }
+    combined.forEach(sol => {
+      const pill = document.createElement("button");
+      pill.type = "button";
+      pill.className = "endgame-pill";
+      pill.textContent = sol;
+      pill.addEventListener("mouseenter", () => setPreviewWord(sol));
+      pill.addEventListener("mouseleave", () => setPreviewWord(null));
+      pill.addEventListener("click", () => appendWordToCanvas(sol));
+      chips.appendChild(pill);
+    });
+  }
 
-        function search(inv, path, startIdx) {
-          if (solutions.length >= 8) return;
-          if (performance.now() - startT > 400) return;
-          const left = total(inv);
-          if (left === 0) {
-            const sol = path.join(" ");
-            if (!seen.has(sol)) {
-              seen.add(sol);
-              solutions.push(path.slice());
-            }
-            return;
+  function solveEndgameNow() {
+    const left = total(remaining);
+    if (left === 0 || left > 22) {
+      alert(left === 0 ? "0 letters remaining!" : `Pool has ${left} letters. Narrow down to <= 22 letters for deep endgame closure.`);
+      return;
+    }
+    const strip = $("endgameStrip");
+    strip.classList.add("visible");
+    const chips = $("endgameChips");
+    chips.innerHTML = `<span style="font-size:9px;">Scanning multi-word zero-waste closures…</span>`;
+
+    setTimeout(() => {
+      const idxs = collectFormable(2, left, remaining);
+      const pool = idxs.map(i => ({
+        word: DICT[i],
+        counts: DICT_COUNTS[i],
+        len: DICT[i].length,
+        mask: DICT_MASKS[i]
+      }));
+      pool.sort((a, b) => b.len - a.len);
+
+      const solutions = [];
+      const seen = new Set();
+      const t0 = performance.now();
+
+      function dfs(inv, path, startIdx) {
+        if (solutions.length >= 14 || performance.now() - t0 > 380) return;
+        const remTot = total(inv);
+        if (remTot === 0) {
+          const key = path.slice().sort().join(" ");
+          if (!seen.has(key)) {
+            seen.add(key);
+            solutions.push(path.join(" "));
           }
-
-          const curMask = invMask(inv);
-          for (let i = startIdx; i < pool.length; i++) {
-            const w = pool[i];
-            if (w.len > left) continue;
-            if ((w.mask & ~curMask) !== 0) continue;
-            if (!canForm(w.counts, inv)) continue;
-
-            search(subtract(inv, w.counts), [...path, w.word], i);
-            if (solutions.length >= 8) return;
-          }
-        }
-
-        search(rem, [], 0);
-
-        resultsBox.innerHTML = "";
-        if (!solutions.length) {
-          resultsBox.innerHTML = "<div style='color:var(--muted); font-size:0.65rem;'>No exact closures found. Alter the last word.</div>";
           return;
         }
-
-        solutions.forEach(sol => {
-          const row = document.createElement("button");
-          row.style.cssText = "text-align:left; padding:0.3rem 0.5rem; border-color:var(--ok); color:var(--ok); font-size:0.7rem;";
-          row.textContent = sol.join(" · ");
-          row.addEventListener("click", () => {
-            const canvas = $("compositionCanvas");
-            canvas.value += (canvas.value ? " " : "") + sol.join(" ");
-            updateAll();
-          });
-          resultsBox.appendChild(row);
-        });
-      }, 15);
-    });
-
-    $("sourceInput").addEventListener("input", updateAll);
-    $("compositionCanvas").addEventListener("input", updateAll);
-    $("radarStrategy").addEventListener("change", updateRadar);
-    $("maxLenFilter").addEventListener("input", updateRadar);
-
-    $("btnClearDraft").addEventListener("click", () => {
-      $("compositionCanvas").value = "";
-      updateAll();
-      $("compositionCanvas").focus();
-    });
-
-    $("btnCopyDraft").addEventListener("click", () => {
-      const text = $("compositionCanvas").value;
-      if (navigator.clipboard && text) {
-        navigator.clipboard.writeText(text).then(() => {
-          $("headStatus").textContent = "COPIED TO CLIPBOARD";
-          setTimeout(() => { $("headStatus").textContent = "READY"; }, 1400);
-        });
+        if (path.length >= 4 || remTot < 2) return;
+        const curM = invMask(inv);
+        for (let i = startIdx; i < pool.length; i++) {
+          const w = pool[i];
+          if (w.len > remTot) continue;
+          if ((w.mask & ~curM) !== 0) continue;
+          if (!canForm(w.counts, inv)) continue;
+          dfs(subtract(inv, w.counts), [...path, w.word], i);
+          if (solutions.length >= 14) return;
+        }
       }
+
+      dfs(remaining.slice(), [], 0);
+      chips.innerHTML = "";
+      if (!solutions.length) {
+        chips.innerHTML = `<span style="font-size:9px;">No exact 0-waste closure found. Try popping the last word.</span>`;
+        return;
+      }
+      solutions.forEach(sol => {
+        const pill = document.createElement("button");
+        pill.type = "button";
+        pill.className = "endgame-pill";
+        pill.textContent = sol;
+        pill.addEventListener("mouseenter", () => setPreviewWord(sol));
+        pill.addEventListener("mouseleave", () => setPreviewWord(null));
+        pill.addEventListener("click", () => appendWordToCanvas(sol));
+        chips.appendChild(pill);
+      });
+    }, 15);
+  }
+
+  // ── TAB 2: Loom Histogram & Prose Cadence ──
+  function countSyllables(word) {
+    word = word.toLowerCase().replace(/[^a-z]/g, '');
+    if (word.length <= 3) return 1;
+    word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '').replace(/^y/, '');
+    const matches = word.match(/[aeiouy]{1,2}/g);
+    return matches ? matches.length : 1;
+  }
+
+  function renderHudAndProse() {
+    const surplus = [];
+    for (let i = 0; i < 26; i++) {
+      const ch = String.fromCharCode(97 + i);
+      if (remaining[i] >= 3 && !"aeiortns".includes(ch)) {
+        surplus.push(`${ch.toUpperCase()}:${remaining[i]}`);
+      }
+    }
+    $("hudSurplusLabel").textContent = surplus.length ? `Gluts: ${surplus.join(" ")}` : "Phenotype Balanced";
+
+    const grid = $("histogramGrid");
+    grid.innerHTML = "";
+    for (let i = 0; i < 26; i++) {
+      const ch = String.fromCharCode(97 + i);
+      const count = remaining[i];
+      const isV = VOWEL_SET.has(ch);
+      const card = document.createElement("div");
+      card.className = "hist-card" + (isV ? " vowel" : "") + (count === 0 ? " depleted" : "") + (count >= 3 && !isV ? " excess" : "");
+      card.innerHTML = `<b>${ch.toUpperCase()}</b><span>${count}</span>`;
+      if (count > 0) card.onclick = () => insertAtCursor(ch);
+      grid.appendChild(card);
+    }
+
+    const text = $("compositionCanvas").value;
+    const words = text.match(/\b[a-zA-Z'-]+\b/g) || [];
+    const tokens = text.match(/\b\w+\b|[^\w\s]/g) || [];
+    $("hud-src-len").textContent = total(sourceCounts);
+    $("hud-draft-len").textContent = total(canvasCounts);
+    $("hud-rem-len").textContent = total(remaining);
+    $("stat-tokens").textContent = tokens.length;
+
+    const lines = text.split(/[.!?\n]+/).map(s => (s.match(/\b\w+\b/g) || []).length).filter(n => n > 0);
+    $("cadence-summary").textContent = `${lines.length} phrases/lines`;
+    const cStream = $("cadence-stream");
+    cStream.innerHTML = "";
+    lines.forEach(len => {
+      const bar = document.createElement("div");
+      bar.className = "rhythm-bar";
+      bar.style.height = Math.min(32, Math.max(5, len * 2.2)) + "px";
+      bar.title = `${len} words`;
+      cStream.appendChild(bar);
     });
 
-    // ── Dictionary sources (shared keys with gRAM / TMURA) ──
-    const CUSTOM_DICT_KEY = "gram-custom-dict-v1";
-    const DICT_SOURCE_KEY = "artist-dict-source-v1";
+    if (words.length > 0 && lines.length > 0) {
+      const syl = words.reduce((s, w) => s + countSyllables(w), 0);
+      const flesch = Math.max(0, Math.min(100, 206.835 - 1.015 * (words.length / lines.length) - 84.6 * (syl / words.length)));
+      $("flesch").textContent = flesch.toFixed(1);
+      const uniq = new Set(words.map(w => w.toLowerCase())).size;
+      $("unique-pct").textContent = Math.round((uniq / words.length) * 100);
+      $("readability-score").textContent = flesch > 70 ? "Lyrical / Clear" : (flesch > 45 ? "Dense Verse" : "Esoteric");
+    } else {
+      $("flesch").textContent = "--";
+      $("unique-pct").textContent = "--";
+      $("readability-score").textContent = "--";
+    }
+  }
 
-    function normalizeWordList(rawList) {
-      const set = new Set();
-      for (const item of rawList) {
-        const w = String(item || "").toLowerCase().replace(/[^a-z]/g, "");
+  // ── Rotary Knob for Max Word Length (3..15) ──
+  function setMaxWordLen(v) {
+    maxWordLen = Math.max(3, Math.min(15, parseInt(v, 10) || 9));
+    $("knob-len-val").textContent = maxWordLen + "L";
+    const angle = -120 + ((maxWordLen - 3) / 12) * 240;
+    $("len-knob").style.setProperty("--knob-angle", angle + "deg");
+    debounceRadar();
+  }
+
+  function initKnob() {
+    const knob = $("len-knob");
+    let dragging = false, startY = 0, startVal = maxWordLen;
+    function down(e) {
+      dragging = true;
+      startY = e.touches ? e.touches[0].clientY : e.clientY;
+      startVal = maxWordLen;
+      e.preventDefault();
+    }
+    function move(e) {
+      if (!dragging) return;
+      const y = e.touches ? e.touches[0].clientY : e.clientY;
+      const delta = Math.round((startY - y) / 10);
+      setMaxWordLen(startVal + delta);
+      e.preventDefault();
+    }
+    function up() { dragging = false; }
+    knob.addEventListener("mousedown", down);
+    knob.addEventListener("touchstart", down, { passive: false });
+    window.addEventListener("mousemove", move);
+    window.addEventListener("touchmove", move, { passive: false });
+    window.addEventListener("mouseup", up);
+    window.addEventListener("touchend", up);
+    setMaxWordLen(maxWordLen);
+  }
+
+  // ── TAB 3: Ink Pad + Stamp Remainder Pool Tiles ──
+  const canvas = $("ink-canvas");
+  const ctx = canvas.getContext("2d");
+  let strokes = [];
+  let drawing = false;
+  let currentStroke = null;
+  let isEraser = false;
+  let currentBrushColor = "#1d211b";
+
+  function resizeCanvas() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvas.style.width = rect.width + "px";
+    canvas.style.height = rect.height + "px";
+    ctx.scale(dpr, dpr);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    redrawStrokes();
+  }
+
+  function setInkColor(c) { isEraser = false; currentBrushColor = c; }
+  function setEraser() { isEraser = true; }
+
+  function getCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: cx - rect.left, y: cy - rect.top };
+  }
+
+  canvas.addEventListener("mousedown", (e) => {
+    if (e.target.closest(".ink-tools")) return;
+    drawing = true;
+    const { x, y } = getCoords(e);
+    currentStroke = { type: "path", points: [{ x, y }], color: currentBrushColor, width: 2.5, eraser: isEraser };
+  });
+  canvas.addEventListener("mousemove", (e) => {
+    if (!drawing || !currentStroke) return;
+    const { x, y } = getCoords(e);
+    currentStroke.points.push({ x, y });
+    redrawStrokes();
+  });
+  window.addEventListener("mouseup", () => {
+    if (drawing && currentStroke) {
+      strokes.push(currentStroke);
+      queueAutoSave();
+    }
+    drawing = false;
+    currentStroke = null;
+  });
+
+  function stampRemainderToInk() {
+    const rect = canvas.getBoundingClientRect();
+    const w = rect.width || 500;
+    const h = (rect.height || 320) - 50;
+    const pool = remOrder.length ? remOrder : cleanString($("sourceInput").value).split("");
+    if (!pool.length) return;
+    const stamps = pool.slice(0, 40).map((ch, idx) => ({
+      ch: ch.toUpperCase(),
+      x: 35 + ((idx * 53 + Math.floor(Math.random() * 25)) % Math.max(120, w - 70)),
+      y: 35 + ((Math.floor(idx / 7) * 45 + Math.floor(Math.random() * 18)) % Math.max(80, h - 40))
+    }));
+    strokes.push({ type: "stamps", items: stamps, color: currentBrushColor });
+    redrawStrokes();
+    queueAutoSave();
+  }
+
+  function redrawStrokes() {
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+
+    const all = currentStroke ? [...strokes, currentStroke] : strokes;
+    all.forEach(s => {
+      if (s.type === "stamps") {
+        ctx.globalCompositeOperation = "source-over";
+        ctx.font = "bold 16px 'Courier New', monospace";
+        ctx.fillStyle = s.color || "#1d211b";
+        s.items.forEach(it => {
+          ctx.fillText(it.ch, it.x, it.y);
+        });
+        return;
+      }
+      if (!s.points || !s.points.length) return;
+      ctx.beginPath();
+      ctx.globalCompositeOperation = s.eraser ? "destination-out" : "source-over";
+      ctx.strokeStyle = s.color;
+      ctx.lineWidth = s.width * (s.eraser ? 5 : 1);
+      ctx.moveTo(s.points[0].x, s.points[0].y);
+      for (let i = 1; i < s.points.length; i++) ctx.lineTo(s.points[i].x, s.points[i].y);
+      ctx.stroke();
+    });
+    ctx.globalCompositeOperation = "source-over";
+  }
+
+  function undoStroke() { strokes.pop(); redrawStrokes(); queueAutoSave(); }
+  function clearInk() { strokes = []; redrawStrokes(); queueAutoSave(); }
+
+  // ── Folios & Lexicon Management ──
+  function loadFolio(id) {
+    currentFolioId = id;
+    $("folio-name").value = id;
+    if (!folios.items[id]) {
+      folios.items[id] = { source: "", draft: "", strokes: [], updated: Date.now() };
+    }
+    const item = folios.items[id];
+    $("sourceInput").value = item.source || "";
+    $("compositionCanvas").value = item.draft || "";
+    strokes = item.strokes || [];
+    folios.current = id;
+    saveFoliosToStorage();
+    updateAll();
+    redrawStrokes();
+    renderFoliosList();
+  }
+
+  function saveCurrentFolio() {
+    const name = $("folio-name").value.trim() || "VERSE_01";
+    folios.items[name] = {
+      source: $("sourceInput").value,
+      draft: $("compositionCanvas").value,
+      strokes: [...strokes],
+      updated: Date.now()
+    };
+    currentFolioId = name;
+    folios.current = name;
+    saveFoliosToStorage();
+    renderFoliosList();
+  }
+
+  let saveTimer = null;
+  function queueAutoSave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveCurrentFolio, 500);
+  }
+
+  function saveFoliosToStorage() {
+    try { localStorage.setItem(FOLIO_STORAGE_KEY, JSON.stringify(folios)); } catch (_) {}
+  }
+
+  function newFolio() {
+    const name = prompt("New Folio Name:", "VERSE_0" + (Object.keys(folios.items).length + 1));
+    if (!name) return;
+    folios.items[name] = { source: "", draft: "", strokes: [], updated: Date.now() };
+    loadFolio(name);
+  }
+
+  function deleteCurrentFolio() {
+    if (!confirm(`Delete folio "${currentFolioId}"?`)) return;
+    delete folios.items[currentFolioId];
+    const keys = Object.keys(folios.items);
+    loadFolio(keys.length ? keys[0] : "VERSE_01");
+  }
+
+  function renderFoliosList() {
+    const list = $("notes-list");
+    list.innerHTML = "";
+    const ids = Object.keys(folios.items).sort((a, b) => (folios.items[b].updated || 0) - (folios.items[a].updated || 0));
+    $("folioCountLabel").textContent = `${ids.length} folio${ids.length === 1 ? "" : "s"}`;
+    ids.forEach(id => {
+      const row = document.createElement("div");
+      row.className = "note-item" + (id === currentFolioId ? " active" : "");
+      const srcPrev = (folios.items[id].source || "(empty)").slice(0, 28);
+      const drfPrev = (folios.items[id].draft || "").slice(0, 28);
+      row.innerHTML = `<span>${id}</span><span style="font-size:9px; opacity:0.75;">${srcPrev} → ${drfPrev}</span>`;
+      row.onclick = () => loadFolio(id);
+      list.appendChild(row);
+    });
+  }
+
+  function exportAllFolios() {
+    const blob = new Blob([JSON.stringify(folios, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "wordstar_leviticus_folios.json";
+    a.click();
+  }
+
+  // ── Smart Dictionary & Corpus Importer ──
+  function normalizeWordList(rawList) {
+    const set = new Set();
+    for (const item of rawList) {
+      const tokens = String(item || "").toLowerCase().split(/[^a-z]+/);
+      for (const w of tokens) {
         if (w.length >= 2 && w.length <= 20) set.add(w);
       }
-      return Array.from(set).sort();
     }
+    return Array.from(set).sort();
+  }
 
-    function finalizeDict(words, label) {
-      DICT = words;
-      DICT_COUNTS = DICT.map(w => countsFrom(w));
-      DICT_MASKS = new Int32Array(DICT.length);
-      for (let i = 0; i < DICT.length; i++) DICT_MASKS[i] = maskFrom(DICT[i]);
-      $("headStatus").textContent = "READY";
-      if ($("dictLabel")) $("dictLabel").textContent = `${DICT.length.toLocaleString()} · ${label}`;
-      updateAll();
-    }
+  function finalizeDict(words, label) {
+    DICT = words;
+    DICT_COUNTS = DICT.map(w => countsFrom(w));
+    DICT_MASKS = new Int32Array(DICT.length);
+    for (let i = 0; i < DICT.length; i++) DICT_MASKS[i] = maskFrom(DICT[i]);
+    buildTrie();
+    $("dictBadge").textContent = `LEX: ${(DICT.length / 1000).toFixed(0)}K`;
+    $("dictDetailLabel").textContent = `${DICT.length.toLocaleString()} words (${label})`;
+    updateAll();
+  }
 
-    async function loadFromLocal() {
-      const res = await fetch("words.json");
-      if (!res.ok) throw new Error("local missing");
-      const data = await res.json();
-      return Array.isArray(data) ? normalizeWordList(data) : normalizeWordList(Object.keys(data));
-    }
+  async function loadFromLocal() {
+    const res = await fetch("words.json");
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    return Array.isArray(data) ? normalizeWordList(data) : normalizeWordList(Object.keys(data));
+  }
+  async function loadFromDwyl() {
+    const res = await fetch("https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt");
+    if (!res.ok) throw new Error();
+    return normalizeWordList((await res.text()).split(/\r?\n/));
+  }
+  async function loadFromFallback() {
+    const res = await fetch("https://raw.githubusercontent.com/adambom/dictionary/master/dictionary.json");
+    if (!res.ok) throw new Error();
+    return normalizeWordList(Object.keys(await res.json()));
+  }
+  function loadFromCustom() {
+    try {
+      const saved = localStorage.getItem(CUSTOM_DICT_KEY);
+      return saved ? normalizeWordList(JSON.parse(saved)) : null;
+    } catch { return null; }
+  }
+  async function loadBaseLexicon() {
+    try { return await loadFromLocal(); }
+    catch { return await loadFromFallback(); }
+  }
 
-    async function loadFromDwyl() {
-      const res = await fetch("https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt");
-      if (!res.ok) throw new Error("dwyl fetch failed");
-      const text = await res.text();
-      return normalizeWordList(text.split(/\r?\n/));
-    }
+  async function loadDict(source) {
+    const sel = $("dictSource");
+    const src = source || (sel ? sel.value : "local");
+    $("dictBadge").textContent = "LEX: LOAD…";
+    try {
+      const customWords = loadFromCustom() || [];
+      CUSTOM_SET = new Set(customWords);
+      let words = null, label = "";
 
-    async function loadFromFallback() {
-      const res = await fetch("https://raw.githubusercontent.com/adambom/dictionary/master/dictionary.json");
-      if (!res.ok) throw new Error("fallback fetch failed");
-      return normalizeWordList(Object.keys(await res.json()));
-    }
-
-    function loadFromCustom() {
-      try {
-        const saved = localStorage.getItem(CUSTOM_DICT_KEY);
-        if (!saved) return null;
-        const list = JSON.parse(saved);
-        return Array.isArray(list) ? normalizeWordList(list) : null;
-      } catch {
-        return null;
-      }
-    }
-
-    async function loadDict(source) {
-      const sel = $("dictSource");
-      const src = source || (sel ? sel.value : "local") || "local";
-      $("headStatus").textContent = "LOADING DICT…";
-      if ($("dictLabel")) $("dictLabel").textContent = "";
-
-      try {
-        let words = null;
-        let label = "";
-
-        if (src === "custom") {
-          words = loadFromCustom();
-          if (!words || !words.length) {
-            $("headStatus").textContent = "NO CUSTOM LIST";
-            try {
-              words = await loadFromLocal();
-              label = "local";
-              if (sel) sel.value = "local";
-            } catch {
-              words = await loadFromFallback();
-              label = "fallback";
-              if (sel) sel.value = "fallback";
-            }
-          } else {
-            label = "custom";
-          }
-        } else if (src === "dwyl") {
-          words = await loadFromDwyl();
-          label = "english-words";
-        } else if (src === "fallback") {
-          words = await loadFromFallback();
-          label = "definition keys";
+      if (src === "custom") {
+        if (!customWords.length) {
+          words = await loadBaseLexicon(); label = "base"; if (sel) sel.value = "local";
         } else {
-          try {
-            words = await loadFromLocal();
-            label = "local";
-          } catch {
-            words = await loadFromFallback();
-            label = "definition keys";
-            if (sel) sel.value = "fallback";
-          }
+          words = customWords; label = "custom";
         }
-
-        try { localStorage.setItem(DICT_SOURCE_KEY, sel ? sel.value : src); } catch (_) {}
-        finalizeDict(words, label);
-      } catch (err) {
-        $("headStatus").textContent = "DICT FAILED";
-        console.error(err);
+      } else if (src === "blend") {
+        const base = await loadBaseLexicon();
+        words = normalizeWordList([...base, ...customWords]);
+        label = `blend ★${customWords.length}`;
+      } else if (src === "dwyl") {
+        words = await loadFromDwyl(); label = "370k";
+      } else if (src === "fallback") {
+        words = await loadFromFallback(); label = "fallback";
+      } else {
+        words = await loadBaseLexicon(); label = "local";
       }
+      try { localStorage.setItem(DICT_SOURCE_KEY, sel ? sel.value : src); } catch (_) {}
+      finalizeDict(words, label);
+    } catch (_) {
+      $("dictBadge").textContent = "LEX: ERR";
+    }
+  }
+
+  function handleDictImport(file) {
+    $("dictBadge").textContent = "IMPORT…";
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const text = String(reader.result || "").trim();
+        let list;
+        if (file.name.toLowerCase().endsWith(".json") || text.startsWith("[") || text.startsWith("{")) {
+          const parsed = JSON.parse(text);
+          list = Array.isArray(parsed) ? parsed : Object.keys(parsed);
+        } else {
+          list = [text];
+        }
+        const words = normalizeWordList(list);
+        if (!words.length) return;
+        CUSTOM_SET = new Set(words);
+        try { localStorage.setItem(CUSTOM_DICT_KEY, JSON.stringify(words)); } catch (_) {}
+        const sel = $("dictSource");
+        if (sel) sel.value = "blend";
+        const base = await loadBaseLexicon();
+        finalizeDict(normalizeWordList([...base, ...words]), `blend ★${words.length}`);
+      } catch (_) {
+        $("dictBadge").textContent = "IMP ERR";
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // ── UI Helpers & Exports ──
+  function switchTab(panelId, btn) {
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    $(panelId).classList.add("active");
+    btn.classList.add("active");
+    if (panelId === "sketch-panel") resizeCanvas();
+    if (panelId === "hud-panel") renderHudAndProse();
+    if (panelId === "notes-panel") renderFoliosList();
+  }
+
+  function toggleBacklight() {
+    document.body.classList.toggle("backlight-night");
+  }
+
+  function toggleFocus() {
+    const isFocus = !document.body.classList.contains("in-focus");
+    document.body.classList.toggle("in-focus", isFocus);
+    document.querySelectorAll(".tab-bar, .bottom-bar, .pda-footer-links").forEach(el => el.classList.toggle("hidden", isFocus));
+  }
+
+  function copyCanvas() {
+    const t = $("compositionCanvas").value;
+    if (t && navigator.clipboard) navigator.clipboard.writeText(t);
+  }
+
+  function clearCanvas() {
+    $("compositionCanvas").value = "";
+    updateAll();
+  }
+
+  function seedSample() {
+    const samples = [
+      { s: "In the beginning God created the heaven and the earth", d: "breathing ancient earth, he carved night and eden" },
+      { s: "Do not forget the human cadence in the machine", d: "chandler, can the machineunfetter a dogged omen?" },
+      { s: "The rain hammered the tin roof outside the neon sign", d: "underneath theornate, shifting, hauntedimetro" }
+    ];
+    const pick = samples[Math.floor(Math.random() * samples.length)];
+    $("sourceInput").value = pick.s;
+    $("compositionCanvas").value = "";
+    updateAll();
+  }
+
+  function handleDownload() {
+    const mode = $("export-mode").value;
+    const name = $("folio-name").value.trim() || "VERSE_01";
+    const src = $("sourceInput").value.trim();
+    const draft = $("compositionCanvas").value.trim();
+    const rem = remOrder.join("");
+
+    if (mode === "png") {
+      const a = document.createElement("a");
+      a.download = `${name}_ink.png`;
+      a.href = canvas.toDataURL("image/png");
+      a.click();
+      return;
     }
 
-    function handleDictImport(file) {
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          let list = [];
-          const text = reader.result;
-          if (file.name.toLowerCase().endsWith(".json") || text.trim().startsWith("[")) {
-            const parsed = JSON.parse(text);
-            list = Array.isArray(parsed) ? parsed : Object.keys(parsed);
-          } else {
-            list = text.split(/\r?\n/);
-          }
-          const words = normalizeWordList(list);
-          if (!words.length) {
-            $("headStatus").textContent = "IMPORT EMPTY";
-            return;
-          }
-          try {
-            localStorage.setItem(CUSTOM_DICT_KEY, JSON.stringify(words));
-          } catch (_) {}
-          if ($("dictSource")) $("dictSource").value = "custom";
-          finalizeDict(words, "custom");
-          $("headStatus").textContent = "IMPORTED";
-          setTimeout(() => { $("headStatus").textContent = "READY"; }, 1600);
-        } catch (e) {
-          $("headStatus").textContent = "IMPORT FAILED";
-          console.error(e);
-        }
+    if (mode === "json") {
+      const payload = {
+        device: "Wordstar PDA · v/ARTIST Leviticus",
+        folio: name,
+        timestamp: new Date().toISOString(),
+        source: src,
+        anagram_draft: draft,
+        remaining_letters: rem,
+        vowel_ratio_pct: vowelRatio(remaining)
       };
-      reader.readAsText(file);
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${name}_atelier.json`;
+      a.click();
+      return;
     }
 
-    (function initDictControls() {
-      const sel = $("dictSource");
-      const btn = $("btnImportDict");
-      const fileInput = $("dictFile");
+    const txt = [
+      "==================================================",
+      "  WORDSTAR PDA · v/ARTIST ANAGRAM ATELIER",
+      "==================================================",
+      `Folio     : ${name}`,
+      `Source    : ${src || "(none)"}`,
+      `Remaining : ${rem || "(0 — PERFECT ANAGRAM)"}`,
+      "--------------------------------------------------",
+      "",
+      draft || "(empty draft)",
+      "",
+      "==================================================",
+      "  wordstar.nexus/leviticus",
+      "=================================================="
+    ].join("\n");
 
-      if (sel) {
-        try {
-          const saved = localStorage.getItem(DICT_SOURCE_KEY);
-          if (saved && ["local", "dwyl", "fallback", "custom"].includes(saved)) {
-            sel.value = saved;
-          }
-        } catch (_) {}
-        sel.addEventListener("change", () => loadDict(sel.value));
-      }
-      if (btn && fileInput) {
-        btn.addEventListener("click", () => fileInput.click());
-        fileInput.addEventListener("change", () => {
-          const f = fileInput.files && fileInput.files[0];
-          if (f) handleDictImport(f);
-          fileInput.value = "";
-        });
-      }
-    })();
+    const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${name}_leviticus.txt`;
+    a.click();
+  }
 
+  // ── Init ──
+  $("sourceInput").addEventListener("input", updateAll);
+  $("compositionCanvas").addEventListener("input", updateAll);
+
+  window.addEventListener("keydown", (e) => {
+    if (e.altKey && (e.key === "s" || e.key === "S")) {
+      e.preventDefault();
+      shuffleRemainder();
+    } else if (e.altKey && e.key === "Backspace") {
+      e.preventDefault();
+      popLastWord();
+    } else if (e.key === "Escape" && document.body.classList.contains("in-focus")) {
+      toggleFocus();
+    }
+  });
+
+  window.addEventListener("load", () => {
+    const updateClock = () => {
+      $("clock").textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    };
+    updateClock();
+    setInterval(updateClock, 10000);
+    initKnob();
+    loadFolio(currentFolioId);
     loadDict();
-  </script>
+  });
+  window.addEventListener("resize", resizeCanvas);
+</script>
 </body>
 </html>
