@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>v/TMURA · Permutation Matrix // Wordstar Nexus</title>
   <style>
-    :root {
+    :root, [data-theme="dark"] {
       --red: #ff0033;
       --red-hover: #ff2252;
+      --red-soft: rgba(255, 0, 51, 0.14);
       --black: #09090b;
       --grey-dark: #111114;
       --grey-panel: #141418;
@@ -17,7 +18,29 @@
       --muted: #727280;
       --ok: #ffff00;
       --ok-bg: rgba(255, 255, 0, 0.12);
+      --ok-border: rgba(255, 255, 0, 0.45);
+      --word-fg: #ededf2;
+      --word-hover-fg: #000000;
     }
+
+    [data-theme="light"] {
+      --red: #d9002b;
+      --red-hover: #b00022;
+      --red-soft: rgba(217, 0, 43, 0.1);
+      --black: #f4f3ef;
+      --grey-dark: #e8e6e0;
+      --grey-panel: #fbfaf7;
+      --grey-mid: #dedbd2;
+      --border: #c7c4bb;
+      --white: #141417;
+      --muted: #62626e;
+      --ok: #007256;
+      --ok-bg: rgba(0, 114, 86, 0.11);
+      --ok-border: rgba(0, 114, 86, 0.45);
+      --word-fg: #141417;
+      --word-hover-fg: #ffffff;
+    }
+
     * { 
       box-sizing: border-box; 
       margin: 0; 
@@ -26,12 +49,13 @@
       scrollbar-width: thin;
       scrollbar-color: var(--red) var(--grey-dark);
     }
-    ::selection { background: var(--red); color: #000; }
+    ::selection { background: var(--red); color: var(--word-hover-fg); }
     body {
       font-family: "SF Mono","Fira Code","Consolas",monospace;
       background: var(--black); color: var(--white);
       height: 100vh; display: flex; flex-direction: column;
       font-size: 11px; line-height: 1.35; overflow: hidden;
+      transition: background 0.15s, color 0.15s;
     }
 
     /* Universal scrollbars */
@@ -47,6 +71,8 @@
     }
     .app-title { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; color: var(--red); display: flex; align-items: center; gap: 0.5rem; }
     .app-title span { color: var(--muted); font-weight: normal; font-size: 0.65rem; }
+    .titlebar-right { display: flex; align-items: center; gap: 0.65rem; }
+
     .app-toolbar {
       background: var(--grey-panel); border-bottom: 1px solid var(--border);
       padding: 0.35rem 0.65rem; display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;
@@ -55,29 +81,32 @@
       background: var(--grey-dark); border: 1px solid var(--border); color: var(--white);
       padding: 0.25rem 0.5rem; font-size: 0.65rem; cursor: pointer; border-radius: 2px;
       display: inline-flex; align-items: center; gap: 0.25rem; transition: all 0.12s;
+      font-family: inherit;
     }
     .tool-btn:hover { border-color: var(--red); color: var(--red); }
-    .tool-btn.active { background: var(--red); border-color: var(--red); color: #000; font-weight: 700; }
+    .tool-btn.active { background: var(--red); border-color: var(--red); color: var(--word-hover-fg); font-weight: 700; }
     .mode-switch { display: flex; border: 1px solid var(--border); overflow: hidden; border-radius: 2px; }
     .mode-switch button {
       border: none; padding: 0.25rem 0.6rem; font-size: 0.65rem; font-weight: 600;
       text-transform: uppercase; background: var(--grey-dark); color: var(--muted); cursor: pointer;
+      font-family: inherit;
     }
-    .mode-switch button.active { background: var(--red); color: #000; font-weight: 700; }
+    .mode-switch button.active { background: var(--red); color: var(--word-hover-fg); font-weight: 700; }
     select.tool-select {
       background: var(--grey-dark); border: 1px solid var(--border); color: var(--white);
-      padding: 0.2rem 0.4rem; font-size: 0.65rem; border-radius: 2px;
+      padding: 0.2rem 0.4rem; font-size: 0.65rem; border-radius: 2px; font-family: inherit;
     }
     select.tool-select:focus { outline: none; border-color: var(--red); }
+
     .app-grid {
-      flex: 1; display: grid; grid-template-columns: 320px 105px 1fr;
+      flex: 1; display: grid; grid-template-columns: 320px 112px 1fr;
       overflow: hidden; background: var(--border); gap: 1px;
     }
     .left-col { background: var(--grey-panel); display: flex; flex-direction: column; overflow: hidden; }
     .pane-box { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 110px; }
     .pane-meta {
       background: var(--grey-dark); padding: 0.3rem 0.6rem; font-size: 0.65rem;
-      color: var(--muted); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;
+      color: var(--muted); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;
     }
     .pane-meta strong { color: var(--white); }
     .pane-textarea {
@@ -85,32 +114,95 @@
       padding: 0.6rem; font: inherit; font-size: 0.85rem; line-height: 1.5; resize: none;
     }
     .pane-textarea:focus { outline: none; }
+
+    /* Explicit Overdraw Banner */
+    .overdraw-strip {
+      display: none; background: var(--red-soft); border-top: 1px solid var(--red);
+      padding: 0.3rem 0.6rem; font-size: 0.65rem; color: var(--red); font-weight: 700;
+      align-items: center; justify-content: space-between; gap: 0.4rem; flex-wrap: wrap;
+    }
+    .overdraw-strip.visible { display: flex; }
+    .overdraw-pill {
+      background: var(--red); color: var(--word-hover-fg); padding: 0.05rem 0.3rem;
+      border-radius: 2px; font-size: 0.62rem; margin-left: 0.2rem; display: inline-block;
+    }
+
     .bottom-status-strip {
       background: var(--grey-dark); border-top: 1px solid var(--border);
       padding: 0.4rem 0.6rem; display: flex; flex-direction: column; gap: 0.35rem;
     }
     .status-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; }
     .gauge-wrapper { display: flex; align-items: center; gap: 0.4rem; font-size: 0.62rem; color: var(--muted); }
-    .vowel-gauge { flex: 1; height: 8px; background: #000; border: 1px solid var(--border); position: relative; }
-    .vowel-gauge-target { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: #555; z-index: 2; }
-    .vowel-gauge-fill { height: 100%; background: var(--ok); width: 0%; transition: width 0.15s; }
+    .vowel-gauge { flex: 1; height: 8px; background: var(--black); border: 1px solid var(--border); position: relative; }
+    .vowel-gauge-target { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--muted); z-index: 2; }
+    .vowel-gauge-fill { height: 100%; background: var(--ok); width: 0%; transition: width 0.12s; }
     .vowel-gauge-fill.danger { background: var(--red); }
+
+    /* Center Column Ladder */
     .center-col { background: var(--grey-panel); display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--border); }
     .ladder-stream { flex: 1; overflow-y: auto; padding: 0.3rem 0; display: flex; flex-direction: column; }
-    .ladder-row { display: flex; justify-content: space-between; align-items: center; padding: 0.18rem 0.5rem; font-size: 0.72rem; font-weight: bold; user-select: none; }
-    .ladder-row.divider { border-top: 1px solid var(--border); margin: 0.25rem 0; padding: 0; }
-    .ladder-row.depleted { opacity: 0.18; }
+    .ladder-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.16rem 0.45rem; font-size: 0.72rem; font-weight: bold; user-select: none;
+      border-left: 2px solid transparent; transition: background 0.08s;
+    }
+    .ladder-row:hover { background: var(--grey-mid); }
+    .ladder-row.divider { border-top: 1px solid var(--border); margin: 0.25rem 0; padding: 0; pointer-events: none; }
+    .ladder-row.depleted { opacity: 0.2; }
     .ladder-row.vowel .glyph { color: var(--red); }
-    .ladder-row .tally { color: var(--ok); font-size: 0.65rem; }
+    .ladder-row.overdrawn {
+      opacity: 1 !important; background: var(--red-soft); border-left-color: var(--red);
+    }
+    .ladder-row.overdrawn .glyph, .ladder-row.overdrawn .count { color: var(--red) !important; }
+    .ladder-row.preview-hit {
+      background: var(--ok-bg); border-left-color: var(--ok);
+    }
+    .ladder-row .tally { color: var(--ok); font-size: 0.63rem; }
     .ladder-row .count { color: var(--muted); font-size: 0.6rem; margin-left: 0.2rem; }
+    .ladder-row .delta {
+      font-size: 0.58rem; color: var(--ok); background: var(--ok-bg);
+      border: 1px solid var(--ok-border); padding: 0 0.2rem; border-radius: 2px; margin-left: 0.2rem;
+    }
+
     .ladder-filters { background: var(--grey-dark); border-top: 1px solid var(--border); padding: 0.4rem 0.35rem; display: flex; flex-direction: column; gap: 0.25rem; }
     .filter-input-row { display: flex; align-items: center; gap: 0.25rem; font-size: 0.65rem; color: var(--muted); }
     .filter-input-row input {
-      flex: 1; background: #000; border: 1px solid var(--border); color: #fff;
-      font: inherit; font-size: 0.65rem; padding: 0.15rem 0.3rem; border-radius: 1px;
+      flex: 1; background: var(--black); border: 1px solid var(--border); color: var(--white);
+      font: inherit; font-size: 0.65rem; padding: 0.15rem 0.3rem; border-radius: 1px; width: 100%;
     }
     .filter-input-row input:focus { outline: none; border-color: var(--red); }
+
+    /* Right Column + Shuffleable Remainder Tile Rack */
     .right-col { background: var(--black); display: flex; flex-direction: column; overflow: hidden; }
+    .remainder-rack-bar {
+      background: var(--grey-panel); border-bottom: 1px solid var(--border);
+      padding: 0.3rem 0.55rem; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
+    }
+    .rack-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .rack-tiles { display: flex; flex-wrap: wrap; gap: 0.2rem; flex: 1; align-items: center; min-height: 20px; }
+    .rack-tile {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 18px; height: 19px; padding: 0 0.2rem;
+      background: var(--grey-dark); border: 1px solid var(--border); color: var(--white);
+      font-size: 0.72rem; font-weight: 700; border-radius: 2px; cursor: pointer; user-select: none;
+      transition: transform 0.08s, border-color 0.1s;
+    }
+    .rack-tile.vowel { color: var(--red); border-bottom: 2px solid var(--red); }
+    .rack-tile:hover { border-color: var(--ok); transform: translateY(-1px); }
+
+    /* Endgame Drawer */
+    .endgame-drawer {
+      display: none; background: var(--grey-dark); border-bottom: 1px solid var(--ok-border);
+      padding: 0.35rem 0.6rem; align-items: center; gap: 0.4rem; flex-wrap: wrap;
+    }
+    .endgame-drawer.open { display: flex; }
+    .endgame-chip {
+      background: var(--ok-bg); border: 1px solid var(--ok-border); color: var(--ok);
+      padding: 0.15rem 0.45rem; border-radius: 2px; font-size: 0.68rem; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+    }
+    .endgame-chip:hover { background: var(--red); border-color: var(--red); color: var(--word-hover-fg); }
+
     .matrix-nav-strip {
       background: var(--grey-dark); border-bottom: 1px solid var(--border);
       padding: 0.25rem 0.5rem; display: flex; align-items: center; gap: 0.35rem;
@@ -119,10 +211,11 @@
     .nav-pill {
       background: var(--grey-mid); border: 1px solid var(--border); color: var(--muted);
       font-size: 0.62rem; padding: 0.1rem 0.4rem; border-radius: 2px; cursor: pointer; white-space: nowrap;
+      font-family: inherit;
     }
     .nav-pill:hover { border-color: var(--red); color: var(--white); }
 
-    /* Outer horizontal scrollbar: thick, prominent, and distinct */
+    /* Outer horizontal scrollbar */
     .matrix-body {
       flex: 1; display: flex; overflow-x: auto; overflow-y: hidden;
       padding: 0.3rem 0; scroll-behavior: smooth;
@@ -133,7 +226,7 @@
     .matrix-body::-webkit-scrollbar-thumb:hover { background: var(--red-hover); }
 
     .length-col {
-      min-width: 115px; max-width: 145px; flex: 1; border-right: 1px solid var(--border);
+      min-width: 118px; max-width: 150px; flex: 1; border-right: 1px solid var(--border);
       display: flex; flex-direction: column; overflow: hidden; background: var(--grey-dark);
     }
     .col-header {
@@ -142,40 +235,54 @@
       display: flex; justify-content: space-between; user-select: none;
     }
 
-    /* Inner vertical word-list scrollbar: sleek red indicator */
     .col-words {
       flex: 1; overflow-y: auto; padding: 0.3rem 0.35rem; display: grid;
       gap: 0.2rem; align-content: start;
     }
     .col-words::-webkit-scrollbar { width: 5px; }
-    .col-words::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); }
+    .col-words::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.12); }
     .col-words::-webkit-scrollbar-thumb { background: var(--red); border-radius: 2px; }
 
     /* Compact multi-column tile packing for short words */
     .col-len-1 .col-words { grid-template-columns: repeat(auto-fill, minmax(24px, 1fr)); }
     .col-len-2 .col-words { grid-template-columns: repeat(auto-fill, minmax(32px, 1fr)); }
     .col-len-3 .col-words { grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); }
-    .col-len-4 .col-words { grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); }
+    .col-len-4 .col-words { grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); }
     .col-len-default .col-words { grid-template-columns: 1fr; }
 
-    /* Tactile boxy word pill (clean, centered, high-contrast) */
+    /* Tactile boxy word pill */
     .matrix-word {
       display: flex;
       align-items: center;
       justify-content: center;
       text-align: center;
-      color: #ededf2 !important;
+      color: var(--word-fg);
       background: var(--grey-panel);
       border: 1px solid var(--border);
       cursor: pointer; padding: 0.2rem 0.25rem; border-radius: 2px;
       white-space: nowrap; text-overflow: ellipsis; overflow: hidden; font-size: 0.72rem; 
       font-weight: 600; letter-spacing: 0.02em; transition: all 0.1s; user-select: none;
-      min-height: 22px;
+      min-height: 22px; position: relative;
+    }
+    .matrix-word.healer {
+      border-left: 2px solid var(--ok);
+    }
+    .matrix-word.exact-close {
+      border-color: var(--ok);
+      background: var(--ok-bg);
+      color: var(--ok);
+    }
+    .matrix-word.custom-word::after {
+      content: "★";
+      font-size: 0.5rem;
+      color: var(--red);
+      margin-left: 2px;
+      opacity: 0.85;
     }
     .matrix-word:hover { 
       background: var(--red) !important; 
       border-color: var(--red) !important;
-      color: #000000 !important; 
+      color: var(--word-hover-fg) !important; 
       font-weight: 700; 
       transform: scale(1.04);
       z-index: 2;
@@ -199,10 +306,11 @@
       gap: 0.5rem; border-left: 2px solid transparent; transition: all 0.12s;
     }
     .sentence-card:hover { border-left-color: var(--red); background: var(--grey-mid); transform: translateX(2px); }
-    .sentence-card.exact { border-left-color: var(--ok); background: rgba(255, 255, 0, 0.03); }
+    .sentence-card.exact { border-left-color: var(--ok); background: var(--ok-bg); }
     .sentence-text { font-weight: 600; color: var(--white); letter-spacing: 0.02em; font-size: 0.75rem; word-break: break-word; }
     .sentence-badge { font-size: 0.6rem; padding: 0.15rem 0.4rem; border-radius: 2px; background: var(--grey-mid); color: var(--muted); white-space: nowrap; }
-    .sentence-badge.exact { color: var(--ok); background: var(--ok-bg); border: 1px solid rgba(255, 255, 0, 0.4); }
+    .sentence-badge.exact { color: var(--ok); background: var(--ok-bg); border: 1px solid var(--ok-border); }
+
     @media (max-width: 820px) {
       body { height: auto; min-height: 100vh; overflow-y: auto; }
       .app-grid { grid-template-columns: 1fr; height: auto; }
@@ -212,7 +320,7 @@
       .ladder-row { flex-direction: column; padding: 0.2rem 0.4rem; background: var(--grey-dark); border: 1px solid var(--border); }
       .ladder-row.divider { display: none; }
       .ladder-filters { display: grid; grid-template-columns: 1fr 1fr 1fr; }
-      .right-col { height: 460px; }
+      .right-col { height: 480px; }
     }
     footer {
       background: var(--grey-dark); border-top: 1px solid var(--border);
@@ -225,7 +333,10 @@
 <body>
   <div class="app-titlebar">
     <div class="app-title">v/TMURA <span>· Permutation Matrix &amp; Syntactic Loom // Wordstar Nexus</span></div>
-    <div id="dictStatus" style="font-size:0.65rem; color:var(--muted);">Loading Lexicon…</div>
+    <div class="titlebar-right">
+      <div id="dictStatus" style="font-size:0.65rem; color:var(--muted);">Loading Lexicon…</div>
+      <button class="tool-btn" id="btnThemeToggle" title="Toggle Light / Dark Theme">☀ Light</button>
+    </div>
   </div>
 
   <div class="app-toolbar">
@@ -233,33 +344,52 @@
       <button type="button" class="active" id="btnModeWords">Words</button>
       <button type="button" id="btnModeSentences">Sentences</button>
     </div>
-    <span style="border-left: 1px solid var(--border); height: 16px; margin: 0 0.2rem;"></span>
+    <span style="border-left: 1px solid var(--border); height: 16px; margin: 0 0.15rem;"></span>
+    <label for="matrixSort" style="font-size:0.65rem; color:var(--muted);">Order:</label>
+    <select id="matrixSort" class="tool-select" title="Healer ranks words that balance vowel ratio (~40%) and burn rare letters">
+      <option value="healer" selected>★ Healer / Balance</option>
+      <option value="alpha">A–Z Alphabetical</option>
+    </select>
+    <span style="border-left: 1px solid var(--border); height: 16px; margin: 0 0.15rem;"></span>
+    <button class="tool-btn" id="btnPopWord" title="Remove last word from draft (Alt+Backspace)">↶ Pop Word</button>
     <button class="tool-btn" id="btnCopyDraft">Copy Draft</button>
     <button class="tool-btn" id="btnClearDraft">Clr Draft</button>
     <button class="tool-btn" id="btnResetAll">Reset All</button>
-    <span style="border-left: 1px solid var(--border); height: 16px; margin: 0 0.2rem;"></span>
+    <span style="border-left: 1px solid var(--border); height: 16px; margin: 0 0.15rem;"></span>
     <label for="dictSource" style="font-size:0.65rem; color:var(--muted);">Dict:</label>
     <select id="dictSource" class="tool-select">
       <option value="local">Local words.json</option>
       <option value="dwyl">English Words (370k)</option>
       <option value="fallback">Definition keys</option>
-      <option value="custom">Custom (imported)</option>
+      <option value="custom">Custom only (imported)</option>
+      <option value="blend">Custom + Base (Blend)</option>
     </select>
-    <button class="tool-btn" id="btnImportDict">Import…</button>
+    <button class="tool-btn" id="btnImportDict" title="Import .txt wordlist, .txt book/poem corpus, or .json">Import…</button>
     <button class="tool-btn" id="btnExportDraft" title="Export current anagram draft as .txt">Export TXT</button>
-    <input type="file" id="dictFile" accept=".txt,.json,text/plain,application/json" style="display:none;" />
+    <input type="file" id="dictFile" accept=".txt,.json,.md,.csv,text/plain,application/json" style="display:none;" />
   </div>
 
   <div class="app-grid">
+    <!-- LEFT COLUMN: SOURCE & DRAFT -->
     <div class="left-col">
       <div class="pane-box" style="border-bottom: 1px solid var(--border);">
         <div class="pane-meta"><span>Source Input</span><span id="origMeta">Orig: 0 vow 0 0%</span></div>
         <textarea id="origInput" class="pane-textarea" placeholder="Type or paste source phrase here…" spellcheck="false"></textarea>
       </div>
       <div class="pane-box">
-        <div class="pane-meta"><span>Anagram Draft</span><span id="anagMeta">Anag: 0 vow 0 0% · 0% done</span></div>
-        <textarea id="anagInput" class="pane-textarea" placeholder="Draft your anagram here. Click words/sentences to append…" spellcheck="false"></textarea>
+        <div class="pane-meta">
+          <span>Anagram Draft</span>
+          <span id="anagMeta">Anag: 0 vow 0 0% · 0% done</span>
+        </div>
+        <textarea id="anagInput" class="pane-textarea" placeholder="Draft your anagram here. Hover words to preview depletion, click to append…" spellcheck="false"></textarea>
       </div>
+
+      <!-- Explicit Overdraw Strip -->
+      <div class="overdraw-strip" id="overdrawStrip">
+        <span>✗ OVERDRAWN:</span>
+        <div id="overdrawBadges"></div>
+      </div>
+
       <div class="bottom-status-strip">
         <div class="status-row">
           <span id="leftMeta" style="font-weight:bold; color:var(--white);">Left: 0 vow 0 0%</span>
@@ -279,6 +409,7 @@
       </div>
     </div>
 
+    <!-- CENTER COLUMN: FREQUENCY LADDER + FILTERS -->
     <div class="center-col">
       <div class="ladder-stream" id="ladderStream"></div>
       <div class="ladder-filters">
@@ -288,10 +419,22 @@
       </div>
     </div>
 
+    <!-- RIGHT COLUMN: SHUFFLEABLE RACK + MATRIX / SENTENCES -->
     <div class="right-col">
+      <!-- Remainder Tile Rack + Endgame Trigger -->
+      <div class="remainder-rack-bar">
+        <span class="rack-label" id="rackLabel">Pool (0):</span>
+        <div class="rack-tiles" id="rackTiles"></div>
+        <button class="tool-btn" id="btnEndgameSolve" style="display:none; border-color:var(--ok); color:var(--ok); font-weight:700;" title="Find exact 0-leftover multi-word closures">⚡ Endgame</button>
+        <button class="tool-btn" id="btnShuffleRack" title="Shuffle remaining letter tiles spatially (Alt+S)">⇄ Shuffle</button>
+      </div>
+
+      <!-- Collapsible Endgame Closeout Drawer -->
+      <div class="endgame-drawer" id="endgameDrawer"></div>
+
       <div id="wordsMatrixContainer" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
         <div class="matrix-nav-strip" id="matrixNavStrip">
-          <span style="font-size:0.6rem; color:var(--muted); text-transform:uppercase;">Col:</span>
+          <span style="font-size:0.6rem; color:var(--muted); text-transform:uppercase;">Jump:</span>
         </div>
         <div class="matrix-body" id="matrixBody"></div>
       </div>
@@ -330,15 +473,21 @@
   <script>
     const LADDER_LETTERS = ['e','a','o','i','u','y','-','t','n','s','h','r','d','l','m','c','f','w','g','p','b','v','k','x','q','j','z'];
     const VOWELS = new Set(['a','e','i','o','u','y']);
+    const RARE_WEIGHT = { q: 28, z: 26, x: 26, j: 24, k: 14, v: 12, w: 8, y: 7, b: 6, f: 6, g: 5, p: 5 };
 
     let DICT = [];
     let DICT_COUNTS = [];
     let DICT_MASKS = new Int32Array(0);
+    let CUSTOM_SET = new Set();
+    let TRIE = null;
 
     let activeMode = "words";
     let sourceCounts = new Uint8Array(26);
     let anagCounts = new Uint8Array(26);
     let remaining = new Uint8Array(26);
+    let overdrawnCounts = new Uint8Array(26);
+    let previewDelta = null; // Uint8Array(26) when hovering a word/sentence
+    let rackOrder = [];      // Current spatial permutation of remaining letters
 
     const $ = (id) => document.getElementById(id);
 
@@ -369,7 +518,7 @@
     }
     function subtract(inv, sub) {
       const n = inv.slice();
-      for (let i = 0; i < 26; i++) n[i] -= sub[i];
+      for (let i = 0; i < 26; i++) n[i] = Math.max(0, n[i] - sub[i]);
       return n;
     }
     function cleanString(str) {
@@ -389,33 +538,140 @@
       return { tot, vows, pct: tot === 0 ? 0 : Math.round((vows / tot) * 100) };
     }
 
-    function updateAll() {
-      sourceCounts = countsFrom(cleanString($("origInput").value));
-      anagCounts = countsFrom(cleanString($("anagInput").value));
-
-      remaining = new Uint8Array(26);
-      let isOverdrawn = false;
-      for (let i = 0; i < 26; i++) {
-        const diff = sourceCounts[i] - anagCounts[i];
-        if (diff < 0) { isOverdrawn = true; remaining[i] = 0; }
-        else { remaining[i] = diff; }
+    // ── Fast Count-Trie for Non-Truncated Lookups ──
+    function buildTrie() {
+      TRIE = { c: new Array(26), w: [] };
+      for (let i = 0; i < DICT.length; i++) {
+        const counts = DICT_COUNTS[i];
+        let node = TRIE;
+        for (let L = 0; L < 26; L++) {
+          const n = counts[L];
+          for (let k = 0; k < n; k++) {
+            if (!node.c[L]) node.c[L] = { c: new Array(26), w: [] };
+            node = node.c[L];
+          }
+        }
+        node.w.push(i);
       }
+    }
 
+    function collectFormable(minLen, maxLen, have) {
+      const out = [];
+      if (!TRIE) return out;
+      const used = new Uint8Array(26);
+      const lo = Math.max(1, minLen);
+      const hi = Math.min(20, maxLen);
+      function walk(node, len, from) {
+        if (len >= lo && node.w.length) {
+          for (let k = 0; k < node.w.length; k++) out.push(node.w[k]);
+        }
+        if (len >= hi || !node.c) return;
+        for (let L = from; L < 26; L++) {
+          const child = node.c[L];
+          if (!child || used[L] >= have[L]) continue;
+          used[L]++;
+          walk(child, len + 1, L);
+          used[L]--;
+        }
+      }
+      walk(TRIE, 0, 0);
+      return out;
+    }
+
+    // ── Healer / Balance Scoring ──
+    function healerScore(wordIdx, rem) {
+      const wCounts = DICT_COUNTS[wordIdx];
+      const after = subtract(rem, wCounts);
+      const sAfter = stats(after);
+      let score = 0;
+      if (sAfter.tot === 0) {
+        score += 200; // Exact closure bonus
+      } else {
+        // Reward keeping remaining pool close to 40% vowel ratio
+        score += 100 - Math.abs(sAfter.pct - 40) * 2.2;
+      }
+      // Reward burning rare/clunky consonants or surplus gluts
+      for (let i = 0; i < 26; i++) {
+        if (wCounts[i] > 0) {
+          const ch = String.fromCharCode(97 + i);
+          if (RARE_WEIGHT[ch]) score += RARE_WEIGHT[ch] * wCounts[i];
+          if (rem[i] >= 3) score += (rem[i] - 2) * 6;
+        }
+      }
+      if (CUSTOM_SET.has(DICT[wordIdx])) score += 35; // Prioritize custom lexicon words
+      return score;
+    }
+
+    // ── Hover-to-Preview Depletion ──
+    function setPreviewWord(str) {
+      if (!str) {
+        previewDelta = null;
+      } else {
+        previewDelta = countsFrom(cleanString(str));
+      }
+      renderStatusAndGauge();
+      renderLadder();
+    }
+
+    function renderStatusAndGauge() {
       const sOrig = stats(sourceCounts);
       const sAnag = stats(anagCounts);
-      const sLeft = stats(remaining);
+      const activeRem = previewDelta ? subtract(remaining, previewDelta) : remaining;
+      const sLeft = stats(activeRem);
+
+      let totalOverdrawn = 0;
+      for (let i = 0; i < 26; i++) totalOverdrawn += overdrawnCounts[i];
 
       $("origMeta").textContent = `Orig: ${sOrig.tot} vow ${sOrig.vows} ${sOrig.pct}%`;
       const donePct = sOrig.tot === 0 ? 0 : Math.min(100, Math.round((sAnag.tot / sOrig.tot) * 1000) / 10);
       $("anagMeta").textContent = `Anag: ${sAnag.tot} vow ${sAnag.vows} ${sAnag.pct}% · ${donePct}% done`;
-      $("leftMeta").textContent = `Left: ${sLeft.tot} vow ${sLeft.vows} ${sLeft.pct}%` + (isOverdrawn ? " [OVERDRAWN]" : "");
+      $("leftMeta").textContent = (previewDelta ? `Preview Left: ` : `Left: `) +
+        `${sLeft.tot} vow ${sLeft.vows} ${sLeft.pct}%` +
+        (totalOverdrawn > 0 ? ` [OVERDRAWN -${totalOverdrawn}]` : "");
 
       const gauge = $("vowelGaugeFill");
       const clamped = Math.max(20, Math.min(60, sLeft.pct));
       gauge.style.width = (((clamped - 20) / 40) * 100) + "%";
       gauge.className = "vowel-gauge-fill" + (sLeft.pct < 32 || sLeft.pct > 48 ? " danger" : "");
+    }
 
+    function updateAll() {
+      previewDelta = null;
+      sourceCounts = countsFrom(cleanString($("origInput").value));
+      anagCounts = countsFrom(cleanString($("anagInput").value));
+
+      remaining = new Uint8Array(26);
+      overdrawnCounts = new Uint8Array(26);
+      const overdrawnList = [];
+
+      for (let i = 0; i < 26; i++) {
+        const diff = sourceCounts[i] - anagCounts[i];
+        if (diff < 0) {
+          remaining[i] = 0;
+          overdrawnCounts[i] = -diff;
+          overdrawnList.push({ ch: String.fromCharCode(65 + i), count: -diff });
+        } else {
+          remaining[i] = diff;
+        }
+      }
+
+      // Render explicit overdraw strip
+      const strip = $("overdrawStrip");
+      const badges = $("overdrawBadges");
+      if (overdrawnList.length > 0) {
+        strip.classList.add("visible");
+        badges.innerHTML = overdrawnList.map(o => `<span class="overdraw-pill">${o.ch} -${o.count}</span>`).join("");
+      } else {
+        strip.classList.remove("visible");
+        badges.innerHTML = "";
+      }
+
+      renderStatusAndGauge();
       renderLadder();
+      syncRackOrder();
+      renderRack();
+      $("endgameDrawer").classList.remove("open");
+
       if (activeMode === "words") debounceMatrix();
       else debounceSentences();
       saveSession();
@@ -432,64 +688,227 @@
           return;
         }
         const idx = char.charCodeAt(0) - 97;
-        const count = remaining[idx];
+        const baseCount = remaining[idx];
+        const over = overdrawnCounts[idx];
+        const pUsed = previewDelta ? Math.min(baseCount, previewDelta[idx]) : 0;
+        const count = baseCount - pUsed;
+
         const row = document.createElement("div");
-        row.className = "ladder-row" + (VOWELS.has(char) ? " vowel" : "") + (count === 0 ? " depleted" : "");
-        row.innerHTML = `<span class="glyph">${char.toUpperCase()}</span><div><span class="tally">${toRoman(count)}</span><span class="count">${count > 0 ? count : ''}</span></div>`;
-        if (count > 0) {
-          row.style.cursor = "pointer";
-          row.title = `Click to insert '${char}' into draft`;
-          row.addEventListener("click", () => {
-            const anag = $("anagInput");
-            anag.value = anag.value ? anag.value + char : char;
-            updateAll();
-            anag.focus();
-          });
+        let cls = "ladder-row";
+        if (VOWELS.has(char)) cls += " vowel";
+        if (over > 0) cls += " overdrawn";
+        else if (count === 0 && pUsed === 0) cls += " depleted";
+        if (pUsed > 0) cls += " preview-hit";
+        row.className = cls;
+
+        if (over > 0) {
+          row.innerHTML = `<span class="glyph">${char.toUpperCase()}</span><div><span class="count">-${over} OVER</span></div>`;
+          row.title = `Overdrawn by ${over}! Remove '${char}' from draft`;
+        } else {
+          const deltaHtml = pUsed > 0 ? `<span class="delta">-${pUsed}</span>` : "";
+          row.innerHTML = `<span class="glyph">${char.toUpperCase()}</span><div><span class="tally">${toRoman(count)}</span><span class="count">${count > 0 ? count : ''}</span>${deltaHtml}</div>`;
+          if (baseCount > 0) {
+            row.style.cursor = "pointer";
+            row.title = `Click to insert '${char}' into draft`;
+            row.addEventListener("click", () => {
+              const anag = $("anagInput");
+              anag.value = anag.value + char;
+              updateAll();
+              anag.focus();
+            });
+          }
         }
         stream.appendChild(row);
       });
     }
 
+    // ── Shuffleable Remainder Tile Rack ──
+    function syncRackOrder() {
+      // Preserve existing spatial order for surviving letters, append new ones
+      const have = remaining.slice();
+      const next = [];
+      for (const ch of rackOrder) {
+        const idx = ch.charCodeAt(0) - 97;
+        if (idx >= 0 && idx < 26 && have[idx] > 0) {
+          next.push(ch);
+          have[idx]--;
+        }
+      }
+      for (let i = 0; i < 26; i++) {
+        while (have[i] > 0) {
+          next.push(String.fromCharCode(97 + i));
+          have[i]--;
+        }
+      }
+      rackOrder = next;
+    }
+
+    function shuffleRack() {
+      for (let i = rackOrder.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = rackOrder[i];
+        rackOrder[i] = rackOrder[j];
+        rackOrder[j] = tmp;
+      }
+      renderRack();
+    }
+
+    function renderRack() {
+      const container = $("rackTiles");
+      const leftTot = rackOrder.length;
+      $("rackLabel").textContent = `Pool (${leftTot}):`;
+      container.innerHTML = "";
+
+      const endgameBtn = $("btnEndgameSolve");
+      if (leftTot >= 2 && leftTot <= 18) {
+        endgameBtn.style.display = "inline-flex";
+        endgameBtn.textContent = `⚡ Endgame (${leftTot}L)`;
+      } else {
+        endgameBtn.style.display = "none";
+      }
+
+      if (leftTot === 0) {
+        const anyOrig = stats(sourceCounts).tot > 0;
+        const anyOver = overdrawnCounts.some(v => v > 0);
+        container.innerHTML = `<span style="font-size:0.65rem; color:${anyOrig && !anyOver ? 'var(--ok)' : 'var(--muted)'};">${
+          anyOrig && !anyOver ? '✓ 0 letters left — Exact Anagram!' : 'No unused letters in pool'
+        }</span>`;
+        return;
+      }
+
+      const frag = document.createDocumentFragment();
+      rackOrder.slice(0, 65).forEach(ch => {
+        const tile = document.createElement("button");
+        tile.type = "button";
+        tile.className = "rack-tile" + (VOWELS.has(ch) ? " vowel" : "");
+        tile.textContent = ch.toUpperCase();
+        tile.title = `Click to append '${ch}'`;
+        tile.addEventListener("click", () => {
+          const anag = $("anagInput");
+          anag.value = anag.value + ch;
+          updateAll();
+          anag.focus();
+        });
+        frag.appendChild(tile);
+      });
+      if (rackOrder.length > 65) {
+        const more = document.createElement("span");
+        more.style.cssText = "font-size:0.62rem; color:var(--muted); margin-left:0.25rem;";
+        more.textContent = `+${rackOrder.length - 65} more`;
+        frag.appendChild(more);
+      }
+      container.appendChild(frag);
+    }
+
+    // ── On-Demand Endgame Exact Closeout Solver ──
+    function solveEndgameCloseouts() {
+      const drawer = $("endgameDrawer");
+      drawer.classList.add("open");
+      drawer.innerHTML = `<span style="font-size:0.62rem; color:var(--muted);">Searching exact 0-leftover closures…</span>`;
+
+      setTimeout(() => {
+        const leftTot = stats(remaining).tot;
+        const idxs = collectFormable(2, leftTot, remaining);
+        const pool = idxs.map(i => ({
+          word: DICT[i],
+          counts: DICT_COUNTS[i],
+          len: DICT[i].length,
+          mask: DICT_MASKS[i],
+          score: healerScore(i, remaining)
+        })).filter(w => w.len >= 2);
+
+        pool.sort((a, b) => b.len - a.len || b.score - a.score);
+
+        const solutions = [];
+        const seen = new Set();
+        const startT = performance.now();
+
+        function dfs(inv, path, startIdx) {
+          if (solutions.length >= 12 || performance.now() - startT > 350) return;
+          const remTot = stats(inv).tot;
+          if (remTot === 0) {
+            const key = path.slice().sort().join(" ");
+            if (!seen.has(key)) {
+              seen.add(key);
+              solutions.push(path.join(" "));
+            }
+            return;
+          }
+          if (path.length >= 4 || remTot < 2) return;
+          const curMask = invMask(inv);
+          for (let i = startIdx; i < pool.length; i++) {
+            const w = pool[i];
+            if (w.len > remTot) continue;
+            if ((w.mask & ~curMask) !== 0) continue;
+            if (!canForm(w.counts, inv)) continue;
+            dfs(subtract(inv, w.counts), [...path, w.word], i);
+            if (solutions.length >= 12) return;
+          }
+        }
+
+        dfs(remaining.slice(), [], 0);
+        drawer.innerHTML = `<span style="font-size:0.62rem; color:var(--ok); font-weight:700;">⚡ Exact Closures:</span>`;
+
+        if (!solutions.length) {
+          drawer.innerHTML += `<span style="font-size:0.62rem; color:var(--muted);">No exact 0-waste closures found for these ${leftTot} letters. Try popping the last word.</span>`;
+          return;
+        }
+
+        solutions.forEach(sol => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "endgame-chip";
+          btn.textContent = sol;
+          btn.addEventListener("mouseenter", () => setPreviewWord(sol));
+          btn.addEventListener("mouseleave", () => setPreviewWord(null));
+          btn.addEventListener("click", () => {
+            const anag = $("anagInput");
+            anag.value = anag.value.trim() ? anag.value.trim() + " " + sol : sol;
+            updateAll();
+            anag.focus();
+          });
+          drawer.appendChild(btn);
+        });
+      }, 15);
+    }
+
+    // ── Matrix Rendering (Trie-accelerated + Healer Ranked) ──
     let matrixTimer = null;
     function debounceMatrix() {
       clearTimeout(matrixTimer);
-      matrixTimer = setTimeout(renderMatrix, 40);
+      matrixTimer = setTimeout(renderMatrix, 35);
     }
 
     function renderMatrix() {
       const container = $("matrixBody");
       const navStrip = $("matrixNavStrip");
-      const remMask = invMask(remaining);
       const leftTot = stats(remaining).tot;
 
       if (!DICT.length || leftTot === 0) {
         container.innerHTML = '<div style="padding:1rem; color:var(--muted);">No letters remaining or lexicon initializing.</div>';
-        navStrip.innerHTML = '<span style="font-size:0.6rem; color:var(--muted); text-transform:uppercase;">Col:</span>';
+        navStrip.innerHTML = '<span style="font-size:0.6rem; color:var(--muted); text-transform:uppercase;">Jump:</span>';
         return;
       }
 
       const pfx = cleanString($("filterPrefix").value);
       const sfx = cleanString($("filterSuffix").value);
       const sub = cleanString($("filterSub").value);
+      const sortMode = $("matrixSort").value;
 
-      const maxCol = Math.min(14, Math.max(6, leftTot));
+      const maxCol = Math.min(15, Math.max(6, leftTot));
       const columns = {};
       for (let len = 1; len <= maxCol; len++) columns[len] = [];
 
-      for (let i = 0; i < DICT.length; i++) {
-        const len = DICT[i].length;
-        if (len > maxCol || len > leftTot) continue;
-        if ((DICT_MASKS[i] & ~remMask) !== 0) continue;
+      const formableIdxs = collectFormable(1, maxCol, remaining);
+      for (let n = 0; n < formableIdxs.length; n++) {
+        const i = formableIdxs[n];
         const w = DICT[i];
+        const len = w.length;
         if (pfx && !w.startsWith(pfx)) continue;
         if (sfx && !w.endsWith(sfx)) continue;
         if (sub && !w.includes(sub)) continue;
-
-        // Generous limits so short words (1L, 2L, 3L) are never cut off by alphabetical order
-        const cap = len <= 2 ? 450 : (len <= 4 ? 320 : 180);
-        if (canForm(DICT_COUNTS[i], remaining)) {
-          if (columns[len] && columns[len].length < cap) columns[len].push(w);
-        }
+        const score = healerScore(i, remaining);
+        columns[len].push({ word: w, score, isHealer: score >= 92, isExact: len === leftTot });
       }
 
       container.innerHTML = "";
@@ -497,12 +916,21 @@
 
       const frag = document.createDocumentFragment();
       for (let len = 1; len <= maxCol; len++) {
-        const list = columns[len] || [];
-        if (list.length === 0 && len > 8) continue;
+        const fullList = columns[len] || [];
+        if (fullList.length === 0 && len > 8) continue;
+
+        if (sortMode === "healer") {
+          fullList.sort((a, b) => b.score - a.score || a.word.localeCompare(b.word));
+        } else {
+          fullList.sort((a, b) => a.word.localeCompare(b.word));
+        }
+
+        const cap = len <= 2 ? 450 : (len <= 4 ? 360 : 240);
+        const list = fullList.slice(0, cap);
 
         const pill = document.createElement("button");
         pill.className = "nav-pill";
-        pill.textContent = `${len}L (${list.length})`;
+        pill.textContent = `${len}L (${fullList.length})`;
         pill.addEventListener("click", () => {
           const target = document.getElementById("col-len-" + len);
           if (target) target.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
@@ -513,19 +941,27 @@
         const gridClass = len === 1 ? "col-len-1" : (len === 2 ? "col-len-2" : (len === 3 ? "col-len-3" : (len === 4 ? "col-len-4" : "col-len-default")));
         col.className = `length-col ${gridClass}`;
         col.id = "col-len-" + len;
-        col.innerHTML = `<div class="col-header"><span>${len}L</span><span style="opacity:0.6">${list.length}</span></div>`;
+        col.innerHTML = `<div class="col-header"><span>${len}L</span><span style="opacity:0.6">${fullList.length}</span></div>`;
 
         const wordsWrap = document.createElement("div");
         wordsWrap.className = "col-words";
 
-        list.forEach(word => {
+        list.forEach(item => {
           const span = document.createElement("span");
-          span.className = "matrix-word";
-          span.textContent = word;
-          span.title = word;
+          let cls = "matrix-word";
+          if (item.isExact) cls += " exact-close";
+          else if (item.isHealer) cls += " healer";
+          if (CUSTOM_SET.has(item.word)) cls += " custom-word";
+          span.className = cls;
+          span.textContent = item.word;
+          span.title = item.isExact ? `${item.word} (EXACT 0-LEFTOVER MATCH)` : (item.isHealer ? `${item.word} (★ Healer score: ${Math.round(item.score)})` : item.word);
+
+          span.addEventListener("mouseenter", () => setPreviewWord(item.word));
+          span.addEventListener("mouseleave", () => setPreviewWord(null));
           span.addEventListener("click", () => {
             const anag = $("anagInput");
-            anag.value = anag.value ? anag.value + " " + word : word;
+            const cur = anag.value.trimEnd();
+            anag.value = cur ? cur + " " + item.word : item.word;
             updateAll();
             anag.focus();
           });
@@ -544,6 +980,7 @@
       }
     }, { passive: false });
 
+    // ── Sentence Loom ──
     let sentenceTimer = null;
     function debounceSentences() {
       clearTimeout(sentenceTimer);
@@ -552,7 +989,6 @@
 
     function renderSentences() {
       const container = $("sentencesStream");
-      const remMask = invMask(remaining);
       const leftTot = stats(remaining).tot;
 
       if (!DICT.length || leftTot === 0) {
@@ -568,18 +1004,15 @@
       const maxDepth = parseInt($("sentenceDepth").value, 10) || 4;
       const maxLeftover = parseInt($("sentenceLeftovers").value, 10);
 
+      const formableIdxs = collectFormable(3, Math.min(15, leftTot), remaining);
       const pool = [];
-      for (let i = 0; i < DICT.length; i++) {
+      for (let n = 0; n < formableIdxs.length; n++) {
+        const i = formableIdxs[n];
         const w = DICT[i];
-        if (w.length < 3 || w.length > 15) continue;
-        if ((DICT_MASKS[i] & ~remMask) !== 0) continue;
         if (pfx && !w.startsWith(pfx)) continue;
         if (sfx && !w.endsWith(sfx)) continue;
         if (sub && !w.includes(sub)) continue;
-
-        if (canForm(DICT_COUNTS[i], remaining)) {
-          pool.push({ word: w, counts: DICT_COUNTS[i], len: w.length, mask: DICT_MASKS[i] });
-        }
+        pool.push({ word: w, counts: DICT_COUNTS[i], len: w.length, mask: DICT_MASKS[i] });
       }
 
       pool.sort((a, b) => b.len - a.len);
@@ -632,9 +1065,12 @@
         const card = document.createElement("div");
         card.className = "sentence-card" + (res.leftover === 0 ? " exact" : "");
         card.innerHTML = `<span class="sentence-text">${res.sentence}</span><span class="sentence-badge ${res.leftover === 0 ? 'exact' : ''}">${res.leftover === 0 ? '0 left · EXACT' : res.leftover + ' left'}</span>`;
+        card.addEventListener("mouseenter", () => setPreviewWord(res.sentence));
+        card.addEventListener("mouseleave", () => setPreviewWord(null));
         card.addEventListener("click", () => {
           const anag = $("anagInput");
-          anag.value = anag.value ? anag.value + " " + res.sentence : res.sentence;
+          const cur = anag.value.trimEnd();
+          anag.value = cur ? cur + " " + res.sentence : res.sentence;
           updateAll();
           anag.focus();
         });
@@ -652,30 +1088,43 @@
       updateAll();
     }
 
-    $("btnModeWords").addEventListener("click", () => setWorkbenchMode("words"));
-    $("btnModeSentences").addEventListener("click", () => setWorkbenchMode("sentences"));
-    $("sentenceDepth").addEventListener("change", debounceSentences);
-    $("sentenceLeftovers").addEventListener("change", debounceSentences);
+    function popLastWord() {
+      const anag = $("anagInput");
+      const trimmed = anag.value.trimEnd();
+      if (!trimmed) return;
+      const lastSpace = trimmed.lastIndexOf(" ");
+      anag.value = lastSpace === -1 ? "" : trimmed.slice(0, lastSpace);
+      updateAll();
+      anag.focus();
+    }
 
+    // ── Smart Corpus & Wordlist Import + Blend Support ──
     const CUSTOM_DICT_KEY = "gram-custom-dict-v1";
     const DICT_SOURCE_KEY = "tmura-dict-source-v1";
     const SESSION_KEY = "tmura-session-v1";
+    const THEME_KEY = "tmura-theme-v1";
 
     function normalizeWordList(rawList) {
       const set = new Set();
       for (const item of rawList) {
-        const w = String(item || "").toLowerCase().replace(/[^a-z]/g, "");
-        if (w.length >= 1 && w.length <= 20) set.add(w);
+        // Tokenize on any non-alpha boundary so raw prose, poems, books, AND 1-word-per-line lists all work cleanly
+        const tokens = String(item || "").toLowerCase().split(/[^a-z]+/);
+        for (const w of tokens) {
+          if (w.length >= 1 && w.length <= 20) set.add(w);
+        }
       }
       return Array.from(set).sort();
     }
 
     function finalizeDict(words, label) {
+      const t0 = performance.now();
       DICT = words;
       DICT_COUNTS = DICT.map((w) => countsFrom(w));
       DICT_MASKS = new Int32Array(DICT.length);
       for (let i = 0; i < DICT.length; i++) DICT_MASKS[i] = maskFrom(DICT[i]);
-      $("dictStatus").textContent = `Ready · ${DICT.length.toLocaleString()} words (${label})`;
+      buildTrie();
+      const ms = Math.round(performance.now() - t0);
+      $("dictStatus").textContent = `Ready · ${DICT.length.toLocaleString()} words (${label} · ${ms}ms)`;
       updateAll();
     }
 
@@ -705,45 +1154,85 @@
       } catch { return null; }
     }
 
+    async function loadBaseLexicon() {
+      try { return await loadFromLocal(); }
+      catch { return await loadFromFallback(); }
+    }
+
     async function loadDict(source) {
       const sel = $("dictSource");
       const src = source || (sel ? sel.value : "local");
       $("dictStatus").textContent = "Loading lexicon…";
       try {
         let words = null, label = "";
+        const customWords = loadFromCustom() || [];
+        CUSTOM_SET = new Set(customWords);
+
         if (src === "custom") {
-          words = loadFromCustom();
-          if (!words || !words.length) {
-            $("dictStatus").textContent = "No custom list. Using local…";
-            words = await loadFromLocal(); label = "local"; if (sel) sel.value = "local";
-          } else { label = "custom"; }
+          if (!customWords.length) {
+            $("dictStatus").textContent = "No custom list found. Loading base…";
+            words = await loadBaseLexicon(); label = "base"; if (sel) sel.value = "local";
+          } else {
+            words = customWords; label = "custom only";
+          }
+        } else if (src === "blend") {
+          const base = await loadBaseLexicon();
+          words = normalizeWordList([...base, ...customWords]);
+          label = `blend (${customWords.length.toLocaleString()} ★)`;
         } else if (src === "dwyl") {
           words = await loadFromDwyl(); label = "dwyl 370k";
         } else if (src === "fallback") {
           words = await loadFromFallback(); label = "fallback";
         } else {
-          try { words = await loadFromLocal(); label = "local"; }
-          catch { words = await loadFromFallback(); label = "fallback"; }
+          words = await loadBaseLexicon(); label = "local";
         }
         try { localStorage.setItem(DICT_SOURCE_KEY, sel ? sel.value : src); } catch (_) {}
         finalizeDict(words, label);
         if (!window.__tmuraLoaded) { window.__tmuraLoaded = true; restoreSession(); }
-      } catch (err) { $("dictStatus").textContent = "Lexicon load failed"; }
+      } catch (err) {
+        $("dictStatus").textContent = "Lexicon load failed";
+      }
     }
 
     function handleDictImport(file) {
       if (!file) return;
+      $("dictStatus").textContent = `Importing ${file.name}…`;
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
         try {
-          const text = reader.result;
-          let list = (file.name.toLowerCase().endsWith(".json") || text.trim().startsWith("[")) ? JSON.parse(text) : text.split(/\r?\n/);
-          const words = normalizeWordList(Array.isArray(list) ? list : Object.keys(list));
-          if (!words.length) return;
-          try { localStorage.setItem(CUSTOM_DICT_KEY, JSON.stringify(words)); } catch (_) {}
-          if ($("dictSource")) $("dictSource").value = "custom";
-          finalizeDict(words, "custom");
-        } catch (_) {}
+          const text = String(reader.result || "").trim();
+          let list;
+          if (file.name.toLowerCase().endsWith(".json") || text.startsWith("[") || text.startsWith("{")) {
+            const parsed = JSON.parse(text);
+            list = Array.isArray(parsed) ? parsed : Object.keys(parsed);
+          } else {
+            list = [text]; // normalizeWordList splits all prose/lines cleanly
+          }
+          const words = normalizeWordList(list);
+          if (!words.length) {
+            $("dictStatus").textContent = "Import failed: 0 valid words found";
+            return;
+          }
+          CUSTOM_SET = new Set(words);
+          let quotaNote = "";
+          try {
+            localStorage.setItem(CUSTOM_DICT_KEY, JSON.stringify(words));
+          } catch (_) {
+            quotaNote = " · session only (>5MB)";
+          }
+          const sel = $("dictSource");
+          // If importing a small corpus/poem (< 3,500 unique words), offer Blend automatically if currently on blend, otherwise custom
+          if (sel && sel.value === "blend") {
+            const base = await loadBaseLexicon();
+            const merged = normalizeWordList([...base, ...words]);
+            finalizeDict(merged, `blend ${words.length.toLocaleString()} ★${quotaNote}`);
+          } else {
+            if (sel) sel.value = "custom";
+            finalizeDict(words, `custom ${words.length.toLocaleString()}${quotaNote}`);
+          }
+        } catch (e) {
+          $("dictStatus").textContent = "Import failed: check file format";
+        }
       };
       reader.readAsText(file);
     }
@@ -828,6 +1317,31 @@
       } catch (_) {}
     }
 
+    // ── Theme Switcher ──
+    function applyTheme(theme) {
+      document.documentElement.setAttribute("data-theme", theme);
+      $("btnThemeToggle").textContent = theme === "light" ? "☾ Dark" : "☀ Light";
+      try { localStorage.setItem(THEME_KEY, theme); } catch (_) {}
+    }
+
+    (function initTheme() {
+      try {
+        const saved = localStorage.getItem(THEME_KEY);
+        if (saved === "light" || saved === "dark") applyTheme(saved);
+      } catch (_) {}
+      $("btnThemeToggle").addEventListener("click", () => {
+        const cur = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+        applyTheme(cur === "light" ? "dark" : "light");
+      });
+    })();
+
+    // ── Event Wiring & Keyboard Shortcuts ──
+    $("btnModeWords").addEventListener("click", () => setWorkbenchMode("words"));
+    $("btnModeSentences").addEventListener("click", () => setWorkbenchMode("sentences"));
+    $("matrixSort").addEventListener("change", debounceMatrix);
+    $("sentenceDepth").addEventListener("change", debounceSentences);
+    $("sentenceLeftovers").addEventListener("change", debounceSentences);
+
     $("origInput").addEventListener("input", updateAll);
     $("anagInput").addEventListener("input", updateAll);
 
@@ -838,6 +1352,9 @@
       });
     });
 
+    $("btnPopWord").addEventListener("click", popLastWord);
+    $("btnShuffleRack").addEventListener("click", shuffleRack);
+    $("btnEndgameSolve").addEventListener("click", solveEndgameCloseouts);
     $("btnClearDraft").addEventListener("click", () => { $("anagInput").value = ""; updateAll(); });
     $("btnMiniClr").addEventListener("click", () => { $("anagInput").value = ""; updateAll(); });
     $("btnResetAll").addEventListener("click", () => { $("origInput").value = ""; $("anagInput").value = ""; updateAll(); });
@@ -847,7 +1364,19 @@
     $("btnExportDraft").addEventListener("click", exportDraftTxt);
     $("btnCheck").addEventListener("click", () => {
       const sLeft = stats(remaining);
-      alert(sLeft.tot === 0 ? "PERFECT ANAGRAM! 0 letters left." : `${sLeft.tot} letters remaining (${sLeft.vows} vowels).`);
+      const anyOver = overdrawnCounts.some(v => v > 0);
+      if (anyOver) alert("OVERDRAWN: Check the red letter badges above the status bar.");
+      else alert(sLeft.tot === 0 ? "PERFECT ANAGRAM! 0 letters left." : `${sLeft.tot} letters remaining (${sLeft.vows} vowels).`);
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.altKey && (e.key === "s" || e.key === "S")) {
+        e.preventDefault();
+        shuffleRack();
+      } else if (e.altKey && e.key === "Backspace") {
+        e.preventDefault();
+        popLastWord();
+      }
     });
 
     (function() {
