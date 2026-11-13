@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="INKREALM-NEXUS">
+    <meta name="robots" content="index, follow">
+
+    <title>MINRAUD | The Reality Studio</title>
+    <meta name="description" content="A neural typewriter for the Interzone. Experimental text generation and cut-up engine.">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="MINRAUD">
+
+    <link rel="icon" type="image/png" href="https://wordstar.nexus/svg/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="https://wordstar.nexus/svg/favicon.svg" />
+    <link rel="shortcut icon" href="https://wordstar.nexus/svg/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="https://wordstar.nexus/svg/apple-touch-icon.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nova+Flat&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="minraud.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <!-- Subtle CRT (can be disabled via class) -->
+    <div id="crt-overlay" class="subtle">
+        <div class="scanline"></div>
+    </div>
+
+    <!-- SPLASH -->
+    <div id="splash-screen">
+        <div class="nova-cube"></div>
+        <button class="splash-btn" onclick="enterSite()">Enter the Reality Studio</button>
+    </div>
+
+    <!-- TOP BAR -->
+    <header class="top-bar">
+        <div class="brand">
+            <div class="orb-container">
+                <svg class="glitch-orb" viewBox="0 0 100 100">
+                    <circle class="orb-circle" cx="50" cy="50" r="45" />
+                    <polygon class="orb-triangle" points="50,25 78,75 22,75" />
+                </svg>
+            </div>
+            <h1>MINRAUD</h1>
+        </div>
+        <p class="tagline">NOThingIsTruE · eveRyThinGisPERMITted</p>
+        <div class="top-actions">
+            <button type="button" id="nova-fm-toggle" class="top-toggle">[ Radio ]</button>
+            <button type="button" id="nous-toggle" class="top-toggle">[ NOUS ]</button>
+        </div>
+    </header>
+
+    <!-- NOVA FM PANEL (collapsible) -->
+    <div id="nova-fm-panel" class="side-panel left-panel">
+        <div class="panel-header">
+            <span>NOUVO NOVA // radioSTREAM</span>
+            <span id="nova-fm-status">STANDBY</span>
+        </div>
+        <button type="button" id="nova-fm-play-btn" class="panel-btn">▶ Engage Stream</button>
+        <audio id="novaAudio" controls preload="none"
+               src="https://nova-nouvo.ice.infomaniak.ch/nova-nouvo-256.aac"></audio>
+        <div class="panel-note">Optional ambient. Source: nova.fr</div>
+    </div>
+
+    <!-- NOUS PANEL (collapsible) -->
+    <div id="nous-panel" class="side-panel right-panel">
+        <div class="panel-header">
+            <span>HERMES_3 // 3.2-3B</span>
+            <span id="nous-status">DISCONNECTED</span>
+        </div>
+        <button type="button" id="loadCoreBtn" class="panel-btn">Initialize Local Engine</button>
+        <div id="dl-track" class="progress-track">
+            <div id="dl-bar" class="progress-fill"></div>
+        </div>
+        <div id="dl-text" class="dl-text">SYNCING...</div>
+        <div id="nous-output">SYSTEM STANDBY...</div>
+        <textarea id="nous-prompt" class="nous-input" placeholder="Enter query..."></textarea>
+        <div class="btn-row">
+            <button type="button" id="nous-transmit-btn" class="panel-btn">Transmit</button>
+            <button type="button" id="insert-btn" class="panel-btn accent" style="display:none;">Insert → Folio</button>
+        </div>
+    </div>
+
+    <main class="main-content">
+
+        <!-- ====================== CUT-UP ENGINE (CENTERPIECE) ====================== -->
+        <section class="cutup-hero panel">
+            <div class="section-label">I // MUTATION ENGINE</div>
+            <h2 class="section-title"><span class="express-icon">✇</span> TamaghisEXPRESScut</h2>
+
+            <div class="blade-turret-wrap">
+                <svg class="blade-turret-svg" viewBox="0 0 220 110" aria-hidden="true">
+                    <defs>
+                        <radialGradient id="turretGlow" cx="50%" cy="90%" r="60%">
+                            <stop offset="0%" stop-color="#ff0033" stop-opacity="0.35"/>
+                            <stop offset="100%" stop-color="#0a0a0a" stop-opacity="0"/>
+                        </radialGradient>
+                    </defs>
+                    <path d="M 15 100 A 95 95 0 0 1 205 100" fill="url(#turretGlow)" stroke="#ff0033" stroke-width="1.2" stroke-dasharray="3 3"/>
+                    <path d="M 40 100 A 70 70 0 0 1 180 100" fill="none" stroke="#44111b" stroke-width="1"/>
+                    <line x1="25" y1="75" x2="35" y2="79" stroke="#ff0033" stroke-width="1.5"/>
+                    <line x1="48" y1="40" x2="56" y2="47" stroke="#ff0033" stroke-width="1.5"/>
+                    <line x1="88" y1="18" x2="91" y2="28" stroke="#ff0033" stroke-width="1.5"/>
+                    <line x1="132" y1="18" x2="129" y2="28" stroke="#ff0033" stroke-width="1.5"/>
+                    <line x1="172" y1="40" x2="164" y2="47" stroke="#ff0033" stroke-width="1.5"/>
+                    <line x1="195" y1="75" x2="185" y2="79" stroke="#ff0033" stroke-width="1.5"/>
+                    <g id="turretNeedle" transform="rotate(-65 110 100)">
+                        <line x1="110" y1="100" x2="110" y2="22" stroke="#ff0033" stroke-width="2.2"/>
+                        <circle cx="110" cy="22" r="3.5" fill="#ff0033"/>
+                    </g>
+                    <circle cx="110" cy="100" r="8" fill="#140003" stroke="#ff0033" stroke-width="2"/>
+                </svg>
+                <div class="turret-readout" id="activeBladeReadout">BLADE ARMED // CLICK TO SLICE</div>
+            </div>
+
+            <div class="mixer-controls">
+                <button type="button" class="module-btn" data-algo="scramble" data-angle="-72"><span class="express-icon">✃</span> SCISSOR</button>
+                <button type="button" class="module-btn" data-algo="fold" data-angle="-42"><span class="express-icon">≣</span> FOLD-IN</button>
+                <button type="button" class="module-btn" data-algo="chunks" data-angle="-14"><span class="express-icon">❖</span> 3RD MIND</button>
+                <button type="button" class="module-btn" data-algo="reverse" data-angle="14"><span class="express-icon">⇄</span> REVERSE</button>
+                <button type="button" class="module-btn" data-algo="diagonal" data-angle="42"><span class="express-icon">╳</span> DIAGONAL</button>
+                <button type="button" class="module-btn" data-algo="permutation" data-angle="72"><span class="express-icon">☍</span> PERMUTE</button>
+            </div>
+
+            <div class="conduit-pills">
+                <button type="button" id="pullFromNotepadBtn" class="mini-btn">⇩ Pull from Folio</button>
+                <button type="button" id="pullFromAiBtn" class="mini-btn">⇩ Pull from AI</button>
+            </div>
+
+            <div class="buffer-row">
+                <div class="buffer-block">
+                    <label class="chamber-label">RAW DATA BUFFER</label>
+                    <textarea id="mixerSource" placeholder="Paste text or pull from Folio / AI..."></textarea>
+                </div>
+                <div class="buffer-block">
+                    <label class="chamber-label">RESULT STREAM</label>
+                    <textarea id="mixerOutput" placeholder="Waiting for blade strike..."></textarea>
+                </div>
+            </div>
+
+            <button type="button" id="pushToNotepadBtn" class="fire-btn">⇧ Upload Result to Folio</button>
+        </section>
+
+        <!-- ====================== WAGHDAS FOLIO ====================== -->
+        <section class="folio-section panel">
+            <div class="folio-header">
+                <div>
+                    <div class="section-label">THE REALITY STUDIO FOLIO</div>
+                    <h2 class="folio-title">Waghdas</h2>
+                </div>
+                <span id="notepadStats" class="notepad-stats">LN 0 · 0 W · 0 C</span>
+            </div>
+
+            <div class="folio-ruler">....+....10....+....20....+....30....+....40....+....50....+....60....+....70....+....80....</div>
+            <textarea id="notepad" placeholder="Your workspace... Double-click any word to look it up in Ghadis."></textarea>
+            <div class="folio-footer">
+                <span class="folio-hint">✦ Double-click a word → Ghadis lexicon</span>
+                <div id="notepadMicStatus" class="notepad-mic-status"></div>
+            </div>
+        </section>
+
+        <!-- ====================== SECONDARY INSTRUMENTS ====================== -->
+        <div class="secondary-grid">
+
+            <!-- BA'DAN AI -->
+            <section class="panel instrument-card">
+                <div class="section-label">II // NEURAL INTERCEPT</div>
+                <h2 class="section-title">Ba'dan AI</h2>
+
+                <label class="chamber-label">SELECT ENGINE</label>
+                <div class="custom-select-container">
+                    <select id="novaModelSelect">
+                        <option value="nova-2-lite-v1" selected>Nova 2 Lite — 20 RPM</option>
+                        <option value="nova-pro-v1">Nova Pro — 5 RPM</option>
+                        <option value="nova-lite-v1">Nova Lite — 5 RPM</option>
+                        <option value="nova-micro-v1">Nova Micro — 5 RPM</option>
+                        <option value="nova-premier-v1">Nova Premier — 2 RPM</option>
+                    </select>
+                </div>
+
+                <div class="byok-slot">
+                    <div class="byok-header">
+                        <span><span class="led-dot"></span> AMAZON NOVA API KEY</span>
+                        <a href="https://nova.amazon.com" target="_blank" rel="noopener">nova.amazon.com ↗</a>
+                    </div>
+                    <input type="password" id="novaApiKey"
+                           placeholder="b3333333-8888-4444-9999-00000000000"
+                           autocomplete="off" spellcheck="false">
+                    <div class="byok-note">Key stays in browser memory only. Or use [NOUS] for local WebGPU.</div>
+                    <div class="byok-footer">
+                        <span id="keyStatus">No key entered</span>
+                        <button type="button" id="clearKeyBtn">CLEAR</button>
+                    </div>
+                </div>
+
+                <div class="knob-module">
+                    <input type="hidden" id="creativity" value="0.7">
+                    <div class="knob-bezel" id="creativityKnob" title="Drag or scroll to tune">
+                        <div class="knob-cap" id="knobCap">
+                            <div class="knob-indicator"></div>
+                        </div>
+                    </div>
+                    <div class="knob-readout-block">
+                        <div class="knob-label">CREATIVITY</div>
+                        <div class="knob-value-display">
+                            <span id="creativityValue">0.7</span>
+                            <span class="knob-unit">VAL</span>
+                        </div>
+                    </div>
+                </div>
+
+                <textarea id="prompt" placeholder="Input query..."></textarea>
+                <button type="button" id="generateButton" class="fire-btn">⚡ Initiate</button>
+
+                <div class="ai-monitor-wrap">
+                    <div class="chamber-label">OUTPUT STREAM</div>
+                    <div class="story-output" id="output">Ready. Enter API key and select model.</div>
+                    <div class="btn-row">
+                        <button type="button" id="copyButton">Copy</button>
+                        <button type="button" id="importButton">⇧ Import to Folio</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GHADIS LEXICON -->
+            <section class="panel instrument-card">
+                <div class="section-label">III // LEXICON</div>
+                <h2 class="section-title" id="dict-title">Ghadis</h2>
+
+                <div class="sundial-receiver">
+                    <div class="sundial-wheel" id="lexiconSundial" title="Click for random vector">
+                        <svg viewBox="0 0 100 100" class="sundial-svg">
+                            <circle cx="50" cy="50" r="44" fill="none" stroke="#331018" stroke-width="6"/>
+                            <circle cx="50" cy="50" r="44" fill="none" stroke="#ff0033" stroke-width="1.2" stroke-dasharray="4 6"/>
+                            <circle cx="50" cy="50" r="28" fill="none" stroke="#551122" stroke-width="1"/>
+                            <g id="sundialSpokes">
+                                <line x1="50" y1="6" x2="50" y2="20" stroke="#ff0033" stroke-width="2"/>
+                                <line x1="50" y1="80" x2="50" y2="94" stroke="#551122" stroke-width="1.5"/>
+                                <line x1="6" y1="50" x2="20" y2="50" stroke="#551122" stroke-width="1.5"/>
+                                <line x1="80" y1="50" x2="94" y2="50" stroke="#551122" stroke-width="1.5"/>
+                                <polygon points="50,14 45,28 55,28" fill="#ff0033"/>
+                            </g>
+                            <circle cx="50" cy="50" r="7" fill="#0a0a0a" stroke="#ff0033" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <div class="sundial-controls">
+                        <input type="text" id="dictionary-search" placeholder="Search any word...">
+                        <div class="btn-row tight">
+                            <button type="button" id="search-button">Search</button>
+                            <button type="button" id="random-word">Random</button>
+                            <button type="button" id="clear-dict">Clear</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dictionary-result" id="dictionary-result">
+                    <div class="no-results">Ready.<br><small>6 lexical sources + live thesaurus</small></div>
+                </div>
+                <div id="dictionary-status" class="dict-telemetry"></div>
+            </section>
+
+            <!-- DISPATCH -->
+            <section class="panel instrument-card dispatch-card">
+                <div class="section-label">IV // DISPATCH</div>
+                <h2 class="section-title">Signal Dispatch</h2>
+
+                <div class="dispatch-grid">
+                    <button type="button" id="micBtn" class="dispatch-key" title="Voice dictation">
+                        <span class="key-led"></span>
+                        <span class="key-name" id="micBtnLabel">[MIC: OFF]</span>
+                        <span class="key-sub">VOX</span>
+                    </button>
+                    <button type="button" id="importTxtBtn" class="dispatch-key" title="Import .txt">
+                        <span class="key-icon">⇩</span>
+                        <span class="key-name">IMP .TXT</span>
+                        <span class="key-sub">LOAD</span>
+                    </button>
+                    <input type="file" id="importTxtFile" accept=".txt,text/plain" style="display:none">
+
+                    <button type="button" id="exportButton" class="dispatch-key" title="Download .txt">
+                        <span class="key-icon">💾</span>
+                        <span class="key-name">SAVE .TXT</span>
+                        <span class="key-sub">EXPORT</span>
+                    </button>
+                    <button type="button" id="captureUrlBtn" class="dispatch-key" title="Share link">
+                        <span class="key-icon">☍</span>
+                        <span class="key-name">#URL HASH</span>
+                        <span class="key-sub">SHARE</span>
+                    </button>
+                    <button type="button" id="clearButton" class="dispatch-key danger-key" title="Clear folio">
+                        <span class="key-icon">✕</span>
+                        <span class="key-name">CLR FOLIO</span>
+                        <span class="key-sub">WIPE</span>
+                    </button>
+                </div>
+
+                <div id="urlReadoutContainer" class="url-readout-wrap" style="display:none;">
+                    <div class="url-readout-header">
+                        <span class="url-readout-label">TRANSMISSION HASH</span>
+                        <span id="urlCopyStatus" class="url-readout-status">COPIED</span>
+                    </div>
+                    <input type="text" id="urlReadout" readonly title="Click to copy" />
+                </div>
+            </section>
+        </div>
+
+        <div class="api-status" id="apiStatus">7 Source Lexicon + Live Thesaurus Online</div>
+
+        <!-- Tickers (lighter) -->
+        <div class="tickers">
+            <div class="ticker-block">
+                <div class="ticker-heading"><span class="accent">LIVE</span> FRANCE24 CULTURE</div>
+                <div class="ticker-wrapper"><div id="france24-ticker"></div></div>
+            </div>
+            <div class="ticker-block">
+                <div class="ticker-heading">SCIENCE<span class="accent">*</span>DAILY</div>
+                <div class="ticker-wrapper"><div id="sciencedaily-ticker"></div></div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>© 2026 INKREALM-NEXUS · Amazon Nova · Local NOUS · Nuovo Nova Radio</p>
+        <p class="footer-wallet">support with gram @ UQAc99MvKIcewbQFmOF_RvqpkAXZno0wiz3_BMsP87pJjSnB</p>
+        <p><a href="https://inkrealm.info">← Back to Main</a></p>
+    </footer>
+
+    <!-- NOUS / HERMES WebLLM -->
+    <script type="module">
+    import * as webllm from "https://esm.run/@mlc-ai/web-llm";
+
+    const HERMES_MODEL_ID = "Hermes-3-Llama-3.2-3B-q4f16_1-MLC";
+    let hermesEngine = null;
+
+    const nousToggle = document.getElementById("nous-toggle");
+    const nousPanel = document.getElementById("nous-panel");
+    const loadCoreBtn = document.getElementById("loadCoreBtn");
+    const nousOutput = document.getElementById("nous-output");
+    const dlTrack = document.getElementById("dl-track");
+    const dlBar = document.getElementById("dl-bar");
+    const dlText = document.getElementById("dl-text");
+    const nousStatus = document.getElementById("nous-status");
+    const insertBtn = document.getElementById("insert-btn");
+    const transmitBtn = document.getElementById("nous-transmit-btn");
+    const nousPrompt = document.getElementById("nous-prompt");
+
+    if (nousToggle && nousPanel && loadCoreBtn && nousOutput && transmitBtn && nousPrompt) {
+        nousToggle.onclick = () => {
+            const open = nousPanel.classList.toggle("open");
+            if (!open) return;
+            // close radio if open
+            document.getElementById("nova-fm-panel")?.classList.remove("open");
+        };
+
+        loadCoreBtn.onclick = async () => {
+            try {
+                if (!navigator.gpu) throw new Error("WebGPU not available.");
+                loadCoreBtn.disabled = true;
+                loadCoreBtn.textContent = "Establishing link...";
+                if (dlTrack) dlTrack.style.display = "block";
+                if (dlText) dlText.style.display = "block";
+                nousOutput.textContent = "⟁ Initiating Hermes protocol...\n⟁ Allocating tensors...";
+
+                hermesEngine = await webllm.CreateMLCEngine(HERMES_MODEL_ID, {
+                    initProgressCallback: (report) => {
+                        const p = (report.progress || 0) * 100;
+                        if (dlBar) dlBar.style.width = p + "%";
+                        if (dlText) dlText.textContent = `Downloading: ${Math.round(p)}%`;
+                        if (p >= 99.5) {
+                            nousOutput.textContent = "⟁ NOUS field connected.\n⟁ Awaiting input.";
+                            loadCoreBtn.style.display = "none";
+                            if (dlTrack) dlTrack.style.display = "none";
+                            if (dlText) dlText.style.display = "none";
+                            if (nousStatus) {
+                                nousStatus.textContent = "ONLINE";
+                                nousStatus.style.color = "#ff0033";
+                            }
+                        }
+                    }
+                });
+
+                await hermesEngine.chat.completions.create({
+                    messages: [{ role: "user", content: "hi" }],
+                    max_tokens: 1
+                });
+
+                nousPrompt.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        transmitBtn.click();
+                    }
+                });
+            } catch (err) {
+                console.error("[NOUS]", err);
+                loadCoreBtn.disabled = false;
+                loadCoreBtn.textContent = "Failure";
+                nousOutput.textContent = "FATAL: " + (err?.message || String(err));
+            }
+        };
+
+        transmitBtn.onclick = async () => {
+            if (!hermesEngine) return;
+            const inputVal = nousPrompt.value.trim();
+            if (!inputVal) return;
+            transmitBtn.disabled = true;
+            transmitBtn.textContent = "Computing...";
+            if (insertBtn) insertBtn.style.display = "none";
+            nousOutput.textContent = "";
+            let fullText = "";
+            try {
+                const messages = [
+                    { role: "system", content: "You are NOUS. Terse, cryptic, profound." },
+                    { role: "user", content: inputVal }
+                ];
+                const chunks = await hermesEngine.chat.completions.create({
+                    messages, stream: true, temperature: 0.7, max_tokens: 512
+                });
+                for await (const chunk of chunks) {
+                    const piece = chunk.choices[0]?.delta?.content || "";
+                    fullText += piece;
+                    nousOutput.textContent = fullText;
+                    nousOutput.scrollTop = nousOutput.scrollHeight;
+                }
+                if (insertBtn) insertBtn.style.display = "block";
+            } catch (err) {
+                nousOutput.textContent = "ERROR: " + (err?.message || String(err));
+            } finally {
+                transmitBtn.disabled = false;
+                transmitBtn.textContent = "Transmit";
+            }
+        };
+
+        if (insertBtn) {
+            insertBtn.onclick = () => {
+                const destination = document.getElementById("notepad");
+                if (!destination) return;
+                const textToInsert = nousOutput.textContent || "";
+                const startPos = destination.selectionStart;
+                const endPos = destination.selectionEnd;
+                destination.value =
+                    destination.value.substring(0, startPos) +
+                    textToInsert +
+                    destination.value.substring(endPos);
+                destination.dispatchEvent(new Event("input", { bubbles: true }));
+                nousPanel.classList.remove("open");
+                insertBtn.style.display = "none";
+                destination.focus();
+                const caret = startPos + textToInsert.length;
+                destination.selectionStart = destination.selectionEnd = caret;
+            };
+        }
+    }
+    </script>
+
+    <script src="minraud.js"></script>
+</body>
+</html>
