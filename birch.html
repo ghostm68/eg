@@ -1207,25 +1207,111 @@ p {
 
         Gideon works the computer." oninput="updateStatus()" style="color: #00ff00;"></textarea>
 		
-    <div id="status">
+  <div id="status">
         Page: 1 | Format: Film | Words: 0
-        <button onclick="document.getElementById('fileInput').click()">Upload Script (.txt or .fountain)</button>
-        <input type="file" id="fileInput" style="display: none;" accept=".txt,.fountain" onchange="uploadScript(event)">
-
-         </div>
+        <button onclick="document.getElementById('fileInput').click()">Upload Script (.txt, .fountain, .pdf)</button>
+        <input type="file" id="fileInput" style="display: none;" accept=".txt,.fountain,.pdf" onchange="uploadScript(event)">
+    </div>
+	
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+</script>
 <script>
     const editor = document.getElementById('editor');
     const status = document.getElementById('status');
     let currentFormat = 'film';
 
-    function updateStatus() {
-        const words = editor.value.trim().split(/\s+/).length;
-        const pages = Math.ceil(words / 250);
+ function updateStatus() {
+        const trimmed = editor.value.trim();
+        const words = trimmed ? trimmed.split(/\s+/).length : 0;
+        const pages = Math.max(1, Math.ceil(words / 250));
         status.innerHTML = `Page: ${pages} | Format: ${currentFormat.charAt(0).toUpperCase() + currentFormat.slice(1)} | Words: ${words}
-        <button onclick="document.getElementById('fileInput').click()">Upload Script (.txt or .fountain)</button>
-        <input type="file" id="fileInput" style="display: none;" accept=".txt,.fountain" onchange="uploadScript(event)"/>`;
+        <button onclick="document.getElementById('fileInput').click()">Upload Script (.txt, .fountain, .pdf)</button>
+        <input type="file" id="fileInput" style="display: none;" accept=".txt,.fountain,.pdf" onchange="uploadScript(event)"/>`;
+    }
+
+    async function extractPdfScript(file) {
+        const buffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
+        const pageTexts = [];
+
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const content = await page.getTextContent();
+
+            // Group text items into visual lines by Y-coordinate
+            const rows = [];
+            content.items.forEach(item => {
+                if (!item.str) return;
+                const x = item.transform[4];
+                const y = item.transform[5];
+                const width = item.width || 0;
+
+                let row = rows.find(r => Math.abs(r.y - y) <= 3);
+                if (!row) {
+                    row = { y, items: [] };
+                    rows.push(row);
+                }
+                row.items.push({ str: item.str, x, endX: x + width });
+            });
+
+            // Top-to-bottom, left-to-right
+            rows.sort((a, b) => b.y - a.y);
+
+            const lines = rows.map(row => {
+                row.items.sort((a, b) => a.x - b.x);
+                const firstX = row.items[0]?.x || 0;
+                // Preserve approximate screenplay indentation (character / dialogue columns)
+                const indent = firstX > 180 ? '                    '
+                             : firstX > 110 ? '        '
+                             : '';
+
+                let line = '';
+                let prevEnd = null;
+                row.items.forEach(it => {
+                    if (prevEnd !== null && (it.x - prevEnd) > 2.5) {
+                        line += ' ';
+                    }
+                    line += it.str;
+                    prevEnd = it.endX;
+                });
+                return indent + line.trimEnd();
+            });
+
+            pageTexts.push(lines.join('\n'));
+        }
+
+        return pageTexts.join('\n\n');
+    }
+
+    async function uploadScript(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (editor.value.trim() && !confirm(`Import "${file.name}" and replace the current script?`)) {
+            event.target.value = '';
+            return;
+        }
+
+        const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+
+        try {
+            if (isPdf) {
+                editor.value = await extractPdfScript(file);
+            } else {
+                editor.value = await file.text();
+            }
+            updateStatus();
+        } catch (err) {
+            console.error('Upload failed:', err);
+            alert('Could not read that file. Scanned image-only PDFs require OCR first.');
+        } finally {
+            event.target.value = '';
+        }
     }
 
     function newScript() {
@@ -1249,13 +1335,16 @@ p {
         doc.setFont('Courier');
         doc.setFontSize(12);
 
-        lines.forEach(line => {
-            if (y > 280) {
-                doc.addPage();
-                y = 20;
-            }
-            doc.text(line, 20, y);
-            y += 5;
+      lines.forEach(line => {
+            const wrapped = doc.splitTextToSize(line || ' ', 170);
+            wrapped.forEach(wLine => {
+                if (y > 280) {
+                    doc.addPage();
+                    y = 20;
+                }
+                doc.text(wLine, 20, y);
+                y += 5;
+            });
         });
 
         doc.save('screenplay.pdf');
