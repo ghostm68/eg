@@ -834,44 +834,64 @@
             <div class="dock-section">
                 <select class="dock-select" id="scriptElementDropdown" onchange="insertSelectedElement()" title="Insert screenplay cue">
                     <option value="">+ CUE</option>
-                    <option value="int">INT.</option>
-                    <option value="ext">EXT.</option>
-                    <option value="fade_in">FADE IN</option>
-                    <option value="fade_out">FADE OUT</option>
-                    <option value="scene_heading">SCENE HEADING</option>
-                    <option value="action">ACTION</option>
-                    <option value="character">CHARACTER</option>
-                    <option value="dialogue">DIALOGUE</option>
-                    <option value="parenthetical">(PARENTHETICAL)</option>
-                    <option value="narration">NARRATION</option>
-                    <option value="intertitle">INTERTITLE</option>
-                    <option value="cut_to">CUT TO</option>
-                    <option value="dissolve_to">DISSOLVE TO</option>
-                    <option value="close_up">CLOSE UP (CU)</option>
-                    <option value="medium_shot">MEDIUM SHOT (MS)</option>
-                    <option value="long_shot">LONG SHOT (LS)</option>
-                    <option value="wide_shot">WIDE SHOT (WS)</option>
-                    <option value="dream_sequence">Dream Sequence</option>
-                    <option value="picture_in_picture">Picture-in-Picture (PIP)</option>
-                    <option value="multiscreen_shot">Multi-Screen Shot</option>
-                    <option value="low_key_lighting">LOW KEY LIGHTING</option>
-                    <option value="high_key_lighting">HIGH KEY LIGHTING</option>
-                    <option value="natural_lighting">NATURAL LIGHTING</option>
-                    <option value="spotlight">SPOTLIGHT</option>
-                    <option value="pan">PAN</option>
-                    <option value="tilt">TILT</option>
-                    <option value="zoom">ZOOM</option>
-                    <option value="dolly">DOLLY</option>
-                    <option value="track">TRACK</option>
-                    <option value="crane">CRANE</option>
-                    <option value="sound_effect">SOUND EFFECT (SFX)</option>
-                    <option value="music">MUSIC</option>
-                    <option value="ambient_sound">AMBIENT SOUND</option>
-                    <option value="dialogue_overlap">DIALOGUE OVERLAP</option>
-                    <option value="time_jump">TIME JUMP</option>
-                    <option value="montage">MONTAGE</option>
-                    <option value="enter">ENTER</option>
-                    <option value="exit">EXIT</option>
+
+                    <optgroup label="Scene">
+                        <option value="int">INT.</option>
+                        <option value="ext">EXT.</option>
+                        <option value="scene_heading">SCENE HEADING</option>
+                        <option value="action">ACTION</option>
+                    </optgroup>
+
+                    <optgroup label="Character & Dialogue">
+                        <option value="character">CHARACTER</option>
+                        <option value="dialogue">DIALOGUE</option>
+                        <option value="parenthetical">(PARENTHETICAL)</option>
+                        <option value="narration">NARRATION</option>
+                        <option value="dialogue_overlap">DIALOGUE OVERLAP</option>
+                    </optgroup>
+
+                    <optgroup label="Transitions">
+                        <option value="fade_in">FADE IN</option>
+                        <option value="fade_out">FADE OUT</option>
+                        <option value="cut_to">CUT TO</option>
+                        <option value="dissolve_to">DISSOLVE TO</option>
+                        <option value="smash_cut">SMASH CUT</option>
+                        <option value="cut_to_black">CUT TO BLACK</option>
+                        <option value="fade_to_black">FADE TO BLACK</option>
+                    </optgroup>
+
+                    <optgroup label="Shots & Camera">
+                        <option value="close_up">CLOSE UP (CU)</option>
+                        <option value="medium_shot">MEDIUM SHOT (MS)</option>
+                        <option value="long_shot">LONG SHOT (LS)</option>
+                        <option value="wide_shot">WIDE SHOT (WS)</option>
+                        <option value="pan">PAN</option>
+                        <option value="tilt">TILT</option>
+                        <option value="zoom">ZOOM</option>
+                        <option value="dolly">DOLLY</option>
+                        <option value="track">TRACK</option>
+                        <option value="crane">CRANE</option>
+                    </optgroup>
+
+                    <optgroup label="Sound & Light">
+                        <option value="sound_effect">SOUND EFFECT (SFX)</option>
+                        <option value="music">MUSIC</option>
+                        <option value="ambient_sound">AMBIENT SOUND</option>
+                        <option value="low_key_lighting">LOW KEY LIGHTING</option>
+                        <option value="high_key_lighting">HIGH KEY LIGHTING</option>
+                        <option value="natural_lighting">NATURAL LIGHTING</option>
+                        <option value="spotlight">SPOTLIGHT</option>
+                    </optgroup>
+
+                    <optgroup label="More Cues">
+                        <option value="intertitle">INTERTITLE</option>
+                        <option value="dream_sequence">Dream Sequence</option>
+                        <option value="picture_in_picture">Picture-in-Picture (PIP)</option>
+                        <option value="multiscreen_shot">Multi-Screen Shot</option>
+                        <option value="time_jump">TIME JUMP</option>
+                        <option value="montage">MONTAGE</option>
+                        <option value="enter">ENTER</option>
+                        <option value="exit">EXIT</option>
                     <option value="adaptation">Adaptation</option>
                     <option value="adr">ADR (Automated Dialogue Replacement)</option>
                     <option value="animatic">Animatic</option>
@@ -1110,6 +1130,7 @@
                     <option value="remake">Remake</option>
                     <option value="sequel">Sequel</option>
                     <option value="prequel">Prequel</option>
+                    </optgroup>
                 </select>
             </div>
 
@@ -1566,14 +1587,20 @@
         }
 
         // ==================== SCREENPLAY CUE INSERTER ====================
-        function insertScriptElement(element) {
+        function insertScriptElement(element, cursorOffset = null) {
             const start = editor.selectionStart;
             const end = editor.selectionEnd;
             const text = editor.value;
             const before = text.substring(0, start);
             const after = text.substring(end, text.length);
             editor.value = before + element + after;
-            editor.selectionStart = editor.selectionEnd = start + element.length;
+
+            // Smart cursor placement
+            if (cursorOffset !== null) {
+                editor.selectionStart = editor.selectionEnd = start + cursorOffset;
+            } else {
+                editor.selectionStart = editor.selectionEnd = start + element.length;
+            }
             editor.focus();
             handleEditorInput();
         }
@@ -1584,28 +1611,55 @@
             if (!val) return;
 
             const label = dropdown.options[dropdown.selectedIndex].text;
+
+            // Professional screenplay formatting for core elements
+            // cursorOffset places the caret where the writer should continue typing
             const customFormats = {
-                int: 'INT. ',
-                ext: 'EXT. ',
-                fade_in: 'FADE IN:\n\n',
-                fade_out: '\n\nFADE OUT.\n',
-                scene_heading: '\nINT. LOCATION - DAY\n\n',
-                action: '\nAction description...\n\n',
-                character: '\n\n                            CHARACTER\n                  ',
-                dialogue: '\n                  Dialogue...\n',
-                parenthetical: '\n                      (parenthetical)\n                  ',
-                cut_to: '\n\nCUT TO:\n\n',
-                dissolve_to: '\n\nDISSOLVE TO:\n\n',
-                smash_cut: '\n\nSMASH CUT TO:\n\n',
-                cut_to_black: '\n\nCUT TO BLACK.\n\n',
-                fade_to_black: '\n\nFADE TO BLACK.\n\n',
-                sound_effect: 'SFX: ',
-                special_effects: 'SFX: ',
-                visual_effects: 'VFX: '
+                // Scene openings
+                int:               { text: 'INT. ',                              cursor: 5 },
+                ext:               { text: 'EXT. ',                              cursor: 5 },
+                scene_heading:     { text: '\nINT. LOCATION - DAY\n\n',          cursor: 6 },
+
+                // Action & description
+                action:            { text: '\n',                                 cursor: 1 },
+
+                // Character / Dialogue block (most important for experienced writers)
+                character:         { text: '\n\n                            CHARACTER\n', cursor: 32 },
+                dialogue:          { text: '\n                  ',               cursor: 19 },
+                parenthetical:     { text: '\n                      ()\n                  ', cursor: 24 },
+
+                // Transitions (right-leaning feel)
+                fade_in:           { text: 'FADE IN:\n\n',                       cursor: 9 },
+                fade_out:          { text: '\n\nFADE OUT.\n',                    cursor: 12 },
+                cut_to:            { text: '\n\nCUT TO:\n\n',                    cursor: 10 },
+                dissolve_to:       { text: '\n\nDISSOLVE TO:\n\n',               cursor: 15 },
+                smash_cut:         { text: '\n\nSMASH CUT TO:\n\n',              cursor: 16 },
+                cut_to_black:      { text: '\n\nCUT TO BLACK.\n\n',              cursor: 16 },
+                fade_to_black:     { text: '\n\nFADE TO BLACK.\n\n',             cursor: 17 },
+
+                // Technical shortcuts
+                sound_effect:      { text: 'SFX: ',                             cursor: 5 },
+                special_effects:   { text: 'SFX: ',                             cursor: 5 },
+                visual_effects:    { text: 'VFX: ',                             cursor: 5 },
+                music:             { text: 'MUSIC: ',                           cursor: 7 },
+                ambient_sound:     { text: 'AMBIENT: ',                         cursor: 9 },
+
+                // Common shot types
+                close_up:          { text: 'CLOSE UP - ',                       cursor: 11 },
+                medium_shot:       { text: 'MEDIUM SHOT - ',                    cursor: 14 },
+                long_shot:         { text: 'LONG SHOT - ',                      cursor: 12 },
+                wide_shot:         { text: 'WIDE SHOT - ',                      cursor: 12 },
+                point_of_view_shot:{ text: 'POV - ',                            cursor: 6 }
             };
 
-            const formatted = customFormats[val] || `\n[${label.toUpperCase()}]\n`;
-            insertScriptElement(formatted);
+            if (customFormats[val]) {
+                const fmt = customFormats[val];
+                insertScriptElement(fmt.text, fmt.cursor);
+            } else {
+                // Everything else keeps the original charm: [LABEL]
+                insertScriptElement(`\n[${label.toUpperCase()}]\n`);
+            }
+
             dropdown.selectedIndex = 0;
         }
 
