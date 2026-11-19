@@ -1442,9 +1442,9 @@ function loadBrowserUrl() {
     });
   </script>
 
-        <!-- WEBGPU LOCAL CORE -->
+  <!-- WEBGPU LOCAL CORE -->
   <script type="module">
-    import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
+    import * as webllm from "https://esm.run/@mlc-ai/web-llm";
 
     const activateBtn = document.getElementById('activate-core-btn');
     const progressUI = document.getElementById('core-progress-ui');
@@ -1455,7 +1455,6 @@ function loadBrowserUrl() {
     const coreTriggerBtn = document.getElementById('coreTriggerBtn');
 
     let engine = null;
-    let isGenerating = false;
 
     if (activateBtn) {
       activateBtn.onclick = async () => {
@@ -1464,39 +1463,30 @@ function loadBrowserUrl() {
 
           activateBtn.textContent = "PROBING HARDWARE & SYNCING...";
           activateBtn.disabled = true;
-          if (progressUI) progressUI.style.display = 'block';
+          progressUI.style.display = 'block';
 
           engine = await webllm.CreateMLCEngine("Qwen2.5-0.5B-Instruct-q4f16_1-MLC", {
             initProgressCallback: (report) => {
-              const p = Math.round((report.progress || 0) * 100);
-              if (pBar) pBar.style.width = p + '%';
-              if (pVal) pVal.textContent = p;
+              const p = Math.round(report.progress * 100);
+              pBar.style.width = p + '%';
+              pVal.textContent = p;
+              if (p === 100) {
+                activateBtn.textContent = "CORE ONLINE (ACTIVE)";
+                activateBtn.style.backgroundColor = "#ffb000";
+                activateBtn.style.color = "#000";
+                chatEngineLabel.textContent = "LOCAL_WEBGPU_ONLINE";
+                chatEngineLabel.style.color = "#ffb000";
+                coreTriggerBtn.textContent = "● CORE ACTIVE (OFFLINE)";
+                coreTriggerBtn.style.background = "#ffb000";
+                coreTriggerBtn.style.color = "#000";
+              }
             }
           });
 
-          // Guaranteed 100% completion state once CreateMLCEngine resolves
-          if (pBar) pBar.style.width = '100%';
-          if (pVal) pVal.textContent = '100';
-          activateBtn.textContent = "CORE ONLINE (ACTIVE)";
-          activateBtn.style.backgroundColor = "#ffb000";
-          activateBtn.style.color = "#000";
-          if (chatEngineLabel) {
-            chatEngineLabel.textContent = "LOCAL_WEBGPU_ONLINE";
-            chatEngineLabel.style.color = "#ffb000";
-          }
-          if (coreTriggerBtn) {
-            coreTriggerBtn.textContent = "● CORE ACTIVE (OFFLINE)";
-            coreTriggerBtn.style.background = "#ffb000";
-            coreTriggerBtn.style.color = "#000";
-          }
-
           window.sendMessage = async function() {
-            if (isGenerating || !engine) return;
             const input = document.getElementById('chat-input');
-            const message = input ? input.value.trim() : '';
+            const message = input.value.trim();
             if (!message) return;
-
-            isGenerating = true;
 
             const userBubble = document.createElement('div');
             userBubble.className = 'chat-bubble user-message';
@@ -1522,14 +1512,11 @@ function loadBrowserUrl() {
               }
             } catch (err) {
               botBubble.textContent = "[SIGNAL LOST]: " + err.message;
-            } finally {
-              isGenerating = false;
             }
           };
 
           setTimeout(() => {
-            const modal = document.getElementById('coreModal');
-            if (modal) modal.classList.remove('active');
+            document.getElementById('coreModal').classList.remove('active');
           }, 1200);
 
         } catch (err) {
@@ -1538,7 +1525,6 @@ function loadBrowserUrl() {
         }
       };
     }
-            </script> 
-                
+  </script>
 </body>
 </html>
