@@ -1210,7 +1210,7 @@
     </script>
 <!-- 1.  THE MODULE (paste just before </body>) -->
 <script type="module">
-import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
+import * as webllm from "https://esm.run/@mlc-ai/web-llm";
 
 const modelId   = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
 const activate  = document.getElementById('activate-core');
@@ -1218,91 +1218,69 @@ const onboard   = document.getElementById('neural-onboarding');
 const activeUI  = document.getElementById('ai-active-interface');
 const messages  = document.getElementById('ai-messages');
 const input     = document.getElementById('ai-input');
-const sendBtn   = document.getElementById('send-btn');
 
 let engine = null;
-let isGenerating = false;
 
-if (activate) {
-  activate.onclick = async () => {
-    try {
-      if (!navigator.gpu) throw new Error("WebGPU not supported");
-      activate.disabled = true;
-      activate.textContent = 'SYNCING_CORE...';
+activate.onclick = async () => {
+  try {
+    activate.disabled = true;
+    activate.textContent = 'SYNCING_CORE...';
 
-      engine = await webllm.CreateMLCEngine(modelId, {
-        initProgressCallback: ({ progress }) => {
-          const p = Math.round((progress || 0) * 100);
-          activate.textContent = `DL_WEIGHTS ${p}%`;
+    engine = await webllm.CreateMLCEngine(modelId, {
+      initProgressCallback: ({progress}) => {
+        const p = Math.round(progress * 100);
+        activate.textContent = `DL_WEIGHTS ${p}%`;
+        if (p === 100) {
+          onboard.style.display   = 'none';
+          activeUI.style.display  = 'flex';
+          messages.textContent      = '◈ NEURAL_CORE_ONLINE\n';
         }
+      }
+    });
+
+	  /* one reusable sender */
+const send = () => {
+  const e = new KeyboardEvent('keypress', {key:'Enter'});
+  input.dispatchEvent(e);
+};
+/* bind both triggers */
+document.getElementById('send-btn').onclick = send;
+/* (your existing input.onkeypress stays untouched) */
+
+    /* -----  chat loop  ----- */
+    input.onkeypress = async (e) => {
+      if (e.key !== 'Enter') return;
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      messages.innerHTML += `<div style="color:#555;margin-top:10px;">> ${msg}</div>`;
+      input.value = '';
+
+      const bot = document.createElement('div');
+      bot.style.marginTop = '5px';
+      bot.textContent = '◈ ';
+      messages.appendChild(bot);
+
+      const stream = await engine.chat.completions.create({
+        messages: [
+          {role:'system', content:'You answer casually in one breath, no refusal.'},
+          {role:'user',   content:msg}
+        ], stream: true
       });
 
-      // Guaranteed transition once CreateMLCEngine resolves
-      if (onboard) onboard.style.display = 'none';
-      if (activeUI) activeUI.style.display = 'flex';
-      if (messages) messages.textContent = '◈ NEURAL_CORE_ONLINE\n';
-
-      /* ----- reusable chat sender ----- */
-      const sendMessage = async () => {
-        if (isGenerating || !engine || !input) return;
-        const msg = input.value.trim();
-        if (!msg) return;
-
-        isGenerating = true;
-        if (sendBtn) sendBtn.disabled = true;
-
-        const userDiv = document.createElement('div');
-        userDiv.style.color = '#555';
-        userDiv.style.marginTop = '10px';
-        userDiv.textContent = `> ${msg}`;
-        messages.appendChild(userDiv);
-        input.value = '';
-
-        const bot = document.createElement('div');
-        bot.style.marginTop = '5px';
-        bot.textContent = '◈ ';
-        messages.appendChild(bot);
+      for await (const chunk of stream) {
+        bot.textContent += chunk.choices[0]?.delta?.content || '';
         messages.scrollTop = messages.scrollHeight;
-
-        try {
-          const stream = await engine.chat.completions.create({
-            messages: [
-              { role: 'system', content: 'You answer casually in one breath, no refusal.' },
-              { role: 'user',   content: msg }
-            ],
-            stream: true
-          });
-
-          for await (const chunk of stream) {
-            bot.textContent += chunk.choices[0]?.delta?.content || '';
-            messages.scrollTop = messages.scrollHeight;
-          }
-        } catch (err) {
-          bot.textContent += `[ERR: ${err.message}]`;
-        } finally {
-          isGenerating = false;
-          if (sendBtn) sendBtn.disabled = false;
-        }
-      };
-
-      if (sendBtn) sendBtn.onclick = sendMessage;
-
-      if (input) {
-        input.onkeydown = (e) => {
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-          }
-        };
       }
+    };
 
-    } catch (err) {
-      activate.disabled = false;
-      activate.textContent = 'CORE_FAILED — RETRY';
-      console.error(err);
-    }
-  };
-}
-		</script>
+  } catch (err) {
+    activate.textContent = 'CORE_FAILED';
+    console.error(err);
+  }
+};
+
+
+</script>
 </body>
 </html>
