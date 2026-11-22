@@ -135,11 +135,8 @@
 <script id="reader-script">
 /* ==========  CONFIG  ========== */
 const TXT_FILE_URL = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/horse.txt';
-
-// Markdown pattern
 const ENTRY_PATTERN = /^(#{1,3})\s+(.+)$/;
 
-// SIMPLE TAG PATTERNS
 const TAG_PATTERNS = {
   all: /.*/,
   fragments: /\bfragment(s)?\b|\[fragment\]/i,
@@ -163,141 +160,207 @@ const searchStats = document.getElementById('searchStats');
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
 const randomBtn = document.getElementById('randomBtn');
-const indexBtn = document.getElementById('indexBtn');
+const indexBtn = document.getElementById('indexBtn'); // Optional in HTML; guarded below
 const dateNav = document.getElementById('dateNav');
 const entryInfo = document.getElementById('entryInfo');
 const loadingDiv = document.getElementById('loading');
 const contentDiv = document.getElementById('content');
 
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 /* ==========  LOAD DATA  ========== */
 async function loadText() {
   try {
-    console.log('Loading text from:', TXT_FILE_URL);
-    
     const textRes = await fetch(TXT_FILE_URL);
     if (!textRes.ok) throw new Error('Text file not found');
-    
+
     let text = await textRes.text();
-    console.log('Text loaded, length:', text.length);
-    
     text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
     parseEntries(text);
-    
+
     loadingDiv.style.display = 'none';
     contentDiv.style.display = 'block';
-    
-    console.log(`Parsed ${window.readerEntries.length} entries`);
-    
-    if (window.readerEntries.length > 0) {
-      showEntry(window.readerEntries[0].id);
-    }
-    
-    // Set "All" button active
+
     const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
     if (allBtn) styleActiveFilter(allBtn);
-    
+
+    if (window.readerEntries.length > 0) {
+      showEntry(window.readerEntries[0].id);
+    } else {
+      contentDiv.innerHTML = '<div class="text-center mt-10 text-gray-500">No entries found in horse.txt.</div>';
+    }
+
     buildIndex();
     updateUIState();
-    
-    // Log what tags were found for debugging
-    logFoundTags();
-    
   } catch (err) {
     console.error('Load error:', err);
-    loadingDiv.innerHTML = `<p style="color:var(--red)">Error: ${err.message}</p>`;
+    loadingDiv.innerHTML = `<p style="color:var(--red)">Error: ${escapeHtml(err.message)}</p>`;
   }
 }
 
-function logFoundTags() {
-  const tagCounts = {};
-  window.readerEntries.forEach(entry => {
-    entry.tags.forEach(tag => {
-      tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-    });
-  });
-  console.log('Tags found in content:', tagCounts);
+/* ==========  BOOLEAN SEARCH  ========== */
+function parseSearchQuery(raw) {
+  const q = raw.trim();
+  const tokens = [];
+  const re = /(-?"[^"]+"|-?\S+)/g;
+  let m;
+  while ((m = re.exec(q)) !== null) tokens.push(m[1]);
+
+  const not = [];
+  const orGroups = [[]];
+
+  for (const tok of tokens) {
+    const upper = tok.toUpperCase();
+    if (upper === 'OR') {
+      if (orGroups[orGroups.length - 1].length > 0) orGroups.push([]);
+      continue;
+    }
+    if (upper === 'AND') continue;
+
+    if (tok.startsWith('-') && tok.length > 1) {
+      let val = tok.slice(1);
+      if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) val = val.slice(1, -1);
+      if (val) not.push(val.toLowerCase());
+      continue;
+    }
+
+    let val = tok;
+    if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) val = val.slice(1, -1);
+    if (val) orGroups[orGroups.length - 1].push(val.toLowerCase());
+  }
+
+  return {
+    orGroups: orGroups.filter(g => g.length > 0),
+    not
+  };
 }
 
-/* ==========  SEARCH ========== */
+function matchesSearch(entry, terms) {
+  const searchText = (entry.content + '\n' + entry.title).toLowerCase();
+  if (terms.not.some(t => t && searchText.includes(t))) return false;
+  if (terms.orGroups.length === 0) return true;
+  return terms.orGroups.some(andGroup => andGroup.every(t => searchText.includes(t)));
+}
+
 searchBox.addEventListener('input', function(e) {
-  performSearch(e.target.value);
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => performSearch(e.target.value), 160);
 });
 
 function performSearch(query) {
   const trimmedQuery = query.trim();
-  console.log('Searching for:', trimmedQuery);
-  
+
   if (!trimmedQuery) {
     isSearching = false;
+    searchQuery = '';
     searchResults = [];
     updateUIState();
-    
-    // Show current or first entry
+
     const pool = getCurrentViewEntries();
     if (pool.length > 0) {
-      const entryToShow = window.readerCurrentIndex > 0 ? 
-        window.readerCurrentIndex : pool[0].id;
-      showEntry(entryToShow);
+      const stillInPool = pool.some(e => e.id === window.readerCurrentIndex);
+      showEntry(stillInPool ? window.readerCurrentIndex : pool[0].id);
+    } else {
+      contentDiv.innerHTML = `<div class="text-center mt-10 p-4 text-gray-500">No entries tagged as "${escapeHtml(currentFilter)}"</div>`;
+      entryInfo.innerHTML = `<div class="text-xs text-gray-500">Filter: ${escapeHtml(currentFilter)}</div>`;
+      updateNavigationButtons([], -1);
     }
     return;
   }
-  
+
   isSearching = true;
   searchQuery = trimmedQuery;
-  
-  // Simple search
+
   const pool = getFilteredEntries();
-  const queryLower = trimmedQuery.toLowerCase();
-  
-  searchResults = pool.filter(entry => {
-    const searchText = (entry.content + ' ' + entry.title).toLowerCase();
-    return searchText.includes(queryLower);
-  });
-  
-  console.log(`Search results: ${searchResults.length} of ${pool.length} entries`);
-  
+  const terms = parseSearchQuery(trimmedQuery);
+  searchResults = pool.filter(entry => matchesSearch(entry, terms));
+
   updateUIState();
-  
+
   if (searchResults.length > 0) {
     showEntry(searchResults[0].id);
   } else {
     contentDiv.innerHTML = `
       <div class="text-center mt-10 p-4">
-        <div class="text-gray-500">No matches found for "${trimmedQuery}"</div>
+        <div class="text-gray-500">No matches found for "${escapeHtml(trimmedQuery)}"</div>
       </div>`;
-    entryInfo.innerHTML = `<div class="text-xs text-gray-500">Search: "${trimmedQuery}"</div>`;
+    entryInfo.innerHTML = `<div class="text-xs text-gray-500">Search: "${escapeHtml(trimmedQuery)}"</div>`;
+    updateNavigationButtons([], -1);
   }
 }
 
-function highlightText(text, query) {
-  if (!query) return text;
-  
-  try {
-    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(`(${escapedQuery})`, 'gi');
-    return text.replace(regex, '<span class="highlight" style="background:var(--red); color:black; padding:0 2px;">$1</span>');
-  } catch (e) {
-    console.log('Highlight error:', e);
-    return text;
+function highlightElementText(rootEl, query) {
+  if (!query) return;
+  const terms = parseSearchQuery(query);
+  const allTerms = Array.from(new Set(terms.orGroups.flat())).filter(Boolean);
+  if (!allTerms.length) return;
+
+  allTerms.sort((a, b) => b.length - a.length);
+  const pattern = allTerms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+  const regex = new RegExp(pattern, 'gi');
+
+  const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT, null);
+  const textNodes = [];
+  let node;
+  while ((node = walker.nextNode())) {
+    if (node.nodeValue && node.nodeValue.trim()) textNodes.push(node);
   }
+
+  textNodes.forEach(textNode => {
+    const val = textNode.nodeValue;
+    regex.lastIndex = 0;
+    if (!regex.test(val)) return;
+
+    regex.lastIndex = 0;
+    const frag = document.createDocumentFragment();
+    let lastIdx = 0;
+    let m;
+    while ((m = regex.exec(val)) !== null) {
+      if (m[0].length === 0) { regex.lastIndex++; continue; }
+      if (m.index > lastIdx) {
+        frag.appendChild(document.createTextNode(val.slice(lastIdx, m.index)));
+      }
+      const span = document.createElement('span');
+      span.className = 'highlight';
+      span.style.cssText = 'background:var(--red); color:black; padding:0 2px;';
+      span.textContent = m[0];
+      frag.appendChild(span);
+      lastIdx = regex.lastIndex;
+    }
+    if (lastIdx < val.length) {
+      frag.appendChild(document.createTextNode(val.slice(lastIdx)));
+    }
+    textNode.parentNode.replaceChild(frag, textNode);
+  });
 }
 
 /* ==========  PARSE ENTRIES  ========== */
 function parseEntries(text) {
+  window.readerEntries = [];
   const lines = text.split('\n');
-  let current = null;
   let id = 0;
-  
-  lines.forEach((line) => {
+  let current = {
+    id: ++id,
+    title: 'Prologue / Intro',
+    headingLevel: 1,
+    content: '',
+    tags: []
+  };
+
+  lines.forEach(line => {
     const m = line.match(ENTRY_PATTERN);
     if (m) {
-      // Save previous entry if exists
-      if (current && current.content.trim()) {
+      if (current.content.trim()) {
         detectTags(current);
         window.readerEntries.push(current);
       }
-      
-      // Start new entry
       current = {
         id: ++id,
         title: m[2].trim(),
@@ -305,14 +368,12 @@ function parseEntries(text) {
         content: line + '\n',
         tags: []
       };
-    } else if (current) {
-      // Continue current entry
+    } else {
       current.content += line + '\n';
     }
   });
-  
-  // Don't forget the last entry
-  if (current && current.content.trim()) {
+
+  if (current.content.trim()) {
     detectTags(current);
     window.readerEntries.push(current);
   }
@@ -320,87 +381,70 @@ function parseEntries(text) {
 
 function detectTags(entry) {
   const detectedTags = [];
-  
-  // Check each tag pattern
   for (const [tag, pattern] of Object.entries(TAG_PATTERNS)) {
     if (tag !== 'all' && pattern.test(entry.content)) {
       detectedTags.push(tag);
     }
   }
-  
   entry.tags = detectedTags;
 }
 
-/* ==========  GET CURRENT VIEW ENTRIES - FIXED ========== */
 function getCurrentViewEntries() {
-  if (isSearching) {
-    return searchResults;
-  }
-  return getFilteredEntries();
+  return isSearching ? searchResults : getFilteredEntries();
 }
 
 function getFilteredEntries() {
-  let entries = window.readerEntries;
-  
   if (currentFilter !== 'all') {
-    return entries.filter(e => e.tags.includes(currentFilter));
+    return window.readerEntries.filter(e => e.tags.includes(currentFilter));
   }
-  
-  return entries;
+  return window.readerEntries;
 }
 
 /* ==========  DISPLAY FUNCTIONS  ========== */
 function showEntry(entryId) {
   const entry = window.readerEntries.find(x => x.id === entryId);
   if (!entry) return;
-  
+
   window.readerCurrentIndex = entryId;
-  
-  let displayContent = entry.content;
-  
-  // Apply highlighting if searching
-  if (isSearching && searchQuery) {
-    displayContent = highlightText(displayContent, searchQuery);
-  }
-  
-  // Process markdown formatting
-  const html = displayContent.split('\n').map(line => {
+
+  const html = entry.content.split('\n').map(line => {
     const trimmed = line.trim();
     if (!trimmed) return '<br>';
-    
+
     const headingMatch = line.match(/^(#{1,3})\s+(.+)$/);
     if (headingMatch) {
       const level = headingMatch[1].length;
-      const headingText = headingMatch[2];
+      const headingText = escapeHtml(headingMatch[2]);
       const headingClass = level === 1 ? 'text-2xl font-bold mt-6 mb-4' :
                           level === 2 ? 'text-xl font-bold mt-5 mb-3' :
                           'text-lg font-bold mt-4 mb-2';
       return `<h${level} class="${headingClass} special-elite" style="color:var(--red)">${headingText}</h${level}>`;
     }
-    
-    return `<p class="mb-4 leading-relaxed">${trimmed}</p>`;
+
+    return `<p class="mb-4 leading-relaxed">${escapeHtml(trimmed)}</p>`;
   }).join('');
-  
+
   contentDiv.innerHTML = html;
-  
+
+  if (isSearching && searchQuery) {
+    highlightElementText(contentDiv, searchQuery);
+  }
+
   const pool = getCurrentViewEntries();
   const idx = pool.findIndex(x => x.id === entryId);
-  const words = entry.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).length;
-  
-  console.log(`Showing entry ${entryId} ("${entry.title}"), position ${idx + 1}/${pool.length} in current view`);
-  
-  // Tag styling
+  const words = entry.content.trim().split(/\s+/).filter(Boolean).length;
+
   const tagStyles = {
-    'fragments': 'border-red-400 text-red-400',
-    'passages': 'border-red-500 text-red-500', 
-    'sections': 'border-red-600 text-red-600'
+    fragments: 'border-red-400 text-red-400',
+    passages: 'border-red-500 text-red-500',
+    sections: 'border-red-600 text-red-600'
   };
-  
+
   entryInfo.innerHTML = `
     <div class="flex flex-col gap-1">
       <div>
         <span class="text-xs text-gray-500 uppercase tracking-widest">HORSE ARCHIVE</span>
-        <span class="ml-2 font-bold text-xl special-elite" style="color:var(--red)">${entry.title}</span>
+        <span class="ml-2 font-bold text-xl special-elite" style="color:var(--red)">${escapeHtml(entry.title)}</span>
       </div>
       <div class="text-xs text-gray-400 flex items-center gap-2 flex-wrap">
         ${isSearching ? `Search result ${idx + 1}/${searchResults.length}` : `Entry ${idx + 1}/${pool.length}`}
@@ -408,31 +452,27 @@ function showEntry(entryId) {
         ${entry.tags.length > 0 ? `<span class="ml-2 flex gap-1 flex-wrap">
           ${entry.tags.map(t => {
             const style = tagStyles[t] || 'border-gray-600 text-gray-600';
-            return `<span class="px-2 py-1 border text-[10px] uppercase ${style}">${t}</span>`;
+            return `<span class="px-2 py-1 border text-[10px] uppercase ${style}">${escapeHtml(t)}</span>`;
           }).join('')}
         </span>` : ''}
       </div>
     </div>`;
-  
-  // Update navigation buttons
+
   updateNavigationButtons(pool, idx);
-  
+
   contentDiv.scrollTop = 0;
   if (isIndexVisible) buildIndex();
 }
 
 function updateNavigationButtons(pool, currentIndex) {
-  console.log(`Updating nav buttons: index ${currentIndex}, pool size ${pool.length}`);
-  
   if (prevBtn) {
     const isDisabled = currentIndex <= 0;
     prevBtn.disabled = isDisabled;
     prevBtn.style.opacity = isDisabled ? '0.5' : '1';
     prevBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
   }
-  
   if (nextBtn) {
-    const isDisabled = currentIndex >= pool.length - 1;
+    const isDisabled = pool.length === 0 || currentIndex >= pool.length - 1;
     nextBtn.disabled = isDisabled;
     nextBtn.style.opacity = isDisabled ? '0.5' : '1';
     nextBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
@@ -441,84 +481,58 @@ function updateNavigationButtons(pool, currentIndex) {
 
 function showRandomEntry() {
   const pool = getCurrentViewEntries();
-  console.log(`Random from pool of ${pool.length} entries`);
-  
   if (!pool.length) return;
-  
+
   let randomIdx;
   do {
     randomIdx = Math.floor(Math.random() * pool.length);
   } while (pool[randomIdx].id === window.readerCurrentIndex && pool.length > 1);
-  
+
   showEntry(pool[randomIdx].id);
 }
 
 function navigateEntries(dir) {
   const pool = getCurrentViewEntries();
-  console.log(`Navigate ${dir}, pool size: ${pool.length}`);
-  
   if (pool.length === 0) return;
-  
+
   const idx = pool.findIndex(x => x.id === window.readerCurrentIndex);
-  console.log(`Current index in pool: ${idx}`);
-  
   const newIdx = dir === 'next' ? idx + 1 : idx - 1;
-  console.log(`New index: ${newIdx}`);
-  
   if (newIdx >= 0 && newIdx < pool.length) {
     showEntry(pool[newIdx].id);
-  } else {
-    console.log(`Cannot navigate ${dir}: ${newIdx} out of bounds (0-${pool.length-1})`);
   }
 }
 
 /* ==========  FILTER HANDLING  ========== */
 document.getElementById('filterBtns').addEventListener('click', function(e) {
   if (e.target.classList.contains('filter-btn')) {
-    const filter = e.target.dataset.filter;
-    console.log('Filter clicked:', filter);
-    handleFilterChange(filter, e.target);
+    handleFilterChange(e.target.dataset.filter, e.target);
   }
 });
 
 function handleFilterChange(filter, button) {
   currentFilter = filter;
-  
-  // Style the active button
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.style.background = 'transparent';
-    btn.style.borderColor = '#333';
-    btn.style.color = '#666';
-  });
-  
-  button.style.background = 'var(--red)';
-  button.style.color = 'black';
-  button.style.borderColor = 'var(--red)';
-  
-  // Clear search
-  searchBox.value = '';
+  styleActiveFilter(button);
+
+  if (searchBox.value.trim()) {
+    performSearch(searchBox.value);
+    return;
+  }
+
   isSearching = false;
   searchQuery = '';
-  
   const filtered = getFilteredEntries();
-  console.log(`Filter "${filter}" applied: ${filtered.length} entries`);
-  
   updateUIState();
-  
+
   if (filtered.length > 0) {
-    // Find the current entry in the filtered list, or show first
     const currentInFiltered = filtered.find(e => e.id === window.readerCurrentIndex);
-    if (currentInFiltered) {
-      showEntry(currentInFiltered.id);
-    } else {
-      showEntry(filtered[0].id);
-    }
+    showEntry(currentInFiltered ? currentInFiltered.id : filtered[0].id);
   } else {
     contentDiv.innerHTML = `
       <div class="text-center mt-10 p-4">
-        <div class="text-gray-500">No entries tagged as "${filter}"</div>
+        <div class="text-gray-500">No entries tagged as "${escapeHtml(filter)}"</div>
       </div>`;
-    entryInfo.innerHTML = `<div class="text-xs text-gray-500">Filter: ${filter}</div>`;
+    entryInfo.innerHTML = `<div class="text-xs text-gray-500">Filter: ${escapeHtml(filter)}</div>`;
+    updateNavigationButtons([], -1);
   }
 }
 
@@ -530,47 +544,42 @@ function updateUIState() {
     const count = getFilteredEntries().length;
     searchStats.textContent = currentFilter !== 'all' ? `${count} ${currentFilter}` : `${count} total`;
   }
-  
-  if (isIndexVisible) {
-    buildIndex();
-  }
+  if (isIndexVisible) buildIndex();
 }
 
 function buildIndex() {
   const pool = getCurrentViewEntries();
-  console.log(`Building index with ${pool.length} entries`);
-  
   dateNav.innerHTML = '';
-  
+
   if (pool.length === 0) {
     dateNav.innerHTML = '<div class="p-3 text-gray-500 text-sm">No entries to display</div>';
     return;
   }
-  
+
   pool.forEach(entry => {
     const div = document.createElement('div');
     div.className = 'p-3 border-b border-gray-700 cursor-pointer hover:bg-gray-900 transition-colors';
-    
+
     if (entry.id === window.readerCurrentIndex) {
       div.style.background = '#1a1a1a';
       div.style.borderLeft = '3px solid var(--red)';
     }
-    
+
     const preview = entry.content.replace(/<[^>]*>/g, '').substring(0, 60).replace(/\n/g, ' ') + '...';
-    
+
     div.innerHTML = `
       <div class="text-sm font-bold text-gray-300 mb-1 truncate special-elite">
-        ${entry.title}
+        ${escapeHtml(entry.title)}
       </div>
-      <div class="text-xs text-gray-600 font-mono truncate">${preview}</div>
-      ${entry.tags.length > 0 ? 
+      <div class="text-xs text-gray-600 font-mono truncate">${escapeHtml(preview)}</div>
+      ${entry.tags.length > 0 ?
         `<div class="mt-1 flex gap-1 flex-wrap">
-          ${entry.tags.slice(0, 2).map(t => 
-            `<span class="text-[9px] px-1 py-0.5 border border-gray-700 text-gray-500">${t}</span>`
+          ${entry.tags.slice(0, 2).map(t =>
+            `<span class="text-[9px] px-1 py-0.5 border border-gray-700 text-gray-500">${escapeHtml(t)}</span>`
           ).join('')}
         </div>` : ''}
     `;
-    
+
     div.addEventListener('click', () => {
       showEntry(entry.id);
       if (window.innerWidth < 768) {
@@ -589,7 +598,6 @@ function styleActiveFilter(btn) {
     b.style.borderColor = '#333';
     b.style.color = '#666';
   });
-  
   btn.style.background = 'var(--red)';
   btn.style.color = 'black';
   btn.style.borderColor = 'var(--red)';
@@ -597,36 +605,40 @@ function styleActiveFilter(btn) {
 
 /* ==========  INITIALIZATION  ========== */
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('DOM loaded, starting horse reader...');
   loadText();
-  
-  // Navigation buttons
-  prevBtn.addEventListener('click', () => navigateEntries('prev'));
-  nextBtn.addEventListener('click', () => navigateEntries('next'));
-  randomBtn.addEventListener('click', showRandomEntry);
-  indexBtn.addEventListener('click', () => {
-    isIndexVisible = !isIndexVisible;
-    dateNav.classList.toggle('hidden');
-    if (isIndexVisible) buildIndex();
-  });
-  
-  // Keyboard shortcuts
+
+  if (prevBtn) prevBtn.addEventListener('click', () => navigateEntries('prev'));
+  if (nextBtn) nextBtn.addEventListener('click', () => navigateEntries('next'));
+  if (randomBtn) randomBtn.addEventListener('click', showRandomEntry);
+  if (indexBtn) {
+    indexBtn.addEventListener('click', () => {
+      isIndexVisible = !isIndexVisible;
+      dateNav.classList.toggle('hidden');
+      if (isIndexVisible) buildIndex();
+    });
+  }
+
   document.addEventListener('keydown', function(e) {
-    if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-    
-    if (e.key === 'ArrowLeft') {
+    if (!e || !e.key) return;
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+      if (e.key === 'Escape') document.activeElement.blur();
+      return;
+    }
+
+    if (e.key === '/') {
+      e.preventDefault();
+      searchBox.focus();
+      searchBox.select();
+    } else if (e.key === 'ArrowLeft') {
       e.preventDefault();
       navigateEntries('prev');
-    }
-    if (e.key === 'ArrowRight') {
+    } else if (e.key === 'ArrowRight') {
       e.preventDefault();
       navigateEntries('next');
-    }
-    if (e.key.toLowerCase() === 'r') {
+    } else if (e.key.toLowerCase() === 'r') {
       e.preventDefault();
       showRandomEntry();
-    }
-    if (e.key === 'Escape' && isIndexVisible) {
+    } else if (e.key === 'Escape' && isIndexVisible) {
       dateNav.classList.add('hidden');
       isIndexVisible = false;
     }
@@ -635,73 +647,122 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 <script id="ai-script">
 /* ==========  AI CONFIG  ========== */
-const NVIDIA_MODELS={
-  stable: "nvidia/nemotron-3.5-lightning-30b-a3b",
-    backup: "mistralai/mistral-medium-3.5-128b"
+const NVIDIA_MODELS = {
+  stable: 'nvidia/nemotron-3.5-lightning-30b-a3b',
+  backup: 'mistralai/mistral-medium-3.5-128b'
 };
-let currentModel=NVIDIA_MODELS.stable,aiContext='current';
-const apiKeyInput=document.getElementById('apiKeyInput');
-const aiInput=document.getElementById('aiInput');
-const askAiBtn=document.getElementById('askAiBtn');
-const aiResponseDiv=document.getElementById('aiResponse');
-const contextInfo=document.getElementById('contextInfo');
+let currentModel = NVIDIA_MODELS.stable;
+let aiContext = 'current';
+const apiKeyInput = document.getElementById('apiKeyInput');
+const aiInput = document.getElementById('aiInput');
+const askAiBtn = document.getElementById('askAiBtn');
+const aiResponseDiv = document.getElementById('aiResponse');
+const contextInfo = document.getElementById('contextInfo');
+
+function escapeAiHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function styleContextButton(activeBtn) {
+  document.querySelectorAll('.context-btn').forEach(b => {
+    b.style.background = 'var(--dark-grey)';
+    b.style.color = '#888';
+    b.style.borderColor = '#333';
+  });
+  if (activeBtn) {
+    activeBtn.style.background = 'var(--red)';
+    activeBtn.style.color = 'black';
+    activeBtn.style.borderColor = 'var(--red)';
+  }
+}
 
 /* ==========  INIT  ========== */
-if(localStorage.getItem('horse_nvidia_key'))apiKeyInput.value=localStorage.getItem('horse_nvidia_key');
-apiKeyInput.addEventListener('input',e=>localStorage.setItem('horse_nvidia_key',e.target.value));
+if (localStorage.getItem('horse_nvidia_key')) {
+  apiKeyInput.value = localStorage.getItem('horse_nvidia_key');
+}
+apiKeyInput.addEventListener('input', e => localStorage.setItem('horse_nvidia_key', e.target.value));
+styleContextButton(document.querySelector('.context-btn[data-context="current"]'));
 
 /* ==========  TRANSMIT  ========== */
-askAiBtn.addEventListener('click',async()=>{
-  const key=apiKeyInput.value.trim(),msg=aiInput.value.trim();
-  if(!key){aiResponseDiv.innerHTML='<p class="text-red-500">Please enter an NVIDIA API Key.</p>';return;}
-  if(!msg)return;
-  if(!window.readerEntries?.length){aiResponseDiv.innerHTML='<p class="text-red-500">horse.txt not loaded yet.</p>';return;}
-  askAiBtn.disabled=true;askAiBtn.textContent='TRANSMITTING...';
-  aiResponseDiv.innerHTML='<p class="animate-pulse" style="color:var(--red)">Consulting Llama...</p>';
-  try{
-    let ctx='';
-    if(aiContext==='current'){
-      const e=window.readerEntries.find(x=>x.id===window.readerCurrentIndex);
-      if(e)ctx=`CONTEXT (Current – ${e.title}):\n${e.content.substring(0,4000)}\n\n---\n`;
-    }else if(aiContext==='all'){
-      ctx=`CONTEXT (Outline):\n${window.readerEntries.map(x=>`- ${x.title} (${x.tags.join(', ')})`).join('\n')}\n\n---\n`;
+askAiBtn.addEventListener('click', async () => {
+  const key = apiKeyInput.value.trim();
+  const msg = aiInput.value.trim();
+  if (!key) {
+    aiResponseDiv.innerHTML = '<p class="text-red-500">Please enter an NVIDIA API Key.</p>';
+    return;
+  }
+  if (!msg) return;
+  if (!window.readerEntries?.length) {
+    aiResponseDiv.innerHTML = '<p class="text-red-500">horse.txt not loaded yet.</p>';
+    return;
+  }
+
+  askAiBtn.disabled = true;
+  askAiBtn.textContent = 'TRANSMITTING...';
+  aiResponseDiv.innerHTML = '<p class="animate-pulse" style="color:var(--red)">Consulting AI...</p>';
+
+  try {
+    let ctx = '';
+    if (aiContext === 'current') {
+      const e = window.readerEntries.find(x => x.id === window.readerCurrentIndex);
+      if (e) ctx = `CONTEXT (Current – ${e.title}):\n${e.content.substring(0, 4000)}\n\n---\n`;
+    } else if (aiContext === 'all') {
+      ctx = `CONTEXT (Outline):\n${window.readerEntries.map(x => `- ${x.title} (${x.tags.join(', ')})`).join('\n')}\n\n---\n`;
     }
-    const proxyUrl = 'https://lively-limitless.inkrealm.workers.dev/?url=' +encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
-    const res=await fetch(proxy,{
-      method:'POST',
-      headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:currentModel,
-        messages:[
-          {role:'system',content:'You are an editor for HORSE, a narrative where reality and dreams blur. Analyse via surrealism. Be bold, concise, literary.'},
-          {role:'user',content:ctx+'User Question: '+msg}
+
+    const proxyUrl = 'https://lively-limitless.inkrealm.workers.dev/?url=' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
+    const res = await fetch(proxyUrl, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: currentModel,
+        messages: [
+          { role: 'system', content: 'You are an editor for HORSE, a narrative where reality and dreams blur. Analyse via surrealism. Be bold, concise, literary.' },
+          { role: 'user', content: ctx + 'User Question: ' + msg }
         ],
-        temperature:.6,top_p:1,max_tokens:1024
+        temperature: 0.6,
+        top_p: 1,
+        max_tokens: 1024
       })
     });
-    if(!res.ok){if(res.status===404)throw new Error('404 Switch');const t=await res.text();let m=t;try{m=JSON.parse(t).error?.message||t;}catch{e}throw new Error(m);}
-    const data=await res.json();
-    let txt=data.choices[0].message.content;
-    txt=txt.replace(/\*\*(.*?)\*\*/g,'<strong style="color:var(--red)">$1</strong>').replace(/\n/g,'<br>');
-    aiResponseDiv.innerHTML=txt;
-  }catch(err){
-    console.error(err);
-    if(err.message.includes('404')||err.message.includes('Switch')){
-      currentModel=NVIDIA_MODELS.backup;
-      aiResponseDiv.innerHTML='<p style="color:#888">Primary model unavailable. Switched to Backup.<br><strong>Please click Transmit again.</strong></p>';
-    }else{
-      aiResponseDiv.innerHTML=`<p style="color:var(--red)">Error: ${err.message}</p>`;
+
+    if (!res.ok) {
+      if (res.status === 404) throw new Error('404 Switch');
+      const t = await res.text();
+      let m = t;
+      try { m = JSON.parse(t).error?.message || t; } catch (_) {}
+      throw new Error(m);
     }
-  }finally{askAiBtn.disabled=false;askAiBtn.textContent='TRANSMIT';}
+
+    const data = await res.json();
+    const rawTxt = data.choices?.[0]?.message?.content || '(No response text returned.)';
+    const formatted = escapeAiHtml(rawTxt)
+      .replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--red)">$1</strong>')
+      .replace(/\n/g, '<br>');
+    aiResponseDiv.innerHTML = formatted;
+  } catch (err) {
+    console.error(err);
+    if (err.message.includes('404') || err.message.includes('Switch')) {
+      currentModel = NVIDIA_MODELS.backup;
+      aiResponseDiv.innerHTML = '<p style="color:#888">Primary model unavailable. Switched to Backup.<br><strong>Please click Transmit again.</strong></p>';
+    } else {
+      aiResponseDiv.innerHTML = `<p style="color:var(--red)">Error: ${escapeAiHtml(err.message)}</p>`;
+    }
+  } finally {
+    askAiBtn.disabled = false;
+    askAiBtn.textContent = 'TRANSMIT';
+  }
 });
 
 /* ==========  CONTEXT BUTTONS  ========== */
-document.addEventListener('click',e=>{
-  if(!e.target.classList.contains('context-btn'))return;
-  document.querySelectorAll('.context-btn').forEach(b=>{b.style.background='var(--dark-grey)';b.style.color='#888';b.style.borderColor='#333';});
-  e.target.style.background='var(--red)';e.target.style.color='black';e.target.style.borderColor='var(--red)';
-  aiContext=e.target.dataset.context;
-  contextInfo.textContent=`Context: ${aiContext.toUpperCase()} (${aiContext==='current'?'Reading current entry':aiContext==='all'?'Reading all titles':'No context'})`;
+document.addEventListener('click', e => {
+  if (!e.target.classList.contains('context-btn')) return;
+  styleContextButton(e.target);
+  aiContext = e.target.dataset.context;
+  contextInfo.textContent = `Context: ${aiContext.toUpperCase()} (${aiContext === 'current' ? 'Reading current entry' : aiContext === 'all' ? 'Reading all titles' : 'No context'})`;
 });
 </script>
 </body>
