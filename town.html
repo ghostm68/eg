@@ -12,28 +12,37 @@
   <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.basic.min.js"></script>
   <style>
     :root {
+      --paper: #EDEAE2;
+      --ink: #111111;
       --red: #e60000;
       --red-soft: #ff4d4d;
       --red-dim: rgba(230, 0, 0, 0.12);
       --red-border: rgba(230, 0, 0, 0.35);
-      --bg: #0a0a0a;
-      --card-bg: #141414;
-      --input-bg: #111;
-      --border: #333;
-      --text: #c8c8c8;
-      --text-muted: #888;
+      --dark: #0a0a0a;
+      --surface: #141414;
+      --border-dark: #2a2a2a;
+      --border-light: #c9c5ba;
+      --mono: 'Share Tech Mono', ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      --serif: 'Cormorant Garamond', Georgia, "Times New Roman", serif;
+      --sans: 'Inter', system-ui, sans-serif;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
     body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      padding: 1rem;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--mono);
+      font-size: 15px;
       line-height: 1.55;
+      overflow-x: hidden;
     }
+    ::selection { background: var(--red); color: var(--paper); }
+    a { color: inherit; }
 
-    /* Small mark used in place of lightning emoji — echoes the city triangle */
+    .wrap { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
+
+    /* Small red triangle mark */
     .mark {
       display: inline-block;
       width: 0.55em;
@@ -42,1056 +51,1777 @@
       border-right: 0.28em solid transparent;
       border-bottom: 0.48em solid var(--red);
       vertical-align: middle;
-      margin: 0 0.15em 0.05em 0;
+      margin: 0 0.2em 0.08em 0;
     }
-    .mark-sm { width: 0.4em; height: 0.4em; border-left-width: 0.2em; border-right-width: 0.2em; border-bottom-width: 0.35em; }
+    .mark-sm { width: 0.42em; height: 0.42em; border-left-width: 0.21em; border-right-width: 0.21em; border-bottom-width: 0.36em; }
 
-    .container { max-width: 900px; margin: 0 auto; }
-    .voodoo { font-family: 'Cormorant Garamond', serif; letter-spacing: 0.04em; font-weight: 400; }
+    /* Reading Progress Bar */
+    #readingProgress {
+      position: fixed; top: 0; left: 0; height: 3px; width: 0%;
+      background: var(--red); z-index: 200; transition: width 0.1s linear;
+    }
 
-    /* Button & Input base */
-    button {
-      background: #111218;
-      border: 1px solid var(--border);
-      color: #9ca3af;
-      padding: 0.35rem 0.65rem;
-      font-size: 0.75rem;
-      font-family: 'Share Tech Mono', 'Courier New', monospace;
+    /* ---------- HEADER ---------- */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: var(--paper); border-bottom: 1px solid var(--ink);
+    }
+    .nav {
+      display: flex; align-items: center; justify-content: space-between;
+      min-height: 56px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+      gap: 12px; flex-wrap: wrap; padding: 8px 0;
+    }
+    .logo { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+    .logo sup { color: var(--red); }
+    .nav nav { display: flex; align-items: center; gap: 20px; }
+    .nav nav a { text-decoration: none; }
+    .nav nav a:hover { color: var(--red); }
+    @media(max-width: 860px) { .nav nav { display: none; } }
+
+    .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .hdr-drawer {
+      display: none; background: var(--dark); color: #ccc;
+      border-top: 1px solid var(--ink); padding: 14px 24px; font-size: 12px;
+    }
+
+    /* Buttons & Inputs */
+    button, .btn {
+      display: inline-block;
+      background: transparent;
+      border: 1px solid var(--ink);
+      color: var(--ink);
+      padding: 7px 14px;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
       cursor: pointer;
       transition: all 0.15s ease;
     }
-    button:hover:not(:disabled) {
+    button:hover:not(:disabled), .btn:hover {
+      background: var(--red);
+      border-color: var(--red);
+      color: var(--paper);
+    }
+    button:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-solid { background: var(--ink); color: var(--paper); }
+
+    .dark-btn {
+      background: #141414;
+      border: 1px solid #333;
+      color: #b5b5b5;
+    }
+    .dark-btn:hover:not(:disabled) {
+      background: var(--red);
       border-color: var(--red);
       color: #fff;
     }
-    button:disabled { opacity: 0.3; cursor: not-allowed; }
-    
+    .mode-active, .filter-active {
+      background: var(--red) !important;
+      color: #fff !important;
+      border-color: var(--red) !important;
+      font-weight: bold;
+    }
+
     input, select, textarea {
-      background: var(--input-bg);
-      border: 1px solid var(--border);
+      background: #0d0d0d;
+      border: 1px solid #333;
       color: #f3f4f6;
-      font-family: 'Share Tech Mono', 'Courier New', monospace;
-      font-size: 0.8rem;
-      padding: 0.5rem;
-      border-radius: 0;
+      font-family: var(--mono);
+      font-size: 13px;
+      padding: 10px 12px;
       width: 100%;
+      border-radius: 0;
     }
     input:focus, select:focus, textarea:focus {
       outline: none;
       border-color: var(--red);
     }
 
-    .highlight {
-      background-color: var(--red);
-      color: #000;
-      padding: 1px 3px;
-      font-weight: bold;
+    /* ---------- VORTEX HERO ---------- */
+    .vortex-hero {
+      position: relative; height: 92vh; min-height: 600px;
+      background: var(--dark); color: var(--paper);
+      overflow: hidden; user-select: none; margin-top: 56px;
     }
-    .active-hit {
-      outline: 2px solid #fff;
-      box-shadow: 0 0 10px var(--red);
-      background-color: #fff !important;
-      color: #000 !important;
+    #vortex { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+    .vortex-top {
+      position: absolute; top: 24px; left: 24px; right: 24px;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+      font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #888; pointer-events: none;
     }
-    .search-active {
-      border-color: var(--red) !important;
-      box-shadow: 0 0 10px var(--red-border);
+    .vortex-modes { display: flex; gap: 8px; pointer-events: auto; flex-wrap: wrap; }
+    .mode-btn {
+      background: rgba(16, 16, 16, 0.85); border: 1px solid #333; color: #aaa;
+      padding: 6px 11px; font-size: 10.5px; letter-spacing: 0.12em;
     }
-    .mode-active, .filter-active {
-      background: var(--red) !important;
-      color: #000 !important;
-      border-color: var(--red) !important;
-      font-weight: bold;
+    .mode-btn.active { border-color: var(--red); color: var(--paper); background: var(--red); }
+    .vortex-ui { position: absolute; left: 24px; bottom: 30px; pointer-events: none; max-width: 680px; }
+    .eyebrow { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 10px; color: var(--red); }
+    .vortex-label {
+      font-family: var(--serif); font-size: clamp(28px, 4vw, 44px);
+      letter-spacing: 0.03em; margin-bottom: 8px; color: var(--paper); font-weight: 400;
+    }
+    .vortex-ui .hint { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #888; line-height: 1.6; }
+    .vortex-ui .hint b { color: var(--red); }
+    .vortex-scroll {
+      position: absolute; right: 24px; bottom: 30px; font-size: 11px;
+      letter-spacing: 0.18em; color: #666; writing-mode: vertical-rl; pointer-events: none;
+    }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
     }
 
-    /* Scrollbars */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #090a0d; }
-    ::-webkit-scrollbar-thumb { background: #262933; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--red); }
+    /* ---------- MARQUEE ---------- */
+    .marquee {
+      border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink);
+      overflow: hidden; white-space: nowrap; background: var(--ink); color: var(--paper);
+    }
+    .marquee-inner {
+      display: inline-block; padding: 10px 0; animation: mq 28s linear infinite;
+      font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    }
+    @keyframes mq { to { transform: translateX(-50%); } }
+    .marquee b { color: var(--red); }
 
-    /* Prose */
-    .prose { color: #cbd5e1; font-size: 0.95rem; line-height: 1.85; }
-    .prose h1, .prose h2, .prose h3 { font-family: 'Cormorant Garamond', serif; color: #eee; margin: 1.6em 0 0.5em; font-weight: 400; }
-    .prose h1 { font-size: 1.9em; border-bottom: 1px solid var(--border); padding-bottom: 0.25em; color: #eee; }
-    .prose h2 { font-size: 1.4em; }
-    .prose p { margin: 1.2em 0; }
+    /* ---------- SECTIONS ---------- */
+    section { padding: 84px 0; }
+    .sec-label { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); margin-bottom: 14px; }
+    .sec-title {
+      font-family: var(--serif); font-size: clamp(28px, 4vw, 46px); font-weight: 400;
+      max-width: 820px; line-height: 1.15; margin-bottom: 42px;
+    }
+    .sec-title .ch, .swirl .ch { display: inline-block; will-change: transform; }
+
+    /* ---------- LEDGER ROWS ---------- */
+    .ledger-row {
+      display: grid; grid-template-columns: 76px 1fr auto; gap: 16px;
+      padding: 15px 8px; border-bottom: 1px solid var(--border-light);
+      align-items: baseline; font-size: 13.5px; cursor: pointer;
+      transition: background 0.15s, padding-left 0.15s;
+    }
+    .ledger-row:hover { background: rgba(230, 0, 0, 0.06); padding-left: 14px; }
+    .ledger-row .num { color: var(--red); }
+    .ledger-row .meta { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #666; }
+    .ledger-row .meta b { color: var(--ink); }
+    .total {
+      margin-top: 20px; font-size: 12px; letter-spacing: 0.1em;
+      text-transform: uppercase; text-align: right; color: var(--red);
+    }
+
+    /* ---------- ANALYTICS DOSSIER ---------- */
+    .features { border-top: 1px solid var(--ink); background: #e6e2d8; }
+    .feature {
+      display: grid; grid-template-columns: 90px 1fr auto; gap: 20px;
+      padding: 24px 0; border-bottom: 1px solid var(--border-light); align-items: center;
+    }
+    @media(max-width: 680px) { .feature { grid-template-columns: 1fr; gap: 10px; } }
+    .feature .num { font-size: 13px; color: #777; }
+    .feature h3 {
+      font-size: 18px; text-transform: uppercase; letter-spacing: 0.04em;
+      cursor: default; display: inline-block; margin-bottom: 6px;
+    }
+    .feature h3:hover { color: var(--red); }
+    .feature p { max-width: 620px; color: #444; font-size: 13px; }
+
+    /* ---------- DARK READER SECTION ---------- */
+    .case { background: var(--dark); color: var(--paper); }
+    .case-kicker {
+      font-family: var(--serif); font-style: italic; color: #999;
+      font-size: 17px; margin-bottom: 36px; max-width: 720px;
+    }
+
+    .reader-toolbar {
+      border: 1px solid #2b2b2b; background: #141414; padding: 22px; margin-bottom: 36px;
+    }
+    .search-wrap { position: relative; margin-bottom: 12px; }
+    #searchStats {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      font-size: 11px; color: #888; pointer-events: none; text-transform: uppercase;
+    }
+    .search-active { border-color: var(--red) !important; box-shadow: 0 0 12px var(--red-border); }
+
+    .toolbar-row {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 10px; margin-bottom: 12px;
+    }
+    .flex-wrap { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+    #matchNav {
+      display: none; align-items: center; gap: 8px; padding: 6px 10px;
+      background: rgba(230, 0, 0, 0.09); border: 1px solid var(--red-border);
+      font-size: 11.5px; margin-bottom: 12px;
+    }
+
+    #dateNav {
+      display: none; max-height: 280px; overflow-y: auto; margin-top: 14px;
+      background: #0d0d0d; border: 1px solid #2b2b2b; padding: 8px;
+    }
+
+    .entry-header {
+      border-bottom: 1px solid #262626; padding-bottom: 18px; margin-bottom: 20px;
+      display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 12px;
+    }
+    .research-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 12px; margin-bottom: 24px;
+      padding: 12px 16px; border: 1px dashed #333; background: #111;
+    }
+    .research-plate {
+      border: 1px solid #262626; background: #0e0e0e; padding: 48px 24px;
+      text-align: center; color: #777; margin-bottom: 24px;
+    }
+
+    /* Two-column literary prose */
+    .prose {
+      font-family: var(--serif);
+      color: #d6d2c8;
+      font-size: 18.5px;
+      line-height: 1.85;
+      column-count: 2;
+      column-gap: 54px;
+    }
+    @media(max-width: 860px) { .prose { column-count: 1; } }
+    .prose h1, .prose h2, .prose h3 {
+      font-family: var(--serif); color: #fff; margin: 1.2em 0 0.5em;
+      font-weight: 400; column-span: all;
+    }
+    .prose h1 { font-size: 2.1em; border-bottom: 1px solid #2a2a2a; padding-bottom: 0.3em; }
+    .prose h2 { font-size: 1.5em; }
+    .prose p { margin-bottom: 1.35em; break-inside: avoid-column; }
     .prose blockquote {
-      border-left: 3px solid var(--red);
-      background: var(--red-dim);
-      padding: 0.5rem 1rem;
-      margin: 1.5em 0;
-      font-style: italic;
+      border-left: 3px solid var(--red); background: var(--red-dim);
+      padding: 0.6rem 1rem; margin: 1.4em 0; font-style: italic;
     }
-    .prose code { background: #171821; color: var(--red); padding: 0.2em 0.4em; }
+    .prose code { background: #1a1a1a; color: var(--red-soft); padding: 0.15em 0.4em; font-family: var(--mono); font-size: 0.8em; }
 
-    /* Modals */
+    .highlight { background-color: var(--red); color: #fff; padding: 1px 4px; font-weight: bold; }
+    .active-hit { outline: 2px solid #fff; box-shadow: 0 0 12px var(--red); background-color: #fff !important; color: #000 !important; }
+
+    .pull-quote {
+      margin: 72px auto 0; max-width: 880px; text-align: center;
+      font-family: var(--serif); font-size: clamp(28px, 4.8vw, 52px);
+      line-height: 1.12; cursor: default; user-select: none; color: var(--paper);
+    }
+    .pull-quote:hover { color: var(--red); }
+    .pull-note {
+      text-align: center; font-size: 11px; letter-spacing: 0.14em;
+      text-transform: uppercase; color: #666; margin-top: 16px;
+    }
+
+    /* ---------- AI CONSOLE & SPECS GRID ---------- */
+    .pricing-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 24px; }
+    @media(max-width: 860px) { .pricing-grid { grid-template-columns: 1fr; } }
+    .card { border: 1px solid var(--ink); padding: 34px; background: #fff; position: relative; }
+    .card.dark { background: var(--ink); color: var(--paper); }
+    .card .edition { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); margin-bottom: 10px; }
+    .card .amount { font-family: var(--serif); font-size: 38px; font-weight: 400; margin-bottom: 22px; line-height: 1.1; }
+    .tag {
+      position: absolute; top: 20px; right: 20px; font-size: 10px; letter-spacing: 0.12em;
+      border: 1px solid var(--red); color: var(--red); padding: 4px 8px; text-transform: uppercase;
+    }
+    .card ul { list-style: none; }
+    .card li { padding: 10px 0; border-bottom: 1px dashed #ccc; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; }
+    .card li::before { content: "▲ "; color: var(--red); }
+
+    .ai-field { margin-bottom: 14px; }
+    .ai-label { display: block; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #888; margin-bottom: 6px; }
+    #aiResponse {
+      margin-top: 16px; background: #0c0c0c; border: 1px solid #2b2b2b; padding: 16px;
+      min-height: 96px; max-height: 360px; overflow-y: auto; font-size: 13px;
+      white-space: pre-wrap; color: #e2e8f0; line-height: 1.7;
+    }
+
+    /* ---------- MODALS ---------- */
     .analytics-overlay {
-      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); z-index: 50; backdrop-filter: blur(2px);
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.82); z-index: 300; backdrop-filter: blur(2px);
     }
     .analytics-modal {
       position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: 90%; max-width: 680px; background: #0f1015; border: 1px solid var(--red);
-      box-shadow: 0 0 25px rgba(255, 51, 68, 0.25); padding: 1.5rem; z-index: 51;
+      width: 90%; max-width: 680px; background: var(--paper); color: var(--ink);
+      border: 2px solid var(--ink); box-shadow: 12px 12px 0 var(--red); padding: 28px; z-index: 301;
     }
-    .flex-wrap { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+
+    /* ---------- FOOTER ---------- */
+    footer { background: var(--ink); color: var(--paper); padding: 64px 0 36px; }
+    .ascii { overflow-x: auto; font-size: 10px; line-height: 1.15; color: #555; white-space: pre; margin-bottom: 32px; }
+    .footer-bottom {
+      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+      font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #888;
+      border-top: 1px solid #333; padding-top: 20px;
+    }
+    .footer-bottom a { text-decoration: none; }
+    .footer-bottom a:hover { color: var(--red); }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0c0c0c; }
+    ::-webkit-scrollbar-thumb { background: #333; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--red); }
+
+    /* Print Typewriter Mode */
+    @media print {
+      header, .vortex-hero, .marquee, .reader-toolbar, .research-bar, .research-plate, #analysis, footer, #ledger, #lexicon { display: none !important; }
+      body, .case { background: #fff !important; color: #000 !important; font-family: "Courier New", Courier, monospace !important; }
+      #readerMain, #content { display: block !important; }
+      .prose { color: #000 !important; column-count: 1 !important; }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
 
-    <!-- HEADER -->
-    <header style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-        <h1 class="voodoo" style="font-size: 1.9rem; color: #eee; margin: 0;">
-          <span class="mark"></span> red and white
-        </h1>
-        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.15rem; font-family:'Share Tech Mono', monospace;">
-          reader · live from wordstar.nexus/city
-        </div>
+<div id="readingProgress"></div>
+
+<!-- ================= HEADER ================= -->
+<header>
+  <div class="wrap">
+    <div class="nav">
+      <div class="logo"><span class="mark"></span> redWHITE<sup>TOWN</sup></div>
+      <nav>
+        <a href="#ledger">Manifest</a>
+        <a href="#lexicon">Analytics</a>
+        <a href="#reader">Manuscript</a>
+        <a href="#analysis">AI Editor</a>
+      </nav>
+      <div class="header-actions">
+        <button id="guideToggle" type="button">Search Guide</button>
+        <button id="authToggle" type="button">Legacy Auth</button>
+        <a class="btn btn-solid" href="#reader">Open Reader</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEARCH GUIDE DRAWER -->
+  <div id="searchGuide" class="hdr-drawer">
+    <div class="wrap">
+      <strong style="color:var(--red);">SEARCH GUIDE:</strong>
+      Exact: plain text, <code>"exact phrase"</code>, <code>word1 OR word2</code>, <code>-exclude</code> ·
+      Fuzzy: typo-tolerant Fuse.js ·
+      Keys: <kbd>←</kbd> <kbd>→</kbd> Entry · <kbd>R</kbd> Random · <kbd>N</kbd>/<kbd>P</kbd> Next/Prev Hit · <kbd>/</kbd> Search · <kbd>Esc</kbd> Close
+    </div>
+  </div>
+
+  <!-- LEGACY AUTH DRAWER -->
+  <div id="authDrawer" class="hdr-drawer">
+    <div class="wrap" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <span style="color:#9ca3af;"><strong>Legacy / unused:</strong> Town loads live from wordstar.nexus/city.</span>
+      <input type="password" id="ghTokenInput" placeholder="github_pat_... or ghp_..." style="max-width:280px; padding:6px 10px;" />
+      <button id="saveGhTokenBtn" class="dark-btn" type="button">Save &amp; Reload</button>
+    </div>
+  </div>
+</header>
+
+<!-- ================= TYPOGRAPHIC VORTEX HERO ================= -->
+<div class="vortex-hero">
+  <canvas id="vortex" aria-hidden="true"></canvas>
+  <h1 class="sr-only">redWHITE · town — live reader from wordstar.nexus/city</h1>
+
+  <div class="vortex-top">
+    <div>TOWN ARCHIVE // LIVE FROM WORDSTAR.NEXUS/CITY</div>
+    <div class="vortex-modes" role="group" aria-label="Vortex Geometry Mode">
+      <button type="button" class="dark-btn mode-btn active" data-mode="spiral">[1] Spiral</button>
+      <button type="button" class="dark-btn mode-btn" data-mode="triangle">[2] City Triangle</button>
+      <button type="button" class="dark-btn mode-btn" data-mode="grid">[3] Text Grid</button>
+    </div>
+  </div>
+
+  <div class="vortex-ui">
+    <div class="eyebrow"><span class="mark"></span> red and white · research reader</div>
+    <div class="vortex-label">redWHITE // town</div>
+    <div class="hint">
+      <b>move</b> to disturb ·
+      <b>hold click</b> to draw inward &amp; <b>release</b> to scatter ·
+      <b>drag</b> to spin · keys <b>[1] [2] [3]</b> morph geometry
+    </div>
+  </div>
+  <div class="vortex-scroll">SCROLL ↓</div>
+</div>
+
+<!-- ================= MARQUEE ================= -->
+<div class="marquee"><div class="marquee-inner" id="marquee">
+  RED AND WHITE <b>▲</b> TOWN READER <b>▲</b> LIVE FROM WORDSTAR.NEXUS/CITY <b>▲</b>
+  RESEARCH ARCHIVE <b>▲</b> EXACT &amp; FUZZY SEARCH <b>▲</b> LITERARY DIAGNOSTICS <b>▲</b>&nbsp;
+</div></div>
+
+<!-- ================= LIVE MANIFEST LEDGER ================= -->
+<section id="ledger">
+  <div class="wrap">
+    <div class="sec-label">Archive Ledger // Live Chapter Manifest</div>
+    <h2 class="sec-title" data-scramble>Every chapter pulled from the city settles into the ledger.</h2>
+    <div id="problemList">
+      <div class="ledger-row">
+        <span class="num">000</span>
+        <span>Synchronizing live manifest from wordstar.nexus/city…</span>
+        <span class="meta"><b>PENDING</b></span>
+      </div>
+    </div>
+    <div class="total" id="ledgerTotal">Source: wordstar.nexus/city (with local .md fallback)</div>
+  </div>
+</section>
+
+<!-- ================= ANALYTICS DOSSIER ================= -->
+<section id="lexicon" class="features">
+  <div class="wrap">
+    <div class="sec-label">Manuscript Diagnostics // Live Scanners</div>
+    <h2 class="sec-title" data-scramble>Structural telemetry across the active text.</h2>
+
+    <div class="feature">
+      <span class="num">001 /</span>
+      <div>
+        <h3 data-hover-scramble>Word Volume &amp; Extremes</h3>
+        <p>Total manuscript word count, per-entry average, plus longest and shortest parsed chapters.</p>
+      </div>
+      <button id="anaWordsBtn" type="button">📊 Words</button>
+    </div>
+
+    <div class="feature">
+      <span class="num">002 /</span>
+      <div>
+        <h3 data-hover-scramble>Entity &amp; Character Scan</h3>
+        <p>Extracts the highest-frequency proper nouns and recurring figures across the loaded archive.</p>
+      </div>
+      <button id="anaCharsBtn" type="button">👤 Chars</button>
+    </div>
+
+    <div class="feature">
+      <span class="num">003 /</span>
+      <div>
+        <h3 data-hover-scramble>3-Word Repetitions</h3>
+        <p>Detects recurrent three-word motifs, ticks, and echoes across chapters.</p>
+      </div>
+      <button id="anaRepsBtn" type="button">🔁 Reps</button>
+    </div>
+
+    <div class="feature">
+      <span class="num">004 /</span>
+      <div>
+        <h3 data-hover-scramble>Timeline &amp; Tag Manifest</h3>
+        <p>Full sequential manifest with auto-detected tags and entry word counts.</p>
+      </div>
+      <button id="anaTimeBtn" type="button">⏰ Timeline</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= DARK READER ================= -->
+<section class="case" id="reader">
+  <div class="wrap">
+    <div class="sec-label">Manuscript Console // Live Feed</div>
+    <h2 class="sec-title" data-scramble>red and white</h2>
+    <p class="case-kicker">Synced directly from the city spritz buffer. Research mode keeps the body veiled until opened.</p>
+
+    <!-- TOOLBAR -->
+    <div class="reader-toolbar">
+      <div class="search-wrap">
+        <input type="text" id="searchBox" placeholder='Search entries (e.g. water AND night, "exact phrase", -dream)...' />
+        <span id="searchStats"></span>
+      </div>
+
+      <div class="toolbar-row">
         <div class="flex-wrap">
-          <button id="guideToggle">Search Guide</button>
-          <button id="authToggle" style="border-color:#4b5563;">⚙️ Legacy Auth</button>
-        </div>
-      </div>
-
-      <!-- PRIVATE REPO AUTH DRAWER -->
-      <div id="authDrawer" style="display:none; margin-top: 0.75rem; padding: 0.75rem; background: #0c0d12; border: 1px solid var(--border);">
-        <p style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 0.5rem;">
-          <strong>Legacy / unused:</strong> Town now loads from the city page. This drawer is kept only for future optional sources.
-        </p>
-        <div style="display:flex; gap:0.5rem;">
-          <input type="password" id="ghTokenInput" placeholder="github_pat_... or ghp_..." style="flex:1;" />
-          <button id="saveGhTokenBtn" style="white-space:nowrap; border-color:var(--red);">SAVE & RELOAD</button>
-        </div>
-      </div>
-
-      <!-- SEARCH GUIDE DRAWER -->
-      <div id="searchGuide" style="display:none; margin-top: 0.75rem; padding: 0.75rem; background: #0c0d12; border: 1px solid var(--border); font-size: 0.75rem; color: #9ca3af;">
-        <div style="color:var(--red); font-weight:bold; margin-bottom:0.25rem; font-family:'Share Tech Mono', monospace;">Search Guide</div>
-        <div>• <strong>Exact:</strong> plain text, <code style="color:var(--red)">"exact phrase"</code>, <code style="color:var(--red)">word1 or word2</code>, <code style="color:var(--red)">-exclude</code></div>
-        <div>• <strong>Fuzzy:</strong> typo-tolerant search powered by Fuse.js</div>
-        <div>• <strong>Keys:</strong> <kbd>←</kbd> <kbd>→</kbd> Navigate • <kbd>R</kbd> Random • <kbd>N</kbd>/<kbd>P</kbd> Next/Prev hit • <kbd>/</kbd> Focus search • <kbd>Esc</kbd> Close modal</div>
-      </div>
-    </header>
-
-    <!-- SEARCH & CONTROLS TOOLBAR -->
-    <div style="position:sticky; top:0; background:var(--bg); padding: 0.5rem 0 1rem 0; border-bottom: 1px solid var(--border); z-index: 30;">
-      
-      <div style="position:relative; margin-bottom: 0.5rem;">
-        <input type="text" id="searchBox" placeholder="Search entries (e.g. water AND night, &quot;exact phrase&quot;, -dream)..." />
-        <span id="searchStats" style="position:absolute; right:10px; top:8px; font-size:0.7rem; color:var(--text-muted); pointer-events:none;"></span>
-      </div>
-
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem;">
-        <div class="flex-wrap">
-          <button id="prevBtn" title="Previous Entry">← Prev</button>
-          <button id="randomBtn" style="color:var(--red);" title="Random (R)"><span class="mark mark-sm"></span> Random</button>
-          <button id="nextBtn" title="Next Entry">Next →</button>
-          <button id="jumpStart" title="First Entry">⇤</button>
-          <button id="jumpEnd" title="Last Entry">⇥</button>
+          <button id="prevBtn" class="dark-btn" type="button" title="Previous Entry">← Prev</button>
+          <button id="randomBtn" class="dark-btn" type="button" style="color:var(--red-soft);" title="Random (R)"><span class="mark mark-sm"></span> Random</button>
+          <button id="nextBtn" class="dark-btn" type="button" title="Next Entry">Next →</button>
+          <button id="jumpStart" class="dark-btn" type="button" title="First Entry">⇤</button>
+          <button id="jumpEnd" class="dark-btn" type="button" title="Last Entry">⇥</button>
         </div>
 
         <div class="flex-wrap">
-          <button id="exactBtn" class="mode-active" data-mode="exact">Exact</button>
-          <button id="fuzzyBtn" data-mode="fuzzy">Fuzzy</button>
-          <button id="indexBtn">Index</button>
+          <button id="exactBtn" class="dark-btn mode-active" type="button" data-mode="exact">Exact</button>
+          <button id="fuzzyBtn" class="dark-btn" type="button" data-mode="fuzzy">Fuzzy</button>
+          <button id="indexBtn" class="dark-btn" type="button">Index</button>
         </div>
       </div>
 
-      <!-- Match navigation bar -->
-      <div id="matchNav" style="display:none; align-items:center; gap:0.5rem; padding:0.25rem 0.5rem; background:rgba(255,51,68,0.08); border:1px solid rgba(255,51,68,0.3); font-size:0.75rem; margin-bottom:0.5rem;">
+      <!-- Match Navigation -->
+      <div id="matchNav">
         <span id="matchCounter" style="color:var(--red);">hit 0/0</span>
-        <button id="prevMatchBtn" style="padding:0.1rem 0.4rem;">↑ hit</button>
-        <button id="nextMatchBtn" style="padding:0.1rem 0.4rem;">hit ↓</button>
-        <span style="color:#6b7280; font-size:0.65rem; margin-left:auto;">[N] / [P]</span>
-      </div>
-
-      <!-- Analytics Toolbar -->
-      <div class="flex-wrap" style="margin-bottom:0.5rem;">
-        <button id="anaWordsBtn">📊 Words</button>
-        <button id="anaCharsBtn">👤 Chars</button>
-        <button id="anaRepsBtn">🔁 Reps</button>
-        <button id="anaTimeBtn">⏰ Timeline</button>
+        <button id="prevMatchBtn" class="dark-btn" type="button" style="padding:3px 8px;">↑ hit</button>
+        <button id="nextMatchBtn" class="dark-btn" type="button" style="padding:3px 8px;">hit ↓</button>
+        <span style="color:#777; font-size:10.5px; margin-left:auto;">[N] / [P]</span>
       </div>
 
       <!-- Filter Badges -->
       <div id="filterBtns" class="flex-wrap">
-        <button class="filter-btn filter-active" data-filter="all">ALL</button>
-        <button class="filter-btn" data-filter="chapters">CHAPTERS</button>
-        <button class="filter-btn" data-filter="annotations">ANNOTATIONS</button>
-        <button class="filter-btn" data-filter="hypothesis">HYPOTHESIS</button>
-        <button class="filter-btn" data-filter="interlude">INTERLUDE</button>
-        <button class="filter-btn" data-filter="chronology">CHRONOLOGY</button>
+        <button class="dark-btn filter-btn filter-active" type="button" data-filter="all">ALL</button>
+        <button class="dark-btn filter-btn" type="button" data-filter="chapters">CHAPTERS</button>
+        <button class="dark-btn filter-btn" type="button" data-filter="annotations">ANNOTATIONS</button>
+        <button class="dark-btn filter-btn" type="button" data-filter="hypothesis">HYPOTHESIS</button>
+        <button class="dark-btn filter-btn" type="button" data-filter="interlude">INTERLUDE</button>
+        <button class="dark-btn filter-btn" type="button" data-filter="chronology">CHRONOLOGY</button>
       </div>
 
       <!-- Collapsible Index -->
-      <div id="dateNav" style="display:none; max-height:260px; overflow-y:auto; margin-top:0.5rem; background:#0c0d12; border:1px solid var(--border); padding:0.5rem;"></div>
+      <div id="dateNav"></div>
     </div>
 
-    <!-- ENTRY INFO + RESEARCH TOGGLE -->
-    <div id="entryInfo" style="margin-top:1rem; padding-bottom:0.5rem; border-bottom:1px solid var(--border); font-size:0.75rem; color:#9ca3af;"></div>
+    <!-- ENTRY INFO -->
+    <div id="entryInfo" class="entry-header"></div>
 
-    <div style="margin:0.75rem 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-      <span style="font-size:0.7rem; color:var(--text-muted); font-family:'Share Tech Mono', monospace;">research view · full text hidden</span>
-      <button id="textToggle" title="Show or hide the manuscript text">Show text</button>
+    <!-- RESEARCH TOGGLE BAR -->
+    <div class="research-bar">
+      <span id="researchLabel" style="font-size:11.5px; color:#888; letter-spacing:0.08em; text-transform:uppercase;">
+        research view · full text hidden
+      </span>
+      <button id="textToggle" class="dark-btn" type="button" style="border-color:var(--red); color:#fff;">Show text</button>
     </div>
 
-    <!-- Status (always visible) -->
-    <div id="loading" style="text-align:center; padding: 2rem 1rem; color:#6b7280; font-size:0.85rem;">
+    <!-- STATUS -->
+    <div id="loading" style="text-align:center; padding: 2.5rem 1rem; color:#888; font-size:13px;">
       <span class="mark"></span> fetching from city…
     </div>
 
-    <!-- MAIN READER CONTENT (hidden by default for research use) -->
-    <main id="readerMain" style="padding: 0.5rem 0 1.5rem; display:none;">
+    <!-- HIDDEN-TEXT COVER PLATE -->
+    <div id="researchPlate" class="research-plate" style="display:none;">
+      <div style="font-size:11px; letter-spacing:0.14em; color:var(--red); margin-bottom:8px;">RESEARCH VEIL ACTIVE</div>
+      <div style="font-family:var(--serif); font-size:22px; color:#ccc; margin-bottom:14px;">Manuscript prose is currently concealed for search, analytics, and AI interrogation.</div>
+      <button id="plateShowBtn" class="dark-btn" type="button" style="border-color:var(--red); color:#fff;">Reveal Manuscript Text</button>
+    </div>
+
+    <!-- READER CONTENT -->
+    <main id="readerMain" style="display:none; padding: 0.5rem 0 1.5rem;">
       <article id="content" class="prose" style="display:none;"></article>
     </main>
 
-    <!-- AI EDITOR PANEL -->
-    <section id="aiSection" style="margin-top:2.5rem; padding-top:1.5rem; border-top:1px solid var(--border);">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap;">
-        <h2 class="voodoo" style="color:#eee; font-size:1.4rem;">AI Editor</h2>
-        <span style="font-size:0.7rem; color:var(--text-muted); font-family:'Share Tech Mono', monospace;">wordstar / openai compatible</span>
-      </div>
-
-      <!-- Config -->
-      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:0.75rem; margin-bottom:0.75rem;">
-        <div>
-          <label style="display:block; font-size:0.7rem; color:#9ca3af; margin-bottom:0.25rem;">API KEY (SAVED LOCALLY):</label>
-          <input type="password" id="apiKeyInput" placeholder="nvapi-... or sk-or-... or sk-..." />
-        </div>
-        <div>
-          <label style="display:block; font-size:0.7rem; color:#9ca3af; margin-bottom:0.25rem;">MODEL & PROVIDER:</label>
-          <select id="modelSelect">
-            <option value="nvidia:nvidia/nemotron-3.5-lightning-30b-a3b">NVIDIA Nemotron 30B (Default)</option>
-            <option value="nvidia:nvidia/llama-3.3-nemotron-super-49b-v1.5">NVIDIA Nemotron 49B</option>
-            <option value="openrouter:deepseek/deepseek-chat">OpenRouter • DeepSeek Chat (V3)</option>
-            <option value="openrouter:deepseek/deepseek-r1">OpenRouter • DeepSeek R1</option>
-            <option value="openai:gpt-4o-mini">OpenAI • GPT-4o-mini</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Context Selector -->
-      <div style="margin-bottom:0.75rem;">
-        <div class="flex-wrap" style="margin-bottom:0.25rem;">
-          <span style="font-size:0.75rem; color:#9ca3af;">Context:</span>
-          <button class="context-btn filter-active" data-context="current">Current</button>
-          <button class="context-btn" data-context="all">Outline</button>
-          <button class="context-btn" data-context="none">None</button>
-        </div>
-        <p id="contextInfo" style="font-size:0.7rem; color:#6b7280;">Target: Current Entry</p>
-      </div>
-
-      <!-- Prompt Input -->
-      <div style="margin-bottom:0.75rem;">
-        <textarea id="aiInput" rows="3" placeholder=":: Awaiting Input :: (Ask for analysis, symbolism, summaries, or critiques...)"></textarea>
-      </div>
-
-      <!-- Action -->
-      <div class="flex-wrap">
-        <button id="askAiBtn" class="voodoo" style="padding:0.5rem 1.5rem; font-weight:bold; color:var(--red); border-color:var(--red);">
-          TRANSMIT
-        </button>
-        <span id="aiSubStatus" style="font-size:0.75rem; color:#6b7280;"></span>
-      </div>
-
-      <!-- Terminal Output -->
-      <div style="margin-top:1rem; margin-bottom:3rem;">
-        <div id="aiResponse" style="background:#090a0d; border:1px solid var(--border); padding:1rem; min-height:80px; max-height:480px; overflow-y:auto; font-size:0.75rem; white-space:pre-wrap; color:#e2e8f0; line-height:1.7;">
-          <span style="color:#6b7280; font-style:italic;">:: Transmit a query to receive terminal output ::</span>
-        </div>
-      </div>
-    </section>
-
+    <div class="pull-quote swirl" id="pullQuote">Red and white. Words waiting in the archive.</div>
+    <div class="pull-note">move your cursor through the words — click to scatter them</div>
   </div>
+</section>
+
+<!-- ================= AI EDITOR & SPECS ================= -->
+<section id="analysis" style="background:#fff; border-top:1px solid var(--ink);">
+  <div class="wrap">
+    <div class="sec-label">Editorial Wire // AI Analysis</div>
+    <h2 class="sec-title" data-scramble>Interrogate the active chapter or the full outline.</h2>
+
+    <div class="pricing-grid">
+      <!-- AI Editor Card -->
+      <div class="card dark" id="aiSection">
+        <span class="tag">OpenAI / NVIDIA / OR</span>
+        <div class="edition">wordstar / openai compatible</div>
+        <div class="amount">AI Editor</div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:12px; margin-bottom:12px;">
+          <div>
+            <label class="ai-label" for="apiKeyInput">API Key (Saved Locally)</label>
+            <input type="password" id="apiKeyInput" placeholder="nvapi-... or sk-or-... or sk-..." />
+          </div>
+          <div>
+            <label class="ai-label" for="modelSelect">Model &amp; Provider</label>
+            <select id="modelSelect">
+              <option value="nvidia:nvidia/nemotron-3.5-lightning-30b-a3b">NVIDIA Nemotron 30B (Default)</option>
+              <option value="nvidia:nvidia/llama-3.3-nemotron-super-49b-v1.5">NVIDIA Nemotron 49B</option>
+              <option value="openrouter:deepseek/deepseek-chat">OpenRouter • DeepSeek Chat (V3)</option>
+              <option value="openrouter:deepseek/deepseek-r1">OpenRouter • DeepSeek R1</option>
+              <option value="openai:gpt-4o-mini">OpenAI • GPT-4o-mini</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="ai-field">
+          <span class="ai-label">Context Target</span>
+          <div class="flex-wrap" style="margin-bottom:6px;">
+            <button class="dark-btn context-btn filter-active" type="button" data-context="current">Current</button>
+            <button class="dark-btn context-btn" type="button" data-context="all">Outline</button>
+            <button class="dark-btn context-btn" type="button" data-context="none">None</button>
+          </div>
+          <p id="contextInfo" style="font-size:11px; color:#777;">Target: Current Entry (Sends content up to 4.5k chars)</p>
+        </div>
+
+        <div class="ai-field">
+          <label class="ai-label" for="aiInput">Prompt</label>
+          <textarea id="aiInput" rows="3" placeholder=":: Awaiting Input :: (Ask for analysis, symbolism, pacing, or critiques...)"></textarea>
+        </div>
+
+        <div class="flex-wrap">
+          <button id="askAiBtn" class="dark-btn" type="button" style="background:var(--red); border-color:var(--red); color:#fff; padding:10px 22px; font-weight:bold;">
+            TRANSMIT →
+          </button>
+          <span id="aiSubStatus" style="font-size:11.5px; color:#888;"></span>
+        </div>
+
+        <div id="aiResponse">
+          <span style="color:#666; font-style:italic;">:: Transmit a query to receive terminal output ::</span>
+        </div>
+      </div>
+
+      <!-- Archive Specs Card -->
+      <div class="card">
+        <span class="tag">Live Sync</span>
+        <div class="edition">Reader Specifications</div>
+        <div class="amount">redWHITE</div>
+        <ul>
+          <li id="specSource">Source: wordstar.nexus/city</li>
+          <li id="specEntries">Entries Parsed: Loading…</li>
+          <li id="specWords">Total Word Count: Loading…</li>
+          <li>Search: Exact Boolean + Fuse.js Fuzzy</li>
+          <li>Mode: Research Veil + 2-Column Serif Prose</li>
+          <li>Keys: ←/→ Entry · R Random · N/P Hit · / Search</li>
+          <li>Print Mode: Courier New Typewriter (Ctrl+P)</li>
+        </ul>
+        <div style="margin-top:24px; display:flex; gap:10px; flex-wrap:wrap;">
+          <button type="button" onclick="window.print()">Print Typewriter Copy</button>
+          <a class="btn" href="#reader">Return to Reader</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <div class="wrap">
+    <pre class="ascii">
+                        888 888       888 888    888 8888888 88888888888 8888888888 
+                        888 888   o   888 888    888   888       888     888        
+                        888 888  d8b  888 888    888   888       888     888        
+888d888 .d88b.  .d88888 888 888 d888b 888 8888888888   888       888     8888888    
+888P"  d8P  Y8b d88" 88 888 888d88888b888 888    888   888       888     888        
+888    88888888 888  88 888 88888P Y88888 888    888   888       888     888        
+888    Y8b.     Y88b 88 888 8888P   Y8888 888    888   888       888     888        
+888     "Y8888   "Y8888 888 888P     Y888 888    888 8888888     888     8888888888 </pre>
+    <div class="footer-bottom">
+      <span>redWHITE · town // live from wordstar.nexus/city</span>
+      <span><a href="https://wordstar.nexus/city" target="_blank" rel="noopener">wordstar.nexus/city</a></span>
+      <span style="color:var(--red);">▲ Research Reader</span>
+    </div>
+  </div>
+</footer>
 
 <script>
-    // --- CONTENT SOURCE SETUP ---
-    // Town populates from the city page (spritz textarea).
-    // Local .md files are an optional offline fallback only.
-    const CITY_URL = 'https://wordstar.nexus/city';
-    const LOCAL_PATH = './';   // optional fallback directory for .md files
-    const CONTENT_FILES = [    // only used if city fetch fails
-      '11-chapter-expanded.md',
-      'ADDENDUM_1945_hypothesis.md',
-      '43-51_batch_chapters.md'
-    ];
+  // --- CONTENT SOURCE SETUP ---
+  const CITY_URL = 'https://wordstar.nexus/city';
+  const LOCAL_PATH = './';
+  const CONTENT_FILES = [
+    '11-chapter-expanded.md',
+    'ADDENDUM_1945_hypothesis.md',
+    '43-51_batch_chapters.md'
+  ];
 
-    const TAG_PATTERNS = {
-      all: /.*/,
-      chapters: /\[chapters\]|\bchapter(s)?\b|\blyric(s)?\b/i,
-      annotations: /\[annotations\]|\bannotation(s)?\b|\bpoem(s)?\b/i,
-      hypothesis: /\[hypothesis\]|\bhypothesis(es)?\b|\bfilm(s)?\b|\bmovie(s)?\b/i,
-      interlude: /\[interlude\]|\binterlude(s)?\b|\bbook(s)?\b|\breading\b/i,
-      chronology: /\[chronology\]|\bchronology(ies)?\b|\bdream(s)?\b|\bdreamt\b/i
-    };
+  const TAG_PATTERNS = {
+    all: /.*/,
+    chapters: /\[chapters\]|\bchapter(s)?\b|\blyric(s)?\b/i,
+    annotations: /\[annotations\]|\bannotation(s)?\b|\bpoem(s)?\b/i,
+    hypothesis: /\[hypothesis\]|\bhypothesis(es)?\b|\bfilm(s)?\b|\bmovie(s)?\b/i,
+    interlude: /\[interlude\]|\binterlude(s)?\b|\bbook(s)?\b|\breading\b/i,
+    chronology: /\[chronology\]|\bchronology(ies)?\b|\bdream(s)?\b|\bdreamt\b/i
+  };
 
-    // --- STATE ---
-    let entries = [];
-    let currentIndex = -1;
-    let currentFilter = 'all';
-    let searchQuery = '';
-    let searchResults = [];
-    let isSearching = false;
-    let isIndexVisible = false;
-    let searchMode = 'exact';
-    let fuse = null;
-    let matchIndex = 0;
-    let matchEls = [];
-    let pendingMatchTarget = 'first'; // 'first' | 'last'
-    let searchTimeout = null;
-    let aiContext = 'current';
+  // --- STATE ---
+  let entries = [];
+  let currentIndex = -1;
+  let currentFilter = 'all';
+  let searchQuery = '';
+  let searchResults = [];
+  let isSearching = false;
+  let isIndexVisible = false;
+  let searchMode = 'exact';
+  let fuse = null;
+  let matchIndex = 0;
+  let matchEls = [];
+  let pendingMatchTarget = 'first';
+  let searchTimeout = null;
+  let aiContext = 'current';
+  let textVisible = false;
 
-    // --- DOM ---
-    const searchBox = document.getElementById('searchBox');
-    const searchStats = document.getElementById('searchStats');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const randomBtn = document.getElementById('randomBtn');
-    const jumpStartBtn = document.getElementById('jumpStart');
-    const jumpEndBtn = document.getElementById('jumpEnd');
-    const indexBtn = document.getElementById('indexBtn');
-    const exactBtn = document.getElementById('exactBtn');
-    const fuzzyBtn = document.getElementById('fuzzyBtn');
-    const filterBtns = document.getElementById('filterBtns');
-    const dateNav = document.getElementById('dateNav');
-    const entryInfo = document.getElementById('entryInfo');
-    const loadingDiv = document.getElementById('loading');
-    const contentDiv = document.getElementById('content');
-    const matchNav = document.getElementById('matchNav');
-    const matchCounter = document.getElementById('matchCounter');
-    const prevMatchBtn = document.getElementById('prevMatchBtn');
-    const nextMatchBtn = document.getElementById('nextMatchBtn');
-    const guideToggle = document.getElementById('guideToggle');
-    const searchGuide = document.getElementById('searchGuide');
-    const authToggle = document.getElementById('authToggle');
-    const authDrawer = document.getElementById('authDrawer');
-    const ghTokenInput = document.getElementById('ghTokenInput');
-    const saveGhTokenBtn = document.getElementById('saveGhTokenBtn');
-    const apiKeyInput = document.getElementById('apiKeyInput');
-    const modelSelect = document.getElementById('modelSelect');
-    const aiInput = document.getElementById('aiInput');
-    const askAiBtn = document.getElementById('askAiBtn');
-    const aiResponseDiv = document.getElementById('aiResponse');
-    const contextInfo = document.getElementById('contextInfo');
-    const aiSubStatus = document.getElementById('aiSubStatus');
+  // --- DOM ---
+  const searchBox = document.getElementById('searchBox');
+  const searchStats = document.getElementById('searchStats');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const randomBtn = document.getElementById('randomBtn');
+  const jumpStartBtn = document.getElementById('jumpStart');
+  const jumpEndBtn = document.getElementById('jumpEnd');
+  const indexBtn = document.getElementById('indexBtn');
+  const exactBtn = document.getElementById('exactBtn');
+  const fuzzyBtn = document.getElementById('fuzzyBtn');
+  const filterBtns = document.getElementById('filterBtns');
+  const dateNav = document.getElementById('dateNav');
+  const entryInfo = document.getElementById('entryInfo');
+  const loadingDiv = document.getElementById('loading');
+  const contentDiv = document.getElementById('content');
+  const readerMain = document.getElementById('readerMain');
+  const researchPlate = document.getElementById('researchPlate');
+  const researchLabel = document.getElementById('researchLabel');
+  const textToggle = document.getElementById('textToggle');
+  const plateShowBtn = document.getElementById('plateShowBtn');
+  const matchNav = document.getElementById('matchNav');
+  const matchCounter = document.getElementById('matchCounter');
+  const prevMatchBtn = document.getElementById('prevMatchBtn');
+  const nextMatchBtn = document.getElementById('nextMatchBtn');
+  const guideToggle = document.getElementById('guideToggle');
+  const searchGuide = document.getElementById('searchGuide');
+  const authToggle = document.getElementById('authToggle');
+  const authDrawer = document.getElementById('authDrawer');
+  const ghTokenInput = document.getElementById('ghTokenInput');
+  const saveGhTokenBtn = document.getElementById('saveGhTokenBtn');
+  const apiKeyInput = document.getElementById('apiKeyInput');
+  const modelSelect = document.getElementById('modelSelect');
+  const aiInput = document.getElementById('aiInput');
+  const askAiBtn = document.getElementById('askAiBtn');
+  const aiResponseDiv = document.getElementById('aiResponse');
+  const contextInfo = document.getElementById('contextInfo');
+  const aiSubStatus = document.getElementById('aiSubStatus');
 
-    function escapeHtml(str) {
-      return String(str ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+  function escapeHtml(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // Load saved tokens
+  if (localStorage.getItem('rw_gh_token')) ghTokenInput.value = localStorage.getItem('rw_gh_token');
+  if (localStorage.getItem('rw_ai_key')) apiKeyInput.value = localStorage.getItem('rw_ai_key');
+  apiKeyInput.addEventListener('input', (e) => localStorage.setItem('rw_ai_key', e.target.value.trim()));
+
+  saveGhTokenBtn.addEventListener('click', () => {
+    localStorage.setItem('rw_gh_token', ghTokenInput.value.trim());
+    loadAndParseContent();
+  });
+
+  authToggle.addEventListener('click', () => {
+    authDrawer.style.display = authDrawer.style.display === 'block' ? 'none' : 'block';
+    searchGuide.style.display = 'none';
+  });
+  guideToggle.addEventListener('click', () => {
+    searchGuide.style.display = searchGuide.style.display === 'block' ? 'none' : 'block';
+    authDrawer.style.display = 'none';
+  });
+
+  function setTextVisibility(show) {
+    textVisible = show;
+    readerMain.style.display = textVisible ? 'block' : 'none';
+    researchPlate.style.display = (!textVisible && entries.length) ? 'block' : 'none';
+    textToggle.textContent = textVisible ? 'Hide text' : 'Show text';
+    researchLabel.textContent = textVisible
+      ? 'research view · manuscript visible'
+      : 'research view · full text hidden';
+    if (textVisible && contentDiv.innerHTML.trim()) {
+      contentDiv.style.display = 'block';
     }
+  }
 
-    // Load saved tokens
-    if (localStorage.getItem('rw_gh_token')) {
-      ghTokenInput.value = localStorage.getItem('rw_gh_token');
+  textToggle.addEventListener('click', () => setTextVisibility(!textVisible));
+  plateShowBtn.addEventListener('click', () => setTextVisibility(true));
+
+  // Scroll Progress Bar
+  window.addEventListener('scroll', () => {
+    const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+    const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    document.getElementById('readingProgress').style.width = (height > 0 ? (winScroll / height) * 100 : 0) + '%';
+  });
+
+  // --- CONTENT FETCHER ---
+  async function fetchCityManuscript() {
+    try {
+      const res = await fetch(CITY_URL);
+      if (!res.ok) return null;
+      const html = await res.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const ta = doc.querySelector('#spritz_words');
+      if (ta && ta.textContent.trim()) return ta.textContent;
+      const any = doc.querySelector('textarea');
+      if (any && any.textContent.trim().length > 200) return any.textContent;
+    } catch (_) { /* ignore */ }
+    return null;
+  }
+
+  async function fetchLocalFile(filename) {
+    try {
+      const localUrl = `${LOCAL_PATH}${filename}`.replace(/\/\//g, '/');
+      const res = await fetch(localUrl);
+      if (res.ok) return await res.text();
+    } catch (_) { /* ignore */ }
+    return null;
+  }
+
+  function parseManuscript(raw) {
+    if (!raw || !raw.trim()) return [];
+    const text = raw.replace(/\r\n/g, '\n').trim();
+
+    const chapterRegex = /(?=^#\s+Red\s+White\s*[–-]\s*Chapter\s+.+$)/gim;
+    let parts = text.split(chapterRegex).map(p => p.trim()).filter(Boolean);
+
+    if (parts.length <= 1) {
+      parts = text.split(/—\s*end of chapter\s+[^—]+\s*—/i).map(p => p.trim()).filter(Boolean);
     }
-    if (localStorage.getItem('rw_ai_key')) {
-      apiKeyInput.value = localStorage.getItem('rw_ai_key');
+    if (parts.length <= 1) {
+      const fallbackSplit = text.split(/(?=^chapter\s+(?:one|two|three|four|five|six|seven|eight|nine|ten|\d+)\b.*$)/gim).map(p => p.trim()).filter(Boolean);
+      if (fallbackSplit.length > 1) parts = fallbackSplit;
     }
-    apiKeyInput.addEventListener('input', (e) => localStorage.setItem('rw_ai_key', e.target.value.trim()));
+    if (parts.length === 0) parts = [text];
 
-    saveGhTokenBtn.addEventListener('click', () => {
-      localStorage.setItem('rw_gh_token', ghTokenInput.value.trim());
-      loadAndParseContent();
-    });
-
-    authToggle.addEventListener('click', () => {
-      authDrawer.style.display = authDrawer.style.display === 'none' ? 'block' : 'none';
-    });
-    guideToggle.addEventListener('click', () => {
-      searchGuide.style.display = searchGuide.style.display === 'none' ? 'block' : 'none';
-    });
-
-    // Research mode: full manuscript text hidden by default
-    const textToggle = document.getElementById('textToggle');
-    const readerMain = document.getElementById('readerMain');
-    let textVisible = false;
-    textToggle.addEventListener('click', () => {
-      textVisible = !textVisible;
-      readerMain.style.display = textVisible ? 'block' : 'none';
-      textToggle.textContent = textVisible ? 'Hide text' : 'Show text';
-      if (textVisible && contentDiv.innerHTML.trim()) {
-        contentDiv.style.display = 'block';
+    return parts.map((content, i) => {
+      let title = `Chapter ${i + 1}`;
+      const firstLine = content.split('\n').find(l => l.trim());
+      if (firstLine) {
+        const m = firstLine.match(/^#\s+(.+)/);
+        if (m) title = m[1].trim();
+        else if (firstLine.length < 80) title = firstLine.trim();
       }
+      return { id: i, date: title, content, tags: [] };
     });
+  }
 
-    // --- CONTENT FETCHER: city page first, local .md as fallback ---
-    async function fetchCityManuscript() {
-      try {
-        const res = await fetch(CITY_URL);
-        if (!res.ok) return null;
-        const html = await res.text();
-        const doc = new DOMParser().parseFromString(html, 'text/html');
-        const ta = doc.querySelector('#spritz_words');
-        if (ta && ta.textContent.trim()) return ta.textContent;
-        const any = doc.querySelector('textarea');
-        if (any && any.textContent.trim().length > 200) return any.textContent;
-      } catch (_) { /* ignore */ }
-      return null;
-    }
+  function renderLedgerAndSpecs(source) {
+    const listEl = document.getElementById('problemList');
+    let totalWords = 0;
 
-    async function fetchLocalFile(filename) {
-      try {
-        const localUrl = `${LOCAL_PATH}${filename}`.replace(/\/\//g, '/');
-        const res = await fetch(localUrl);
-        if (res.ok) return await res.text();
-      } catch (_) { /* ignore */ }
-      return null;
-    }
+    listEl.innerHTML = entries.map((e, i) => {
+      const words = e.content.trim().split(/\s+/).filter(Boolean).length;
+      totalWords += words;
+      const tag = (e.tags[0] || 'CHAPTER').toUpperCase();
+      return `
+        <div class="ledger-row" data-entry-id="${e.id}">
+          <span class="num">${String(i + 1).padStart(3, '0')}</span>
+          <span>${escapeHtml(e.date)}</span>
+          <span class="meta">${escapeHtml(tag)} · <b>${words.toLocaleString()} WORDS</b></span>
+        </div>`;
+    }).join('');
 
-    function parseManuscript(raw) {
-      if (!raw || !raw.trim()) return [];
-      const text = raw.replace(/\r\n/g, '\n').trim();
-
-      const chapterRegex = /(?=^#\s+Red\s+White\s*[–-]\s*Chapter\s+.+$)/gim;
-      let parts = text.split(chapterRegex).map(p => p.trim()).filter(Boolean);
-
-      if (parts.length <= 1) {
-        parts = text.split(/—\s*end of chapter\s+[^—]+\s*—/i).map(p => p.trim()).filter(Boolean);
-      }
-
-      if (parts.length === 0) parts = [text];
-
-      return parts.map((content, i) => {
-        let title = `Chapter ${i + 1}`;
-        const firstLine = content.split('\n').find(l => l.trim());
-        if (firstLine) {
-          const m = firstLine.match(/^#\s+(.+)/);
-          if (m) title = m[1].trim();
-          else if (firstLine.length < 80) title = firstLine.trim();
-        }
-        return { id: i, date: title, content, tags: [] };
+    listEl.querySelectorAll('.ledger-row').forEach(row => {
+      row.addEventListener('click', () => {
+        const id = parseInt(row.dataset.entryId, 10);
+        showEntry(id, false);
+        setTextVisibility(true);
+        document.getElementById('reader').scrollIntoView({ behavior: 'smooth' });
       });
-    }
+    });
 
-    async function loadAndParseContent() {
-      loadingDiv.style.display = 'block';
-      contentDiv.style.display = 'none';
-      loadingDiv.innerHTML = '<span class="mark"></span> fetching from city…';
+    document.getElementById('ledgerTotal').textContent =
+      `Source: ${source === 'city' ? 'wordstar.nexus/city' : 'local .md fallback'} · ${entries.length} entries · ${totalWords.toLocaleString()} words`;
+    document.getElementById('specSource').textContent =
+      `Source: ${source === 'city' ? 'wordstar.nexus/city (live)' : 'Local .md fallback'}`;
+    document.getElementById('specEntries').textContent = `Entries Parsed: ${entries.length}`;
+    document.getElementById('specWords').textContent = `Total Word Count: ${totalWords.toLocaleString()}`;
+  }
 
-      try {
-        let raw = await fetchCityManuscript();
-        let source = 'city';
+  async function loadAndParseContent() {
+    loadingDiv.style.display = 'block';
+    contentDiv.style.display = 'none';
+    researchPlate.style.display = 'none';
+    loadingDiv.innerHTML = '<span class="mark"></span> fetching from city…';
 
-        if (!raw) {
-          loadingDiv.innerHTML = '<span class="mark"></span> city unavailable — trying local files…';
-          const localParts = [];
-          for (const filename of CONTENT_FILES) {
-            const t = await fetchLocalFile(filename);
-            if (t) localParts.push(t);
-          }
-          if (localParts.length) {
-            raw = localParts.join('\n\n---\n\n');
-            source = 'local';
-          }
+    try {
+      let raw = await fetchCityManuscript();
+      let source = 'city';
+
+      if (!raw) {
+        loadingDiv.innerHTML = '<span class="mark"></span> city unavailable — trying local files…';
+        const localParts = [];
+        for (const filename of CONTENT_FILES) {
+          const t = await fetchLocalFile(filename);
+          if (t) localParts.push(t);
         }
-
-        if (!raw) {
-          loadingDiv.innerHTML = `
-            <div style="color:var(--red); font-size:0.85rem; max-width:600px; margin:0 auto; text-align:left; border:1px solid rgba(255,51,68,0.4); background:#0c0d12; padding:1.25rem;">
-              <p style="font-weight:bold; margin-bottom:0.5rem;"><span class="mark"></span> no manuscript found</p>
-              <p style="color:#9ca3af; margin-bottom:0.75rem;">Could not load content from <code>${escapeHtml(CITY_URL)}</code> and no local markdown files were present.</p>
-              <p style="color:#6b7280; font-size:0.75rem;">Add the chapter text to the city page’s spritz textarea, or place .md files next to this reader.</p>
-            </div>`;
-          return;
-        }
-
-        const parsed = parseManuscript(raw);
-        if (!parsed.length) {
-          loadingDiv.innerHTML = '<p style="color:var(--red);">Manuscript loaded but no chapters could be parsed.</p>';
-          return;
-        }
-
-        entries = parsed;
-        entries.forEach(detectTags);
-
-        loadingDiv.style.display = 'none';
-        contentDiv.style.display = 'block';
-        rebuildFuse();
-        showEntry(entries[0].id);
-        buildDateIndex();
-
-        console.log(`Loaded ${entries.length} entries from ${source}`);
-      } catch (err) {
-        loadingDiv.innerHTML = `<p style="color:var(--red);">Error loading content: ${escapeHtml(err.message)}</p>`;
-      }
-    }
-
-    function detectTags(entry) {
-      for (const tag in TAG_PATTERNS) {
-        if (tag === 'all') continue;
-        if (TAG_PATTERNS[tag].test(entry.content)) {
-          entry.tags.push(tag);
-        }
-      }
-    }
-
-    function getFilteredEntries() {
-      if (currentFilter === 'all') return entries;
-      return entries.filter(e => e.tags.includes(currentFilter));
-    }
-
-    function rebuildFuse() {
-      if (!entries.length || typeof Fuse === 'undefined') return;
-      fuse = new Fuse(getFilteredEntries(), {
-        keys: [{ name: 'date', weight: 0.3 }, { name: 'content', weight: 0.7 }],
-        threshold: 0.4,
-        ignoreLocation: true,
-        minMatchCharLength: 2
-      });
-    }
-
-    // --- SAFE DOM-ONLY HIT HIGHLIGHTING ---
-    function highlightElementText(rootEl, query) {
-      if (!query.trim()) return;
-      const parsed = parseSearchQuery(query);
-      const terms = Array.from(new Set(parsed.orGroups.flat())).filter(Boolean);
-      if (!terms.length) return;
-
-      terms.sort((a, b) => b.length - a.length);
-      const pattern = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-      const regex = new RegExp(pattern, 'gi');
-
-      const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT, null);
-      const textNodes = [];
-      let node;
-      while ((node = walker.nextNode())) {
-        if (node.nodeValue && node.nodeValue.trim()) {
-          textNodes.push(node);
+        if (localParts.length) {
+          raw = localParts.join('\n\n---\n\n');
+          source = 'local';
         }
       }
 
-      textNodes.forEach(textNode => {
-        const val = textNode.nodeValue;
-        regex.lastIndex = 0;
-        if (!regex.test(val)) return;
+      if (!raw) {
+        loadingDiv.innerHTML = `
+          <div style="color:var(--red-soft); font-size:13px; max-width:600px; margin:0 auto; text-align:left; border:1px solid var(--red-border); background:#111; padding:20px;">
+            <p style="font-weight:bold; margin-bottom:8px;"><span class="mark"></span> no manuscript found</p>
+            <p style="color:#aaa; margin-bottom:10px;">Could not load content from <code>${escapeHtml(CITY_URL)}</code> and no local markdown files were present.</p>
+            <p style="color:#777; font-size:12px;">Add chapter text to the city page’s spritz textarea, or place .md files next to this reader.</p>
+          </div>`;
+        return;
+      }
 
-        regex.lastIndex = 0;
-        const frag = document.createDocumentFragment();
-        let lastIdx = 0;
-        let m;
-        while ((m = regex.exec(val)) !== null) {
-          if (m[0].length === 0) { regex.lastIndex++; continue; }
-          if (m.index > lastIdx) {
-            frag.appendChild(document.createTextNode(val.slice(lastIdx, m.index)));
-          }
-          const span = document.createElement('span');
-          span.className = 'highlight';
-          span.textContent = m[0];
-          frag.appendChild(span);
-          lastIdx = regex.lastIndex;
-        }
-        if (lastIdx < val.length) {
-          frag.appendChild(document.createTextNode(val.slice(lastIdx)));
-        }
-        textNode.parentNode.replaceChild(frag, textNode);
-      });
+      const parsed = parseManuscript(raw);
+      if (!parsed.length) {
+        loadingDiv.innerHTML = '<p style="color:var(--red-soft);">Manuscript loaded but no chapters could be parsed.</p>';
+        return;
+      }
+
+      entries = parsed;
+      entries.forEach(detectTags);
+
+      loadingDiv.style.display = 'none';
+      contentDiv.style.display = 'block';
+      setTextVisibility(textVisible);
+      renderLedgerAndSpecs(source);
+      rebuildFuse();
+      showEntry(entries[0].id, false);
+      buildDateIndex();
+    } catch (err) {
+      loadingDiv.innerHTML = `<p style="color:var(--red-soft);">Error loading content: ${escapeHtml(err.message)}</p>`;
+    }
+  }
+
+  function detectTags(entry) {
+    for (const tag in TAG_PATTERNS) {
+      if (tag === 'all') continue;
+      if (TAG_PATTERNS[tag].test(entry.content)) entry.tags.push(tag);
+    }
+  }
+
+  function getFilteredEntries() {
+    if (currentFilter === 'all') return entries;
+    return entries.filter(e => e.tags.includes(currentFilter));
+  }
+
+  function rebuildFuse() {
+    if (!entries.length || typeof Fuse === 'undefined') return;
+    fuse = new Fuse(getFilteredEntries(), {
+      keys: [{ name: 'date', weight: 0.3 }, { name: 'content', weight: 0.7 }],
+      threshold: 0.4,
+      ignoreLocation: true,
+      minMatchCharLength: 2
+    });
+  }
+
+  // --- SAFE DOM-ONLY HIT HIGHLIGHTING ---
+  function highlightElementText(rootEl, query) {
+    if (!query.trim()) return;
+    const parsed = parseSearchQuery(query);
+    const terms = Array.from(new Set(parsed.orGroups.flat())).filter(Boolean);
+    if (!terms.length) return;
+
+    terms.sort((a, b) => b.length - a.length);
+    const pattern = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    const regex = new RegExp(pattern, 'gi');
+
+    const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT, null);
+    const textNodes = [];
+    let node;
+    while ((node = walker.nextNode())) {
+      if (node.nodeValue && node.nodeValue.trim()) textNodes.push(node);
     }
 
-    function showEmptyState(message) {
-      contentDiv.innerHTML = `<div style="text-align:center; padding:4rem 0; color:#6b7280;">${escapeHtml(message)}</div>`;
-      entryInfo.innerHTML = `<div style="color:var(--red);">0 entries in current view</div>`;
-      prevBtn.disabled = true;
-      nextBtn.disabled = true;
+    textNodes.forEach(textNode => {
+      const val = textNode.nodeValue;
+      regex.lastIndex = 0;
+      if (!regex.test(val)) return;
+
+      regex.lastIndex = 0;
+      const frag = document.createDocumentFragment();
+      let lastIdx = 0;
+      let m;
+      while ((m = regex.exec(val)) !== null) {
+        if (m[0].length === 0) { regex.lastIndex++; continue; }
+        if (m.index > lastIdx) frag.appendChild(document.createTextNode(val.slice(lastIdx, m.index)));
+        const span = document.createElement('span');
+        span.className = 'highlight';
+        span.textContent = m[0];
+        frag.appendChild(span);
+        lastIdx = regex.lastIndex;
+      }
+      if (lastIdx < val.length) frag.appendChild(document.createTextNode(val.slice(lastIdx)));
+      textNode.parentNode.replaceChild(frag, textNode);
+    });
+  }
+
+  function showEmptyState(message) {
+    contentDiv.innerHTML = `<div style="text-align:center; padding:3rem 0; color:#777;">${escapeHtml(message)}</div>`;
+    entryInfo.innerHTML = `<div style="color:var(--red-soft);">0 entries in current view</div>`;
+    prevBtn.disabled = true;
+    nextBtn.disabled = true;
+    matchEls = [];
+    matchIndex = 0;
+    updateMatchUI();
+  }
+
+  function showEntry(entryId, shouldScroll = true) {
+    const e = entries.find(x => x.id === entryId);
+    if (!e) return;
+    currentIndex = e.id;
+
+    contentDiv.innerHTML = marked.parse(e.content);
+    if (isSearching && searchQuery) highlightElementText(contentDiv, searchQuery);
+
+    const pool = isSearching ? searchResults : getFilteredEntries();
+    const currentPos = pool.findIndex(x => x.id === entryId);
+    const wordCount = e.content.trim().split(/\s+/).filter(Boolean).length;
+
+    const tagsHtml = e.tags.map(t =>
+      `<span style="padding:2px 7px; border:1px solid ${t === currentFilter ? 'var(--red)' : '#333'}; color:${t === currentFilter ? 'var(--red-soft)' : '#888'}; font-size:10.5px;">${escapeHtml(t.toUpperCase())}</span>`
+    ).join(' ');
+
+    entryInfo.innerHTML = `
+      <div>
+        <div style="font-size:11px; color:var(--red); letter-spacing:0.14em; text-transform:uppercase; margin-bottom:4px;">R/W ARCHIVE</div>
+        <div style="font-family:var(--serif); font-size:clamp(22px, 3vw, 34px); color:#fff;">${escapeHtml(e.date)}</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:12px; color:#999;">
+        <span>${isSearching ? `Match ${currentPos + 1} of ${searchResults.length}` : `Entry ${currentPos + 1} of ${pool.length}`}</span>
+        <span>·</span>
+        <span>${wordCount.toLocaleString()} words</span>
+        ${tagsHtml}
+      </div>
+    `;
+
+    prevBtn.disabled = currentPos <= 0;
+    nextBtn.disabled = currentPos >= pool.length - 1;
+
+    if (shouldScroll) {
+      document.getElementById('reader').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    matchEls = Array.from(contentDiv.querySelectorAll('.highlight'));
+    matchIndex = pendingMatchTarget === 'last' && matchEls.length > 0 ? matchEls.length - 1 : 0;
+    pendingMatchTarget = 'first';
+    updateMatchUI();
+    if (matchEls.length && textVisible) {
+      requestAnimationFrame(() => scrollToMatch(matchIndex));
+    } else if (matchEls.length) {
+      matchEls[matchIndex]?.classList.add('active-hit');
+    }
+  }
+
+  function updateMatchUI() {
+    if (isSearching && matchEls.length > 0) {
+      matchNav.style.display = 'flex';
+      matchCounter.textContent = `hit ${matchIndex + 1}/${matchEls.length}`;
+    } else if (isSearching) {
+      matchNav.style.display = 'flex';
+      matchCounter.textContent = 'hit 0/0';
+    } else {
+      matchNav.style.display = 'none';
+    }
+  }
+
+  function scrollToMatch(idx) {
+    if (!matchEls.length) return;
+    matchEls.forEach(el => el.classList.remove('active-hit'));
+    matchIndex = ((idx % matchEls.length) + matchEls.length) % matchEls.length;
+    const target = matchEls[matchIndex];
+    target.classList.add('active-hit');
+    if (textVisible) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    updateMatchUI();
+  }
+
+  function navigateMatch(dir) {
+    if (!isSearching || !matchEls.length) {
+      pendingMatchTarget = dir === 'prev' ? 'last' : 'first';
+      navigateEntries(dir);
+      return;
+    }
+    if (dir === 'next') {
+      if (matchIndex >= matchEls.length - 1) { pendingMatchTarget = 'first'; navigateEntries('next'); }
+      else scrollToMatch(matchIndex + 1);
+    } else {
+      if (matchIndex <= 0) { pendingMatchTarget = 'last'; navigateEntries('prev'); }
+      else scrollToMatch(matchIndex - 1);
+    }
+  }
+
+  // --- SEARCH ---
+  function parseSearchQuery(raw) {
+    const q = raw.trim();
+    const tokens = [];
+    const re = /(-?"[^"]+"|-?\S+)/g;
+    let m;
+    while ((m = re.exec(q)) !== null) tokens.push(m[1]);
+
+    const not = [];
+    const orGroups = [[]];
+
+    for (const tok of tokens) {
+      const upper = tok.toUpperCase();
+      if (upper === 'OR') {
+        if (orGroups[orGroups.length - 1].length > 0) orGroups.push([]);
+        continue;
+      }
+      if (upper === 'AND') continue;
+      if (tok.startsWith('-') && tok.length > 1) {
+        let val = tok.slice(1);
+        if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) val = val.slice(1, -1);
+        if (val) not.push(val.toLowerCase());
+        continue;
+      }
+      let val = tok;
+      if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) val = val.slice(1, -1);
+      if (val) orGroups[orGroups.length - 1].push(val.toLowerCase());
+    }
+    return { orGroups: orGroups.filter(g => g.length > 0), not };
+  }
+
+  function matchesExact(entry, terms) {
+    const text = (entry.content + '\n' + entry.date).toLowerCase();
+    if (terms.not.some(x => x && text.includes(x))) return false;
+    if (terms.orGroups.length === 0) return true;
+    return terms.orGroups.some(andGroup => andGroup.every(x => text.includes(x)));
+  }
+
+  function performSearch(query) {
+    if (!entries.length) return;
+    searchQuery = query.trim();
+    searchBox.classList.toggle('search-active', searchQuery.length > 0);
+    pendingMatchTarget = 'first';
+
+    if (!searchQuery) {
+      isSearching = false;
+      searchResults = [];
       matchEls = [];
       matchIndex = 0;
       updateMatchUI();
-    }
-
-    function showEntry(entryId) {
-      const e = entries.find(x => x.id === entryId);
-      if (!e) return;
-      currentIndex = e.id;
-
-      contentDiv.innerHTML = marked.parse(e.content);
-      if (isSearching && searchQuery) {
-        highlightElementText(contentDiv, searchQuery);
-      }
-
-      const pool = isSearching ? searchResults : getFilteredEntries();
-      const currentPos = pool.findIndex(x => x.id === entryId);
-      const wordCount = e.content.trim().split(/\s+/).filter(Boolean).length;
-
-      const tagsHtml = e.tags.map(t =>
-        `<span style="padding:0.1rem 0.4rem; border:1px solid ${t === currentFilter ? 'var(--red)' : '#262933'}; color:${t === currentFilter ? 'var(--red)' : '#6b7280'}; font-size:0.65rem;">${escapeHtml(t.toUpperCase())}</span>`
-      ).join(' ');
-
-      entryInfo.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-          <div>
-            <span style="font-size:0.65rem; color:#6b7280; letter-spacing:0.1em;">R/W ARCHIVE • </span>
-            <span style="color:var(--red); font-weight:bold; font-size:0.9rem;" class="voodoo">${escapeHtml(e.date)}</span>
-          </div>
-          <div style="display:flex; align-items:center; gap:0.5rem;">
-            <span>${isSearching ? `Match ${currentPos + 1} of ${searchResults.length}` : `Entry ${currentPos + 1} of ${pool.length}`}</span>
-            <span>•</span>
-            <span>${wordCount.toLocaleString()} words</span>
-            <span>${tagsHtml}</span>
-          </div>
-        </div>
-      `;
-
-      prevBtn.disabled = currentPos <= 0;
-      nextBtn.disabled = currentPos >= pool.length - 1;
-
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-
-      matchEls = Array.from(contentDiv.querySelectorAll('.highlight'));
-      matchIndex = pendingMatchTarget === 'last' && matchEls.length > 0 ? matchEls.length - 1 : 0;
-      pendingMatchTarget = 'first';
-      updateMatchUI();
-      if (matchEls.length && textVisible) {
-        requestAnimationFrame(() => scrollToMatch(matchIndex));
-      } else if (matchEls.length) {
-        matchEls[matchIndex]?.classList.add('active-hit');
-      }
-    }
-
-    function updateMatchUI() {
-      if (isSearching && matchEls.length > 0) {
-        matchNav.style.display = 'flex';
-        matchCounter.textContent = `hit ${matchIndex + 1}/${matchEls.length}`;
-      } else if (isSearching) {
-        matchNav.style.display = 'flex';
-        matchCounter.textContent = 'hit 0/0';
-      } else {
-        matchNav.style.display = 'none';
-      }
-    }
-
-    function scrollToMatch(idx) {
-      if (!matchEls.length) return;
-      matchEls.forEach(el => el.classList.remove('active-hit'));
-      matchIndex = ((idx % matchEls.length) + matchEls.length) % matchEls.length;
-      const target = matchEls[matchIndex];
-      target.classList.add('active-hit');
-      if (textVisible) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      updateMatchUI();
-    }
-
-    function navigateMatch(dir) {
-      if (!isSearching || !matchEls.length) {
-        pendingMatchTarget = dir === 'prev' ? 'last' : 'first';
-        navigateEntries(dir);
-        return;
-      }
-      if (dir === 'next') {
-        if (matchIndex >= matchEls.length - 1) {
-          pendingMatchTarget = 'first';
-          navigateEntries('next');
-        } else {
-          scrollToMatch(matchIndex + 1);
-        }
-      } else {
-        if (matchIndex <= 0) {
-          pendingMatchTarget = 'last';
-          navigateEntries('prev');
-        } else {
-          scrollToMatch(matchIndex - 1);
-        }
-      }
-    }
-
-    // --- SEARCH MODES ---
-    function parseSearchQuery(raw) {
-      const q = raw.trim();
-      const tokens = [];
-      const re = /(-?"[^"]+"|-?\S+)/g;
-      let m;
-      while ((m = re.exec(q)) !== null) tokens.push(m[1]);
-
-      const not = [];
-      const orGroups = [[]];
-
-      for (const tok of tokens) {
-        const upper = tok.toUpperCase();
-        if (upper === 'OR') {
-          if (orGroups[orGroups.length - 1].length > 0) orGroups.push([]);
-          continue;
-        }
-        if (upper === 'AND') continue;
-
-        if (tok.startsWith('-') && tok.length > 1) {
-          let val = tok.slice(1);
-          if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) val = val.slice(1, -1);
-          if (val) not.push(val.toLowerCase());
-          continue;
-        }
-
-        let val = tok;
-        if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) val = val.slice(1, -1);
-        if (val) orGroups[orGroups.length - 1].push(val.toLowerCase());
-      }
-
-      return {
-        orGroups: orGroups.filter(g => g.length > 0),
-        not
-      };
-    }
-
-    function matchesExact(entry, terms) {
-      const text = (entry.content + '\n' + entry.date).toLowerCase();
-      if (terms.not.some(x => x && text.includes(x))) return false;
-      if (terms.orGroups.length === 0) return true;
-      return terms.orGroups.some(andGroup => andGroup.every(x => text.includes(x)));
-    }
-
-    function performSearch(query) {
-      if (!entries.length) return;
-      searchQuery = query.trim();
-      searchBox.classList.toggle('search-active', searchQuery.length > 0);
-      pendingMatchTarget = 'first';
-
-      if (!searchQuery) {
-        isSearching = false;
-        searchResults = [];
-        matchEls = [];
-        matchIndex = 0;
-        updateMatchUI();
-        searchStats.textContent = '';
-        buildDateIndex();
-        const pool = getFilteredEntries();
-        if (pool.length) showEntry(pool[0].id);
-        else showEmptyState(`:: NO ENTRIES MATCHING FILTER [${currentFilter.toUpperCase()}] ::`);
-        return;
-      }
-
-      isSearching = true;
-      const pool = getFilteredEntries();
-
-      if (searchMode === 'fuzzy') {
-        if (!fuse) rebuildFuse();
-        const results = fuse ? fuse.search(searchQuery) : [];
-        searchResults = results.map(r => r.item);
-      } else {
-        const terms = parseSearchQuery(searchQuery);
-        searchResults = pool.filter(e => matchesExact(e, terms));
-      }
-
-      searchStats.textContent = `${searchResults.length} hits`;
+      searchStats.textContent = '';
       buildDateIndex();
-
-      if (searchResults.length > 0) {
-        showEntry(searchResults[0].id);
-      } else {
-        showEmptyState(`:: NO MATCHES FOUND FOR "${searchQuery}" ::`);
-      }
+      const pool = getFilteredEntries();
+      if (pool.length) showEntry(pool[0].id, false);
+      else showEmptyState(`:: NO ENTRIES MATCHING FILTER [${currentFilter.toUpperCase()}] ::`);
+      return;
     }
 
-    // --- DRAWER INDEX & NAVIGATION ---
-    function buildDateIndex() {
-      dateNav.innerHTML = '';
-      const pool = isSearching ? searchResults : getFilteredEntries();
-
-      if (!pool.length) {
-        dateNav.innerHTML = '<div style="padding:0.5rem; color:#6b7280; font-size:0.75rem;">No matching entries in index.</div>';
-        return;
-      }
-
-      pool.forEach(e => {
-        const div = document.createElement('div');
-        div.style.cssText = `padding:0.5rem; border-bottom:1px solid #1a1c24; cursor:pointer; font-size:0.75rem; ${e.id === currentIndex ? 'background:#13151c; border-left:3px solid var(--red);' : ''}`;
-        const snippet = e.content.replace(/<[^>]*>/g, '').substring(0, 75).replace(/\n/g, ' ') + '...';
-        div.innerHTML = `
-          <div style="display:flex; justify-content:space-between; margin-bottom:0.2rem;">
-            <strong style="color:#e5e7eb;">${escapeHtml(e.date)}</strong>
-            <span style="font-size:0.65rem; color:#6b7280;">${escapeHtml(e.tags[0] || 'ENTRY')}</span>
-          </div>
-          <div style="color:#6b7280; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(snippet)}</div>
-        `;
-        div.addEventListener('click', () => {
-          pendingMatchTarget = 'first';
-          showEntry(e.id);
-          dateNav.style.display = 'none';
-          isIndexVisible = false;
-        });
-        dateNav.appendChild(div);
-      });
+    isSearching = true;
+    const pool = getFilteredEntries();
+    if (searchMode === 'fuzzy') {
+      if (!fuse) rebuildFuse();
+      const results = fuse ? fuse.search(searchQuery) : [];
+      searchResults = results.map(r => r.item);
+    } else {
+      const terms = parseSearchQuery(searchQuery);
+      searchResults = pool.filter(e => matchesExact(e, terms));
     }
 
-    function navigateEntries(dir) {
-      if (!entries.length) return;
-      const pool = isSearching ? searchResults : getFilteredEntries();
-      const pos = pool.findIndex(x => x.id === currentIndex);
-      const target = dir === 'next' ? pos + 1 : pos - 1;
-      if (target >= 0 && target < pool.length) {
-        showEntry(pool[target].id);
-      }
+    searchStats.textContent = `${searchResults.length} hits`;
+    buildDateIndex();
+
+    if (searchResults.length > 0) showEntry(searchResults[0].id, false);
+    else showEmptyState(`:: NO MATCHES FOUND FOR "${searchQuery}" ::`);
+  }
+
+  function buildDateIndex() {
+    dateNav.innerHTML = '';
+    const pool = isSearching ? searchResults : getFilteredEntries();
+    if (!pool.length) {
+      dateNav.innerHTML = '<div style="padding:8px; color:#777; font-size:12px;">No matching entries in index.</div>';
+      return;
     }
-
-    function showRandomEntry() {
-      if (!entries.length) return;
-      const pool = isSearching ? searchResults : getFilteredEntries();
-      if (!pool.length) return;
-      let rand;
-      do {
-        rand = Math.floor(Math.random() * pool.length);
-      } while (pool[rand].id === currentIndex && pool.length > 1);
-      pendingMatchTarget = 'first';
-      showEntry(pool[rand].id);
-    }
-
-    // --- ANALYTICS MODALS ---
-    function showAnalyticsModal(title, text) {
-      document.querySelector('.analytics-modal')?.remove();
-      document.querySelector('.analytics-overlay')?.remove();
-
-      const overlay = document.createElement('div');
-      overlay.className = 'analytics-overlay';
-      overlay.onclick = () => { overlay.remove(); modal.remove(); };
-
-      const modal = document.createElement('div');
-      modal.className = 'analytics-modal';
-      modal.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; border-bottom:1px solid #242731; padding-bottom:0.5rem;">
-          <h3 style="font-size:0.8rem; font-weight:bold; color:var(--red);" class="voodoo">📊 ${escapeHtml(title)}</h3>
-          <button onclick="this.closest('.analytics-modal').remove(); document.querySelector('.analytics-overlay')?.remove();">CLOSE</button>
+    pool.forEach(e => {
+      const div = document.createElement('div');
+      div.style.cssText = `padding:8px 10px; border-bottom:1px solid #1f1f1f; cursor:pointer; font-size:12px; ${e.id === currentIndex ? 'background:#181818; border-left:3px solid var(--red);' : ''}`;
+      const snippet = e.content.replace(/<[^>]*>/g, '').substring(0, 75).replace(/\n/g, ' ') + '...';
+      div.innerHTML = `
+        <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+          <strong style="color:#eee;">${escapeHtml(e.date)}</strong>
+          <span style="font-size:10.5px; color:var(--red-soft); text-transform:uppercase;">${escapeHtml(e.tags[0] || 'ENTRY')}</span>
         </div>
-        <div style="font-size:0.75rem; white-space:pre-wrap; max-height:60vh; overflow-y:auto; line-height:1.7;">${escapeHtml(text)}</div>
+        <div style="color:#777; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(snippet)}</div>
       `;
-      document.body.appendChild(overlay);
-      document.body.appendChild(modal);
-    }
-
-    document.getElementById('anaWordsBtn').addEventListener('click', () => {
-      if (!entries.length) return;
-      let totalWords = 0;
-      let longest = { title: '', words: 0 };
-      let shortest = { title: '', words: Infinity };
-
-      entries.forEach(e => {
-        const words = e.content.trim().split(/\s+/).length;
-        totalWords += words;
-        if (words > longest.words) longest = { title: e.date, words };
-        if (words < shortest.words) shortest = { title: e.date, words };
-      });
-
-      const avg = Math.round(totalWords / entries.length);
-      showAnalyticsModal('WORD COUNT ANALYSIS', `TOTAL ENTRIES: ${entries.length}\nTOTAL WORDS: ${totalWords.toLocaleString()}\nAVERAGE / ENTRY: ${avg.toLocaleString()}\n\nLONGEST: "${longest.title}" (${longest.words.toLocaleString()} words)\nSHORTEST: "${shortest.title}" (${shortest.words.toLocaleString()} words)`);
-    });
-
-    document.getElementById('anaCharsBtn').addEventListener('click', () => {
-      if (!entries.length) return;
-      const counts = new Map();
-      entries.forEach(e => {
-        const matches = e.content.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g);
-        if (matches) {
-          matches.forEach(name => {
-            if (name.length > 2 && !['The', 'And', 'But', 'For', 'Not', 'You', 'She', 'He', 'They', 'Chapter'].includes(name)) {
-              counts.set(name, (counts.get(name) || 0) + 1);
-            }
-          });
-        }
-      });
-      const top = Array.from(counts.entries()).sort((a,b) => b[1] - a[1]).slice(0, 20);
-      showAnalyticsModal('ENTITY & CHARACTER SCAN', top.map(([k,v], i) => `${i+1}. ${k}: ${v} mentions`).join('\n') || 'None found.');
-    });
-
-    document.getElementById('anaRepsBtn').addEventListener('click', () => {
-      if (!entries.length) return;
-      const words = entries.map(e => e.content.toLowerCase()).join(' ').replace(/[^\w\s]/g, ' ').split(/\s+/).filter(w => w.length > 3);
-      const counts = new Map();
-      for (let i = 0; i <= words.length - 3; i++) {
-        const phrase = words.slice(i, i + 3).join(' ');
-        counts.set(phrase, (counts.get(phrase) || 0) + 1);
-      }
-      const top = Array.from(counts.entries()).filter(([, c]) => c >= 2).sort((a,b) => b[1] - a[1]).slice(0, 15);
-      showAnalyticsModal('3-WORD REPETITIONS', top.map(([p, c], i) => `${i+1}. "${p}": ${c}x`).join('\n') || 'No recurrent phrases found.');
-    });
-
-    document.getElementById('anaTimeBtn').addEventListener('click', () => {
-      if (!entries.length) return;
-      const list = entries.map((e, i) => `${i+1}. [${e.tags.join('/') || 'ENTRY'}] ${e.date} (${e.content.trim().split(/\s+/).length} words)`).join('\n');
-      showAnalyticsModal('TIMELINE & MANIFEST', list);
-    });
-
-    // --- AI TRANSMIT ---
-    askAiBtn.addEventListener('click', async () => {
-      const apiKey = apiKeyInput.value.trim();
-      const prompt = aiInput.value.trim();
-
-      if (!apiKey) {
-        aiResponseDiv.innerHTML = '<span style="color:var(--red);">❌ Please enter an API key.</span>';
-        apiKeyInput.focus();
-        return;
-      }
-      if (!prompt) {
-        aiResponseDiv.innerHTML = '<span style="color:var(--red);">❌ Please enter a prompt.</span>';
-        return;
-      }
-
-      askAiBtn.disabled = true;
-      askAiBtn.textContent = 'TRANSMITTING...';
-      aiSubStatus.textContent = 'Connecting...';
-      aiResponseDiv.innerHTML = '<span style="color:var(--red);" class="voodoo">manifesting response from archive...</span>';
-
-      try {
-        let contextText = '';
-        if (aiContext === 'current' && entries.length) {
-          const cur = entries.find(x => x.id === currentIndex);
-          if (cur) contextText = `CURRENT ENTRY (${cur.date}):\n${cur.content.substring(0, 4500)}\n\n---\n\n`;
-        } else if (aiContext === 'all' && entries.length) {
-          const list = entries.map(e => `- ${e.date} (Tags: ${e.tags.join(', ')})`).join('\n');
-          contextText = `ARCHIVE OUTLINE:\n${list}\n\n---\n\n`;
-        }
-
-        const [provider, modelName] = modelSelect.value.split(':');
-        let endpoint = '';
-        let headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
-
-        if (provider === 'nvidia') {
-          endpoint = 'https://lively-limitless.inkrealm.workers.dev/?url=' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
-        } else if (provider === 'openrouter') {
-          endpoint = 'https://openrouter.ai/api/v1/chat/completions';
-          headers['HTTP-Referer'] = window.location.href;
-          headers['X-Title'] = 'RW-Reader';
-        } else {
-          endpoint = 'https://api.openai.com/v1/chat/completions';
-        }
-
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: headers,
-          body: JSON.stringify({
-            model: modelName,
-            messages: [
-              { role: 'system', content: 'You are an analytical literary assistant. Respond with clear, direct insights.' },
-              { role: 'user', content: contextText + prompt }
-            ],
-            temperature: 0.6,
-            max_tokens: 1500
-          })
-        });
-
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(`API Status ${res.status}: ${text}`);
-        }
-
-        const data = await res.json();
-        const rawReply = data.choices?.[0]?.message?.content || '(No response text returned.)';
-        const formatted = escapeHtml(rawReply)
-          .replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--red)">$1</strong>')
-          .replace(/\n/g, '<br>');
-        aiResponseDiv.innerHTML = formatted;
-        aiSubStatus.textContent = 'Transmission complete.';
-      } catch (err) {
-        aiResponseDiv.innerHTML = `<span style="color:var(--red);">❌ TRANSMISSION FAILED:\n${escapeHtml(err.message)}</span>`;
-        aiSubStatus.textContent = 'Error occurred.';
-      } finally {
-        askAiBtn.disabled = false;
-        askAiBtn.textContent = 'TRANSMIT';
-      }
-    });
-
-    // --- EVENT LISTENERS ---
-    searchBox.addEventListener('input', (e) => {
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => performSearch(e.target.value), 250);
-    });
-
-    [exactBtn, fuzzyBtn].forEach(btn => {
-      btn.addEventListener('click', () => {
-        [exactBtn, fuzzyBtn].forEach(b => b.classList.remove('mode-active'));
-        btn.classList.add('mode-active');
-        searchMode = btn.dataset.mode;
-        if (searchBox.value.trim()) performSearch(searchBox.value);
-      });
-    });
-
-    indexBtn.addEventListener('click', () => {
-      isIndexVisible = !isIndexVisible;
-      dateNav.style.display = isIndexVisible ? 'block' : 'none';
-      if (isIndexVisible) buildDateIndex();
-    });
-
-    prevBtn.addEventListener('click', () => { pendingMatchTarget = 'first'; navigateEntries('prev'); });
-    nextBtn.addEventListener('click', () => { pendingMatchTarget = 'first'; navigateEntries('next'); });
-    randomBtn.addEventListener('click', showRandomEntry);
-    jumpStartBtn.addEventListener('click', () => {
-      const pool = isSearching ? searchResults : getFilteredEntries();
-      if (pool.length) { pendingMatchTarget = 'first'; showEntry(pool[0].id); }
-    });
-    jumpEndBtn.addEventListener('click', () => {
-      const pool = isSearching ? searchResults : getFilteredEntries();
-      if (pool.length) { pendingMatchTarget = 'first'; showEntry(pool[pool.length - 1].id); }
-    });
-
-    prevMatchBtn.addEventListener('click', () => navigateMatch('prev'));
-    nextMatchBtn.addEventListener('click', () => navigateMatch('next'));
-
-    filterBtns.addEventListener('click', (e) => {
-      if (!e.target.classList.contains('filter-btn')) return;
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('filter-active'));
-      e.target.classList.add('filter-active');
-      currentFilter = e.target.dataset.filter;
-      rebuildFuse();
-
-      if (searchBox.value.trim()) {
-        performSearch(searchBox.value);
-      } else {
-        isSearching = false;
-        searchResults = [];
-        matchEls = [];
-        matchIndex = 0;
-        searchStats.textContent = '';
-        searchBox.classList.remove('search-active');
-        updateMatchUI();
-        buildDateIndex();
-        const filtered = getFilteredEntries();
-        if (filtered.length) {
-          showEntry(filtered[0].id);
-        } else {
-          showEmptyState(`:: NO ENTRIES MATCHING FILTER [${currentFilter.toUpperCase()}] ::`);
-        }
-      }
-    });
-
-    document.addEventListener('click', (e) => {
-      if (!e.target.classList.contains('context-btn')) return;
-      document.querySelectorAll('.context-btn').forEach(b => b.classList.remove('filter-active'));
-      e.target.classList.add('filter-active');
-      aiContext = e.target.dataset.context;
-      const desc = {
-        current: 'Target: Current Entry (Sends content up to 4.5k chars)',
-        all: 'Target: Archive Outline (Titles and tags)',
-        none: 'Target: Standalone query without context'
-      };
-      contextInfo.textContent = desc[aiContext];
-    });
-
-    // KEYBOARD LISTENER (Guarded against undefined e.key)
-    document.addEventListener('keydown', (e) => {
-      if (!e || !e.key) return;
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
-        if (e.key === 'Escape') document.activeElement.blur();
-        return;
-      }
-
-      const key = e.key.toLowerCase();
-      if (e.key === 'ArrowLeft') { pendingMatchTarget = 'first'; navigateEntries('prev'); }
-      else if (e.key === 'ArrowRight') { pendingMatchTarget = 'first'; navigateEntries('next'); }
-      else if (key === 'r') showRandomEntry();
-      else if (key === 'n') navigateMatch('next');
-      else if (key === 'p') navigateMatch('prev');
-      else if (e.key === '/') { e.preventDefault(); searchBox.focus(); }
-      else if (e.key === 'Escape') {
-        document.querySelector('.analytics-modal')?.remove();
-        document.querySelector('.analytics-overlay')?.remove();
+      div.addEventListener('click', () => {
+        pendingMatchTarget = 'first';
+        showEntry(e.id, false);
         dateNav.style.display = 'none';
         isIndexVisible = false;
+      });
+      dateNav.appendChild(div);
+    });
+  }
+
+  function navigateEntries(dir) {
+    if (!entries.length) return;
+    const pool = isSearching ? searchResults : getFilteredEntries();
+    const pos = pool.findIndex(x => x.id === currentIndex);
+    const target = dir === 'next' ? pos + 1 : pos - 1;
+    if (target >= 0 && target < pool.length) showEntry(pool[target].id, false);
+  }
+
+  function showRandomEntry() {
+    if (!entries.length) return;
+    const pool = isSearching ? searchResults : getFilteredEntries();
+    if (!pool.length) return;
+    let rand;
+    do { rand = Math.floor(Math.random() * pool.length); }
+    while (pool[rand].id === currentIndex && pool.length > 1);
+    pendingMatchTarget = 'first';
+    showEntry(pool[rand].id, false);
+  }
+
+  // --- ANALYTICS MODALS ---
+  function showAnalyticsModal(title, text) {
+    document.querySelector('.analytics-modal')?.remove();
+    document.querySelector('.analytics-overlay')?.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'analytics-overlay';
+    overlay.onclick = () => { overlay.remove(); modal.remove(); };
+
+    const modal = document.createElement('div');
+    modal.className = 'analytics-modal';
+    modal.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid var(--ink); padding-bottom:10px;">
+        <h3 style="font-size:14px; font-weight:bold; text-transform:uppercase; letter-spacing:0.08em;">📊 ${escapeHtml(title)}</h3>
+        <button onclick="this.closest('.analytics-modal').remove(); document.querySelector('.analytics-overlay')?.remove();">CLOSE</button>
+      </div>
+      <div style="font-size:13px; white-space:pre-wrap; max-height:60vh; overflow-y:auto; line-height:1.7;">${escapeHtml(text)}</div>
+    `;
+    document.body.appendChild(overlay);
+    document.body.appendChild(modal);
+  }
+
+  document.getElementById('anaWordsBtn').addEventListener('click', () => {
+    if (!entries.length) return;
+    let totalWords = 0;
+    let longest = { title: '', words: 0 };
+    let shortest = { title: '', words: Infinity };
+    entries.forEach(e => {
+      const words = e.content.trim().split(/\s+/).filter(Boolean).length;
+      totalWords += words;
+      if (words > longest.words) longest = { title: e.date, words };
+      if (words < shortest.words) shortest = { title: e.date, words };
+    });
+    const avg = Math.round(totalWords / entries.length);
+    showAnalyticsModal('WORD COUNT ANALYSIS',
+      `TOTAL ENTRIES: ${entries.length}\nTOTAL WORDS: ${totalWords.toLocaleString()}\nAVERAGE / ENTRY: ${avg.toLocaleString()}\n\nLONGEST: "${longest.title}" (${longest.words.toLocaleString()} words)\nSHORTEST: "${shortest.title}" (${shortest.words.toLocaleString()} words)`
+    );
+  });
+
+  document.getElementById('anaCharsBtn').addEventListener('click', () => {
+    if (!entries.length) return;
+    const counts = new Map();
+    entries.forEach(e => {
+      const matches = e.content.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g);
+      if (matches) {
+        matches.forEach(name => {
+          if (name.length > 2 && !['The', 'And', 'But', 'For', 'Not', 'You', 'She', 'He', 'They', 'Chapter'].includes(name)) {
+            counts.set(name, (counts.get(name) || 0) + 1);
+          }
+        });
       }
     });
+    const top = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 20);
+    showAnalyticsModal('ENTITY & CHARACTER SCAN', top.map(([k, v], i) => `${i + 1}. ${k}: ${v} mentions`).join('\n') || 'None found.');
+  });
 
-    // Boot
-    document.addEventListener('DOMContentLoaded', loadAndParseContent);
-  </script>
+  document.getElementById('anaRepsBtn').addEventListener('click', () => {
+    if (!entries.length) return;
+    const words = entries.map(e => e.content.toLowerCase()).join(' ').replace(/[^\w\s]/g, ' ').split(/\s+/).filter(w => w.length > 3);
+    const counts = new Map();
+    for (let i = 0; i <= words.length - 3; i++) {
+      const phrase = words.slice(i, i + 3).join(' ');
+      counts.set(phrase, (counts.get(phrase) || 0) + 1);
+    }
+    const top = Array.from(counts.entries()).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1]).slice(0, 15);
+    showAnalyticsModal('3-WORD REPETITIONS', top.map(([p, c], i) => `${i + 1}. "${p}": ${c}x`).join('\n') || 'No recurrent phrases found.');
+  });
+
+  document.getElementById('anaTimeBtn').addEventListener('click', () => {
+    if (!entries.length) return;
+    const list = entries.map((e, i) => `${i + 1}. [${e.tags.join('/') || 'ENTRY'}] ${e.date} (${e.content.trim().split(/\s+/).filter(Boolean).length} words)`).join('\n');
+    showAnalyticsModal('TIMELINE & MANIFEST', list);
+  });
+
+  // --- AI TRANSMIT ---
+  askAiBtn.addEventListener('click', async () => {
+    const apiKey = apiKeyInput.value.trim();
+    const prompt = aiInput.value.trim();
+
+    if (!apiKey) {
+      aiResponseDiv.innerHTML = '<span style="color:var(--red-soft);">❌ Please enter an API key.</span>';
+      apiKeyInput.focus();
+      return;
+    }
+    if (!prompt) {
+      aiResponseDiv.innerHTML = '<span style="color:var(--red-soft);">❌ Please enter a prompt.</span>';
+      return;
+    }
+
+    askAiBtn.disabled = true;
+    askAiBtn.textContent = 'TRANSMITTING...';
+    aiSubStatus.textContent = 'Connecting...';
+    aiResponseDiv.innerHTML = '<span style="color:var(--red-soft);">manifesting response from archive...</span>';
+
+    try {
+      let contextText = '';
+      if (aiContext === 'current' && entries.length) {
+        const cur = entries.find(x => x.id === currentIndex);
+        if (cur) contextText = `CURRENT ENTRY (${cur.date}):\n${cur.content.substring(0, 4500)}\n\n---\n\n`;
+      } else if (aiContext === 'all' && entries.length) {
+        const list = entries.map(e => `- ${e.date} (Tags: ${e.tags.join(', ')})`).join('\n');
+        contextText = `ARCHIVE OUTLINE:\n${list}\n\n---\n\n`;
+      }
+
+      const [provider, modelName] = modelSelect.value.split(':');
+      let endpoint = '';
+      const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
+
+      if (provider === 'nvidia') {
+        endpoint = 'https://lively-limitless.inkrealm.workers.dev/?url=' + encodeURIComponent('https://integrate.api.nvidia.com/v1/chat/completions');
+      } else if (provider === 'openrouter') {
+        endpoint = 'https://openrouter.ai/api/v1/chat/completions';
+        headers['HTTP-Referer'] = window.location.href;
+        headers['X-Title'] = 'RW-Reader';
+      } else {
+        endpoint = 'https://api.openai.com/v1/chat/completions';
+      }
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: modelName,
+          messages: [
+            { role: 'system', content: 'You are an analytical literary assistant. Respond with clear, direct insights.' },
+            { role: 'user', content: contextText + prompt }
+          ],
+          temperature: 0.6,
+          max_tokens: 1500
+        })
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`API Status ${res.status}: ${text}`);
+      }
+
+      const data = await res.json();
+      const rawReply = data.choices?.[0]?.message?.content || '(No response text returned.)';
+      const formatted = escapeHtml(rawReply)
+        .replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--red-soft)">$1</strong>')
+        .replace(/\n/g, '<br>');
+      aiResponseDiv.innerHTML = formatted;
+      aiSubStatus.textContent = 'Transmission complete.';
+    } catch (err) {
+      aiResponseDiv.innerHTML = `<span style="color:var(--red-soft);">❌ TRANSMISSION FAILED:\n${escapeHtml(err.message)}</span>`;
+      aiSubStatus.textContent = 'Error occurred.';
+    } finally {
+      askAiBtn.disabled = false;
+      askAiBtn.textContent = 'TRANSMIT →';
+    }
+  });
+
+  // --- EVENT LISTENERS ---
+  searchBox.addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => performSearch(e.target.value), 250);
+  });
+
+  [exactBtn, fuzzyBtn].forEach(btn => {
+    btn.addEventListener('click', () => {
+      [exactBtn, fuzzyBtn].forEach(b => b.classList.remove('mode-active'));
+      btn.classList.add('mode-active');
+      searchMode = btn.dataset.mode;
+      if (searchBox.value.trim()) performSearch(searchBox.value);
+    });
+  });
+
+  indexBtn.addEventListener('click', () => {
+    isIndexVisible = !isIndexVisible;
+    dateNav.style.display = isIndexVisible ? 'block' : 'none';
+    if (isIndexVisible) buildDateIndex();
+  });
+
+  prevBtn.addEventListener('click', () => { pendingMatchTarget = 'first'; navigateEntries('prev'); });
+  nextBtn.addEventListener('click', () => { pendingMatchTarget = 'first'; navigateEntries('next'); });
+  randomBtn.addEventListener('click', showRandomEntry);
+  jumpStartBtn.addEventListener('click', () => {
+    const pool = isSearching ? searchResults : getFilteredEntries();
+    if (pool.length) { pendingMatchTarget = 'first'; showEntry(pool[0].id, false); }
+  });
+  jumpEndBtn.addEventListener('click', () => {
+    const pool = isSearching ? searchResults : getFilteredEntries();
+    if (pool.length) { pendingMatchTarget = 'first'; showEntry(pool[pool.length - 1].id, false); }
+  });
+
+  prevMatchBtn.addEventListener('click', () => navigateMatch('prev'));
+  nextMatchBtn.addEventListener('click', () => navigateMatch('next'));
+
+  filterBtns.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('filter-btn')) return;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('filter-active'));
+    e.target.classList.add('filter-active');
+    currentFilter = e.target.dataset.filter;
+    rebuildFuse();
+
+    if (searchBox.value.trim()) {
+      performSearch(searchBox.value);
+    } else {
+      isSearching = false;
+      searchResults = [];
+      matchEls = [];
+      matchIndex = 0;
+      searchStats.textContent = '';
+      searchBox.classList.remove('search-active');
+      updateMatchUI();
+      buildDateIndex();
+      const filtered = getFilteredEntries();
+      if (filtered.length) showEntry(filtered[0].id, false);
+      else showEmptyState(`:: NO ENTRIES MATCHING FILTER [${currentFilter.toUpperCase()}] ::`);
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('context-btn')) return;
+    document.querySelectorAll('.context-btn').forEach(b => b.classList.remove('filter-active'));
+    e.target.classList.add('filter-active');
+    aiContext = e.target.dataset.context;
+    const desc = {
+      current: 'Target: Current Entry (Sends content up to 4.5k chars)',
+      all: 'Target: Archive Outline (Titles and tags)',
+      none: 'Target: Standalone query without context'
+    };
+    contextInfo.textContent = desc[aiContext];
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (!e || !e.key) return;
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+      if (e.key === 'Escape') document.activeElement.blur();
+      return;
+    }
+    const key = e.key.toLowerCase();
+    if (e.key === 'ArrowLeft') { pendingMatchTarget = 'first'; navigateEntries('prev'); }
+    else if (e.key === 'ArrowRight') { pendingMatchTarget = 'first'; navigateEntries('next'); }
+    else if (key === 'r') showRandomEntry();
+    else if (key === 'n') navigateMatch('next');
+    else if (key === 'p') navigateMatch('prev');
+    else if (e.key === '/') { e.preventDefault(); searchBox.focus(); }
+    else if (e.key === 'Escape') {
+      document.querySelector('.analytics-modal')?.remove();
+      document.querySelector('.analytics-overlay')?.remove();
+      dateNav.style.display = 'none';
+      isIndexVisible = false;
+    }
+  });
+
+  // --- KINETIC TYPOGRAPHY (MARQUEE, SCRAMBLE, SWIRL) ---
+  const mq = document.getElementById('marquee');
+  mq.innerHTML += mq.innerHTML;
+
+  const GLYPHS = '!<>-_\\/[]{}=+*^?#XKQZ0123456789';
+  function splitChars(el) {
+    const text = el.textContent;
+    el.textContent = '';
+    const chars = [];
+    for (const ch of text) {
+      const s = document.createElement('span');
+      s.className = 'ch';
+      s.textContent = ch === ' ' ? '\u00A0' : ch;
+      s.dataset.final = s.textContent;
+      el.appendChild(s);
+      chars.push(s);
+    }
+    return chars;
+  }
+
+  function scrambleIn(chars, duration = 800) {
+    chars.forEach((c, i) => {
+      const final = c.dataset.final;
+      if (final === '\u00A0') return;
+      const start = performance.now() + i * 24;
+      function tick(now) {
+        const t = (now - start) / duration;
+        if (t < 0) { requestAnimationFrame(tick); return; }
+        if (t >= 1) { c.textContent = final; c.style.transform = ''; c.style.opacity = ''; return; }
+        if (Math.random() < 0.55) c.textContent = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+        const ang = t * Math.PI * 4;
+        const r = (1 - t) * 14;
+        c.style.transform = `translate(${Math.cos(ang) * r}px, ${Math.sin(ang) * r}px) rotate(${(1 - t) * 180}deg)`;
+        c.style.opacity = (0.15 + 0.85 * t).toFixed(2);
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    });
+  }
+
+  function makeSwirl(el) {
+    const chars = splitChars(el);
+    const st = chars.map(() => ({ x: 0, y: 0, tx: 0, ty: 0, rot: 0, trot: 0 }));
+
+    el.addEventListener('mousemove', e => {
+      const r = el.getBoundingClientRect();
+      const mx = e.clientX - r.left, my = e.clientY - r.top;
+      const R = 130;
+      chars.forEach((c, i) => {
+        const cr = c.getBoundingClientRect();
+        const cx = cr.left - r.left + cr.width / 2;
+        const cy = cr.top - r.top + cr.height / 2;
+        const dx = cx - mx, dy = cy - my;
+        const d = Math.hypot(dx, dy);
+        if (d < R && d > 0.01) {
+          const f = 1 - d / R;
+          st[i].tx = (dx / d) * f * 32;
+          st[i].ty = (dy / d) * f * 32;
+          st[i].trot = (dx / d) * f * 42;
+        }
+      });
+    });
+    el.addEventListener('mouseleave', () => st.forEach(s => { s.tx = s.ty = 0; s.trot = 0; }));
+    el.addEventListener('click', () => {
+      st.forEach(s => {
+        const a = Math.random() * Math.PI * 2;
+        const d = 45 + Math.random() * 85;
+        s.tx = Math.cos(a) * d;
+        s.ty = Math.sin(a) * d;
+        s.trot = (Math.random() - 0.5) * 200;
+      });
+      setTimeout(() => st.forEach(s => { s.tx = s.ty = 0; s.trot = 0; }), 320);
+    });
+
+    (function loop() {
+      chars.forEach((c, i) => {
+        const s = st[i];
+        s.x += (s.tx - s.x) * 0.11;
+        s.y += (s.ty - s.y) * 0.11;
+        s.rot += (s.trot - s.rot) * 0.11;
+        c.style.transform = `translate(${s.x.toFixed(1)}px, ${s.y.toFixed(1)}px) rotate(${s.rot.toFixed(1)}deg)`;
+      });
+      requestAnimationFrame(loop);
+    })();
+  }
+
+  document.querySelectorAll('[data-hover-scramble]').forEach(h => {
+    const chars = splitChars(h);
+    h.addEventListener('mouseenter', () => {
+      chars.forEach((c, i) => {
+        const final = c.dataset.final;
+        if (final === '\u00A0') return;
+        let n = 0;
+        const iv = setInterval(() => {
+          c.textContent = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+          if (++n > 3 + i % 4) { c.textContent = final; clearInterval(iv); }
+        }, 40);
+      });
+    });
+  });
+
+  const seen = new WeakSet();
+  const io = new IntersectionObserver(list => {
+    list.forEach(en => {
+      if (en.isIntersecting && !seen.has(en.target)) {
+        seen.add(en.target);
+        scrambleIn(splitChars(en.target), 800);
+        io.unobserve(en.target);
+      }
+    });
+  }, { threshold: 0.35 });
+  document.querySelectorAll('[data-scramble]').forEach(el => io.observe(el));
+
+  // --- INTERACTIVE VORTEX HERO ---
+  (function () {
+    const canvas = document.getElementById('vortex');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const PHRASE = 'RED AND WHITE // TOWN ARCHIVE // WORDSTAR.NEXUS // ';
+    const VG = '!<>-_/[]{}=+*^?#XKQZ0123456789';
+    let W, H, DPR, cx, cy, maxR, chars = [];
+    let mode = 'spiral';
+    let globalAngle = 0;
+    let globalAngularVel = 0.00075;
+    let flashIntensity = 0;
+    const mouse = { x: -9999, y: -9999, down: false, lastAngle: 0 };
+
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = canvas.clientWidth; H = canvas.clientHeight;
+      canvas.width = W * DPR; canvas.height = H * DPR;
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      cx = W * 0.55; cy = H * 0.44;
+      maxR = Math.hypot(W, H) * 0.4;
+      if (!chars.length) build();
+      else assignTargets();
+    }
+
+    function build() {
+      chars = [];
+      const TOTAL = 720;
+      for (let i = 0; i < TOTAL; i++) {
+        chars.push({
+          ch: PHRASE[i % PHRASE.length],
+          x: cx + (Math.random() - 0.5) * W,
+          y: cy + (Math.random() - 0.5) * H,
+          vx: 0, vy: 0, tx: cx, ty: cy,
+          baseR: 40, baseA: 0, gridX: cx, gridY: cy,
+          rot: 0, depth: 0.5, g: 0, heat: 0
+        });
+      }
+      assignTargets();
+    }
+
+    function assignTargets() {
+      const TOTAL = chars.length;
+      if (mode === 'spiral') {
+        const GROOVES = 5;
+        const PER = Math.ceil(TOTAL / GROOVES);
+        chars.forEach((c, i) => {
+          const g = i % GROOVES;
+          const step = Math.floor(i / GROOVES) / PER;
+          c.baseR = 24 + step * maxR;
+          c.baseA = g * (Math.PI * 2 / GROOVES) + step * 4.4;
+          c.depth = Math.min(1, step * 1.15);
+        });
+      } else if (mode === 'triangle') {
+        // 3 concentric triangles echoing the red .mark emblem
+        const layers = 3;
+        const perLayer = Math.ceil(TOTAL / layers);
+        chars.forEach((c, i) => {
+          const layer = Math.floor(i / perLayer);
+          const idxInLayer = i % perLayer;
+          const edge = Math.floor((idxInLayer / perLayer) * 3);
+          const edgeT = ((idxInLayer / perLayer) * 3) % 1;
+          const R = maxR * (0.28 + layer * 0.24);
+          const a1 = -Math.PI / 2 + edge * ((Math.PI * 2) / 3);
+          const a2 = -Math.PI / 2 + ((edge + 1) % 3) * ((Math.PI * 2) / 3);
+          const px = Math.cos(a1) * R * (1 - edgeT) + Math.cos(a2) * R * edgeT;
+          const py = Math.sin(a1) * R * (1 - edgeT) + Math.sin(a2) * R * edgeT;
+          c.baseR = Math.hypot(px, py);
+          c.baseA = Math.atan2(py, px);
+          c.depth = 0.35 + layer * 0.3;
+        });
+      } else if (mode === 'grid') {
+        const cols = 28, rows = Math.ceil(TOTAL / cols);
+        const gw = W * 0.76, gh = H * 0.64;
+        const startX = (W - gw) * 0.54, startY = (H - gh) * 0.45;
+        chars.forEach((c, i) => {
+          const col = i % cols;
+          const row = Math.floor(i / cols);
+          c.gridX = startX + (col / (cols - 1)) * gw;
+          c.gridY = startY + (row / (rows - 1)) * gh;
+          c.depth = 0.72;
+        });
+      }
+    }
+
+    function setMode(newMode) {
+      mode = newMode;
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+      assignTargets();
+    }
+
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); setMode(btn.dataset.mode); });
+    });
+
+    window.addEventListener('keydown', e => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+      if (e.key === '1') setMode('spiral');
+      if (e.key === '2') setMode('triangle');
+      if (e.key === '3') setMode('grid');
+    });
+
+    canvas.addEventListener('mousedown', e => {
+      const r = canvas.getBoundingClientRect();
+      mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
+      mouse.down = true;
+      mouse.lastAngle = Math.atan2(mouse.y - cy, mouse.x - cx);
+    });
+
+    canvas.addEventListener('mousemove', e => {
+      const r = canvas.getBoundingClientRect();
+      const nx = e.clientX - r.left, ny = e.clientY - r.top;
+      if (mouse.down) {
+        const curAngle = Math.atan2(ny - cy, nx - cx);
+        let delta = curAngle - mouse.lastAngle;
+        if (delta > Math.PI) delta -= Math.PI * 2;
+        if (delta < -Math.PI) delta += Math.PI * 2;
+        if (Math.hypot(nx - mouse.x, ny - mouse.y) > 4) globalAngularVel += delta * 0.16;
+        mouse.lastAngle = curAngle;
+      }
+      mouse.x = nx; mouse.y = ny;
+    });
+
+    function releaseTrigger() {
+      if (!mouse.down) return;
+      mouse.down = false;
+      flashIntensity = 1.0;
+      globalAngularVel += 0.028;
+      for (const c of chars) {
+        const dx = c.x - mouse.x, dy = c.y - mouse.y;
+        const d = Math.hypot(dx, dy) || 1;
+        const blast = Math.max(0, 1 - d / 400);
+        const force = 10 + blast * 32 + Math.random() * 6;
+        c.vx += (dx / d) * force;
+        c.vy += (dy / d) * force;
+        c.heat = Math.min(1, blast * 1.3 + 0.3);
+        c.g = 5;
+      }
+    }
+
+    window.addEventListener('mouseup', releaseTrigger);
+    canvas.addEventListener('mouseleave', () => { mouse.x = -9999; mouse.y = -9999; mouse.down = false; });
+
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min((now - last) / 16.6, 3);
+      last = now;
+      ctx.clearRect(0, 0, W, H);
+
+      if (flashIntensity > 0.01) {
+        const gx = mouse.x > 0 ? mouse.x : cx, gy = mouse.y > 0 ? mouse.y : cy;
+        const grad = ctx.createRadialGradient(gx, gy, 5, gx, gy, 340);
+        grad.addColorStop(0, `rgba(230,0,0,${(flashIntensity * 0.28).toFixed(2)})`);
+        grad.addColorStop(1, 'rgba(230,0,0,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+        flashIntensity *= Math.pow(0.86, dt);
+      }
+
+      globalAngle += globalAngularVel * dt;
+      globalAngularVel += (0.00075 - globalAngularVel) * 0.03 * dt;
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      for (const c of chars) {
+        if (mode === 'grid') {
+          c.tx = c.gridX; c.ty = c.gridY; c.rot = 0;
+        } else {
+          const a = c.baseA + globalAngle;
+          c.tx = cx + Math.cos(a) * c.baseR;
+          c.ty = cy + Math.sin(a) * c.baseR;
+          c.rot = a + Math.PI / 2;
+        }
+
+        c.vx += (c.tx - c.x) * 0.042 * dt;
+        c.vy += (c.ty - c.y) * 0.042 * dt;
+
+        const dx = c.x - mouse.x, dy = c.y - mouse.y;
+        const d = Math.hypot(dx, dy);
+
+        if (mouse.down && d < 250 && d > 1) {
+          const pull = (1 - d / 250) * 2.8 * dt;
+          c.vx -= (dx / d) * pull;
+          c.vy -= (dy / d) * pull;
+          c.heat = Math.min(1, c.heat + 0.06 * dt);
+        } else if (!mouse.down && d < 130 && d > 1) {
+          const push = (1 - d / 130) * 2.1 * dt;
+          c.vx += (dx / d) * push;
+          c.vy += (dy / d) * push;
+          c.heat = Math.min(1, c.heat + 0.025 * dt);
+        }
+
+        c.vx *= Math.pow(0.84, dt);
+        c.vy *= Math.pow(0.84, dt);
+        c.x += c.vx * dt;
+        c.y += c.vy * dt;
+        c.heat *= Math.pow(0.94, dt);
+
+        if (c.ch === ' ') continue;
+        const size = 9.5 + c.depth * 6;
+        ctx.font = size.toFixed(1) + 'px "Share Tech Mono", ui-monospace, monospace';
+
+        let ch = c.ch;
+        if (c.g > 0) { ch = VG[Math.floor(Math.random() * VG.length)]; c.g--; }
+        else if (Math.random() < 0.0016) c.g = 2;
+
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        ctx.rotate(c.rot + c.vx * 0.035);
+        ctx.fillStyle = c.heat > 0.15
+          ? `rgba(230,0,0,${Math.min(1, 0.55 + c.heat * 0.45).toFixed(2)})`
+          : `rgba(237,234,226,${(0.35 + c.depth * 0.6).toFixed(2)})`;
+        ctx.fillText(ch, 0, 0);
+        ctx.restore();
+      }
+      requestAnimationFrame(frame);
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+    requestAnimationFrame(frame);
+  })();
+
+  // Boot
+  makeSwirl(document.getElementById('pullQuote'));
+  document.addEventListener('DOMContentLoaded', loadAndParseContent);
+</script>
 </body>
 </html>
