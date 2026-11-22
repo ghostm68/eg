@@ -306,7 +306,7 @@
 
   </div>
 
-  <script>
+<script>
     // --- CONTENT SOURCE SETUP ---
     // Town populates from the city page (spritz textarea).
     // Local .md files are an optional offline fallback only.
@@ -339,6 +339,7 @@
     let fuse = null;
     let matchIndex = 0;
     let matchEls = [];
+    let pendingMatchTarget = 'first'; // 'first' | 'last'
     let searchTimeout = null;
     let aiContext = 'current';
 
@@ -376,6 +377,15 @@
     const contextInfo = document.getElementById('contextInfo');
     const aiSubStatus = document.getElementById('aiSubStatus');
 
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     // Load saved tokens
     if (localStorage.getItem('rw_gh_token')) {
       ghTokenInput.value = localStorage.getItem('rw_gh_token');
@@ -405,7 +415,6 @@
       textVisible = !textVisible;
       readerMain.style.display = textVisible ? 'block' : 'none';
       textToggle.textContent = textVisible ? 'Hide text' : 'Show text';
-      // Keep the content article itself visible once loaded
       if (textVisible && contentDiv.innerHTML.trim()) {
         contentDiv.style.display = 'block';
       }
@@ -420,7 +429,6 @@
         const doc = new DOMParser().parseFromString(html, 'text/html');
         const ta = doc.querySelector('#spritz_words');
         if (ta && ta.textContent.trim()) return ta.textContent;
-        // fallback: look for any large textarea
         const any = doc.querySelector('textarea');
         if (any && any.textContent.trim().length > 200) return any.textContent;
       } catch (_) { /* ignore */ }
@@ -436,25 +444,20 @@
       return null;
     }
 
-    // Split raw manuscript text into entries by chapter headings or end-of-chapter markers
     function parseManuscript(raw) {
       if (!raw || !raw.trim()) return [];
       const text = raw.replace(/\r\n/g, '\n').trim();
 
-      // Prefer splitting on headings like "# Red White – Chapter ..."
       const chapterRegex = /(?=^#\s+Red\s+White\s*[–-]\s*Chapter\s+.+$)/gim;
       let parts = text.split(chapterRegex).map(p => p.trim()).filter(Boolean);
 
-      // If no chapter headings, try end-of-chapter markers
       if (parts.length <= 1) {
         parts = text.split(/—\s*end of chapter\s+[^—]+\s*—/i).map(p => p.trim()).filter(Boolean);
       }
 
-      // If still one block, treat the whole thing as a single entry
       if (parts.length === 0) parts = [text];
 
       return parts.map((content, i) => {
-        // Extract a title from the first heading or first line
         let title = `Chapter ${i + 1}`;
         const firstLine = content.split('\n').find(l => l.trim());
         if (firstLine) {
@@ -476,7 +479,6 @@
         let source = 'city';
 
         if (!raw) {
-          // Fallback: try local markdown files
           loadingDiv.innerHTML = '<span class="mark"></span> city unavailable — trying local files…';
           const localParts = [];
           for (const filename of CONTENT_FILES) {
@@ -493,7 +495,7 @@
           loadingDiv.innerHTML = `
             <div style="color:var(--red); font-size:0.85rem; max-width:600px; margin:0 auto; text-align:left; border:1px solid rgba(255,51,68,0.4); background:#0c0d12; padding:1.25rem;">
               <p style="font-weight:bold; margin-bottom:0.5rem;"><span class="mark"></span> no manuscript found</p>
-              <p style="color:#9ca3af; margin-bottom:0.75rem;">Could not load content from <code>${CITY_URL}</code> and no local markdown files were present.</p>
+              <p style="color:#9ca3af; margin-bottom:0.75rem;">Could not load content from <code>${escapeHtml(CITY_URL)}</code> and no local markdown files were present.</p>
               <p style="color:#6b7280; font-size:0.75rem;">Add the chapter text to the city page’s spritz textarea, or place .md files next to this reader.</p>
             </div>`;
           return;
@@ -514,10 +516,9 @@
         showEntry(entries[0].id);
         buildDateIndex();
 
-        // Subtle source indicator in the entry info area later if desired
         console.log(`Loaded ${entries.length} entries from ${source}`);
       } catch (err) {
-        loadingDiv.innerHTML = `<p style="color:var(--red);">Error loading content: ${err.message}</p>`;
+        loadingDiv.innerHTML = `<p style="color:var(--red);">Error loading content: ${escapeHtml(err.message)}</p>`;
       }
     }
 
@@ -536,7 +537,7 @@
     }
 
     function rebuildFuse() {
-      if (!entries.length) return;
+      if (!entries.length || typeof Fuse === 'undefined') return;
       fuse = new Fuse(getFilteredEntries(), {
         keys: [{ name: 'date', weight: 0.3 }, { name: 'content', weight: 0.7 }],
         threshold: 0.4,
@@ -545,17 +546,61 @@
       });
     }
 
-    // --- DISPLAY & IN-ENTRY HIT HIGHLIGHTING ---
-    function highlightSearchTerms(rawHtml, query) {
-      if (!query.trim()) return rawHtml;
-      const terms = query.replace(/"/g, '').split(/\s+/).filter(t => t && t.length > 1 && !['and','or','not'].includes(t.toLowerCase()));
-      let result = rawHtml;
+    // --- SAFE DOM-ONLY HIT HIGHLIGHTING ---
+    function highlightElementText(rootEl, query) {
+      if (!query.trim()) return;
+      const parsed = parseSearchQuery(query);
+      const terms = Array.from(new Set(parsed.orGroups.flat())).filter(Boolean);
+      if (!terms.length) return;
 
-      terms.forEach(term => {
-        const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-        result = result.replace(regex, '<span class="highlight">$1</span>');
+      terms.sort((a, b) => b.length - a.length);
+      const pattern = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+      const regex = new RegExp(pattern, 'gi');
+
+      const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT, null);
+      const textNodes = [];
+      let node;
+      while ((node = walker.nextNode())) {
+        if (node.nodeValue && node.nodeValue.trim()) {
+          textNodes.push(node);
+        }
+      }
+
+      textNodes.forEach(textNode => {
+        const val = textNode.nodeValue;
+        regex.lastIndex = 0;
+        if (!regex.test(val)) return;
+
+        regex.lastIndex = 0;
+        const frag = document.createDocumentFragment();
+        let lastIdx = 0;
+        let m;
+        while ((m = regex.exec(val)) !== null) {
+          if (m[0].length === 0) { regex.lastIndex++; continue; }
+          if (m.index > lastIdx) {
+            frag.appendChild(document.createTextNode(val.slice(lastIdx, m.index)));
+          }
+          const span = document.createElement('span');
+          span.className = 'highlight';
+          span.textContent = m[0];
+          frag.appendChild(span);
+          lastIdx = regex.lastIndex;
+        }
+        if (lastIdx < val.length) {
+          frag.appendChild(document.createTextNode(val.slice(lastIdx)));
+        }
+        textNode.parentNode.replaceChild(frag, textNode);
       });
-      return result;
+    }
+
+    function showEmptyState(message) {
+      contentDiv.innerHTML = `<div style="text-align:center; padding:4rem 0; color:#6b7280;">${escapeHtml(message)}</div>`;
+      entryInfo.innerHTML = `<div style="color:var(--red);">0 entries in current view</div>`;
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
+      matchEls = [];
+      matchIndex = 0;
+      updateMatchUI();
     }
 
     function showEntry(entryId) {
@@ -563,25 +608,24 @@
       if (!e) return;
       currentIndex = e.id;
 
-      let rendered = marked.parse(e.content);
+      contentDiv.innerHTML = marked.parse(e.content);
       if (isSearching && searchQuery) {
-        rendered = highlightSearchTerms(rendered, searchQuery);
+        highlightElementText(contentDiv, searchQuery);
       }
-      contentDiv.innerHTML = rendered;
 
       const pool = isSearching ? searchResults : getFilteredEntries();
       const currentPos = pool.findIndex(x => x.id === entryId);
-      const wordCount = e.content.trim().split(/\s+/).length;
+      const wordCount = e.content.trim().split(/\s+/).filter(Boolean).length;
 
-      const tagsHtml = e.tags.map(t => 
-        `<span style="padding:0.1rem 0.4rem; border:1px solid ${t === currentFilter ? 'var(--red)' : '#262933'}; color:${t === currentFilter ? 'var(--red)' : '#6b7280'}; font-size:0.65rem;">${t.toUpperCase()}</span>`
+      const tagsHtml = e.tags.map(t =>
+        `<span style="padding:0.1rem 0.4rem; border:1px solid ${t === currentFilter ? 'var(--red)' : '#262933'}; color:${t === currentFilter ? 'var(--red)' : '#6b7280'}; font-size:0.65rem;">${escapeHtml(t.toUpperCase())}</span>`
       ).join(' ');
 
       entryInfo.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
           <div>
             <span style="font-size:0.65rem; color:#6b7280; letter-spacing:0.1em;">R/W ARCHIVE • </span>
-            <span style="color:var(--red); font-weight:bold; font-size:0.9rem;" class="voodoo">${e.date}</span>
+            <span style="color:var(--red); font-weight:bold; font-size:0.9rem;" class="voodoo">${escapeHtml(e.date)}</span>
           </div>
           <div style="display:flex; align-items:center; gap:0.5rem;">
             <span>${isSearching ? `Match ${currentPos + 1} of ${searchResults.length}` : `Entry ${currentPos + 1} of ${pool.length}`}</span>
@@ -598,10 +642,13 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
       matchEls = Array.from(contentDiv.querySelectorAll('.highlight'));
-      matchIndex = 0;
+      matchIndex = pendingMatchTarget === 'last' && matchEls.length > 0 ? matchEls.length - 1 : 0;
+      pendingMatchTarget = 'first';
       updateMatchUI();
-      if (matchEls.length) {
-        requestAnimationFrame(() => scrollToMatch(0));
+      if (matchEls.length && textVisible) {
+        requestAnimationFrame(() => scrollToMatch(matchIndex));
+      } else if (matchEls.length) {
+        matchEls[matchIndex]?.classList.add('active-hit');
       }
     }
 
@@ -623,57 +670,84 @@
       matchIndex = ((idx % matchEls.length) + matchEls.length) % matchEls.length;
       const target = matchEls[matchIndex];
       target.classList.add('active-hit');
-      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (textVisible) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       updateMatchUI();
     }
 
     function navigateMatch(dir) {
       if (!isSearching || !matchEls.length) {
+        pendingMatchTarget = dir === 'prev' ? 'last' : 'first';
         navigateEntries(dir);
         return;
       }
       if (dir === 'next') {
-        if (matchIndex >= matchEls.length - 1) navigateEntries('next');
-        else scrollToMatch(matchIndex + 1);
+        if (matchIndex >= matchEls.length - 1) {
+          pendingMatchTarget = 'first';
+          navigateEntries('next');
+        } else {
+          scrollToMatch(matchIndex + 1);
+        }
       } else {
-        if (matchIndex <= 0) navigateEntries('prev');
-        else scrollToMatch(matchIndex - 1);
+        if (matchIndex <= 0) {
+          pendingMatchTarget = 'last';
+          navigateEntries('prev');
+        } else {
+          scrollToMatch(matchIndex - 1);
+        }
       }
     }
 
     // --- SEARCH MODES ---
-    function parseSearchQuery(query) {
-      const terms = { and: [], or: [], not: [], exact: [] };
-      const exactMatches = query.match(/"([^"]+)"/g);
-      if (exactMatches) {
-        exactMatches.forEach(match => {
-          terms.exact.push(match.replace(/"/g, '').toLowerCase());
-          query = query.replace(match, '');
-        });
+    function parseSearchQuery(raw) {
+      const q = raw.trim();
+      const tokens = [];
+      const re = /(-?"[^"]+"|-?\S+)/g;
+      let m;
+      while ((m = re.exec(q)) !== null) tokens.push(m[1]);
+
+      const not = [];
+      const orGroups = [[]];
+
+      for (const tok of tokens) {
+        const upper = tok.toUpperCase();
+        if (upper === 'OR') {
+          if (orGroups[orGroups.length - 1].length > 0) orGroups.push([]);
+          continue;
+        }
+        if (upper === 'AND') continue;
+
+        if (tok.startsWith('-') && tok.length > 1) {
+          let val = tok.slice(1);
+          if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) val = val.slice(1, -1);
+          if (val) not.push(val.toLowerCase());
+          continue;
+        }
+
+        let val = tok;
+        if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) val = val.slice(1, -1);
+        if (val) orGroups[orGroups.length - 1].push(val.toLowerCase());
       }
-      let currentOp = 'and';
-      query.toLowerCase().split(/\s+/).filter(Boolean).forEach(word => {
-        if (word === 'and') currentOp = 'and';
-        else if (word === 'or') currentOp = 'or';
-        else if (word.startsWith('-')) terms.not.push(word.substring(1));
-        else terms[currentOp].push(word);
-      });
-      return terms;
+
+      return {
+        orGroups: orGroups.filter(g => g.length > 0),
+        not
+      };
     }
 
     function matchesExact(entry, terms) {
-      const text = (entry.content + ' ' + entry.date).toLowerCase();
-      if (terms.not.some(x => text.includes(x))) return false;
-      if (terms.exact.length && !terms.exact.every(x => text.includes(x))) return false;
-      if (terms.and.length && !terms.and.every(x => text.includes(x))) return false;
-      if (terms.or.length && !terms.or.some(x => text.includes(x))) return false;
-      return true;
+      const text = (entry.content + '\n' + entry.date).toLowerCase();
+      if (terms.not.some(x => x && text.includes(x))) return false;
+      if (terms.orGroups.length === 0) return true;
+      return terms.orGroups.some(andGroup => andGroup.every(x => text.includes(x)));
     }
 
     function performSearch(query) {
       if (!entries.length) return;
       searchQuery = query.trim();
       searchBox.classList.toggle('search-active', searchQuery.length > 0);
+      pendingMatchTarget = 'first';
 
       if (!searchQuery) {
         isSearching = false;
@@ -685,6 +759,7 @@
         buildDateIndex();
         const pool = getFilteredEntries();
         if (pool.length) showEntry(pool[0].id);
+        else showEmptyState(`:: NO ENTRIES MATCHING FILTER [${currentFilter.toUpperCase()}] ::`);
         return;
       }
 
@@ -693,7 +768,7 @@
 
       if (searchMode === 'fuzzy') {
         if (!fuse) rebuildFuse();
-        const results = fuse.search(searchQuery);
+        const results = fuse ? fuse.search(searchQuery) : [];
         searchResults = results.map(r => r.item);
       } else {
         const terms = parseSearchQuery(searchQuery);
@@ -706,9 +781,7 @@
       if (searchResults.length > 0) {
         showEntry(searchResults[0].id);
       } else {
-        matchEls = [];
-        updateMatchUI();
-        contentDiv.innerHTML = `<div style="text-align:center; padding:4rem 0; color:#6b7280;">:: NO MATCHES FOUND FOR "${searchQuery}" ::</div>`;
+        showEmptyState(`:: NO MATCHES FOUND FOR "${searchQuery}" ::`);
       }
     }
 
@@ -728,12 +801,13 @@
         const snippet = e.content.replace(/<[^>]*>/g, '').substring(0, 75).replace(/\n/g, ' ') + '...';
         div.innerHTML = `
           <div style="display:flex; justify-content:space-between; margin-bottom:0.2rem;">
-            <strong style="color:#e5e7eb;">${e.date}</strong>
-            <span style="font-size:0.65rem; color:#6b7280;">${e.tags[0] || 'ENTRY'}</span>
+            <strong style="color:#e5e7eb;">${escapeHtml(e.date)}</strong>
+            <span style="font-size:0.65rem; color:#6b7280;">${escapeHtml(e.tags[0] || 'ENTRY')}</span>
           </div>
-          <div style="color:#6b7280; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${snippet}</div>
+          <div style="color:#6b7280; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(snippet)}</div>
         `;
         div.addEventListener('click', () => {
+          pendingMatchTarget = 'first';
           showEntry(e.id);
           dateNav.style.display = 'none';
           isIndexVisible = false;
@@ -760,6 +834,7 @@
       do {
         rand = Math.floor(Math.random() * pool.length);
       } while (pool[rand].id === currentIndex && pool.length > 1);
+      pendingMatchTarget = 'first';
       showEntry(pool[rand].id);
     }
 
@@ -767,7 +842,7 @@
     function showAnalyticsModal(title, text) {
       document.querySelector('.analytics-modal')?.remove();
       document.querySelector('.analytics-overlay')?.remove();
-      
+
       const overlay = document.createElement('div');
       overlay.className = 'analytics-overlay';
       overlay.onclick = () => { overlay.remove(); modal.remove(); };
@@ -776,10 +851,10 @@
       modal.className = 'analytics-modal';
       modal.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; border-bottom:1px solid #242731; padding-bottom:0.5rem;">
-          <h3 style="font-size:0.8rem; font-weight:bold; color:var(--red);" class="voodoo">📊 ${title}</h3>
+          <h3 style="font-size:0.8rem; font-weight:bold; color:var(--red);" class="voodoo">📊 ${escapeHtml(title)}</h3>
           <button onclick="this.closest('.analytics-modal').remove(); document.querySelector('.analytics-overlay')?.remove();">CLOSE</button>
         </div>
-        <div style="font-size:0.75rem; white-space:pre-wrap; max-height:60vh; overflow-y:auto; line-height:1.7;">${text}</div>
+        <div style="font-size:0.75rem; white-space:pre-wrap; max-height:60vh; overflow-y:auto; line-height:1.7;">${escapeHtml(text)}</div>
       `;
       document.body.appendChild(overlay);
       document.body.appendChild(modal);
@@ -901,12 +976,14 @@
         }
 
         const data = await res.json();
-        let reply = data.choices[0].message.content;
-        reply = reply.replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--red)">$1</strong>').replace(/\n/g, '<br>');
-        aiResponseDiv.innerHTML = reply;
+        const rawReply = data.choices?.[0]?.message?.content || '(No response text returned.)';
+        const formatted = escapeHtml(rawReply)
+          .replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--red)">$1</strong>')
+          .replace(/\n/g, '<br>');
+        aiResponseDiv.innerHTML = formatted;
         aiSubStatus.textContent = 'Transmission complete.';
       } catch (err) {
-        aiResponseDiv.innerHTML = `<span style="color:var(--red);">❌ TRANSMISSION FAILED:\n${err.message}</span>`;
+        aiResponseDiv.innerHTML = `<span style="color:var(--red);">❌ TRANSMISSION FAILED:\n${escapeHtml(err.message)}</span>`;
         aiSubStatus.textContent = 'Error occurred.';
       } finally {
         askAiBtn.disabled = false;
@@ -935,16 +1012,16 @@
       if (isIndexVisible) buildDateIndex();
     });
 
-    prevBtn.addEventListener('click', () => navigateEntries('prev'));
-    nextBtn.addEventListener('click', () => navigateEntries('next'));
+    prevBtn.addEventListener('click', () => { pendingMatchTarget = 'first'; navigateEntries('prev'); });
+    nextBtn.addEventListener('click', () => { pendingMatchTarget = 'first'; navigateEntries('next'); });
     randomBtn.addEventListener('click', showRandomEntry);
     jumpStartBtn.addEventListener('click', () => {
       const pool = isSearching ? searchResults : getFilteredEntries();
-      if (pool.length) showEntry(pool[0].id);
+      if (pool.length) { pendingMatchTarget = 'first'; showEntry(pool[0].id); }
     });
     jumpEndBtn.addEventListener('click', () => {
       const pool = isSearching ? searchResults : getFilteredEntries();
-      if (pool.length) showEntry(pool[pool.length - 1].id);
+      if (pool.length) { pendingMatchTarget = 'first'; showEntry(pool[pool.length - 1].id); }
     });
 
     prevMatchBtn.addEventListener('click', () => navigateMatch('prev'));
@@ -956,12 +1033,24 @@
       e.target.classList.add('filter-active');
       currentFilter = e.target.dataset.filter;
       rebuildFuse();
-      searchBox.value = '';
-      isSearching = false;
-      const filtered = getFilteredEntries();
-      if (filtered.length) {
-        showEntry(filtered[0].id);
+
+      if (searchBox.value.trim()) {
+        performSearch(searchBox.value);
+      } else {
+        isSearching = false;
+        searchResults = [];
+        matchEls = [];
+        matchIndex = 0;
+        searchStats.textContent = '';
+        searchBox.classList.remove('search-active');
+        updateMatchUI();
         buildDateIndex();
+        const filtered = getFilteredEntries();
+        if (filtered.length) {
+          showEntry(filtered[0].id);
+        } else {
+          showEmptyState(`:: NO ENTRIES MATCHING FILTER [${currentFilter.toUpperCase()}] ::`);
+        }
       }
     });
 
@@ -980,12 +1069,15 @@
 
     // KEYBOARD LISTENER (Guarded against undefined e.key)
     document.addEventListener('keydown', (e) => {
-      if (!e || !e.key) return; // Guard: prevents "undefined (reading 'toLowerCase')"
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+      if (!e || !e.key) return;
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+        if (e.key === 'Escape') document.activeElement.blur();
+        return;
+      }
 
       const key = e.key.toLowerCase();
-      if (e.key === 'ArrowLeft') navigateEntries('prev');
-      else if (e.key === 'ArrowRight') navigateEntries('next');
+      if (e.key === 'ArrowLeft') { pendingMatchTarget = 'first'; navigateEntries('prev'); }
+      else if (e.key === 'ArrowRight') { pendingMatchTarget = 'first'; navigateEntries('next'); }
       else if (key === 'r') showRandomEntry();
       else if (key === 'n') navigateMatch('next');
       else if (key === 'p') navigateMatch('prev');
