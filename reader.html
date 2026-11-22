@@ -3,1148 +3,1149 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>INK REALM — R3ADER // DREAMWEAVER ARCHIVE</title>
+  <title>Dreamweaver — Literary Archive</title>
 
-  <!-- Typography: Editorial Dossier + Special Elite + Voodoo Swirly Header -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Special+Elite&display=swap" rel="stylesheet">
-  <link href="https://fonts.cdnfonts.com/css/voodoo" rel="stylesheet">
-
-  <!-- Fuzzy Search (Fuse.js) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Special+Elite&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
 
-  <!-- Semantic Search (HuggingFace Transformers - Local In-Browser Embeddings) -->
   <script type="module">
-    import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+    import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2';
     env.allowLocalModels = false;
+    env.useBrowserCache = true;
+    window.transformersEnv = env;
     window.transformersPipeline = pipeline;
+    window.transformersReady = Promise.resolve({ pipeline, env });
   </script>
 
   <style>
     :root {
-      --bg-paper: #F4F1EA;
-      --bg-elevated: #EAE5D9;
-      --bg-panel: #EFECE4;
-      --ink-dark: #141413;
-      --ink-body: #292826;
-      --ink-muted: #6E6A63;
-      --accent: #C83E2B;
-      --accent-soft: rgba(200, 62, 43, 0.12);
-      --border-hairline: #D5CFC2;
-      --border-strong: #141413;
-      --hi-bg: #f59e0b;
-      --hi-fg: #000000;
-      --hi-active: #C83E2B;
-
-      --font-display: 'Cormorant Garamond', Georgia, serif;
-      --font-voodoo: 'Voodoo', 'Cormorant Garamond', serif;
-      --font-reader: 'Special Elite', 'Courier New', monospace;
-      --font-mono: 'IBM Plex Mono', monospace;
-      --reader-size: 15px;
+      --bg: #f6f3eb;
+      --surface: #fcfaf5;
+      --surface-2: #efeadd;
+      --border: #ddd5c5;
+      --text: #221f1a;
+      --muted: #6f675b;
+      --accent: #7b4b2a;
+      --accent-soft: rgba(123, 75, 42, 0.12);
+      --mark: #f6d56f;
+      --mark-active: #eb8c3b;
+      --shadow: 0 10px 30px rgba(34, 31, 26, 0.08);
+      --reader-font: 'Special Elite', 'Newsreader', Georgia, serif;
+      --reader-size: 1.05rem;
     }
 
     html[data-theme="noir"] {
-      --bg-paper: #0c0c0e;
-      --bg-elevated: #141418;
-      --bg-panel: #111115;
-      --ink-dark: #EAE6DF;
-      --ink-body: #cfcac2;
-      --ink-muted: #78756f;
-      --accent: #ff453a;
-      --accent-soft: rgba(255, 69, 58, 0.16);
-      --border-hairline: #26262b;
-      --border-strong: #EAE6DF;
+      --bg: #0f1115;
+      --surface: #161920;
+      --surface-2: #1e222b;
+      --border: #2c313d;
+      --text: #e6e3da;
+      --muted: #9899a6;
+      --accent: #d49a6a;
+      --accent-soft: rgba(212, 154, 106, 0.14);
+      --mark: #6b5216;
+      --mark-active: #b86722;
+      --shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
+    * { box-sizing: border-box; }
     html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Newsreader', Georgia, serif;
       height: 100%;
-      background-color: var(--bg-paper);
-      color: var(--ink-body);
-      font-family: var(--font-mono);
-      -webkit-font-smoothing: antialiased;
-      overflow: hidden;
     }
 
-    /* Subtle tactile film grain */
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 9999;
-      opacity: 0.03;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    }
-
-    .app-shell {
+    .mono { font-family: 'IBM Plex Mono', monospace; }
+    .reader-shell {
       display: flex;
       flex-direction: column;
       height: 100vh;
-      width: 100vw;
+      overflow: hidden;
     }
 
-    /* ==========================================================================
-       TOP DOSSIER HEADER (HALVED IN IFRAME MODE, SWIRLY VOODOO TITLE)
-       ========================================================================== */
-    .top-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.55rem 1rem;
-      border-bottom: 2px solid var(--border-strong);
-      background: var(--bg-paper);
-      gap: 0.75rem;
-      flex-shrink: 0;
-      z-index: 40;
-    }
-
-    .brand-cluster {
-      display: flex;
-      align-items: center;
-      gap: 0.85rem;
-      min-width: 0;
-    }
-
-    .voodoo-title {
-      font-family: var(--font-voodoo);
-      font-size: 2.1rem;
-      line-height: 1;
-      color: var(--ink-dark);
-      letter-spacing: 0.03em;
-      user-select: none;
-      white-space: nowrap;
-      transition: font-size 0.2s ease;
-    }
-
-    /* In iframe drawer mode, keep the swirly title sleek & halved so it never overwhelms */
-    body.in-iframe .voodoo-title {
-      font-size: 1.35rem;
-    }
-    body.in-iframe .top-bar {
-      padding: 0.35rem 0.75rem;
-    }
-
-    .archive-badge {
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      padding: 0.2rem 0.45rem;
-      border: 1px solid var(--border-hairline);
-      background: var(--bg-elevated);
-      color: var(--ink-muted);
-      white-space: nowrap;
-    }
-    .archive-badge strong { color: var(--accent); }
-
-    .top-controls {
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
-      flex-wrap: wrap;
-    }
-
-    .btn-dossier {
-      font-family: var(--font-mono);
-      font-size: 0.68rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      padding: 0.32rem 0.55rem;
-      background: transparent;
-      color: var(--ink-dark);
-      border: 1px solid var(--border-hairline);
-      cursor: pointer;
-      transition: all 0.15s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      text-decoration: none;
-      white-space: nowrap;
-    }
-    .btn-dossier:hover {
-      border-color: var(--ink-dark);
-      background: var(--bg-elevated);
-    }
-    .btn-dossier.active {
-      background: var(--ink-dark);
-      color: var(--bg-paper);
-      border-color: var(--ink-dark);
-    }
-    .btn-dossier.accent {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-    .btn-dossier.accent:hover,
-    .btn-dossier.accent.active {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    /* ==========================================================================
-       COLLAPSIBLE DREAM-FIELD HERO (AUTO-COLLAPSED IN IFRAME DRAWER)
-       ========================================================================== */
-    .hero-strip {
+    /* Optional Collapsible Dream-Field Banner */
+    #dreamCanvasWrap {
       position: relative;
-      height: 128px;
-      border-bottom: 1px solid var(--border-strong);
-      background: var(--bg-elevated);
+      height: 68px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, var(--surface-2), var(--bg));
       overflow: hidden;
       flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 1.5rem;
       transition: height 0.25s ease;
     }
-    .hero-strip.collapsed {
-      display: none;
-    }
-    #dream-canvas {
-      position: absolute;
-      inset: 0;
+    #dreamCanvasWrap.collapsed { height: 0; border-bottom: none; }
+    #dreamCanvas {
       width: 100%;
       height: 100%;
-      pointer-events: auto;
-      opacity: 0.75;
-    }
-    .hero-overlay {
-      position: relative;
-      z-index: 2;
-      pointer-events: none;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      width: 100%;
-      gap: 1rem;
-    }
-    .hero-headline {
-      font-family: var(--font-display);
-      font-size: clamp(1.35rem, 2.5vw, 2.1rem);
-      font-weight: 700;
-      color: var(--ink-dark);
-      line-height: 1.05;
-      letter-spacing: -0.01em;
-    }
-    .hero-sub {
-      font-size: 0.68rem;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--accent);
-      margin-bottom: 0.25rem;
-    }
-    .hero-telemetry {
-      display: flex;
-      gap: 1.25rem;
-      background: var(--bg-paper);
-      border: 1px solid var(--border-strong);
-      padding: 0.45rem 0.85rem;
-      font-size: 0.68rem;
-      box-shadow: 3px 3px 0 var(--border-hairline);
-    }
-    .telemetry-item span {
       display: block;
-      font-size: 0.58rem;
-      color: var(--ink-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
     }
-    .telemetry-item strong {
-      font-size: 0.88rem;
-      color: var(--ink-dark);
+    .canvas-toggle {
+      position: absolute;
+      right: 12px;
+      bottom: 8px;
+      z-index: 5;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
     }
 
-    /* ==========================================================================
-       MAIN WORKSPACE (SIDEBAR + READER STAGE)
-       ========================================================================== */
-    .workspace {
-      flex: 1;
+    /* Top Control Bar */
+    .topbar {
       display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      z-index: 20;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-right: 6px;
+    }
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--text);
+    }
+    .badge {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .search-cluster {
+      display: flex;
+      align-items: center;
+      flex: 1 1 380px;
+      min-width: 240px;
+      gap: 6px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 4px 8px;
+    }
+    .search-cluster input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      min-width: 110px;
+    }
+
+    .chip-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .btn-chip, .btn-tool {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      border-radius: 7px;
+      padding: 5px 9px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: 'IBM Plex Mono', monospace;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    .btn-chip:hover, .btn-tool:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+    .btn-chip.active, .btn-tool.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* Main Workspace */
+    .workspace {
+      display: flex;
+      flex: 1;
       min-height: 0;
       overflow: hidden;
     }
 
-    /* Left Archive Dossier Sidebar */
+    /* Sidebar Index */
     .sidebar {
-      width: 315px;
-      border-right: 1px solid var(--border-strong);
-      background: var(--bg-panel);
+      width: 320px;
+      max-width: 38vw;
+      border-right: 1px solid var(--border);
+      background: var(--surface);
       display: flex;
       flex-direction: column;
       min-height: 0;
-      flex-shrink: 0;
-      transition: width 0.2s ease;
     }
-    body.in-iframe .sidebar {
-      width: 255px;
-    }
-    .sidebar.hidden-mobile {
-      display: none;
-    }
-
-    .sidebar-section {
-      padding: 0.65rem 0.75rem;
-      border-bottom: 1px solid var(--border-hairline);
-      flex-shrink: 0;
-    }
-
-    /* Search Input & Hit Counter */
-    .search-box-wrap {
-      position: relative;
+    .sidebar-head {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      gap: 8px;
     }
-    .search-input {
-      width: 100%;
-      padding: 0.42rem 4.2rem 0.42rem 0.55rem;
-      font-family: var(--font-mono);
-      font-size: 0.74rem;
-      background: var(--bg-paper);
-      color: var(--ink-dark);
-      border: 1px solid var(--border-strong);
-      outline: none;
-    }
-    .search-input:focus {
-      border-color: var(--accent);
-    }
-    .search-clear {
-      position: absolute;
-      right: 0.35rem;
-      background: none;
-      border: none;
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      color: var(--ink-muted);
-      cursor: pointer;
-      padding: 0.15rem 0.3rem;
-    }
-    .search-clear:hover { color: var(--accent); }
-
-    /* Search Modes + Hit Nav Row */
-    .mode-row {
+    .sidebar-head-top {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 0.25rem;
-      margin-top: 0.45rem;
-      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
     }
-    .mode-group {
+    .tag-row {
       display: flex;
-      gap: 0.25rem;
+      flex-wrap: wrap;
+      gap: 5px;
     }
-    .chip {
-      font-family: var(--font-mono);
-      font-size: 0.62rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 0.18rem 0.42rem;
-      border: 1px solid var(--border-hairline);
-      background: var(--bg-paper);
-      color: var(--ink-muted);
+    .tag-chip {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--muted);
       cursor: pointer;
     }
-    .chip:hover {
-      border-color: var(--ink-dark);
-      color: var(--ink-dark);
-    }
-    .chip.active {
-      background: var(--ink-dark);
-      color: var(--bg-paper);
-      border-color: var(--ink-dark);
-    }
-    .chip.tag-active {
+    .tag-chip.active {
       background: var(--accent);
       color: #fff;
       border-color: var(--accent);
     }
 
-    .hit-nav {
-      display: none;
-      align-items: center;
-      gap: 0.2rem;
-      font-size: 0.62rem;
-    }
-    .hit-nav.visible {
-      display: inline-flex;
-    }
-
-    /* Tag Filters & Analytics Bar */
-    .tag-row {
-      display: flex;
-      gap: 0.25rem;
-      flex-wrap: wrap;
-    }
-
-    /* Scrollable Entry Index */
     .entry-list {
       flex: 1;
       overflow-y: auto;
-      padding: 0.4rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
+      padding: 6px;
     }
-    .entry-item {
-      text-align: left;
-      padding: 0.5rem 0.6rem;
-      background: var(--bg-paper);
-      border: 1px solid var(--border-hairline);
+    .entry-card {
+      padding: 10px 11px;
+      border-radius: 9px;
+      border: 1px solid transparent;
       cursor: pointer;
-      transition: all 0.12s ease;
-      font-family: var(--font-mono);
+      margin-bottom: 4px;
+      transition: background 0.14s ease, border-color 0.14s ease;
     }
-    .entry-item:hover {
-      border-color: var(--ink-dark);
+    .entry-card:hover {
+      background: var(--surface-2);
     }
-    .entry-item.active {
-      border-left: 3px solid var(--accent);
-      background: var(--bg-elevated);
-      border-color: var(--ink-dark);
+    .entry-card.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
     }
-    .entry-date {
-      font-size: 0.72rem;
-      font-weight: 600;
-      color: var(--ink-dark);
+    .entry-card-date {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--accent);
+      margin-bottom: 3px;
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      gap: 0.35rem;
+      gap: 6px;
     }
-    .entry-preview {
-      font-size: 0.64rem;
-      color: var(--ink-muted);
-      white-space: nowrap;
+    .entry-card-snippet {
+      font-size: 13px;
+      line-height: 1.4;
+      color: var(--text);
+      opacity: 0.88;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
       overflow: hidden;
-      text-overflow: ellipsis;
-      margin-top: 0.2rem;
-    }
-    .entry-tags {
-      display: flex;
-      gap: 0.2rem;
-      margin-top: 0.3rem;
-      flex-wrap: wrap;
-    }
-    .mini-tag {
-      font-size: 0.55rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 0.05rem 0.3rem;
-      border: 1px solid var(--border-hairline);
-      color: var(--ink-muted);
-    }
-    .sim-badge {
-      font-size: 0.58rem;
-      color: var(--accent);
-      font-weight: 600;
     }
 
-    /* ==========================================================================
-       PRIVATE NVIDIA AI CONSOLE (SIDEBAR FOOTER)
-       ========================================================================== */
-    .ai-console {
-      border-top: 2px solid var(--border-strong);
-      background: var(--bg-elevated);
-      padding: 0.6rem 0.75rem;
-      flex-shrink: 0;
-    }
-    .ai-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.64rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--ink-dark);
-      margin-bottom: 0.4rem;
-      cursor: pointer;
-    }
-    .ai-header span.priv-pill {
-      font-size: 0.56rem;
-      padding: 0.08rem 0.35rem;
-      border: 1px solid var(--accent);
-      color: var(--accent);
-    }
-    .ai-body {
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
-    }
-    .ai-body.collapsed {
-      display: none;
-    }
-    .ai-input {
-      width: 100%;
-      padding: 0.32rem 0.45rem;
-      font-family: var(--font-mono);
-      font-size: 0.66rem;
-      background: var(--bg-paper);
-      color: var(--ink-dark);
-      border: 1px solid var(--border-hairline);
-    }
-    .ai-btn-row {
-      display: flex;
-      gap: 0.3rem;
-    }
-    .ai-output {
-      max-height: 110px;
-      overflow-y: auto;
-      font-size: 0.66rem;
-      line-height: 1.45;
-      padding: 0.4rem;
-      background: var(--bg-paper);
-      border: 1px solid var(--border-hairline);
-      color: var(--ink-body);
-      white-space: pre-wrap;
-      display: none;
-    }
-    .ai-output.visible {
-      display: block;
-    }
-
-    /* ==========================================================================
-       RIGHT STAGE: ENTRY READER & ANALYTICS OVERLAY
-       ========================================================================== */
-    .reader-stage {
+    /* Reading Pane */
+    .entry-pane {
       flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      min-height: 0;
-      background: var(--bg-paper);
+      overflow-y: auto;
+      padding: 28px clamp(18px, 5vw, 64px) 72px;
+      background: var(--bg);
       position: relative;
     }
-
-    .entry-toolbar {
-      padding: 0.55rem 1.25rem;
-      border-bottom: 1px solid var(--border-hairline);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 0.75rem;
-      background: var(--bg-panel);
-      flex-shrink: 0;
-      flex-wrap: wrap;
-    }
-
-    .entry-meta-title {
-      font-family: var(--font-display);
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: var(--ink-dark);
-      line-height: 1.1;
-    }
-
-    .entry-meta-sub {
-      font-size: 0.64rem;
-      color: var(--ink-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-
-    .reader-scroll {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1.75rem clamp(1.25rem, 4vw, 3.5rem) 4rem;
-    }
-
-    .reader-paper {
-      max-width: 72ch;
+    .entry-container {
+      max-width: 780px;
       margin: 0 auto;
-      font-family: var(--font-reader);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: clamp(22px, 4vw, 42px);
+      box-shadow: var(--shadow);
+    }
+    .entry-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding-bottom: 16px;
+      margin-bottom: 22px;
+      border-bottom: 1px solid var(--border);
+    }
+    .entry-date-title {
+      font-size: 1.45rem;
+      font-weight: 600;
+      margin: 0;
+      color: var(--text);
+    }
+    .entry-meta {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11.5px;
+      color: var(--muted);
+      margin-top: 5px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .entry-body {
+      font-family: var(--reader-font);
       font-size: var(--reader-size);
-      line-height: 1.78;
-      color: var(--ink-body);
+      line-height: 1.82;
+      color: var(--text);
       white-space: pre-wrap;
       word-break: break-word;
     }
-
-    /* Search Highlight Marks */
     mark.search-hit {
-      background: var(--hi-bg);
-      color: var(--hi-fg);
+      background: var(--mark);
+      color: inherit;
       padding: 0 2px;
-      border-radius: 2px;
+      border-radius: 3px;
     }
-    mark.search-hit.current-hit {
-      background: var(--hi-active);
-      color: #ffffff;
-      outline: 2px solid var(--ink-dark);
+    mark.search-hit.active-hit {
+      background: var(--mark-active);
+      color: #fff;
+      outline: 2px solid var(--accent);
     }
 
-    /* Analytics Modal Drawer */
-    .analytics-modal {
-      position: absolute;
+    /* Tag Pills inside Entry */
+    .pill {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10.5px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+    }
+
+    /* Modals & AI Drawer */
+    .modal-backdrop {
+      position: fixed;
       inset: 0;
-      background: rgba(20, 20, 19, 0.72);
-      backdrop-filter: blur(3px);
-      z-index: 50;
+      background: rgba(0, 0, 0, 0.45);
       display: none;
       align-items: center;
       justify-content: center;
-      padding: 1.25rem;
+      z-index: 50;
+      padding: 18px;
     }
-    .analytics-modal.open {
-      display: flex;
-    }
+    .modal-backdrop.open { display: flex; }
     .modal-card {
-      background: var(--bg-paper);
-      border: 2px solid var(--border-strong);
-      width: 100%;
-      max-width: 680px;
-      max-height: 82vh;
+      width: min(760px, 100%);
+      max-height: 85vh;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
       display: flex;
       flex-direction: column;
-      box-shadow: 8px 8px 0 rgba(0,0,0,0.25);
+      overflow: hidden;
     }
     .modal-head {
-      padding: 0.75rem 1rem;
-      border-bottom: 1px solid var(--border-strong);
-      background: var(--bg-elevated);
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
       align-items: center;
-    }
-    .modal-head h3 {
-      font-family: var(--font-display);
-      font-size: 1.25rem;
-      color: var(--ink-dark);
     }
     .modal-body {
-      padding: 1rem;
+      padding: 18px;
       overflow-y: auto;
-      font-size: 0.76rem;
-      line-height: 1.6;
-    }
-    .stat-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.35rem 0.5rem;
-      border-bottom: 1px solid var(--border-hairline);
-      cursor: pointer;
-    }
-    .stat-row:hover {
-      background: var(--bg-elevated);
-    }
-    .stat-bar-wrap {
-      flex: 1;
-      height: 6px;
-      background: var(--border-hairline);
-      margin: 0 0.75rem;
-      position: relative;
-    }
-    .stat-bar-fill {
-      height: 100%;
-      background: var(--accent);
+      font-size: 14px;
+      line-height: 1.55;
     }
 
-    @media (max-width: 720px) {
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .stat-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .stat-card.clickable { cursor: pointer; }
+    .stat-card.clickable:hover { border-color: var(--accent); }
+    .stat-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10.5px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .stat-value {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 1.05rem;
+      font-weight: 500;
+      margin-top: 3px;
+      color: var(--text);
+    }
+    .stat-sub {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .section-title {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      margin: 16px 0 8px;
+    }
+
+    .ai-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: min(440px, 100vw);
+      height: 100vh;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      transform: translateX(100%);
+      transition: transform 0.24s ease;
+      z-index: 60;
+      display: flex;
+      flex-direction: column;
+    }
+    .ai-drawer.open { transform: translateX(0); }
+    .ai-context-row {
+      display: flex;
+      gap: 4px;
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .ai-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .ai-msg {
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      border: 1px solid var(--border);
+    }
+    .ai-msg.user { background: var(--accent-soft); align-self: flex-end; max-width: 90%; }
+    .ai-msg.bot { background: var(--surface-2); align-self: flex-start; max-width: 95%; }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 165px 1fr 56px;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 7px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+    }
+    .bar-row.clickable { cursor: pointer; }
+    .bar-row.clickable:hover > span:first-child { color: var(--accent); text-decoration: underline; }
+    .bar-track {
+      height: 10px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 999px;
+    }
+
+    .guide-row {
+      display: grid;
+      grid-template-columns: 155px 1fr;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .guide-code {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      color: var(--accent);
+    }
+
+    /* Compact Mode / Mobile Adjustments */
+    body.compact-embed #dreamCanvasWrap { display: none; }
+    @media (max-width: 960px) {
+      .workspace { flex-direction: column; }
       .sidebar {
-        position: absolute;
-        z-index: 30;
-        height: calc(100% - 48px);
-        width: 280px;
-        box-shadow: 6px 0 18px rgba(0,0,0,0.25);
+        width: 100%;
+        max-width: 100%;
+        max-height: 280px;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
       }
-      .hero-telemetry { display: none; }
+      .entry-pane { padding: 14px; }
     }
   </style>
 </head>
 <body>
-  <div class="app-shell">
+  <div class="reader-shell">
+    <!-- Ambient Dream-Field Header -->
+    <div id="dreamCanvasWrap">
+      <canvas id="dreamCanvas"></canvas>
+      <button id="canvasToggleBtn" class="canvas-toggle mono" title="Collapse ambient field">hide field</button>
+    </div>
 
-    <!-- TOP DOSSIER HEADER -->
-    <header class="top-bar">
-      <div class="brand-cluster">
-        <button id="toggleSidebarBtn" class="btn-dossier" title="Toggle Index Sidebar">☰ Index</button>
-        <div class="voodoo-title">R3ADER</div>
-        <div id="archiveStatusBadge" class="archive-badge">Syncing Archive...</div>
+    <!-- Top Toolbar -->
+    <header class="topbar">
+      <div class="brand-group">
+        <span class="brand-title">Dreamweaver</span>
+        <span id="entryCountBadge" class="badge">Loading…</span>
+        <span id="searchStatusBadge" class="badge" style="display:none;"></span>
       </div>
 
-      <div class="top-controls">
-        <!-- Analytics Suite -->
-        <button class="btn-dossier" id="btnWords" title="Top Word Frequencies">📊 Words</button>
-        <button class="btn-dossier" id="btnChars" title="Tracked Entities & People">👤 Chars</button>
-        <button class="btn-dossier" id="btnReps" title="Repeated Phrases">🔁 Reps</button>
-        <button class="btn-dossier" id="btnTime" title="Chronological Volume">⏰ Time</button>
+      <div class="search-cluster">
+        <input id="searchBox" type="text" placeholder='Search ("phrase", -exclude, OR, /regex/) — press /' autocomplete="off" />
+        <button class="btn-chip active" data-mode="exact" title='Exact substring, "phrase", AND/OR, -exclude, /regex/'>Exact</button>
+        <button class="btn-chip" data-mode="fuzzy" title="Approximate spelling + synonym expansion">Fuzzy</button>
+        <button class="btn-chip" data-mode="semantic" title="AI meaning search (local MiniLM embeddings)">Semantic</button>
+        <button id="searchGuideBtn" class="btn-tool" title="Search syntax & keyboard shortcuts">?</button>
+      </div>
 
-        <!-- Typography & Theme Controls -->
-        <button class="btn-dossier" id="btnFontFamily" title="Cycle Typeface (Special Elite / Editorial Serif / Mono)">Aa Font</button>
-        <button class="btn-dossier" id="btnFontDown" title="Decrease Text Size">A−</button>
-        <button class="btn-dossier" id="btnFontUp" title="Increase Text Size">A+</button>
-        <button class="btn-dossier" id="btnTheme" title="Toggle Paper / Noir CRT">◐ Theme</button>
-        <button class="btn-dossier" id="btnToggleHero" title="Toggle Interactive Dream-Field Header">◈ Banner</button>
-        <a href="https://wordstar.nexus/reader" target="_blank" rel="noopener" class="btn-dossier accent" id="fullReaderLink">Full Reader ↗</a>
+      <div class="chip-group">
+        <button id="hitPrevBtn" class="btn-tool" title="Previous hit (p)">↑</button>
+        <span id="hitCountBadge" class="badge">0 hits</span>
+        <button id="hitNextBtn" class="btn-tool" title="Next hit (n)">↓</button>
+      </div>
+
+      <div class="chip-group">
+        <button id="randomEntryBtn" class="btn-tool" title="Random entry (R)">⚡</button>
+        <button id="aiToggleBtn" class="btn-tool" title="Open NVIDIA AI Assistant">✨ AI</button>
+        <button id="themeToggleBtn" class="btn-tool" title="Toggle Paper / Noir theme">◐ Paper</button>
+        <select id="fontSelect" class="btn-tool" aria-label="Reading font">
+          <option value="'Special Elite', Georgia, serif">Special Elite</option>
+          <option value="'Newsreader', Georgia, serif">Newsreader</option>
+          <option value="'IBM Plex Mono', monospace">IBM Plex Mono</option>
+        </select>
+        <button id="fontDownBtn" class="btn-tool" title="Decrease font size">A-</button>
+        <button id="fontUpBtn" class="btn-tool" title="Increase font size">A+</button>
+      </div>
+
+      <div class="chip-group">
+        <button id="statsWordsBtn" class="btn-tool">📊 Words</button>
+        <button id="statsCharsBtn" class="btn-tool">👤 Chars</button>
+        <button id="statsRepsBtn" class="btn-tool">🔁 Reps</button>
+        <button id="statsTimeBtn" class="btn-tool">⏰ Time</button>
       </div>
     </header>
 
-    <!-- INTERACTIVE CANVAS HERO (AUTO-COLLAPSED WHEN EMBEDDED IN DREAMWEAVER IFRAME) -->
-    <section id="heroStrip" class="hero-strip">
-      <canvas id="dream-canvas"></canvas>
-      <div class="hero-overlay">
-        <div>
-          <div class="hero-sub">CHRONOLOGICAL STREAM // DUAL-SOURCE MERGE</div>
-          <div class="hero-headline">The Dreamweaver Dossier</div>
-        </div>
-        <div class="hero-telemetry">
-          <div class="telemetry-item">
-            <span>Entries</span>
-            <strong id="statEntries">—</strong>
-          </div>
-          <div class="telemetry-item">
-            <span>Total Words</span>
-            <strong id="statWords">—</strong>
-          </div>
-          <div class="telemetry-item">
-            <span>Feed Mode</span>
-            <strong id="statSourceMode">Dual-Sync</strong>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- MAIN WORKSPACE -->
+    <!-- Main Workspace -->
     <div class="workspace">
-
-      <!-- LEFT SIDEBAR: SEARCH, MODES, TAGS, ENTRY LIST, PRIVATE NVIDIA AI -->
-      <aside id="sidebar" class="sidebar">
-        <!-- Search & Modes -->
-        <div class="sidebar-section">
-          <div class="search-box-wrap">
-            <input type="text" id="searchInput" class="search-input" placeholder="Search archive (/ to focus)..." />
-            <button id="clearSearchBtn" class="search-clear" title="Clear Search">✕</button>
-          </div>
-
-          <div class="mode-row">
-            <div class="mode-group">
-              <button class="chip active" data-mode="exact" id="modeExact">Exact</button>
-              <button class="chip" data-mode="fuzzy" id="modeFuzzy">Fuzzy</button>
-              <button class="chip" data-mode="semantic" id="modeSemantic" title="Local HuggingFace MiniLM Embeddings">🧠 Semantic</button>
-            </div>
-
-            <!-- Hit Jumper (n / p) -->
-            <div id="hitNav" class="hit-nav">
-              <span id="hitCountLabel">0/0</span>
-              <button class="chip" id="prevHitBtn" title="Previous Hit (p)">↑</button>
-              <button class="chip" id="nextHitBtn" title="Next Hit (n)">↓</button>
+      <aside class="sidebar">
+        <div class="sidebar-head">
+          <div class="sidebar-head-top">
+            <span class="mono" style="font-size:11px; color:var(--muted);">FILTERS & INDEX</span>
+            <div style="display:flex; gap:5px; align-items:center;">
+              <button id="sortToggleBtn" class="btn-tool" style="padding:2px 7px; font-size:11px;" title="Cycle sort order (Archive / Newest / Oldest)">⇅ Archive</button>
+              <span id="sidebarCount" class="badge">0</span>
             </div>
           </div>
-        </div>
-
-        <!-- Category Tag Filters -->
-        <div class="sidebar-section">
-          <div class="tag-row" id="tagFilterRow">
-            <button class="chip tag-active" data-tag="all">All</button>
-            <button class="chip" data-tag="dream">💭 Dream</button>
-            <button class="chip" data-tag="book">📚 Book</button>
-            <button class="chip" data-tag="film">🎬 Film</button>
-            <button class="chip" data-tag="lyric">🎵 Lyric</button>
-            <button class="chip" data-tag="poem">✒️ Poem</button>
+          <div id="tagFilters" class="tag-row">
+            <button class="tag-chip active" data-tag="all">All</button>
+            <button class="tag-chip" data-tag="dream">🌙 Dream</button>
+            <button class="tag-chip" data-tag="book">📖 Book</button>
+            <button class="tag-chip" data-tag="film">🎬 Film</button>
+            <button class="tag-chip" data-tag="lyric">🎵 Lyric</button>
+            <button class="tag-chip" data-tag="poem">✒️ Poem</button>
           </div>
         </div>
-
-        <!-- Scrollable Entries List -->
-        <div id="entryList" class="entry-list">
-          <div style="padding:1rem; font-size:0.72rem; color:var(--ink-muted);">Loading Dreamweaver stream...</div>
-        </div>
-
-        <!-- PRIVATE NVIDIA AI WORKER CONSOLE (NO PUTER) -->
-        <div class="ai-console">
-          <div class="ai-header" id="aiToggleHeader">
-            <span>⚡ Private NVIDIA AI</span>
-            <span class="priv-pill">Key-Local ▾</span>
-          </div>
-          <div class="ai-body" id="aiBody">
-            <input type="password" id="nvidiaKeyInput" class="ai-input" placeholder="nvapi-... (saved locally in browser)" />
-            <input type="text" id="aiPromptInput" class="ai-input" placeholder="Ask about this entry (or leave blank to summarize)..." />
-            <div class="ai-btn-row">
-              <button class="btn-dossier accent" id="askAiBtn" style="flex:1; justify-content:center;">Analyze Entry</button>
-              <button class="btn-dossier" id="clearAiBtn">Clear</button>
-            </div>
-            <div id="aiOutput" class="ai-output"></div>
-          </div>
-        </div>
+        <div id="entryList" class="entry-list"></div>
       </aside>
 
-      <!-- RIGHT READER STAGE -->
-      <main class="reader-stage">
-        <div class="entry-toolbar">
-          <div>
-            <div class="entry-meta-title" id="activeEntryDate">Select an Entry</div>
-            <div class="entry-meta-sub" id="activeEntryMeta">Waiting for archive stream...</div>
-          </div>
-          <div style="display:flex; gap:0.35rem; align-items:center;">
-            <button class="btn-dossier" id="prevEntryBtn" title="Newer Entry">← Newer</button>
-            <button class="btn-dossier" id="nextEntryBtn" title="Older Entry">Older →</button>
-            <button class="btn-dossier" id="copyEntryBtn" title="Copy Entry Text">Copy</button>
-          </div>
-        </div>
-
-        <div class="reader-scroll" id="readerScroll">
-          <article id="readerContent" class="reader-paper">Initializing R3ADER archive...</article>
-        </div>
-
-        <!-- ANALYTICS MODAL -->
-        <div id="analyticsModal" class="analytics-modal">
-          <div class="modal-card">
-            <div class="modal-head">
-              <h3 id="modalTitle">Archive Telemetry</h3>
-              <button class="btn-dossier" id="closeModalBtn">✕ Close</button>
+      <main class="entry-pane" id="entryPane">
+        <article class="entry-container">
+          <header class="entry-header">
+            <div>
+              <h1 id="entryDateHeading" class="entry-date-title">Loading Archive…</h1>
+              <div id="entryMetaLine" class="entry-meta"></div>
             </div>
-            <div class="modal-body" id="modalBody"></div>
-          </div>
-        </div>
+            <div class="chip-group">
+              <button id="copyEntryBtn" class="btn-tool" title="Copy current entry">Copy</button>
+              <button id="prevEntryBtn" class="btn-tool" title="Previous entry (←)">← Prev</button>
+              <button id="nextEntryBtn" class="btn-tool" title="Next entry (→)">Next →</button>
+            </div>
+          </header>
+          <div id="entryBody" class="entry-body">Fetching dreamweaver-current.txt and dreamweaver.txt…</div>
+        </article>
       </main>
-
     </div>
   </div>
 
+  <!-- Analytics / Guide Modal -->
+  <div id="analyticsModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-head">
+        <strong id="modalTitle" class="mono">Analytics</strong>
+        <button id="modalCloseBtn" class="btn-tool">Close</button>
+      </div>
+      <div id="modalBody" class="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- NVIDIA AI Drawer -->
+  <aside id="aiDrawer" class="ai-drawer">
+    <div class="modal-head">
+      <strong class="mono">✨ Dreamweaver AI Console</strong>
+      <button id="aiCloseBtn" class="btn-tool">Close</button>
+    </div>
+    <div style="padding:10px 14px; border-bottom:1px solid var(--border); display:flex; gap:6px; align-items:center;">
+      <input id="nvidiaKeyInput" type="password" placeholder="NVIDIA API Key (nvapi-...)" class="mono" style="flex:1; padding:6px 8px; border:1px solid var(--border); border-radius:7px; background:var(--bg); color:var(--text); font-size:12px;" />
+      <button id="saveKeyBtn" class="btn-tool">Save</button>
+    </div>
+    <div class="ai-context-row">
+      <span class="mono" style="font-size:11px; color:var(--muted); margin-right:4px;">Context:</span>
+      <button class="btn-chip active" data-ctx="current" title="Send currently viewed entry">Current</button>
+      <button class="btn-chip" data-ctx="results" title="Send top matching search results">Results</button>
+      <button class="btn-chip" data-ctx="outline" title="Send archive dates, titles & tags">Outline</button>
+      <button class="btn-chip" data-ctx="none" title="No entry context">None</button>
+    </div>
+    <div id="aiChatBody" class="ai-messages">
+      <div class="ai-msg bot">Ask about themes, symbols, people, or patterns in your active entry, filtered search results, or archive outline.</div>
+    </div>
+    <div style="padding:12px; border-top:1px solid var(--border); display:flex; gap:8px;">
+      <textarea id="aiPromptInput" rows="2" placeholder="Ask about this dream, motif, or search results… (Enter to send)" style="flex:1; padding:8px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text); font-family:inherit; font-size:13px; resize:none;"></textarea>
+      <button id="aiSendBtn" class="btn-chip active">Send</button>
+    </div>
+  </aside>
+
   <script>
-    /* ==========================================================================
-       1. IFRAME DETECTION (COMPACT MODE INSIDE DREAMWEAVER DRAWER)
-       ========================================================================== */
-    const isEmbedded = (window.self !== window.top);
-    const heroStrip = document.getElementById('heroStrip');
-    if (isEmbedded) {
-      document.body.classList.add('in-iframe');
-      heroStrip.classList.add('collapsed');
-    }
+    const ARCHIVE_SOURCES = [
+      { url: 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/dreamweaver-current.txt', label: 'current' },
+      { url: 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/dreamweaver.txt', label: 'archive' }
+    ];
 
-    document.getElementById('btnToggleHero').addEventListener('click', () => {
-      heroStrip.classList.toggle('collapsed');
-    });
+    const NVIDIA_WORKER_URL = 'https://nvidia-cors-proxy.ghostm68.workers.dev/?url=';
+    const NVIDIA_API_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
+    const NVIDIA_MODELS = [
+      'nvidia/nemotron-3.5-lightning-30b-a3b',
+      'nvidia/llama-3.3-nemotron-super-49b-v1.5',
+      'nvidia/llama-3.1-nemotron-70b-instruct'
+    ];
 
-    /* ==========================================================================
-       2. DUAL-FILE ARCHIVE FETCH (dreamweaver-current.txt + dreamweaver.txt)
-       ========================================================================== */
-    const CURRENT_URL = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/dreamweaver-current.txt';
-    const ARCHIVE_URL = 'https://raw.githubusercontent.com/ghostm68/eg/refs/heads/main/dreamweaver.txt';
-    const NVIDIA_WORKER_URL = 'https://lively-limitless.inkrealm.workers.dev/?url=https://integrate.api.nvidia.com/v1/chat/completions';
+    const DATE_REGEX = /^(?:\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}|(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4}|\d{1,2}\s+(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{4})\b/i;
+
+    const MONTH_MAP = {
+      jan: '01', january: '01',
+      feb: '02', february: '02',
+      mar: '03', march: '03',
+      apr: '04', april: '04',
+      may: '05',
+      jun: '06', june: '06',
+      jul: '07', july: '07',
+      aug: '08', august: '08',
+      sep: '09', sept: '09', september: '09',
+      oct: '10', october: '10',
+      nov: '11', november: '11',
+      dec: '12', december: '12'
+    };
+
+    const TAG_PATTERNS = {
+      book: /\b(book|novel|author|chapter|read|reading|library|published|literature|paperback|hardcover)\b/i,
+      film: /\b(film|movie|cinema|director|watched|screenplay|documentary|theatre|theater|dvd|actor)\b/i,
+      dream: /\b(dream|dreamt|dreaming|nightmare|asleep|slumber|lucid|awoke|woke up|rem sleep|dreamscape)\b/i,
+      lyric: /\b(lyric|lyrics|chorus|verse|melody|song|album|track|singing|guitar|piano)\b/i,
+      poem: /\b(poem|poetry|poet|stanza|sonnet|haiku|rhyme|ode|elegy|verse)\b/i
+    };
+
+    const SYNONYMS = {
+      dream: ['dream', 'dreamt', 'dreaming', 'nightmare', 'vision', 'sleep', 'lucid'],
+      nightmare: ['nightmare', 'dream', 'terror', 'sleep'],
+      sleep: ['sleep', 'asleep', 'slumber', 'dream', 'woke', 'awoke'],
+      book: ['book', 'novel', 'read', 'reading', 'page', 'chapter', 'story', 'author'],
+      novel: ['novel', 'book', 'fiction', 'story', 'read'],
+      film: ['film', 'movie', 'cinema', 'watch', 'watched', 'director'],
+      movie: ['movie', 'film', 'cinema', 'watch', 'watched'],
+      write: ['write', 'writing', 'wrote', 'written', 'poem', 'lyric', 'journal'],
+      read: ['read', 'reading', 'book', 'novel', 'page'],
+      music: ['music', 'song', 'lyric', 'lyrics', 'melody', 'album', 'band'],
+      poem: ['poem', 'poetry', 'verse', 'stanza', 'rhyme'],
+      memory: ['memory', 'remember', 'remembered', 'past', 'nostalgia', 'forgot']
+    };
+
+    const STOP_WORDS = new Set([
+      'about','above','after','again','against','almost','alone','along','already','also','although','always','among',
+      'another','around','asked','away','back','because','been','before','being','below','between','both','came',
+      'cannot','could','didnt','does','doing','done','down','during','each','either','else','enough','even','ever',
+      'every','everything','feel','felt','find','first','from','further','gave','getting','give','going','gone','good',
+      'great','hadnt','hasnt','have','having','here','herself','himself','into','just','keep','kept','knew','know',
+      'last','later','least','less','like','little','long','look','looked','looking','made','make','making','many',
+      'maybe','mean','might','more','most','much','must','myself','near','never','next','night','none','nothing',
+      'once','only','onto','other','others','ought','ourselves','over','own','part','perhaps','place','please',
+      'quite','rather','really','right','said','same','saw','saying','says','seem','seemed','seen','several',
+      'shall','she','should','since','some','someone','something','sometimes','soon','still','such','take','taken',
+      'tell','than','that','their','them','themselves','then','there','these','they','thing','things','think',
+      'this','those','though','thought','through','thus','time','today','together','told','took','toward','under',
+      'until','upon','very','want','wanted','wasnt','water','well','went','were','what','whatever','when','where',
+      'whether','which','while','whom','whose','will','with','within','without','would','wrote','years','yesterday',
+      'your','yourself','the','and','for','are','but','not','you','all','can','had','her','was','one','our','out',
+      'day','get','has','him','his','how','man','new','now','old','see','two','way','who','boy','did','its','let',
+      'put','say','too','use'
+    ]);
+
+    const NAME_EXCLUSIONS = new Set([
+      'The','And','But','For','Nor','Yet','This','That','These','Those','There','Here','Then','When','Where','While',
+      'Which','What','Who','Whom','Whose','Why','How','With','From','Into','Onto','Upon','Over','Under','After',
+      'Before','During','Until','Since','Because','Although','Though','Unless','Except','About','Above','Below',
+      'Between','Among','Through','Across','Around','Behind','Beside','Near','Inside','Outside','Without','Within',
+      'Just','Only','Even','Still','Also','Very','Much','More','Most','Some','Many','Such','Each','Every','Both',
+      'Either','Neither','None','Nothing','Everything','Something','Someone','Anyone','Everyone','All','Any','Other',
+      'Another','Same','Different','First','Last','Next','Once','Twice','Soon','Later','Today','Yesterday','Tomorrow',
+      'Now','Never','Always','Often','Sometimes','Usually','Maybe','Perhaps','Actually','Really','Quite','Rather',
+      'Well','Yes','Not','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','She','Her','Hers',
+      'His','Him','They','Them','Their','You','Your','Our','Ours','Its','Prologue','Unindexed','Dream','Dreams',
+      'Book','Books','Film','Movie','Poem','Lyric','Chapter','Part','Note','Notes','Entry','Page',
+      'January','February','March','April','May','June','July','August','September','October','November','December',
+      'Jan','Feb','Mar','Apr','Jun','Jul','Aug','Sep','Sept','Oct','Nov','Dec',
+      'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'
+    ]);
 
     let allEntries = [];
     let filteredEntries = [];
-    let currentEntryIndex = 0;
-    let searchMode = 'exact';
+    let activeEntryId = null;
     let activeTag = 'all';
+    let searchMode = 'exact';
+    let sortMode = 'archive'; // 'archive' | 'newest' | 'oldest'
+    let aiContextMode = 'current'; // 'current' | 'results' | 'outline' | 'none'
     let fuseInstance = null;
 
-    // Semantic Search State (MiniLM)
-    let extractor = null;
-    let entryEmbeddings = {};
-
-    // Hit Navigation State
     let hitElements = [];
     let activeHitIdx = -1;
+    let pendingHitTarget = null; // null | 'first' | 'last' | number
+    let searchRequestId = 0;
 
-    // Tag Regex Patterns (Preserved from your original reader.html)
-    const TAG_PATTERNS = {
-      book: /\b(book|novel|read|reading|author|pages|chapter|literature|library|poem|poetry)\b/i,
-      film: /\b(film|movie|cinema|watch|watched|director|scene|actor|screen|documentary)\b/i,
-      dream: /\b(dream|dreamt|dreamed|nightmare|sleep|woke|subconscious|surreal|vision)\b/i,
-      lyric: /\b(song|lyric|album|music|track|band|melody|singing|chorus|verse)\b/i,
-      poem: /\b(poem|stanza|sonnet|verse|haiku|ode|rhyme|poet)\b/i
-    };
+    let semanticExtractor = null;
+    let semanticLoadPromise = null;
+    let semanticEnabled = false;
 
-    const DATE_REGEX = /^\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}|\d{4}[\/\-\.]\d{1,2}[\/\-\.]\d{1,2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{2,4})\b/i;
+    const $ = id => document.getElementById(id);
 
-    async function fetchTextSafe(url) {
-      try {
-        const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) return null;
-        return await res.text();
-      } catch (e) {
-        return null;
-      }
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
 
-    function parseRawTextIntoEntries(rawText, sourceLabel) {
-      if (!rawText) return [];
-      const lines = rawText.replace(/\r\n/g, '\n').split('\n');
-      const parsed = [];
-      let current = null;
+    function escapeRegExp(str) {
+      return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
 
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        const dateMatch = line.match(DATE_REGEX);
-
-        if (dateMatch) {
-          if (current && current.content.trim().length > 0) {
-            parsed.push(finalizeEntry(current));
-          }
-          current = {
-            date: dateMatch[1].trim(),
-            headerLine: line.trim(),
-            content: line + '\n',
-            source: sourceLabel
-          };
+    function yieldToUI() {
+      return new Promise(resolve => {
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(() => resolve(), { timeout: 50 });
         } else {
-          if (!current) {
-            current = {
-              date: 'Prologue / Unindexed',
-              headerLine: 'Opening Fragment',
-              content: line + '\n',
-              source: sourceLabel
-            };
-          } else {
-            current.content += line + '\n';
-          }
+          setTimeout(resolve, 0);
         }
-      }
-      if (current && current.content.trim().length > 0) {
-        parsed.push(finalizeEntry(current));
-      }
-      return parsed;
+      });
     }
 
-    function finalizeEntry(entryObj) {
-      const text = entryObj.content.trim();
+    function setSearchStatus(text, show = true) {
+      const badge = $('searchStatusBadge');
+      if (!badge) return;
+      badge.textContent = text;
+      badge.style.display = show && text ? 'inline-flex' : 'none';
+    }
+
+    function syncModeChips() {
+      document.querySelectorAll('.mode-chip, .btn-chip[data-mode]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === searchMode);
+      });
+    }
+
+    function detectTags(text) {
       const tags = [];
       for (const [tag, regex] of Object.entries(TAG_PATTERNS)) {
         if (regex.test(text)) tags.push(tag);
       }
-      const words = text.split(/\s+/).filter(Boolean).length;
-      const preview = text.replace(entryObj.headerLine, '').trim().slice(0, 95) || entryObj.headerLine;
-      return {
-        id: entryObj.date + '::' + text.slice(0, 48),
-        date: entryObj.date,
-        content: text,
-        preview,
-        tags,
-        words,
-        source: entryObj.source
-      };
+      return tags;
+    }
+
+    function parseEntryDate(dateStr) {
+      if (!dateStr) return null;
+      const s = dateStr.trim();
+
+      // YYYY-MM-DD or YYYY/MM/DD
+      let m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})\b/);
+      if (m) {
+        const y = m[1], mo = m[2].padStart(2, '0'), d = m[3].padStart(2, '0');
+        return { iso: `${y}-${mo}-${d}`, year: y, month: `${y}-${mo}`, ts: Date.UTC(+y, +mo - 1, +d) };
+      }
+
+      // DD-MM-YYYY or MM-DD-YYYY (heuristic: if first > 12 -> DD-MM-YYYY)
+      m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})\b/);
+      if (m) {
+        let a = parseInt(m[1], 10);
+        let b = parseInt(m[2], 10);
+        let y = m[3].length === 2 ? (parseInt(m[3], 10) > 50 ? '19' + m[3] : '20' + m[3]) : m[3];
+        let d, mo;
+        if (a > 12) { d = a; mo = b; }
+        else if (b > 12) { mo = a; d = b; }
+        else { d = a; mo = b; }
+        const moStr = String(mo).padStart(2, '0');
+        const dStr = String(d).padStart(2, '0');
+        return { iso: `${y}-${moStr}-${dStr}`, year: y, month: `${y}-${moStr}`, ts: Date.UTC(+y, mo - 1, d) };
+      }
+
+      // Month DD, YYYY
+      m = s.match(/^(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2}),?\s+(\d{4})\b/i);
+      if (m) {
+        const mo = MONTH_MAP[m[1].toLowerCase()];
+        const d = m[2].padStart(2, '0');
+        const y = m[3];
+        if (mo) return { iso: `${y}-${mo}-${d}`, year: y, month: `${y}-${mo}`, ts: Date.UTC(+y, +mo - 1, +d) };
+      }
+
+      // DD Month YYYY
+      m = s.match(/^(\d{1,2})\s+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{4})\b/i);
+      if (m) {
+        const d = m[1].padStart(2, '0');
+        const mo = MONTH_MAP[m[2].toLowerCase()];
+        const y = m[3];
+        if (mo) return { iso: `${y}-${mo}-${d}`, year: y, month: `${y}-${mo}`, ts: Date.UTC(+y, +mo - 1, +d) };
+      }
+
+      return null;
+    }
+
+    function parseArchiveText(rawText, sourceLabel) {
+      const lines = rawText.replace(/\r\n/g, '\n').split('\n');
+      const parsed = [];
+      let current = null;
+      let leadingLines = [];
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (DATE_REGEX.test(trimmed)) {
+          if (current) {
+            parsed.push(current);
+          } else if (leadingLines.join('\n').trim().length > 0) {
+            parsed.push({
+              date: 'Prologue / Unindexed',
+              lines: leadingLines,
+              source: sourceLabel
+            });
+          }
+          current = { date: trimmed, lines: [], source: sourceLabel };
+        } else {
+          if (current) current.lines.push(line);
+          else leadingLines.push(line);
+        }
+      }
+
+      if (current) {
+        parsed.push(current);
+      } else if (leadingLines.join('\n').trim().length > 0) {
+        parsed.push({
+          date: 'Unindexed Archive',
+          lines: leadingLines,
+          source: sourceLabel
+        });
+      }
+
+      return parsed
+        .map(item => {
+          const text = item.lines.join('\n').trim();
+          const firstLine = (text.split('\n').find(l => l.trim().length > 0) || item.date).trim().slice(0, 90);
+          const words = text ? text.split(/\s+/).filter(Boolean) : [];
+          return {
+            date: item.date,
+            parsedDate: parseEntryDate(item.date),
+            title: firstLine,
+            content: text,
+            source: item.source,
+            tags: detectTags(text),
+            wordCount: words.length,
+            charCount: text.length
+          };
+        })
+        .filter(e => e.content.length > 0);
+    }
+
+    async function fetchTextSafe(url) {
+      try {
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) return '';
+        return await res.text();
+      } catch {
+        return '';
+      }
+    }
+
+    function buildFuseIndex() {
+      if (typeof Fuse === 'undefined') {
+        fuseInstance = null;
+        return;
+      }
+      fuseInstance = new Fuse(allEntries, {
+        keys: [
+          { name: 'date', weight: 0.2 },
+          { name: 'title', weight: 0.3 },
+          { name: 'content', weight: 0.65 }
+        ],
+        threshold: 0.38,
+        ignoreLocation: true,
+        minMatchCharLength: 2,
+        includeScore: true,
+        shouldSort: true
+      });
     }
 
     async function loadArchive() {
-      const badge = document.getElementById('archiveStatusBadge');
-      badge.innerHTML = 'Fetching Stream...';
+      $('entryCountBadge').textContent = 'Fetching…';
+      const [currentRaw, archiveRaw] = await Promise.all(
+        ARCHIVE_SOURCES.map(src => fetchTextSafe(src.url))
+      );
 
-      // Fetch both dreamweaver-current.txt (optional fast file) and dreamweaver.txt in parallel
-      const [currentTxt, archiveTxt] = await Promise.all([
-        fetchTextSafe(CURRENT_URL),
-        fetchTextSafe(ARCHIVE_URL)
-      ]);
+      const currentEntries = currentRaw ? parseArchiveText(currentRaw, 'current') : [];
+      const archiveEntries = archiveRaw ? parseArchiveText(archiveRaw, 'archive') : [];
 
-      const currentEntries = parseRawTextIntoEntries(currentTxt, 'current');
-      const archiveEntries = parseRawTextIntoEntries(archiveTxt, 'archive');
-
-      // Deduplicate if an entry exists in both files
       const seen = new Set();
-      const merged = [];
+      const combined = [];
+      let idx = 0;
+
       for (const item of [...currentEntries, ...archiveEntries]) {
-        if (!seen.has(item.id)) {
-          seen.add(item.id);
-          merged.push(item);
-        }
+        const sig = `${item.date}::${item.content.slice(0, 64)}`;
+        if (seen.has(sig)) continue;
+        seen.add(sig);
+        combined.push({
+          ...item,
+          id: `entry-${idx}`,
+          orderIndex: idx
+        });
+        idx++;
       }
 
-      allEntries = merged;
+      allEntries = combined;
+      buildFuseIndex();
+
+      $('entryCountBadge').textContent = `${allEntries.length} entries`;
+
+      if (allEntries.length === 0) {
+        $('entryDateHeading').textContent = 'No Entries Loaded';
+        $('entryBody').textContent = 'Could not fetch dreamweaver-current.txt or dreamweaver.txt. Check your network connection and reload.';
+        return;
+      }
+
       filteredEntries = [...allEntries];
-
-      // Build Fuzzy Search Index
-      fuseInstance = new Fuse(allEntries, {
-        keys: ['date', 'content'],
-        includeScore: true,
-        threshold: 0.38,
-        ignoreLocation: true
-      });
-
-      const totalWords = allEntries.reduce((acc, e) => acc + e.words, 0);
-      const hasCurrent = Boolean(currentTxt && currentTxt.trim().length > 0);
-
-      badge.innerHTML = hasCurrent
-        ? `<strong>${allEntries.length}</strong> Entries (Current + Archive)`
-        : `<strong>${allEntries.length}</strong> Entries`;
-
-      document.getElementById('statEntries').textContent = allEntries.length.toLocaleString();
-      document.getElementById('statWords').textContent = totalWords.toLocaleString();
-      document.getElementById('statSourceMode').textContent = hasCurrent ? 'Current + Archive' : 'Primary Archive';
-
-      renderEntryList();
-      if (filteredEntries.length > 0) {
-        selectEntry(0);
-      }
+      applySort(filteredEntries);
+      activeEntryId = filteredEntries[0]?.id || null;
+      renderSidebar();
+      renderActiveEntry();
     }
 
-    /* ==========================================================================
-       3. RENDER SIDEBAR LIST & MAIN ENTRY VIEW
-       ========================================================================== */
-    function renderEntryList() {
-      const listEl = document.getElementById('entryList');
-      if (filteredEntries.length === 0) {
-        listEl.innerHTML = `<div style="padding:1rem; font-size:0.7rem; color:var(--ink-muted);">No matching entries in dossier.</div>`;
-        return;
-      }
+    /* ---------------- Search Engines ---------------- */
 
-      const fragment = document.createDocumentFragment();
-      filteredEntries.forEach((entry, idx) => {
-        const item = document.createElement('div');
-        item.className = 'entry-item' + (idx === currentEntryIndex ? ' active' : '');
-        const simHtml = entry._similarity ? `<span class="sim-badge">${Math.round(entry._similarity * 100)}% match</span>` : '';
-        const tagsHtml = entry.tags.map(t => `<span class="mini-tag">${t}</span>`).join('');
-
-        item.innerHTML = `
-          <div class="entry-date">
-            <span>${escapeHtml(entry.date)}</span>
-            ${simHtml}
-          </div>
-          <div class="entry-preview">${escapeHtml(entry.preview)}</div>
-          ${tagsHtml ? `<div class="entry-tags">${tagsHtml}</div>` : ''}
-        `;
-        item.addEventListener('click', () => selectEntry(idx));
-        fragment.appendChild(item);
-      });
-
-      listEl.innerHTML = '';
-      listEl.appendChild(fragment);
-    }
-
-    function selectEntry(idx) {
-      if (idx < 0 || idx >= filteredEntries.length) return;
-      currentEntryIndex = idx;
-      const entry = filteredEntries[idx];
-
-      // Update active state in sidebar
-      const items = document.querySelectorAll('.entry-item');
-      items.forEach((el, i) => el.classList.toggle('active', i === idx));
-
-      document.getElementById('activeEntryDate').textContent = entry.date;
-      document.getElementById('activeEntryMeta').textContent =
-        `${entry.words.toLocaleString()} words // ${entry.tags.length ? entry.tags.join(' · ') : 'untagged'} // source: ${entry.source}`;
-
-      renderEntryContentWithHighlights(entry.content);
-    }
-
-    function renderEntryContentWithHighlights(rawContent) {
-      const readerEl = document.getElementById('readerContent');
-      const query = document.getElementById('searchInput').value.trim();
-
-      if (!query || searchMode === 'semantic') {
-        readerEl.textContent = rawContent;
-        updateHitNav([]);
-        return;
-      }
-
-      const escapedText = escapeHtml(rawContent);
-      const terms = query.split(/\s+/).filter(t => t.length > 1).map(escapeRegExp);
-      if (terms.length === 0) {
-        readerEl.textContent = rawContent;
-        updateHitNav([]);
-        return;
-      }
-
-      const regex = new RegExp(`(${terms.join('|')})`, 'gi');
-      readerEl.innerHTML = escapedText.replace(regex, `<mark class="search-hit">$1</mark>`);
-
-      const marks = Array.from(readerEl.querySelectorAll('mark.search-hit'));
-      updateHitNav(marks);
-    }
-
-    function updateHitNav(marks) {
-      hitElements = marks;
-      const nav = document.getElementById('hitNav');
-      const label = document.getElementById('hitCountLabel');
-
-      if (hitElements.length === 0) {
-        nav.classList.remove('visible');
-        activeHitIdx = -1;
-        return;
-      }
-
-      nav.classList.add('visible');
-      activeHitIdx = 0;
-      scrollToHit(0);
-    }
-
-    function scrollToHit(index) {
-      if (hitElements.length === 0) return;
-      hitElements.forEach(el => el.classList.remove('current-hit'));
-      activeHitIdx = (index + hitElements.length) % hitElements.length;
-      const target = hitElements[activeHitIdx];
-      target.classList.add('current-hit');
-      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      document.getElementById('hitCountLabel').textContent = `${activeHitIdx + 1}/${hitElements.length}`;
-    }
-
-    document.getElementById('nextHitBtn').addEventListener('click', () => scrollToHit(activeHitIdx + 1));
-    document.getElementById('prevHitBtn').addEventListener('click', () => scrollToHit(activeHitIdx - 1));
-
-    /* ==========================================================================
-       4. SEARCH (EXACT, FUZZY, & SEMANTIC HUGGINGFACE MINILM) + TAG FILTERS
-       ========================================================================== */
-    async function applyFilters() {
-      const query = document.getElementById('searchInput').value.trim();
-      let basePool = allEntries;
-
-      if (activeTag !== 'all') {
-        basePool = basePool.filter(e => e.tags.includes(activeTag));
-      }
-
-      // Clear previous semantic similarity scores
-      basePool.forEach(e => delete e._similarity);
-
-      if (!query) {
-        filteredEntries = [...basePool];
-        currentEntryIndex = 0;
-        renderEntryList();
-        if (filteredEntries.length) selectEntry(0);
-        return;
-      }
-
-      if (searchMode === 'exact') {
-        const qLower = query.toLowerCase();
-        filteredEntries = basePool.filter(e =>
-          e.content.toLowerCase().includes(qLower) || e.date.toLowerCase().includes(qLower)
-        );
-      } else if (searchMode === 'fuzzy') {
-        const results = fuseInstance.search(query);
-        const allowedIds = new Set(basePool.map(e => e.id));
-        filteredEntries = results.map(r => r.item).filter(item => allowedIds.has(item.id));
-      } else if (searchMode === 'semantic') {
-        await runSemanticSearch(query, basePool);
-        return;
-      }
-
-      currentEntryIndex = 0;
-      renderEntryList();
-      if (filteredEntries.length) selectEntry(0);
-    }
-
-    async function runSemanticSearch(query, pool) {
-      const badge = document.getElementById('archiveStatusBadge');
-      try {
-        if (!extractor) {
-          badge.innerHTML = `<strong>🧠 Loading MiniLM Model...</strong>`;
-          extractor = await window.transformersPipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+    // Supports /regex/flags, "exact phrases", AND, OR, -exclude
+    function parseSearchQuery(raw) {
+      const q = raw.trim();
+      const regexMatch = q.match(/^\/(.+)\/([gimsuy]*)$/);
+      if (regexMatch) {
+        try {
+          const flags = regexMatch[2].includes('i') ? regexMatch[2] : regexMatch[2] + 'i';
+          const compiled = new RegExp(regexMatch[1], flags.replace(/g/g, ''));
+          return { type: 'regex', regex: compiled, raw: q };
+        } catch {
+          // Fall through to normal query parsing if invalid regex
         }
-        badge.innerHTML = `<strong>🧠 Computing Vectors...</strong>`;
-        const qOutput = await extractor(query, { pooling: 'mean', normalize: true });
-        const qVec = Array.from(qOutput.data);
+      }
 
-        // Compute embeddings for pool entries (first 512 chars for fast responsiveness)
-        const scored = [];
-        for (const entry of pool) {
-          if (!entryEmbeddings[entry.id]) {
-            const out = await extractor(entry.content.slice(0, 512), { pooling: 'mean', normalize: true });
-            entryEmbeddings[entry.id] = Array.from(out.data);
+      const tokens = [];
+      const re = /(-?"[^"]+"|-?\S+)/g;
+      let m;
+      while ((m = re.exec(q)) !== null) {
+        tokens.push(m[1]);
+      }
+
+      const excluded = [];
+      const orGroups = [[]]; // DNF: array of AND-groups joined by OR
+
+      for (const tok of tokens) {
+        const upper = tok.toUpperCase();
+        if (upper === 'OR') {
+          if (orGroups[orGroups.length - 1].length > 0) orGroups.push([]);
+          continue;
+        }
+        if (upper === 'AND') {
+          continue;
+        }
+        if (tok.startsWith('-') && tok.length > 1) {
+          let val = tok.slice(1);
+          if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) val = val.slice(1, -1);
+          if (val) excluded.push(val.toLowerCase());
+          continue;
+        }
+        let val = tok;
+        if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) val = val.slice(1, -1);
+        if (val) orGroups[orGroups.length - 1].push(val.toLowerCase());
+      }
+
+      return {
+        type: 'boolean',
+        orGroups: orGroups.filter(g => g.length > 0),
+        excluded,
+        raw: q
+      };
+    }
+
+    function matchesExactSearch(entry, parsed) {
+      const haystack = `${entry.date}\n${entry.content}`.toLowerCase();
+
+      if (parsed.type === 'regex') {
+        return parsed.regex.test(`${entry.date}\n${entry.content}`);
+      }
+
+      for (const neg of parsed.excluded) {
+        if (haystack.includes(neg)) return false;
+      }
+
+      if (parsed.orGroups.length === 0) return true;
+
+      return parsed.orGroups.some(andGroup =>
+        andGroup.every(term => haystack.includes(term))
+      );
+    }
+
+    function getSynonymTerms(query) {
+      const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+      const extras = new Set();
+      for (const w of words) {
+        const clean = w.replace(/[^a-z]/g, '');
+        if (SYNONYMS[clean]) {
+          for (const syn of SYNONYMS[clean]) {
+            if (syn !== clean) extras.add(syn);
           }
-          const sim = cosineSimilarity(qVec, entryEmbeddings[entry.id]);
-          entry._similarity = sim;
-          scored.push(entry);
+        }
+      }
+      return Array.from(extras);
+    }
+
+    function runFuzzySearch(query, basePool) {
+      const allowedIds = new Set(basePool.map(e => e.id));
+      if (!fuseInstance) {
+        const parsed = parseSearchQuery(query);
+        return basePool.filter(e => matchesExactSearch(e, parsed));
+      }
+
+      const scoreMap = new Map();
+
+      // Primary query results (weighted highest)
+      for (const hit of fuseInstance.search(query)) {
+        if (!allowedIds.has(hit.item.id)) continue;
+        scoreMap.set(hit.item.id, { item: hit.item, score: hit.score ?? 0.5 });
+      }
+
+      // Synonym expansion results (slight score penalty so direct matches stay on top)
+      const synTerms = getSynonymTerms(query);
+      for (const syn of synTerms) {
+        for (const hit of fuseInstance.search(syn)) {
+          if (!allowedIds.has(hit.item.id)) continue;
+          const adjusted = (hit.score ?? 0.5) + 0.14;
+          const prev = scoreMap.get(hit.item.id);
+          if (!prev || adjusted < prev.score) {
+            scoreMap.set(hit.item.id, { item: hit.item, score: adjusted });
+          }
+        }
+      }
+
+      return Array.from(scoreMap.values())
+        .sort((a, b) => a.score - b.score)
+        .map(x => x.item);
+    }
+
+    async function ensureSemanticModel() {
+      if (semanticExtractor) return semanticExtractor;
+      if (semanticLoadPromise) return semanticLoadPromise;
+
+      semanticLoadPromise = (async () => {
+        if (window.transformersReady) {
+          await window.transformersReady;
+        }
+        if (typeof window.transformersPipeline !== 'function') {
+          throw new Error('Transformers.js failed to load');
         }
 
-        scored.sort((a, b) => b._similarity - a._similarity);
-        filteredEntries = scored.slice(0, 40);
-        badge.innerHTML = `<strong>${filteredEntries.length}</strong> Semantic Matches`;
-        currentEntryIndex = 0;
-        renderEntryList();
-        if (filteredEntries.length) selectEntry(0);
+        setSearchStatus('Loading AI model…');
+        const opts = {
+          dtype: 'q8',
+          progress_callback: (p) => {
+            if (p && p.status === 'progress' && typeof p.progress === 'number') {
+              setSearchStatus(`AI model ${Math.round(p.progress)}%`);
+            }
+          }
+        };
+
+        try {
+          semanticExtractor = await window.transformersPipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', opts);
+        } catch {
+          // Fallback without explicit q8 option if environment rejects it
+          semanticExtractor = await window.transformersPipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+        }
+        semanticEnabled = true;
+        return semanticExtractor;
+      })();
+
+      try {
+        return await semanticLoadPromise;
       } catch (err) {
-        badge.innerHTML = `Semantic fallback -> Exact`;
-        searchMode = 'exact';
-        applyFilters();
+        semanticLoadPromise = null;
+        throw err;
       }
     }
 
@@ -1154,364 +1155,1007 @@
       return dot;
     }
 
-    // Search Input Debounce
-    let searchTimer = null;
-    document.getElementById('searchInput').addEventListener('input', () => {
-      clearTimeout(searchTimer);
-      searchTimer = setTimeout(applyFilters, searchMode === 'semantic' ? 450 : 160);
-    });
+    async function runSemanticSearch(query, basePool, reqId) {
+      try {
+        const extractor = await ensureSemanticModel();
+        if (reqId !== searchRequestId) return;
 
-    document.getElementById('clearSearchBtn').addEventListener('click', () => {
-      document.getElementById('searchInput').value = '';
-      applyFilters();
-    });
+        // Embed missing entries in batches with UI yields
+        let embeddedCount = 0;
+        const missing = basePool.filter(e => !e.embedding);
+        if (missing.length > 0) {
+          for (let i = 0; i < missing.length; i++) {
+            if (reqId !== searchRequestId) return;
+            const entry = missing[i];
+            const snippet = `${entry.date}. ${entry.title}. ${entry.content.slice(0, 320)}`;
+            const out = await extractor(snippet, { pooling: 'mean', normalize: true });
+            entry.embedding = out.data;
+            embeddedCount++;
+            if (embeddedCount % 6 === 0 || embeddedCount === missing.length) {
+              setSearchStatus(`Indexing ${embeddedCount}/${missing.length}`);
+              await yieldToUI();
+            }
+          }
+        }
 
-    // Mode Buttons
-    document.querySelectorAll('[data-mode]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('[data-mode]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        searchMode = btn.getAttribute('data-mode');
-        applyFilters();
-      });
-    });
+        if (reqId !== searchRequestId) return;
 
-    // Tag Filter Buttons
-    document.querySelectorAll('[data-tag]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('[data-tag]').forEach(b => b.classList.remove('tag-active'));
-        btn.classList.add('tag-active');
-        activeTag = btn.getAttribute('data-tag');
-        applyFilters();
-      });
-    });
+        const qOut = await extractor(query, { pooling: 'mean', normalize: true });
+        const qVec = qOut.data;
+        const qLower = query.toLowerCase();
+        const qTerms = qLower.split(/\s+/).filter(w => w.length > 2 && !STOP_WORDS.has(w));
 
-    /* ==========================================================================
-       5. ANALYTICS MODALS (📊 WORDS, 👤 CHARS, 🔁 REPS, ⏰ TIME)
-       ========================================================================== */
-    const STOP_WORDS = new Set([
-      'the','and','that','have','for','not','with','you','this','but','his','from','they','she','her','been','than','its','who','was','are','were','had','has','what','when','where','which','there','their','about','would','could','should','into','more','some','very','just','like','only','over','also','back','after','even','well','way','our','out','all','one','two'
-    ]);
+        const scored = basePool.map(entry => {
+          let score = cosineSimilarity(qVec, entry.embedding);
+          const fullLower = `${entry.date} ${entry.content}`.toLowerCase();
 
-    const TRACKED_PEOPLE = [
-      'Delia', 'Loki', 'Audrey', 'ant', 'Chantal', 'Bowie', 'Dylan', 'Cohen', 'Lynch', 'Pynchon', 'Borges', 'Kafka'
-    ];
+          // Hybrid literal boost so exact matches deep inside long entries aren't buried
+          if (fullLower.includes(qLower)) {
+            score = Math.max(score, 0.42) + 0.16;
+          } else if (qTerms.length > 0) {
+            let termHits = 0;
+            for (const t of qTerms) {
+              if (fullLower.includes(t)) termHits++;
+            }
+            if (termHits > 0) {
+              score += (termHits / qTerms.length) * 0.12;
+            }
+          }
 
-    function openModal(title, htmlContent) {
-      document.getElementById('modalTitle').textContent = title;
-      document.getElementById('modalBody').innerHTML = htmlContent;
-      document.getElementById('analyticsModal').classList.add('open');
-
-      // Allow clicking any row with data-query to jump straight to that search
-      document.querySelectorAll('[data-jump-query]').forEach(row => {
-        row.addEventListener('click', () => {
-          const q = row.getAttribute('data-jump-query');
-          document.getElementById('searchInput').value = q;
-          document.getElementById('analyticsModal').classList.remove('open');
-          applyFilters();
+          return { entry, score };
         });
-      });
+
+        scored.sort((a, b) => b.score - a.score);
+
+        // Apply soft relevance threshold; fallback to top 25 if sparse
+        let strong = scored.filter(x => x.score >= 0.18);
+        if (strong.length === 0) strong = scored.slice(0, 25);
+
+        filteredEntries = strong.map(x => {
+          x.entry._semanticScore = x.score;
+          return x.entry;
+        });
+
+        setSearchStatus(`Semantic (${filteredEntries.length})`, true);
+        finalizeFilteredResults();
+      } catch (err) {
+        console.warn('Semantic search fallback:', err);
+        searchMode = 'exact';
+        syncModeChips();
+        setSearchStatus('Semantic unavailable -> Exact', true);
+        setTimeout(() => setSearchStatus('', false), 3500);
+        applyFilters();
+      }
     }
 
-    document.getElementById('closeModalBtn').addEventListener('click', () => {
-      document.getElementById('analyticsModal').classList.remove('open');
-    });
+    function applySort(list) {
+      if (sortMode === 'archive') {
+        list.sort((a, b) => a.orderIndex - b.orderIndex);
+      } else if (sortMode === 'newest') {
+        list.sort((a, b) => {
+          const ta = a.parsedDate?.ts ?? -Infinity;
+          const tb = b.parsedDate?.ts ?? -Infinity;
+          return tb - ta || a.orderIndex - b.orderIndex;
+        });
+      } else if (sortMode === 'oldest') {
+        list.sort((a, b) => {
+          const ta = a.parsedDate?.ts ?? Infinity;
+          const tb = b.parsedDate?.ts ?? Infinity;
+          return ta - tb || a.orderIndex - b.orderIndex;
+        });
+      }
+    }
 
-    // 📊 Words Frequency
-    document.getElementById('btnWords').addEventListener('click', () => {
-      const counts = {};
+    function finalizeFilteredResults() {
+      if (searchMode === 'exact' || !$('searchBox').value.trim()) {
+        applySort(filteredEntries);
+      }
+      if (!filteredEntries.some(e => e.id === activeEntryId)) {
+        activeEntryId = filteredEntries[0]?.id || null;
+      }
+      renderSidebar();
+      renderActiveEntry();
+    }
+
+    async function applyFilters() {
+      const reqId = ++searchRequestId;
+      const query = $('searchBox').value.trim();
+
+      const basePool = activeTag === 'all'
+        ? allEntries
+        : allEntries.filter(e => e.tags.includes(activeTag));
+
+      if (!query) {
+        setSearchStatus('', false);
+        filteredEntries = [...basePool];
+        finalizeFilteredResults();
+        return;
+      }
+
+      if (searchMode === 'exact') {
+        setSearchStatus('', false);
+        const parsed = parseSearchQuery(query);
+        filteredEntries = basePool.filter(e => matchesExactSearch(e, parsed));
+        finalizeFilteredResults();
+      } else if (searchMode === 'fuzzy') {
+        setSearchStatus('', false);
+        filteredEntries = runFuzzySearch(query, basePool);
+        finalizeFilteredResults();
+      } else if (searchMode === 'semantic') {
+        await runSemanticSearch(query, basePool, reqId);
+      }
+    }
+
+    /* ---------------- Rendering & Highlighting ---------------- */
+
+    function getHighlightRegex(query) {
+      const q = query.trim();
+      if (!q) return null;
+
+      if (searchMode === 'exact') {
+        const parsed = parseSearchQuery(q);
+        if (parsed.type === 'regex') {
+          try {
+            return new RegExp(parsed.regex.source, parsed.regex.flags.includes('g') ? parsed.regex.flags : parsed.regex.flags + 'g');
+          } catch {
+            return null;
+          }
+        }
+        const terms = Array.from(new Set(parsed.orGroups.flat())).filter(Boolean);
+        if (terms.length === 0) return null;
+        terms.sort((a, b) => b.length - a.length);
+        return new RegExp(`(${terms.map(escapeRegExp).join('|')})`, 'gi');
+      }
+
+      if (searchMode === 'fuzzy') {
+        const baseWords = q.split(/\s+/).filter(t => t.length > 1);
+        const syns = getSynonymTerms(q);
+        const allTerms = Array.from(new Set([...baseWords, ...syns])).filter(t => t.length > 1);
+        if (allTerms.length === 0) return null;
+        allTerms.sort((a, b) => b.length - a.length);
+        return new RegExp(`(${allTerms.map(escapeRegExp).join('|')})`, 'gi');
+      }
+
+      // Semantic: highlight meaningful words from query
+      const words = q.split(/\s+/).filter(w => w.length >= 2);
+      const nonStop = words.filter(w => !STOP_WORDS.has(w.toLowerCase()));
+      const chosen = nonStop.length > 0 ? nonStop : words;
+      if (chosen.length === 0) return null;
+      chosen.sort((a, b) => b.length - a.length);
+      return new RegExp(`(${chosen.map(escapeRegExp).join('|')})`, 'gi');
+    }
+
+    function renderEntryContentWithHighlights(text, query) {
+      const regex = getHighlightRegex(query);
+      if (!regex) return escapeHtml(text);
+
+      let out = '';
+      let lastIdx = 0;
+      regex.lastIndex = 0;
+      let match;
+      let guard = 0;
+
+      while ((match = regex.exec(text)) !== null) {
+        if (++guard > 2000) break;
+        if (match[0].length === 0) {
+          regex.lastIndex++;
+          continue;
+        }
+        out += escapeHtml(text.slice(lastIdx, match.index));
+        out += `<mark class="search-hit">${escapeHtml(match[0])}</mark>`;
+        lastIdx = regex.lastIndex;
+      }
+      out += escapeHtml(text.slice(lastIdx));
+      return out;
+    }
+
+    function renderSidebar() {
+      const list = $('entryList');
+      $('sidebarCount').textContent = filteredEntries.length;
+
+      if (filteredEntries.length === 0) {
+        list.innerHTML = `<div style="padding:18px; color:var(--muted); font-size:13px;">No matching entries found.</div>`;
+        return;
+      }
+
+      const frag = document.createDocumentFragment();
+      for (const entry of filteredEntries) {
+        const card = document.createElement('div');
+        card.className = `entry-card${entry.id === activeEntryId ? ' active' : ''}`;
+        card.dataset.id = entry.id;
+
+        const tagStr = entry.tags.length ? entry.tags.slice(0, 2).join(' · ') : entry.source;
+        const scoreTag = (searchMode === 'semantic' && $('searchBox').value.trim() && typeof entry._semanticScore === 'number')
+          ? `${Math.min(99, Math.max(1, Math.round(entry._semanticScore * 100)))}%`
+          : tagStr;
+
+        card.innerHTML = `
+          <div class="entry-card-date">
+            <span>${escapeHtml(entry.date)}</span>
+            <span>${escapeHtml(scoreTag)}</span>
+          </div>
+          <div class="entry-card-snippet">${escapeHtml(entry.content.slice(0, 150))}</div>
+        `;
+        card.addEventListener('click', () => {
+          activeEntryId = entry.id;
+          pendingHitTarget = 'first';
+          renderSidebar();
+          renderActiveEntry();
+        });
+        frag.appendChild(card);
+      }
+
+      list.innerHTML = '';
+      list.appendChild(frag);
+
+      const activeCard = list.querySelector('.entry-card.active');
+      if (activeCard) activeCard.scrollIntoView({ block: 'nearest' });
+    }
+
+    function renderActiveEntry() {
+      const entry = filteredEntries.find(e => e.id === activeEntryId) || filteredEntries[0];
+      if (!entry) {
+        $('entryDateHeading').textContent = 'No Matching Entry';
+        $('entryMetaLine').innerHTML = '';
+        $('entryBody').textContent = 'Try adjusting your search query or clearing the active tag filter.';
+        hitElements = [];
+        activeHitIdx = -1;
+        $('hitCountBadge').textContent = '0 hits';
+        return;
+      }
+
+      activeEntryId = entry.id;
+      const pos = filteredEntries.findIndex(e => e.id === entry.id) + 1;
+      const isSearching = Boolean($('searchBox').value.trim()) || activeTag !== 'all';
+      const posLabel = isSearching ? `Result ${pos}/${filteredEntries.length}` : `Entry ${pos}/${filteredEntries.length}`;
+      const readMin = Math.max(1, Math.round(entry.wordCount / 220));
+
+      $('entryDateHeading').textContent = entry.date;
+      $('entryMetaLine').innerHTML = `
+        <span>${posLabel}</span>
+        <span>· ${entry.wordCount.toLocaleString()} words (~${readMin} min)</span>
+        <span>· source: ${escapeHtml(entry.source)}</span>
+        ${entry.tags.map(t => `<span class="pill">${escapeHtml(t)}</span>`).join('')}
+      `;
+
+      const query = $('searchBox').value.trim();
+      $('entryBody').innerHTML = renderEntryContentWithHighlights(entry.content, query);
+
+      hitElements = Array.from($('entryBody').querySelectorAll('mark.search-hit'));
+      activeHitIdx = -1;
+
+      if (hitElements.length > 0) {
+        const targetIdx = pendingHitTarget === 'last'
+          ? hitElements.length - 1
+          : (typeof pendingHitTarget === 'number' ? Math.min(pendingHitTarget, hitElements.length - 1) : 0);
+        scrollToHit(targetIdx);
+      } else {
+        $('hitCountBadge').textContent = '0 hits';
+        $('entryPane').scrollTop = 0;
+      }
+      pendingHitTarget = null;
+    }
+
+    function scrollToHit(index) {
+      if (hitElements.length === 0) return;
+      hitElements.forEach(el => el.classList.remove('active-hit'));
+      activeHitIdx = ((index % hitElements.length) + hitElements.length) % hitElements.length;
+      const el = hitElements[activeHitIdx];
+      el.classList.add('active-hit');
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      $('hitCountBadge').textContent = `${activeHitIdx + 1}/${hitElements.length} hits`;
+    }
+
+    function navigateMatch(direction) {
+      if (filteredEntries.length === 0) return;
+
+      if (hitElements.length === 0) {
+        pendingHitTarget = direction === 'next' ? 'first' : 'last';
+        navigateEntries(direction === 'next' ? 1 : -1);
+        return;
+      }
+
+      if (direction === 'next') {
+        if (activeHitIdx + 1 < hitElements.length) {
+          scrollToHit(activeHitIdx + 1);
+        } else {
+          pendingHitTarget = 'first';
+          navigateEntries(1);
+        }
+      } else {
+        if (activeHitIdx - 1 >= 0) {
+          scrollToHit(activeHitIdx - 1);
+        } else {
+          pendingHitTarget = 'last';
+          navigateEntries(-1);
+        }
+      }
+    }
+
+    function navigateEntries(delta) {
+      if (filteredEntries.length === 0) return;
+      const idx = filteredEntries.findIndex(e => e.id === activeEntryId);
+      const nextIdx = idx === -1 ? 0 : (idx + delta + filteredEntries.length) % filteredEntries.length;
+      activeEntryId = filteredEntries[nextIdx].id;
+      renderSidebar();
+      renderActiveEntry();
+    }
+
+    function goToRandomEntry() {
+      const pool = filteredEntries.length > 0 ? filteredEntries : allEntries;
+      if (pool.length === 0) return;
+      let pick = pool[Math.floor(Math.random() * pool.length)];
+      if (pool.length > 1 && pick.id === activeEntryId) {
+        pick = pool[(pool.indexOf(pick) + 1) % pool.length];
+      }
+      activeEntryId = pick.id;
+      pendingHitTarget = null;
+      renderSidebar();
+      renderActiveEntry();
+    }
+
+    function openEntryById(id) {
+      if (!filteredEntries.some(e => e.id === id)) {
+        activeTag = 'all';
+        $('searchBox').value = '';
+        document.querySelectorAll('.tag-chip').forEach(b => b.classList.toggle('active', b.dataset.tag === 'all'));
+        filteredEntries = [...allEntries];
+        applySort(filteredEntries);
+      }
+      activeEntryId = id;
+      $('analyticsModal').classList.remove('open');
+      renderSidebar();
+      renderActiveEntry();
+    }
+
+    function jumpToExactSearch(term) {
+      $('analyticsModal').classList.remove('open');
+      searchMode = 'exact';
+      syncModeChips();
+      $('searchBox').value = term;
+      applyFilters();
+    }
+
+    /* ---------------- Restored & Upgraded Analytics ---------------- */
+
+    function openModal(title, html) {
+      $('modalTitle').textContent = title;
+      $('modalBody').innerHTML = html;
+      $('analyticsModal').classList.add('open');
+    }
+
+    function renderBarRows(rows, clickType) {
+      if (!rows.length) return `<p style="color:var(--muted);">No matching data found.</p>`;
+      const max = Math.max(...rows.map(r => r[1]), 1);
+      return rows.map(([label, count, extra]) => {
+        const pct = Math.max(2, Math.round((count / max) * 100));
+        const attr = clickType === 'search'
+          ? `class="bar-row clickable" data-jump-search="${escapeHtml(extra ?? label)}"`
+          : `class="bar-row"`;
+        return `
+          <div ${attr}>
+            <span title="${escapeHtml(label)}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(label)}</span>
+            <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+            <span style="text-align:right; color:var(--muted);">${count.toLocaleString()}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function analyzeWordCount() {
+      if (allEntries.length === 0) return;
+
+      let totalWords = 0;
+      let totalChars = 0;
+      let longest = allEntries[0];
+      let shortest = allEntries[0];
+      let longCount = 0;
+      let shortCount = 0;
+
+      const byTag = { dream: 0, book: 0, film: 0, lyric: 0, poem: 0 };
+      const byMonth = new Map();
+      const wordCounts = new Map();
+
       for (const e of allEntries) {
+        totalWords += e.wordCount;
+        totalChars += e.charCount;
+        if (e.wordCount > longest.wordCount) longest = e;
+        if (e.wordCount < shortest.wordCount) shortest = e;
+        if (e.wordCount >= 1000) longCount++;
+        if (e.wordCount < 100) shortCount++;
+
+        for (const t of e.tags) {
+          if (t in byTag) byTag[t] += e.wordCount;
+        }
+        if (e.parsedDate?.month) {
+          byMonth.set(e.parsedDate.month, (byMonth.get(e.parsedDate.month) || 0) + e.wordCount);
+        }
+
         const words = e.content.toLowerCase().match(/\b[a-z]{4,}\b/g) || [];
         for (const w of words) {
-          if (!STOP_WORDS.has(w)) counts[w] = (counts[w] || 0) + 1;
+          if (!STOP_WORDS.has(w)) wordCounts.set(w, (wordCounts.get(w) || 0) + 1);
         }
       }
-      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 45);
-      const max = sorted[0]?.[1] || 1;
-      const rows = sorted.map(([word, count]) => `
-        <div class="stat-row" data-jump-query="${word}">
-          <strong style="width:120px;">${word}</strong>
-          <div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:${(count/max)*100}%"></div></div>
-          <span>${count.toLocaleString()}</span>
+
+      const avgWords = Math.round(totalWords / allEntries.length);
+      const topWords = Array.from(wordCounts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 36);
+      const tagRows = Object.entries(byTag).sort((a, b) => b[1] - a[1]);
+      const monthRows = Array.from(byMonth.entries()).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 12).reverse();
+
+      const html = `
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label">Total Entries</div><div class="stat-value">${allEntries.length.toLocaleString()}</div></div>
+          <div class="stat-card"><div class="stat-label">Total Words</div><div class="stat-value">${totalWords.toLocaleString()}</div></div>
+          <div class="stat-card"><div class="stat-label">Average / Entry</div><div class="stat-value">${avgWords.toLocaleString()}</div><div class="stat-sub">${totalChars.toLocaleString()} chars</div></div>
+          <div class="stat-card"><div class="stat-label">Length Spread</div><div class="stat-value">${longCount} / ${shortCount}</div><div class="stat-sub">≥1000w / &lt;100w</div></div>
+          <div class="stat-card clickable" data-open-id="${escapeHtml(longest.id)}">
+            <div class="stat-label">Longest Entry ↗</div>
+            <div class="stat-value">${longest.wordCount.toLocaleString()} w</div>
+            <div class="stat-sub">${escapeHtml(longest.date)}</div>
+          </div>
+          <div class="stat-card clickable" data-open-id="${escapeHtml(shortest.id)}">
+            <div class="stat-label">Shortest Entry ↗</div>
+            <div class="stat-value">${shortest.wordCount.toLocaleString()} w</div>
+            <div class="stat-sub">${escapeHtml(shortest.date)}</div>
+          </div>
         </div>
-      `).join('');
-      openModal('📊 Top Archive Lexicon (Click any word to filter)', rows);
-    });
+        <div class="section-title">Words by Tag</div>
+        ${renderBarRows(tagRows)}
+        ${monthRows.length ? `<div class="section-title">Recent 12 Active Months (Words)</div>${renderBarRows(monthRows, 'search')}` : ''}
+        <div class="section-title">Top Frequent Words (Click to Search)</div>
+        ${renderBarRows(topWords, 'search')}
+      `;
 
-    // 👤 Tracked Characters & Entities
-    document.getElementById('btnChars').addEventListener('click', () => {
-      const results = TRACKED_PEOPLE.map(name => {
-        const regex = new RegExp(`\\b${escapeRegExp(name)}\\b`, 'gi');
-        let mentions = 0;
-        for (const e of allEntries) {
-          const m = e.content.match(regex);
-          if (m) mentions += m.length;
-        }
-        return [name, mentions];
-      }).sort((a, b) => b[1] - a[1]);
+      openModal('📊 Archive Word Analytics', html);
+    }
 
-      const max = results[0]?.[1] || 1;
-      const rows = results.map(([name, count]) => `
-        <div class="stat-row" data-jump-query="${name}">
-          <strong style="width:120px;">${name}</strong>
-          <div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:${(count/max)*100}%"></div></div>
-          <span>${count} mentions</span>
-        </div>
-      `).join('');
-      openModal('👤 Recurring Figures & Entities (Click to search)', rows);
-    });
+    function checkCharacterNames() {
+      if (allEntries.length === 0) return;
 
-    // 🔁 Repeated 3-Word Phrases
-    document.getElementById('btnReps').addEventListener('click', () => {
-      const phrases = {};
-      for (const e of allEntries.slice(0, 250)) {
-        const words = (e.content.toLowerCase().match(/\b[a-z]{3,}\b/g) || []).filter(w => !STOP_WORDS.has(w));
-        for (let i = 0; i < words.length - 2; i++) {
-          const trigram = `${words[i]} ${words[i+1]} ${words[i+2]}`;
-          phrases[trigram] = (phrases[trigram] || 0) + 1;
+      const nameMap = new Map();
+      const sampleDates = new Map();
+
+      // Sample up to 800 entries evenly across the archive for crisp speed + broad coverage
+      const step = Math.max(1, Math.floor(allEntries.length / 800));
+      for (let i = 0; i < allEntries.length; i += step) {
+        const entry = allEntries[i];
+        const matches = entry.content.match(/\b[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?\b/g) || [];
+        const seenInEntry = new Set();
+
+        for (const rawName of matches) {
+          const parts = rawName.split(/\s+/);
+          if (parts.some(p => NAME_EXCLUSIONS.has(p))) continue;
+          if (seenInEntry.has(rawName)) continue;
+          seenInEntry.add(rawName);
+
+          nameMap.set(rawName, (nameMap.get(rawName) || 0) + 1);
+          if (!sampleDates.has(rawName)) sampleDates.set(rawName, []);
+          const arr = sampleDates.get(rawName);
+          if (arr.length < 3) arr.push(entry.date);
         }
       }
-      const sorted = Object.entries(phrases).filter(([, c]) => c > 2).sort((a, b) => b[1] - a[1]).slice(0, 35);
-      const max = sorted[0]?.[1] || 1;
-      const rows = sorted.map(([phrase, count]) => `
-        <div class="stat-row" data-jump-query="${phrase}">
-          <strong style="width:210px;">"${phrase}"</strong>
-          <div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:${(count/max)*100}%"></div></div>
-          <span>${count}×</span>
-        </div>
-      `).join('');
-      openModal('🔁 Recurring Motifs & Tri-Grams', rows || '<div>No repeated motifs found.</div>');
-    });
 
-    // ⏰ Chronological Distribution
-    document.getElementById('btnTime').addEventListener('click', () => {
-      const years = {};
+      const ranked = Array.from(nameMap.entries())
+        .filter(([, count]) => count >= 2)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 45);
+
+      const rows = ranked.map(([name, count]) => {
+        const samples = (sampleDates.get(name) || []).join(', ');
+        return [`${name}`, count, `"${name}"`, samples];
+      });
+
+      const max = Math.max(...rows.map(r => r[1]), 1);
+      const html = `
+        <p style="color:var(--muted); margin-top:0;">Discovered recurring proper names &amp; entities across sampled entries (click any name to run an exact search):</p>
+        ${rows.length ? rows.map(([name, count, queryTerm, samples]) => {
+          const pct = Math.max(2, Math.round((count / max) * 100));
+          return `
+            <div class="bar-row clickable" data-jump-search="${escapeHtml(queryTerm)}" title="Seen in: ${escapeHtml(samples)}">
+              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(name)}</span>
+              <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+              <span style="text-align:right; color:var(--muted);">${count} entries</span>
+            </div>
+          `;
+        }).join('') : '<p style="color:var(--muted);">No recurring proper names found.</p>'}
+      `;
+
+      openModal('👤 Discovered Characters & Entities', html);
+    }
+
+    function findRepetitions() {
+      if (allEntries.length === 0) return;
+
+      const phraseCounts = new Map();
+      const limit = Math.min(allEntries.length, 600);
+
+      for (let i = 0; i < limit; i++) {
+        const words = allEntries[i].content.toLowerCase().match(/\b[a-z']{2,}\b/g) || [];
+        for (let j = 0; j <= words.length - 3; j++) {
+          const w1 = words[j], w2 = words[j + 1], w3 = words[j + 2];
+          // Keep natural contiguous trigrams, skip if all 3 are stop words
+          if (STOP_WORDS.has(w1) && STOP_WORDS.has(w2) && STOP_WORDS.has(w3)) continue;
+          if (w1.length < 3 && w3.length < 3) continue;
+          const tri = `${w1} ${w2} ${w3}`;
+          phraseCounts.set(tri, (phraseCounts.get(tri) || 0) + 1);
+        }
+      }
+
+      const ranked = Array.from(phraseCounts.entries())
+        .filter(([, c]) => c >= 3)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 35)
+        .map(([phrase, count]) => [phrase, count, `"${phrase}"`]);
+
+      openModal(
+        '🔁 Repeated Phrases (Contiguous Trigrams)',
+        `<p style="color:var(--muted); margin-top:0;">Most frequent 3-word phrases across ${limit} entries (click to search exact phrase):</p>` +
+        renderBarRows(ranked, 'search')
+      );
+    }
+
+    function checkTimeline() {
+      if (allEntries.length === 0) return;
+
+      const dated = [];
+      const byYear = new Map();
+      const byMonth = new Map();
+
       for (const e of allEntries) {
-        const yMatch = e.date.match(/(\d{2,4})$/);
-        let yr = yMatch ? yMatch[1] : 'Other';
-        if (yr.length === 2) yr = '20' + yr;
-        years[yr] = (years[yr] || 0) + 1;
+        if (e.parsedDate) {
+          dated.push(e.parsedDate);
+          byYear.set(e.parsedDate.year, (byYear.get(e.parsedDate.year) || 0) + 1);
+          byMonth.set(e.parsedDate.month, (byMonth.get(e.parsedDate.month) || 0) + 1);
+        } else {
+          byYear.set('Unparsed', (byYear.get('Unparsed') || 0) + 1);
+        }
       }
-      const sorted = Object.entries(years).sort((a, b) => b[0].localeCompare(a[0]));
-      const max = Math.max(...sorted.map(s => s[1]), 1);
-      const rows = sorted.map(([yr, count]) => `
-        <div class="stat-row" data-jump-query="${yr}">
-          <strong style="width:90px;">${yr}</strong>
-          <div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:${(count/max)*100}%"></div></div>
-          <span>${count} entries</span>
+
+      dated.sort((a, b) => a.ts - b.ts);
+      const earliest = dated[0]?.iso || 'Unknown';
+      const latest = dated[dated.length - 1]?.iso || 'Unknown';
+
+      const yearRows = Array.from(byYear.entries())
+        .sort((a, b) => String(b[0]).localeCompare(String(a[0])))
+        .map(([y, c]) => [y, c, y === 'Unparsed' ? '' : y]);
+
+      const topMonths = Array.from(byMonth.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([m, c]) => [m, c, m]);
+
+      const html = `
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label">Parsed Dates</div><div class="stat-value">${dated.length} / ${allEntries.length}</div></div>
+          <div class="stat-card"><div class="stat-label">Earliest Entry</div><div class="stat-value">${escapeHtml(earliest)}</div></div>
+          <div class="stat-card"><div class="stat-label">Latest Entry</div><div class="stat-value">${escapeHtml(latest)}</div></div>
+          <div class="stat-card"><div class="stat-label">Active Months</div><div class="stat-value">${byMonth.size}</div></div>
         </div>
-      `).join('');
-      openModal('⏰ Archive Volume by Year', rows);
-    });
+        <div class="section-title">Entries by Year (Click Year to Search)</div>
+        ${renderBarRows(yearRows, 'search')}
+        ${topMonths.length ? `<div class="section-title">Most Active Months</div>${renderBarRows(topMonths, 'search')}` : ''}
+      `;
 
-    /* ==========================================================================
-       6. PRIVATE NVIDIA AI INTEGRATION (LOCAL KEY STORAGE, CLOUDFLARE PROXY)
-       ========================================================================== */
-    const keyInput = document.getElementById('nvidiaKeyInput');
-    const savedKey = localStorage.getItem('dw_nvidia_key');
-    if (savedKey) keyInput.value = savedKey;
+      openModal('⏰ Archive Timeline', html);
+    }
 
-    keyInput.addEventListener('change', () => {
-      localStorage.setItem('dw_nvidia_key', keyInput.value.trim());
-    });
+    function showSearchGuide() {
+      const html = `
+        <div class="section-title" style="margin-top:0;">Exact Search Operators</div>
+        <div class="guide-row"><span class="guide-code">"lucid dream"</span><span>Matches the exact phrase in order.</span></div>
+        <div class="guide-row"><span class="guide-code">ocean -nightmare</span><span>Contains <em>ocean</em> and excludes <em>nightmare</em>.</span></div>
+        <div class="guide-row"><span class="guide-code">kafka OR borges</span><span>Matches entries containing either term.</span></div>
+        <div class="guide-row"><span class="guide-code">rain train</span><span>Implicit AND — requires both words anywhere.</span></div>
+        <div class="guide-row"><span class="guide-code">/\\b(mirror|glass)\\b/i</span><span>Regular expression search inside Exact mode.</span></div>
 
-    document.getElementById('aiToggleHeader').addEventListener('click', () => {
-      document.getElementById('aiBody').classList.toggle('collapsed');
-    });
+        <div class="section-title">Fuzzy &amp; Semantic Modes</div>
+        <div class="guide-row"><span class="guide-code">Fuzzy</span><span>Tolerates typos + expands core synonyms (dream/nightmare/sleep, book/novel, film/movie, etc.).</span></div>
+        <div class="guide-row"><span class="guide-code">Semantic</span><span>Runs local MiniLM embeddings in your browser + hybrid keyword boost for conceptual search.</span></div>
 
-    document.getElementById('clearAiBtn').addEventListener('click', () => {
-      const out = document.getElementById('aiOutput');
-      out.textContent = '';
-      out.classList.remove('visible');
-    });
+        <div class="section-title">Keyboard Shortcuts</div>
+        <div class="guide-row"><span class="guide-code">/</span><span>Focus the search box.</span></div>
+        <div class="guide-row"><span class="guide-code">n / p</span><span>Next / previous highlighted hit (automatically advances across matching entries).</span></div>
+        <div class="guide-row"><span class="guide-code">← / →</span><span>Previous / next entry in current list.</span></div>
+        <div class="guide-row"><span class="guide-code">R</span><span>Jump to a random entry.</span></div>
+        <div class="guide-row"><span class="guide-code">Esc</span><span>Close open modals/drawers or unfocus search.</span></div>
+      `;
+      openModal('🔍 Search Guide & Shortcuts', html);
+    }
 
-    document.getElementById('askAiBtn').addEventListener('click', async () => {
-      const apiKey = keyInput.value.trim();
-      const out = document.getElementById('aiOutput');
-      out.classList.add('visible');
+    /* ---------------- NVIDIA AI Console ---------------- */
 
-      if (!apiKey) {
-        out.textContent = 'Please enter your NVIDIA API Key (nvapi-...) above. It stays strictly in your browser localStorage.';
-        return;
+    function loadSavedNvidiaKey() {
+      return localStorage.getItem('dreamweaver_nvidia_key') || localStorage.getItem('dw_nvidia_key') || '';
+    }
+
+    function saveNvidiaKey(val) {
+      localStorage.setItem('dreamweaver_nvidia_key', val);
+      localStorage.setItem('dw_nvidia_key', val);
+    }
+
+    function formatAiMarkdown(text) {
+      let safe = escapeHtml(text);
+      safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      safe = safe.replace(/\*(.+?)\*/g, '<em>$1</em>');
+      return safe;
+    }
+
+    function buildAiContextPrompt() {
+      if (aiContextMode === 'none') return '';
+
+      if (aiContextMode === 'current') {
+        const active = filteredEntries.find(e => e.id === activeEntryId) || filteredEntries[0];
+        if (!active) return '';
+        return `\n\nActive Entry (${active.date} · tags: ${active.tags.join(', ') || 'none'}):\n${active.content.slice(0, 5500)}`;
       }
-      localStorage.setItem('dw_nvidia_key', apiKey);
 
-      const entry = filteredEntries[currentEntryIndex];
-      if (!entry) {
-        out.textContent = 'Select an entry first.';
-        return;
+      if (aiContextMode === 'results') {
+        const sample = filteredEntries.slice(0, 12);
+        const q = $('searchBox').value.trim();
+        const lines = sample.map(e => `- [${e.date}] ${e.content.slice(0, 320).replace(/\s+/g, ' ')}`).join('\n');
+        return `\n\nFiltered Results (${filteredEntries.length} total${q ? `, query: "${q}"` : ''}; showing first ${sample.length}):\n${lines}`;
       }
 
-      const userPrompt = document.getElementById('aiPromptInput').value.trim() ||
-        'Provide a concise literary, psychological, and thematic synthesis of this journal entry.';
+      if (aiContextMode === 'outline') {
+        const outline = allEntries.slice(0, 200).map(e => `${e.date}: ${e.title} [${e.tags.join(',') || '-'}]`).join('\n');
+        return `\n\nArchive Outline (${allEntries.length} entries total, first ${Math.min(200, allEntries.length)}):\n${outline}`;
+      }
 
-      out.textContent = 'Querying NVIDIA Nemotron via private worker...';
+      return '';
+    }
 
-      try {
-        const response = await fetch(NVIDIA_WORKER_URL, {
+    async function callNvidiaWithFallback(key, messages) {
+      let lastError = null;
+
+      for (const model of NVIDIA_MODELS) {
+        const res = await fetch(NVIDIA_WORKER_URL + encodeURIComponent(NVIDIA_API_URL), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
+            'Authorization': `Bearer ${key}`
           },
           body: JSON.stringify({
-            model: 'nvidia/llama-3.1-nemotron-70b-instruct',
-            messages: [
-              { role: 'system', content: 'You are an insightful literary archivist analyzing entries from the Dreamweaver journal.' },
-              { role: 'user', content: `Entry Date: ${entry.date}\n\nEntry Text:\n${entry.content.slice(0, 6000)}\n\nTask: ${userPrompt}` }
-            ],
-            temperature: 0.5,
-            max_tokens: 500
+            model,
+            messages,
+            temperature: 0.65,
+            max_tokens: 1024
           })
         });
 
-        const data = await response.json();
-        const reply = data?.choices?.[0]?.message?.content || JSON.stringify(data);
-        out.textContent = reply;
+        if (res.status === 404) {
+          lastError = new Error(`Model ${model} returned 404`);
+          continue;
+        }
+        if (!res.ok) {
+          const errText = await res.text().catch(() => '');
+          throw new Error(`HTTP ${res.status}: ${errText.slice(0, 180)}`);
+        }
+
+        const data = await res.json();
+        return {
+          reply: data.choices?.[0]?.message?.content || '(No response text returned.)',
+          model
+        };
+      }
+
+      throw lastError || new Error('All NVIDIA models failed');
+    }
+
+    async function sendAiPrompt() {
+      const prompt = $('aiPromptInput').value.trim();
+      if (!prompt) return;
+
+      const key = ($('nvidiaKeyInput').value || loadSavedNvidiaKey()).trim();
+      if (!key) {
+        appendAiMessage('Please enter and save your NVIDIA API key first.', 'bot');
+        return;
+      }
+
+      $('aiPromptInput').value = '';
+      appendAiMessage(prompt, 'user');
+      const thinkingNode = appendAiMessage('Thinking…', 'bot');
+
+      const contextText = buildAiContextPrompt();
+      const messages = [
+        {
+          role: 'system',
+          content: 'You are a perceptive literary and dream-archive assistant for Dreamweaver. Provide concise, insightful observations grounded strictly in the provided context.'
+        },
+        {
+          role: 'user',
+          content: `${prompt}${contextText}`
+        }
+      ];
+
+      try {
+        const { reply, model } = await callNvidiaWithFallback(key, messages);
+        thinkingNode.innerHTML = formatAiMarkdown(reply) +
+          `<div class="mono" style="font-size:10px; color:var(--muted); margin-top:6px;">${escapeHtml(model)}</div>`;
       } catch (err) {
-        out.textContent = 'Error contacting NVIDIA worker: ' + err.message;
+        thinkingNode.textContent = `AI request failed: ${err.message}`;
       }
-    });
+    }
 
-    /* ==========================================================================
-       7. TYPOGRAPHY, THEME, NAVIGATION & KEYBOARD SHORTCUTS
-       ========================================================================== */
-    const fonts = [
-      "'Special Elite', 'Courier New', monospace",
-      "'Newsreader', Georgia, serif",
-      "'IBM Plex Mono', monospace"
-    ];
-    let fontIdx = 0;
-    document.getElementById('btnFontFamily').addEventListener('click', () => {
-      fontIdx = (fontIdx + 1) % fonts.length;
-      document.documentElement.style.setProperty('--font-reader', fonts[fontIdx]);
-    });
+    function appendAiMessage(text, role) {
+      const div = document.createElement('div');
+      div.className = `ai-msg ${role}`;
+      div.textContent = text;
+      $('aiChatBody').appendChild(div);
+      $('aiChatBody').scrollTop = $('aiChatBody').scrollHeight;
+      return div;
+    }
 
-    let fontSize = 15;
-    document.getElementById('btnFontUp').addEventListener('click', () => {
-      fontSize = Math.min(24, fontSize + 1);
-      document.documentElement.style.setProperty('--reader-size', fontSize + 'px');
-    });
-    document.getElementById('btnFontDown').addEventListener('click', () => {
-      fontSize = Math.max(11, fontSize - 1);
-      document.documentElement.style.setProperty('--reader-size', fontSize + 'px');
-    });
+    /* ---------------- Preferences & Events ---------------- */
 
-    document.getElementById('btnTheme').addEventListener('click', () => {
-      const html = document.documentElement;
-      const next = html.getAttribute('data-theme') === 'noir' ? 'paper' : 'noir';
-      html.setAttribute('data-theme', next);
-    });
+    function updateThemeButton() {
+      const t = document.documentElement.getAttribute('data-theme');
+      $('themeToggleBtn').textContent = t === 'noir' ? '☀ Noir' : '◐ Paper';
+    }
 
-    document.getElementById('toggleSidebarBtn').addEventListener('click', () => {
-      document.getElementById('sidebar').classList.toggle('hidden-mobile');
-    });
+    function initPreferences() {
+      const savedTheme = localStorage.getItem('dw_theme') || 'paper';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      updateThemeButton();
 
-    document.getElementById('prevEntryBtn').addEventListener('click', () => selectEntry(currentEntryIndex - 1));
-    document.getElementById('nextEntryBtn').addEventListener('click', () => selectEntry(currentEntryIndex + 1));
-
-    document.getElementById('copyEntryBtn').addEventListener('click', () => {
-      const entry = filteredEntries[currentEntryIndex];
-      if (!entry) return;
-      navigator.clipboard.writeText(entry.content);
-      const btn = document.getElementById('copyEntryBtn');
-      btn.textContent = 'Copied ✓';
-      setTimeout(() => btn.textContent = 'Copy', 1400);
-    });
-
-    window.addEventListener('keydown', (e) => {
-      if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
-        e.preventDefault();
-        document.getElementById('searchInput').focus();
-      } else if (document.activeElement.tagName !== 'INPUT') {
-        if (e.key === 'n') scrollToHit(activeHitIdx + 1);
-        if (e.key === 'p') scrollToHit(activeHitIdx - 1);
+      const savedFont = localStorage.getItem('dw_font');
+      if (savedFont) {
+        document.documentElement.style.setProperty('--reader-font', savedFont);
+        $('fontSelect').value = savedFont;
       }
-    });
 
-    /* ==========================================================================
-       8. INTERACTIVE DREAM-FIELD CANVAS (HEADER CONSTELLATION)
-       ========================================================================== */
+      const savedSize = parseFloat(localStorage.getItem('dw_font_size'));
+      if (!Number.isNaN(savedSize)) {
+        document.documentElement.style.setProperty('--reader-size', `${savedSize}rem`);
+      }
+
+      $('nvidiaKeyInput').value = loadSavedNvidiaKey();
+
+      if (window.self !== window.top || window.innerHeight < 520) {
+        document.body.classList.add('compact-embed');
+      }
+    }
+
+    function bindEvents() {
+      let debounceTimer = null;
+      $('searchBox').addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          pendingHitTarget = 'first';
+          applyFilters();
+        }, 160);
+      });
+
+      document.querySelectorAll('.btn-chip[data-mode]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          searchMode = btn.dataset.mode;
+          syncModeChips();
+          pendingHitTarget = 'first';
+          applyFilters();
+        });
+      });
+
+      document.querySelectorAll('.tag-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tag-chip').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          activeTag = btn.dataset.tag;
+          pendingHitTarget = 'first';
+          applyFilters();
+        });
+      });
+
+      $('sortToggleBtn').addEventListener('click', () => {
+        const cycle = ['archive', 'newest', 'oldest'];
+        sortMode = cycle[(cycle.indexOf(sortMode) + 1) % cycle.length];
+        const labels = { archive: '⇅ Archive', newest: '⇅ Newest', oldest: '⇅ Oldest' };
+        $('sortToggleBtn').textContent = labels[sortMode];
+        applySort(filteredEntries);
+        renderSidebar();
+        renderActiveEntry();
+      });
+
+      $('hitPrevBtn').addEventListener('click', () => navigateMatch('prev'));
+      $('hitNextBtn').addEventListener('click', () => navigateMatch('next'));
+      $('prevEntryBtn').addEventListener('click', () => { pendingHitTarget = null; navigateEntries(-1); });
+      $('nextEntryBtn').addEventListener('click', () => { pendingHitTarget = null; navigateEntries(1); });
+      $('randomEntryBtn').addEventListener('click', goToRandomEntry);
+      $('searchGuideBtn').addEventListener('click', showSearchGuide);
+
+      $('copyEntryBtn').addEventListener('click', async () => {
+        const entry = filteredEntries.find(e => e.id === activeEntryId);
+        if (!entry) return;
+        await navigator.clipboard.writeText(`${entry.date}\n\n${entry.content}`);
+        $('copyEntryBtn').textContent = 'Copied!';
+        setTimeout(() => { $('copyEntryBtn').textContent = 'Copy'; }, 1200);
+      });
+
+      $('themeToggleBtn').addEventListener('click', () => {
+        const cur = document.documentElement.getAttribute('data-theme');
+        const next = cur === 'noir' ? 'paper' : 'noir';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('dw_theme', next);
+        updateThemeButton();
+      });
+
+      $('fontSelect').addEventListener('change', e => {
+        document.documentElement.style.setProperty('--reader-font', e.target.value);
+        localStorage.setItem('dw_font', e.target.value);
+      });
+
+      const adjustFont = delta => {
+        const cur = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--reader-size')) || 1.05;
+        const next = Math.min(1.6, Math.max(0.82, +(cur + delta).toFixed(2)));
+        document.documentElement.style.setProperty('--reader-size', `${next}rem`);
+        localStorage.setItem('dw_font_size', String(next));
+      };
+      $('fontDownBtn').addEventListener('click', () => adjustFont(-0.07));
+      $('fontUpBtn').addEventListener('click', () => adjustFont(0.07));
+
+      $('statsWordsBtn').addEventListener('click', analyzeWordCount);
+      $('statsCharsBtn').addEventListener('click', checkCharacterNames);
+      $('statsRepsBtn').addEventListener('click', findRepetitions);
+      $('statsTimeBtn').addEventListener('click', checkTimeline);
+
+      $('modalCloseBtn').addEventListener('click', () => $('analyticsModal').classList.remove('open'));
+      $('analyticsModal').addEventListener('click', e => {
+        if (e.target === $('analyticsModal')) {
+          $('analyticsModal').classList.remove('open');
+          return;
+        }
+        const jumpEl = e.target.closest('[data-jump-search]');
+        if (jumpEl && jumpEl.dataset.jumpSearch) {
+          jumpToExactSearch(jumpEl.dataset.jumpSearch);
+          return;
+        }
+        const openEl = e.target.closest('[data-open-id]');
+        if (openEl && openEl.dataset.openId) {
+          openEntryById(openEl.dataset.openId);
+        }
+      });
+
+      $('aiToggleBtn').addEventListener('click', () => $('aiDrawer').classList.toggle('open'));
+      $('aiCloseBtn').addEventListener('click', () => $('aiDrawer').classList.remove('open'));
+      $('saveKeyBtn').addEventListener('click', () => {
+        saveNvidiaKey($('nvidiaKeyInput').value.trim());
+        $('saveKeyBtn').textContent = 'Saved';
+        setTimeout(() => { $('saveKeyBtn').textContent = 'Save'; }, 1200);
+      });
+
+      document.querySelectorAll('.ai-context-row [data-ctx]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          aiContextMode = btn.dataset.ctx;
+          document.querySelectorAll('.ai-context-row [data-ctx]').forEach(b => {
+            b.classList.toggle('active', b === btn);
+          });
+        });
+      });
+
+      $('aiSendBtn').addEventListener('click', sendAiPrompt);
+      $('aiPromptInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendAiPrompt();
+        }
+      });
+
+      document.addEventListener('keydown', e => {
+        const tag = document.activeElement?.tagName;
+        const inField = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+
+        if (e.key === '/' && !inField) {
+          e.preventDefault();
+          $('searchBox').focus();
+          $('searchBox').select();
+          return;
+        }
+        if (e.key === 'Escape') {
+          $('analyticsModal').classList.remove('open');
+          $('aiDrawer').classList.remove('open');
+          if (inField) document.activeElement.blur();
+          return;
+        }
+
+        if (inField) return;
+
+        if (e.key === 'n') { e.preventDefault(); navigateMatch('next'); }
+        else if (e.key === 'p') { e.preventDefault(); navigateMatch('prev'); }
+        else if (e.key === 'ArrowRight') { e.preventDefault(); pendingHitTarget = null; navigateEntries(1); }
+        else if (e.key === 'ArrowLeft') { e.preventDefault(); pendingHitTarget = null; navigateEntries(-1); }
+        else if (e.key === 'r' || e.key === 'R') { e.preventDefault(); goToRandomEntry(); }
+      });
+    }
+
     function initDreamCanvas() {
-      const canvas = document.getElementById('dream-canvas');
-      if (!canvas) return;
+      const wrap = $('dreamCanvasWrap');
+      const canvas = $('dreamCanvas');
+      const toggleBtn = $('canvasToggleBtn');
       const ctx = canvas.getContext('2d');
-      let nodes = [];
+      let w = 0, h = 0;
       let mouse = { x: -999, y: -999 };
+      let nodes = [];
+      let rafId = null;
 
       function resize() {
-        canvas.width = canvas.offsetWidth || window.innerWidth;
-        canvas.height = canvas.offsetHeight || 128;
-        nodes = Array.from({ length: 38 }, () => ({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 0.45,
-          vy: (Math.random() - 0.5) * 0.45,
-          r: Math.random() * 2 + 1
+        w = canvas.width = canvas.offsetWidth || window.innerWidth;
+        h = canvas.height = canvas.offsetHeight || 68;
+        nodes = Array.from({ length: 34 }, () => ({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: (Math.random() - 0.5) * 0.25,
+          r: 1 + Math.random() * 1.5
         }));
       }
-      resize();
-      window.addEventListener('resize', resize);
+
+      function step() {
+        if (!wrap.classList.contains('collapsed')) {
+          ctx.clearRect(0, 0, w, h);
+          const isNoir = document.documentElement.getAttribute('data-theme') === 'noir';
+          const nodeColor = isNoir ? 'rgba(212, 154, 106, 0.55)' : 'rgba(123, 75, 42, 0.45)';
+          const lineBase = isNoir ? '212, 154, 106' : '123, 75, 42';
+
+          for (const n of nodes) {
+            const dx = n.x - mouse.x;
+            const dy = n.y - mouse.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist > 0 && dist < 80) {
+              n.vx += (dx / dist) * 0.04;
+              n.vy += (dy / dist) * 0.04;
+            }
+            n.vx *= 0.99;
+            n.vy *= 0.99;
+            n.x += n.vx;
+            n.y += n.vy;
+
+            if (n.x < 0 || n.x > w) n.vx *= -1;
+            if (n.y < 0 || n.y > h) n.vy *= -1;
+            n.x = Math.max(0, Math.min(w, n.x));
+            n.y = Math.max(0, Math.min(h, n.y));
+          }
+
+          for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+              const d = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
+              if (d < 110) {
+                ctx.strokeStyle = `rgba(${lineBase}, ${((1 - d / 110) * 0.24).toFixed(3)})`;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(nodes[i].x, nodes[i].y);
+                ctx.lineTo(nodes[j].x, nodes[j].y);
+                ctx.stroke();
+              }
+            }
+          }
+
+          ctx.fillStyle = nodeColor;
+          for (const n of nodes) {
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        rafId = requestAnimationFrame(step);
+      }
+
       canvas.addEventListener('mousemove', e => {
         const rect = canvas.getBoundingClientRect();
         mouse.x = e.clientX - rect.left;
         mouse.y = e.clientY - rect.top;
       });
+      canvas.addEventListener('mouseleave', () => { mouse.x = -999; mouse.y = -999; });
 
-      function tick() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const isNoir = document.documentElement.getAttribute('data-theme') === 'noir';
-        const strokeColor = isNoir ? 'rgba(234,230,223,0.16)' : 'rgba(20,20,19,0.15)';
-        const accentColor = '#C83E2B';
+      toggleBtn.addEventListener('click', () => {
+        const collapsed = wrap.classList.toggle('collapsed');
+        toggleBtn.textContent = collapsed ? 'show field' : 'hide field';
+      });
 
-        for (let i = 0; i < nodes.length; i++) {
-          const n = nodes[i];
-          n.x += n.vx;
-          n.y += n.vy;
-          if (n.x < 0 || n.x > canvas.width) n.vx *= -1;
-          if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
-
-          ctx.beginPath();
-          ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-          ctx.fillStyle = accentColor;
-          ctx.fill();
-
-          for (let j = i + 1; j < nodes.length; j++) {
-            const m = nodes[j];
-            const dist = Math.hypot(n.x - m.x, n.y - m.y);
-            if (dist < 110) {
-              ctx.beginPath();
-              ctx.moveTo(n.x, n.y);
-              ctx.lineTo(m.x, m.y);
-              ctx.strokeStyle = strokeColor;
-              ctx.stroke();
-            }
-          }
-
-          const mDist = Math.hypot(n.x - mouse.x, n.y - mouse.y);
-          if (mDist < 130) {
-            ctx.beginPath();
-            ctx.moveTo(n.x, n.y);
-            ctx.lineTo(mouse.x, mouse.y);
-            ctx.strokeStyle = 'rgba(200, 62, 43, 0.45)';
-            ctx.stroke();
-          }
-        }
-        requestAnimationFrame(tick);
-      }
-      tick();
+      window.addEventListener('resize', resize);
+      resize();
+      if (!rafId) step();
     }
 
-    function escapeHtml(str) {
-      return str.replace(/[&<>"']/g, m => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-      }[m]));
-    }
-
-    function escapeRegExp(str) {
-      return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }
-
+    initPreferences();
+    bindEvents();
     initDreamCanvas();
     loadArchive();
   </script>
